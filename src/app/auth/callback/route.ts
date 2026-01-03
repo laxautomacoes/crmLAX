@@ -33,7 +33,11 @@ export async function GET(request: Request) {
             }
         )
         const { error } = await supabase.auth.exchangeCodeForSession(code)
-        if (!error) {
+
+        if (error) {
+            console.error('Erro ao trocar código por sessão:', error.message)
+        } else {
+            console.log('Sessão estabelecida com sucesso via código')
             return NextResponse.redirect(`${origin}${next}`)
         }
     }
