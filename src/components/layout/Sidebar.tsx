@@ -1,9 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import { usePathname, useSearchParams } from 'next/navigation';
+import { usePathname, useSearchParams, useRouter } from 'next/navigation';
 import { LayoutDashboard, Filter, Users, Package, FileText, Rocket, Settings, LogOut, LifeBuoy, X, ChevronRight, ChevronDown } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { createClient } from '@/lib/supabase/client';
 
 const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -33,7 +34,15 @@ interface SidebarProps {
 export function Sidebar({ isOpen, onClose, isCollapsed, toggleCollapse }: SidebarProps) {
     const pathname = usePathname();
     const searchParams = useSearchParams();
+    const router = useRouter();
+    const supabase = createClient();
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push('/login');
+        router.refresh();
+    };
 
     // Auto-expand if child is active
     useEffect(() => {
@@ -192,7 +201,11 @@ export function Sidebar({ isOpen, onClose, isCollapsed, toggleCollapse }: Sideba
                         <LifeBuoy size={20} className="shrink-0" />
                         {!isCollapsed && <span>Suporte</span>}
                     </button>
-                    <button className={`flex items-center gap-3 text-red-400 hover:text-red-300 text-sm mt-4 w-full transition-colors ${isCollapsed ? 'justify-center' : ''}`} title={isCollapsed ? "Sair" : ""}>
+                    <button
+                        onClick={handleLogout}
+                        className={`flex items-center gap-3 text-red-400 hover:text-red-300 text-sm mt-4 w-full transition-colors ${isCollapsed ? 'justify-center' : ''}`}
+                        title={isCollapsed ? "Sair" : ""}
+                    >
                         <LogOut size={20} className="shrink-0" />
                         {!isCollapsed && <span>Sair</span>}
                     </button>

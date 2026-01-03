@@ -3,12 +3,22 @@
 import { useState, useRef, useEffect } from 'react';
 import { Moon, Bell, Settings, LogOut, User } from 'lucide-react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { getProfile } from '@/app/_actions/profile';
 
 export function AvatarDropdown() {
     const [isOpen, setIsOpen] = useState(false);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const [profile, setProfile] = useState<any>(null);
+    const router = useRouter();
+    const supabase = createClient();
+
+    const handleLogout = async () => {
+        await supabase.auth.signOut();
+        router.push('/login');
+        router.refresh();
+    };
 
     useEffect(() => {
         async function loadData() {
@@ -121,7 +131,7 @@ export function AvatarDropdown() {
                         <MenuItem icon={Moon} label="Modo Escuro" onClick={() => { }} />
                         <MenuItem icon={Bell} label="Notificações" href="/dashboard/settings?tab=notifications" />
                         <MenuItem icon={User} label="Configurações" href="/dashboard/settings" />
-                        <MenuItem icon={LogOut} label="Sair" isRed onClick={() => { }} />
+                        <MenuItem icon={LogOut} label="Sair" isRed onClick={handleLogout} />
                     </div>
                 </div>
             )}
