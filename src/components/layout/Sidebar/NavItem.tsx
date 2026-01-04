@@ -24,7 +24,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
             <div>
                 <button
                     onClick={() => !isCollapsed && onToggleExpand(item.name)}
-                    className={`w-full flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-sm font-medium ${isActive ? 'text-[#FFE600]' : 'text-gray-300 hover:bg-[#4A5A5A] hover:text-white'} ${isCollapsed ? 'justify-center' : ''}`}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-base font-medium ${isActive ? 'text-[#FFE600]' : 'text-gray-300 hover:bg-[#4A5A5A] hover:text-white'} ${isCollapsed ? 'justify-center' : ''}`}
                     title={isCollapsed ? item.name : ''}
                 >
                     <item.icon size={20} className="shrink-0" />
@@ -48,7 +48,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
                                 subActive = sub.href === '/dashboard/settings' ? (pathname === sub.href && !searchParams.has('tab')) : pathname === sub.href;
                             }
                             return (
-                                <Link key={sub.name} href={sub.href} className={`block px-3 py-2 text-sm rounded-lg transition-colors ${subActive ? 'text-[#FFE600] font-medium' : 'text-gray-400 hover:text-white'}`}>
+                                <Link key={sub.name} href={sub.href} className={`block px-3 py-2 text-base rounded-lg transition-colors ${subActive ? 'text-[#FFE600] font-medium' : 'text-gray-400 hover:text-white'}`}>
                                     {sub.name}
                                 </Link>
                             );
@@ -62,7 +62,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
     return (
         <Link
             href={item.href}
-            className={`flex items-center gap-3 px-3 py-3 rounded-lg transition-colors text-sm font-medium ${isActive ? 'bg-[#556767] text-white' : 'text-gray-300 hover:bg-[#4A5A5A] hover:text-white'} ${isCollapsed ? 'justify-center' : ''}`}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-base font-medium ${isActive ? 'bg-[#556767] text-white' : 'text-gray-300 hover:bg-[#4A5A5A] hover:text-white'} ${isCollapsed ? 'justify-center' : ''}`}
             title={isCollapsed ? item.name : ''}
         >
             <item.icon size={20} className="shrink-0" />
