@@ -1,0 +1,16 @@
+---
+alwaysApply: true
+---
+1. Sempre entregue o Plano de Implementação, Tasks e Walkthrouths em PT-BR
+
+2. Sempre consulte "project_system" e "project_specs" antes de gerar um resultado
+
+3. Você deve manter o padrão de construção das páginas:
+- fontes
+- cores
+- espaçamentos e centralizações
+- arredondamento de cards
+- ocupação altura e largura
+- posições e alinhamento de títulos, subtítulos e textos
+- posição e alinhamento de botões
+- layout de modals

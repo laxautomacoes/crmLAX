@@ -3,7 +3,8 @@
 import { Bell, Sun, Moon, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AvatarDropdown } from './AvatarDropdown';
 import { Modal } from '@/components/shared/Modal';
-import { NotificationsList, Notification } from '@/components/dashboard/NotificationsList';
+import { NotificationsList } from '@/components/dashboard/NotificationsList';
+import { Notification } from '@/components/dashboard/NotificationItem';
 import { getNotifications } from '@/app/_actions/notifications';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';

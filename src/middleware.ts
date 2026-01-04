@@ -1,7 +1,26 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
+import { isPublicRoute, isSiteRequest } from '@/lib/utils/tenant'
+import { getTenantByHostname } from '@/lib/utils/tenant-query'
 
 export async function middleware(request: NextRequest) {
+    const hostname = request.headers.get('host') || ''
+    const pathname = request.nextUrl.pathname
+    
+    // 1. Identificar tenant pelo hostname (subdomínio ou custom domain)
+    const tenant = await getTenantByHostname(hostname)
+    
+    // 2. Se for request de site público e temos tenant, redirecionar para /site/[slug]
+    if (tenant && !isSiteRequest(pathname) && !pathname.startsWith('/dashboard') && !pathname.startsWith('/api')) {
+        // Se acessando raiz do site do tenant, redirecionar para /site/[slug]
+        if (pathname === '/') {
+            const url = request.nextUrl.clone()
+            url.pathname = `/site/${tenant.slug}`
+            return NextResponse.redirect(url)
+        }
+    }
+    
+    // 3. Criar cliente Supabase para autenticação
     let supabaseResponse = NextResponse.next({
         request,
     })
@@ -35,18 +54,23 @@ export async function middleware(request: NextRequest) {
         data: { user },
     } = await supabase.auth.getUser()
 
-    if (
-        !user &&
-        !request.nextUrl.pathname.startsWith('/login') &&
-        !request.nextUrl.pathname.startsWith('/auth') &&
-        !request.nextUrl.pathname.startsWith('/forgot-password') &&
-        !request.nextUrl.pathname.startsWith('/reset-password') &&
-        !request.nextUrl.pathname.startsWith('/register')
-    ) {
-        // no user, potentially respond by redirecting the user to the login page
+    // 4. Autenticação apenas para rotas que não são públicas
+    if (!user && !isPublicRoute(pathname) && !isSiteRequest(pathname)) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
+    }
+
+    // 5. Adicionar header com tenant_id se identificado
+    if (tenant) {
+        const response = NextResponse.next({
+            request: {
+                headers: new Headers(request.headers),
+            },
+        })
+        response.headers.set('x-tenant-id', tenant.id)
+        response.headers.set('x-tenant-slug', tenant.slug)
+        return response
     }
 
     return supabaseResponse
