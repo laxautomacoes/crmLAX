@@ -4,7 +4,8 @@ import { Bell, Sun, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AvatarDropdown } from './AvatarDropdown';
 import { Modal } from '@/components/shared/Modal';
 import { NotificationsList, Notification } from '@/components/dashboard/NotificationsList';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getProfile } from '@/app/_actions/profile';
 
 interface HeaderProps {
     onMenuClick: () => void;
@@ -35,6 +36,14 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
+    const [profile, setProfile] = useState<any>(null);
+
+    useEffect(() => {
+        getProfile().then((data) => {
+            if (data.profile) setProfile(data.profile);
+        });
+    }, []);
+
     return (
         <>
             <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-none sticky top-0 z-40">
@@ -57,7 +66,9 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
                     {/* Desktop Welcome & Date */}
                     <div className="hidden md:flex flex-col ml-4">
-                        <h2 className="text-lg font-semibold text-[#404F4F]">Bem-vindo, Léo Acosta</h2>
+                        <h2 className="text-lg font-semibold text-[#404F4F]">
+                            Bem-vindo, {profile?.full_name || 'Léo Acosta'}
+                        </h2>
                         <span className="text-xs text-gray-500">{formattedDate}</span>
                     </div>
 

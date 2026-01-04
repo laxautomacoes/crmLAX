@@ -5,6 +5,7 @@ import { Moon, Bell, Settings, LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getProfile } from '@/app/_actions/profile';
+import { UserAvatar } from '@/components/shared/UserAvatar';
 import { MenuItem } from './AvatarDropdown/MenuItem';
 import { DropdownHeader } from './AvatarDropdown/DropdownHeader';
 
@@ -22,7 +23,9 @@ export function AvatarDropdown() {
     };
 
     useEffect(() => {
-        getProfile().then(({ profile }) => profile && setProfile(profile));
+        getProfile().then((data) => {
+            if (data.profile) setProfile(data.profile);
+        });
 
         const handleClickOutside = (e: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setIsOpen(false);
@@ -35,13 +38,13 @@ export function AvatarDropdown() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="h-8 w-8 rounded-full bg-[#404F4F] flex items-center justify-center text-white text-sm font-medium focus:ring-2 focus:ring-offset-2 focus:ring-[#404F4F] overflow-hidden"
+                className="flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#404F4F] rounded-full"
             >
-                {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
-                ) : (
-                    <span>{profile?.full_name?.substring(0, 2).toUpperCase() || 'LA'}</span>
-                )}
+                <UserAvatar
+                    src={profile?.avatar_url}
+                    name={profile?.full_name}
+                    className="h-8 w-8 text-sm"
+                />
             </button>
 
             {isOpen && (

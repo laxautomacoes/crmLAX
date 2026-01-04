@@ -1,28 +1,30 @@
-'use client';
+import { UserAvatar } from '@/components/shared/UserAvatar';
 
 interface DropdownHeaderProps {
     profile: any;
 }
 
 export function DropdownHeader({ profile }: DropdownHeaderProps) {
-    const initials = profile?.full_name ? profile.full_name.substring(0, 2).toUpperCase() : 'LA';
-
     return (
         <div className="flex items-center gap-4 p-5 border-b border-gray-100 bg-white">
-            <div className="h-12 w-12 rounded-full bg-[#404F4F] flex flex-shrink-0 items-center justify-center text-white font-bold text-lg overflow-hidden">
-                {profile?.avatar_url ? (
-                    <img src={profile.avatar_url} alt="Avatar" className="h-full w-full object-cover" />
-                ) : (
-                    <span>{initials}</span>
-                )}
-            </div>
+            <UserAvatar
+                src={profile?.avatar_url}
+                name={profile?.full_name}
+                className="h-12 w-12 text-lg font-bold"
+            />
             <div className="flex flex-col min-w-0">
                 <p className="text-base font-bold text-gray-900 truncate">
-                    {profile?.full_name || 'Léo Acosta'}
+                    {profile?.full_name}
                 </p>
-                <p className="text-sm text-gray-500 truncate">
-                    {profile?.email || 'leocrm@lax.com'}
-                </p>
+                <div className="flex flex-col gap-0.5 mt-1">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#00B087] bg-[#00B087]/10 px-1.5 py-0.5 rounded w-fit mb-1">
+                        {profile?.role === 'superadmin' ? 'Super Administrador' :
+                            profile?.role === 'admin' ? 'Administrador' : 'Colaborador'}
+                    </span>
+                    <p className="text-sm text-gray-500">
+                        {profile?.email}
+                    </p>
+                </div>
             </div>
         </div>
     );

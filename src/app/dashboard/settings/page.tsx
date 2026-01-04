@@ -32,6 +32,8 @@ export default function SettingsPage() {
     );
 }
 
+import { UserAvatar } from '@/components/shared/UserAvatar';
+
 function ProfileTab() {
     const [profile, setProfile] = useState<any>(null);
     const [uploading, setUploading] = useState(false);
@@ -48,6 +50,11 @@ function ProfileTab() {
     const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         try {
             setUploading(true);
+
+            if (!profile?.id) {
+                throw new Error('Perfil não carregado. Por favor, recarregue a página.');
+            }
+
             if (!event.target.files || event.target.files.length === 0) {
                 throw new Error('Você deve selecionar uma imagem para fazer upload.');
             }
@@ -55,7 +62,7 @@ function ProfileTab() {
             const file = event.target.files[0];
             const fileExt = file.name.split('.').pop();
             const fileName = `${Math.random()}.${fileExt}`;
-            const filePath = `${profile?.id}/${fileName}`;
+            const filePath = `${profile.id}/${fileName}`;
 
             const supabase = createClient();
 
@@ -71,16 +78,18 @@ function ProfileTab() {
                 .from('avatars')
                 .getPublicUrl(filePath);
 
-            const { error: updateError } = await updateProfileAvatar(publicUrl);
+            const result = await updateProfileAvatar(publicUrl);
 
-            if (updateError) {
-                throw updateError;
+            if (result.error) {
+                throw new Error(result.error);
             }
 
             setProfile({ ...profile, avatar_url: publicUrl });
             alert('Avatar atualizado com sucesso!');
         } catch (error: any) {
-            alert('Erro ao atualizar avatar: ' + error.message);
+            console.error('Erro detalhado no upload:', error);
+            const errorMessage = error.message || (typeof error === 'string' ? error : 'Erro desconhecido');
+            alert('Erro ao atualizar avatar: ' + errorMessage);
         } finally {
             setUploading(false);
         }
@@ -100,17 +109,11 @@ function ProfileTab() {
                         className="relative group cursor-pointer"
                         onClick={() => fileInputRef.current?.click()}
                     >
-                        {profile?.avatar_url ? (
-                            <img
-                                src={profile.avatar_url}
-                                alt="Avatar"
-                                className="w-32 h-32 rounded-full object-cover border-4 border-white shadow-md"
-                            />
-                        ) : (
-                            <div className="w-32 h-32 rounded-full bg-[#E0EBEB] flex items-center justify-center text-3xl font-bold text-[#404F4F] overflow-hidden border-4 border-white shadow-md">
-                                {profile?.full_name ? profile.full_name.substring(0, 2).toUpperCase() : 'LA'}
-                            </div>
-                        )}
+                        <UserAvatar
+                            src={profile?.avatar_url}
+                            name={profile?.full_name}
+                            className="w-32 h-32 text-3xl font-bold border-4 border-white shadow-md"
+                        />
 
                         <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <Camera className="text-white" size={24} />
@@ -149,7 +152,8 @@ function ProfileTab() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Nome Completo</label>
                         <input
                             type="text"
-                            defaultValue="Léo Acosta"
+                            value={profile?.full_name || ''}
+                            onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/20 focus:border-[#FFE600] text-sm"
                         />
                     </div>
@@ -157,7 +161,7 @@ function ProfileTab() {
                         <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
                         <input
                             type="email"
-                            defaultValue="leocrm@lax.com"
+                            value={profile?.email || ''}
                             className="w-full px-3 py-2 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/20 focus:border-[#FFE600] text-sm bg-gray-50"
                             readOnly
                         />
