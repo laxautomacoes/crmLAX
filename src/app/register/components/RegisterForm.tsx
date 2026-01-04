@@ -37,7 +37,7 @@ export function RegisterForm({
                     <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
                         type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                        className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 placeholder-gray-400 text-sm font-medium"
+                        className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 placeholder-gray-500 text-sm font-medium"
                         placeholder="João Silva"
                     />
                 </div>
@@ -49,7 +49,7 @@ export function RegisterForm({
                     <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
                         type="email" required readOnly={isInvited} value={email} onChange={(e) => setEmail(e.target.value)}
-                        className={`block w-full pl-11 pr-4 py-3.5 border border-gray-100 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 text-sm font-medium ${isInvited ? 'bg-gray-100' : 'bg-gray-50'}`}
+                        className={`block w-full pl-11 pr-4 py-3.5 border border-gray-100 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 placeholder-gray-500 text-sm font-medium ${isInvited ? 'bg-gray-100' : 'bg-gray-50'}`}
                         placeholder="seu@email.com"
                     />
                 </div>
@@ -61,7 +61,7 @@ export function RegisterForm({
                     <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
                     <input
                         type={showPassword ? "text" : "password"} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
-                        className="block w-full pl-11 pr-11 py-3.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 text-sm font-medium"
+                        className="block w-full pl-11 pr-11 py-3.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 placeholder-gray-500 text-sm font-medium"
                         placeholder="Mínimo 6 caracteres"
                     />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">

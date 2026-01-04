@@ -11,7 +11,7 @@ Este documento é a fonte única de verdade para a interface do CRM LAX. Deve se
 | **Background (Páginas)** | `#F0F2F5` | Fundo de páginas da Dashboard e Login. |
 | **Background (Cards)** | `#FFFFFF` | Fundo de cards, modais e áreas de conteúdo. |
 | **Gray 50/100** | `#F9FAFB` / `#F3F4F6` | Fundo de inputs, bordas suaves de cards. |
-| **Gray 400/500** | `#9CA3AF` / `#6B7280` | Placeholders, ícones desativados, textos de apoio. |
+| **Gray 500/800/900** | `#6B7280` / `#1F2937` / `#111827`| Placeholders (500), Labels (800), Texto de Input (900). |
 | **Success** | `#00B087` / `#10B981` | Badges de status 'Ganho', confirmações. |
 | **Danger** | `#EF4444` | Botões de exclusão, erros, alertas críticos. |
 

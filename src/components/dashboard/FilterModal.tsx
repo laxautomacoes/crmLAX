@@ -12,7 +12,7 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
         <Modal isOpen={isOpen} onClose={onClose} title="Filtrar Dashboard">
             <div className="space-y-4">
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Período</label>
+                    <label className="block text-sm font-bold text-gray-800 ml-1 mb-1">Período</label>
                     <select className="w-full border-gray-300 rounded-lg shadow-sm focus:border-[#404F4F] focus:ring-[#404F4F]">
                         <option>Hoje</option>
                         <option>Últimos 7 dias</option>
@@ -22,7 +22,7 @@ export function FilterModal({ isOpen, onClose }: FilterModalProps) {
                 </div>
 
                 <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Origem do Lead</label>
+                    <label className="block text-sm font-bold text-gray-800 ml-1 mb-1">Origem do Lead</label>
                     <div className="space-y-2">
                         <label className="flex items-center gap-2">
                             <input type="checkbox" className="rounded text-[#404F4F] focus:ring-[#404F4F]" />
