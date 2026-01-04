@@ -36,17 +36,17 @@ export default function LoginPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F0F2F5] flex flex-col justify-center items-center p-4">
-            <div className="bg-white w-full max-w-[480px] rounded-2xl shadow-xl p-8 md:p-12">
+        <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 transition-colors">
+            <div className="bg-card w-full max-w-[480px] rounded-2xl shadow-xl p-8 md:p-12 border border-border">
                 {/* Logo Section */}
                 <div className="flex flex-col items-center mb-8">
                     <div className="flex items-center gap-2 mb-2">
                         {/* Using text logo for now as we don't have the SVG asset, matching brand font */}
-                        <div className="text-3xl font-bold tracking-tight text-[#404F4F]">
-                            CRM <span className="text-[#FFE600] inline-block transform -skew-x-12">LAX</span>
+                        <div className="text-3xl font-bold tracking-tight text-foreground">
+                            CRM <span className="text-secondary inline-block transform -skew-x-12">LAX</span>
                         </div>
                     </div>
-                    <p className="text-gray-500 text-sm font-medium text-center">
+                    <p className="text-muted-foreground text-sm font-medium text-center">
                         Gestão e controle financeiro com IA
                     </p>
                 </div>
@@ -59,7 +59,7 @@ export default function LoginPage() {
                     )}
 
                     <div className="space-y-1.5">
-                        <label className="block text-sm font-bold text-gray-800 ml-1">
+                        <label className="block text-sm font-bold text-foreground ml-1">
                             Email
                         </label>
                         <div className="relative">
@@ -71,14 +71,14 @@ export default function LoginPage() {
                                 required
                                 value={email}
                                 onChange={(e) => setEmail(e.target.value)}
-                                className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] transition-all text-sm font-medium"
+                                className="block w-full pl-11 pr-4 py-3.5 bg-muted/30 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all text-sm font-medium"
                                 placeholder="adm@laxperience.online"
                             />
                         </div>
                     </div>
 
                     <div className="space-y-1.5">
-                        <label className="block text-sm font-bold text-gray-800 ml-1">
+                        <label className="block text-sm font-bold text-foreground ml-1">
                             Senha
                         </label>
                         <div className="relative">
@@ -90,7 +90,7 @@ export default function LoginPage() {
                                 required
                                 value={password}
                                 onChange={(e) => setPassword(e.target.value)}
-                                className="block w-full pl-11 pr-11 py-3.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-900 placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] transition-all text-sm font-medium"
+                                className="block w-full pl-11 pr-11 py-3.5 bg-muted/30 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all text-sm font-medium"
                                 placeholder="•••••••••••"
                             />
                             <button
@@ -110,7 +110,7 @@ export default function LoginPage() {
                     <div className="flex justify-center pt-1">
                         <Link
                             href="/forgot-password"
-                            className="text-sm font-semibold text-[#404F4F] hover:text-[#2d3939] transition-colors"
+                            className="text-sm font-semibold text-foreground hover:opacity-80 transition-opacity"
                         >
                             Esqueceu a senha?
                         </Link>
@@ -119,7 +119,7 @@ export default function LoginPage() {
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-[#404F4F] bg-[#FFE600] hover:bg-[#F2DB00] focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#FFE600] disabled:opacity-70 disabled:cursor-wait transition-all transform active:scale-[0.99]"
+                        className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-secondary-foreground bg-secondary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary disabled:opacity-70 disabled:cursor-wait transition-all transform active:scale-[0.99]"
                     >
                         {loading ? (
                             <Loader2 className="h-5 w-5 animate-spin" />
@@ -130,10 +130,10 @@ export default function LoginPage() {
 
                     <div className="relative my-6">
                         <div className="absolute inset-0 flex items-center">
-                            <div className="w-full border-t border-gray-100"></div>
+                            <div className="w-full border-t border-border"></div>
                         </div>
                         <div className="relative flex justify-center text-sm">
-                            <span className="px-4 bg-white text-gray-400 font-medium">
+                            <span className="px-4 bg-card text-muted-foreground font-medium">
                                 ou continue com
                             </span>
                         </div>
@@ -150,7 +150,7 @@ export default function LoginPage() {
                                 }
                             });
                         }}
-                        className="w-full flex justify-center items-center gap-3 py-3.5 px-4 border border-gray-200 rounded-lg bg-white text-sm font-bold text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-gray-200 transition-all"
+                        className="w-full flex justify-center items-center gap-3 py-3.5 px-4 border border-border rounded-lg bg-card text-sm font-bold text-foreground hover:bg-muted/50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-border transition-all"
                     >
                         {/* Simple Google G Logo using SVG */}
                         <svg className="h-5 w-5" aria-hidden="true" viewBox="0 0 24 24">
@@ -175,12 +175,12 @@ export default function LoginPage() {
                     </button>
 
                     <div className="flex justify-center items-center mt-6">
-                        <span className="text-gray-500 text-sm font-medium mr-1.5">
+                        <span className="text-muted-foreground text-sm font-medium mr-1.5">
                             Não tem uma conta?
                         </span>
                         <Link
                             href="/register"
-                            className="text-sm font-bold text-[#404F4F] hover:text-[#2d3939] transition-colors"
+                            className="text-sm font-bold text-foreground hover:opacity-80 transition-opacity"
                         >
                             Cadastre-se
                         </Link>

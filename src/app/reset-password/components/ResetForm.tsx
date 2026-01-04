@@ -22,33 +22,33 @@ export function ResetForm({
     return (
         <form className="space-y-5" onSubmit={onSubmit}>
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm text-center">
+                <div className="bg-red-500/10 border border-red-500/20 text-red-600 px-4 py-3 rounded-lg text-sm text-center">
                     {error}
                 </div>
             )}
 
             <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-gray-800 ml-1">Nova Senha</label>
+                <label className="block text-sm font-bold text-foreground ml-1">Nova Senha</label>
                 <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <input
                         type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
-                        className="block w-full pl-11 pr-11 py-3.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 placeholder-gray-500 text-sm font-medium"
+                        className="block w-full pl-11 pr-11 py-3.5 bg-muted/30 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary placeholder-muted-foreground text-sm font-medium transition-all"
                         placeholder="•••••••••••"
                     />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400">
+                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground">
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
                 </div>
             </div>
 
             <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-gray-800 ml-1">Confirmar Nova Senha</label>
+                <label className="block text-sm font-bold text-foreground ml-1">Confirmar Nova Senha</label>
                 <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-gray-400" />
+                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
                     <input
                         type={showPassword ? "text" : "password"} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="block w-full pl-11 pr-4 py-3.5 bg-gray-50 border border-gray-100 rounded-lg text-gray-900 focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 placeholder-gray-500 text-sm font-medium"
+                        className="block w-full pl-11 pr-4 py-3.5 bg-muted/30 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary placeholder-muted-foreground text-sm font-medium transition-all"
                         placeholder="•••••••••••"
                     />
                 </div>
@@ -56,7 +56,7 @@ export function ResetForm({
 
             <button
                 type="submit" disabled={loading}
-                className="w-full flex justify-center py-3.5 border border-transparent rounded-lg shadow-sm text-sm font-bold text-[#404F4F] bg-[#FFE600] hover:bg-[#F2DB00] disabled:opacity-70 transition-all transform active:scale-[0.99]"
+                className="w-full flex justify-center py-3.5 border border-transparent rounded-lg shadow-sm text-sm font-bold text-secondary-foreground bg-secondary hover:opacity-90 disabled:opacity-70 transition-all transform active:scale-[0.99]"
             >
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Redefinir Senha'}
             </button>

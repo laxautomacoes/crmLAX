@@ -8,18 +8,18 @@ const recentLeads = [
 
 export default function RecentLeadsList() {
     return (
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-100">
-            <h3 className="text-lg font-bold text-[#404F4F] mb-6">Leads Recentes</h3>
+        <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
+            <h3 className="text-lg font-bold text-foreground mb-6">Leads Recentes</h3>
             <div className="space-y-4">
                 {recentLeads.map((lead) => (
-                    <div key={lead.id} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50 transition-colors">
+                    <div key={lead.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
                         <div className="flex items-center gap-4">
                             <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 font-bold text-sm">
                                 JD
                             </div>
                             <div>
-                                <p className="font-semibold text-[#404F4F]">{lead.name}</p>
-                                <p className="text-xs text-gray-500">{lead.car}</p>
+                                <p className="font-semibold text-foreground">{lead.name}</p>
+                                <p className="text-xs text-muted-foreground">{lead.car}</p>
                             </div>
                         </div>
                         <div className="text-right">

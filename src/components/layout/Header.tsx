@@ -1,10 +1,11 @@
 'use client';
 
-import { Bell, Sun, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bell, Sun, Moon, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AvatarDropdown } from './AvatarDropdown';
 import { Modal } from '@/components/shared/Modal';
 import { NotificationsList, Notification } from '@/components/dashboard/NotificationsList';
 import { useState, useEffect } from 'react';
+import { useTheme } from 'next-themes';
 import { getProfile } from '@/app/_actions/profile';
 
 interface HeaderProps {
@@ -38,7 +39,11 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
     const [profile, setProfile] = useState<any>(null);
 
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
+
     useEffect(() => {
+        setMounted(true);
         getProfile().then((data) => {
             if (data.profile) setProfile(data.profile);
         });
@@ -46,7 +51,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
     return (
         <>
-            <header className="h-16 bg-white border-b border-gray-200 flex items-center justify-between px-6 flex-none sticky top-0 z-40">
+            <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 flex-none sticky top-0 z-40">
                 <div className="flex items-center gap-4 flex-1">
                     {/* Mobile Menu Button */}
                     <button
@@ -59,17 +64,17 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                     {/* Desktop Collapse Button */}
                     <button
                         onClick={toggleSidebar}
-                        className="hidden md:block text-gray-500 hover:text-gray-700 transition-colors"
+                        className="hidden md:block text-muted-foreground hover:text-foreground transition-colors"
                     >
                         {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     </button>
 
                     {/* Desktop Welcome & Date */}
                     <div className="hidden md:flex flex-col ml-4">
-                        <h2 className="text-lg font-semibold text-[#404F4F]">
+                        <h2 className="text-lg font-semibold text-foreground">
                             Bem-vindo, {profile?.full_name || 'Léo Acosta'}
                         </h2>
-                        <span className="text-xs text-gray-500">{formattedDate}</span>
+                        <span className="text-xs text-muted-foreground">{formattedDate}</span>
                     </div>
 
                     {/* Mobile Centered Logo */}
@@ -80,16 +85,21 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
                 <div className="flex items-center gap-6">
                     <div className="hidden md:flex items-center gap-4">
-                        <button className="text-gray-500 hover:text-gray-700">
-                            <Sun size={20} />
-                        </button>
+                        {mounted && (
+                            <button
+                                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                                className="text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                            </button>
+                        )}
                         <button
                             onClick={() => setIsNotificationsOpen(true)}
-                            className="text-gray-500 hover:text-gray-700 relative"
+                            className="text-muted-foreground hover:text-foreground relative"
                         >
                             <Bell size={20} />
                             {unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-white"></span>
+                                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-card"></span>
                             )}
                         </button>
                         <div className="relative">

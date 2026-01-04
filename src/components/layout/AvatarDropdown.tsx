@@ -1,13 +1,14 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Moon, Bell, Settings, LogOut, User } from 'lucide-react';
+import { Moon, Sun, Bell, Settings, LogOut, User } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getProfile } from '@/app/_actions/profile';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { MenuItem } from './AvatarDropdown/MenuItem';
 import { DropdownHeader } from './AvatarDropdown/DropdownHeader';
+import { useTheme } from 'next-themes';
 
 export function AvatarDropdown() {
     const [isOpen, setIsOpen] = useState(false);
@@ -15,6 +16,7 @@ export function AvatarDropdown() {
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const supabase = createClient();
+    const { theme, setTheme } = useTheme();
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -48,10 +50,14 @@ export function AvatarDropdown() {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-3 w-72 bg-white rounded-2xl shadow-xl border border-gray-100 z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                <div className="absolute right-0 mt-3 w-72 bg-card rounded-2xl shadow-xl border border-border z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                     <DropdownHeader profile={profile} />
-                    <div className="flex flex-col bg-white">
-                        <MenuItem icon={Moon} label="Modo Escuro" onClick={() => { }} />
+                    <div className="flex flex-col bg-card">
+                        <MenuItem
+                            icon={theme === 'dark' ? Sun : Moon}
+                            label={theme === 'dark' ? "Modo Claro" : "Modo Escuro"}
+                            onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                        />
                         <MenuItem icon={Bell} label="Notificações" href="/dashboard/settings?tab=notifications" />
                         <MenuItem icon={User} label="Configurações" href="/dashboard/settings" />
                         <MenuItem icon={LogOut} label="Sair" isRed onClick={handleLogout} />

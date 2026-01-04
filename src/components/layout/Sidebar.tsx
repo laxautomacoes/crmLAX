@@ -37,9 +37,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     return (
         <>
             {isOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />}
-            <div className={`fixed inset-y-0 left-0 z-50 bg-[#404F4F] text-white flex flex-col transition-all duration-300 md:translate-x-0 md:static ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}>
+            <div className={`fixed inset-y-0 left-0 z-50 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col transition-all duration-300 md:translate-x-0 md:static ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}>
                 <div className="p-6 flex items-center relative justify-center">
-                    <h1 className={`${isCollapsed ? 'text-xl' : 'text-2xl'} font-bold text-[#FFE600]`}>{isCollapsed ? 'L' : 'CRM LAX'}</h1>
+                    <h1 className={`${isCollapsed ? 'text-xl' : 'text-2xl'} font-bold text-secondary`}>{isCollapsed ? 'L' : 'CRM LAX'}</h1>
                     <button onClick={onClose} className="md:hidden absolute right-4"><X size={24} /></button>
                 </div>
 

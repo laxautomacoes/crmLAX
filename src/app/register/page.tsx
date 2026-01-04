@@ -62,14 +62,14 @@ export default function RegisterPage() {
     };
 
     return (
-        <div className="min-h-screen bg-[#F0F2F5] flex flex-col justify-center items-center p-4">
-            <div className="bg-white w-full max-w-[480px] rounded-2xl shadow-xl p-8 md:p-12">
+        <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 transition-colors">
+            <div className="bg-card w-full max-w-[480px] rounded-2xl shadow-xl p-8 md:p-12 border border-border">
                 <div className="flex flex-col items-center mb-8">
-                    <div className="text-3xl font-bold tracking-tight text-[#404F4F] mb-2">
-                        CRM <span className="text-[#FFE600] inline-block transform -skew-x-12">LAX</span>
+                    <div className="text-3xl font-bold tracking-tight text-foreground mb-2">
+                        CRM <span className="text-secondary inline-block transform -skew-x-12">LAX</span>
                     </div>
                     {!isSuccess && (
-                        <p className="text-gray-500 text-sm font-medium text-center">
+                        <p className="text-muted-foreground text-sm font-medium text-center">
                             {invitation ? `Você foi convidado para participar da ${invitation.tenants?.name}` : 'Crie sua conta para começar'}
                         </p>
                     )}

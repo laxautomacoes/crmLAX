@@ -18,7 +18,7 @@ export default function SettingsPage() {
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-[#404F4F] text-center md:text-left">
+                <h1 className="text-2xl font-bold text-foreground text-center md:text-left">
                     {activeTab === 'notifications' ? 'Notificações' : 'Meu Perfil'}
                 </h1>
             </div>
@@ -98,10 +98,10 @@ function ProfileTab() {
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-fr">
             {/* Foto de Perfil */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm flex flex-col h-full">
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-full">
                 <div className="flex items-center gap-2 mb-6">
-                    <Camera className="text-gray-400" size={20} />
-                    <h2 className="font-semibold text-gray-900">Foto Perfil</h2>
+                    <Camera className="text-muted-foreground" size={20} />
+                    <h2 className="font-semibold text-foreground">Foto Perfil</h2>
                 </div>
 
                 <div className="flex flex-col items-center flex-1 justify-center">
@@ -112,13 +112,13 @@ function ProfileTab() {
                         <UserAvatar
                             src={profile?.avatar_url}
                             name={profile?.full_name}
-                            className="w-32 h-32 text-3xl font-bold border-4 border-white shadow-md"
+                            className="w-32 h-32 text-3xl font-bold border-4 border-card shadow-md"
                         />
 
                         <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                             <Camera className="text-white" size={24} />
                         </div>
-                        <div className="absolute bottom-0 right-0 bg-[#FFE600] p-2 rounded-full text-[#404F4F] border-2 border-white shadow-sm">
+                        <div className="absolute bottom-0 right-0 bg-secondary p-2 rounded-full text-secondary-foreground border-2 border-card shadow-sm">
                             <Camera size={14} />
                         </div>
                     </div>
@@ -133,54 +133,54 @@ function ProfileTab() {
                         className="hidden"
                     />
 
-                    <p className="mt-4 text-sm font-medium text-gray-900">
+                    <p className="mt-4 text-sm font-medium text-foreground">
                         {uploading ? 'Enviando...' : 'JPG, PNG ou WebP'}
                     </p>
-                    <p className="text-xs text-gray-500">Máximo 2MB</p>
+                    <p className="text-xs text-muted-foreground">Máximo 2MB</p>
                 </div>
             </div>
 
             {/* Informações Perfil */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm h-full md:col-span-1 flex flex-col">
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm h-full md:col-span-1 flex flex-col">
                 <div className="flex items-center gap-2 mb-6">
-                    <User className="text-gray-400" size={20} />
-                    <h2 className="font-semibold text-gray-900">Informações Perfil</h2>
+                    <User className="text-muted-foreground" size={20} />
+                    <h2 className="font-semibold text-foreground">Informações Perfil</h2>
                 </div>
 
                 <div className="space-y-4 flex-1 flex flex-col">
                     <div>
-                        <label className="block text-sm font-bold text-gray-800 ml-1 mb-1.5">Nome Completo</label>
+                        <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">Nome Completo</label>
                         <input
                             type="text"
                             value={profile?.full_name || ''}
                             onChange={(e) => setProfile({ ...profile, full_name: e.target.value })}
-                            className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] text-sm text-gray-900 placeholder-gray-500 font-medium"
+                            className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-gray-800 ml-1 mb-1.5">Email</label>
+                        <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">Email</label>
                         <input
                             type="email"
                             value={profile?.email || ''}
-                            className="w-full px-3 py-2 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] text-sm bg-gray-50 text-gray-500 font-medium cursor-not-allowed"
+                            className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm bg-muted/30 text-muted-foreground font-medium cursor-not-allowed"
                             readOnly
                         />
-                        <p className="mt-1 text-xs text-gray-500">
+                        <p className="mt-1 text-xs text-muted-foreground">
                             Ao alterar, você receberá um link de confirmação em ambos os emails.
                         </p>
                     </div>
 
-                    <button className="w-full mt-auto bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-bold py-2 px-4 rounded-lg transition-colors text-sm">
+                    <button className="w-full mt-auto bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm">
                         Salvar Alterações
                     </button>
                 </div>
             </div>
 
             {/* Alterar Senha */}
-            <div className="bg-white p-6 rounded-2xl border border-gray-100 shadow-sm text-sm flex flex-col h-full">
+            <div className="bg-card p-6 rounded-2xl border border-border shadow-sm text-sm flex flex-col h-full">
                 <div className="flex items-center gap-2 mb-6">
-                    <Lock className="text-gray-400" size={20} />
-                    <h2 className="font-semibold text-gray-900">Alterar Senha</h2>
+                    <Lock className="text-muted-foreground" size={20} />
+                    <h2 className="font-semibold text-foreground">Alterar Senha</h2>
                 </div>
 
                 <PasswordForm />
@@ -236,34 +236,34 @@ function PasswordForm() {
                 </div>
             )}
             <div>
-                <label className="block text-sm font-bold text-gray-800 ml-1 mb-1.5">Nova Senha</label>
+                <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">Nova Senha</label>
                 <input
                     type="password"
                     placeholder="Mínimo 6 caracteres"
                     value={newPassword}
                     onChange={(e) => setNewPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] text-sm text-gray-900 placeholder-gray-500 font-medium"
+                    className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
                 />
             </div>
             <div>
-                <label className="block text-sm font-bold text-gray-800 ml-1 mb-1.5">Confirmar Nova Senha</label>
+                <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">Confirmar Nova Senha</label>
                 <input
                     type="password"
                     placeholder="Digite novamente"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="w-full px-3 py-2 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] text-sm text-gray-900 placeholder-gray-500 font-medium"
+                    className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
                 />
             </div>
 
             <button
                 onClick={handlePasswordChange}
                 disabled={loading}
-                className="w-full mt-auto bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-bold py-2 px-4 rounded-lg transition-colors text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
+                className="w-full mt-auto bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed group"
             >
                 {loading ? (
                     <span className="flex items-center justify-center gap-2">
-                        <div className="w-4 h-4 border-2 border-[#404F4F]/30 border-t-[#404F4F] rounded-full animate-spin"></div>
+                        <div className="w-4 h-4 border-2 border-secondary-foreground/30 border-t-secondary-foreground rounded-full animate-spin"></div>
                         Alterando...
                     </span>
                 ) : 'Alterar Senha'}
@@ -313,13 +313,13 @@ function NotificationsTab() {
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm min-h-[500px] flex flex-col">
+        <div className="bg-card rounded-2xl border border-border shadow-sm min-h-[500px] flex flex-col">
             {/* Header Actions */}
-            <div className="flex flex-wrap items-center justify-between p-4 border-b border-gray-100 gap-4">
+            <div className="flex flex-wrap items-center justify-between p-4 border-b border-border gap-4">
                 <div className="flex items-center gap-2">
                     <button
                         onClick={toggleSelectAll}
-                        className="flex items-center gap-2 bg-white border border-gray-200 text-gray-700 px-4 py-2 rounded-lg hover:bg-gray-50 transition-colors text-sm font-medium"
+                        className="flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium"
                     >
                         {selectedIds.length === notifications.length && notifications.length > 0 ? (
                             <CheckSquare size={18} className="text-[#00B087]" />
@@ -332,11 +332,11 @@ function NotificationsTab() {
 
                 <div className="flex items-center gap-4">
                     <div className="flex gap-2">
-                        <span className="text-xs px-2 py-1 rounded-full bg-gray-100 text-gray-600 font-medium">
-                            Tudo <span className="text-gray-900 ml-1">{notifications.length}</span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-muted/50 text-muted-foreground font-medium">
+                            Tudo <span className="text-foreground ml-1">{notifications.length}</span>
                         </span>
-                        <span className="text-xs px-2 py-1 rounded-full bg-red-50 text-red-600 font-medium">
-                            Não lidas <span className="text-red-700 ml-1">{unreadCount}</span>
+                        <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 font-medium">
+                            Não lidas <span className="text-red-600 ml-1">{unreadCount}</span>
                         </span>
                     </div>
 
@@ -364,22 +364,22 @@ function NotificationsTab() {
             {/* List */}
             <div className="flex-1 overflow-y-auto">
                 {notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-gray-400 py-20">
+                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-20">
                         <Bell size={48} className="mb-4 opacity-20" />
-                        <p className="font-medium text-gray-900">Nenhuma notificação</p>
+                        <p className="font-medium text-foreground">Nenhuma notificação</p>
                         <p className="text-sm">Sua caixa de entrada está vazia.</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-gray-50">
+                    <div className="divide-y divide-border">
                         {notifications.map((notification) => (
                             <div
                                 key={notification.id}
-                                className={`flex items-center gap-4 p-4 hover:bg-gray-50 transition-colors group ${!notification.read ? 'bg-blue-50/30' : ''
+                                className={`flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors group ${!notification.read ? 'bg-blue-500/5' : ''
                                     }`}
                             >
                                 <button
                                     onClick={() => toggleSelect(notification.id)}
-                                    className="text-gray-400 hover:text-gray-600"
+                                    className="text-muted-foreground hover:text-foreground"
                                 >
                                     {selectedIds.includes(notification.id) ? (
                                         <CheckSquare size={18} className="text-[#00B087]" />
@@ -390,12 +390,12 @@ function NotificationsTab() {
 
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-baseline justify-between mb-1">
-                                        <h4 className={`text-sm truncate ${!notification.read ? 'font-semibold text-gray-900' : 'font-medium text-gray-700'}`}>
+                                        <h4 className={`text-sm truncate ${!notification.read ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'}`}>
                                             {notification.title}
                                         </h4>
-                                        <span className="text-xs text-gray-400 whitespace-nowrap ml-2">{notification.date}</span>
+                                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{notification.date}</span>
                                     </div>
-                                    <p className="text-sm text-gray-500 truncate">{notification.message}</p>
+                                    <p className="text-sm text-muted-foreground truncate">{notification.message}</p>
                                 </div>
 
                                 {!notification.read && (

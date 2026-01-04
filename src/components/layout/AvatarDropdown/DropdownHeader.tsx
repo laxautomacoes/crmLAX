@@ -6,14 +6,14 @@ interface DropdownHeaderProps {
 
 export function DropdownHeader({ profile }: DropdownHeaderProps) {
     return (
-        <div className="flex items-center gap-4 p-5 border-b border-gray-100 bg-white">
+        <div className="flex items-center gap-4 p-5 border-b border-border bg-card">
             <UserAvatar
                 src={profile?.avatar_url}
                 name={profile?.full_name}
                 className="h-12 w-12 text-lg font-bold"
             />
             <div className="flex flex-col min-w-0">
-                <p className="text-base font-bold text-gray-900 truncate">
+                <p className="text-base font-bold text-foreground truncate">
                     {profile?.full_name}
                 </p>
                 <div className="flex flex-col gap-0.5 mt-1">
@@ -21,7 +21,7 @@ export function DropdownHeader({ profile }: DropdownHeaderProps) {
                         {profile?.role === 'superadmin' ? 'Super Administrador' :
                             profile?.role === 'admin' ? 'Administrador' : 'Colaborador'}
                     </span>
-                    <p className="text-sm text-gray-500">
+                    <p className="text-sm text-muted-foreground">
                         {profile?.email}
                     </p>
                 </div>
