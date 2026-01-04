@@ -4,6 +4,7 @@ import { Bell, Sun, Moon, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
 import { AvatarDropdown } from './AvatarDropdown';
 import { Modal } from '@/components/shared/Modal';
 import { NotificationsList, Notification } from '@/components/dashboard/NotificationsList';
+import { getNotifications } from '@/app/_actions/notifications';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { getProfile } from '@/app/_actions/profile';
@@ -25,15 +26,17 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
     // Capitalize month if needed, though default is lowercase in pt-BR. User example showed "Janeira" (typo?) "Janeiro".
     const formattedDate = `Hoje é ${dateString}`;
 
+    const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
-    // Lifted state for notifications
-    const [notifications, setNotifications] = useState<Notification[]>([
-        { id: 1, title: 'Nova venda realizada', message: 'Você realizou uma nova venda no valor de R$ 1.500,00', date: 'Há 5 min', read: false },
-        { id: 2, title: 'Lead qualificado', message: 'Um novo lead foi marcado como qualificado.', date: 'Há 1 hora', read: false },
-        { id: 3, title: 'Meta atingida!', message: 'Parabéns! Você atingiu sua meta mensal de vendas.', date: 'Ontem', read: true },
-        { id: 4, title: 'Atualização do sistema', message: 'O sistema passará por manutenção programada às 22h.', date: 'Ontem', read: true },
-    ]);
+    const fetchNotifications = async () => {
+        const { notifications: data } = await getNotifications();
+        if (data) setNotifications(data as any);
+    };
+
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
@@ -53,7 +56,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
         <>
             <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 flex-none sticky top-0 z-40">
                 <div className="flex items-center gap-4 flex-1">
-                    {/* Mobile Menu Button */}
+                    {/* Mobile Menu Button ... */}
                     <button
                         onClick={onMenuClick}
                         className="md:hidden text-gray-500 hover:text-gray-700 absolute left-4"
@@ -61,7 +64,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         <Menu size={24} />
                     </button>
 
-                    {/* Desktop Collapse Button */}
+                    {/* Desktop Collapse Button ... */}
                     <button
                         onClick={toggleSidebar}
                         className="hidden md:block text-muted-foreground hover:text-foreground transition-colors"
@@ -69,7 +72,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     </button>
 
-                    {/* Desktop Welcome & Date */}
+                    {/* Desktop Welcome & Date ... */}
                     <div className="hidden md:flex flex-col ml-4">
                         <h2 className="text-lg font-semibold text-foreground">
                             Bem-vindo, {profile?.full_name || 'Léo Acosta'}
@@ -77,7 +80,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         <span className="text-xs text-muted-foreground">{formattedDate}</span>
                     </div>
 
-                    {/* Mobile Centered Logo */}
+                    {/* Mobile Centered Logo ... */}
                     <div className="md:hidden flex-1 flex justify-center">
                         <span className="text-xl font-bold text-[#FFE600] text-shadow-sm ml-6">CRM LAX</span>
                     </div>
@@ -107,7 +110,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         </div>
                     </div>
 
-                    {/* Mobile Avatar Dropdown */}
+                    {/* Mobile Avatar Dropdown ... */}
                     <div className="md:hidden">
                         <AvatarDropdown />
                     </div>
@@ -119,10 +122,10 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                 onClose={() => setIsNotificationsOpen(false)}
                 title="Notificações"
             >
-                <div className="h-[400px]">
+                <div className="h-[500px] -m-6">
                     <NotificationsList
                         notifications={notifications}
-                        setNotifications={setNotifications}
+                        onRefresh={fetchNotifications}
                     />
                 </div>
             </Modal>

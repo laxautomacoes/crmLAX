@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Camera, Save, Trash2, CheckCircle, Square, CheckSquare, Bell, User, Lock, Mail } from 'lucide-react';
 import { NotificationsList } from '@/components/dashboard/NotificationsList';
+import { getNotifications } from '@/app/_actions/notifications';
 import { createClient } from '@/lib/supabase/client';
 import { getProfile, updateProfileAvatar, updateProfile } from '@/app/_actions/profile';
 import { useEffect, useRef } from 'react';
@@ -319,139 +320,34 @@ function PasswordForm() {
 }
 
 function NotificationsTab() {
-    // Mock data for notifications
-    const [notifications, setNotifications] = useState([
-        { id: 1, title: 'Nova venda realizada', message: 'Você realizou uma nova venda no valor de R$ 1.500,00', date: 'Há 5 min', read: false },
-        { id: 2, title: 'Lead qualificado', message: 'Um novo lead foi marcado como qualificado.', date: 'Há 1 hora', read: false },
-        { id: 3, title: 'Meta atingida!', message: 'Parabéns! Você atingiu sua meta mensal de vendas.', date: 'Ontem', read: true },
-        { id: 4, title: 'Atualização do sistema', message: 'O sistema passará por manutenção programada às 22h.', date: 'Ontem', read: true },
-    ]);
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+    const [notifications, setNotifications] = useState<any[]>([]);
+    const [loading, setLoading] = useState(true);
 
-    const toggleSelect = (id: number) => {
-        if (selectedIds.includes(id)) {
-            setSelectedIds(selectedIds.filter(itemId => itemId !== id));
-        } else {
-            setSelectedIds([...selectedIds, id]);
-        }
+    const fetchNotifications = async () => {
+        setLoading(true);
+        const { notifications: data } = await getNotifications();
+        if (data) setNotifications(data);
+        setLoading(false);
     };
 
-    const toggleSelectAll = () => {
-        if (selectedIds.length === notifications.length) {
-            setSelectedIds([]);
-        } else {
-            setSelectedIds(notifications.map(n => n.id));
-        }
-    };
+    useEffect(() => {
+        fetchNotifications();
+    }, []);
 
-    const deleteSelected = () => {
-        setNotifications(notifications.filter(n => !selectedIds.includes(n.id)));
-        setSelectedIds([]);
-    };
-
-    const markAsRead = () => {
-        setNotifications(notifications.map(n =>
-            selectedIds.includes(n.id) ? { ...n, read: true } : n
-        ));
-        setSelectedIds([]);
-    };
-
-    const unreadCount = notifications.filter(n => !n.read).length;
+    if (loading) {
+        return (
+            <div className="bg-card rounded-2xl border border-border shadow-sm min-h-[500px] flex items-center justify-center">
+                <div className="w-8 h-8 border-4 border-secondary/30 border-t-secondary rounded-full animate-spin"></div>
+            </div>
+        );
+    }
 
     return (
-        <div className="bg-card rounded-2xl border border-border shadow-sm min-h-[500px] flex flex-col">
-            {/* Header Actions */}
-            <div className="flex flex-wrap items-center justify-between p-4 border-b border-border gap-4">
-                <div className="flex items-center gap-2">
-                    <button
-                        onClick={toggleSelectAll}
-                        className="flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium"
-                    >
-                        {selectedIds.length === notifications.length && notifications.length > 0 ? (
-                            <CheckSquare size={18} className="text-[#00B087]" />
-                        ) : (
-                            <Square size={18} />
-                        )}
-                        Selecionar todos
-                    </button>
-                </div>
-
-                <div className="flex items-center gap-4">
-                    <div className="flex gap-2">
-                        <span className="text-xs px-2 py-1 rounded-full bg-muted/50 text-muted-foreground font-medium">
-                            Tudo <span className="text-foreground ml-1">{notifications.length}</span>
-                        </span>
-                        <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 font-medium">
-                            Não lidas <span className="text-red-600 ml-1">{unreadCount}</span>
-                        </span>
-                    </div>
-
-                    {selectedIds.length > 0 && (
-                        <div className="flex items-center gap-2 animate-in fade-in slide-in-from-right-4 duration-200">
-                            <button
-                                onClick={markAsRead}
-                                className="px-3 py-1.5 text-xs font-medium text-[#00B087] bg-[#00B087]/10 hover:bg-[#00B087]/20 rounded-md transition-colors flex items-center gap-1"
-                            >
-                                <CheckCircle size={14} />
-                                Marcar como lida
-                            </button>
-                            <button
-                                onClick={deleteSelected}
-                                className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors flex items-center gap-1"
-                            >
-                                <Trash2 size={14} />
-                                Excluir
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </div>
-
-            {/* List */}
-            <div className="flex-1 overflow-y-auto">
-                {notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-full text-muted-foreground py-20">
-                        <Bell size={48} className="mb-4 opacity-20" />
-                        <p className="font-medium text-foreground">Nenhuma notificação</p>
-                        <p className="text-sm">Sua caixa de entrada está vazia.</p>
-                    </div>
-                ) : (
-                    <div className="divide-y divide-border">
-                        {notifications.map((notification) => (
-                            <div
-                                key={notification.id}
-                                className={`flex items-center gap-4 p-4 hover:bg-muted/50 transition-colors group ${!notification.read ? 'bg-blue-500/5' : ''
-                                    }`}
-                            >
-                                <button
-                                    onClick={() => toggleSelect(notification.id)}
-                                    className="text-muted-foreground hover:text-foreground"
-                                >
-                                    {selectedIds.includes(notification.id) ? (
-                                        <CheckSquare size={18} className="text-[#00B087]" />
-                                    ) : (
-                                        <Square size={18} />
-                                    )}
-                                </button>
-
-                                <div className="flex-1 min-w-0">
-                                    <div className="flex items-baseline justify-between mb-1">
-                                        <h4 className={`text-sm truncate ${!notification.read ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'}`}>
-                                            {notification.title}
-                                        </h4>
-                                        <span className="text-xs text-muted-foreground whitespace-nowrap ml-2">{notification.date}</span>
-                                    </div>
-                                    <p className="text-sm text-muted-foreground truncate">{notification.message}</p>
-                                </div>
-
-                                {!notification.read && (
-                                    <div className="h-2 w-2 rounded-full bg-red-500 shrink-0"></div>
-                                )}
-                            </div>
-                        ))}
-                    </div>
-                )}
-            </div>
+        <div className="bg-card rounded-2xl border border-border shadow-sm min-h-[500px] flex flex-col overflow-hidden">
+            <NotificationsList
+                notifications={notifications}
+                onRefresh={fetchNotifications}
+            />
         </div>
     );
 }

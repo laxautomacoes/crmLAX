@@ -1,26 +1,30 @@
 'use client';
 
 import { useState } from 'react';
-import { Trash2, CheckCircle, Square, CheckSquare, Bell } from 'lucide-react';
+import { Trash2, CheckCircle, Square, CheckSquare, Bell, X } from 'lucide-react';
+import { markAsRead, deleteNotifications } from '@/app/_actions/notifications';
+import { formatDistanceToNow } from 'date-fns';
+import { ptBR } from 'date-fns/locale';
 
 export interface Notification {
-    id: number;
+    id: string;
     title: string;
     message: string;
-    date: string;
+    created_at: string;
     read: boolean;
+    type?: string;
 }
 
 interface NotificationsListProps {
     notifications: Notification[];
-    setNotifications: (notifications: Notification[]) => void;
+    onRefresh: () => void;
 }
 
-export function NotificationsList({ notifications, setNotifications }: NotificationsListProps) {
-    // Removed local state initialization
-    const [selectedIds, setSelectedIds] = useState<number[]>([]);
+export function NotificationsList({ notifications, onRefresh }: NotificationsListProps) {
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [isProcessing, setIsProcessing] = useState(false);
 
-    const toggleSelect = (id: number) => {
+    const toggleSelect = (id: string) => {
         if (selectedIds.includes(id)) {
             setSelectedIds(selectedIds.filter(itemId => itemId !== id));
         } else {
@@ -29,116 +33,150 @@ export function NotificationsList({ notifications, setNotifications }: Notificat
     };
 
     const toggleSelectAll = () => {
-        if (selectedIds.length === notifications.length) {
+        if (selectedIds.length === notifications.length && notifications.length > 0) {
             setSelectedIds([]);
         } else {
             setSelectedIds(notifications.map(n => n.id));
         }
     };
 
-    const deleteSelected = () => {
-        setNotifications(notifications.filter(n => !selectedIds.includes(n.id)));
-        setSelectedIds([]);
+    const handleDelete = async () => {
+        if (selectedIds.length === 0) return;
+        setIsProcessing(true);
+        try {
+            const result = await deleteNotifications(selectedIds);
+            if (result.success) {
+                setSelectedIds([]);
+                onRefresh();
+            }
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
-    const markAsRead = () => {
-        setNotifications(notifications.map(n =>
-            selectedIds.includes(n.id) ? { ...n, read: true } : n
-        ));
-        setSelectedIds([]);
+    const handleMarkAsRead = async () => {
+        if (selectedIds.length === 0) return;
+        setIsProcessing(true);
+        try {
+            const result = await markAsRead(selectedIds);
+            if (result.success) {
+                setSelectedIds([]);
+                onRefresh();
+            }
+        } finally {
+            setIsProcessing(false);
+        }
     };
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
+    const formatRelativeDate = (dateString: string) => {
+        try {
+            const date = new Date(dateString);
+            const distance = formatDistanceToNow(date, { addSuffix: true, locale: ptBR });
+            // Capitalize first letter and handle some specific translations if needed
+            return distance.charAt(0).toUpperCase() + distance.slice(1);
+        } catch (e) {
+            return dateString;
+        }
+    };
+
     return (
-        <div className="flex flex-col h-full bg-card md:bg-transparent rounded-lg md:rounded-none">
+        <div className="flex flex-col h-full bg-card">
             {/* Header Actions */}
-            <div className="flex flex-wrap items-center justify-between p-4 border-b border-border gap-4 bg-card sticky top-0 z-10">
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between p-5 sticky top-0 z-10 bg-transparent">
+                <div className="flex items-center">
                     <button
                         onClick={toggleSelectAll}
-                        className="flex items-center gap-2 text-sm text-muted-foreground hover:text-foreground font-medium"
+                        className="flex items-center gap-4 text-sm text-[#404F4F] hover:opacity-80 font-bold bg-transparent p-0 border-none outline-none ring-0 focus:outline-none focus:ring-0"
                     >
-                        {selectedIds.length === notifications.length && notifications.length > 0 ? (
-                            <CheckSquare size={18} className="text-[#00B087]" />
-                        ) : (
-                            <Square size={18} />
-                        )}
+                        <div className="shrink-0 flex items-center justify-center w-[20px] h-[20px]">
+                            {selectedIds.length === notifications.length && notifications.length > 0 ? (
+                                <CheckSquare size={20} className="text-[#00B087]" />
+                            ) : (
+                                <Square size={20} className="text-gray-300" />
+                            )}
+                        </div>
                         Selecionar todos
                     </button>
                 </div>
 
-                <div className="flex items-center gap-4">
-                    <div className="flex gap-2">
-                        <span className="text-xs px-2 py-1 rounded-full bg-muted/50 text-muted-foreground font-medium">
-                            Tudo <span className="text-foreground ml-1">{notifications.length}</span>
-                        </span>
-                        <span className="text-xs px-2 py-1 rounded-full bg-red-500/10 text-red-600 font-medium whitespace-nowrap">
-                            Não lidas <span className="text-red-600 ml-1">{unreadCount}</span>
-                        </span>
-                    </div>
+                <div className="flex items-center gap-3">
+                    <span className="text-xs text-gray-500 font-medium whitespace-nowrap">
+                        Tudo <span className="text-[#404F4F] font-bold ml-1">{notifications.length}</span>
+                    </span>
+                    <span className="text-xs px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-600 font-bold whitespace-nowrap">
+                        Não lidas <span className="ml-1">{unreadCount}</span>
+                    </span>
                 </div>
             </div>
 
-            {(selectedIds.length > 0) && (
-                <div className="px-4 py-2 bg-muted/30 border-b border-border flex items-center justify-end gap-2 animate-in fade-in slide-in-from-top-1">
+            {/* Bulk Actions Bar (Floating if selected) */}
+            {selectedIds.length > 0 && (
+                <div className="px-4 py-2 bg-[#F9FAFB] border-b border-gray-100 flex items-center justify-end gap-2 animate-in fade-in slide-in-from-top-1">
                     <button
-                        onClick={markAsRead}
-                        className="px-3 py-1.5 text-xs font-medium text-[#00B087] bg-[#00B087]/10 hover:bg-[#00B087]/20 rounded-md transition-colors flex items-center gap-1"
+                        onClick={handleMarkAsRead}
+                        disabled={isProcessing}
+                        className="px-3 py-1.5 text-xs font-bold text-[#00B087] hover:bg-[#00B087]/5 rounded-lg transition-all flex items-center gap-1.5"
                     >
                         <CheckCircle size={14} />
                         Marcar como lida
                     </button>
                     <button
-                        onClick={deleteSelected}
-                        className="px-3 py-1.5 text-xs font-medium text-red-600 bg-red-50 hover:bg-red-100 rounded-md transition-colors flex items-center gap-1"
+                        onClick={handleDelete}
+                        disabled={isProcessing}
+                        className="px-3 py-1.5 text-xs font-bold text-red-600 hover:bg-red-50 rounded-lg transition-all flex items-center gap-1.5"
                     >
                         <Trash2 size={14} />
-                        Excluir
+                        Excluir permanentemente
                     </button>
                 </div>
             )}
 
             {/* List */}
-            <div className="flex-1 overflow-y-auto custom-scrollbar md:min-h-[400px]">
+            <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
-                        <Bell size={48} className="mb-4 opacity-20" />
-                        <p className="font-medium text-foreground">Nenhuma notificação</p>
-                        <p className="text-sm">Sua caixa de entrada está vazia.</p>
+                    <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
+                        <Bell size={48} className="mb-4 opacity-10 text-[#404F4F]" />
+                        <p className="font-bold text-[#404F4F]">Nenhuma notificação</p>
+                        <p className="text-sm">Sua caixa de entrada está limpa.</p>
                     </div>
                 ) : (
-                    <div className="divide-y divide-border">
+                    <div className="">
                         {notifications.map((notification) => (
                             <div
                                 key={notification.id}
-                                className={`flex items-start gap-3 p-4 hover:bg-muted/50 transition-colors group ${!notification.read ? 'bg-blue-500/5' : ''
-                                    }`}
+                                className={`flex items-start gap-4 p-5 border-b border-gray-50 transition-all hover:bg-[#F9FAFB] ${!notification.read ? 'bg-[#F0F7FF]/30' : ''}`}
                             >
                                 <button
                                     onClick={() => toggleSelect(notification.id)}
-                                    className="text-muted-foreground hover:text-foreground mt-1 shrink-0"
+                                    className="pt-0.5 shrink-0"
                                 >
                                     {selectedIds.includes(notification.id) ? (
-                                        <CheckSquare size={18} className="text-[#00B087]" />
+                                        <CheckSquare size={20} className="text-[#00B087]" />
                                     ) : (
-                                        <Square size={18} />
+                                        <Square size={20} className="text-gray-300" />
                                     )}
                                 </button>
 
                                 <div className="flex-1 min-w-0">
-                                    <div className="flex flex-col sm:flex-row sm:items-baseline sm:justify-between mb-1">
-                                        <h4 className={`text-sm ${!notification.read ? 'font-semibold text-foreground' : 'font-medium text-muted-foreground'}`}>
+                                    <div className="flex items-start justify-between gap-4 mb-0.5">
+                                        <h4 className={`text-sm leading-tight ${!notification.read ? 'font-bold text-[#404F4F]' : 'font-semibold text-gray-500'}`}>
                                             {notification.title}
                                         </h4>
-                                        <span className="text-xs text-muted-foreground whitespace-nowrap sm:ml-2">{notification.date}</span>
+                                        <div className="flex items-center gap-2 shrink-0">
+                                            <span className="text-[11px] font-medium text-gray-400 whitespace-nowrap">
+                                                {formatRelativeDate(notification.created_at)}
+                                            </span>
+                                            {!notification.read && (
+                                                <div className="h-1.5 w-1.5 rounded-full bg-red-500"></div>
+                                            )}
+                                        </div>
                                     </div>
-                                    <p className="text-sm text-muted-foreground line-clamp-2">{notification.message}</p>
+                                    <p className={`text-sm leading-relaxed ${!notification.read ? 'text-gray-600 font-medium' : 'text-gray-400'}`}>
+                                        {notification.message}
+                                    </p>
                                 </div>
-
-                                {!notification.read && (
-                                    <div className="h-2 w-2 rounded-full bg-red-500 shrink-0 mt-2"></div>
-                                )}
                             </div>
                         ))}
                     </div>
