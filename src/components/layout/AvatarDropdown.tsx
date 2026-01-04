@@ -40,7 +40,7 @@ export function AvatarDropdown() {
         <div className="relative" ref={dropdownRef}>
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-[#404F4F] rounded-full"
+                className="flex items-center justify-center focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary/30 rounded-full"
             >
                 <UserAvatar
                     src={profile?.avatar_url}

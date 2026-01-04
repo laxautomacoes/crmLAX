@@ -17,7 +17,7 @@ export function DropdownHeader({ profile }: DropdownHeaderProps) {
                     {profile?.full_name}
                 </p>
                 <div className="flex flex-col gap-0.5 mt-1">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-[#00B087] bg-[#00B087]/10 px-1.5 py-0.5 rounded w-fit mb-1">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-secondary-foreground bg-secondary px-1.5 py-0.5 rounded w-fit mb-1">
                         {profile?.role === 'superadmin' ? 'Super Administrador' :
                             profile?.role === 'admin' ? 'Administrador' : 'Colaborador'}
                     </span>
