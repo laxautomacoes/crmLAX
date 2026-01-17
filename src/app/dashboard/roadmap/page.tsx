@@ -1,190 +1,284 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { getUpdates, createUpdate, deleteUpdate } from '@/app/_actions/roadmap';
+import { Rocket, Plus, Edit2, Trash2, CheckCircle2, Circle, Clock, AlertCircle, Loader2 } from 'lucide-react';
+import { getRoadmap, createRoadmapItem, updateRoadmapItem, deleteRoadmapItem } from '@/app/_actions/roadmap';
 import { getProfile } from '@/app/_actions/profile';
-import { Rocket, Plus, Trash2, Calendar, Star, Bug, Zap, Loader2, X } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 export default function RoadmapPage() {
-    const [updates, setUpdates] = useState<any[]>([]);
+    const [items, setItems] = useState<any[]>([]);
+    const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
-    const [userRole, setUserRole] = useState<string | null>(null);
-    const [showForm, setShowForm] = useState(false);
+    const [actionLoading, setActionLoading] = useState(false);
+    const [showModal, setShowModal] = useState(false);
+    const [editingItem, setEditingItem] = useState<any>(null);
+    const router = useRouter();
 
-    // Form state
-    const [title, setTitle] = useState('');
-    const [description, setDescription] = useState('');
-    const [type, setType] = useState<'feature' | 'fix' | 'roadmap'>('feature');
-    const [status, setStatus] = useState('Em andamento');
-    const [submitting, setSubmitting] = useState(false);
+    const [formData, setFormData] = useState({
+        title: '',
+        description: '',
+        type: 'roadmap' as 'feature' | 'fix' | 'roadmap',
+        status: 'planned'
+    });
+
+    const loadData = async () => {
+        setLoading(true);
+        const [roadmapRes, profileRes] = await Promise.all([
+            getRoadmap(),
+            getProfile()
+        ]);
+
+        if (profileRes.profile) {
+            // Regra: Rodmap não visível para 'user'
+            if (profileRes.profile.role === 'user') {
+                router.push('/dashboard');
+                return;
+            }
+            setProfile(profileRes.profile);
+        }
+
+        if (roadmapRes.items) {
+            setItems(roadmapRes.items);
+        }
+        setLoading(false);
+    };
 
     useEffect(() => {
-        async function loadData() {
-            const [updatesRes, profileRes] = await Promise.all([
-                getUpdates(),
-                getProfile()
-            ]);
-            setUpdates(updatesRes.updates || []);
-            setUserRole(profileRes.profile?.role || 'user');
-            setLoading(false);
-        }
         loadData();
     }, []);
 
+    const isSuperAdmin = profile?.role === 'superadmin';
+
+    const handleOpenModal = (item: any = null) => {
+        if (!isSuperAdmin) return;
+        if (item) {
+            setEditingItem(item);
+            setFormData({
+                title: item.title,
+                description: item.description || '',
+                type: item.type as any,
+                status: item.status
+            });
+        } else {
+            setEditingItem(null);
+            setFormData({
+                title: '',
+                description: '',
+                type: 'roadmap',
+                status: 'planned'
+            });
+        }
+        setShowModal(true);
+    };
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        setSubmitting(true);
-        const res = await createUpdate({ title, description, type, status });
-        if (res.success) {
-            setTitle('');
-            setDescription('');
-            setShowForm(false);
-            const { updates } = await getUpdates();
-            setUpdates(updates);
+        setActionLoading(true);
+
+        let res;
+        if (editingItem) {
+            res = await updateRoadmapItem(editingItem.id, formData);
         } else {
-            alert(res.error || 'Erro ao criar atualização');
+            res = await createRoadmapItem(formData);
         }
-        setSubmitting(false);
+
+        if (res.success) {
+            setShowModal(false);
+            loadData();
+        } else {
+            alert(res.error || 'Erro ao salvar item');
+        }
+        setActionLoading(false);
     };
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir esta atualização?')) return;
-        const res = await deleteUpdate(id);
+        if (!isSuperAdmin || !confirm('Tem certeza que deseja excluir este item?')) return;
+        setActionLoading(true);
+        const res = await deleteRoadmapItem(id);
         if (res.success) {
-            setUpdates(prev => prev.filter(u => u.id !== id));
+            loadData();
+        } else {
+            alert(res.error || 'Erro ao excluir');
         }
+        setActionLoading(false);
     };
 
     if (loading) {
         return (
-            <div className="flex h-[60vh] items-center justify-center">
+            <div className="flex flex-col items-center justify-center min-h-[400px]">
                 <Loader2 className="w-8 h-8 animate-spin text-[#FFE600]" />
+                <p className="mt-4 text-muted-foreground font-medium text-sm">Carregando Roadmap...</p>
             </div>
         );
     }
 
-    const typeIcons = {
-        feature: <Star className="w-4 h-4" />,
-        fix: <Bug className="w-4 h-4" />,
-        roadmap: <Zap className="w-4 h-4" />
-    };
-
-    const typeColors = {
-        feature: 'bg-green-100 text-green-700 border-green-200',
-        fix: 'bg-red-100 text-red-700 border-red-200',
-        roadmap: 'bg-blue-100 text-blue-700 border-blue-200'
-    };
-
     return (
-        <div className="max-w-5xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-12">
+        <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h2 className="text-2xl font-bold text-[#404F4F]">Roadmap & Updates</h2>
-                    <p className="text-gray-500">Acompanhe a evolução do CRM LAX</p>
+                    <h1 className="text-2xl font-bold text-[#404F4F]">Roadmap do Produto</h1>
+                    <p className="text-muted-foreground text-sm">Acompanhe as próximas funcionalidades e melhorias do CRM LAX</p>
                 </div>
-                {userRole === 'superadmin' && (
+                {isSuperAdmin && (
                     <button
-                        onClick={() => setShowForm(true)}
-                        className="flex items-center gap-2 bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] px-6 py-3 rounded-lg font-bold transition-all shadow-sm active:scale-[0.98]"
+                        onClick={() => handleOpenModal()}
+                        className="bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-bold py-2.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
                     >
-                        <Plus className="w-5 h-5" />
-                        Nova Atualização
+                        <Plus size={20} />
+                        Novo Item
                     </button>
                 )}
             </div>
 
-            {/* Form Modal */}
-            {showForm && (
-                <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-xl overflow-hidden animate-in fade-in zoom-in duration-200">
-                        <div className="p-6 border-b border-gray-100 flex items-center justify-between">
-                            <h3 className="font-bold text-[#404F4F] text-lg">Adicionar Atualização</h3>
-                            <button onClick={() => setShowForm(false)} className="text-gray-400 hover:text-gray-600">
-                                <X className="w-6 h-6" />
-                            </button>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-4">
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-gray-800 ml-1">Título</label>
-                                <input
-                                    required
-                                    value={title}
-                                    onChange={(e) => setTitle(e.target.value)}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none"
-                                    placeholder="Ex: Novo Filtro de Clientes"
-                                />
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-gray-800 ml-1">Tipo</label>
-                                <select
-                                    value={type}
-                                    onChange={(e) => setType(e.target.value as any)}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none"
-                                >
-                                    <option value="feature">Nova Feature</option>
-                                    <option value="fix">Correção de Bug</option>
-                                    <option value="roadmap">Roadmap / Futuro</option>
-                                </select>
-                            </div>
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-gray-800 ml-1">Descrição</label>
-                                <textarea
-                                    required
-                                    value={description}
-                                    onChange={(e) => setDescription(e.target.value)}
-                                    rows={4}
-                                    className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none resize-none"
-                                    placeholder="Descreva o que mudou..."
-                                />
-                            </div>
-                            <button
-                                disabled={submitting}
-                                className="w-full py-4 bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-bold rounded-lg transition-all disabled:opacity-50"
-                            >
-                                {submitting ? 'Salvando...' : 'Salvar Atualização'}
-                            </button>
-                        </form>
-                    </div>
-                </div>
-            )}
-
-            {/* Updates List */}
-            <div className="space-y-6">
-                {updates.length === 0 ? (
-                    <div className="text-center py-20 bg-white rounded-2xl border border-dashed border-gray-200">
-                        <Rocket className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500 font-medium">Nenhuma atualização registrada ainda.</p>
+            {/* Content Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                {items.length === 0 ? (
+                    <div className="col-span-full bg-card p-12 rounded-2xl border border-dashed border-border flex flex-col items-center justify-center text-center">
+                        <Rocket className="w-12 h-12 text-muted-foreground mb-4 opacity-20" />
+                        <h3 className="text-lg font-bold text-foreground">Nenhum item no Roadmap</h3>
+                        <p className="text-muted-foreground max-w-sm text-sm">
+                            {isSuperAdmin
+                                ? 'Comece adicionando o primeiro item para compartilhar os planos com sua equipe.'
+                                : 'Aguarde as novidades que o time está preparando.'}
+                        </p>
                     </div>
                 ) : (
-                    updates.map((update) => (
-                        <div key={update.id} className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 hover:border-gray-200 transition-all flex flex-col md:flex-row gap-6 relative group">
-                            <div className="flex-1 space-y-3">
-                                <div className="flex items-center gap-3">
-                                    <span className={`px-2.5 py-1 rounded-full text-[10px] font-bold uppercase border flex items-center gap-1.5 ${typeColors[update.type as keyof typeof typeColors]}`}>
-                                        {typeIcons[update.type as keyof typeof typeIcons]}
-                                        {update.type}
-                                    </span>
-                                    <span className="text-xs text-gray-400 flex items-center gap-1">
-                                        <Calendar className="w-3.5 h-3.5" />
-                                        {new Date(update.published_at).toLocaleDateString()}
+                    items.map((item) => (
+                        <div key={item.id} className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full">
+                            <div className="flex items-start justify-between mb-4">
+                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${item.type === 'feature' ? 'bg-blue-100 text-blue-600' :
+                                        item.type === 'fix' ? 'bg-orange-100 text-orange-600' :
+                                            'bg-[#FFE600]/10 text-[#404F4F]'
+                                    }`}>
+                                    {item.type}
+                                </span>
+                                {isSuperAdmin && (
+                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                        <button
+                                            onClick={() => handleOpenModal(item)}
+                                            className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            <Edit2 size={16} />
+                                        </button>
+                                        <button
+                                            onClick={() => handleDelete(item.id)}
+                                            className="p-1.5 hover:bg-red-50 rounded-lg text-muted-foreground hover:text-red-500 transition-colors"
+                                        >
+                                            <Trash2 size={16} />
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+
+                            <h3 className="font-bold text-lg text-[#404F4F] mb-1.5">{item.title}</h3>
+                            <p className="text-sm text-muted-foreground line-clamp-3 mb-6 flex-1 font-medium">
+                                {item.description}
+                            </p>
+
+                            <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
+                                <div className="flex items-center gap-2">
+                                    {item.status === 'completed' ? (
+                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
+                                    ) : item.status === 'in_progress' ? (
+                                        <Clock className="w-4 h-4 text-yellow-500" />
+                                    ) : (
+                                        <Circle className="w-4 h-4 text-muted-foreground" />
+                                    )}
+                                    <span className="text-xs font-bold text-muted-foreground uppercase">
+                                        {item.status === 'completed' ? 'Concluído' :
+                                            item.status === 'in_progress' ? 'Em Progresso' : 'Planejado'}
                                     </span>
                                 </div>
-                                <h3 className="text-lg font-bold text-[#404F4F]">{update.title}</h3>
-                                <p className="text-gray-600 text-sm leading-relaxed whitespace-pre-wrap">{update.description}</p>
                             </div>
-                            {userRole === 'superadmin' && (
-                                <button
-                                    onClick={() => handleDelete(update.id)}
-                                    className="absolute top-6 right-6 p-2 text-gray-300 hover:text-red-500 transition-all md:relative md:top-0 md:right-0 md:self-start md:opacity-0 group-hover:opacity-100"
-                                >
-                                    <Trash2 className="w-5 h-5" />
-                                </button>
-                            )}
                         </div>
                     ))
                 )}
             </div>
+
+            {/* Modal */}
+            {showModal && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
+                    <div className="bg-card w-full max-w-md rounded-2xl shadow-xl border border-border overflow-hidden ring-1 ring-black/5">
+                        <div className="p-6 border-b border-border">
+                            <h2 className="text-xl font-bold text-[#404F4F]">
+                                {editingItem ? 'Editar Item' : 'Novo Item do Roadmap'}
+                            </h2>
+                        </div>
+                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-bold text-gray-800 ml-1">Título</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.title}
+                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                    className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none transition-all font-medium text-foreground"
+                                    placeholder="Ex: Novo dashboard de métricas"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-sm font-bold text-gray-800 ml-1">Descrição</label>
+                                <textarea
+                                    rows={3}
+                                    value={formData.description}
+                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                    className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none transition-all font-medium resize-none text-foreground"
+                                    placeholder="Descreva brevemente a funcionalidade..."
+                                />
+                            </div>
+
+                            <div className="grid grid-cols-2 gap-4">
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-gray-800 ml-1">Tipo</label>
+                                    <div className="relative">
+                                        <select
+                                            value={formData.type}
+                                            onChange={(e: any) => setFormData({ ...formData, type: e.target.value })}
+                                            className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none appearance-none font-medium text-foreground"
+                                        >
+                                            <option value="roadmap">Roadmap</option>
+                                            <option value="feature">Melhoria</option>
+                                            <option value="fix">Correção</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <div className="space-y-1.5">
+                                    <label className="text-sm font-bold text-gray-800 ml-1">Status</label>
+                                    <select
+                                        value={formData.status}
+                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                        className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none appearance-none font-medium text-foreground"
+                                    >
+                                        <option value="planned">Planejado</option>
+                                        <option value="in_progress">Em Progresso</option>
+                                        <option value="completed">Concluído</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div className="flex items-center gap-3 pt-4">
+                                <button
+                                    type="button"
+                                    onClick={() => setShowModal(false)}
+                                    className="flex-1 py-2.5 rounded-lg border border-border text-sm font-bold text-muted-foreground hover:bg-muted transition-all"
+                                >
+                                    Cancelar
+                                </button>
+                                <button
+                                    type="submit"
+                                    disabled={actionLoading}
+                                    className="flex-[2] py-2.5 bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-bold rounded-lg transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
+                                >
+                                    {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (editingItem ? 'Salvar Alterações' : 'Adicionar Item')}
+                                </button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

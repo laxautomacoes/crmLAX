@@ -45,6 +45,7 @@ export function AvatarDropdown() {
                 <UserAvatar
                     src={profile?.avatar_url}
                     name={profile?.full_name}
+                    role={profile?.role}
                     className="h-8 w-8 text-sm"
                 />
             </button>

@@ -50,21 +50,28 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             setExpandedItems(prev => [...prev, activeItem.name]);
     }, [pathname, searchParams]);
 
-    // Filtragem de itens do menu
-    const filteredMenuItems = menuItems.map(item => {
-        if (item.subItems) {
-            return {
-                ...item,
-                subItems: item.subItems.filter(sub => {
-                    if (sub.name === 'Time') {
-                        return userRole === 'admin' || userRole === 'superadmin';
-                    }
-                    return true;
-                })
-            };
-        }
-        return item;
-    });
+    // Filtragem de itens do menu baseada em roles
+    const filteredMenuItems = menuItems
+        .filter(item => {
+            if ((item as any).roles) {
+                return (item as any).roles.includes(userRole);
+            }
+            return true;
+        })
+        .map(item => {
+            if (item.subItems) {
+                return {
+                    ...item,
+                    subItems: item.subItems.filter(sub => {
+                        if ((sub as any).roles) {
+                            return (sub as any).roles.includes(userRole);
+                        }
+                        return true;
+                    })
+                };
+            }
+            return item;
+        });
 
     return (
         <>
