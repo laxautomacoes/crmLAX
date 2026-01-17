@@ -94,7 +94,7 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
                 <div className="relative">
                     <button
                         onClick={() => setShowMenu(!showMenu)}
-                        className="p-2 hover:bg-gray-50 rounded-lg text-gray-400 hover:text-[#404F4F] transition-colors"
+                        className="p-2 hover:bg-[#404F4F]/5 rounded-lg text-[#404F4F]/60 hover:text-[#404F4F] transition-colors"
                     >
                         <MoreVertical size={20} />
                     </button>
@@ -184,7 +184,7 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
                                 </h4>
                                 <button
                                     onClick={() => setIsAnalyzed(false)}
-                                    className="text-xs text-gray-400 hover:text-gray-600 underline"
+                                    className="text-xs text-[#404F4F]/40 hover:text-[#404F4F] underline"
                                 >
                                     Fechar
                                 </button>

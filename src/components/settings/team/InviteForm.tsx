@@ -67,14 +67,14 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                         <button
                             type="button"
                             onClick={() => setRole('user')}
-                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'user' ? 'bg-[#404F4F] text-white border-[#404F4F]' : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200'}`}
+                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'user' ? 'bg-[#404F4F] text-white border-[#404F4F]' : 'bg-white text-[#404F4F] border-[#404F4F]/20 hover:bg-[#404F4F]/5'}`}
                         >
                             Usuário
                         </button>
                         <button
                             type="button"
                             onClick={() => setRole('admin')}
-                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'admin' ? 'bg-[#404F4F] text-white border-[#404F4F]' : 'bg-white text-gray-500 border-gray-100 hover:border-gray-200'}`}
+                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'admin' ? 'bg-[#404F4F] text-white border-[#404F4F]' : 'bg-white text-[#404F4F] border-[#404F4F]/20 hover:bg-[#404F4F]/5'}`}
                         >
                             Admin
                         </button>

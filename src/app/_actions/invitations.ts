@@ -44,7 +44,7 @@ export async function createInvitation(email: string, role: 'admin' | 'user' = '
         return { error: error.message }
     }
 
-    revalidatePath('/dashboard/settings/team')
+    revalidatePath('/settings/team')
     return { success: true, invitation: data }
 }
 

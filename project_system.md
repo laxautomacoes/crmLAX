@@ -6,7 +6,7 @@ Este documento é a fonte única de verdade para a interface do CRM LAX. Deve se
 
 | Elemento | Hex Code | Uso Principal |
 | :--- | :--- | :--- |
-| **Petrol (Primária)** | `#404F4F` | Sidebar, Títulos, Botões secundários, Texto principal. |
+| **Petrol (Primária)** | `#404F4F` | Sidebar, Títulos, Botões neutros/secundários, Texto principal. |
 | **Yellow (Secundária)** | `#FFE600` | Botões de ação principal (CTA), Destaques de marca. |
 | **Background (Páginas)** | `#F0F2F5` | Fundo de páginas da Dashboard e Login. |
 | **Background (Cards)** | `#FFFFFF` | Fundo de cards, modais e áreas de conteúdo. |
@@ -53,7 +53,7 @@ Seguir rigorosamente para evitar inconsistências visuais:
 ## 5. Padrões de Interação (Hover & Focus)
 
 - **Botões Yellow**: `hover:bg-[#F2DB00] transition-all transform active:scale-[0.99]`.
-- **Botões Petrol**: `hover:bg-[#2d3939] transition-all`.
+- **Botões Petrol (Neutros)**: `text-[#404F4F] border-[#404F4F]/20 hover:bg-[#404F4F]/5 transition-all`. Para botões preenchidos: `bg-[#404F4F] text-white hover:bg-[#2d3939]`.
 - **Inputs**: `focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] outline-none`.
 - **Animações de Entrada**: `animate-in fade-in slide-in-from-bottom-4 duration-300`.
 

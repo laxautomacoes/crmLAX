@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { Plus, Search, ChevronDown, Phone, Mail, Calendar, Sparkles, MessageSquare, Edit, Trash2 } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
+import { formatPhone } from '@/lib/utils/phone'
 import { createNewClient, updateClient, deleteClient } from '@/app/_actions/clients'
 import { analyzeLeadProbability } from '@/app/_actions/ai-analysis'
 import { toast } from 'sonner'
@@ -97,10 +98,10 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                 <div className="flex items-center justify-center md:justify-end">
                     <button
                         onClick={handleOpenCreate}
-                        className="flex items-center gap-2 bg-[#FFE600] text-[#404F4F] px-5 py-2.5 rounded-lg font-bold hover:bg-[#F2DB00] transition-colors shadow-sm"
+                        className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-opacity text-sm font-medium"
                     >
-                        <Plus size={20} />
-                        Novo
+                        <Plus size={18} />
+                        Novo Cliente
                     </button>
                 </div>
             </div>
@@ -188,8 +189,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         <input
                             required
                             value={formData.phone}
-                            onChange={e => setFormData({ ...formData, phone: e.target.value })}
-                            placeholder="(00) 00000-0000"
+                            onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
+                            placeholder="(48) 99999 9999"
                             className="w-full p-3 rounded-lg border border-gray-200 focus:outline-none focus:border-[#FFE600] focus:ring-1 focus:ring-[#FFE600] transition-all"
                         />
                     </div>
@@ -207,7 +208,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="flex-1 px-4 py-3 rounded-lg font-bold border border-gray-200 text-gray-500 hover:bg-gray-50 transition-colors"
+                            className="flex-1 px-4 py-3 rounded-lg font-bold border border-[#404F4F]/20 text-[#404F4F] hover:bg-[#404F4F]/5 transition-colors"
                         >
                             Cancelar
                         </button>
@@ -273,7 +274,7 @@ function ClientListItem({ client, isExpanded, onToggle, onEdit, onDelete, tenant
                 <td className="px-6 py-5">
                     <div className="flex flex-col text-sm items-center">
                         <span className="text-[#404F4F] font-medium flex items-center gap-1.5">
-                            <Phone size={14} className="text-gray-300" /> {client.phone}
+                            <Phone size={14} className="text-gray-300" /> {formatPhone(client.phone)}
                         </span>
                         <span className="text-gray-400 text-xs flex items-center gap-1.5 mt-0.5">
                             <Mail size={14} className="text-gray-300" /> {client.email}
@@ -300,8 +301,8 @@ function ClientListItem({ client, isExpanded, onToggle, onEdit, onDelete, tenant
                 </td>
                 <td className="px-6 py-5 text-right">
                     <div className="flex items-center justify-center gap-2">
-                        <button className={`p-2 rounded-lg bg-white border border-gray-100 group-hover:border-gray-200 transition-all ${isExpanded ? 'rotate-180 shadow-sm' : ''}`}>
-                            <ChevronDown size={18} className="text-gray-400" />
+                        <button className={`p-2 rounded-lg bg-white border border-[#404F4F]/10 group-hover:border-[#404F4F]/20 transition-all ${isExpanded ? 'rotate-180 shadow-sm' : ''}`}>
+                            <ChevronDown size={18} className="text-[#404F4F]/60" />
                         </button>
                     </div>
                 </td>
@@ -329,7 +330,7 @@ function ClientListItem({ client, isExpanded, onToggle, onEdit, onDelete, tenant
                                                 </div>
                                                 <div className="flex items-center gap-3 text-sm text-gray-600">
                                                     <Phone size={16} className="text-[#404F4F]/40" />
-                                                    {client.phone}
+                                                    {formatPhone(client.phone)}
                                                 </div>
                                                 <div className="flex items-center gap-3 text-sm text-gray-600 pt-2 border-t border-gray-50">
                                                     <Calendar size={16} className="text-[#404F4F]/40" />

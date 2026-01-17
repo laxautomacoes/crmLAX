@@ -55,7 +55,7 @@ export async function createRoadmapItem(data: {
             return { error: error.message }
         }
 
-        revalidatePath('/dashboard/roadmap')
+        revalidatePath('/roadmap')
         return { success: true }
     } catch (error) {
         console.error('Error in createRoadmapItem:', error)
@@ -95,7 +95,7 @@ export async function updateRoadmapItem(id: string, data: {
             return { error: error.message }
         }
 
-        revalidatePath('/dashboard/roadmap')
+        revalidatePath('/roadmap')
         return { success: true }
     } catch (error) {
         console.error('Error in updateRoadmapItem:', error)
@@ -130,7 +130,7 @@ export async function deleteRoadmapItem(id: string) {
             return { error: error.message }
         }
 
-        revalidatePath('/dashboard/roadmap')
+        revalidatePath('/roadmap')
         return { success: true }
     } catch (error) {
         console.error('Error in deleteRoadmapItem:', error)

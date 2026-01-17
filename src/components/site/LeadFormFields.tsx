@@ -1,5 +1,7 @@
 'use client';
 
+import { formatPhone } from '@/lib/utils/phone';
+
 interface LeadFormFieldsProps {
     name: string;
     phone: string;
@@ -49,9 +51,9 @@ export function LeadFormFields({
                     type="tel"
                     required
                     value={phone}
-                    onChange={(e) => onPhoneChange(e.target.value)}
+                    onChange={(e) => onPhoneChange(formatPhone(e.target.value))}
                     className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] text-sm text-gray-900 placeholder-gray-500 font-medium"
-                    placeholder="(11) 99999-9999"
+                    placeholder="(48) 99999 9999"
                 />
             </div>
 

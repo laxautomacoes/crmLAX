@@ -31,7 +31,7 @@ export function Modal({ isOpen, onClose, title, children }: ModalProps) {
                     <h3 className="text-lg font-semibold text-foreground">{title}</h3>
                     <button
                         onClick={onClose}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        className="text-[#404F4F]/40 hover:text-[#404F4F] transition-colors"
                     >
                         <X size={20} />
                     </button>

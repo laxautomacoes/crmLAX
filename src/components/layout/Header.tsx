@@ -60,7 +60,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                     {/* Mobile Menu Button ... */}
                     <button
                         onClick={onMenuClick}
-                        className="md:hidden text-gray-500 hover:text-gray-700 absolute left-4"
+                        className="md:hidden text-[#404F4F]/60 hover:text-[#404F4F] absolute left-4"
                     >
                         <Menu size={24} />
                     </button>
@@ -68,7 +68,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                     {/* Desktop Collapse Button ... */}
                     <button
                         onClick={toggleSidebar}
-                        className="hidden md:block text-muted-foreground hover:text-foreground transition-colors"
+                        className="hidden md:block text-[#404F4F]/60 hover:text-[#404F4F] transition-colors"
                     >
                         {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     </button>
@@ -78,7 +78,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         <h2 className="text-lg font-semibold text-foreground">
                             Bem-vindo, {profile?.full_name || 'Léo Acosta'}
                         </h2>
-                        <span className="text-xs text-muted-foreground">{formattedDate}</span>
+                        <span className="text-xs text-[#404F4F]/60">{formattedDate}</span>
                     </div>
 
                     {/* Mobile Centered Logo ... */}
@@ -92,14 +92,14 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         {mounted && (
                             <button
                                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                                className="text-muted-foreground hover:text-foreground transition-colors"
+                                className="text-[#404F4F]/60 hover:text-[#404F4F] transition-colors"
                             >
                                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                             </button>
                         )}
                         <button
                             onClick={() => setIsNotificationsOpen(true)}
-                            className="text-muted-foreground hover:text-foreground relative"
+                            className="text-[#404F4F]/60 hover:text-[#404F4F] relative"
                         >
                             <Bell size={20} />
                             {unreadCount > 0 && (

@@ -45,7 +45,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
                                 const targetTab = new URLSearchParams(params).get('tab');
                                 subActive = pathname === path && searchParams.get('tab') === targetTab;
                             } else {
-                                subActive = sub.href === '/dashboard/settings' ? (pathname === sub.href && !searchParams.has('tab')) : pathname === sub.href;
+                                subActive = sub.href === '/settings' ? (pathname === sub.href && !searchParams.has('tab')) : pathname === sub.href;
                             }
                             return (
                                 <Link key={sub.name} href={sub.href} className={`block px-3 py-2 text-base rounded-lg transition-colors ${subActive ? 'text-[#FFE600] font-medium' : 'text-gray-400 hover:text-white'}`}>

@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
+import { cleanPhone } from '@/lib/utils/phone'
 
 export interface ClientData {
     id?: string
@@ -74,7 +75,7 @@ export async function createNewClient(tenantId: string, data: ClientData) {
         .insert({
             tenant_id: tenantId,
             name: data.name,
-            phone: data.phone,
+            phone: cleanPhone(data.phone),
             email: data.email,
             tags: data.tags
         })
@@ -99,7 +100,7 @@ export async function createNewClient(tenantId: string, data: ClientData) {
         if (leadError) console.error('Error creating lead:', leadError)
     }
 
-    revalidatePath('/dashboard/clients')
+    revalidatePath('/clients')
     return { success: true, data: contact }
 }
 
@@ -110,7 +111,7 @@ export async function updateClient(clientId: string, data: Partial<ClientData>) 
         .from('contacts')
         .update({
             name: data.name,
-            phone: data.phone,
+            phone: data.phone ? cleanPhone(data.phone) : undefined,
             email: data.email,
             tags: data.tags
         })
@@ -120,7 +121,7 @@ export async function updateClient(clientId: string, data: Partial<ClientData>) 
         return { success: false, error: error.message }
     }
 
-    revalidatePath('/dashboard/clients')
+    revalidatePath('/clients')
     return { success: true }
 }
 
@@ -136,6 +137,6 @@ export async function deleteClient(clientId: string) {
         return { success: false, error: error.message }
     }
 
-    revalidatePath('/dashboard/clients')
+    revalidatePath('/clients')
     return { success: true }
 }
