@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, Suspense } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 
@@ -14,12 +14,14 @@ export default function DashboardLayout({
 
     return (
         <div className="flex h-screen bg-background overflow-hidden">
-            <Sidebar
-                isOpen={sidebarOpen}
-                onClose={() => setSidebarOpen(false)}
-                isCollapsed={sidebarCollapsed}
-                toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
-            />
+            <Suspense fallback={null}>
+                <Sidebar
+                    isOpen={sidebarOpen}
+                    onClose={() => setSidebarOpen(false)}
+                    isCollapsed={sidebarCollapsed}
+                    toggleCollapse={() => setSidebarCollapsed(!sidebarCollapsed)}
+                />
+            </Suspense>
 
             <div className="flex-1 flex flex-col h-full overflow-hidden">
                 <Header
@@ -29,7 +31,9 @@ export default function DashboardLayout({
                 />
 
                 <main className="flex-1 p-4 md:p-8 overflow-y-auto w-full">
-                    {children}
+                    <Suspense fallback={<div className="p-8">Carregando...</div>}>
+                        {children}
+                    </Suspense>
                 </main>
             </div>
         </div>

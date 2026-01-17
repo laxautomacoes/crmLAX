@@ -18,12 +18,28 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const router = useRouter();
     const supabase = createClient();
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
+    const [userRole, setUserRole] = useState<string | null>(null);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
         router.push('/login');
         router.refresh();
     };
+
+    useEffect(() => {
+        async function fetchRole() {
+            const { data: { user } } = await supabase.auth.getUser();
+            if (user) {
+                const { data } = await supabase
+                    .from('profiles')
+                    .select('role')
+                    .eq('id', user.id)
+                    .maybeSingle();
+                setUserRole(data?.role || 'user');
+            }
+        }
+        fetchRole();
+    }, []);
 
     useEffect(() => {
         const activeItem = menuItems.find(item =>
@@ -33,6 +49,22 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
         if (activeItem && !expandedItems.includes(activeItem.name))
             setExpandedItems(prev => [...prev, activeItem.name]);
     }, [pathname, searchParams]);
+
+    // Filtragem de itens do menu
+    const filteredMenuItems = menuItems.map(item => {
+        if (item.subItems) {
+            return {
+                ...item,
+                subItems: item.subItems.filter(sub => {
+                    if (sub.name === 'Time') {
+                        return userRole === 'admin' || userRole === 'superadmin';
+                    }
+                    return true;
+                })
+            };
+        }
+        return item;
+    });
 
     return (
         <>
@@ -44,7 +76,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                 </div>
 
                 <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
-                    {menuItems.map(item => (
+                    {filteredMenuItems.map(item => (
                         <NavItem
                             key={item.name} item={item} pathname={pathname} searchParams={searchParams}
                             isCollapsed={isCollapsed} isExpanded={expandedItems.includes(item.name)}

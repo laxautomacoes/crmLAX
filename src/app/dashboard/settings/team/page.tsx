@@ -1,13 +1,18 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { getProfile } from '@/app/_actions/profile';
 import { listInvitations } from '@/app/_actions/invitations';
 import { InviteForm } from '@/components/settings/team/InviteForm';
 import { InvitationsTable } from '@/components/settings/team/InvitationsTable';
+import { Loader2 } from 'lucide-react';
 
 export default function TeamSettingsPage() {
+    const router = useRouter();
     const [fetching, setFetching] = useState(true);
     const [invitations, setInvitations] = useState<any[]>([]);
+    const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
 
     const loadInvitations = async () => {
         setFetching(true);
@@ -17,8 +22,25 @@ export default function TeamSettingsPage() {
     };
 
     useEffect(() => {
-        loadInvitations();
-    }, []);
+        async function checkAccess() {
+            const { profile } = await getProfile();
+            if (profile?.role === 'user') {
+                router.push('/dashboard');
+                return;
+            }
+            setIsAuthorized(true);
+            loadInvitations();
+        }
+        checkAccess();
+    }, [router]);
+
+    if (isAuthorized === null) {
+        return (
+            <div className="flex h-[60vh] items-center justify-center">
+                <Loader2 className="w-8 h-8 animate-spin text-[#FFE600]" />
+            </div>
+        );
+    }
 
     return (
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -32,7 +54,11 @@ export default function TeamSettingsPage() {
                     <InviteForm onInviteCreated={loadInvitations} />
                 </div>
                 <div className="lg:col-span-2">
-                    <InvitationsTable invitations={invitations} fetching={fetching} onRefresh={loadInvitations} />
+                    <InvitationsTable
+                        invitations={invitations}
+                        fetching={fetching}
+                        onRefresh={loadInvitations}
+                    />
                 </div>
             </div>
         </div>

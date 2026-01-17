@@ -13,6 +13,7 @@ export const menuItems = [
         href: '/dashboard/settings',
         subItems: [
             { name: 'Meu Perfil', href: '/dashboard/settings' },
+            { name: 'Time', href: '/dashboard/settings/team' },
             { name: 'Notificações', href: '/dashboard/settings?tab=notifications' }
         ]
     },
