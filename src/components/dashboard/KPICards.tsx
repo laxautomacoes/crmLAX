@@ -2,34 +2,45 @@
 
 import { Users, Car, TrendingUp } from 'lucide-react';
 
-const kpis = [
-    {
-        title: 'Leads Ativos',
-        value: '24',
-        trend: '+12%',
-        trendUp: true,
-        icon: Users,
-    },
-    {
-        title: 'Veículos',
-        value: '45',
-        trend: '+3',
-        trendUp: true,
-        icon: Car,
-    },
-    {
-        title: 'Conversões',
-        value: '8',
-        trend: '+2',
-        trendUp: true,
-        icon: TrendingUp,
-    },
-];
+interface KPICardsProps {
+    kpis: {
+        leadsAtivos: number
+        leadsAtivosTrend: string
+        veiculos: number
+        veiculosTrend: string
+        conversoes: number
+        conversoesTrend: string
+    }
+}
 
-export default function KPICards() {
+export default function KPICards({ kpis }: KPICardsProps) {
+    const kpiData = [
+        {
+            title: 'Leads Ativos',
+            value: kpis.leadsAtivos.toString(),
+            trend: kpis.leadsAtivosTrend,
+            trendUp: true,
+            icon: Users,
+        },
+        {
+            title: 'Veículos',
+            value: kpis.veiculos.toString(),
+            trend: kpis.veiculosTrend,
+            trendUp: true,
+            icon: Car,
+        },
+        {
+            title: 'Conversões',
+            value: kpis.conversoes.toString(),
+            trend: kpis.conversoesTrend,
+            trendUp: true,
+            icon: TrendingUp,
+        },
+    ];
+
     return (
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4 md:gap-6 mb-6 md:mb-8">
-            {kpis.map((kpi, index) => (
+            {kpiData.map((kpi, index) => (
                 <div
                     key={index}
                     className="bg-card px-4 py-4 md:p-6 rounded-lg shadow-sm border border-border relative overflow-hidden 

@@ -23,7 +23,7 @@ export default async function ClientsPage() {
     const initialClients = success && clients ? clients : []
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
+        <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <ClientList
                 initialClients={initialClients}
                 tenantId={tenantId}
