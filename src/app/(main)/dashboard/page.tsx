@@ -19,8 +19,8 @@ export default async function DashboardPage() {
         kpis: {
             leadsAtivos: 0,
             leadsAtivosTrend: '+0%',
-            veiculos: 0,
-            veiculosTrend: '+0',
+            imoveis: 0,
+            imoveisTrend: '+0',
             conversoes: 0,
             conversoesTrend: '+0'
         },

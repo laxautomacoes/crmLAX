@@ -45,21 +45,35 @@ export async function getDashboardMetrics(tenantId: string) {
 
         if (assetsError) throw assetsError
 
-        // 3. Buscar conversões (leads com status "Ganho" ou similar)
-        const { count: conversions, error: conversionsError } = await supabase
-            .from('leads')
-            .select('*', { count: 'exact', head: true })
+        // 3. Buscar conversões (leads em estágios que representam ganho)
+        // Primeiro buscamos os estágios para identificar qual é o "Ganho"
+        const { data: allStages } = await supabase
+            .from('lead_stages')
+            .select('id, name')
             .eq('tenant_id', tenantId)
-            .eq('status', 'Ganho')
 
-        if (conversionsError) throw conversionsError
+        const winStage = allStages?.find(s =>
+            s.name.toLowerCase().includes('ganho') ||
+            s.name.toLowerCase().includes('fechado') ||
+            s.name.toLowerCase().includes('concluído')
+        )
+
+        let conversions = 0
+        if (winStage) {
+            const { count } = await supabase
+                .from('leads')
+                .select('*', { count: 'exact', head: true })
+                .eq('tenant_id', tenantId)
+                .eq('stage_id', winStage.id)
+            conversions = count || 0
+        }
 
         // 4. Buscar estágios e contar leads por estágio
         const { data: stages, error: stagesError } = await supabase
-            .from('pipeline_stages')
-            .select('id, name, position')
+            .from('lead_stages')
+            .select('id, name, order_index')
             .eq('tenant_id', tenantId)
-            .order('position', { ascending: true })
+            .order('order_index', { ascending: true })
 
         if (stagesError) throw stagesError
 
@@ -69,7 +83,7 @@ export async function getDashboardMetrics(tenantId: string) {
                     .from('leads')
                     .select('*', { count: 'exact', head: true })
                     .eq('tenant_id', tenantId)
-                    .eq('status', stage.id)
+                    .eq('stage_id', stage.id)
 
                 return {
                     label: stage.name,
@@ -85,8 +99,8 @@ export async function getDashboardMetrics(tenantId: string) {
             .select(`
                 id,
                 created_at,
-                status,
-                details,
+                stage_id,
+                source,
                 contacts (
                     name
                 )
@@ -100,8 +114,8 @@ export async function getDashboardMetrics(tenantId: string) {
         const recentLeads = (recentLeadsData || []).map((lead: any) => ({
             id: lead.id,
             name: lead.contacts?.name || 'Sem nome',
-            interest: lead.details?.interest || 'N/A',
-            status: stages?.find(s => s.id === lead.status)?.name || 'Novo',
+            interest: lead.source || 'N/A',
+            status: stages?.find(s => s.id === lead.stage_id)?.name || 'Novo',
             created_at: lead.created_at
         }))
 
