@@ -4,8 +4,8 @@ import { Search, Filter } from 'lucide-react';
 
 interface AssetFiltersProps {
     filters: {
-        marca: string;
-        ano: string;
+        tipo: string;
+        quartos: string;
         precoMin: string;
         precoMax: string;
         search: string;
@@ -36,7 +36,7 @@ export function AssetFilters({ filters, onFilterChange }: AssetFiltersProps) {
                             type="text"
                             value={filters.search}
                             onChange={(e) => handleChange('search', e.target.value)}
-                            placeholder="Marca, modelo..."
+                            placeholder="Bairro, condomínio ou tipo de imóvel..."
                             className="w-full pl-10 pr-4 py-3 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] text-sm text-gray-900 placeholder-gray-500 font-medium"
                         />
                     </div>
@@ -44,26 +44,26 @@ export function AssetFilters({ filters, onFilterChange }: AssetFiltersProps) {
 
                 <div>
                     <label className="block text-sm font-bold text-gray-800 ml-1 mb-1.5">
-                        Marca
+                        Tipo
                     </label>
                     <input
                         type="text"
-                        value={filters.marca}
-                        onChange={(e) => handleChange('marca', e.target.value)}
-                        placeholder="Ex: Honda"
+                        value={filters.tipo}
+                        onChange={(e) => handleChange('tipo', e.target.value)}
+                        placeholder="Ex: Apartamento, Casa, Terreno..."
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] text-sm text-gray-900 placeholder-gray-500 font-medium"
                     />
                 </div>
 
                 <div>
                     <label className="block text-sm font-bold text-gray-800 ml-1 mb-1.5">
-                        Ano
+                        Quartos
                     </label>
                     <input
                         type="text"
-                        value={filters.ano}
-                        onChange={(e) => handleChange('ano', e.target.value)}
-                        placeholder="Ex: 2020"
+                        value={filters.quartos}
+                        onChange={(e) => handleChange('quartos', e.target.value)}
+                        placeholder="Ex: 2 ou mais"
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] text-sm text-gray-900 placeholder-gray-500 font-medium"
                     />
                 </div>
@@ -76,7 +76,7 @@ export function AssetFilters({ filters, onFilterChange }: AssetFiltersProps) {
                         type="text"
                         value={filters.precoMax}
                         onChange={(e) => handleChange('precoMax', e.target.value)}
-                        placeholder="R$ 100.000"
+                        placeholder="Até R$ 1.500.000"
                         className="w-full px-4 py-3 bg-gray-50 border border-gray-100 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] text-sm text-gray-900 placeholder-gray-500 font-medium"
                     />
                 </div>

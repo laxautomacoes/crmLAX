@@ -18,7 +18,7 @@ interface LeadDetails {
  */
 export async function analyzeLeadProbability(details: LeadDetails) {
     try {
-        const prompt = `Analise este lead de venda de veículos e determine a probabilidade de fechamento (0-100%).
+        const prompt = `Analise este lead de venda/aluguel de imóveis e determine a probabilidade de fechamento (0-100%).
     Nome: ${details.name}
     Origem: ${details.source || 'Não informada'}
     Interações: ${details.interactions.join(' | ')}
@@ -28,7 +28,7 @@ export async function analyzeLeadProbability(details: LeadDetails) {
         const completion = await openai.chat.completions.create({
             model: "gpt-4o-mini",
             messages: [
-                { role: "system", content: "Você é um especialista em vendas de veículos." },
+                { role: "system", content: "Você é um especialista no mercado imobiliário." },
                 { role: "user", content: prompt }
             ],
         });

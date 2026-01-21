@@ -304,7 +304,7 @@ export default function LeadsPage() {
                                 type="text"
                                 value={newLead.interest}
                                 onChange={(e) => setNewLead({ ...newLead, interest: e.target.value })}
-                                placeholder="Ex: Toyota Corolla 2023"
+                                placeholder="Ex: Casa 3 quartos com suíte"
                                 className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all"
                             />
                         </div>

@@ -13,8 +13,8 @@ interface Asset {
 interface AssetsGridProps {
     assets: Asset[];
     filters: {
-        marca: string;
-        ano: string;
+        tipo: string;
+        quartos: string;
         precoMin: string;
         precoMax: string;
         search: string;
@@ -27,24 +27,24 @@ export function AssetsGrid({ assets, filters }: AssetsGridProps) {
         if (filters.search) {
             const searchLower = filters.search.toLowerCase();
             const titleLower = asset.title.toLowerCase();
-            const marca = (asset.details?.marca || asset.details?.brand || '').toLowerCase();
-            if (!titleLower.includes(searchLower) && !marca.includes(searchLower)) {
+            const tipo = (asset.details?.tipo_imovel || asset.details?.type || '').toLowerCase();
+            if (!titleLower.includes(searchLower) && !tipo.includes(searchLower)) {
                 return false;
             }
         }
 
-        // Filtro de marca
-        if (filters.marca) {
-            const marca = (asset.details?.marca || asset.details?.brand || '').toLowerCase();
-            if (!marca.includes(filters.marca.toLowerCase())) {
+        // Filtro de tipo
+        if (filters.tipo) {
+            const tipo = (asset.details?.tipo_imovel || asset.details?.type || '').toLowerCase();
+            if (!tipo.includes(filters.tipo.toLowerCase())) {
                 return false;
             }
         }
 
-        // Filtro de ano
-        if (filters.ano) {
-            const ano = String(asset.details?.ano || asset.details?.year || '');
-            if (!ano.includes(filters.ano)) {
+        // Filtro de quartos
+        if (filters.quartos) {
+            const quartos = String(asset.details?.quartos || asset.details?.rooms || '');
+            if (!quartos.includes(filters.quartos)) {
                 return false;
             }
         }
@@ -64,7 +64,7 @@ export function AssetsGrid({ assets, filters }: AssetsGridProps) {
         return (
             <div className="text-center py-12">
                 <p className="text-lg font-semibold text-[#404F4F] mb-2">
-                    Nenhum veículo encontrado
+                    Nenhum imóvel encontrado
                 </p>
                 <p className="text-sm text-muted-foreground">
                     Tente ajustar os filtros de busca.

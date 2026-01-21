@@ -16,7 +16,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
     title: "CRM LAX",
-    description: "Plataforma vertical para revendas de veículos",
+    description: "Plataforma vertical para imobiliárias e corretores",
 };
 
 export const viewport: Viewport = {

@@ -13,8 +13,8 @@ interface SiteClientProps {
 
 export function SiteClient({ assets, tenantName, whatsappNumber }: SiteClientProps) {
     const [filters, setFilters] = useState({
-        marca: '',
-        ano: '',
+        tipo: '',
+        quartos: '',
         precoMin: '',
         precoMax: '',
         search: ''
@@ -24,10 +24,10 @@ export function SiteClient({ assets, tenantName, whatsappNumber }: SiteClientPro
         return (
             <div className="text-center py-12 bg-card rounded-2xl border border-border">
                 <p className="text-lg font-semibold text-[#404F4F] mb-2">
-                    Nenhum veículo disponível no momento
+                    Nenhum imóvel disponível no momento
                 </p>
                 <p className="text-sm text-muted-foreground">
-                    Volte em breve para ver nossos veículos!
+                    Volte em breve para ver nossos imóveis!
                 </p>
             </div>
         );

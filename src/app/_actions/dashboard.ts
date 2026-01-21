@@ -6,8 +6,8 @@ export interface DashboardMetrics {
     kpis: {
         leadsAtivos: number
         leadsAtivosTrend: string
-        veiculos: number
-        veiculosTrend: string
+        imoveis: number
+        imoveisTrend: string
         conversoes: number
         conversoesTrend: string
     }
@@ -37,7 +37,7 @@ export async function getDashboardMetrics(tenantId: string) {
 
         if (leadsError) throw leadsError
 
-        // 2. Buscar total de assets (veículos)
+        // 2. Buscar total de assets (imóveis)
         const { count: totalAssets, error: assetsError } = await supabase
             .from('assets')
             .select('*', { count: 'exact', head: true })
@@ -111,8 +111,8 @@ export async function getDashboardMetrics(tenantId: string) {
                 kpis: {
                     leadsAtivos: totalLeads || 0,
                     leadsAtivosTrend: '+0%', // Implementar cálculo de tendência depois
-                    veiculos: totalAssets || 0,
-                    veiculosTrend: '+0',
+                    imoveis: totalAssets || 0,
+                    imoveisTrend: '+0',
                     conversoes: conversions || 0,
                     conversoesTrend: '+0'
                 },

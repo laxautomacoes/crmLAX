@@ -1,8 +1,8 @@
 PROJECT SPECIFICATIONS: CRM LAX
 
 1. VISÃO DO PRODUTO
-O CRM LAX é uma plataforma vertical (SaaS) para revendas de veículos.
-O diferencial é ser um sistema "limpo", focado em automação real e inteligência de dados, eliminando a complexidade genérica de CRMs disponíveis no mercado.
+O CRM LAX é uma plataforma vertical (SaaS) para imobiliárias e corretores independentes.
+O diferencial é ser um sistema "limpo", focado em automação real e inteligência de dados, eliminando a complexidade genérica de CRMs imobiliários disponíveis no mercado.
 
 2. ARQUITETURA TÉCNICA (CORE STACK)
 - Framework: Next.js 14+ (App Router).
@@ -28,7 +28,7 @@ Core:
 CRM & Vendas:
 - contacts: id, tenant_id, name, phone, email, tags (jsonb), created_at. (Dados únicos do cliente).
 - leads: id, contact_id, tenant_id, asset_id (fk), status (kanban_step), source, utm_data (jsonb), assigned_to (profile_id).
-- assets (Estoque): id, tenant_id, type (car|house), title, price, status, details (jsonb), images (jsonb).
+- assets (Estoque): id, tenant_id, type (house|apartment|land|commercial), title, price, status, details (jsonb), images (jsonb).
 - interactions: id, lead_id, type (whatsapp|system|note), content, metadata (jsonb).
 
 IA & Logs:
@@ -52,7 +52,7 @@ Lógica Interna (CRM):
 
 Funcionalidades:
 - Análise de probabilidade de fechamento de lead.
-- Geração de copy para anúncios com base nos details do asset.
+- Geração de copy para anúncios com base nos detalhes do imóvel.
 - Feedback de performance do vendedor.
 
 6. MÓDULO SITE VITRINE & DOMÍNIOS
@@ -63,11 +63,11 @@ Funcionalidades:
 7. UI/UX DESIGN SYSTEM
 Cores:
 - Primária: #404F4F (Cinza Petrol).
-- Secundária: #FFE600 (Amarelo Automotivo).
+- Secundária: #FFE600 (Amarelo).
 
 Interface CRM: Sidebar colapsável, Kanban com Drag & Drop (Touch-friendly).
 
-Interface Site: Galeria de fotos otimizada, busca com filtros (Marca, Ano, Preço).
+Interface Site: Galeria de fotos otimizada, busca com filtros (Tipo, Quartos, Preço).
 
 Página de Roadmap: /updates - Timeline vertical pública para transparência com o cliente.
 

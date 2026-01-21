@@ -4,7 +4,7 @@ export default function manifest(): MetadataRoute.Manifest {
     return {
         name: 'CRM LAX',
         short_name: 'CRM LAX',
-        description: 'Plataforma vertical para revendas de veículos',
+        description: 'Plataforma vertical para imobiliárias e corretores',
         start_url: '/dashboard',
         display: 'standalone',
         background_color: '#404F4F',

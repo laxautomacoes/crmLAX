@@ -4,9 +4,9 @@ import { SiteClient } from '@/components/site/SiteClient';
 
 export default async function SitePage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
-    
+
     const tenant = await getTenantFromHeaders() || await getTenantBySlug(slug);
-    
+
     if (!tenant) {
         return (
             <div className="flex flex-col items-center justify-center min-h-screen py-2">
@@ -15,7 +15,7 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
             </div>
         );
     }
-    
+
     const supabase = await createClient();
     const { data: assets } = await supabase
         .from('assets')
@@ -32,12 +32,12 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
                 <div className="mb-8 text-center md:text-left">
                     <h1 className="text-4xl font-bold text-[#404F4F]">{tenant.name}</h1>
                     <p className="mt-2 text-xl text-muted-foreground">
-                        Bem-vindo à nossa revenda de veículos
+                        Encontre o seu novo lar
                     </p>
                 </div>
-                
-                <SiteClient 
-                    assets={assets || []} 
+
+                <SiteClient
+                    assets={assets || []}
                     tenantName={tenant.name}
                     whatsappNumber={whatsappNumber}
                 />

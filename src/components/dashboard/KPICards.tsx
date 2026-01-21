@@ -1,13 +1,13 @@
 'use client';
 
-import { Users, Car, TrendingUp } from 'lucide-react';
+import { Users, Home, TrendingUp } from 'lucide-react';
 
 interface KPICardsProps {
     kpis: {
         leadsAtivos: number
         leadsAtivosTrend: string
-        veiculos: number
-        veiculosTrend: string
+        imoveis: number
+        imoveisTrend: string
         conversoes: number
         conversoesTrend: string
     }
@@ -23,11 +23,11 @@ export default function KPICards({ kpis }: KPICardsProps) {
             icon: Users,
         },
         {
-            title: 'Veículos',
-            value: kpis.veiculos.toString(),
-            trend: kpis.veiculosTrend,
+            title: 'Imóveis',
+            value: kpis.imoveis.toString(),
+            trend: kpis.imoveisTrend,
             trendUp: true,
-            icon: Car,
+            icon: Home,
         },
         {
             title: 'Conversões',
