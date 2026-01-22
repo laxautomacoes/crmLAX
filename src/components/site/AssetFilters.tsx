@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Filter } from 'lucide-react';
+import { Search, Filter, LayoutGrid, List } from 'lucide-react';
 
 interface AssetFiltersProps {
     filters: {
@@ -11,18 +11,38 @@ interface AssetFiltersProps {
         search: string;
     };
     onFilterChange: (filters: AssetFiltersProps['filters']) => void;
+    viewMode: 'gallery' | 'list';
+    onViewModeChange: (mode: 'gallery' | 'list') => void;
 }
 
-export function AssetFilters({ filters, onFilterChange }: AssetFiltersProps) {
+export function AssetFilters({ filters, onFilterChange, viewMode, onViewModeChange }: AssetFiltersProps) {
     const handleChange = (key: keyof typeof filters, value: string) => {
         onFilterChange({ ...filters, [key]: value });
     };
 
     return (
         <div className="bg-card rounded-2xl border border-border shadow-sm p-6 mb-8">
-            <div className="flex items-center gap-2 mb-6">
-                <Filter className="text-[#404F4F]" size={20} />
-                <h3 className="text-lg font-bold text-[#404F4F]">Filtros</h3>
+            <div className="flex items-center justify-between mb-6">
+                <div className="flex items-center gap-2">
+                    <Filter className="text-[#404F4F]" size={20} />
+                    <h3 className="text-lg font-bold text-[#404F4F]">Filtros</h3>
+                </div>
+                <div className="flex items-center bg-gray-50 border border-gray-100 rounded-lg p-1 shadow-sm">
+                    <button
+                        onClick={() => onViewModeChange('gallery')}
+                        className={`p-2 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-[#404F4F] text-white shadow-sm' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`}
+                        title="Visualização em Galeria"
+                    >
+                        <LayoutGrid size={18} />
+                    </button>
+                    <button
+                        onClick={() => onViewModeChange('list')}
+                        className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-[#404F4F] text-white shadow-sm' : 'text-gray-400 hover:bg-gray-100 hover:text-gray-600'}`}
+                        title="Visualização em Lista"
+                    >
+                        <List size={18} />
+                    </button>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">

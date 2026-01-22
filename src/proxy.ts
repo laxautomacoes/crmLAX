@@ -3,13 +3,13 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { isPublicRoute, isSiteRequest } from '@/lib/utils/tenant'
 import { getTenantByHostname } from '@/lib/utils/tenant-query'
 
-export async function middleware(request: NextRequest) {
+export async function proxy(request: NextRequest) {
     const hostname = request.headers.get('host') || ''
     const pathname = request.nextUrl.pathname
-    
+
     // 1. Identificar tenant pelo hostname (subdomínio ou custom domain)
     const tenant = await getTenantByHostname(hostname)
-    
+
     // 2. Se for request de site público e temos tenant, redirecionar para /site/[slug]
     if (tenant && !isSiteRequest(pathname) && !pathname.startsWith('/dashboard') && !pathname.startsWith('/api')) {
         // Se acessando raiz do site do tenant, redirecionar para /site/[slug]
@@ -19,7 +19,7 @@ export async function middleware(request: NextRequest) {
             return NextResponse.redirect(url)
         }
     }
-    
+
     // 3. Criar cliente Supabase para autenticação
     let supabaseResponse = NextResponse.next({
         request,

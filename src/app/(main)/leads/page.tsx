@@ -28,8 +28,8 @@ export default function LeadsPage() {
                 setTenantId(profile.tenant_id)
                 const result = await getPipelineData(profile.tenant_id)
                 if (result.success && result.data) {
-                    setStages(result.data.stages)
-                    setLeads(result.data.leads)
+                    setStages(result.data.stages || [])
+                    setLeads(result.data.leads || [])
                 }
             }
         } catch (error) {

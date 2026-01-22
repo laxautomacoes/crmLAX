@@ -12,53 +12,10 @@ interface Asset {
 
 interface AssetsGridProps {
     assets: Asset[];
-    filters: {
-        tipo: string;
-        quartos: string;
-        precoMin: string;
-        precoMax: string;
-        search: string;
-    };
 }
 
-export function AssetsGrid({ assets, filters }: AssetsGridProps) {
-    const filteredAssets = assets.filter(asset => {
-        // Filtro de busca
-        if (filters.search) {
-            const searchLower = filters.search.toLowerCase();
-            const titleLower = asset.title.toLowerCase();
-            const tipo = (asset.details?.tipo_imovel || asset.details?.type || '').toLowerCase();
-            if (!titleLower.includes(searchLower) && !tipo.includes(searchLower)) {
-                return false;
-            }
-        }
-
-        // Filtro de tipo
-        if (filters.tipo) {
-            const tipo = (asset.details?.tipo_imovel || asset.details?.type || '').toLowerCase();
-            if (!tipo.includes(filters.tipo.toLowerCase())) {
-                return false;
-            }
-        }
-
-        // Filtro de quartos
-        if (filters.quartos) {
-            const quartos = String(asset.details?.quartos || asset.details?.rooms || '');
-            if (!quartos.includes(filters.quartos)) {
-                return false;
-            }
-        }
-
-        // Filtro de preço máximo
-        if (filters.precoMax && asset.price) {
-            const precoMax = parseFloat(filters.precoMax.replace(/[^\d,.-]/g, '').replace(',', '.'));
-            if (!isNaN(precoMax) && Number(asset.price) > precoMax) {
-                return false;
-            }
-        }
-
-        return true;
-    });
+export function AssetsGrid({ assets }: AssetsGridProps) {
+    const filteredAssets = assets;
 
     if (filteredAssets.length === 0) {
         return (

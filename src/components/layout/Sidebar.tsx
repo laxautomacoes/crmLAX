@@ -19,6 +19,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const supabase = createClient();
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [tenantSlug, setTenantSlug] = useState<string | null>(null);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -27,18 +28,33 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     };
 
     useEffect(() => {
-        async function fetchRole() {
+        async function fetchData() {
             const { data: { user } } = await supabase.auth.getUser();
             if (user) {
-                const { data } = await supabase
+                // Buscar Role
+                const { data: profile } = await supabase
                     .from('profiles')
-                    .select('role')
+                    .select('role, tenant_id')
                     .eq('id', user.id)
                     .maybeSingle();
-                setUserRole(data?.role || 'user');
+
+                setUserRole(profile?.role || 'user');
+
+                // Buscar Slug do Tenant
+                if (profile?.tenant_id) {
+                    const { data: tenant } = await supabase
+                        .from('tenants')
+                        .select('slug')
+                        .eq('id', profile.tenant_id)
+                        .maybeSingle();
+
+                    if (tenant?.slug) {
+                        setTenantSlug(tenant.slug);
+                    }
+                }
             }
         }
-        fetchRole();
+        fetchData();
     }, []);
 
     useEffect(() => {
@@ -50,7 +66,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             setExpandedItems(prev => [...prev, activeItem.name]);
     }, [pathname, searchParams]);
 
-    // Filtragem de itens do menu baseada em roles
+    // Filtragem de itens do menu baseada em roles e injeção de slug
     const filteredMenuItems = menuItems
         .filter(item => {
             if ((item as any).roles) {
@@ -59,18 +75,28 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             return true;
         })
         .map(item => {
-            if (item.subItems) {
-                return {
-                    ...item,
-                    subItems: item.subItems.filter(sub => {
+            const newItem = { ...item };
+            if (newItem.subItems) {
+                newItem.subItems = newItem.subItems
+                    .filter(sub => {
                         if ((sub as any).roles) {
                             return (sub as any).roles.includes(userRole);
                         }
                         return true;
                     })
-                };
+                    .map(sub => {
+                        // Se for o link do site, injetar o slug real
+                        if (sub.name === 'Site') {
+                            return {
+                                ...sub,
+                                href: tenantSlug ? `/site/${tenantSlug}` : '#',
+                                isExternal: true
+                            };
+                        }
+                        return sub;
+                    });
             }
-            return item;
+            return newItem;
         });
 
     return (
