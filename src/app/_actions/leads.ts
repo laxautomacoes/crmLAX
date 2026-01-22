@@ -140,7 +140,18 @@ export async function createLead(tenantId: string, data: any) {
                 name: data.name,
                 phone: cleanPhone(data.phone),
                 email: data.email,
-                tags: data.tags || []
+                tags: data.tags || [],
+                cpf: data.cpf,
+                address_street: data.address_street,
+                address_number: data.address_number,
+                address_complement: data.address_complement,
+                address_neighborhood: data.address_neighborhood,
+                address_city: data.address_city,
+                address_state: data.address_state,
+                address_zip_code: data.address_zip_code,
+                marital_status: data.marital_status,
+                birth_date: data.birth_date,
+                primary_interest: data.primary_interest
             },
             { onConflict: 'tenant_id,phone' }
         )
@@ -247,7 +258,18 @@ export async function updateLead(tenantId: string, leadId: string, data: any) {
             name: data.name,
             phone: cleanPhone(data.phone),
             email: data.email,
-            tags: data.tags || []
+            tags: data.tags || [],
+            cpf: data.cpf,
+            address_street: data.address_street,
+            address_number: data.address_number,
+            address_complement: data.address_complement,
+            address_neighborhood: data.address_neighborhood,
+            address_city: data.address_city,
+            address_state: data.address_state,
+            address_zip_code: data.address_zip_code,
+            marital_status: data.marital_status,
+            birth_date: data.birth_date,
+            primary_interest: data.primary_interest
         })
         .eq('id', lead.contact_id);
 

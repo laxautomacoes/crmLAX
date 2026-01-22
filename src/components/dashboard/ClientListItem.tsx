@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, Phone, Mail, Calendar, Sparkles, MessageSquare, Edit, Trash2 } from 'lucide-react'
+import { ChevronDown, Phone, Mail, Calendar, Sparkles, MessageSquare, Edit, Trash2, MapPin, User, IdCard, Heart, Target } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatPhone } from '@/lib/utils/phone'
 import { analyzeLeadProbability } from '@/app/_actions/ai-analysis'
@@ -162,6 +162,12 @@ function ClientExpandedContent({
                             <Phone size={16} className="text-muted-foreground" />
                             {formatPhone(client.phone)}
                         </div>
+                        {client.cpf && (
+                            <div className="flex items-center gap-3 text-sm text-foreground">
+                                <IdCard size={16} className="text-muted-foreground" />
+                                {client.cpf}
+                            </div>
+                        )}
                         <div className="flex items-center gap-3 text-sm text-foreground pt-2 border-t border-border">
                             <Calendar size={16} className="text-muted-foreground" />
                             Cliente desde {new Date(client.created_at).toLocaleDateString('pt-BR')}
@@ -169,7 +175,51 @@ function ClientExpandedContent({
                     </div>
                 </div>
 
-                <div className="flex flex-col gap-2">
+                {(client.marital_status || client.birth_date || client.primary_interest) && (
+                    <div className="space-y-4">
+                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Informações Adicionais</h4>
+                        <div className="bg-card p-4 rounded-xl border border-border space-y-3 shadow-sm">
+                            {client.birth_date && (
+                                <div className="flex items-center gap-3 text-sm text-foreground">
+                                    <Calendar size={16} className="text-muted-foreground" />
+                                    Nascimento: {new Date(client.birth_date).toLocaleDateString('pt-BR')}
+                                </div>
+                            )}
+                            {client.marital_status && (
+                                <div className="flex items-center gap-3 text-sm text-foreground">
+                                    <Heart size={16} className="text-muted-foreground" />
+                                    {client.marital_status}
+                                </div>
+                            )}
+                            {client.primary_interest && (
+                                <div className="flex items-center gap-3 text-sm text-foreground">
+                                    <Target size={16} className="text-muted-foreground" />
+                                    Interesse em <span className="font-bold capitalize">{client.primary_interest}</span>
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {client.address_street && (
+                    <div className="space-y-4">
+                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Endereço</h4>
+                        <div className="bg-card p-4 rounded-xl border border-border space-y-2 shadow-sm">
+                            <div className="flex items-start gap-3 text-sm text-foreground">
+                                <MapPin size={16} className="text-muted-foreground mt-0.5" />
+                                <div className="flex flex-col">
+                                    <span>{client.address_street}, {client.address_number}</span>
+                                    {client.address_complement && <span className="text-xs text-muted-foreground">{client.address_complement}</span>}
+                                    <span>{client.address_neighborhood}</span>
+                                    <span>{client.address_city} - {client.address_state}</span>
+                                    {client.address_zip_code && <span className="text-xs text-muted-foreground">{client.address_zip_code}</span>}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                <div className="flex flex-col gap-2 pt-4">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(); }}
                         className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm"
@@ -210,13 +260,15 @@ function ClientLeadsSection({ client }: any) {
                         client.leads.map((lead: any) => (
                             <div key={lead.id} className="bg-card p-4 rounded-xl border border-border shadow-sm">
                                 <div className="flex justify-between items-start mb-2">
-                                    <span className="text-xs font-bold text-foreground">{lead.source}</span>
+                                    <span className="text-xs font-bold text-foreground">
+                                        {lead.assets?.title || lead.source || 'Interesse não especificado'}
+                                    </span>
                                     <span className="px-2 py-0.5 bg-secondary/20 text-foreground text-[9px] font-bold rounded uppercase">
-                                        {lead.status}
+                                        {lead.status_name || lead.status}
                                     </span>
                                 </div>
-                                {lead.details?.interest && (
-                                    <p className="text-sm text-muted-foreground">{lead.details.interest}</p>
+                                {lead.assets?.title && lead.source && (
+                                    <p className="text-[10px] text-muted-foreground italic">Origem: {lead.source}</p>
                                 )}
                             </div>
                         ))

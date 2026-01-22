@@ -13,6 +13,17 @@ export interface ClientData {
     value?: number
     notes?: string
     tags?: string[]
+    cpf?: string
+    address_street?: string
+    address_number?: string
+    address_complement?: string
+    address_neighborhood?: string
+    address_city?: string
+    address_state?: string
+    address_zip_code?: string
+    marital_status?: string
+    birth_date?: string
+    primary_interest?: string
 }
 
 export async function getClients(tenantId: string) {
@@ -26,7 +37,16 @@ export async function getClients(tenantId: string) {
       leads (
         id,
         status,
+        stage_id,
+        created_at,
         source,
+        asset_id,
+        assets (
+            title
+        ),
+        lead_stages (
+            name
+        ),
         interactions (
             content,
             type,
@@ -45,21 +65,41 @@ export async function getClients(tenantId: string) {
     // Mapear para o formato esperado pelo front
     const clients = contacts.map(contact => {
         // Pegar o lead mais recente ou ativo
-        const activeLead = contact.leads?.[0]
+        const activeLead = (contact.leads as any[])?.sort((a, b) => 
+            new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        )[0]
+        
         // Pegar a última nota/mensagem
         const lastInteraction = activeLead?.interactions?.[0]?.content
+
+        // Interesse prioritário: Asset linkado, depois source
+        const interest = activeLead?.assets?.title || activeLead?.source || 'N/A'
 
         return {
             id: contact.id,
             name: contact.name,
             phone: contact.phone,
             email: contact.email,
+            cpf: contact.cpf,
+            address_street: contact.address_street,
+            address_number: contact.address_number,
+            address_complement: contact.address_complement,
+            address_neighborhood: contact.address_neighborhood,
+            address_city: contact.address_city,
+            address_state: contact.address_state,
+            address_zip_code: contact.address_zip_code,
+            marital_status: contact.marital_status,
+            birth_date: contact.birth_date,
+            primary_interest: contact.primary_interest,
             created_at: contact.created_at,
-            interest: activeLead?.source || 'N/A', // Usando source como interesse temporariamente se não houver asset linkado
+            interest,
             value: 0, // Implementar lógica de valor baseada em assets depois
             notes: lastInteraction || '',
             tags: contact.tags || [],
-            leads: contact.leads
+            leads: contact.leads?.map((l: any) => ({
+                ...l,
+                status_name: l.lead_stages?.name || l.status
+            }))
         }
     })
 
@@ -77,7 +117,18 @@ export async function createNewClient(tenantId: string, data: ClientData) {
             name: data.name,
             phone: cleanPhone(data.phone),
             email: data.email,
-            tags: data.tags
+            tags: data.tags,
+            cpf: data.cpf,
+            address_street: data.address_street,
+            address_number: data.address_number,
+            address_complement: data.address_complement,
+            address_neighborhood: data.address_neighborhood,
+            address_city: data.address_city,
+            address_state: data.address_state,
+            address_zip_code: data.address_zip_code,
+            marital_status: data.marital_status,
+            birth_date: data.birth_date,
+            primary_interest: data.primary_interest
         })
         .select()
         .single()
@@ -113,7 +164,18 @@ export async function updateClient(clientId: string, data: Partial<ClientData>) 
             name: data.name,
             phone: data.phone ? cleanPhone(data.phone) : undefined,
             email: data.email,
-            tags: data.tags
+            tags: data.tags,
+            cpf: data.cpf,
+            address_street: data.address_street,
+            address_number: data.address_number,
+            address_complement: data.address_complement,
+            address_neighborhood: data.address_neighborhood,
+            address_city: data.address_city,
+            address_state: data.address_state,
+            address_zip_code: data.address_zip_code,
+            marital_status: data.marital_status,
+            birth_date: data.birth_date,
+            primary_interest: data.primary_interest
         })
         .eq('id', clientId)
 
