@@ -69,13 +69,36 @@ export async function getDashboardMetrics(tenantId: string) {
         }
 
         // 4. Buscar estágios e contar leads por estágio
-        const { data: stages, error: stagesError } = await supabase
+        let { data: stages, error: stagesError } = await supabase
             .from('lead_stages')
             .select('id, name, order_index')
             .eq('tenant_id', tenantId)
             .order('order_index', { ascending: true })
 
         if (stagesError) throw stagesError
+
+        // Se não houver estágios, criar um padrão
+        if (!stages || stages.length === 0) {
+            const { error: insertError } = await supabase
+                .from('lead_stages')
+                .insert({
+                    tenant_id: tenantId,
+                    name: 'Novo Lead',
+                    order_index: 0
+                });
+
+            if (insertError) {
+                console.error('Erro ao criar estágio padrão na dashboard:', insertError);
+            } else {
+                // Re-buscar após criar
+                const { data: newStages } = await supabase
+                    .from('lead_stages')
+                    .select('id, name, order_index')
+                    .eq('tenant_id', tenantId)
+                    .order('order_index', { ascending: true });
+                stages = newStages;
+            }
+        }
 
         const funnelSteps = await Promise.all(
             (stages || []).map(async (stage) => {

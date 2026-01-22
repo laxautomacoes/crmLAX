@@ -28,5 +28,5 @@ export default async function DashboardPage() {
         recentLeads: []
     };
 
-    return <DashboardClient metrics={metrics} profileName={profile.full_name} />;
+    return <DashboardClient metrics={metrics} profileName={profile.full_name} tenantId={profile.tenant_id} />;
 }

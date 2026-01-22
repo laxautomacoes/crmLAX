@@ -8,7 +8,7 @@ export async function getPipelineData(tenantId: string) {
     const supabase = await createClient();
 
     // 1. Buscar estágios
-    const { data: stages, error: stagesError } = await supabase
+    let { data: stages, error: stagesError } = await supabase
         .from('lead_stages')
         .select('*')
         .eq('tenant_id', tenantId)
@@ -16,6 +16,29 @@ export async function getPipelineData(tenantId: string) {
 
     if (stagesError) {
         return { success: false, error: stagesError.message };
+    }
+
+    // Se não houver estágios, criar um padrão
+    if (!stages || stages.length === 0) {
+        const { error: insertError } = await supabase
+            .from('lead_stages')
+            .insert({
+                tenant_id: tenantId,
+                name: 'Novo Lead',
+                order_index: 0
+            });
+
+        if (insertError) {
+            console.error('Erro ao criar estágio padrão:', insertError);
+        } else {
+            // Re-buscar após criar
+            const { data: newStages } = await supabase
+                .from('lead_stages')
+                .select('*')
+                .eq('tenant_id', tenantId)
+                .order('order_index', { ascending: true });
+            stages = newStages;
+        }
     }
 
     // 2. Buscar leads com contatos
