@@ -3,7 +3,7 @@ import { NextResponse, type NextRequest } from 'next/server'
 import { isPublicRoute, isSiteRequest } from '@/lib/utils/tenant'
 import { getTenantByHostname } from '@/lib/utils/tenant-query'
 
-export async function proxy(request: NextRequest) {
+export default async function proxy(request: NextRequest) {
     const hostname = request.headers.get('host') || ''
     const pathname = request.nextUrl.pathname
 

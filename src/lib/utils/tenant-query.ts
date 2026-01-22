@@ -1,5 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
-import { TenantInfo } from './tenant';
+import { TenantInfo } from './tenant-types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export async function getTenantByHostname(hostname: string): Promise<TenantInfo | null> {

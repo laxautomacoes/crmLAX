@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { Loader2 } from 'lucide-react';
-import { createLeadFromSite } from '@/app/_actions/leads';
+import { createLeadFromSite } from '@/app/_actions/leads-site';
 import { LeadFormFields } from './LeadFormFields';
 
 interface LeadFormProps {
