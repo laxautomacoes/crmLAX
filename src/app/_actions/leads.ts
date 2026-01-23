@@ -119,7 +119,7 @@ export async function updateLeadStage(leadId: string, stageId: string) {
 
     const { error } = await supabase
         .from('leads')
-        .update({ stage_id: stageId })
+        .update({ stage_id: stageId || null })
         .eq('id', leadId);
 
     if (error) return { success: false, error: error.message };
@@ -150,7 +150,7 @@ export async function createLead(tenantId: string, data: any) {
                 address_state: data.address_state,
                 address_zip_code: data.address_zip_code,
                 marital_status: data.marital_status,
-                birth_date: data.birth_date,
+                birth_date: data.birth_date || null,
                 primary_interest: data.primary_interest
             },
             { onConflict: 'tenant_id,phone' }
@@ -166,7 +166,7 @@ export async function createLead(tenantId: string, data: any) {
         .insert({
             tenant_id: tenantId,
             contact_id: contact.id,
-            stage_id: data.stage_id,
+            stage_id: data.stage_id || null,
             notes: data.notes,
             value: data.value,
             source: data.interest || 'Direto'
@@ -268,7 +268,7 @@ export async function updateLead(tenantId: string, leadId: string, data: any) {
             address_state: data.address_state,
             address_zip_code: data.address_zip_code,
             marital_status: data.marital_status,
-            birth_date: data.birth_date,
+            birth_date: data.birth_date || null,
             primary_interest: data.primary_interest
         })
         .eq('id', lead.contact_id);
@@ -279,7 +279,7 @@ export async function updateLead(tenantId: string, leadId: string, data: any) {
     const { error: leadError } = await supabase
         .from('leads')
         .update({
-            stage_id: data.stage_id,
+            stage_id: data.stage_id || null,
             notes: data.notes,
             value: data.value,
             source: data.interest

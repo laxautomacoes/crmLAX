@@ -99,7 +99,7 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
                 <div className="relative" ref={dropdownRef}>
                     <button
                         onClick={() => setShowDropdown(!showDropdown)}
-                        className="text-[#404F4F]/60 hover:text-[#404F4F] transition-colors p-1 hover:bg-card rounded"
+                        className="text-muted-foreground hover:text-foreground transition-colors p-1 hover:bg-card rounded"
                     >
                         <MoreHorizontal size={16} />
                     </button>
@@ -159,9 +159,9 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
 
                 <button
                     onClick={() => onAddLead(id)}
-                    className="w-full py-2.5 border border-[#404F4F]/10 rounded-lg text-[#404F4F]/60 flex items-center justify-center gap-2 hover:text-[#404F4F] dark:hover:text-secondary hover:bg-card transition-all text-xs font-bold group mt-2 shadow-sm"
+                    className="w-full py-2.5 border border-border rounded-lg text-muted-foreground flex items-center justify-center gap-2 hover:text-foreground dark:hover:text-secondary hover:bg-card transition-all text-xs font-bold group mt-2 shadow-sm"
                 >
-                    <Plus size={14} className="group-hover:text-[#404F4F] dark:group-hover:text-secondary transition-colors" />
+                    <Plus size={14} className="group-hover:text-foreground dark:group-hover:text-secondary transition-colors" />
                     Novo Lead
                 </button>
             </div>

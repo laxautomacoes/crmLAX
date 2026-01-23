@@ -16,7 +16,7 @@ export function UserAvatar({ src, name, role, className = "" }: UserAvatarProps)
 
     return (
         <div className="relative inline-block">
-            <div className={`rounded-full bg-[#404F4F] flex items-center justify-center text-white font-medium overflow-hidden shrink-0 ${className}`}>
+            <div className={`rounded-full bg-primary flex items-center justify-center text-primary-foreground font-medium overflow-hidden shrink-0 ${className}`}>
                 {src ? (
                     <img
                         src={src}
@@ -24,7 +24,7 @@ export function UserAvatar({ src, name, role, className = "" }: UserAvatarProps)
                         className="h-full w-full object-cover"
                         onError={(e) => {
                             (e.target as HTMLImageElement).style.display = 'none';
-                            (e.target as HTMLImageElement).parentElement?.classList.add('bg-[#404F4F]');
+                            (e.target as HTMLImageElement).parentElement?.classList.add('bg-primary');
                         }}
                     />
                 ) : (
@@ -32,7 +32,7 @@ export function UserAvatar({ src, name, role, className = "" }: UserAvatarProps)
                 )}
             </div>
             {isSuperAdmin && (
-                <div className="absolute -bottom-1 -right-1 bg-[#FFE600] text-[#404F4F] text-[8px] font-black px-1 rounded-sm border border-[#404F4F] shadow-sm uppercase tracking-tighter">
+                <div className="absolute -bottom-1 -right-1 bg-secondary text-secondary-foreground text-[8px] font-black px-1 rounded-sm border border-primary shadow-sm uppercase tracking-tighter">
                     Admin
                 </div>
             )}

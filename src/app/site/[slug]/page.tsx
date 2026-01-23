@@ -9,35 +9,60 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
 
     if (!tenant) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-screen py-2">
-                <h1 className="text-4xl font-bold text-red-600">Loja não encontrada</h1>
-                <p className="mt-4 text-xl">A loja solicitada não existe ou não está disponível.</p>
+            <div className="flex flex-col items-center justify-center min-h-screen py-2 bg-background">
+                <h1 className="text-4xl font-bold text-destructive">Loja não encontrada</h1>
+                <p className="mt-4 text-xl text-muted-foreground">A loja solicitada não existe ou não está disponível.</p>
             </div>
         );
     }
 
-    const supabase = await createClient();
-    const { data: assets } = await supabase
-        .from('assets')
-        .select('id, title, price, images, details, status')
-        .eq('tenant_id', tenant.id)
-        .eq('status', 'available')
-        .order('created_at', { ascending: false });
+    let assets: any[] = [];
+    let whatsappNumber: string | null = null;
 
-    const whatsappNumber = await getTenantWhatsApp(tenant.id);
+    try {
+        const supabase = await createClient();
+
+        console.log('Fetching assets for tenant:', { id: tenant.id, slug: tenant.slug, name: tenant.name });
+
+        const { data, error: supabaseError } = await supabase
+            .from('assets')
+            .select('*')
+            .eq('tenant_id', tenant.id)
+            .order('created_at', { ascending: false });
+
+        if (supabaseError) {
+            console.error('Supabase error fetching assets:', {
+                message: supabaseError.message,
+                details: supabaseError.details,
+                hint: supabaseError.hint,
+                code: supabaseError.code
+            });
+        } else {
+            console.log(`Found ${data?.length || 0} assets`);
+            assets = data?.filter(a => 
+                a.status?.toLowerCase() === 'disponível' || 
+                a.status?.toLowerCase() === 'disponivel' ||
+                a.status?.toLowerCase() === 'available'
+            ) || [];
+        }
+
+        whatsappNumber = await getTenantWhatsApp(tenant.id);
+    } catch (err) {
+        console.error('Unexpected error in SitePage:', err);
+    }
 
     return (
-        <div className="min-h-screen bg-[#F0F2F5]">
+        <div className="min-h-screen bg-background">
             <div className="max-w-[1600px] mx-auto px-4 py-8">
                 <div className="mb-8 text-center md:text-left">
-                    <h1 className="text-4xl font-bold text-[#404F4F]">{tenant.name}</h1>
+                    <h1 className="text-4xl font-bold text-foreground">{tenant.name}</h1>
                     <p className="mt-2 text-xl text-muted-foreground">
                         Encontre o seu novo lar
                     </p>
                 </div>
 
                 <SiteClient
-                    assets={assets || []}
+                    assets={assets}
                     tenantName={tenant.name}
                     whatsappNumber={whatsappNumber}
                 />

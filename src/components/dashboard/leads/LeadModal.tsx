@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { ChevronDown } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
 import { formatPhone } from '@/lib/utils/phone'
 import { toast } from 'sonner'
@@ -107,7 +108,7 @@ export function LeadModal({
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                        <label className="block text-sm font-bold text-gray-800 ml-1 mb-1">Nome completo *</label>
+                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Nome completo *</label>
                         <input
                             type="text"
                             value={leadData.name}
@@ -117,7 +118,7 @@ export function LeadModal({
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-gray-800 ml-1 mb-1">Telefone *</label>
+                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Telefone *</label>
                         <input
                             type="text"
                             value={leadData.phone}
@@ -127,7 +128,7 @@ export function LeadModal({
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-gray-800 ml-1 mb-1">E-mail</label>
+                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">E-mail</label>
                         <input
                             type="email"
                             value={leadData.email}
@@ -137,7 +138,7 @@ export function LeadModal({
                         />
                     </div>
                     <div className="col-span-2">
-                        <label className="block text-sm font-bold text-gray-800 ml-1 mb-1">Interesse</label>
+                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Interesse</label>
                         <input
                             type="text"
                             value={leadData.interest}
@@ -147,21 +148,24 @@ export function LeadModal({
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-gray-800 ml-1 mb-1">Estágio Inicial *</label>
-                        <select
-                            value={leadData.stage_id}
-                            onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all"
-                        >
-                            <option value="">Selecione um estágio</option>
-                            {stages.map((s) => (
-                                <option key={s.id} value={s.id}>{s.name}</option>
-                            ))}
-                        </select>
+                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Estágio Inicial *</label>
+                        <div className="relative">
+                            <select
+                                value={leadData.stage_id}
+                                onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
+                                className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all appearance-none pr-10"
+                            >
+                                <option value="">Selecione um estágio</option>
+                                {stages.map((s) => (
+                                    <option key={s.id} value={s.id}>{s.name}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                        </div>
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-gray-800 ml-1 mb-1">Valor Estimado</label>
+                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Valor Estimado</label>
                         <input
                             type="number"
                             value={leadData.value}
@@ -171,7 +175,7 @@ export function LeadModal({
                         />
                     </div>
                     <div className="col-span-2">
-                        <label className="block text-sm font-bold text-gray-800 ml-1 mb-1">Notas/Observações</label>
+                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Notas/Observações</label>
                         <textarea
                             value={leadData.notes}
                             onChange={(e) => setLeadData({ ...leadData, notes: e.target.value })}
@@ -181,13 +185,21 @@ export function LeadModal({
                         />
                     </div>
                 </div>
-                <button
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                    className="w-full py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:bg-[#F2DB00] shadow-sm active:scale-[0.99] transition-all disabled:opacity-50"
-                >
-                    {isLoading ? "Processando..." : (editingLead ? "Salvar Alterações" : "Criar Lead")}
-                </button>
+                <div className="flex gap-3 pt-2">
+                    <button
+                        onClick={onClose}
+                        className="flex-1 py-3 bg-card text-foreground border border-border rounded-lg font-bold hover:bg-muted transition-all active:scale-[0.99]"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="flex-1 py-3 bg-yellow-400 text-black rounded-lg font-bold hover:bg-yellow-500 shadow-sm active:scale-[0.99] transition-all disabled:opacity-50"
+                    >
+                        {isLoading ? "Processando..." : (editingLead ? "Salvar Alterações" : "Criar Lead")}
+                    </button>
+                </div>
             </div>
         </Modal>
     )

@@ -107,7 +107,7 @@ export default function RoadmapPage() {
     if (loading) {
         return (
             <div className="flex flex-col items-center justify-center min-h-[400px]">
-                <Loader2 className="w-8 h-8 animate-spin text-[#FFE600]" />
+                <Loader2 className="w-8 h-8 animate-spin text-secondary" />
                 <p className="mt-4 text-muted-foreground font-medium text-sm">Carregando Roadmap...</p>
             </div>
         );
@@ -118,13 +118,13 @@ export default function RoadmapPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-[#404F4F]">Roadmap do Produto</h1>
+                    <h1 className="text-2xl font-bold text-foreground">Roadmap do Produto</h1>
                     <p className="text-muted-foreground text-sm">Acompanhe as próximas funcionalidades e melhorias do CRM LAX</p>
                 </div>
                 {isSuperAdmin && (
                     <button
                         onClick={() => handleOpenModal()}
-                        className="bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-bold py-2.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
+                        className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
                     >
                         <Plus size={20} />
                         Novo Item
@@ -150,7 +150,7 @@ export default function RoadmapPage() {
                             <div className="flex items-start justify-between mb-4">
                                 <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${item.type === 'feature' ? 'bg-blue-100 text-blue-600' :
                                         item.type === 'fix' ? 'bg-orange-100 text-orange-600' :
-                                            'bg-[#FFE600]/10 text-[#404F4F]'
+                                            'bg-secondary/10 text-secondary'
                                     }`}>
                                     {item.type}
                                 </span>
@@ -172,7 +172,7 @@ export default function RoadmapPage() {
                                 )}
                             </div>
 
-                            <h3 className="font-bold text-lg text-[#404F4F] mb-1.5">{item.title}</h3>
+                            <h3 className="font-bold text-lg text-foreground mb-1.5">{item.title}</h3>
                             <p className="text-sm text-muted-foreground line-clamp-3 mb-6 flex-1 font-medium">
                                 {item.description}
                             </p>
@@ -202,42 +202,42 @@ export default function RoadmapPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
                     <div className="bg-card w-full max-w-md rounded-2xl shadow-xl border border-border overflow-hidden ring-1 ring-black/5">
                         <div className="p-6 border-b border-border">
-                            <h2 className="text-xl font-bold text-[#404F4F]">
+                            <h2 className="text-xl font-bold text-foreground">
                                 {editingItem ? 'Editar Item' : 'Novo Item do Roadmap'}
                             </h2>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-5">
                             <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-gray-800 ml-1">Título</label>
+                                <label className="text-sm font-bold text-foreground ml-1">Título</label>
                                 <input
                                     type="text"
                                     required
                                     value={formData.title}
                                     onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none transition-all font-medium text-foreground"
+                                    className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none transition-all font-medium text-foreground"
                                     placeholder="Ex: Novo dashboard de métricas"
                                 />
                             </div>
 
                             <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-gray-800 ml-1">Descrição</label>
+                                <label className="text-sm font-bold text-foreground ml-1">Descrição</label>
                                 <textarea
                                     rows={3}
                                     value={formData.description}
                                     onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none transition-all font-medium resize-none text-foreground"
+                                    className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none transition-all font-medium resize-none text-foreground"
                                     placeholder="Descreva brevemente a funcionalidade..."
                                 />
                             </div>
 
                             <div className="grid grid-cols-2 gap-4">
                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-gray-800 ml-1">Tipo</label>
+                                    <label className="text-sm font-bold text-foreground ml-1">Tipo</label>
                                     <div className="relative">
                                         <select
                                             value={formData.type}
                                             onChange={(e: any) => setFormData({ ...formData, type: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none appearance-none font-medium text-foreground"
+                                            className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none appearance-none font-medium text-foreground"
                                         >
                                             <option value="roadmap">Roadmap</option>
                                             <option value="feature">Melhoria</option>
@@ -246,11 +246,11 @@ export default function RoadmapPage() {
                                     </div>
                                 </div>
                                 <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-gray-800 ml-1">Status</label>
+                                    <label className="text-sm font-bold text-foreground ml-1">Status</label>
                                     <select
                                         value={formData.status}
                                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-muted/30 border border-border rounded-lg text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none appearance-none font-medium text-foreground"
+                                        className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none appearance-none font-medium text-foreground"
                                     >
                                         <option value="planned">Planejado</option>
                                         <option value="in_progress">Em Progresso</option>
@@ -270,7 +270,7 @@ export default function RoadmapPage() {
                                 <button
                                     type="submit"
                                     disabled={actionLoading}
-                                    className="flex-[2] py-2.5 bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-bold rounded-lg transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
+                                    className="flex-[2] py-2.5 bg-secondary hover:opacity-90 text-secondary-foreground font-bold rounded-lg transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
                                 >
                                     {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (editingItem ? 'Salvar Alterações' : 'Adicionar Item')}
                                 </button>

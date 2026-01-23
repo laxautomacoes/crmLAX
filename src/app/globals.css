@@ -1,23 +1,26 @@
 @import "tailwindcss";
 
 :root {
+  color-scheme: light;
   --background: #FAFBFD;
-  --foreground: #404F4F;
+  --foreground: #2D3737; /* Slightly darker for better contrast */
   --card: #FFFFFF;
-  --card-foreground: #404F4F;
-  --border: #E5E7EB;
-  --input: #F9FAFB;
-  --primary: #404F4F;
+  --card-foreground: #2D3737;
+  --border: #E2E8F0; /* Slightly darker border */
+  --input: #F8FAFC;
+  --primary: #2D3737; /* Darker primary */
   --primary-foreground: #FFFFFF;
-  --secondary: #FFE600;
-  --secondary-foreground: #404F4F;
-  --muted: #6B7280;
-  --muted-foreground: #9CA3AF;
-  --sidebar: #404F4F;
+  --secondary: #B29600; /* Darker yellow/gold for high contrast in light mode */
+  --secondary-foreground: #FFFFFF; /* White text on dark yellow background */
+  --muted: #F1F5F9;
+  --muted-foreground: #475569; /* Darker muted text */
+  --sidebar: #2D3737;
   --sidebar-foreground: #FFFFFF;
+  --ring: #B29600;
 }
 
 .dark {
+  color-scheme: dark;
   --background: #121414;
   --foreground: #F0F2F5;
   --card: #1A1F1F;
@@ -28,10 +31,11 @@
   --primary-foreground: #FFFFFF;
   --secondary: #FFE600;
   --secondary-foreground: #121414;
-  --muted: #9CA3AF;
-  --muted-foreground: #6B7280;
+  --muted: #2D3939;
+  --muted-foreground: #9CA3AF;
   --sidebar: #0D0F0F;
   --sidebar-foreground: #F0F2F5;
+  --ring: #FFE600;
 }
 
 @theme inline {
@@ -45,8 +49,11 @@
   --color-primary-foreground: var(--primary-foreground);
   --color-secondary: var(--secondary);
   --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-ring: var(--ring);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -56,4 +63,30 @@ body {
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* Customizing native date/time picker */
+input[type="date"],
+input[type="datetime-local"],
+input[type="time"] {
+  accent-color: var(--secondary);
+  font-family: var(--font-sans), sans-serif;
+}
+
+/* Webkit specific styles for the input fields */
+::-webkit-calendar-picker-indicator {
+  cursor: pointer;
+  border-radius: 4px;
+  padding: 2px;
+  filter: invert(var(--calendar-icon-invert, 0));
+  transition: all 0.2s;
+}
+
+::-webkit-calendar-picker-indicator:hover {
+  background-color: var(--secondary);
+  color: var(--secondary-foreground);
+}
+
+.dark {
+  --calendar-icon-invert: 1;
 }

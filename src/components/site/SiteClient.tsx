@@ -64,7 +64,7 @@ export function SiteClient({ assets, tenantName, whatsappNumber }: SiteClientPro
     if (!assets || assets.length === 0) {
         return (
             <div className="text-center py-12 bg-card rounded-2xl border border-border">
-                <p className="text-lg font-semibold text-[#404F4F] mb-2">
+                <p className="text-lg font-semibold text-foreground mb-2">
                     Nenhum imóvel disponível no momento
                 </p>
                 <p className="text-sm text-muted-foreground">

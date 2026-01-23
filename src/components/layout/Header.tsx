@@ -60,30 +60,30 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                     {/* Mobile Menu Button ... */}
                     <button
                         onClick={onMenuClick}
-                        className="md:hidden text-[#404F4F]/60 hover:text-[#404F4F] absolute left-4"
+                        className="md:hidden text-foreground/70 hover:text-foreground absolute left-4"
                     >
                         <Menu size={24} />
                     </button>
 
-                    {/* Desktop Collapse Button ... */}
+                    {/* Desktop Collapse Button */}
                     <button
                         onClick={toggleSidebar}
-                        className="hidden md:block text-[#404F4F]/60 hover:text-[#404F4F] transition-colors"
+                        className="hidden md:block text-foreground/70 hover:text-foreground transition-colors"
                     >
                         {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
                     </button>
 
-                    {/* Desktop Welcome & Date ... */}
+                    {/* Desktop Welcome & Date */}
                     <div className="hidden md:flex flex-col ml-4">
                         <h2 className="text-lg font-semibold text-foreground">
                             Bem-vindo, {profile?.full_name || 'Léo Acosta'}
                         </h2>
-                        <span className="text-xs text-[#404F4F]/60">{formattedDate}</span>
+                        <span className="text-xs text-foreground/70">{formattedDate}</span>
                     </div>
 
                     {/* Mobile Centered Logo ... */}
                     <div className="md:hidden flex-1 flex justify-center">
-                        <span className="text-xl font-bold text-[#FFE600] text-shadow-sm ml-6">CRM LAX</span>
+                        <span className="text-xl font-bold text-secondary text-shadow-sm ml-6">CRM LAX</span>
                     </div>
                 </div>
 
@@ -92,14 +92,14 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         {mounted && (
                             <button
                                 onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                                className="text-[#404F4F]/60 hover:text-[#404F4F] transition-colors"
+                                className="text-foreground/70 hover:text-foreground transition-colors"
                             >
                                 {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
                             </button>
                         )}
                         <button
                             onClick={() => setIsNotificationsOpen(true)}
-                            className="text-[#404F4F]/60 hover:text-[#404F4F] relative"
+                            className="text-foreground/70 hover:text-foreground relative"
                         >
                             <Bell size={20} />
                             {unreadCount > 0 && (

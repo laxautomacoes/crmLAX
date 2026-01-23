@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Plus, Search } from 'lucide-react'
+import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
 import { formatPhone } from '@/lib/utils/phone'
 import { createNewClient, updateClient, deleteClient } from '@/app/_actions/clients'
@@ -164,7 +164,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     </div>
                     <button
                         onClick={handleOpenCreate}
-                        className="flex items-center gap-2 px-4 py-2 bg-primary hover:opacity-90 text-primary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99]"
+                        className="flex items-center gap-2 px-4 py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99]"
                     >
                         <Plus size={18} />
                         Novo Cliente

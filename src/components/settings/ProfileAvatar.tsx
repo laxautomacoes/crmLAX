@@ -30,15 +30,23 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
             }
 
             const file = event.target.files[0];
+            
+            // Validação de tamanho (2MB para avatar)
+            if (file.size > 2 * 1024 * 1024) {
+                throw new Error('A imagem é muito grande. O limite é 2MB.');
+            }
+
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random()}.${fileExt}`;
+            const fileName = `${profile.id}-${Date.now()}.${fileExt}`;
             const filePath = `${profile.id}/${fileName}`;
 
             const supabase = createClient();
 
             const { error: uploadError } = await supabase.storage
                 .from('avatars')
-                .upload(filePath, file);
+                .upload(filePath, file, {
+                    cacheControl: '3600'
+                });
 
             if (uploadError) throw uploadError;
 

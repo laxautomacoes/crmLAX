@@ -78,3 +78,30 @@ export async function deleteNotifications(ids: string[]) {
         return { error: 'Failed to delete notifications' }
     }
 }
+
+export async function createNotification(data: {
+    user_id: string;
+    title: string;
+    message: string;
+    type?: string;
+}) {
+    try {
+        const supabase = await createClient()
+        
+        const { error } = await supabase
+            .from('notifications')
+            .insert([{
+                ...data,
+                read: false,
+                created_at: new Date().toISOString()
+            }])
+
+        if (error) throw error
+
+        revalidatePath('/dashboard')
+        return { success: true }
+    } catch (error) {
+        console.error('Error creating notification:', error)
+        return { error: 'Failed to create notification' }
+    }
+}

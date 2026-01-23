@@ -298,25 +298,25 @@ function ClientLeadsSection({ client }: any) {
 function ClientAIAnalysis({ isAnalyzed, analysisLoading, analysisResult, handleAnalyze, setIsAnalyzed }: any) {
     return (
         <div className="lg:col-span-4 space-y-4">
-            <h4 className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-1">Inteligência Artificial</h4>
-            <div className="bg-[#404F4F] p-6 rounded-2xl text-white shadow-xl relative overflow-hidden group">
+            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Inteligência Artificial</h4>
+            <div className="bg-primary p-6 rounded-2xl text-primary-foreground shadow-xl relative overflow-hidden group">
                 <div className="absolute top-0 right-0 p-4 opacity-10">
                     <Sparkles size={80} />
                 </div>
 
                 {!isAnalyzed ? (
                     <div className="relative z-10 text-center space-y-4">
-                        <div className="bg-[#FFE600] w-12 h-12 rounded-2xl flex items-center justify-center mx-auto shadow-lg text-[#404F4F]">
+                        <div className="bg-secondary w-12 h-12 rounded-2xl flex items-center justify-center mx-auto shadow-lg text-secondary-foreground">
                             <Sparkles size={24} />
                         </div>
                         <div>
                             <h5 className="font-bold text-sm">Análise Preditiva</h5>
-                            <p className="text-[11px] text-gray-300 mt-1">Gere um insight automático baseado no comportamento deste cliente.</p>
+                            <p className="text-[11px] text-primary-foreground/70 mt-1">Gere um insight automático baseado no comportamento deste cliente.</p>
                         </div>
                         <button
                             onClick={handleAnalyze}
                             disabled={analysisLoading}
-                            className="w-full py-2.5 bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+                            className="w-full py-2.5 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
                         >
                             {analysisLoading ? <span className="animate-pulse">Analisando...</span> : 'Gerar Insight Agora'}
                         </button>
@@ -329,16 +329,16 @@ function ClientAIAnalysis({ isAnalyzed, analysisLoading, analysisResult, handleA
                     >
                         <div className="flex items-center justify-between">
                             <h5 className="font-bold text-sm flex items-center gap-2">
-                                <Sparkles size={14} className="text-[#FFE600]" /> Resultado IA
+                                <Sparkles size={14} className="text-secondary" /> Resultado IA
                             </h5>
                             <button
                                 onClick={(e) => { e.stopPropagation(); setIsAnalyzed(false); }}
-                                className="text-[10px] text-gray-400 hover:text-white underline"
+                                className="text-[10px] text-primary-foreground/60 hover:text-primary-foreground underline"
                             >
                                 Nova Análise
                             </button>
                         </div>
-                        <p className="text-xs text-gray-100 leading-relaxed italic bg-black/20 p-4 rounded-xl border border-white/5">
+                        <p className="text-xs text-primary-foreground/90 leading-relaxed italic bg-black/20 p-4 rounded-xl border border-white/5">
                             {analysisResult}
                         </p>
                     </motion.div>

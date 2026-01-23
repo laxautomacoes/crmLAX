@@ -49,7 +49,7 @@ export default function DashboardClient({ metrics, profileName, tenantId }: Dash
                 <div className="flex items-center justify-center md:justify-end gap-3">
                     <button
                         onClick={() => setIsLeadModalOpen(true)}
-                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:bg-[#F2DB00] active:scale-[0.99] transition-all text-sm font-bold shadow-sm"
+                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold shadow-sm"
                     >
                         <Plus size={18} />
                         Novo Lead

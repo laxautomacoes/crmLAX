@@ -6,9 +6,10 @@ interface PropertyListProps {
     properties: any[]
     onEdit: (prop: any) => void
     onDelete: (id: string) => void
+    onView: (prop: any) => void
 }
 
-export function PropertyList({ properties, onEdit, onDelete }: PropertyListProps) {
+export function PropertyList({ properties, onEdit, onDelete, onView }: PropertyListProps) {
     if (properties.length === 0) {
         return (
             <div className="text-center py-20 bg-card rounded-2xl border border-dashed border-border">
@@ -26,8 +27,9 @@ export function PropertyList({ properties, onEdit, onDelete }: PropertyListProps
                             <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Imóvel</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tipo</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Detalhes</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Área</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Valor</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Áreas</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Valores</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Lazer</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Status</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-right">Ações</th>
                         </tr>
@@ -39,6 +41,7 @@ export function PropertyList({ properties, onEdit, onDelete }: PropertyListProps
                                 prop={prop}
                                 onEdit={onEdit}
                                 onDelete={onDelete}
+                                onView={onView}
                             />
                         ))}
                     </tbody>

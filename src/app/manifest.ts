@@ -7,8 +7,8 @@ export default function manifest(): MetadataRoute.Manifest {
         description: 'Plataforma vertical para imobiliárias e corretores',
         start_url: '/dashboard',
         display: 'standalone',
-        background_color: '#404F4F',
-        theme_color: '#404F4F',
+        background_color: '#ffffff',
+        theme_color: '#000000',
         icons: [
             {
                 src: '/favicon.ico',

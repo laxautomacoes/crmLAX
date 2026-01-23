@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { getProfile } from '@/app/_actions/profile';
+import { initStorageBuckets } from '@/app/_actions/storage';
 import { ProfileAvatar } from './ProfileAvatar';
 import { ProfileInfo } from './ProfileInfo';
 import { PasswordForm } from './PasswordForm';
@@ -11,6 +12,9 @@ export function ProfileTab() {
 
     useEffect(() => {
         async function loadProfile() {
+            // Tentar inicializar buckets se necessário
+            await initStorageBuckets();
+            
             const { profile } = await getProfile();
             if (profile) setProfile(profile);
         }

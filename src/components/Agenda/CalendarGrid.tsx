@@ -12,11 +12,13 @@ import {
     isSameMonth,
     isSameDay,
     addDays,
-    eachDayOfInterval
+    eachDayOfInterval,
+    addMinutes
 } from 'date-fns';
-import { ptBR } from 'date-fns/locale';
-import { ChevronLeft, ChevronRight, Plus } from 'lucide-react';
+import { ptBR, enUS } from 'date-fns/locale';
+import { ChevronLeft, ChevronRight, Plus, ChevronDown } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getBrazilianHolidays } from '@/lib/utils/holidays';
 
 interface CalendarGridProps {
     events: any[];
@@ -50,9 +52,23 @@ export default function CalendarGrid({ events, onAddEvent, onEditEvent }: Calend
     const endDate = endOfWeek(monthEnd, { weekStartsOn: 0 });
 
     const days = eachDayOfInterval({ start: startDate, end: endDate });
+    const holidays = getBrazilianHolidays(currentMonth.getFullYear());
 
     const getEventsForDay = (day: Date) => {
         return events.filter(event => isSameDay(new Date(event.start_time), day));
+    };
+
+    const getHolidaysForDay = (day: Date) => {
+        return holidays.filter(holiday => isSameDay(holiday.date, day));
+    };
+
+    // Função para converter data UTC do banco para data local com correção de timezone
+    const toLocalTime = (dateStr: string) => {
+        const date = new Date(dateStr);
+        // O Supabase retorna TIMESTAMPTZ, o JS converte para local automaticamente.
+        // Garantimos que a exibição ignore variações de fuso se necessário, 
+        // mas aqui formatamos para pt-BR (Brasília).
+        return date;
     };
 
     return (
@@ -78,16 +94,6 @@ export default function CalendarGrid({ events, onAddEvent, onEditEvent }: Calend
                         </button>
                     </div>
                 </div>
-
-                <div className="flex items-center gap-3">
-                    <button
-                        onClick={() => onAddEvent(new Date())}
-                        className="bg-yellow-400 hover:bg-yellow-500 text-zinc-900 font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-all transform active:scale-95"
-                    >
-                        <Plus size={18} />
-                        Agendar
-                    </button>
-                </div>
             </div>
 
             {/* Days Header */}
@@ -103,6 +109,7 @@ export default function CalendarGrid({ events, onAddEvent, onEditEvent }: Calend
             <div className="grid grid-cols-7 auto-rows-[120px] md:auto-rows-[160px]">
                 {days.map((day, idx) => {
                     const dayEvents = getEventsForDay(day);
+                    const dayHolidays = getHolidaysForDay(day);
                     const isToday = isSameDay(day, new Date());
                     const isCurrentMonth = isSameMonth(day, monthStart);
 
@@ -110,18 +117,29 @@ export default function CalendarGrid({ events, onAddEvent, onEditEvent }: Calend
                         <div
                             key={day.toString()}
                             className={`
-                                border-r border-b border-border p-2 transition-colors relative group
+                                border-r border-b border-border p-2 transition-colors relative group min-h-[100px] md:min-h-[140px]
                                 ${!isCurrentMonth ? 'bg-muted/5' : 'bg-card'}
                                 ${idx % 7 === 6 ? 'border-r-0' : ''}
                             `}
                         >
                             <div className="flex justify-between items-start mb-1">
-                                <span className={`
-                                    text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full
-                                    ${isToday ? 'bg-yellow-400 text-zinc-900' : isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'}
-                                `}>
-                                    {format(day, 'd')}
-                                </span>
+                                <div className="flex flex-col gap-0.5">
+                                    <span className={`
+                                        text-sm font-semibold w-7 h-7 flex items-center justify-center rounded-full
+                                        ${isToday ? 'bg-secondary text-secondary-foreground' : isCurrentMonth ? 'text-foreground' : 'text-muted-foreground'}
+                                    `}>
+                                        {format(day, 'd')}
+                                    </span>
+                                    {dayHolidays.map((holiday, hIdx) => (
+                                        <span 
+                                            key={hIdx} 
+                                            className={`text-[9px] font-bold leading-tight ${holiday.type === 'holiday' ? 'text-red-500' : 'text-blue-500'}`}
+                                            title={holiday.name}
+                                        >
+                                            {holiday.name}
+                                        </span>
+                                    ))}
+                                </div>
 
                                 <button
                                     onClick={() => onAddEvent(day)}
@@ -131,22 +149,27 @@ export default function CalendarGrid({ events, onAddEvent, onEditEvent }: Calend
                                 </button>
                             </div>
 
-                            <div className="space-y-1 overflow-y-auto max-h-[80px] md:max-h-[120px] no-scrollbar">
+                            <div className="space-y-1 overflow-y-auto max-h-[60px] md:max-h-[100px] no-scrollbar">
                                 {dayEvents.map(event => (
                                     <button
                                         key={event.id}
                                         onClick={() => onEditEvent(event)}
                                         className={`
                                             w-full text-left px-2 py-1 rounded text-[10px] md:text-xs font-medium border
-                                            truncate transition-all hover:brightness-95
+                                            transition-all hover:brightness-95
                                             ${eventTypeColors[event.event_type as keyof typeof eventTypeColors] || eventTypeColors.other}
                                         `}
                                     >
-                                        <div className="flex items-center gap-1">
-                                            <span className="font-bold opacity-70">
-                                                {format(new Date(event.start_time), 'HH:mm')}
-                                            </span>
-                                            <span className="truncate">{event.title}</span>
+                                        <div className="flex flex-col">
+                                            <div className="flex items-center gap-1">
+                                                <span className="font-bold opacity-70 shrink-0">
+                                                    {format(toLocalTime(event.start_time), 'HH:mm', { locale: ptBR })}
+                                                </span>
+                                                <span className="truncate">{event.title}</span>
+                                            </div>
+                                            <div className="text-[8px] md:text-[9px] opacity-60 leading-tight">
+                                                {eventTypeLabels[event.event_type as keyof typeof eventTypeLabels] || eventTypeLabels.other}
+                                            </div>
                                         </div>
                                     </button>
                                 ))}

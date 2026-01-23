@@ -17,11 +17,11 @@ export function InvitationsTable({ invitations, fetching }: InvitationsTableProp
     };
 
     return (
-        <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
-            <div className="p-6 border-b border-gray-50 flex items-center justify-between">
-                <div className="flex items-center gap-3 text-[#404F4F]">
-                    <div className="p-2 bg-[#404F4F]/5 rounded-xl">
-                        <Shield className="w-5 h-5" />
+        <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
+            <div className="p-6 border-b border-border flex items-center justify-between">
+                <div className="flex items-center gap-3 text-foreground">
+                    <div className="p-2 bg-primary/5 rounded-xl">
+                        <Shield className="w-5 h-5 text-primary" />
                     </div>
                     <h3 className="font-bold">Convites Ativos</h3>
                 </div>
@@ -30,7 +30,7 @@ export function InvitationsTable({ invitations, fetching }: InvitationsTableProp
             <div className="overflow-x-auto">
                 <table className="w-full">
                     <thead>
-                        <tr className="bg-gray-50 text-left text-xs font-bold text-gray-500 uppercase tracking-wider">
+                        <tr className="bg-muted/50 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
                             <th className="px-6 py-4">Usuário</th>
                             <th className="px-6 py-4">Papel</th>
                             <th className="px-6 py-4">Status</th>
@@ -38,17 +38,17 @@ export function InvitationsTable({ invitations, fetching }: InvitationsTableProp
                             <th className="px-6 py-4 text-right">Ação</th>
                         </tr>
                     </thead>
-                    <tbody className="divide-y divide-gray-50">
+                    <tbody className="divide-y divide-border">
                         {fetching ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                                     <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                                     Carregando convites...
                                 </td>
                             </tr>
                         ) : invitations.length === 0 ? (
                             <tr>
-                                <td colSpan={5} className="px-6 py-12 text-center text-gray-400">
+                                <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
                                     Nenhum convite pendente.
                                 </td>
                             </tr>

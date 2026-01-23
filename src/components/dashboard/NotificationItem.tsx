@@ -32,26 +32,26 @@ export function NotificationItem({ notification, isSelected, onToggleSelect }: N
 
     return (
         <div
-            className={`flex items-start gap-4 p-5 border-b border-gray-50 transition-all hover:bg-[#F9FAFB] ${!notification.read ? 'bg-[#F0F7FF]/30' : ''}`}
+            className={`flex items-start gap-4 p-5 border-b border-border transition-all hover:bg-muted/50 ${!notification.read ? 'bg-secondary/10' : ''}`}
         >
             <button
                 onClick={() => onToggleSelect(notification.id)}
                 className="pt-0.5 shrink-0"
             >
                 {isSelected ? (
-                    <CheckSquare size={20} className="text-[#00B087]" />
+                    <CheckSquare size={20} className="text-secondary" />
                 ) : (
-                    <Square size={20} className="text-gray-300" />
+                    <Square size={20} className="text-muted-foreground/30" />
                 )}
             </button>
 
             <div className="flex-1 min-w-0">
                 <div className="flex items-start justify-between gap-4 mb-0.5">
-                    <h4 className={`text-sm leading-tight ${!notification.read ? 'font-bold text-[#404F4F]' : 'font-semibold text-gray-500'}`}>
+                    <h4 className={`text-sm leading-tight ${!notification.read ? 'font-bold text-foreground' : 'font-semibold text-muted-foreground'}`}>
                         {notification.title}
                     </h4>
                     <div className="flex items-center gap-2 shrink-0">
-                        <span className="text-[11px] font-medium text-gray-400 whitespace-nowrap">
+                        <span className="text-[11px] font-medium text-muted-foreground/60 whitespace-nowrap">
                             {formatRelativeDate(notification.created_at)}
                         </span>
                         {!notification.read && (
@@ -59,7 +59,7 @@ export function NotificationItem({ notification, isSelected, onToggleSelect }: N
                         )}
                     </div>
                 </div>
-                <p className={`text-sm leading-relaxed ${!notification.read ? 'text-gray-600 font-medium' : 'text-gray-400'}`}>
+                <p className={`text-sm leading-relaxed ${!notification.read ? 'text-foreground/80 font-medium' : 'text-muted-foreground/70'}`}>
                     {notification.message}
                 </p>
             </div>

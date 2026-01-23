@@ -58,7 +58,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                         {lead.name}
                     </h4>
                     {lead.interest && (
-                        <span className="inline-block px-2.5 py-0.5 bg-[#404F4F] dark:bg-[#FFE600] text-white dark:text-[#404F4F] rounded-full text-[10px] font-bold shadow-sm transition-colors">
+                        <span className="inline-block px-2.5 py-0.5 bg-secondary text-secondary-foreground rounded-full text-[10px] font-bold shadow-sm transition-colors">
                             {lead.interest}
                         </span>
                     )}
@@ -71,7 +71,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                                 e.stopPropagation()
                                 setShowDropdown(!showDropdown)
                             }}
-                            className="p-1 hover:bg-[#404F4F]/5 rounded text-[#404F4F]/60 opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="p-1 hover:bg-muted/50 rounded text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
                         >
                             <MoreVertical size={14} />
                         </button>
@@ -109,7 +109,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                             )}
                         </AnimatePresence>
                     </div>
-                    <div className="text-[#404F4F]/60">
+                    <div className="text-muted-foreground">
                         {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
                     </div>
                 </div>

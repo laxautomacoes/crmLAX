@@ -7,6 +7,8 @@ interface Asset {
     title: string;
     price?: number | null;
     images?: string[] | null;
+    videos?: string[] | null;
+    documents?: any[] | null;
     details?: Record<string, any> | null;
 }
 
@@ -20,7 +22,7 @@ export function AssetsGrid({ assets }: AssetsGridProps) {
     if (filteredAssets.length === 0) {
         return (
             <div className="text-center py-12">
-                <p className="text-lg font-semibold text-[#404F4F] mb-2">
+                <p className="text-lg font-semibold text-foreground mb-2">
                     Nenhum imóvel encontrado
                 </p>
                 <p className="text-sm text-muted-foreground">

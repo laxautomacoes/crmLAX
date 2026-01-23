@@ -13,13 +13,13 @@ export function InvitationRow({ invitation, onCopyLink }: InvitationRowProps) {
     const canCopy = !isUsed && !isExpired;
 
     return (
-        <tr className="hover:bg-gray-50 transition-colors">
+        <tr className="hover:bg-muted/50 transition-colors">
             <td className="px-6 py-4">
-                <div className="text-sm font-bold text-[#404F4F]">{invitation.email}</div>
-                <div className="text-[10px] text-gray-400">{new Date(invitation.created_at).toLocaleDateString()}</div>
+                <div className="text-sm font-bold text-foreground">{invitation.email}</div>
+                <div className="text-[10px] text-muted-foreground">{new Date(invitation.created_at).toLocaleDateString()}</div>
             </td>
             <td className="px-6 py-4">
-                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${invitation.role === 'admin' ? 'bg-[#FFE600] text-[#404F4F]' : 'bg-gray-100 text-gray-500'}`}>
+                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${invitation.role === 'admin' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}>
                     {invitation.role}
                 </span>
             </td>
@@ -38,14 +38,14 @@ export function InvitationRow({ invitation, onCopyLink }: InvitationRowProps) {
                     </div>
                 )}
             </td>
-            <td className="px-6 py-4 text-xs text-gray-500">
+            <td className="px-6 py-4 text-xs text-muted-foreground">
                 {new Date(invitation.expires_at).toLocaleDateString()}
             </td>
             <td className="px-6 py-4 text-right">
                 {canCopy && (
                     <button
                         onClick={() => onCopyLink(invitation.token)}
-                        className="p-2 hover:bg-[#FFE600]/10 text-gray-400 hover:text-[#404F4F] rounded-xl transition-all"
+                        className="p-2 hover:bg-secondary/10 text-muted-foreground hover:text-secondary rounded-xl transition-all"
                         title="Copiar Link"
                     >
                         <Copy className="w-4 h-4" />

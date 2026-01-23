@@ -127,7 +127,7 @@ export async function createNewClient(tenantId: string, data: ClientData) {
             address_state: data.address_state,
             address_zip_code: data.address_zip_code,
             marital_status: data.marital_status,
-            birth_date: data.birth_date,
+            birth_date: data.birth_date || null,
             primary_interest: data.primary_interest
         })
         .select()
@@ -174,7 +174,7 @@ export async function updateClient(clientId: string, data: Partial<ClientData>) 
             address_state: data.address_state,
             address_zip_code: data.address_zip_code,
             marital_status: data.marital_status,
-            birth_date: data.birth_date,
+            birth_date: data.birth_date || null,
             primary_interest: data.primary_interest
         })
         .eq('id', clientId)

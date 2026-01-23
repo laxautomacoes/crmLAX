@@ -4,22 +4,29 @@ import { useState, useEffect } from 'react'
 import { Plus, Search, LayoutGrid, List } from 'lucide-react'
 import { getProfile } from '@/app/_actions/profile'
 import { getAssets, createAsset, updateAsset, deleteAsset } from '@/app/_actions/assets'
+import { initStorageBuckets } from '@/app/_actions/storage'
 import { toast } from 'sonner'
 import { PropertyGallery } from '@/components/dashboard/properties/PropertyGallery'
 import { PropertyList } from '@/components/dashboard/properties/PropertyList'
 import { PropertyModal } from '@/components/dashboard/properties/PropertyModal'
+import { PropertyDetailsModal } from '@/components/dashboard/properties/PropertyDetailsModal'
 
 export default function PropertiesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isDetailsOpen, setIsDetailsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery')
     const [tenantId, setTenantId] = useState<string | null>(null)
     const [properties, setProperties] = useState<any[]>([])
     const [editingProperty, setEditingProperty] = useState<any | null>(null)
+    const [viewingProperty, setViewingProperty] = useState<any | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
 
     const fetchData = async () => {
         try {
+            // Tentar inicializar buckets se necessário
+            await initStorageBuckets()
+            
             const { profile } = await getProfile()
             if (profile?.tenant_id) {
                 setTenantId(profile.tenant_id)
@@ -65,6 +72,11 @@ export default function PropertiesPage() {
         setIsModalOpen(true)
     }
 
+    const handleView = (prop: any) => {
+        setViewingProperty(prop)
+        setIsDetailsOpen(true)
+    }
+
     const handleDelete = async (id: string) => {
         if (!confirm('Excluir este imóvel?')) return
         const result = await deleteAsset(id)
@@ -94,21 +106,21 @@ export default function PropertiesPage() {
         <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-2xl font-bold text-[#404F4F]">Imóveis</h1>
+                    <h1 className="text-2xl font-bold text-foreground">Imóveis</h1>
                     <p className="text-sm text-muted-foreground">{filteredProperties.length} imóveis encontrados</p>
                 </div>
                 <div className="flex flex-wrap items-center gap-3">
                     <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm">
                         <button
                             onClick={() => setViewMode('gallery')}
-                            className={`p-2 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-[#404F4F] text-white' : 'text-muted-foreground hover:bg-muted'}`}
+                            className={`p-2 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
                             title="Visualização em Galeria"
                         >
                             <LayoutGrid size={18} />
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-[#404F4F] text-white' : 'text-muted-foreground hover:bg-muted'}`}
+                            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
                             title="Visualização em Lista"
                         >
                             <List size={18} />
@@ -127,7 +139,7 @@ export default function PropertiesPage() {
                     </div>
                     <button
                         onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                        className="flex items-center gap-2 bg-primary text-primary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99]"
+                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99]"
                     >
                         <Plus size={18} />
                         Novo Imóvel
@@ -140,12 +152,14 @@ export default function PropertiesPage() {
                     properties={filteredProperties}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onView={handleView}
                 />
             ) : (
                 <PropertyList
                     properties={filteredProperties}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onView={handleView}
                 />
             )}
 
@@ -154,6 +168,12 @@ export default function PropertiesPage() {
                 onClose={() => setIsModalOpen(false)}
                 editingProperty={editingProperty}
                 onSave={handleSave}
+            />
+
+            <PropertyDetailsModal
+                isOpen={isDetailsOpen}
+                onClose={() => setIsDetailsOpen(false)}
+                prop={viewingProperty}
             />
         </div>
     )

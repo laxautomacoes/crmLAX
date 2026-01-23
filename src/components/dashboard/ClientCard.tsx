@@ -79,13 +79,13 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
             layout
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
-            className="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 hover:shadow-md transition-shadow relative overflow-hidden group"
+            className="bg-card rounded-2xl shadow-sm border border-border p-6 hover:shadow-md transition-shadow relative overflow-hidden group"
         >
             {/* Header */}
             <div className="flex justify-between items-start mb-4">
                 <div>
-                    <h3 className="text-lg font-bold text-[#404F4F]">{client.name}</h3>
-                    <p className="text-xs text-gray-400 mt-1 flex items-center gap-1">
+                    <h3 className="text-lg font-bold text-foreground">{client.name}</h3>
+                    <p className="text-xs text-muted-foreground mt-1 flex items-center gap-1">
                         <Calendar size={12} />
                         Cadastrado em {new Date(client.created_at).toLocaleDateString('pt-BR')}
                     </p>
@@ -94,16 +94,16 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
                 <div className="relative">
                     <button
                         onClick={() => setShowMenu(!showMenu)}
-                        className="p-2 hover:bg-[#404F4F]/5 rounded-lg text-[#404F4F]/60 hover:text-[#404F4F] transition-colors"
+                        className="p-2 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"
                     >
                         <MoreVertical size={20} />
                     </button>
 
                     {showMenu && (
-                        <div className="absolute right-0 top-full mt-2 w-32 bg-white border border-gray-100 rounded-lg shadow-lg z-10 py-1">
+                        <div className="absolute right-0 top-full mt-2 w-32 bg-card border border-border rounded-lg shadow-lg z-10 py-1">
                             <button
                                 onClick={() => onEdit(client)}
-                                className="w-full text-left px-4 py-2 text-sm text-gray-600 hover:bg-gray-50 flex items-center gap-2"
+                                className="w-full text-left px-4 py-2 text-sm text-foreground hover:bg-muted flex items-center gap-2"
                             >
                                 <Edit size={14} /> Editar
                             </button>
@@ -120,12 +120,12 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
 
             {/* Info Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
-                <div className="flex items-center gap-3 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    <Phone size={16} className="text-[#404F4F]" />
+                <div className="flex items-center gap-3 text-sm text-foreground bg-muted p-3 rounded-lg">
+                    <Phone size={16} className="text-muted-foreground" />
                     <span>{client.phone}</span>
                 </div>
-                <div className="flex items-center gap-3 text-sm text-gray-600 bg-gray-50 p-3 rounded-lg">
-                    <Mail size={16} className="text-[#404F4F]" />
+                <div className="flex items-center gap-3 text-sm text-foreground bg-muted p-3 rounded-lg">
+                    <Mail size={16} className="text-muted-foreground" />
                     <span className="truncate">{client.email}</span>
                 </div>
             </div>
@@ -133,12 +133,12 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
             {/* Tags & Interests */}
             <div className="mb-6 flex flex-wrap gap-2">
                 {client.interest && (
-                    <span className="px-3 py-1 bg-blue-50 text-blue-700 rounded-full text-xs font-medium border border-blue-100">
+                    <span className="px-3 py-1 bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 rounded-full text-xs font-medium border border-blue-100 dark:border-blue-500/20">
                         {client.interest}
                     </span>
                 )}
                 {client.tags && client.tags.map(tag => (
-                    <span key={tag} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-xs font-medium border border-gray-200 flex items-center gap-1">
+                    <span key={tag} className="px-3 py-1 bg-muted text-muted-foreground rounded-full text-xs font-medium border border-border flex items-center gap-1">
                         <Tag size={10} /> {tag}
                     </span>
                 ))}
@@ -146,27 +146,27 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
 
             {/* Notes Preview */}
             {client.notes && (
-                <div className="bg-orange-50/50 p-4 rounded-xl mb-4 border border-orange-100/50">
+                <div className="bg-orange-50/50 dark:bg-orange-500/5 p-4 rounded-xl mb-4 border border-orange-100/50 dark:border-orange-500/10">
                     <div className="flex items-start gap-2">
                         <MessageSquare size={14} className="text-orange-400 mt-1" />
-                        <p className="text-sm text-gray-600 italic line-clamp-2">"{client.notes}"</p>
+                        <p className="text-sm text-foreground italic line-clamp-2">"{client.notes}"</p>
                     </div>
                 </div>
             )}
 
             {/* AI Action Area */}
-            <div className="mt-auto pt-4 border-t border-gray-100">
+            <div className="mt-auto pt-4 border-t border-border">
                 {!isAnalyzed ? (
                     <button
                         onClick={handleAnalyze}
                         disabled={analysisLoading}
-                        className="w-full flex items-center justify-center gap-2 bg-[#404F4F] hover:bg-[#2d3939] text-white py-2.5 rounded-lg transition-all font-medium text-sm disabled:opacity-70"
+                        className="w-full flex items-center justify-center gap-2 bg-primary hover:opacity-90 text-primary-foreground py-2.5 rounded-lg transition-all font-medium text-sm disabled:opacity-70"
                     >
                         {analysisLoading ? (
                             <span className="animate-pulse">Analisando Lead...</span>
                         ) : (
                             <>
-                                <Sparkles size={16} className="text-[#FFE600]" />
+                                <Sparkles size={16} className="text-secondary" />
                                 Gerar Análise de Probabilidade
                             </>
                         )}
@@ -177,19 +177,19 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
                         animate={{ height: 'auto', opacity: 1 }}
                         className="rounded-xl overflow-hidden"
                     >
-                        <div className="bg-[#FFE600]/10 border border-[#FFE600]/20 p-4 rounded-xl">
+                        <div className="bg-secondary/10 border border-secondary/20 p-4 rounded-xl">
                             <div className="flex items-center justify-between mb-2">
-                                <h4 className="text-sm font-bold text-[#404F4F] flex items-center gap-2">
-                                    <Sparkles size={14} className="text-yellow-600" /> Insight IA
+                                <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                    <Sparkles size={14} className="text-secondary" /> Insight IA
                                 </h4>
                                 <button
                                     onClick={() => setIsAnalyzed(false)}
-                                    className="text-xs text-[#404F4F]/40 hover:text-[#404F4F] underline"
+                                    className="text-xs text-muted-foreground hover:text-foreground underline"
                                 >
                                     Fechar
                                 </button>
                             </div>
-                            <p className="text-sm text-gray-700 leading-relaxed">
+                            <p className="text-sm text-foreground leading-relaxed">
                                 {analysisResult}
                             </p>
                         </div>

@@ -76,9 +76,9 @@ export function NotificationsList({ notifications, onRefresh }: NotificationsLis
 
             <div className="flex-1 overflow-y-auto custom-scrollbar">
                 {notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-[300px] text-gray-400">
-                        <Bell size={48} className="mb-4 opacity-10 text-[#404F4F]" />
-                        <p className="font-bold text-[#404F4F]">Nenhuma notificação</p>
+                    <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                        <Bell size={48} className="mb-4 opacity-10 text-foreground" />
+                        <p className="font-bold text-foreground">Nenhuma notificação</p>
                         <p className="text-sm">Sua caixa de entrada está limpa.</p>
                     </div>
                 ) : (

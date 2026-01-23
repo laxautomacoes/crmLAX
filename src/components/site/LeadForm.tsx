@@ -63,7 +63,7 @@ export function LeadForm({ assetId, assetTitle, onSubmit }: LeadFormProps) {
                 <button
                     type="submit"
                     disabled={loading}
-                    className="w-full bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-bold py-3 px-4 rounded-lg transition-all transform active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
+                    className="w-full bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-3 px-4 rounded-lg transition-all transform active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2"
                 >
                     {loading ? (
                         <>
