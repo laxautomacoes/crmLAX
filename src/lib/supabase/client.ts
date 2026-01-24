@@ -16,6 +16,8 @@ export function createClient() {
                         getSession: async () => ({ data: { session: null }, error: new Error(errorMessage) }),
                         signOut: async () => ({ error: new Error(errorMessage) }),
                         signInWithOAuth: async () => ({ data: null, error: new Error(errorMessage) }),
+                        signInWithPassword: async () => ({ data: null, error: new Error(errorMessage) }),
+                        signUp: async () => ({ data: null, error: new Error(errorMessage) }),
                         resetPasswordForEmail: async () => ({ data: null, error: new Error(errorMessage) }),
                         updateUser: async () => ({ data: null, error: new Error(errorMessage) }),
                     }

@@ -21,18 +21,24 @@ export function LoginForm() {
         setLoading(true);
         setError(null);
 
-        const supabase = createClient();
-        const { error } = await supabase.auth.signInWithPassword({
-            email,
-            password,
-        });
+        try {
+            const supabase = createClient();
+            const { error } = await supabase.auth.signInWithPassword({
+                email,
+                password,
+            });
 
-        if (error) {
-            setError(error.message);
-            setLoading(false);
-        } else {
+            if (error) {
+                setError(error.message);
+                return;
+            }
+
             router.push('/dashboard');
             router.refresh();
+        } catch (err: any) {
+            setError(err?.message || 'Falha ao autenticar.');
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -97,4 +103,3 @@ export function LoginForm() {
         </form>
     );
 }
-
