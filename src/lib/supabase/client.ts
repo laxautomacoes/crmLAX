@@ -4,13 +4,49 @@ export function createClient() {
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
-    // Se estivermos no servidor e as variáveis não existirem, retornamos um mock simples
-    // para evitar erro de prerenderização. No cliente, o Supabase exigirá os valores.
     if (!supabaseUrl || !supabaseAnonKey) {
-        if (typeof window === 'undefined') {
-            return {} as any
-        }
-        // Se estiver no cliente e faltar variáveis, o erro será lançado pelo createBrowserClient
+        const errorMessage = "Supabase client used without environment variables. " +
+            "Ensure NEXT_PUBLIC_SUPABASE_URL and NEXT_PUBLIC_SUPABASE_ANON_KEY are set."
+
+        return new Proxy({}, {
+            get: (target, prop) => {
+                if (prop === 'auth') {
+                    return {
+                        getUser: async () => ({ data: { user: null }, error: new Error(errorMessage) }),
+                        getSession: async () => ({ data: { session: null }, error: new Error(errorMessage) }),
+                        signOut: async () => ({ error: new Error(errorMessage) }),
+                        signInWithOAuth: async () => ({ data: null, error: new Error(errorMessage) }),
+                        resetPasswordForEmail: async () => ({ data: null, error: new Error(errorMessage) }),
+                        updateUser: async () => ({ data: null, error: new Error(errorMessage) }),
+                    }
+                }
+                if (prop === 'from') {
+                    return () => ({
+                        select: () => ({
+                            eq: () => ({
+                                single: async () => ({ data: null, error: new Error(errorMessage) }),
+                                maybeSingle: async () => ({ data: null, error: new Error(errorMessage) }),
+                                order: () => ({
+                                    limit: () => ({
+                                        single: async () => ({ data: null, error: new Error(errorMessage) }),
+                                    })
+                                })
+                            }),
+                            order: () => ({
+                                eq: () => ({
+                                    select: () => ({})
+                                })
+                            })
+                        }),
+                        insert: () => ({ select: () => ({ single: async () => ({ data: null, error: new Error(errorMessage) }) }) }),
+                        upsert: () => ({ select: () => ({ single: async () => ({ data: null, error: new Error(errorMessage) }) }) }),
+                        update: () => ({ eq: () => ({ select: () => ({ single: async () => ({ data: null, error: new Error(errorMessage) }) }) }) }),
+                        delete: () => ({ eq: async () => ({ error: new Error(errorMessage) }) }),
+                    })
+                }
+                return undefined
+            }
+        }) as any
     }
 
     return createBrowserClient(
