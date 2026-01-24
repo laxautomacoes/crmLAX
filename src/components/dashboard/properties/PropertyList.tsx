@@ -7,9 +7,10 @@ interface PropertyListProps {
     onEdit: (prop: any) => void
     onDelete: (id: string) => void
     onView: (prop: any) => void
+    onSend: (prop: any) => void
 }
 
-export function PropertyList({ properties, onEdit, onDelete, onView }: PropertyListProps) {
+export function PropertyList({ properties, onEdit, onDelete, onView, onSend }: PropertyListProps) {
     if (properties.length === 0) {
         return (
             <div className="text-center py-20 bg-card rounded-2xl border border-dashed border-border">
@@ -42,6 +43,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView }: PropertyL
                                 onEdit={onEdit}
                                 onDelete={onDelete}
                                 onView={onView}
+                                onSend={onSend}
                             />
                         ))}
                     </tbody>

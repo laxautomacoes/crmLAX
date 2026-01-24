@@ -5,21 +5,26 @@ import { Plus, Search, LayoutGrid, List } from 'lucide-react'
 import { getProfile } from '@/app/_actions/profile'
 import { getAssets, createAsset, updateAsset, deleteAsset } from '@/app/_actions/assets'
 import { initStorageBuckets } from '@/app/_actions/storage'
+import { getTenantByUserId } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
 import { PropertyGallery } from '@/components/dashboard/properties/PropertyGallery'
 import { PropertyList } from '@/components/dashboard/properties/PropertyList'
 import { PropertyModal } from '@/components/dashboard/properties/PropertyModal'
 import { PropertyDetailsModal } from '@/components/dashboard/properties/PropertyDetailsModal'
+import { SendToLeadModal } from '@/components/dashboard/properties/SendToLeadModal'
 
 export default function PropertiesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDetailsOpen, setIsDetailsOpen] = useState(false)
+    const [isSendModalOpen, setIsSendModalOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery')
     const [tenantId, setTenantId] = useState<string | null>(null)
+    const [tenantSlug, setTenantSlug] = useState<string>('')
     const [properties, setProperties] = useState<any[]>([])
     const [editingProperty, setEditingProperty] = useState<any | null>(null)
     const [viewingProperty, setViewingProperty] = useState<any | null>(null)
+    const [sendingProperty, setSendingProperty] = useState<any | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
 
     const fetchData = async () => {
@@ -30,6 +35,13 @@ export default function PropertiesPage() {
             const { profile } = await getProfile()
             if (profile?.tenant_id) {
                 setTenantId(profile.tenant_id)
+                
+                // Buscar slug do tenant
+                const tenant = await getTenantByUserId(profile.id)
+                if (tenant) {
+                    setTenantSlug(tenant.slug)
+                }
+
                 const result = await getAssets(profile.tenant_id)
                 if (result.success) {
                     setProperties(result.data || [])
@@ -75,6 +87,11 @@ export default function PropertiesPage() {
     const handleView = (prop: any) => {
         setViewingProperty(prop)
         setIsDetailsOpen(true)
+    }
+
+    const handleSend = (prop: any) => {
+        setSendingProperty(prop)
+        setIsSendModalOpen(true)
     }
 
     const handleDelete = async (id: string) => {
@@ -153,6 +170,7 @@ export default function PropertiesPage() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onView={handleView}
+                    onSend={handleSend}
                 />
             ) : (
                 <PropertyList
@@ -160,21 +178,42 @@ export default function PropertiesPage() {
                     onEdit={handleEdit}
                     onDelete={handleDelete}
                     onView={handleView}
+                    onSend={handleSend}
                 />
             )}
 
             <PropertyModal
                 isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
+                onClose={() => {
+                    setIsModalOpen(false)
+                    setEditingProperty(null)
+                }}
                 editingProperty={editingProperty}
                 onSave={handleSave}
             />
 
             <PropertyDetailsModal
                 isOpen={isDetailsOpen}
-                onClose={() => setIsDetailsOpen(false)}
+                onClose={() => {
+                    setIsDetailsOpen(false)
+                    setViewingProperty(null)
+                }}
                 prop={viewingProperty}
+                onSend={handleSend}
             />
+
+            {sendingProperty && tenantId && (
+                <SendToLeadModal
+                    isOpen={isSendModalOpen}
+                    onClose={() => {
+                        setIsSendModalOpen(false)
+                        setSendingProperty(null)
+                    }}
+                    property={sendingProperty}
+                    tenantId={tenantId}
+                    tenantSlug={tenantSlug}
+                />
+            )}
         </div>
     )
 }

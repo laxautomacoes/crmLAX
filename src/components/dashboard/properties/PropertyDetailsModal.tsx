@@ -1,25 +1,36 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { 
     Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, 
     PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, 
-    Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info
+    Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info, Send
 } from 'lucide-react';
 
 interface PropertyDetailsModalProps {
     isOpen: boolean;
     onClose: () => void;
     prop: any;
+    onSend?: (prop: any) => void;
 }
 
-export function PropertyDetailsModal({ isOpen, onClose, prop }: PropertyDetailsModalProps) {
+export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: PropertyDetailsModalProps) {
+    const [selectedImageIndex, setSelectedImageIndex] = useState(0);
+
+    useEffect(() => {
+        if (isOpen) {
+            setSelectedImageIndex(0);
+        }
+    }, [isOpen]);
+
     if (!prop) return null;
 
     const details = prop.details || {};
     
     const amenities = [
         { id: 'portaria_24h', icon: <Shield size={16} />, label: 'Portaria 24h' },
+        { id: 'portaria_virtual', icon: <Shield size={16} />, label: 'Portaria Virtual' },
         { id: 'piscina', icon: <Waves size={16} />, label: 'Piscina' },
         { id: 'piscina_aquecida', icon: <Waves size={16} />, label: 'Piscina Aquecida' },
         { id: 'espaco_gourmet', icon: <Utensils size={16} />, label: 'Espaço Gourmet' },
@@ -49,8 +60,19 @@ export function PropertyDetailsModal({ isOpen, onClose, prop }: PropertyDetailsM
             <div className="space-y-8 max-h-[85vh] overflow-y-auto pr-4 custom-scrollbar">
                 {/* Header Info */}
                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                    <div className="space-y-1">
-                        <h2 className="text-2xl font-bold text-foreground">{prop.title}</h2>
+                    <div className="flex-1 space-y-1">
+                        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                            <h2 className="text-2xl font-bold text-foreground">{prop.title}</h2>
+                            {onSend && (
+                                <button
+                                    onClick={() => onSend(prop)}
+                                    className="flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 transition-all shadow-sm shadow-secondary/20"
+                                >
+                                    <Send size={18} />
+                                    Enviar para Lead
+                                </button>
+                            )}
+                        </div>
                         <div className="flex items-center gap-2 text-muted-foreground">
                             <MapPin size={16} />
                             <span>
@@ -67,6 +89,11 @@ export function PropertyDetailsModal({ isOpen, onClose, prop }: PropertyDetailsM
                             <span className="px-3 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full uppercase">
                                 {prop.status}
                             </span>
+                            {details.situacao && (
+                                <span className="px-3 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full uppercase">
+                                    {details.situacao}
+                                </span>
+                            )}
                             <span className="px-3 py-1 bg-muted text-muted-foreground text-[10px] font-bold rounded-full uppercase">
                                 {prop.type}
                             </span>
@@ -75,31 +102,32 @@ export function PropertyDetailsModal({ isOpen, onClose, prop }: PropertyDetailsM
                 </div>
 
                 {/* Gallery */}
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div className="md:col-span-2 aspect-video rounded-2xl overflow-hidden bg-muted border border-border">
-                        {prop.images?.[0] ? (
-                            <img src={prop.images[0]} className="w-full h-full object-cover" alt="" />
+                <div className="space-y-4">
+                    <div className="w-full aspect-video rounded-3xl overflow-hidden bg-muted border border-border">
+                        {prop.images?.[selectedImageIndex] ? (
+                            <img src={prop.images[selectedImageIndex]} className="w-full h-full object-cover" alt="" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-muted-foreground">
                                 <Home size={48} strokeWidth={1} />
                             </div>
                         )}
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-1 gap-4">
-                        {prop.images?.slice(1, 3).map((img: string, i: number) => (
-                            <div key={i} className="aspect-video rounded-xl overflow-hidden border border-border bg-muted">
-                                <img src={img} className="w-full h-full object-cover" alt="" />
-                            </div>
-                        ))}
-                        {prop.images?.length > 3 && (
-                            <div className="aspect-video rounded-xl overflow-hidden border border-border bg-muted relative group">
-                                <img src={prop.images[3]} className="w-full h-full object-cover opacity-50" alt="" />
-                                <div className="absolute inset-0 flex items-center justify-center font-bold text-foreground">
-                                    +{prop.images.length - 3} fotos
-                                </div>
-                            </div>
-                        )}
-                    </div>
+                    
+                    {prop.images?.length > 1 && (
+                        <div className="flex gap-4 overflow-x-auto pb-2 custom-scrollbar snap-x">
+                            {prop.images.map((img: string, i: number) => (
+                                <button 
+                                    key={i} 
+                                    onClick={() => setSelectedImageIndex(i)}
+                                    className={`relative flex-shrink-0 w-32 md:w-48 aspect-video rounded-2xl overflow-hidden border-2 transition-all snap-start ${
+                                        selectedImageIndex === i ? 'border-secondary ring-2 ring-secondary/20' : 'border-transparent hover:border-border'
+                                    }`}
+                                >
+                                    <img src={img} className="w-full h-full object-cover" alt="" />
+                                </button>
+                            ))}
+                        </div>
+                    )}
                 </div>
 
                 {/* Main Content Grid */}
@@ -113,7 +141,14 @@ export function PropertyDetailsModal({ isOpen, onClose, prop }: PropertyDetailsM
                                     <BedDouble size={18} />
                                     <span className="text-xs font-bold uppercase tracking-wider">Quartos</span>
                                 </div>
-                                <div className="text-lg font-bold text-foreground">{details.quartos || 0}</div>
+                                <div className="text-lg font-bold text-foreground">
+                                    {details.quartos || 0}
+                                    {details.suites > 0 && (
+                                        <span className="text-xs font-medium text-muted-foreground ml-1">
+                                            ({details.suites} suítes)
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-1">
                                 <div className="text-secondary flex items-center gap-2">
@@ -127,15 +162,50 @@ export function PropertyDetailsModal({ isOpen, onClose, prop }: PropertyDetailsM
                                     <Car size={18} />
                                     <span className="text-xs font-bold uppercase tracking-wider">Vagas</span>
                                 </div>
-                                <div className="text-lg font-bold text-foreground">{details.vagas || 0}</div>
+                                <div className="text-lg font-bold text-foreground">
+                                    {details.vagas || 0}
+                                    {details.vagas_numeracao && (
+                                        <span className="text-xs font-medium text-muted-foreground ml-1">
+                                            ({details.vagas_numeracao})
+                                        </span>
+                                    )}
+                                </div>
                             </div>
                             <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-1">
                                 <div className="text-secondary flex items-center gap-2">
                                     <Square size={18} />
                                     <span className="text-xs font-bold uppercase tracking-wider">Área Útil</span>
                                 </div>
-                                <div className="text-lg font-bold text-foreground">{details.area_util || 0}m²</div>
+                                <div className="text-lg font-bold text-foreground">{details.area_util || details.area_privativa || 0}m²</div>
                             </div>
+                        </div>
+
+                        {/* Additional Areas & Info */}
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                            {details.area_total && (
+                                <div className="p-3 rounded-xl bg-card border border-border space-y-1">
+                                    <div className="text-xs font-bold text-muted-foreground uppercase">Área Total</div>
+                                    <div className="text-sm font-bold text-foreground">{details.area_total}m²</div>
+                                </div>
+                            )}
+                            {details.area_terreno && (
+                                <div className="p-3 rounded-xl bg-card border border-border space-y-1">
+                                    <div className="text-xs font-bold text-muted-foreground uppercase">Área Terreno</div>
+                                    <div className="text-sm font-bold text-foreground">{details.area_terreno}m²</div>
+                                </div>
+                            )}
+                            {details.area_construida && (
+                                <div className="p-3 rounded-xl bg-card border border-border space-y-1">
+                                    <div className="text-xs font-bold text-muted-foreground uppercase">Área Const.</div>
+                                    <div className="text-sm font-bold text-foreground">{details.area_construida}m²</div>
+                                </div>
+                            )}
+                            {details.torre_bloco && (
+                                <div className="p-3 rounded-xl bg-card border border-border space-y-1">
+                                    <div className="text-xs font-bold text-muted-foreground uppercase">Torre/Bloco</div>
+                                    <div className="text-sm font-bold text-foreground">{details.torre_bloco}</div>
+                                </div>
+                            )}
                         </div>
 
                         {/* Description */}
@@ -189,6 +259,24 @@ export function PropertyDetailsModal({ isOpen, onClose, prop }: PropertyDetailsM
                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                             <Mail size={14} />
                                             {prop.owner_email}
+                                        </div>
+                                    )}
+                                    {details.proprietario?.cpf && (
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <FileText size={14} />
+                                            CPF: {details.proprietario.cpf}
+                                        </div>
+                                    )}
+                                    {details.proprietario?.estado_civil && (
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <User size={14} />
+                                            {details.proprietario.estado_civil}
+                                        </div>
+                                    )}
+                                    {details.proprietario?.data_nascimento && (
+                                        <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                                            <Calendar size={14} />
+                                            Nasc: {new Date(details.proprietario.data_nascimento).toLocaleDateString('pt-BR')}
                                         </div>
                                     )}
                                 </div>

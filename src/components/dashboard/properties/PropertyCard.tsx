@@ -1,15 +1,16 @@
 'use client'
 
-import { Home, MapPin, BedDouble, Bath, Square, Car, Trash2, Edit, Video, FileText } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Square, Car, Trash2, Edit, Video, FileText, Send } from 'lucide-react'
 
 interface PropertyCardProps {
     prop: any
     onEdit: (prop: any) => void
     onDelete: (id: string) => void
     onView: (prop: any) => void
+    onSend: (prop: any) => void
 }
 
-export function PropertyCard({ prop, onEdit, onDelete, onView }: PropertyCardProps) {
+export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: PropertyCardProps) {
     return (
         <div 
             onClick={() => onView(prop)}
@@ -24,6 +25,16 @@ export function PropertyCard({ prop, onEdit, onDelete, onView }: PropertyCardPro
                     </div>
                 )}
                 <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onSend(prop)
+                        }}
+                        className="p-2 bg-white/90 backdrop-blur rounded-lg shadow-sm text-secondary hover:bg-white"
+                        title="Enviar para Lead"
+                    >
+                        <Send size={16} />
+                    </button>
                     <button
                         onClick={(e) => {
                             e.stopPropagation()

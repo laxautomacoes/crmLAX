@@ -1,15 +1,16 @@
 'use client'
 
-import { Home, MapPin, BedDouble, Bath, Square, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Square, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send } from 'lucide-react'
 
 interface PropertyListItemProps {
     prop: any
     onEdit: (prop: any) => void
     onDelete: (id: string) => void
     onView: (prop: any) => void
+    onSend: (prop: any) => void
 }
 
-export function PropertyListItem({ prop, onEdit, onDelete, onView }: PropertyListItemProps) {
+export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: PropertyListItemProps) {
     const formattedPrice = prop.price
         ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}`
         : 'Sob consulta'
@@ -160,6 +161,16 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView }: PropertyLis
             </td>
             <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            onSend(prop)
+                        }}
+                        className="p-2 hover:bg-secondary/5 rounded-lg text-secondary transition-colors"
+                        title="Enviar para Lead"
+                    >
+                        <Send size={16} />
+                    </button>
                     <button
                         onClick={(e) => {
                             e.stopPropagation()

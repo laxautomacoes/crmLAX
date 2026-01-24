@@ -178,7 +178,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave }: Prop
         
         try {
             const currentFiles = [...(formData[type] as any)]
-            const uploadedFiles = []
+            const uploadedFiles: (string | { name: string; url: string })[] = []
 
             for (let i = 0; i < files.length; i++) {
                 const file = files[i]

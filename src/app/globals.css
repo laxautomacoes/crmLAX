@@ -2,21 +2,21 @@
 
 :root {
   color-scheme: light;
-  --background: #FAFBFD;
-  --foreground: #2D3737; /* Slightly darker for better contrast */
+  --background: #F0F2F5;
+  --foreground: #404F4F;
   --card: #FFFFFF;
-  --card-foreground: #2D3737;
-  --border: #E2E8F0; /* Slightly darker border */
-  --input: #F8FAFC;
-  --primary: #2D3737; /* Darker primary */
+  --card-foreground: #404F4F;
+  --border: #F3F4F6;
+  --input: #F9FAFB;
+  --primary: #404F4F;
   --primary-foreground: #FFFFFF;
-  --secondary: #B29600; /* Darker yellow/gold for high contrast in light mode */
-  --secondary-foreground: #FFFFFF; /* White text on dark yellow background */
+  --secondary: #FFE600; /* Standard system yellow */
+  --secondary-foreground: #121414; /* Dark text for better contrast on yellow */
   --muted: #F1F5F9;
-  --muted-foreground: #475569; /* Darker muted text */
-  --sidebar: #2D3737;
+  --muted-foreground: #6B7280;
+  --sidebar: #404F4F;
   --sidebar-foreground: #FFFFFF;
-  --ring: #B29600;
+  --ring: #FFE600;
 }
 
 .dark {
