@@ -2,6 +2,8 @@ import ClientList from '@/components/dashboard/ClientList'
 import { getClients } from '@/app/_actions/clients'
 import { getProfile } from '@/app/_actions/profile'
 
+export const dynamic = 'force-dynamic'
+
 export default async function ClientsPage() {
     // Fetch server-side
     const { profile, error: profileError } = await getProfile()

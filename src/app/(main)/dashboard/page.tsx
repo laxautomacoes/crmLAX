@@ -2,6 +2,8 @@ import { getDashboardMetrics } from '@/app/_actions/dashboard';
 import { getProfile } from '@/app/_actions/profile';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
     const { profile, error: profileError } = await getProfile();
 
