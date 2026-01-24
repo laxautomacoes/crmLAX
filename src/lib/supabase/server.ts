@@ -7,9 +7,16 @@ export async function createClient() {
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
 
     // Durante o build (prerender), as variáveis de ambiente podem não estar disponíveis.
-    // Retornamos um mock para evitar que o build falhe se as variáveis forem obrigatórias.
+    // Retornamos um objeto que não falha na inicialização, mas informa o erro se usado.
     if (!supabaseUrl || !supabaseAnonKey) {
-        return {} as any
+        return new Proxy({}, {
+            get: () => {
+                throw new Error(
+                    "Supabase client used during prerender without environment variables. " +
+                    "Ensure the page is marked with 'force-dynamic' or check your .env files."
+                );
+            }
+        }) as any
     }
 
     return createServerClient(
