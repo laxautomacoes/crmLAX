@@ -6,6 +6,8 @@ import { getRoadmap, createRoadmapItem, updateRoadmapItem, deleteRoadmapItem } f
 import { getProfile } from '@/app/_actions/profile';
 import { useRouter } from 'next/navigation';
 
+export const dynamic = 'force-dynamic';
+
 export default function RoadmapPage() {
     const [items, setItems] = useState<any[]>([]);
     const [profile, setProfile] = useState<any>(null);

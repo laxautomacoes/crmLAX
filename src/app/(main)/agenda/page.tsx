@@ -10,6 +10,8 @@ import { getClients } from '@/app/_actions/clients';
 import { getAssets } from '@/app/_actions/assets';
 import { toast } from 'sonner';
 
+export const dynamic = 'force-dynamic';
+
 export default function AgendaPage() {
     const [events, setEvents] = useState<any[]>([]);
     const [leads, setLeads] = useState<any[]>([]);

@@ -4,8 +4,8 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, unstable_noStore } from 'next/cache'
 
 export async function getProfile() {
+    unstable_noStore()
     try {
-        unstable_noStore()
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
 

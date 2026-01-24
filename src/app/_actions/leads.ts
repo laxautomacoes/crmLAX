@@ -229,7 +229,7 @@ export async function duplicateStage(tenantId: string, stageId: string) {
     let copyNumber = 1;
     let newName = `${baseName} (Cópia ${copyNumber})`;
 
-    const existingNames = allStages?.map(s => s.name) || [];
+    const existingNames = (allStages as any[])?.map((s) => s.name) || [];
 
     while (existingNames.includes(newName)) {
         copyNumber++;

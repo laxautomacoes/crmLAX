@@ -13,6 +13,8 @@ import { PropertyModal } from '@/components/dashboard/properties/PropertyModal'
 import { PropertyDetailsModal } from '@/components/dashboard/properties/PropertyDetailsModal'
 import { SendToLeadModal } from '@/components/dashboard/properties/SendToLeadModal'
 
+export const dynamic = 'force-dynamic'
+
 export default function PropertiesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDetailsOpen, setIsDetailsOpen] = useState(false)

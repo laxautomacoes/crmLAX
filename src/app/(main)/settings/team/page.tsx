@@ -8,6 +8,8 @@ import { InviteForm } from '@/components/settings/team/InviteForm';
 import { InvitationsTable } from '@/components/settings/team/InvitationsTable';
 import { Loader2 } from 'lucide-react';
 
+export const dynamic = 'force-dynamic';
+
 export default function TeamSettingsPage() {
     const router = useRouter();
     const [fetching, setFetching] = useState(true);

@@ -2,6 +2,8 @@ import { getTenantFromHeaders, getTenantBySlug, getTenantWhatsApp } from '@/lib/
 import { createClient } from '@/lib/supabase/server';
 import { SiteClient } from '@/components/site/SiteClient';
 
+export const dynamic = 'force-dynamic';
+
 export default async function SitePage({ params }: { params: Promise<{ slug: string }> }) {
     const { slug } = await params;
 
@@ -39,7 +41,7 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
             });
         } else {
             console.log(`Found ${data?.length || 0} assets`);
-            assets = data?.filter(a => 
+            assets = data?.filter((a: any) => 
                 a.status?.toLowerCase() === 'disponível' || 
                 a.status?.toLowerCase() === 'disponivel' ||
                 a.status?.toLowerCase() === 'available'

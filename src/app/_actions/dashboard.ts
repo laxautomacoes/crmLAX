@@ -52,7 +52,7 @@ export async function getDashboardMetrics(tenantId: string) {
             .select('id, name')
             .eq('tenant_id', tenantId)
 
-        const winStage = allStages?.find(s =>
+        const winStage = (allStages as any[])?.find((s) =>
             s.name.toLowerCase().includes('ganho') ||
             s.name.toLowerCase().includes('fechado') ||
             s.name.toLowerCase().includes('concluído')
@@ -101,7 +101,7 @@ export async function getDashboardMetrics(tenantId: string) {
         }
 
         const funnelSteps = await Promise.all(
-            (stages || []).map(async (stage) => {
+            (stages as any[] || []).map(async (stage) => {
                 const { count } = await supabase
                     .from('leads')
                     .select('*', { count: 'exact', head: true })
@@ -134,11 +134,11 @@ export async function getDashboardMetrics(tenantId: string) {
 
         if (recentError) throw recentError
 
-        const recentLeads = (recentLeadsData || []).map((lead: any) => ({
+        const recentLeads = (recentLeadsData as any[] || []).map((lead) => ({
             id: lead.id,
             name: lead.contacts?.name || 'Sem nome',
             interest: lead.source || 'N/A',
-            status: stages?.find(s => s.id === lead.stage_id)?.name || 'Novo',
+            status: (stages as any[])?.find((s) => s.id === lead.stage_id)?.name || 'Novo',
             created_at: lead.created_at
         }))
 

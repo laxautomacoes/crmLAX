@@ -11,6 +11,8 @@ import { getProfile } from '@/app/_actions/profile'
 import { getPipelineData, createStage, deleteStage, duplicateStage, updateStageName, deleteLead } from '@/app/_actions/leads'
 import { toast } from 'sonner'
 
+export const dynamic = 'force-dynamic'
+
 export default function LeadsPage() {
     const [isStageModalOpen, setIsStageModalOpen] = useState(false)
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)

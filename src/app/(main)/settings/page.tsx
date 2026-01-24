@@ -4,6 +4,8 @@ import { useSearchParams } from 'next/navigation';
 import { ProfileTab } from '@/components/settings/ProfileTab';
 import { NotificationsTab } from '@/components/settings/NotificationsTab';
 
+export const dynamic = 'force-dynamic';
+
 export default function SettingsPage() {
     const searchParams = useSearchParams();
     const tabParam = searchParams.get('tab');

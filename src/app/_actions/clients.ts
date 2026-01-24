@@ -63,7 +63,7 @@ export async function getClients(tenantId: string) {
     }
 
     // Mapear para o formato esperado pelo front
-    const clients = contacts.map(contact => {
+    const clients = (contacts as any[])?.map((contact) => {
         // Pegar o lead mais recente ou ativo
         const activeLead = (contact.leads as any[])?.sort((a, b) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -96,7 +96,7 @@ export async function getClients(tenantId: string) {
             value: 0, // Implementar lógica de valor baseada em assets depois
             notes: lastInteraction || '',
             tags: contact.tags || [],
-            leads: contact.leads?.map((l: any) => ({
+            leads: (contact.leads as any[])?.map((l) => ({
                 ...l,
                 status_name: l.lead_stages?.name || l.status
             }))
