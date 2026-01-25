@@ -3,11 +3,12 @@
 import { useState } from 'react';
 import { Home, MapPin, BedDouble, Bath, Square, Car, ChevronRight } from 'lucide-react';
 import { PropertyDetailsModal } from './PropertyDetailsModal';
+import { translatePropertyType } from '@/utils/property-translations';
 
 export function AssetsListItem({ asset }: { asset: any }) {
     const [showDetails, setShowDetails] = useState(false);
     const formattedPrice = asset.price ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` : 'Sob consulta';
-    const tipo = asset.details?.tipo_imovel || asset.details?.type || 'Imóvel';
+    const tipo = translatePropertyType(asset.details?.tipo_imovel || asset.details?.type || asset.type);
     const bairro = asset.details?.endereco?.bairro || 'Bairro ñ inf.';
     const cidade = asset.details?.endereco?.cidade || 'Cidade ñ inf.';
 

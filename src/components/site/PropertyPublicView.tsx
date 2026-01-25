@@ -1,6 +1,7 @@
 'use client';
 
 import { Home, BedDouble, Bath, Square, Car, Waves, Utensils, PartyPopper, Dumbbell, MessageCircle } from 'lucide-react';
+import { translatePropertyType } from '@/utils/property-translations';
 
 interface PropertyPublicViewProps {
     asset: any;
@@ -28,6 +29,14 @@ export function PropertyPublicView({ asset, broker, tenant }: PropertyPublicView
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <div className="lg:col-span-2 space-y-8">
                     <div>
+                        <div className="flex items-center gap-2 mb-2">
+                            <span className="px-2 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded uppercase tracking-wider">
+                                {translatePropertyType(asset.type || asset.details?.type)}
+                            </span>
+                            <span className="px-2 py-1 bg-muted text-muted-foreground text-[10px] font-bold rounded uppercase tracking-wider">
+                                {asset.status}
+                            </span>
+                        </div>
                         <h1 className="text-3xl font-bold text-foreground mb-2">{asset.title}</h1>
                         <p className="text-lg text-muted-foreground">
                             {details.endereco?.bairro && `${details.endereco.bairro}, `}

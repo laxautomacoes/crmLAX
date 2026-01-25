@@ -7,6 +7,7 @@ import {
     PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, 
     Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info, Send
 } from 'lucide-react';
+import { translatePropertyType } from '@/utils/property-translations';
 
 interface PropertyDetailsModalProps {
     isOpen: boolean;
@@ -105,7 +106,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                 </span>
                             )}
                             <span className="px-3 py-1 bg-muted text-muted-foreground text-[10px] font-bold rounded-full uppercase">
-                                {prop.type}
+                                {translatePropertyType(prop.type)}
                             </span>
                         </div>
                         {prop.profiles?.full_name && (

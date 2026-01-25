@@ -2,6 +2,7 @@
 
 import { Modal } from '@/components/shared/Modal';
 import { Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, Video, FileText, ExternalLink } from 'lucide-react';
+import { translatePropertyType } from '@/utils/property-translations';
 
 export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boolean, onClose: () => void, asset: any }) {
     if (!asset) return null;
@@ -35,7 +36,12 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             <span className="text-2xl font-bold text-foreground">
                                 {asset.price ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` : 'Sob consulta'}
                             </span>
-                            <span className="px-3 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-full uppercase">{asset.status}</span>
+                            <div className="flex gap-2">
+                                <span className="px-2 py-1 bg-muted text-muted-foreground text-[10px] font-bold rounded uppercase tracking-wider">
+                                    {translatePropertyType(asset.type || asset.details?.type)}
+                                </span>
+                                <span className="px-3 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-full uppercase">{asset.status}</span>
+                            </div>
                         </div>
                         <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
                             <div className="flex items-center gap-1"><BedDouble size={16} /> {details.quartos || 0} Q</div>

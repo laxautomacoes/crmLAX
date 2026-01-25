@@ -38,7 +38,7 @@ export async function getAssets(tenantId: string, status?: string) {
                 console.warn('Retrying assets fetch without new columns')
                 const { data: fallbackData, error: fallbackError } = await supabase
                     .from('assets')
-                    .select('*, profiles:created_by(full_name)')
+                    .select('*')
                     .eq('tenant_id', tenantId)
                     .order('created_at', { ascending: false })
                 
@@ -78,17 +78,26 @@ export async function createAsset(tenantId: string, assetData: any) {
             .single()
 
         if (error) {
-            // Se o erro for especificamente sobre a coluna approval_status, tentamos sem ela
-            if (error.message.includes('approval_status') || error.code === '42703') {
-                console.warn('Column approval_status not found, retrying without it...')
-                const { approval_status, ...fallbackData } = insertData
+            // Se o erro for especificamente sobre as colunas approval_status ou created_by, tentamos sem elas
+            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.code === '42703') {
+                console.warn('Column approval_status or created_by not found, retrying without them...')
+                const { approval_status, created_by, ...fallbackData } = insertData
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .insert([fallbackData])
-                    .select()
+                    .select('id, title, type, price, status, details, images, videos, documents')
                     .single()
                 
-                if (retryError) throw retryError
+                if (retryError) {
+                    // Se ainda der erro, tenta o insert mais básico possível sem select
+                    console.warn('Second retry without select...')
+                    const { error: basicError } = await supabase
+                        .from('assets')
+                        .insert([fallbackData])
+                    
+                    if (basicError) throw basicError
+                    return { success: true }
+                }
                 return { success: true, data: retryData }
             }
             throw error
@@ -121,17 +130,76 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
             .single()
 
         if (error) {
-            // Se o erro for sobre a coluna approval_status no update
-            if (error.message.includes('approval_status') || error.code === '42703') {
-                console.warn('Column approval_status not found during update, retrying without it...')
-                const { approval_status, ...fallbackData } = updateData
+            // Se o erro for sobre as colunas novas no update
+            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.code === '42703') {
+                console.warn('New columns not found during update, retrying without them...')
+                const { approval_status, created_by, ...fallbackData } = updateData as any
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .update(fallbackData)
                     .eq('id', assetId)
                     .eq('tenant_id', tenantId)
-                    .select()
+                    .select('id, title, type, price, status, details, images, videos, documents')
                     .single()
+                
+                if (retryError) {
+                    // Se ainda der erro, tenta o update mais básico possível sem select
+                    console.warn('Second retry update without select...')
+                    const { error: basicError } = await supabase
+                        .from('assets')
+                        .update(fallbackData)
+                        .eq('id', assetId)
+                        .eq('tenant_id', tenantId)
+                    
+                    if (basicError) throw basicError
+                    return { success: true }
+                }
+                return { success: true, data: retryData }
+            }
+            throw error
+        }
+
+        revalidatePath('/properties')
+        return { success: true, data }
+    } catch (error: any) {
+        console.error('Error updating asset:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
+    const supabase = await createClient()
+    const { profile } = await getProfile()
+
+    try {
+        const approvalStatus = (profile?.role === 'admin' || profile?.role === 'superadmin') ? 'approved' : 'pending'
+        
+        const insertData = assetsData.map(asset => ({
+            ...asset,
+            tenant_id: tenantId,
+            created_by: profile?.id,
+            approval_status: approvalStatus
+        }))
+
+        const { data, error } = await supabase
+            .from('assets')
+            .insert(insertData)
+            .select()
+
+        if (error) {
+            // Se falhar por causa das colunas novas, tenta sem elas
+            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.code === '42703') {
+                const fallbackData = assetsData.map(asset => {
+                    const { ...rest } = asset
+                    return {
+                        ...rest,
+                        tenant_id: tenantId
+                    }
+                })
+                const { data: retryData, error: retryError } = await supabase
+                    .from('assets')
+                    .insert(fallbackData)
+                    .select('id, title, type, price, status, details')
                 
                 if (retryError) throw retryError
                 return { success: true, data: retryData }
@@ -142,7 +210,7 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
         revalidatePath('/properties')
         return { success: true, data }
     } catch (error: any) {
-        console.error('Error updating asset:', error)
+        console.error('Error bulk creating assets:', error)
         return { success: false, error: error.message }
     }
 }
@@ -177,11 +245,24 @@ export async function getAssetById(assetId: string) {
             .eq('id', assetId)
             .single()
 
-        if (error) throw error
+        if (error) {
+            // Fallback se colunas novas não existirem
+            if (error.message.includes('created_by') || error.code === '42703') {
+                const { data: retryData, error: retryError } = await supabase
+                    .from('assets')
+                    .select('*')
+                    .eq('id', assetId)
+                    .single()
+                
+                if (retryError) throw retryError
+                return { success: true, data: retryData }
+            }
+            throw error
+        }
 
         // Se o imóvel não estiver aprovado, apenas o criador ou admins podem ver
-        if (data.approval_status !== 'approved') {
-            if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && data.created_by !== profile.id)) {
+        if (data.approval_status && data.approval_status !== 'approved') {
+            if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && data.created_by && data.created_by !== profile.id)) {
                 return { success: false, error: 'Not authorized' }
             }
         }

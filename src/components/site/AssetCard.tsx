@@ -4,6 +4,7 @@ import { Home, MessageCircle, Info } from 'lucide-react';
 import { useState } from 'react';
 import { LeadFormModal } from './LeadFormModal';
 import { PropertyDetailsModal } from './PropertyDetailsModal';
+import { translatePropertyType } from '@/utils/property-translations';
 
 interface AssetCardProps {
     asset: {
@@ -25,7 +26,7 @@ export function AssetCard({ asset }: AssetCardProps) {
         ? asset.images[0]
         : null;
 
-    const tipo = asset.details?.tipo_imovel || asset.details?.type || 'Imóvel';
+    const tipo = translatePropertyType(asset.details?.tipo_imovel || asset.details?.type || (asset as any).type);
     const area = asset.details?.area_util || asset.details?.area || null;
     const quartos = asset.details?.quartos || asset.details?.rooms || null;
 

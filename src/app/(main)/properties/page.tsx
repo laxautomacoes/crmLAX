@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, LayoutGrid, List, Download } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Download, Filter } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProfile } from '@/app/_actions/profile'
 import { getAssets, createAsset, updateAsset, deleteAsset } from '@/app/_actions/assets'
@@ -13,6 +13,7 @@ import { PropertyList } from '@/components/dashboard/properties/PropertyList'
 import { PropertyModal } from '@/components/dashboard/properties/PropertyModal'
 import { PropertyDetailsModal } from '@/components/dashboard/properties/PropertyDetailsModal'
 import { SendToLeadModal } from '@/components/dashboard/properties/SendToLeadModal'
+import { PropertyFiltersModal } from '@/components/dashboard/properties/PropertyFiltersModal'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,6 +21,7 @@ export default function PropertiesPage() {
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDetailsOpen, setIsDetailsOpen] = useState(false)
     const [isSendModalOpen, setIsSendModalOpen] = useState(false)
+    const [isFiltersOpen, setIsFiltersOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery')
     const [tenantId, setTenantId] = useState<string | null>(null)
@@ -30,7 +32,16 @@ export default function PropertiesPage() {
     const [viewingProperty, setViewingProperty] = useState<any | null>(null)
     const [sendingProperty, setSendingProperty] = useState<any | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
-    const [statusFilter, setStatusFilter] = useState('all')
+    
+    const [filters, setFilters] = useState({
+        status: 'all',
+        type: 'all',
+        minPrice: '',
+        maxPrice: '',
+        bedrooms: 'all',
+        bathrooms: 'all',
+        parking: 'all'
+    })
 
     const fetchData = async () => {
         try {
@@ -48,7 +59,7 @@ export default function PropertiesPage() {
                     setTenantSlug(tenant.slug)
                 }
 
-                const result = await getAssets(profile.tenant_id, statusFilter === 'all' ? undefined : statusFilter)
+                const result = await getAssets(profile.tenant_id, filters.status === 'all' ? undefined : filters.status)
                 if (result.success) {
                     setProperties(result.data || [])
                 }
@@ -63,7 +74,7 @@ export default function PropertiesPage() {
 
     useEffect(() => {
         fetchData()
-    }, [statusFilter])
+    }, [filters.status])
 
     const handleSave = async (propertyData: any) => {
         if (!tenantId) return
@@ -192,11 +203,29 @@ export default function PropertiesPage() {
         toast.success('Exportação iniciada!')
     }
 
-    const filteredProperties = properties.filter(prop =>
-        prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prop.details?.endereco?.bairro?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        prop.details?.endereco?.cidade?.toLowerCase().includes(searchTerm.toLowerCase())
-    )
+    const filteredProperties = properties.filter(prop => {
+        const matchesSearch = prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            prop.details?.endereco?.bairro?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            prop.details?.endereco?.cidade?.toLowerCase().includes(searchTerm.toLowerCase())
+
+        const matchesType = filters.type === 'all' || prop.type === filters.type
+        
+        const price = prop.price || 0
+        const matchesMinPrice = !filters.minPrice || price >= parseFloat(filters.minPrice)
+        const matchesMaxPrice = !filters.maxPrice || price <= parseFloat(filters.maxPrice)
+
+        const bedrooms = prop.details?.quartos || 0
+        const matchesBedrooms = filters.bedrooms === 'all' || bedrooms >= parseInt(filters.bedrooms)
+
+        const bathrooms = prop.details?.banheiros || 0
+        const matchesBathrooms = filters.bathrooms === 'all' || bathrooms >= parseInt(filters.bathrooms)
+
+        const parking = prop.details?.vagas || 0
+        const matchesParking = filters.parking === 'all' || parking >= parseInt(filters.parking)
+
+        return matchesSearch && matchesType && matchesMinPrice && matchesMaxPrice && 
+               matchesBedrooms && matchesBathrooms && matchesParking
+    })
 
 
     if (isLoading) {
@@ -223,22 +252,19 @@ export default function PropertiesPage() {
                         className="md:w-64"
                     />
 
-                    <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2 shadow-sm">
-                        <span className="text-xs font-bold text-muted-foreground uppercase">Status:</span>
-                        <select
-                            value={statusFilter}
-                            onChange={(e) => setStatusFilter(e.target.value)}
-                            className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer"
-                        >
-                            <option value="all">Todos</option>
-                            <option value="pending">Pendentes</option>
-                            <option value="approved">Aprovados</option>
-                            <option value="rejected">Rejeitados</option>
-                        </select>
-                    </div>
+                    <button
+                        onClick={() => setIsFiltersOpen(true)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] ${
+                            isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '')
+                            ? 'bg-primary text-primary-foreground border-primary'
+                            : 'bg-card border-border text-foreground hover:bg-muted'
+                        }`}
+                    >
+                        <Filter size={18} />
+                        Filtros
+                    </button>
 
                     <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm">
-
                         <button
                             onClick={() => setViewMode('gallery')}
                             className={`p-2 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
@@ -254,15 +280,6 @@ export default function PropertiesPage() {
                             <List size={18} />
                         </button>
                     </div>
-
-                    <button
-                        onClick={handleExportCSV}
-                        className="flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2 rounded-lg hover:bg-muted transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
-                    >
-                        <Download size={18} />
-                        Exportar CSV
-                    </button>
-
 
                     <button
                         onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
@@ -325,6 +342,16 @@ export default function PropertiesPage() {
                     tenantSlug={tenantSlug}
                 />
             )}
+
+            <PropertyFiltersModal
+                isOpen={isFiltersOpen}
+                onClose={() => setIsFiltersOpen(false)}
+                filters={filters}
+                setFilters={setFilters}
+                onExport={handleExportCSV}
+                tenantId={tenantId}
+                onImportSuccess={fetchData}
+            />
         </div>
     )
 }

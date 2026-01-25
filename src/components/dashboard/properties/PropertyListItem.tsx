@@ -1,6 +1,7 @@
 'use client'
 
 import { Home, MapPin, BedDouble, Bath, Square, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send } from 'lucide-react'
+import { translatePropertyType } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
     prop: any
@@ -45,28 +46,28 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
         >
             <td className="px-6 py-4">
                 <div className="flex items-center gap-4">
-                    <div className="w-16 h-12 rounded-lg bg-muted flex-shrink-0 overflow-hidden relative group">
+                    <div className="w-24 h-18 rounded-lg bg-muted flex-shrink-0 overflow-hidden relative group">
                         {prop.images?.[0] ? (
                             <img src={prop.images[0]} alt={prop.title} className="w-full h-full object-cover" />
                         ) : (
                             <div className="w-full h-full flex items-center justify-center text-muted-foreground/50">
-                                <Home size={20} />
+                                <Home size={24} />
                             </div>
                         )}
                         <div className="absolute bottom-0 right-0 flex gap-0.5 p-0.5 bg-black/50 rounded-tl-md">
                             {prop.videos?.length > 0 && (
                                 <div title={`${prop.videos.length} vídeo(s)`}>
-                                    <Video size={8} className="text-white" />
+                                    <Video size={10} className="text-white" />
                                 </div>
                             )}
                             {prop.documents?.length > 0 && (
                                 <div title={`${prop.documents.length} documento(s)`}>
-                                    <FileText size={8} className="text-white" />
+                                    <FileText size={10} className="text-white" />
                                 </div>
                             )}
                         </div>
                     </div>
-                    <div>
+                    <div className="text-left">
                         <div className="font-bold text-foreground text-sm line-clamp-1">{prop.title}</div>
                         <div className="flex flex-col gap-0.5 mt-0.5">
                             <div className="flex items-center gap-1 text-muted-foreground text-[10px]">
@@ -82,11 +83,11 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-4">
-                <span className="text-xs font-medium text-muted-foreground capitalize">{prop.type}</span>
+            <td className="px-6 py-4 text-center">
+                <span className="text-xs font-medium text-muted-foreground">{translatePropertyType(prop.type)}</span>
             </td>
             <td className="px-6 py-4">
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 items-center">
                     <div className="flex items-center gap-1 text-muted-foreground" title="Quartos">
                         <BedDouble size={14} />
                         <span className="text-[11px] font-semibold">{prop.details?.quartos || 0}</span>
@@ -105,7 +106,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
                 </div>
             </td>
             <td className="px-6 py-4">
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 items-center">
                     <div className="flex items-center gap-1 text-muted-foreground" title="Área Construída">
                         <Square size={12} />
                         <span className="text-[10px] font-semibold">C: {prop.details?.area_construida || prop.details?.area_util || 0}m²</span>
@@ -131,30 +132,14 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
                 </div>
             </td>
             <td className="px-6 py-4">
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 items-center">
                     <div className="font-bold text-foreground text-sm whitespace-nowrap">{formattedPrice}</div>
                     {formattedCondo && <div className="text-[10px] text-muted-foreground font-medium">{formattedCondo}</div>}
                     {formattedIptu && <div className="text-[10px] text-muted-foreground font-medium">{formattedIptu}</div>}
                 </div>
             </td>
             <td className="px-6 py-4">
-                <div className="grid grid-cols-4 gap-1 w-fit">
-                    {amenities.map(amenity => (
-                        <div
-                            key={amenity.id}
-                            title={amenity.label}
-                            className={`p-1 rounded border ${prop.details?.[amenity.id]
-                                ? 'bg-secondary/10 border-secondary text-secondary'
-                                : 'bg-muted/30 border-transparent text-muted-foreground/30'
-                                }`}
-                        >
-                            {amenity.icon}
-                        </div>
-                    ))}
-                </div>
-            </td>
-            <td className="px-6 py-4">
-                <div className="flex flex-col gap-1.5">
+                <div className="flex flex-col gap-1.5 items-center">
                     <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit ${prop.status === 'Disponível' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
                         }`}>
                         {prop.status}

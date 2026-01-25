@@ -25,13 +25,12 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend }: P
                 <table className="w-full text-left">
                     <thead className="bg-muted/50 border-b border-border">
                         <tr>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Imóvel</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Tipo</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Detalhes</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Áreas</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Valores</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Lazer</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Status</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Imóvel</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Tipo</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Detalhes</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Áreas</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Valores</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Status</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-right">Ações</th>
                         </tr>
                     </thead>
