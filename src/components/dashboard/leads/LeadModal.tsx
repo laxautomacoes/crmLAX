@@ -161,7 +161,7 @@ export function LeadModal({
                             label="Interesse"
                             value={leadData.interest}
                             onChange={(e) => setLeadData({ ...leadData, interest: e.target.value })}
-                            placeholder="Ex: Casa 3 quartos com suíte"
+                            placeholder="Ex: Casa 3 dormitórios com suíte"
                         />
                     </div>
 

@@ -60,7 +60,7 @@ export function AssetCard({ asset }: AssetCardProps) {
                     <div className="flex flex-wrap gap-4 mb-4 text-sm text-muted-foreground">
                         <span><strong>Tipo:</strong> {tipo}</span>
                         {area && <span><strong>Área:</strong> {area} m²</span>}
-                        {quartos && <span><strong>Quartos:</strong> {quartos}</span>}
+                        {quartos && <span><strong>Dormitórios:</strong> {quartos}</span>}
                     </div>
 
                     <div className="flex gap-2">

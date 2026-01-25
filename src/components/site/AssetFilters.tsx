@@ -78,7 +78,7 @@ export function AssetFilters({ filters, onFilterChange, viewMode, onViewModeChan
                 />
 
                 <FormInput
-                    label="Quartos"
+                    label="Dormitórios"
                     value={filters.quartos}
                     onChange={(e) => handleChange('quartos', e.target.value)}
                     placeholder="Ex: 2 ou mais"

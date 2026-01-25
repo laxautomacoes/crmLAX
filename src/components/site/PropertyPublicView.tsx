@@ -62,8 +62,8 @@ export function PropertyPublicView({ asset, broker, tenant }: PropertyPublicView
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-card rounded-2xl border border-border shadow-sm">
                         <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
                             <BedDouble className="text-secondary mb-2" size={24} />
-                            <span className="text-lg font-bold">{details.quartos || 0}</span>
-                            <span className="text-xs text-muted-foreground uppercase font-medium">Quartos</span>
+                            <span className="text-lg font-bold">{details.dormitorios || details.quartos || 0}</span>
+                            <span className="text-xs text-muted-foreground uppercase font-medium">Dormitórios</span>
                         </div>
                         <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
                             <Bath className="text-secondary mb-2" size={24} />

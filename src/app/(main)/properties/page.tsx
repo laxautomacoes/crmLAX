@@ -136,7 +136,7 @@ export default function PropertiesPage() {
             'ID', 'Título', 'Tipo', 'Preço', 'Status', 
             'Bairro', 'Cidade', 'Rua', 'Número', 'CEP',
             'Área Privativa', 'Área Total', 'Área Terreno', 'Área Construída',
-            'Quartos', 'Suítes', 'Banheiros', 'Vagas', 'Vagas Numeração',
+            'Dormitórios', 'Suítes', 'Banheiros', 'Vagas', 'Vagas Numeração',
             'Torre/Bloco', 'Valor Condomínio', 'Valor IPTU',
             'Portaria 24h', 'Portaria Virtual', 'Piscina', 'Piscina Aquecida',
             'Espaço Gourmet', 'Salão de Festas', 'Academia', 'Sala de Jogos',
@@ -163,7 +163,7 @@ export default function PropertiesPage() {
                 d.area_total || '',
                 d.area_terreno || '',
                 d.area_construida || '',
-                d.quartos || 0,
+                d.dormitorios || d.quartos || 0,
                 d.suites || 0,
                 d.banheiros || 0,
                 d.vagas || 0,
@@ -217,7 +217,7 @@ export default function PropertiesPage() {
         const matchesMinPrice = !filters.minPrice || price >= parseFloat(filters.minPrice)
         const matchesMaxPrice = !filters.maxPrice || price <= parseFloat(filters.maxPrice)
 
-        const bedrooms = prop.details?.quartos || 0
+        const bedrooms = prop.details?.dormitorios || prop.details?.quartos || 0
         const matchesBedrooms = filters.bedrooms === 'all' || bedrooms >= parseInt(filters.bedrooms)
 
         const bathrooms = prop.details?.banheiros || 0

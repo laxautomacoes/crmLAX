@@ -42,12 +42,12 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
     if (!prop) return null;
 
     const handleNext = () => {
-        if (!prop.images) return;
+        if (!prop.images || prop.images.length === 0) return;
         setSelectedImageIndex((prev) => (prev + 1) % prop.images.length);
     };
 
     const handlePrev = () => {
-        if (!prop.images) return;
+        if (!prop.images || prop.images.length === 0) return;
         setSelectedImageIndex((prev) => (prev - 1 + prop.images.length) % prop.images.length);
     };
 
@@ -123,9 +123,13 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                     >
                         {prop.images?.[selectedImageIndex] ? (
                             <>
-                                <img src={prop.images[selectedImageIndex]} className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]" alt="" />
+                                <img 
+                                    src={prop.images[selectedImageIndex]} 
+                                    className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]" 
+                                    alt="" 
+                                />
                                 
-                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                     <div className="p-3 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white">
                                         <Maximize2 size={24} />
                                     </div>
@@ -155,20 +159,51 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                         )}
                     </div>
                     
+                    {/* Images Carousel */}
                     {prop.images?.length > 1 && (
                         <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
-                            {prop.images.map((img: string, i: number) => (
+                            {prop.images.map((url: string, i: number) => (
                                 <button 
                                     key={i} 
                                     ref={el => { thumbnailRefs.current[i] = el; }}
                                     onClick={() => setSelectedImageIndex(i)}
-                                    className={`relative flex-shrink-0 w-24 md:w-32 aspect-video rounded-2xl overflow-hidden border-2 transition-all snap-start ${
+                                    className={`relative flex-shrink-0 w-32 md:w-40 aspect-video rounded-2xl overflow-hidden border-2 transition-all snap-start ${
                                         selectedImageIndex === i ? 'border-secondary ring-2 ring-secondary/20' : 'border-transparent hover:border-border'
                                     }`}
                                 >
-                                    <img src={img} className="w-full h-full object-cover" alt="" />
+                                    <img src={url} className="w-full h-full object-cover" alt="" />
                                 </button>
                             ))}
+                        </div>
+                    )}
+
+                    {/* Videos Carousel (Separated) */}
+                    {prop.videos?.length > 0 && (
+                        <div className="space-y-2">
+                            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 px-1">
+                                <Video size={12} className="text-secondary" />
+                                Vídeos do Imóvel
+                            </h4>
+                            <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
+                                {prop.videos.map((url: string, i: number) => (
+                                    <button 
+                                        key={i} 
+                                        onClick={() => {
+                                            const videoIndex = (prop.images?.length || 0) + i;
+                                            setSelectedImageIndex(videoIndex);
+                                            setIsFullscreenOpen(true);
+                                        }}
+                                        className="relative flex-shrink-0 w-32 md:w-40 aspect-video rounded-2xl overflow-hidden border-2 border-transparent hover:border-secondary transition-all snap-start group bg-black"
+                                    >
+                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                            <div className="p-2 rounded-full bg-secondary/80 text-white shadow-lg group-hover:scale-110 transition-transform">
+                                                <Play size={20} className="fill-white ml-0.5" />
+                                            </div>
+                                        </div>
+                                        <video src={url} className="w-full h-full object-cover opacity-60" />
+                                    </button>
+                                ))}
+                            </div>
                         </div>
                     )}
                 </div>
@@ -213,72 +248,72 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
 
                 {/* Main Content */}
                 <div className="space-y-8">
-                    {/* Key Features (Full Width) */}
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-1">
-                            <div className="text-secondary flex items-center gap-2">
-                                <BedDouble size={16} />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Quartos</span>
+                    {/* Key Features (Balanced and Reorganized) */}
+                <div className="space-y-3">
+                    {/* Row 1: Basic Features */}
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
+                            <div className="text-secondary flex items-center gap-2 mb-1">
+                                <BedDouble size={15} className="flex-shrink-0" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Dormitórios</span>
                             </div>
-                            <div className="text-lg font-bold text-foreground">
-                                {details.quartos || 0}
+                            <div className="text-xl font-black text-foreground flex items-baseline gap-2">
+                                {details.dormitorios || details.quartos || 0}
                                 {details.suites > 0 && (
-                                    <span className="text-xs font-medium text-muted-foreground ml-1">
-                                        ({details.suites} suítes)
+                                    <span className="text-[10px] font-medium text-muted-foreground tracking-normal">
+                                        ({details.suites} Suítes)
                                     </span>
                                 )}
                             </div>
                         </div>
-                        <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-1">
-                            <div className="text-secondary flex items-center gap-2">
-                                <Bath size={16} />
+                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
+                            <div className="text-secondary flex items-center gap-2 mb-1">
+                                <Bath size={15} className="flex-shrink-0" />
                                 <span className="text-[10px] font-bold uppercase tracking-wider">Banheiros</span>
                             </div>
-                            <div className="text-lg font-bold text-foreground">{details.banheiros || 0}</div>
+                            <div className="text-xl font-black text-foreground">{details.banheiros || 0}</div>
                         </div>
-                        <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-1">
-                            <div className="text-secondary flex items-center gap-2">
-                                <Car size={16} />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Vagas</span>
+                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
+                            <div className="text-secondary flex items-center gap-2 mb-1">
+                                <Car size={15} className="flex-shrink-0" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Vagas de Garagem</span>
                             </div>
-                            <div className="text-lg font-bold text-foreground">
-                                {details.vagas || 0}
-                                {details.vagas_numeracao && (
-                                    <span className="text-xs font-medium text-muted-foreground ml-1">
-                                        ({details.vagas_numeracao})
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-1">
-                            <div className="text-secondary flex items-center gap-2">
-                                <Square size={16} />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Privativa (m²)</span>
-                            </div>
-                            <div className="text-lg font-bold text-foreground">{details.area_privativa || 0}m²</div>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-1">
-                            <div className="text-secondary flex items-center gap-2">
-                                <Square size={16} />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Total (m²)</span>
-                            </div>
-                            <div className="text-lg font-bold text-foreground">{details.area_total || 0}m²</div>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-1">
-                            <div className="text-secondary flex items-center gap-2">
-                                <Square size={16} />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Terreno (m²)</span>
-                            </div>
-                            <div className="text-lg font-bold text-foreground">{details.area_terreno || 0}m²</div>
-                        </div>
-                        <div className="p-4 rounded-2xl bg-muted/50 border border-border space-y-1">
-                            <div className="text-secondary flex items-center gap-2">
-                                <Square size={16} />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Construção (m²)</span>
-                            </div>
-                            <div className="text-lg font-bold text-foreground">{details.area_construida || 0}m²</div>
+                            <div className="text-xl font-black text-foreground">{details.vagas || 0}</div>
                         </div>
                     </div>
+
+                    {/* Row 2: Area Features */}
+                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
+                            <div className="text-secondary flex items-center gap-2 mb-1">
+                                <Square size={14} className="flex-shrink-0" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Privativa</span>
+                            </div>
+                            <div className="text-xl font-black text-foreground">{details.area_privativa || 0}m²</div>
+                        </div>
+                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
+                            <div className="text-secondary flex items-center gap-2 mb-1">
+                                <Square size={14} className="flex-shrink-0" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Total</span>
+                            </div>
+                            <div className="text-xl font-black text-foreground">{details.area_total || 0}m²</div>
+                        </div>
+                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
+                            <div className="text-secondary flex items-center gap-2 mb-1">
+                                <Square size={14} className="flex-shrink-0" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Área do Terreno</span>
+                            </div>
+                            <div className="text-xl font-black text-foreground">{details.area_terreno || 0}m²</div>
+                        </div>
+                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
+                            <div className="text-secondary flex items-center gap-2 mb-1">
+                                <Square size={14} className="flex-shrink-0" />
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Construída</span>
+                            </div>
+                            <div className="text-xl font-black text-foreground">{details.area_construida || 0}m²</div>
+                        </div>
+                    </div>
+                </div>
 
                     {/* Description & Proprietary (Full Width) */}
                     <div className="grid grid-cols-1 gap-8">

@@ -113,9 +113,9 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: Propert
                 </div>
 
                 <div className="flex items-center justify-between py-3 border-y border-border">
-                    <div className="flex items-center gap-1 text-muted-foreground" title="Quartos">
+                    <div className="flex items-center gap-1 text-muted-foreground" title="Dormitórios">
                         <BedDouble size={16} />
-                        <span className="text-xs font-semibold">{prop.details?.quartos || 0}</span>
+                        <span className="text-xs font-semibold">{prop.details?.dormitorios || prop.details?.quartos || 0}</span>
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground" title="Banheiros">
                         <Bath size={16} />

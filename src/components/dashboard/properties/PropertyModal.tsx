@@ -105,7 +105,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     area_total: editingProperty.details?.area_total || '',
                     area_terreno: editingProperty.details?.area_terreno || '',
                     area_construida: editingProperty.details?.area_construida || editingProperty.details?.area_util || '',
-                    quartos: editingProperty.details?.quartos || '',
+                    quartos: editingProperty.details?.dormitorios || editingProperty.details?.quartos || '',
                     suites: editingProperty.details?.suites || '',
                     banheiros: editingProperty.details?.banheiros || '',
                     vagas: editingProperty.details?.vagas || '',

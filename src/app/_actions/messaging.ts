@@ -34,7 +34,7 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
             <div style="margin-bottom: 24px;">
               <h2 style="font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0;">Detalhes do Imóvel</h2>
               <ul style="margin: 0; padding: 0; list-style: none;">
-                ${propertyData.details?.quartos ? `<li style="margin-bottom: 8px; color: #444;">• ${propertyData.details.quartos} Quartos</li>` : ''}
+                ${(propertyData.details?.dormitorios || propertyData.details?.quartos) ? `<li style="margin-bottom: 8px; color: #444;">• ${propertyData.details.dormitorios || propertyData.details.quartos} Dormitórios</li>` : ''}
                 ${propertyData.details?.suites ? `<li style="margin-bottom: 8px; color: #444;">• ${propertyData.details.suites} Suítes</li>` : ''}
                 ${propertyData.details?.area_privativa ? `<li style="margin-bottom: 8px; color: #444;">• ${propertyData.details.area_privativa}m² privativos</li>` : ''}
                 <li style="margin-bottom: 8px; color: #444;">• Tipo: ${propertyData.type}</li>

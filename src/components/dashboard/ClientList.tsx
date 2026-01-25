@@ -433,7 +433,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                     label="Detalhes do Interesse"
                                     value={formData.interest}
                                     onChange={e => setFormData({ ...formData, interest: e.target.value })}
-                                    placeholder="Ex: Apartamento 3 quartos no Centro"
+                                    placeholder="Ex: Apartamento 3 dormitórios no Centro"
                                     rows={2}
                                 />
                             </div>

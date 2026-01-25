@@ -88,9 +88,9 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
             </td>
             <td className="px-6 py-4">
                 <div className="flex flex-col gap-1 items-center">
-                    <div className="flex items-center gap-1 text-muted-foreground" title="Quartos">
-                        <BedDouble size={14} />
-                        <span className="text-[11px] font-semibold">{prop.details?.quartos || 0}</span>
+                    <div className="flex items-center gap-1 text-muted-foreground" title="Dormitórios">
+                        <BedDouble size={12} />
+                        <span className="text-[11px] font-semibold">{prop.details?.dormitorios || prop.details?.quartos || 0}</span>
                     </div>
                     <div className="flex items-center gap-1 text-muted-foreground" title="Banheiros">
                         <Bath size={14} />

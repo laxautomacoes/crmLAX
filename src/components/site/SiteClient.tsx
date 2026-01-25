@@ -42,10 +42,10 @@ export function SiteClient({ assets, tenantName, whatsappNumber }: SiteClientPro
             }
         }
 
-        // Filtro de quartos
+        // Filtro de dormitórios
         if (filters.quartos) {
-            const quartos = String(asset.details?.quartos || asset.details?.rooms || '');
-            if (!quartos.includes(filters.quartos)) {
+            const dormitorios = String(asset.details?.dormitorios || asset.details?.quartos || asset.details?.rooms || '');
+            if (!dormitorios.includes(filters.quartos)) {
                 return false;
             }
         }

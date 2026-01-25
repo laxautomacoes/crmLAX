@@ -32,30 +32,59 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
                         <div 
-                            onClick={() => { setSelectedMediaIndex(0); setIsFullscreenOpen(true); }}
-                            className="relative group aspect-video rounded-xl overflow-hidden bg-muted cursor-zoom-in"
+                            onClick={() => setIsFullscreenOpen(true)}
+                            className="relative group aspect-video rounded-xl overflow-hidden bg-black flex items-center justify-center cursor-zoom-in"
                         >
-                            <img src={asset.images?.[0]} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="" />
-                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                            <img src={asset.images?.[selectedMediaIndex]} className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105" alt="" />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                 <div className="p-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white">
                                     <Maximize2 size={20} />
                                 </div>
                             </div>
                         </div>
-                        <div className="grid grid-cols-4 gap-2">
-                            {asset.images?.slice(1, 5).map((img: string, i: number) => (
+                        
+                        {/* Images Carousel */}
+                        <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar snap-x">
+                            {asset.images?.map((url: string, i: number) => (
                                 <div 
                                     key={i} 
-                                    onClick={() => { setSelectedMediaIndex(i + 1); setIsFullscreenOpen(true); }}
-                                    className="relative group aspect-square rounded-lg overflow-hidden border border-border cursor-zoom-in"
+                                    onClick={() => setSelectedMediaIndex(i)}
+                                    className={`relative flex-shrink-0 w-24 aspect-video rounded-lg overflow-hidden border-2 cursor-pointer transition-all snap-start ${
+                                        selectedMediaIndex === i ? 'border-secondary' : 'border-transparent hover:border-border'
+                                    }`}
                                 >
-                                    <img src={img} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="" />
-                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                                        <Maximize2 size={14} className="text-white" />
-                                    </div>
+                                    <img src={url} className="w-full h-full object-cover" alt="" />
                                 </div>
                             ))}
                         </div>
+
+                        {/* Videos Carousel (Separated) */}
+                        {asset.videos?.length > 0 && (
+                            <div className="space-y-2 pt-2 border-t border-border/50">
+                                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 px-1">
+                                    <Video size={12} className="text-secondary" />
+                                    Vídeos
+                                </h4>
+                                <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar snap-x">
+                                    {asset.videos.map((url: string, i: number) => (
+                                        <div 
+                                            key={i} 
+                                            onClick={() => {
+                                                const videoIndex = (asset.images?.length || 0) + i;
+                                                setSelectedMediaIndex(videoIndex);
+                                                setIsFullscreenOpen(true);
+                                            }}
+                                            className="relative flex-shrink-0 w-24 aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-secondary transition-all snap-start group bg-black cursor-pointer"
+                                        >
+                                            <div className="absolute inset-0 flex items-center justify-center z-10">
+                                                <Play size={16} className="text-white fill-white group-hover:scale-110 transition-transform" />
+                                            </div>
+                                            <video src={url} className="w-full h-full object-cover opacity-60" />
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="space-y-4">
                         <div className="flex items-center justify-between">
@@ -69,11 +98,63 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 <span className="px-3 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-full uppercase">{asset.status}</span>
                             </div>
                         </div>
-                        <div className="flex flex-wrap gap-4 text-sm text-muted-foreground">
-                            <div className="flex items-center gap-1"><BedDouble size={16} /> {details.quartos || 0} Q</div>
-                            <div className="flex items-center gap-1"><Bath size={16} /> {details.banheiros || 0} B</div>
-                            <div className="flex items-center gap-1"><Car size={16} /> {details.vagas || 0} V</div>
-                            <div className="flex items-center gap-1"><Square size={16} /> {details.area_util || details.area_total || 0}m²</div>
+                        <div className="space-y-3">
+                            {/* Row 1: Basic Features */}
+                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
+                                    <BedDouble size={16} className="text-secondary flex-shrink-0" /> 
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Dormitórios</span>
+                                        <span className="font-black text-foreground text-lg leading-tight">{details.dormitorios || details.quartos || 0}</span> 
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
+                                    <Bath size={16} className="text-secondary flex-shrink-0" /> 
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Banheiros</span>
+                                        <span className="font-black text-foreground text-lg leading-tight">{details.banheiros || 0}</span> 
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
+                                    <Car size={16} className="text-secondary flex-shrink-0" /> 
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Vagas de Garagem</span>
+                                        <span className="font-black text-foreground text-lg leading-tight">{details.vagas || 0}</span> 
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Row 2: Area Features */}
+                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
+                                    <Square size={16} className="text-secondary flex-shrink-0" /> 
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área Privativa</span>
+                                        <span className="font-black text-foreground text-lg leading-tight">{details.area_privativa || details.area_util || 0}m²</span> 
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
+                                    <Square size={16} className="text-secondary flex-shrink-0" /> 
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área Total</span>
+                                        <span className="font-black text-foreground text-lg leading-tight">{details.area_total || 0}m²</span> 
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
+                                    <Square size={16} className="text-secondary flex-shrink-0" /> 
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área do Terreno</span>
+                                        <span className="font-black text-foreground text-lg leading-tight">{details.area_terreno || 0}m²</span> 
+                                    </div>
+                                </div>
+                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
+                                    <Square size={16} className="text-secondary flex-shrink-0" /> 
+                                    <div className="flex flex-col">
+                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área Construída</span>
+                                        <span className="font-black text-foreground text-lg leading-tight">{details.area_construida || 0}m²</span> 
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">{asset.description || 'Sem descrição disponível.'}</p>
                         {amenities.length > 0 && (

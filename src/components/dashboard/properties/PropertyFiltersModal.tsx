@@ -241,7 +241,7 @@ export function PropertyFiltersModal({
 
                     <div className="grid grid-cols-3 gap-4">
                         <FormSelect
-                            label="Quartos"
+                            label="Dormitórios"
                             value={filters.bedrooms}
                             onChange={(e) => setFilters({ ...filters, bedrooms: e.target.value })}
                             options={[

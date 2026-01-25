@@ -11,7 +11,7 @@ export function RoomsFields({ formData, setFormData }: RoomsFieldsProps) {
     return (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4">
             <FormInput
-                label="Quartos"
+                label="Dormitórios"
                 type="number"
                 value={formData.details.quartos}
                 onChange={(e) => setFormData({ ...formData, details: { ...formData.details, quartos: e.target.value } })}
