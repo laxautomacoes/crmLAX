@@ -40,7 +40,10 @@ export default function PropertiesPage() {
         maxPrice: '',
         bedrooms: 'all',
         bathrooms: 'all',
-        parking: 'all'
+        parking: 'all',
+        sortBy: 'newest',
+        city: '',
+        neighborhood: ''
     })
 
     const fetchData = async () => {
@@ -223,8 +226,29 @@ export default function PropertiesPage() {
         const parking = prop.details?.vagas || 0
         const matchesParking = filters.parking === 'all' || parking >= parseInt(filters.parking)
 
+        const matchesCity = !filters.city || 
+            prop.details?.endereco?.cidade?.toLowerCase().includes(filters.city.toLowerCase())
+        
+        const matchesNeighborhood = !filters.neighborhood || 
+            prop.details?.endereco?.bairro?.toLowerCase().includes(filters.neighborhood.toLowerCase())
+
         return matchesSearch && matchesType && matchesMinPrice && matchesMaxPrice && 
-               matchesBedrooms && matchesBathrooms && matchesParking
+               matchesBedrooms && matchesBathrooms && matchesParking && 
+               matchesCity && matchesNeighborhood
+    }).sort((a, b) => {
+        switch (filters.sortBy) {
+            case 'price_high':
+                return (b.price || 0) - (a.price || 0)
+            case 'price_low':
+                return (a.price || 0) - (b.price || 0)
+            case 'az':
+                return (a.title || '').localeCompare(b.title || '')
+            case 'oldest':
+                return new Date(a.created_at).getTime() - new Date(b.created_at).getTime()
+            case 'newest':
+            default:
+                return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+        }
     })
 
 
@@ -244,6 +268,23 @@ export default function PropertiesPage() {
                     <p className="text-sm text-muted-foreground">{filteredProperties.length} imóveis encontrados</p>
                 </div>
                 <div className="flex items-center justify-center md:justify-end gap-3">
+                    <div className="flex items-center bg-card border border-border rounded-lg p-0.5 shadow-sm">
+                        <button
+                            onClick={() => setViewMode('gallery')}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                            title="Visualização em Galeria"
+                        >
+                            <LayoutGrid size={16} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                            title="Visualização em Lista"
+                        >
+                            <List size={16} />
+                        </button>
+                    </div>
+
                     <FormInput
                         placeholder="Buscar imóveis..."
                         value={searchTerm}
@@ -255,7 +296,7 @@ export default function PropertiesPage() {
                     <button
                         onClick={() => setIsFiltersOpen(true)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] ${
-                            isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '')
+                            isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest')
                             ? 'bg-primary text-primary-foreground border-primary'
                             : 'bg-card border-border text-foreground hover:bg-muted'
                         }`}
@@ -263,23 +304,6 @@ export default function PropertiesPage() {
                         <Filter size={18} />
                         Filtros
                     </button>
-
-                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm">
-                        <button
-                            onClick={() => setViewMode('gallery')}
-                            className={`p-2 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-                            title="Visualização em Galeria"
-                        >
-                            <LayoutGrid size={18} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-                            title="Visualização em Lista"
-                        >
-                            <List size={18} />
-                        </button>
-                    </div>
 
                     <button
                         onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}

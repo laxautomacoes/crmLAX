@@ -22,6 +22,7 @@ interface PropertyModalProps {
 export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRole }: PropertyModalProps) {
     const [formData, setFormData] = useState({
         title: '',
+        description: '',
         price: '',
         type: 'house',
         status: 'Disponível',
@@ -90,6 +91,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         if (editingProperty) {
             setFormData({
                 title: editingProperty.title || '',
+                description: editingProperty.description || '',
                 price: editingProperty.price?.toString() || '',
                 type: editingProperty.type || 'house',
                 status: editingProperty.status || 'Disponível',
@@ -146,6 +148,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         } else {
             setFormData({
                 title: '',
+                description: '',
                 price: '',
                 type: 'house',
                 status: 'Disponível',

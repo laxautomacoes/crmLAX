@@ -29,7 +29,7 @@ export function AreaFields({ formData, setFormData }: AreaFieldsProps) {
                 onChange={(e) => setFormData({ ...formData, details: { ...formData.details, area_terreno: e.target.value } })}
             />
             <FormInput
-                label="Área Construída (m²)"
+                label="Área Construção (m²)"
                 type="number"
                 value={formData.details.area_construida}
                 onChange={(e) => setFormData({ ...formData, details: { ...formData.details, area_construida: e.target.value } })}

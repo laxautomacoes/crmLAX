@@ -34,7 +34,7 @@ export async function getAssets(tenantId: string, status?: string) {
 
         if (error) {
             // Se o erro for sobre colunas inexistentes, tentamos uma query básica
-            if (error.message.includes('approval_status') || error.message.includes('created_by')) {
+            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.message.includes('description')) {
                 console.warn('Retrying assets fetch without new columns')
                 const { data: fallbackData, error: fallbackError } = await supabase
                     .from('assets')
@@ -78,10 +78,10 @@ export async function createAsset(tenantId: string, assetData: any) {
             .single()
 
         if (error) {
-            // Se o erro for especificamente sobre as colunas approval_status ou created_by, tentamos sem elas
-            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.code === '42703') {
-                console.warn('Column approval_status or created_by not found, retrying without them...')
-                const { approval_status, created_by, ...fallbackData } = insertData
+            // Se o erro for especificamente sobre as colunas approval_status, created_by ou description, tentamos sem elas
+            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.message.includes('description') || error.code === '42703') {
+                console.warn('Column approval_status, created_by or description not found, retrying without them...')
+                const { approval_status, created_by, description, ...fallbackData } = insertData
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .insert([fallbackData])
@@ -131,9 +131,9 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
 
         if (error) {
             // Se o erro for sobre as colunas novas no update
-            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.code === '42703') {
+            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.message.includes('description') || error.code === '42703') {
                 console.warn('New columns not found during update, retrying without them...')
-                const { approval_status, created_by, ...fallbackData } = updateData as any
+                const { approval_status, created_by, description, ...fallbackData } = updateData as any
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .update(fallbackData)
@@ -188,9 +188,9 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
 
         if (error) {
             // Se falhar por causa das colunas novas, tenta sem elas
-            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.code === '42703') {
+            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.message.includes('description') || error.code === '42703') {
                 const fallbackData = assetsData.map(asset => {
-                    const { ...rest } = asset
+                    const { approval_status, created_by, description, ...rest } = asset as any
                     return {
                         ...rest,
                         tenant_id: tenantId
@@ -247,7 +247,7 @@ export async function getAssetById(assetId: string) {
 
         if (error) {
             // Fallback se colunas novas não existirem
-            if (error.message.includes('created_by') || error.code === '42703') {
+            if (error.message.includes('created_by') || error.message.includes('description') || error.code === '42703') {
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .select('*')

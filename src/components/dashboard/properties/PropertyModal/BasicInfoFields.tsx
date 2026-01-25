@@ -2,6 +2,7 @@
 
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
+import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 
 interface BasicInfoFieldsProps {
     formData: any
@@ -19,6 +20,14 @@ export function BasicInfoFields({ formData, setFormData, userRole }: BasicInfoFi
                 value={formData.title}
                 onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                 placeholder="Ex: Apartamento 3 suítes Beira Mar"
+            />
+
+            <FormTextarea
+                label="Descrição"
+                value={formData.description}
+                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                placeholder="Descreva os principais detalhes do imóvel..."
+                rows={4}
             />
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4">

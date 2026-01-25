@@ -1,12 +1,23 @@
 'use client';
 
+import { useState } from 'react';
 import { Modal } from '@/components/shared/Modal';
-import { Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, Video, FileText, ExternalLink } from 'lucide-react';
+import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
+import { Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, Video, FileText, ExternalLink, Maximize2 } from 'lucide-react';
 import { translatePropertyType } from '@/utils/property-translations';
 
 export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boolean, onClose: () => void, asset: any }) {
+    const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
+    const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+
     if (!asset) return null;
     const details = asset.details || {};
+    
+    const allMedia = [
+        ...(asset.images || []).map((url: string) => ({ type: 'image' as const, url })),
+        ...(asset.videos || []).map((url: string) => ({ type: 'video' as const, url }))
+    ];
+
     const amenities = [
         { id: 'piscina', icon: <Waves size={16} />, label: 'Piscina' },
         { id: 'academia', icon: <Dumbbell size={16} />, label: 'Academia' },
@@ -20,13 +31,28 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
             <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-4">
-                        <div className="aspect-video rounded-xl overflow-hidden bg-muted">
-                            <img src={asset.images?.[0]} className="w-full h-full object-cover" alt="" />
+                        <div 
+                            onClick={() => { setSelectedMediaIndex(0); setIsFullscreenOpen(true); }}
+                            className="relative group aspect-video rounded-xl overflow-hidden bg-muted cursor-zoom-in"
+                        >
+                            <img src={asset.images?.[0]} className="w-full h-full object-cover transition-transform group-hover:scale-105" alt="" />
+                            <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                <div className="p-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white">
+                                    <Maximize2 size={20} />
+                                </div>
+                            </div>
                         </div>
                         <div className="grid grid-cols-4 gap-2">
                             {asset.images?.slice(1, 5).map((img: string, i: number) => (
-                                <div key={i} className="aspect-square rounded-lg overflow-hidden border border-border">
-                                    <img src={img} className="w-full h-full object-cover" alt="" />
+                                <div 
+                                    key={i} 
+                                    onClick={() => { setSelectedMediaIndex(i + 1); setIsFullscreenOpen(true); }}
+                                    className="relative group aspect-square rounded-lg overflow-hidden border border-border cursor-zoom-in"
+                                >
+                                    <img src={img} className="w-full h-full object-cover transition-transform group-hover:scale-110" alt="" />
+                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <Maximize2 size={14} className="text-white" />
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -72,10 +98,21 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 <h4 className="text-sm font-bold text-foreground flex items-center gap-2"><Video size={18} className="text-secondary" /> Vídeos</h4>
                                 <div className="space-y-2">
                                     {asset.videos.map((url: string, i: number) => (
-                                        <a key={i} href={url} target="_blank" className="flex items-center justify-between p-3 rounded-xl border border-border bg-card hover:bg-muted transition-colors group">
+                                        <button 
+                                            key={i} 
+                                            onClick={() => {
+                                                const videoIndex = (asset.images?.length || 0) + i;
+                                                setSelectedMediaIndex(videoIndex);
+                                                setIsFullscreenOpen(true);
+                                            }}
+                                            className="w-full flex items-center justify-between p-3 rounded-xl border border-border bg-card hover:bg-muted transition-colors group"
+                                        >
                                             <span className="text-xs font-medium">Vídeo {i + 1}</span>
-                                            <ExternalLink size={14} className="text-muted-foreground group-hover:text-secondary" />
-                                        </a>
+                                            <div className="flex items-center gap-2">
+                                                <Maximize2 size={14} className="text-muted-foreground group-hover:text-secondary" />
+                                                <ExternalLink size={14} className="text-muted-foreground group-hover:text-secondary" />
+                                            </div>
+                                        </button>
                                     ))}
                                 </div>
                             </div>
@@ -96,6 +133,13 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                     </div>
                 )}
             </div>
+
+            <FullscreenMediaViewer
+                isOpen={isFullscreenOpen}
+                onClose={() => setIsFullscreenOpen(false)}
+                media={allMedia}
+                initialIndex={selectedMediaIndex}
+            />
         </Modal>
     );
 }

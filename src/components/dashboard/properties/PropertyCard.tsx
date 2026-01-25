@@ -11,6 +11,22 @@ interface PropertyCardProps {
     onSend: (prop: any) => void
 }
 
+const getPropertyTypeStyles = (type: string) => {
+    const types: Record<string, string> = {
+        'apartment': 'bg-blue-600 text-white',
+        'house': 'bg-emerald-600 text-white',
+        'land': 'bg-amber-600 text-white',
+        'commercial': 'bg-indigo-600 text-white',
+        'penthouse': 'bg-purple-600 text-white',
+        'studio': 'bg-pink-600 text-white',
+        'rural': 'bg-green-600 text-white',
+        'warehouse': 'bg-slate-600 text-white',
+        'office': 'bg-cyan-600 text-white',
+        'store': 'bg-rose-600 text-white'
+    }
+    return types[type.toLowerCase()] || 'bg-primary text-primary-foreground'
+}
+
 export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: PropertyCardProps) {
     return (
         <div 
@@ -57,39 +73,42 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: Propert
                         <Trash2 size={16} />
                     </button>
                 </div>
-                <div className="absolute bottom-3 left-3 flex gap-2 flex-wrap">
-                    <div className="px-2 py-1 bg-white/90 backdrop-blur rounded text-[10px] font-bold uppercase tracking-wider text-primary">
-                        {translatePropertyType(prop.type)}
-                    </div>
-                    <div className={`px-2 py-1 backdrop-blur rounded text-[10px] font-bold uppercase tracking-wider ${prop.approval_status === 'approved' ? 'bg-blue-500/90 text-white' :
-                        prop.approval_status === 'rejected' ? 'bg-red-500/90 text-white' :
-                            'bg-gray-500/90 text-white'
-                        }`}>
-                        {prop.approval_status === 'approved' ? 'Aprovado' :
-                            prop.approval_status === 'rejected' ? 'Rejeitado' :
-                                'Pendente'}
-                    </div>
-                    {prop.videos?.length > 0 && (
-                        <div className="px-1.5 py-1 bg-white/90 backdrop-blur rounded flex items-center gap-1 text-[10px] font-bold text-primary" title={`${prop.videos.length} vídeo(s)`}>
-                            <Video size={10} />
-                            {prop.videos.length}
-                        </div>
-                    )}
-                    {prop.documents?.length > 0 && (
-                        <div className="px-1.5 py-1 bg-white/90 backdrop-blur rounded flex items-center gap-1 text-[10px] font-bold text-primary" title={`${prop.documents.length} documento(s)`}>
-                            <FileText size={10} />
-                            {prop.documents.length}
-                        </div>
-                    )}
-                </div>
             </div>
 
             <div className="p-5 space-y-4">
-                <div>
-                    <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1">{prop.title}</h3>
-                    <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
-                        <MapPin size={12} />
-                        <span className="line-clamp-1">{prop.details?.endereco?.bairro || 'Bairro ñ inf.'}, {prop.details?.endereco?.cidade || 'Cidade ñ inf.'}</span>
+                <div className="space-y-3">
+                    <div className="flex gap-2 flex-wrap">
+                        <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
+                            {translatePropertyType(prop.type)}
+                        </div>
+                        <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-sm ${
+                            prop.approval_status === 'approved' ? 'bg-blue-700 text-white' :
+                            prop.approval_status === 'rejected' ? 'bg-red-700 text-white' :
+                            'bg-gray-700 text-white'
+                        }`}>
+                            {prop.approval_status === 'approved' ? 'Aprovado' :
+                                prop.approval_status === 'rejected' ? 'Rejeitado' :
+                                    'Pendente'}
+                        </div>
+                        {prop.videos?.length > 0 && (
+                            <div className="px-1.5 py-0.5 bg-violet-700 rounded flex items-center gap-1 text-[10px] font-black text-white shadow-sm" title={`${prop.videos.length} vídeo(s)`}>
+                                <Video size={10} strokeWidth={3} />
+                                {prop.videos.length}
+                            </div>
+                        )}
+                        {prop.documents?.length > 0 && (
+                            <div className="px-1.5 py-0.5 bg-orange-600 rounded flex items-center gap-1 text-[10px] font-black text-white shadow-sm" title={`${prop.documents.length} documento(s)`}>
+                                <FileText size={10} strokeWidth={3} />
+                                {prop.documents.length}
+                            </div>
+                        )}
+                    </div>
+                    <div>
+                        <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1">{prop.title}</h3>
+                        <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
+                            <MapPin size={12} />
+                            <span className="line-clamp-1">{prop.details?.endereco?.bairro || 'Bairro ñ inf.'}, {prop.details?.endereco?.cidade || 'Cidade ñ inf.'}</span>
+                        </div>
                     </div>
                 </div>
 

@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { Download, Upload, Filter, Trash2 } from 'lucide-react'
+import { Download, Upload, Filter, Trash2, ArrowUpDown } from 'lucide-react'
 import { propertyTypes } from '@/utils/property-translations'
 import { toast } from 'sonner'
 import { bulkCreateAssets } from '@/app/_actions/assets'
@@ -39,7 +39,10 @@ export function PropertyFiltersModal({
             maxPrice: '',
             bedrooms: 'all',
             bathrooms: 'all',
-            parking: 'all'
+            parking: 'all',
+            sortBy: 'newest',
+            city: '',
+            neighborhood: ''
         })
     }
 
@@ -145,14 +148,54 @@ export function PropertyFiltersModal({
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Filtros e Ações" size="lg">
             <div className="space-y-8">
-                {/* Seção de Filtros */}
                 <div className="space-y-4">
+                    <div className="flex items-center gap-2 text-primary font-bold">
+                        <ArrowUpDown size={18} />
+                        <h4 className="text-sm uppercase tracking-wider">Ordenação</h4>
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormSelect
+                            label="Ordenar por"
+                            value={filters.sortBy}
+                            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
+                            options={[
+                                { value: 'newest', label: 'Mais recente' },
+                                { value: 'oldest', label: 'Mais antigo' },
+                                { value: 'price_high', label: 'Maior valor' },
+                                { value: 'price_low', label: 'Menor valor' },
+                                { value: 'az', label: 'A - Z' }
+                            ]}
+                        />
+                    </div>
+                </div>
+
+                {/* Seção de Filtros */}
+                <div className="space-y-4 pt-6 border-t border-border">
                     <div className="flex items-center gap-2 text-primary font-bold">
                         <Filter size={18} />
                         <h4 className="text-sm uppercase tracking-wider">Filtros de Busca</h4>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-muted-foreground uppercase ml-1">Cidade</label>
+                            <FormInput
+                                placeholder="Filtrar por cidade"
+                                value={filters.city}
+                                onChange={(e) => setFilters({ ...filters, city: e.target.value })}
+                            />
+                        </div>
+
+                        <div className="space-y-1">
+                            <label className="text-xs font-bold text-muted-foreground uppercase ml-1">Bairro</label>
+                            <FormInput
+                                placeholder="Filtrar por bairro"
+                                value={filters.neighborhood}
+                                onChange={(e) => setFilters({ ...filters, neighborhood: e.target.value })}
+                            />
+                        </div>
+
                         <FormSelect
                             label="Status de Aprovação"
                             value={filters.status}
