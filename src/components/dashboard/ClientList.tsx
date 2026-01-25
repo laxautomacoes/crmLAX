@@ -1,13 +1,14 @@
 'use client'
 
-import { useState } from 'react'
-import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown } from 'lucide-react'
+import { useState, useEffect } from 'react'
+import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { formatPhone } from '@/lib/utils/phone'
 import { createNewClient, updateClient, deleteClient } from '@/app/_actions/clients'
+import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
 import { ClientListItem } from './ClientListItem'
 
@@ -21,6 +22,9 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     const [clients, setClients] = useState(initialClients)
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
+    const [selectedBroker, setSelectedBroker] = useState('all')
+    const [brokers, setBrokers] = useState<any[]>([])
+    const [userRole, setUserRole] = useState<string>('user')
     const [expandedId, setExpandedId] = useState<string | null>(null)
 
     // Form States
@@ -44,9 +48,29 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     const [editingClientId, setEditingClientId] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
 
+    useEffect(() => {
+        async function fetchBrokers() {
+            const { profile } = await getProfile()
+            if (profile) {
+                setUserRole(profile.role)
+                if (profile.role === 'admin' || profile.role === 'superadmin') {
+                    const res = await getBrokers(tenantId)
+                    if (res.success) {
+                        setBrokers(res.data || [])
+                    }
+                }
+            }
+        }
+        fetchBrokers()
+    }, [tenantId])
+
     const filteredClients = clients.filter(client => {
-        return client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             client.email.toLowerCase().includes(searchTerm.toLowerCase())
+        
+        const matchesBroker = selectedBroker === 'all' || client.assigned_to === selectedBroker
+
+        return matchesSearch && matchesBroker
     })
 
     const handleEdit = (client: any) => {
@@ -163,6 +187,23 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                             icon={Search}
                         />
                     </div>
+                    {(userRole === 'admin' || userRole === 'superadmin') && brokers.length > 0 && (
+                        <div className="relative group min-w-[180px]">
+                            <select
+                                value={selectedBroker}
+                                onChange={(e) => setSelectedBroker(e.target.value)}
+                                className="w-full appearance-none pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer hover:bg-muted/10"
+                            >
+                                <option value="all">Todos os Corretores</option>
+                                {brokers.map((broker) => (
+                                    <option key={broker.id} value={broker.id}>
+                                        {broker.full_name}
+                                    </option>
+                                ))}
+                            </select>
+                            <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
+                        </div>
+                    )}
                     <button
                         onClick={handleOpenCreate}
                         className="flex items-center gap-2 px-4 py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99]"

@@ -142,6 +142,12 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                                     </span>
                                 </div>
                             )}
+                            <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-medium pt-1 border-t border-border/50 mt-2">
+                                <User size={12} className="text-primary" />
+                                <span className="text-primary/90 font-bold truncate">
+                                    {lead.broker_name || 'Não atribuído'}
+                                </span>
+                            </div>
                         </div>
 
                         {lead.notes && (

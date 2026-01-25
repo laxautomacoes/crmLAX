@@ -8,6 +8,7 @@ import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { toast } from 'sonner'
 import { createLead, updateLead } from '@/app/_actions/leads'
+import { getBrokers, getProfile } from '@/app/_actions/profile'
 
 interface LeadModalProps {
     isOpen: boolean
@@ -27,6 +28,8 @@ export function LeadModal({
     editingLead
 }: LeadModalProps) {
     const [isLoading, setIsLoading] = useState(false)
+    const [brokers, setBrokers] = useState<any[]>([])
+    const [userRole, setUserRole] = useState<string>('user')
     const [leadData, setLeadData] = useState({
         name: '',
         phone: '',
@@ -34,8 +37,25 @@ export function LeadModal({
         interest: '',
         value: '',
         notes: '',
-        stage_id: ''
+        stage_id: '',
+        assigned_to: ''
     })
+
+    useEffect(() => {
+        async function fetchContext() {
+            const { profile } = await getProfile()
+            if (profile) {
+                setUserRole(profile.role)
+                if (profile.role === 'admin' || profile.role === 'superadmin') {
+                    const res = await getBrokers(tenantId)
+                    if (res.success) {
+                        setBrokers(res.data || [])
+                    }
+                }
+            }
+        }
+        if (isOpen) fetchContext()
+    }, [isOpen, tenantId])
 
     useEffect(() => {
         if (editingLead) {
@@ -46,7 +66,8 @@ export function LeadModal({
                 interest: editingLead.interest || '',
                 value: editingLead.value?.toString() || '',
                 notes: editingLead.notes || '',
-                stage_id: editingLead.status || (stages.length > 0 ? stages[0].id : '')
+                stage_id: editingLead.status || (stages.length > 0 ? stages[0].id : ''),
+                assigned_to: editingLead.assigned_to || ''
             })
         } else {
             setLeadData({
@@ -56,7 +77,8 @@ export function LeadModal({
                 interest: '',
                 value: '',
                 notes: '',
-                stage_id: stages.length > 0 ? stages[0].id : ''
+                stage_id: stages.length > 0 ? stages[0].id : '',
+                assigned_to: ''
             })
         }
     }, [editingLead, isOpen, stages])
@@ -142,6 +164,21 @@ export function LeadModal({
                             placeholder="Ex: Casa 3 quartos com suíte"
                         />
                     </div>
+
+                    {(userRole === 'admin' || userRole === 'superadmin') && (
+                        <div className="col-span-2">
+                            <FormSelect
+                                label="Corretor Responsável"
+                                value={leadData.assigned_to}
+                                onChange={(e) => setLeadData({ ...leadData, assigned_to: e.target.value })}
+                                options={[
+                                    { value: '', label: 'Não atribuído' },
+                                    ...brokers.map(b => ({ value: b.id, label: b.full_name }))
+                                ]}
+                            />
+                        </div>
+                    )}
+
                     <div>
                         <FormSelect
                             label="Estágio Inicial *"

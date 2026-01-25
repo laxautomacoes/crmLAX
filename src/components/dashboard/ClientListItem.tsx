@@ -65,9 +65,16 @@ export function ClientListItem({
                         </div>
                         <div className="flex flex-col text-left">
                             <span className="font-bold text-foreground">{client.name}</span>
-                            <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider font-medium">
-                                <Calendar size={10} /> {new Date(client.created_at).toLocaleDateString('pt-BR')}
-                            </span>
+                            <div className="flex items-center gap-2">
+                                <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider font-medium">
+                                    <Calendar size={10} /> {new Date(client.created_at).toLocaleDateString('pt-BR')}
+                                </span>
+                                {client.broker_name && (
+                                    <span className="text-[10px] text-primary flex items-center gap-1 uppercase tracking-wider font-bold">
+                                        <User size={10} /> {client.broker_name}
+                                    </span>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </td>
@@ -270,6 +277,10 @@ function ClientLeadsSection({ client }: any) {
                                 {lead.assets?.title && lead.source && (
                                     <p className="text-[10px] text-muted-foreground italic">Origem: {lead.source}</p>
                                 )}
+                                <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1.5 text-[10px] text-primary font-bold">
+                                    <User size={10} />
+                                    <span>Corretor: {lead.profiles?.full_name || 'Não atribuído'}</span>
+                                </div>
                             </div>
                         ))
                     ) : (

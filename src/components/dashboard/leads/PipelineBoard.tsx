@@ -30,6 +30,8 @@ export interface Lead {
     notes?: string
     value?: number
     status: string
+    assigned_to?: string
+    broker_name?: string
 }
 
 interface Stage {

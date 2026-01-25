@@ -17,7 +17,7 @@ export async function getPipelineData(tenantId: string) {
     }
     const stages = stagesResult.data;
 
-    // 2. Buscar leads com contatos
+    // 2. Buscar leads com contatos e corretores
     const { data: leads, error: leadsError } = await supabase
         .from('leads')
         .select(`
@@ -27,6 +27,9 @@ export async function getPipelineData(tenantId: string) {
                 phone,
                 email,
                 tags
+            ),
+            profiles:assigned_to (
+                full_name
             )
         `)
         .eq('tenant_id', tenantId);
@@ -45,7 +48,9 @@ export async function getPipelineData(tenantId: string) {
         status: lead.stage_id,
         notes: lead.notes,
         value: lead.value,
-        interest: lead.source // Usando source como interesse por enquanto
+        interest: lead.source, // Usando source como interesse por enquanto
+        assigned_to: lead.assigned_to,
+        broker_name: lead.profiles?.full_name || 'Não atribuído'
     }));
 
     return {
@@ -166,7 +171,8 @@ export async function updateLead(tenantId: string, leadId: string, data: any) {
             stage_id: data.stage_id || null,
             notes: data.notes,
             value: data.value,
-            source: data.interest
+            source: data.interest,
+            assigned_to: data.assigned_to
         })
         .eq('id', leadId);
 

@@ -8,7 +8,7 @@ import { LeadsHeader } from '@/components/dashboard/leads/LeadsHeader'
 import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
 import { Modal } from '@/components/shared/Modal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
-import { getProfile } from '@/app/_actions/profile'
+import { getProfile, getBrokers } from '@/app/_actions/profile'
 import { getPipelineData, deleteLead } from '@/app/_actions/leads'
 import { createStage, deleteStage, duplicateStage, updateStageName } from '@/app/_actions/stages'
 import { toast } from 'sonner'
@@ -22,6 +22,11 @@ export default function LeadsPage() {
     const [tenantId, setTenantId] = useState<string | null>(null)
     const [stages, setStages] = useState<any[]>([])
     const [leads, setLeads] = useState<any[]>([])
+    const [filteredLeads, setFilteredLeads] = useState<any[]>([])
+    const [brokers, setBrokers] = useState<any[]>([])
+    const [userRole, setUserRole] = useState<string>('user')
+    const [searchTerm, setSearchTerm] = useState('')
+    const [selectedBroker, setSelectedBroker] = useState('all')
     const [editingLead, setEditingLead] = useState<any | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
@@ -30,10 +35,23 @@ export default function LeadsPage() {
             const { profile } = await getProfile()
             if (profile?.tenant_id) {
                 setTenantId(profile.tenant_id)
-                const result = await getPipelineData(profile.tenant_id)
-                if (result.success && result.data) {
-                    setStages(result.data.stages || [])
-                    setLeads(result.data.leads || [])
+                setUserRole(profile.role)
+
+                const [pipelineResult, brokersResult] = await Promise.all([
+                    getPipelineData(profile.tenant_id),
+                    profile.role === 'admin' || profile.role === 'superadmin' 
+                        ? getBrokers(profile.tenant_id) 
+                        : Promise.resolve({ success: true, data: [] })
+                ])
+
+                if (pipelineResult.success && pipelineResult.data) {
+                    setStages(pipelineResult.data.stages || [])
+                    setLeads(pipelineResult.data.leads || [])
+                    setFilteredLeads(pipelineResult.data.leads || [])
+                }
+
+                if (brokersResult.success) {
+                    setBrokers(brokersResult.data || [])
                 }
             }
         } catch (error) {
@@ -47,6 +65,25 @@ export default function LeadsPage() {
     useEffect(() => {
         fetchData()
     }, [])
+
+    useEffect(() => {
+        let result = leads
+
+        if (searchTerm) {
+            const term = searchTerm.toLowerCase()
+            result = result.filter(lead => 
+                lead.name.toLowerCase().includes(term) || 
+                lead.phone.includes(term) ||
+                lead.interest?.toLowerCase().includes(term)
+            )
+        }
+
+        if (selectedBroker !== 'all') {
+            result = result.filter(lead => lead.assigned_to === selectedBroker)
+        }
+
+        setFilteredLeads(result)
+    }, [searchTerm, selectedBroker, leads])
 
     const handleNewStage = async () => {
         if (!newStageName.trim() || !tenantId) return
@@ -89,8 +126,11 @@ export default function LeadsPage() {
     }
 
     const handleSearch = (term: string) => {
-        // Implementar filtro local
-        console.log('Pesquisar por:', term)
+        setSearchTerm(term)
+    }
+
+    const handleBrokerChange = (brokerId: string) => {
+        setSelectedBroker(brokerId)
     }
 
     if (isLoading) {
@@ -140,7 +180,12 @@ export default function LeadsPage() {
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-foreground text-center md:text-left">Leads</h1>
                 <div className="flex items-center justify-center md:justify-end gap-3">
-                    <LeadsHeader onSearch={handleSearch} />
+                    <LeadsHeader 
+                        onSearch={handleSearch} 
+                        brokers={brokers}
+                        onBrokerChange={handleBrokerChange}
+                        isAdmin={userRole === 'admin' || userRole === 'superadmin'}
+                    />
                     <button
                         onClick={() => setIsStageModalOpen(true)}
                         className="flex items-center gap-2 px-4 py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm whitespace-nowrap"
@@ -160,7 +205,7 @@ export default function LeadsPage() {
 
             <PipelineBoard
                 initialStages={stages}
-                initialLeads={leads}
+                initialLeads={filteredLeads}
                 onRefresh={fetchData}
                 onAddLead={handleOpenLeadModal}
                 onDeleteStage={handleDeleteStage}

@@ -41,6 +41,10 @@ export async function getClients(tenantId: string) {
         created_at,
         source,
         asset_id,
+        assigned_to,
+        profiles:assigned_to (
+            full_name
+        ),
         assets (
             title
         ),
@@ -96,6 +100,8 @@ export async function getClients(tenantId: string) {
             value: 0, // Implementar lógica de valor baseada em assets depois
             notes: lastInteraction || '',
             tags: contact.tags || [],
+            broker_name: activeLead?.profiles?.full_name || 'Não atribuído',
+            assigned_to: activeLead?.assigned_to,
             leads: (contact.leads as any[])?.map((l) => ({
                 ...l,
                 status_name: l.lead_stages?.name || l.status
