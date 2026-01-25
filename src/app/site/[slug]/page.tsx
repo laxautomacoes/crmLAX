@@ -30,6 +30,7 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
             .from('assets')
             .select('*')
             .eq('tenant_id', tenant.id)
+            .eq('approval_status', 'approved')
             .order('created_at', { ascending: false });
 
         if (supabaseError) {

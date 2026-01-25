@@ -154,10 +154,20 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
                 </div>
             </td>
             <td className="px-6 py-4">
-                <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap ${prop.status === 'Disponível' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                    }`}>
-                    {prop.status}
-                </span>
+                <div className="flex flex-col gap-1.5">
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit ${prop.status === 'Disponível' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
+                        }`}>
+                        {prop.status}
+                    </span>
+                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit ${prop.approval_status === 'approved' ? 'bg-blue-100 text-blue-700' :
+                        prop.approval_status === 'rejected' ? 'bg-red-100 text-red-700' :
+                            'bg-gray-100 text-gray-700'
+                        }`}>
+                        {prop.approval_status === 'approved' ? 'Aprovado' :
+                            prop.approval_status === 'rejected' ? 'Rejeitado' :
+                                'Pendente'}
+                    </span>
+                </div>
             </td>
             <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2">

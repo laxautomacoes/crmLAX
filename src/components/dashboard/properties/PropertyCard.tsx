@@ -56,9 +56,17 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: Propert
                         <Trash2 size={16} />
                     </button>
                 </div>
-                <div className="absolute bottom-3 left-3 flex gap-2">
+                <div className="absolute bottom-3 left-3 flex gap-2 flex-wrap">
                     <div className="px-2 py-1 bg-white/90 backdrop-blur rounded text-[10px] font-bold uppercase tracking-wider text-primary">
                         {prop.type}
+                    </div>
+                    <div className={`px-2 py-1 backdrop-blur rounded text-[10px] font-bold uppercase tracking-wider ${prop.approval_status === 'approved' ? 'bg-blue-500/90 text-white' :
+                        prop.approval_status === 'rejected' ? 'bg-red-500/90 text-white' :
+                            'bg-gray-500/90 text-white'
+                        }`}>
+                        {prop.approval_status === 'approved' ? 'Aprovado' :
+                            prop.approval_status === 'rejected' ? 'Rejeitado' :
+                                'Pendente'}
                     </div>
                     {prop.videos?.length > 0 && (
                         <div className="px-1.5 py-1 bg-white/90 backdrop-blur rounded flex items-center gap-1 text-[10px] font-bold text-primary" title={`${prop.videos.length} vídeo(s)`}>

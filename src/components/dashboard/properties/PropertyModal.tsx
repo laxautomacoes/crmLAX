@@ -16,14 +16,16 @@ interface PropertyModalProps {
     onClose: () => void
     editingProperty: any | null
     onSave: (propertyData: any) => Promise<void>
+    userRole?: string
 }
 
-export function PropertyModal({ isOpen, onClose, editingProperty, onSave }: PropertyModalProps) {
+export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRole }: PropertyModalProps) {
     const [formData, setFormData] = useState({
         title: '',
         price: '',
         type: 'house',
         status: 'Disponível',
+        approval_status: 'pending',
         images: [] as string[],
         videos: [] as string[],
         documents: [] as { name: string, url: string }[],
@@ -80,6 +82,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave }: Prop
                 price: editingProperty.price?.toString() || '',
                 type: editingProperty.type || 'house',
                 status: editingProperty.status || 'Disponível',
+                approval_status: editingProperty.approval_status || 'pending',
                 images: editingProperty.images || [],
                 videos: editingProperty.videos || [],
                 documents: editingProperty.documents || [],
@@ -126,6 +129,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave }: Prop
                 price: '',
                 type: 'house',
                 status: 'Disponível',
+                approval_status: 'pending',
                 images: [],
                 videos: [],
                 documents: [],
@@ -250,7 +254,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave }: Prop
         >
             <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
                 <div className="grid grid-cols-2 gap-4">
-                    <BasicInfoFields formData={formData} setFormData={setFormData} />
+                    <BasicInfoFields formData={formData} setFormData={setFormData} userRole={userRole} />
                     <AreaFields formData={formData} setFormData={setFormData} />
                     <RoomsFields formData={formData} setFormData={setFormData} />
                     <AmenitiesFields formData={formData} setFormData={setFormData} />

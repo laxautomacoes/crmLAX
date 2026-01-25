@@ -86,6 +86,14 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                     <div className="flex flex-col items-end gap-2">
                         <div className="text-2xl font-black text-secondary">{formattedPrice}</div>
                         <div className="flex gap-2">
+                            <span className={`px-3 py-1 text-[10px] font-bold rounded-full uppercase ${prop.approval_status === 'approved' ? 'bg-blue-100 text-blue-700' :
+                                prop.approval_status === 'rejected' ? 'bg-red-100 text-red-700' :
+                                    'bg-gray-100 text-gray-700'
+                                }`}>
+                                {prop.approval_status === 'approved' ? 'Aprovado' :
+                                    prop.approval_status === 'rejected' ? 'Rejeitado' :
+                                        'Pendente'}
+                            </span>
                             <span className="px-3 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full uppercase">
                                 {prop.status}
                             </span>
@@ -98,6 +106,12 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                 {prop.type}
                             </span>
                         </div>
+                        {prop.profiles?.full_name && (
+                            <div className="text-[10px] text-muted-foreground mt-1 flex items-center gap-1 justify-end">
+                                <User size={10} />
+                                Cadastrado por: <span className="font-semibold">{prop.profiles.full_name}</span>
+                            </div>
+                        )}
                     </div>
                 </div>
 

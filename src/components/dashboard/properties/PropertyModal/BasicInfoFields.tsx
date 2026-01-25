@@ -6,9 +6,12 @@ import { FormSelect } from '@/components/shared/forms/FormSelect'
 interface BasicInfoFieldsProps {
     formData: any
     setFormData: (data: any) => void
+    userRole?: string
 }
 
-export function BasicInfoFields({ formData, setFormData }: BasicInfoFieldsProps) {
+export function BasicInfoFields({ formData, setFormData, userRole }: BasicInfoFieldsProps) {
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin'
+
     return (
         <div className="grid grid-cols-2 gap-4">
             <div className="col-span-2">
@@ -20,7 +23,7 @@ export function BasicInfoFields({ formData, setFormData }: BasicInfoFieldsProps)
                 />
             </div>
 
-            <div className="grid grid-cols-4 col-span-2 gap-4">
+            <div className="grid grid-cols-5 col-span-2 gap-4">
                 <FormInput
                     label="Preço (R$)"
                     type="number"
@@ -67,6 +70,18 @@ export function BasicInfoFields({ formData, setFormData }: BasicInfoFieldsProps)
                         { value: 'Vendido', label: 'Vendido' },
                         { value: 'Reservado', label: 'Reservado' },
                         { value: 'Suspenso', label: 'Suspenso' }
+                    ]}
+                />
+
+                <FormSelect
+                    label="Aprovação"
+                    value={formData.approval_status}
+                    onChange={(e) => setFormData({ ...formData, approval_status: e.target.value })}
+                    disabled={!isAdmin}
+                    options={[
+                        { value: 'pending', label: 'Pendente' },
+                        { value: 'approved', label: 'Aprovado' },
+                        { value: 'rejected', label: 'Rejeitado' }
                     ]}
                 />
             </div>

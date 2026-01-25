@@ -25,10 +25,12 @@ export default function PropertiesPage() {
     const [tenantId, setTenantId] = useState<string | null>(null)
     const [tenantSlug, setTenantSlug] = useState<string>('')
     const [properties, setProperties] = useState<any[]>([])
+    const [userRole, setUserRole] = useState<string>('user')
     const [editingProperty, setEditingProperty] = useState<any | null>(null)
     const [viewingProperty, setViewingProperty] = useState<any | null>(null)
     const [sendingProperty, setSendingProperty] = useState<any | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
+    const [statusFilter, setStatusFilter] = useState('all')
 
     const fetchData = async () => {
         try {
@@ -38,6 +40,7 @@ export default function PropertiesPage() {
             const { profile } = await getProfile()
             if (profile?.tenant_id) {
                 setTenantId(profile.tenant_id)
+                setUserRole(profile.role || 'user')
                 
                 // Buscar slug do tenant
                 const tenant = await getTenantByUserId(profile.id)
@@ -45,7 +48,7 @@ export default function PropertiesPage() {
                     setTenantSlug(tenant.slug)
                 }
 
-                const result = await getAssets(profile.tenant_id)
+                const result = await getAssets(profile.tenant_id, statusFilter === 'all' ? undefined : statusFilter)
                 if (result.success) {
                     setProperties(result.data || [])
                 }
@@ -60,7 +63,7 @@ export default function PropertiesPage() {
 
     useEffect(() => {
         fetchData()
-    }, [])
+    }, [statusFilter])
 
     const handleSave = async (propertyData: any) => {
         if (!tenantId) return
@@ -138,6 +141,20 @@ export default function PropertiesPage() {
                         className="md:w-64"
                     />
 
+                    <div className="flex items-center gap-2 bg-card border border-border rounded-lg px-3 py-2 shadow-sm">
+                        <span className="text-xs font-bold text-muted-foreground uppercase">Status:</span>
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="bg-transparent text-sm font-medium focus:outline-none cursor-pointer"
+                        >
+                            <option value="all">Todos</option>
+                            <option value="pending">Pendentes</option>
+                            <option value="approved">Aprovados</option>
+                            <option value="rejected">Rejeitados</option>
+                        </select>
+                    </div>
+
                     <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm">
                         <button
                             onClick={() => setViewMode('gallery')}
@@ -191,6 +208,7 @@ export default function PropertiesPage() {
                 }}
                 editingProperty={editingProperty}
                 onSave={handleSave}
+                userRole={userRole}
             />
 
             <PropertyDetailsModal
