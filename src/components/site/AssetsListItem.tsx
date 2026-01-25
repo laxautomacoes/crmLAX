@@ -24,6 +24,11 @@ export function AssetsListItem({ asset }: { asset: any }) {
                         <div className="flex flex-col md:flex-row md:items-start justify-between gap-2">
                             <div>
                                 <h3 className="font-bold text-foreground text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1">{asset.title}</h3>
+                                {asset.description && (
+                                    <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5 italic">
+                                        {asset.description}
+                                    </div>
+                                )}
                                 <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1"><MapPin size={14} /><span>{bairro}, {cidade}</span></div>
                             </div>
                             <div className="text-xl font-bold text-foreground whitespace-nowrap">{formattedPrice}</div>

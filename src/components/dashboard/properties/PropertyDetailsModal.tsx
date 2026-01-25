@@ -67,9 +67,9 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
         { id: 'salao_festas', icon: <PartyPopper size={16} />, label: 'Salão de Festas' },
         { id: 'academia', icon: <Dumbbell size={16} />, label: 'Academia' },
         { id: 'sala_jogos', icon: <Gamepad2 size={16} />, label: 'Sala de Jogos' },
-        { id: 'sala_estudos_coworking', icon: <BookOpen size={16} />, label: 'Coworking' },
-        { id: 'sala_cinema', icon: <Film size={16} />, label: 'Cinema' },
-        { id: 'playground', icon: <Play size={16} />, label: 'Playground' },
+        { id: 'sala_estudos_coworking', icon: <BookOpen size={16} />, label: 'Estudos/Coworking' },
+        { id: 'sala_cinema', icon: <Film size={16} />, label: 'Sala de Cinema' },
+        { id: 'playground', icon: <Baby size={16} />, label: 'Playground' },
         { id: 'brinquedoteca', icon: <Baby size={16} />, label: 'Brinquedoteca' },
         { id: 'home_market', icon: <Home size={16} />, label: 'Home Market' },
     ].filter(a => details[a.id]);
@@ -78,36 +78,60 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
         ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}`
         : 'Sob consulta';
 
-    const formattedCondo = details.valor_condominio
-        ? `R$ ${Number(details.valor_condominio).toLocaleString('pt-BR')}`
-        : <span className="text-secondary font-bold">—</span>;
+    const formattedCondo = details.valor_condominio ? `R$ ${Number(details.valor_condominio).toLocaleString('pt-BR')}` : 'Sob consulta';
+    const formattedIptu = details.valor_iptu ? `R$ ${Number(details.valor_iptu).toLocaleString('pt-BR')}` : 'Sob consulta';
 
-    const formattedIptu = details.valor_iptu
-        ? `R$ ${Number(details.valor_iptu).toLocaleString('pt-BR')}`
-        : <span className="text-secondary font-bold">—</span>;
+    const endereco = details.endereco || {};
+    const fullAddress = [
+        endereco.rua,
+        endereco.numero,
+        endereco.complemento,
+        endereco.bairro,
+        endereco.cidade,
+        endereco.estado,
+        endereco.cep
+    ].filter(Boolean).join(', ');
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title="Detalhes do Imóvel" size="xl">
             <div className="space-y-8 max-h-[85vh] overflow-y-auto pr-4 custom-scrollbar">
                 {/* Header Info */}
                 <div className="flex items-center justify-between gap-4 border-b border-border pb-6">
-                    <div className="space-y-1">
-                        <h2 className="text-2xl font-bold text-foreground">{prop.title}</h2>
-                        <div className="flex items-center gap-2 text-muted-foreground">
-                            <MapPin size={16} />
-                            <span className="text-sm">
-                                {details.endereco?.rua && `${details.endereco.rua}, `}
-                                {details.endereco?.numero && `${details.endereco.numero} - `}
-                                {details.endereco?.bairro || 'Bairro ñ inf.'}, 
-                                {details.endereco?.cidade || 'Cidade ñ inf.'}
-                                {details.endereco?.estado && ` - ${details.endereco.estado}`}
-                            </span>
+                        <div className="space-y-1">
+                            <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                <div className="flex items-center gap-1.5 text-muted-foreground text-sm font-medium">
+                                    <MapPin size={14} className="text-secondary" />
+                                    {fullAddress || 'Endereço não informado'}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                    <span className="w-1.5 h-1.5 rounded-full bg-border" />
+                                    {details.situacao && (
+                                        <span className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] font-bold rounded uppercase tracking-wider">
+                                            {details.situacao}
+                                        </span>
+                                    )}
+                                    <span className="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded uppercase tracking-wider">
+                                        {translatePropertyType(prop.type)}
+                                    </span>
+                                    <span className="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded uppercase tracking-wider">
+                                        {prop.status}
+                                    </span>
+                                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${prop.approval_status === 'approved' ? 'bg-blue-500/10 text-blue-500' :
+                                        prop.approval_status === 'rejected' ? 'bg-red-500/10 text-red-500' :
+                                            'bg-amber-500/10 text-amber-500'
+                                        }`}>
+                                        {prop.approval_status === 'approved' ? 'Aprovado' :
+                                            prop.approval_status === 'rejected' ? 'Rejeitado' :
+                                                'Pendente'}
+                                    </span>
+                                </div>
+                            </div>
                         </div>
-                    </div>
                     {onSend && (
                         <button
                             onClick={() => onSend(prop)}
-                            className="flex items-center gap-2 px-6 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 transition-all shadow-sm shadow-secondary/20 whitespace-nowrap"
+                            className="flex items-center gap-2 px-6 py-2 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 transition-all shadow-sm shadow-secondary/20 whitespace-nowrap"
                         >
                             <Send size={18} />
                             Enviar para Lead
@@ -208,112 +232,125 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                     )}
                 </div>
 
-                {/* Info Bar (Price and Status) */}
-                <div className="flex flex-wrap items-center justify-between gap-6 p-6 rounded-3xl bg-muted/30 border border-border">
-                    <div className="space-y-1">
-                        <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Valor do Imóvel</div>
-                        <div className="text-3xl font-black text-secondary">{formattedPrice}</div>
-                    </div>
-                    
-                    <div className="flex flex-col items-end gap-3">
-                        <div className="flex flex-wrap gap-2 justify-end">
-                            <span className={`px-3 py-1.5 text-[10px] font-bold rounded-full uppercase tracking-wider shadow-sm ${prop.approval_status === 'approved' ? 'bg-blue-500/10 text-blue-600 border border-blue-500/20' :
-                                prop.approval_status === 'rejected' ? 'bg-red-500/10 text-red-600 border border-red-500/20' :
-                                    'bg-amber-500/10 text-amber-600 border border-amber-500/20'
-                                }`}>
-                                {prop.approval_status === 'approved' ? 'Aprovado' :
-                                    prop.approval_status === 'rejected' ? 'Rejeitado' :
-                                        'Pendente'}
-                            </span>
-                            <span className="px-3 py-1.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full border border-secondary/20 uppercase tracking-wider shadow-sm">
-                                {prop.status}
-                            </span>
-                            {details.situacao && (
-                                <span className="px-3 py-1.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded-full border border-secondary/20 uppercase tracking-wider shadow-sm">
-                                    {details.situacao}
-                                </span>
-                            )}
-                            <span className="px-3 py-1.5 bg-muted text-muted-foreground text-[10px] font-bold rounded-full border border-border uppercase tracking-wider shadow-sm">
-                                {translatePropertyType(prop.type)}
-                            </span>
-                        </div>
-                        {prop.profiles?.full_name && (
-                            <div className="text-[10px] text-muted-foreground flex items-center gap-1.5">
-                                <User size={12} className="text-secondary" />
-                                Cadastrado por: <span className="font-bold text-foreground">{prop.profiles.full_name}</span>
-                            </div>
-                        )}
+                {/* Header Info (Simplified) */}
+                <div className="space-y-6 pt-4">
+                    <div className="space-y-3">
+                        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                            <Home size={20} className="text-secondary" />
+                            Dados imóvel
+                        </h3>
+                        <div className="flex flex-wrap items-center justify-between gap-6 pb-6 border-b border-border/60">
+                             <div className="space-y-1">
+                                 <div className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Valor do Imóvel</div>
+                                 <div className="text-2xl font-bold text-foreground tracking-tight">{formattedPrice}</div>
+                             </div>
+                             
+                             <div className="flex flex-col items-end gap-3">
+                                 {prop.profiles?.full_name && (
+                                     <div className="text-[10px] text-muted-foreground flex items-center gap-1.5">
+                                         <User size={12} className="text-secondary/60" />
+                                         <span>Cadastrado por: <span className="font-bold text-foreground/80">{prop.profiles.full_name}</span></span>
+                                     </div>
+                                 )}
+                             </div>
+                         </div>
                     </div>
                 </div>
 
                 {/* Main Content */}
                 <div className="space-y-8">
-                    {/* Key Features (Balanced and Reorganized) */}
-                <div className="space-y-3">
-                    {/* Row 1: Basic Features */}
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
-                            <div className="text-secondary flex items-center gap-2 mb-1">
-                                <BedDouble size={15} className="flex-shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Dormitórios</span>
+                    {/* Key Features (Simplified - Line format) */}
+                    <div className="space-y-4">
+                        <div className="flex flex-col gap-4">
+                            <div className="flex items-center gap-4 group py-2 border-b border-border/40">
+                                <div className="p-2.5 rounded-xl bg-secondary/10 text-secondary">
+                                    <BedDouble size={18} />
+                                </div>
+                                <div className="flex flex-1 items-center justify-between">
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Dormitórios</span>
+                                    <div className="text-base font-bold text-foreground flex items-baseline gap-2">
+                                        {details.dormitorios || details.quartos || 0}
+                                        {Number(details.suites) > 0 && (
+                                            <span className="text-xs font-medium text-muted-foreground">
+                                                ({details.suites} Suítes)
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="text-xl font-black text-foreground flex items-baseline gap-2">
-                                {details.dormitorios || details.quartos || 0}
-                                {details.suites > 0 && (
-                                    <span className="text-[10px] font-medium text-muted-foreground tracking-normal">
-                                        ({details.suites} Suítes)
-                                    </span>
-                                )}
-                            </div>
-                        </div>
-                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
-                            <div className="text-secondary flex items-center gap-2 mb-1">
-                                <Bath size={15} className="flex-shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Banheiros</span>
-                            </div>
-                            <div className="text-xl font-black text-foreground">{details.banheiros || 0}</div>
-                        </div>
-                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
-                            <div className="text-secondary flex items-center gap-2 mb-1">
-                                <Car size={15} className="flex-shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Vagas de Garagem</span>
-                            </div>
-                            <div className="text-xl font-black text-foreground">{details.vagas || 0}</div>
-                        </div>
-                    </div>
 
-                    {/* Row 2: Area Features */}
-                    <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
-                            <div className="text-secondary flex items-center gap-2 mb-1">
-                                <Square size={14} className="flex-shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Privativa</span>
+                            <div className="flex items-center gap-4 group py-2 border-b border-border/40">
+                                <div className="p-2.5 rounded-xl bg-secondary/10 text-secondary">
+                                    <Bath size={18} />
+                                </div>
+                                <div className="flex flex-1 items-center justify-between">
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Banheiros</span>
+                                    <div className="text-base font-bold text-foreground">
+                                        {details.banheiros || 0}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="text-xl font-black text-foreground">{details.area_privativa || 0}m²</div>
-                        </div>
-                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
-                            <div className="text-secondary flex items-center gap-2 mb-1">
-                                <Square size={14} className="flex-shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Total</span>
+
+                            <div className="flex items-center gap-4 group py-2 border-b border-border/40">
+                                <div className="p-2.5 rounded-xl bg-secondary/10 text-secondary">
+                                    <Car size={18} />
+                                </div>
+                                <div className="flex flex-1 items-center justify-between">
+                                    <span className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest">Vagas</span>
+                                    <div className="text-base font-bold text-foreground flex items-baseline gap-2">
+                                        {details.vagas || 0}
+                                        {details.vagas_numeracao && (
+                                            <span className="text-xs font-medium text-muted-foreground">
+                                                ({details.vagas_numeracao})
+                                            </span>
+                                        )}
+                                    </div>
+                                </div>
                             </div>
-                            <div className="text-xl font-black text-foreground">{details.area_total || 0}m²</div>
                         </div>
-                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
-                            <div className="text-secondary flex items-center gap-2 mb-1">
-                                <Square size={14} className="flex-shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Área do Terreno</span>
+
+                        {/* Area Features (Line format) */}
+                        <div className="grid grid-cols-1 gap-3 pt-2">
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/20">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Square size={14} className="text-secondary/60" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Área Privativa</span>
+                                </div>
+                                <div className="text-sm font-bold text-foreground">{details.area_privativa || 0}m²</div>
                             </div>
-                            <div className="text-xl font-black text-foreground">{details.area_terreno || 0}m²</div>
-                        </div>
-                        <div className="p-3.5 rounded-2xl bg-muted/40 border border-border/60 flex flex-col justify-center hover:bg-muted/60 transition-colors">
-                            <div className="text-secondary flex items-center gap-2 mb-1">
-                                <Square size={14} className="flex-shrink-0" />
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Área Construída</span>
+                            
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/20">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Square size={14} className="text-secondary/60" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Área Total</span>
+                                </div>
+                                <div className="text-sm font-bold text-foreground">{details.area_total || 0}m²</div>
                             </div>
-                            <div className="text-xl font-black text-foreground">{details.area_construida || 0}m²</div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/20">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Square size={14} className="text-secondary/60" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Área do Terreno</span>
+                                </div>
+                                <div className="text-sm font-bold text-foreground">{details.area_terreno || 0}m²</div>
+                            </div>
+
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/20">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <Square size={14} className="text-secondary/60" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Área Construída</span>
+                                </div>
+                                <div className="text-sm font-bold text-foreground">{details.area_construida || 0}m²</div>
+                            </div>
                         </div>
+
+                        {details.torre_bloco && (
+                            <div className="flex items-center gap-2 text-xs text-muted-foreground py-2 px-3 bg-muted/30 rounded-lg w-fit">
+                                <span className="font-bold uppercase tracking-widest text-[9px]">Torre/Bloco:</span>
+                                <span className="text-foreground font-semibold">{details.torre_bloco}</span>
+                            </div>
+                        )}
                     </div>
-                </div>
 
                     {/* Description & Proprietary (Full Width) */}
                     <div className="grid grid-cols-1 gap-8">
@@ -327,29 +364,35 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                             </p>
                         </div>
 
-                        {/* Proprietário | Construtora Card below Description */}
-                        <div className="p-6 rounded-3xl bg-secondary/5 border border-secondary/10 space-y-6">
-                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-6">
-                                <div className="space-y-1">
-                                    <div className="text-secondary flex items-center gap-2">
-                                        <User size={18} />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest">Proprietário | Construtora</span>
-                                    </div>
-                                    <div className="text-2xl font-bold text-foreground">
+                        {/* Proprietário | Construtora Section (Standardized with Description style) */}
+                        <div className="space-y-3">
+                            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                <User size={20} className="text-secondary" />
+                                Proprietário | Construtora
+                            </h3>
+                            
+                            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                                <div className="text-muted-foreground leading-relaxed">
+                                    <span className="text-foreground font-bold text-lg">
                                         {details.proprietario?.nome || prop.owner_name || 'Não informado'}
-                                    </div>
+                                    </span>
+                                    {details.proprietario?.responsavel && (
+                                        <span className="text-sm font-normal ml-2">
+                                            (Resp: {details.proprietario.responsavel})
+                                        </span>
+                                    )}
                                 </div>
 
                                 {(details.proprietario?.telefone || prop.owner_phone || details.proprietario?.email || prop.owner_email) && (
-                                    <div className="flex flex-wrap gap-4">
+                                    <div className="flex flex-wrap gap-3">
                                         {(details.proprietario?.telefone || prop.owner_phone) && (
-                                            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border text-sm font-medium text-foreground">
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-medium text-foreground">
                                                 <Phone size={14} className="text-secondary" />
                                                 {details.proprietario?.telefone || prop.owner_phone}
                                             </div>
                                         )}
                                         {(details.proprietario?.email || prop.owner_email) && (
-                                            <div className="flex items-center gap-2 px-4 py-2 rounded-xl bg-card border border-border text-sm font-medium text-foreground">
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-medium text-foreground">
                                                 <Mail size={14} className="text-secondary" />
                                                 {details.proprietario?.email || prop.owner_email}
                                             </div>
@@ -359,7 +402,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                             </div>
 
                             {(details.proprietario?.endereco_rua || details.proprietario?.endereco_bairro) && (
-                                <div className="pt-4 border-t border-secondary/10 flex items-start gap-2 text-sm text-muted-foreground">
+                                <div className="pt-1 flex items-start gap-2 text-sm text-muted-foreground leading-relaxed">
                                     <MapPin size={16} className="mt-0.5 text-secondary flex-shrink-0" />
                                     <span>
                                         {details.proprietario.endereco_rua}{details.proprietario.endereco_numero ? `, ${details.proprietario.endereco_numero}` : ''} - {details.proprietario.endereco_bairro}

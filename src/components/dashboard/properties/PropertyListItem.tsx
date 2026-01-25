@@ -67,8 +67,13 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
                             )}
                         </div>
                     </div>
-                    <div className="text-left">
+                    <div className="text-left max-w-md">
                         <div className="font-bold text-foreground text-sm line-clamp-1">{prop.title}</div>
+                        {prop.description && (
+                            <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5 italic">
+                                {prop.description}
+                            </div>
+                        )}
                         <div className="flex flex-col gap-0.5 mt-0.5">
                             <div className="flex items-center gap-1 text-muted-foreground text-[10px]">
                                 <MapPin size={10} />

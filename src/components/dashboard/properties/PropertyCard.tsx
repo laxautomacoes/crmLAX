@@ -105,6 +105,11 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: Propert
                     </div>
                     <div>
                         <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1">{prop.title}</h3>
+                        {prop.description && (
+                            <p className="text-xs text-muted-foreground line-clamp-1 mt-1 italic">
+                                {prop.description}
+                            </p>
+                        )}
                         <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
                             <MapPin size={12} />
                             <span className="line-clamp-1">{prop.details?.endereco?.bairro || 'Bairro ñ inf.'}, {prop.details?.endereco?.cidade || 'Cidade ñ inf.'}</span>

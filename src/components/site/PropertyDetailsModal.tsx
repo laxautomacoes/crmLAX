@@ -19,10 +19,18 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
     ];
 
     const amenities = [
+        { id: 'portaria_24h', icon: <Shield size={16} />, label: 'Portaria 24h' },
+        { id: 'portaria_virtual', icon: <Shield size={16} />, label: 'Portaria Virtual' },
         { id: 'piscina', icon: <Waves size={16} />, label: 'Piscina' },
-        { id: 'academia', icon: <Dumbbell size={16} />, label: 'Academia' },
+        { id: 'piscina_aquecida', icon: <Waves size={16} />, label: 'Piscina Aquecida' },
         { id: 'espaco_gourmet', icon: <Utensils size={16} />, label: 'Espaço Gourmet' },
         { id: 'salao_festas', icon: <PartyPopper size={16} />, label: 'Salão de Festas' },
+        { id: 'academia', icon: <Dumbbell size={16} />, label: 'Academia' },
+        { id: 'sala_jogos', icon: <Gamepad2 size={16} />, label: 'Sala de Jogos' },
+        { id: 'sala_estudos_coworking', icon: <BookOpen size={16} />, label: 'Estudos/Coworking' },
+        { id: 'sala_cinema', icon: <Film size={16} />, label: 'Sala de Cinema' },
+        { id: 'playground', icon: <Baby size={16} />, label: 'Playground' },
+        { id: 'brinquedoteca', icon: <Baby size={16} />, label: 'Brinquedoteca' },
         { id: 'home_market', icon: <Home size={16} />, label: 'Home Market' },
     ].filter(a => details[a.id]);
 
@@ -105,7 +113,12 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                     <BedDouble size={16} className="text-secondary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Dormitórios</span>
-                                        <span className="font-black text-foreground text-lg leading-tight">{details.dormitorios || details.quartos || 0}</span> 
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="font-black text-foreground text-lg leading-tight">{details.dormitorios || details.quartos || 0}</span>
+                                            {Number(details.suites) > 0 && (
+                                                <span className="text-[10px] text-muted-foreground font-medium">({details.suites} suítes)</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
@@ -119,7 +132,12 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                     <Car size={16} className="text-secondary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Vagas de Garagem</span>
-                                        <span className="font-black text-foreground text-lg leading-tight">{details.vagas || 0}</span> 
+                                        <div className="flex items-baseline gap-1">
+                                            <span className="font-black text-foreground text-lg leading-tight">{details.vagas || 0}</span>
+                                            {details.vagas_numeracao && (
+                                                <span className="text-[10px] text-muted-foreground font-medium">({details.vagas_numeracao})</span>
+                                            )}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -155,6 +173,13 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                     </div>
                                 </div>
                             </div>
+                            
+                            {details.torre_bloco && (
+                                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40 text-[10px] text-muted-foreground">
+                                    <span className="font-bold uppercase tracking-wider mr-2">Torre/Bloco:</span>
+                                    <span className="text-foreground font-medium">{details.torre_bloco}</span>
+                                </div>
+                            )}
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed">{asset.description || 'Sem descrição disponível.'}</p>
                         {amenities.length > 0 && (

@@ -55,7 +55,13 @@ export function AssetCard({ asset }: AssetCardProps) {
                 )}
 
                 <div className="p-6">
-                    <h3 className="text-xl font-bold text-foreground mb-3">{asset.title}</h3>
+                    <h3 className="text-xl font-bold text-foreground mb-1">{asset.title}</h3>
+                    
+                    {(asset as any).description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3 italic">
+                            {(asset as any).description}
+                        </p>
+                    )}
 
                     <div className="flex flex-wrap gap-4 mb-4 text-sm text-muted-foreground">
                         <span><strong>Tipo:</strong> {tipo}</span>

@@ -208,6 +208,7 @@ export default function PropertiesPage() {
 
     const filteredProperties = properties.filter(prop => {
         const matchesSearch = prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (prop.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             prop.details?.endereco?.bairro?.toLowerCase().includes(searchTerm.toLowerCase()) ||
             prop.details?.endereco?.cidade?.toLowerCase().includes(searchTerm.toLowerCase())
 

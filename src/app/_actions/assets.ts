@@ -38,17 +38,29 @@ export async function getAssets(tenantId: string, status?: string) {
                 console.warn('Retrying assets fetch without new columns')
                 const { data: fallbackData, error: fallbackError } = await supabase
                     .from('assets')
-                    .select('*')
+                    .select('id, title, type, price, status, details, images, videos, documents')
                     .eq('tenant_id', tenantId)
                     .order('created_at', { ascending: false })
                 
                 if (fallbackError) throw fallbackError
-                return { success: true, data: fallbackData }
+
+                // Mapear description do details se existir
+                const mappedData = (fallbackData || []).map((item: any) => ({
+                    ...item,
+                    description: item.description || (item.details as any)?.description
+                }))
+                return { success: true, data: mappedData }
             }
             throw error
         }
 
-        return { success: true, data }
+        // Garantir que a description seja lida do details se a coluna raiz estiver vazia
+        const mappedData = (data || []).map((item: any) => ({
+            ...item,
+            description: item.description || (item.details as any)?.description
+        }))
+
+        return { success: true, data: mappedData }
     } catch (error: any) {
         console.error('Error fetching assets:', error)
         return { success: false, error: error.message }
@@ -78,10 +90,31 @@ export async function createAsset(tenantId: string, assetData: any) {
             .single()
 
         if (error) {
-            // Se o erro for especificamente sobre as colunas approval_status, created_by ou description, tentamos sem elas
-            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.message.includes('description') || error.code === '42703') {
-                console.warn('Column approval_status, created_by or description not found, retrying without them...')
-                const { approval_status, created_by, description, ...fallbackData } = insertData
+            // Se o erro for especificamente sobre colunas que podem não existir ainda no schema cache
+            const isMissingColumnError = 
+                error.code === '42703' || 
+                error.message.includes('column') || 
+                error.message.includes('schema cache') ||
+                error.message.includes('approval_status') || 
+                error.message.includes('created_by') ||
+                error.message.includes('description');
+
+            if (isMissingColumnError) {
+                console.warn('Column error detected during creation, applying definitive fallback...')
+                const fallbackData = { ...insertData } as any
+                
+                // Se a descrição falhar, vamos movê-la para dentro de 'details' para não perder a informação
+                if (error.message.includes('description') || error.code === '42703') {
+                    fallbackData.details = {
+                        ...fallbackData.details,
+                        description: fallbackData.description
+                    }
+                    delete fallbackData.description
+                }
+                
+                if (error.message.includes('approval_status') || error.code === '42703') delete fallbackData.approval_status
+                if (error.message.includes('created_by') || error.code === '42703') delete fallbackData.created_by
+                
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .insert([fallbackData])
@@ -89,16 +122,22 @@ export async function createAsset(tenantId: string, assetData: any) {
                     .single()
                 
                 if (retryError) {
-                    // Se ainda der erro, tenta o insert mais básico possível sem select
-                    console.warn('Second retry without select...')
-                    const { error: basicError } = await supabase
+                    // Se ainda der erro, tenta o insert mais básico sem select nenhum
+                    const { error: finalError } = await supabase
                         .from('assets')
                         .insert([fallbackData])
                     
-                    if (basicError) throw basicError
+                    if (finalError) throw finalError
                     return { success: true }
                 }
-                return { success: true, data: retryData }
+
+                // Se salvou no fallback (dentro de details), garantimos que o objeto retornado tenha a description na raiz para o UI
+                const resultData = retryData ? {
+                    ...retryData,
+                    description: retryData.description || retryData.details?.description
+                } : null
+
+                return { success: true, data: resultData }
             }
             throw error
         }
@@ -117,6 +156,14 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
 
     try {
         const updateData = { ...assetData }
+        
+        // Remover campos que não devem ser atualizados ou que vêm de joins
+        delete updateData.id
+        delete updateData.tenant_id
+        delete updateData.created_at
+        delete updateData.profiles
+        delete updateData.created_by // Geralmente não mudamos quem criou
+
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
             delete updateData.approval_status
         }
@@ -130,10 +177,37 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
             .single()
 
         if (error) {
-            // Se o erro for sobre as colunas novas no update
-            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.message.includes('description') || error.code === '42703') {
-                console.warn('New columns not found during update, retrying without them...')
-                const { approval_status, created_by, description, ...fallbackData } = updateData as any
+            // Se o erro for especificamente sobre colunas que podem não existir ainda no schema cache
+            const isMissingColumnError = 
+                error.code === '42703' || 
+                error.message.includes('column') || 
+                error.message.includes('schema cache') ||
+                error.message.includes('approval_status') || 
+                error.message.includes('created_by') ||
+                error.message.includes('description');
+
+            if (isMissingColumnError) {
+                console.warn('Column error detected during update, applying definitive fallback...')
+                const fallbackData = { ...updateData } as any
+                
+                // Se a descrição falhar como coluna, movemos para details como fallback
+                if (error.message.includes('description') || error.code === '42703') {
+                    // Nota: No update, se quisermos salvar no details, precisamos garantir que 
+                    // estamos enviando o objeto details completo ou usando a sintaxe de patch do Supabase.
+                    // Para simplificar e garantir persistência, se description falhar, 
+                    // assumimos que ela deve ir para dentro do JSONB details.
+                    if (fallbackData.description) {
+                        fallbackData.details = {
+                            ...(fallbackData.details || {}),
+                            description: fallbackData.description
+                        }
+                    }
+                    delete fallbackData.description
+                }
+                
+                if (error.message.includes('approval_status') || error.code === '42703') delete fallbackData.approval_status
+                if (error.message.includes('created_by') || error.code === '42703') delete fallbackData.created_by
+                
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .update(fallbackData)
@@ -143,18 +217,23 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
                     .single()
                 
                 if (retryError) {
-                    // Se ainda der erro, tenta o update mais básico possível sem select
-                    console.warn('Second retry update without select...')
-                    const { error: basicError } = await supabase
+                    // Segundo fallback: update básico sem select
+                    const { error: finalError } = await supabase
                         .from('assets')
                         .update(fallbackData)
                         .eq('id', assetId)
                         .eq('tenant_id', tenantId)
                     
-                    if (basicError) throw basicError
+                    if (finalError) throw finalError
                     return { success: true }
                 }
-                return { success: true, data: retryData }
+
+                const resultData = retryData ? {
+                    ...retryData,
+                    description: retryData.description || retryData.details?.description
+                } : null
+
+                return { success: true, data: resultData }
             }
             throw error
         }
@@ -187,22 +266,55 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
             .select()
 
         if (error) {
-            // Se falhar por causa das colunas novas, tenta sem elas
-            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.message.includes('description') || error.code === '42703') {
+            // Se falhar por causa das colunas novas no schema cache
+            const isMissingColumnError = 
+                error.code === '42703' || 
+                error.message.includes('column') || 
+                error.message.includes('schema cache') ||
+                error.message.includes('approval_status') || 
+                error.message.includes('created_by') ||
+                error.message.includes('description');
+
+            if (isMissingColumnError) {
                 const fallbackData = assetsData.map(asset => {
-                    const { approval_status, created_by, description, ...rest } = asset as any
-                    return {
+                    const { approval_status, created_by, ...rest } = asset as any
+                    const item = {
                         ...rest,
                         tenant_id: tenantId
                     }
+
+                    // Fallback para description dentro de details se necessário
+                    if (error.message.includes('description') || error.code === '42703') {
+                        item.details = {
+                            ...(item.details || {}),
+                            description: item.description
+                        }
+                        delete item.description
+                    }
+
+                    return item
                 })
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .insert(fallbackData)
                     .select('id, title, type, price, status, details')
                 
-                if (retryError) throw retryError
-                return { success: true, data: retryData }
+                if (retryError) {
+                    // Fallback final: insert básico
+                    const { error: finalError } = await supabase
+                        .from('assets')
+                        .insert(fallbackData)
+                    
+                    if (finalError) throw finalError
+                    return { success: true }
+                }
+
+                const resultData = retryData?.map((item: any) => ({
+                    ...item,
+                    description: item.description || item.details?.description
+                }))
+
+                return { success: true, data: resultData }
             }
             throw error
         }
