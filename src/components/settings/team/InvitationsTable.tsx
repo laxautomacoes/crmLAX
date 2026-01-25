@@ -38,11 +38,11 @@ export function InvitationsTable({ invitations, fetching, onRefresh }: Invitatio
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="bg-muted/50 text-left text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                <th className="px-6 py-4">Usuário</th>
+                            <tr className="bg-muted/50 text-center text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                <th className="px-6 py-4 text-left">Usuário</th>
+                                <th className="px-6 py-4">Criado em</th>
                                 <th className="px-6 py-4">Papel</th>
                                 <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4">Expira em</th>
                                 <th className="px-6 py-4 text-right">Ação</th>
                             </tr>
                         </thead>

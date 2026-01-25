@@ -13,17 +13,15 @@ export function BasicInfoFields({ formData, setFormData, userRole }: BasicInfoFi
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
 
     return (
-        <div className="grid grid-cols-2 gap-4">
-            <div className="col-span-2">
-                <FormInput
-                    label="Imóvel | Empreendimento *"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Ex: Apartamento 3 suítes Beira Mar"
-                />
-            </div>
+        <div className="space-y-4">
+            <FormInput
+                label="Imóvel | Empreendimento *"
+                value={formData.title}
+                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                placeholder="Ex: Apartamento 3 suítes Beira Mar"
+            />
 
-            <div className="grid grid-cols-5 col-span-2 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4">
                 <FormInput
                     label="Preço (R$)"
                     type="number"
@@ -73,17 +71,19 @@ export function BasicInfoFields({ formData, setFormData, userRole }: BasicInfoFi
                     ]}
                 />
 
-                <FormSelect
-                    label="Aprovação"
-                    value={formData.approval_status}
-                    onChange={(e) => setFormData({ ...formData, approval_status: e.target.value })}
-                    disabled={!isAdmin}
-                    options={[
-                        { value: 'pending', label: 'Pendente' },
-                        { value: 'approved', label: 'Aprovado' },
-                        { value: 'rejected', label: 'Rejeitado' }
-                    ]}
-                />
+                <div className="sm:col-span-2 lg:col-span-2">
+                    <FormSelect
+                        label="Aprovação"
+                        value={formData.approval_status}
+                        onChange={(e) => setFormData({ ...formData, approval_status: e.target.value })}
+                        disabled={!isAdmin}
+                        options={[
+                            { value: 'pending', label: 'Pendente' },
+                            { value: 'approved', label: 'Aprovado' },
+                            { value: 'rejected', label: 'Rejeitado' }
+                        ]}
+                    />
+                </div>
             </div>
         </div>
     )

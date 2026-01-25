@@ -7,6 +7,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { formatPhone } from '@/lib/utils/phone'
+import { fetchAddressByCep, formatCEP } from '@/lib/utils/cep'
 import { createNewClient, updateClient, deleteClient } from '@/app/_actions/clients'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
@@ -47,6 +48,31 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     })
     const [editingClientId, setEditingClientId] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
+    const [cepLoading, setCepLoading] = useState(false)
+
+    const handleCepChange = async (cep: string) => {
+        const formattedCep = formatCEP(cep)
+        setFormData({ ...formData, address_zip_code: formattedCep })
+
+        if (formattedCep.replace(/\D/g, '').length === 8) {
+            setCepLoading(true)
+            try {
+                const address = await fetchAddressByCep(formattedCep)
+                if (address) {
+                    setFormData(prev => ({
+                        ...prev,
+                        address_street: address.logradouro || prev.address_street,
+                        address_neighborhood: address.bairro || prev.address_neighborhood,
+                        address_city: address.localidade || prev.address_city,
+                        address_state: address.uf || prev.address_state,
+                        address_zip_code: formattedCep
+                    }))
+                }
+            } finally {
+                setCepLoading(false)
+            }
+        }
+    }
 
     useEffect(() => {
         async function fetchBrokers() {
@@ -317,16 +343,23 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     <div className="space-y-4">
                         <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Endereço</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                            <FormInput
+                                label="CEP"
+                                value={formData.address_zip_code}
+                                onChange={e => handleCepChange(e.target.value)}
+                                placeholder="00000-000"
+                                disabled={cepLoading}
+                            />
                             <div className="md:col-span-2">
                                 <FormInput
                                     label="Rua"
                                     value={formData.address_street}
                                     onChange={e => setFormData({ ...formData, address_street: e.target.value })}
-                                    placeholder="Nome da rua"
+                                    placeholder="Rua / Avenida"
                                 />
                             </div>
                             <FormInput
-                                label="Número"
+                                label="Nº"
                                 value={formData.address_number}
                                 onChange={e => setFormData({ ...formData, address_number: e.target.value })}
                                 placeholder="123"
@@ -342,12 +375,6 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                 value={formData.address_neighborhood}
                                 onChange={e => setFormData({ ...formData, address_neighborhood: e.target.value })}
                                 placeholder="Bairro"
-                            />
-                            <FormInput
-                                label="CEP"
-                                value={formData.address_zip_code}
-                                onChange={e => setFormData({ ...formData, address_zip_code: e.target.value })}
-                                placeholder="00000-000"
                             />
                             <div className="md:col-span-2">
                                 <FormInput

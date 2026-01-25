@@ -36,8 +36,6 @@ export async function createInvitation(
     }
 
     const token = require('crypto').randomBytes(32).toString('hex')
-    const expiresAt = new Date()
-    expiresAt.setDate(expiresAt.getDate() + 7) // 7 dias de validade
 
     const { data, error } = await supabase
         .from('invitations')
@@ -48,8 +46,7 @@ export async function createInvitation(
             name,
             phone,
             permissions,
-            token,
-            expires_at: expiresAt.toISOString()
+            token
         })
         .select()
         .single()
@@ -60,15 +57,42 @@ export async function createInvitation(
     }
 
     // Enviar notificações
-    const inviteLink = `${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'http://localhost:3000'}/register?token=${data.token}`
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
+    const protocol = rootDomain.includes('localhost') ? 'http://' : 'https://'
+    const baseUrl = rootDomain.startsWith('http') ? rootDomain : `${protocol}${rootDomain}`
+    const inviteLink = `${baseUrl}/register?token=${data.token}`
+    
     const tenantName = profile.tenants?.name || 'CRM LAX'
 
-    await Promise.allSettled([
+    console.log(`Tentando enviar convite para ${email}. Link: ${inviteLink}`)
+
+    const results = await Promise.allSettled([
         sendInvitationEmail(email, inviteLink, tenantName),
         phone ? sendInvitationWhatsApp(phone, inviteLink, tenantName) : Promise.resolve()
     ])
 
+    // Log de resultados para depuração
+    let notificationError = false
+    results.forEach((result, index) => {
+        if (result.status === 'rejected') {
+            console.error(`Falha no envio da notificação ${index === 0 ? 'Email' : 'WhatsApp'}:`, result.reason)
+            if (index === 0) notificationError = true
+        } else if (result.value && 'error' in result.value) {
+            console.error(`Erro retornado no envio da notificação ${index === 0 ? 'Email' : 'WhatsApp'}:`, result.value.error)
+            if (index === 0) notificationError = true
+        }
+    })
+
     revalidatePath('/settings/team')
+    
+    if (notificationError) {
+        return { 
+            success: true, 
+            invitation: data, 
+            warning: 'O convite foi criado, mas houve um erro ao enviar o e-mail. Você pode copiar o link manualmente.' 
+        }
+    }
+
     return { success: true, invitation: data }
 }
 
@@ -82,7 +106,6 @@ export async function getInvitationByToken(token: string) {
         .from('invitations')
         .select('*, tenants(name)')
         .eq('token', token)
-        .gt('expires_at', new Date().toISOString())
         .is('used_at', null)
         .single()
 
@@ -132,7 +155,6 @@ export async function updateInvitation(
     id: string,
     updates: {
         role?: 'admin' | 'user',
-        expires_at?: string,
         name?: string,
         email?: string,
         phone?: string,

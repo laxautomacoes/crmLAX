@@ -61,13 +61,21 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 email: '',
                 cpf: '',
                 estado_civil: '',
-                data_nascimento: ''
+                data_nascimento: '',
+                endereco_rua: '',
+                endereco_numero: '',
+                endereco_complemento: '',
+                endereco_bairro: '',
+                endereco_cidade: '',
+                endereco_estado: '',
+                endereco_cep: ''
             },
             endereco: {
                 rua: '',
                 numero: '',
                 bairro: '',
                 cidade: '',
+                estado: '',
                 cep: ''
             }
         }
@@ -118,9 +126,16 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         email: '',
                         cpf: '',
                         estado_civil: '',
-                        data_nascimento: ''
+                        data_nascimento: '',
+                        endereco_rua: '',
+                        endereco_numero: '',
+                        endereco_complemento: '',
+                        endereco_bairro: '',
+                        endereco_cidade: '',
+                        endereco_estado: '',
+                        endereco_cep: ''
                     },
-                    endereco: editingProperty.details?.endereco || { rua: '', numero: '', bairro: '', cidade: '', cep: '' }
+                    endereco: editingProperty.details?.endereco || { rua: '', numero: '', bairro: '', cidade: '', estado: '', cep: '' }
                 }
             })
         } else {
@@ -165,7 +180,14 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         email: '',
                         cpf: '',
                         estado_civil: '',
-                        data_nascimento: ''
+                        data_nascimento: '',
+                        endereco_rua: '',
+                        endereco_numero: '',
+                        endereco_complemento: '',
+                        endereco_bairro: '',
+                        endereco_cidade: '',
+                        endereco_estado: '',
+                        endereco_cep: ''
                     },
                     endereco: {
                         rua: '',
@@ -253,7 +275,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             size="lg"
         >
             <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
-                <div className="grid grid-cols-2 gap-4">
+                <div className="flex flex-col gap-6">
                     <BasicInfoFields formData={formData} setFormData={setFormData} userRole={userRole} />
                     <AreaFields formData={formData} setFormData={setFormData} />
                     <RoomsFields formData={formData} setFormData={setFormData} />

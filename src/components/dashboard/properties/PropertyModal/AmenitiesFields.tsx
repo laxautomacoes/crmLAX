@@ -22,9 +22,9 @@ export function AmenitiesFields({ formData, setFormData }: AmenitiesFieldsProps)
     ]
 
     return (
-        <div className="col-span-2 pt-2">
+        <div className="pt-2">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Área comum | lazer</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 {amenities.map((amenity) => (
                     <FormCheckbox
                         key={amenity.id}

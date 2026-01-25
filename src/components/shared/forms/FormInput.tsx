@@ -14,7 +14,7 @@ export function FormInput({ label, error, icon: Icon, rightElement, className = 
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">
+                <label className="block text-[11px] font-bold text-muted-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis uppercase tracking-tight">
                     {label}
                 </label>
             )}

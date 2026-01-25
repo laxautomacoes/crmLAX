@@ -9,38 +9,35 @@ interface InvitationRowProps {
 }
 
 export function InvitationRow({ invitation, onCopyLink, onEdit }: InvitationRowProps) {
-    const isExpired = new Date(invitation.expires_at) < new Date();
     const isUsed = !!invitation.used_at;
-    const canCopy = !isUsed && !isExpired;
+    const canCopy = !isUsed;
 
     return (
         <tr className="hover:bg-muted/50 transition-colors">
-            <td className="px-6 py-4">
-                <div className="text-sm font-bold text-foreground">{invitation.email}</div>
-                <div className="text-[10px] text-muted-foreground">{new Date(invitation.created_at).toLocaleDateString()}</div>
+            <td className="px-6 py-4 text-left">
+                <div className="text-sm font-bold text-foreground truncate max-w-[200px]">{invitation.name || 'Sem nome'}</div>
+                <div className="text-[11px] text-muted-foreground truncate max-w-[200px]">{invitation.email}</div>
             </td>
-            <td className="px-6 py-4">
+            <td className="px-6 py-4 text-center">
+                <div className="text-xs text-muted-foreground">{new Date(invitation.created_at).toLocaleDateString()}</div>
+            </td>
+            <td className="px-6 py-4 text-center">
                 <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${invitation.role === 'admin' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}>
                     {invitation.role}
                 </span>
             </td>
-            <td className="px-6 py-4">
-                {isUsed ? (
-                    <div className="flex items-center gap-1.5 text-green-600 font-bold text-xs">
-                        <CheckCircle className="w-3.5 h-3.5" /> Aceito
-                    </div>
-                ) : isExpired ? (
-                    <div className="flex items-center gap-1.5 text-red-500 font-bold text-xs">
-                        <XCircle className="w-3.5 h-3.5" /> Expirado
-                    </div>
-                ) : (
-                    <div className="flex items-center gap-1.5 text-blue-500 font-bold text-xs">
-                        <Clock className="w-3.5 h-3.5" /> Pendente
-                    </div>
-                )}
-            </td>
-            <td className="px-6 py-4 text-xs text-muted-foreground">
-                {new Date(invitation.expires_at).toLocaleDateString()}
+            <td className="px-6 py-4 text-center">
+                <div className="flex justify-center">
+                    {isUsed ? (
+                        <div className="flex items-center gap-1.5 text-green-600 font-bold text-xs">
+                            <CheckCircle className="w-3.5 h-3.5" /> Aceito
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-1.5 text-blue-500 font-bold text-xs">
+                            <Clock className="w-3.5 h-3.5" /> Pendente
+                        </div>
+                    )}
+                </div>
             </td>
             <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2">

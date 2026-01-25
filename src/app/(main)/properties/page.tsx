@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, LayoutGrid, List } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Download } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProfile } from '@/app/_actions/profile'
 import { getAssets, createAsset, updateAsset, deleteAsset } from '@/app/_actions/assets'
@@ -111,11 +111,93 @@ export default function PropertiesPage() {
         }
     }
 
+    const handleExportCSV = () => {
+        if (filteredProperties.length === 0) {
+            toast.error('Nenhum imóvel para exportar')
+            return
+        }
+
+        // Definir cabeçalhos (expandindo o JSON 'details')
+        const headers = [
+            'ID', 'Título', 'Tipo', 'Preço', 'Status', 
+            'Bairro', 'Cidade', 'Rua', 'Número', 'CEP',
+            'Área Privativa', 'Área Total', 'Área Terreno', 'Área Construída',
+            'Quartos', 'Suítes', 'Banheiros', 'Vagas', 'Vagas Numeração',
+            'Torre/Bloco', 'Valor Condomínio', 'Valor IPTU',
+            'Portaria 24h', 'Portaria Virtual', 'Piscina', 'Piscina Aquecida',
+            'Espaço Gourmet', 'Salão de Festas', 'Academia', 'Sala de Jogos',
+            'Sala Estudos/Coworking', 'Sala de Cinema', 'Playground', 'Brinquedoteca'
+        ]
+
+        // Mapear dados "achatando" o JSON details
+        const csvRows = filteredProperties.map(prop => {
+            const d = prop.details || {}
+            const e = d.endereco || {}
+            
+            return [
+                prop.id,
+                `"${(prop.title || '').replace(/"/g, '""')}"`,
+                prop.type,
+                prop.price || 0,
+                prop.status || 'Disponível',
+                `"${(e.bairro || '').replace(/"/g, '""')}"`,
+                `"${(e.cidade || '').replace(/"/g, '""')}"`,
+                `"${(e.rua || '').replace(/"/g, '""')}"`,
+                `"${(e.numero || '').replace(/"/g, '""')}"`,
+                `"${(e.cep || '').replace(/"/g, '""')}"`,
+                d.area_privativa || '',
+                d.area_total || '',
+                d.area_terreno || '',
+                d.area_construida || '',
+                d.quartos || 0,
+                d.suites || 0,
+                d.banheiros || 0,
+                d.vagas || 0,
+                `"${(d.vagas_numeracao || '').replace(/"/g, '""')}"`,
+                `"${(d.torre_bloco || '').replace(/"/g, '""')}"`,
+                d.valor_condominio || 0,
+                d.valor_iptu || 0,
+                d.portaria_24h ? 'Sim' : 'Não',
+                d.portaria_virtual ? 'Sim' : 'Não',
+                d.piscina ? 'Sim' : 'Não',
+                d.piscina_aquecida ? 'Sim' : 'Não',
+                d.espaco_gourmet ? 'Sim' : 'Não',
+                d.salao_festas ? 'Sim' : 'Não',
+                d.academia ? 'Sim' : 'Não',
+                d.sala_jogos ? 'Sim' : 'Não',
+                d.sala_estudos_coworking ? 'Sim' : 'Não',
+                d.sala_cinema ? 'Sim' : 'Não',
+                d.playground ? 'Sim' : 'Não',
+                d.brinquedoteca ? 'Sim' : 'Não'
+            ]
+        })
+
+        // Criar conteúdo CSV
+        const csvContent = [
+            headers.join(','),
+            ...csvRows.map(row => row.join(','))
+        ].join('\n')
+
+        // Criar blob e download
+        const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement('a')
+        link.setAttribute('href', url)
+        link.setAttribute('download', `imoveis-crm-lax-${new Date().toISOString().split('T')[0]}.csv`)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        toast.success('Exportação iniciada!')
+    }
+
     const filteredProperties = properties.filter(prop =>
         prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
         prop.details?.endereco?.bairro?.toLowerCase().includes(searchTerm.toLowerCase()) ||
         prop.details?.endereco?.cidade?.toLowerCase().includes(searchTerm.toLowerCase())
     )
+
 
     if (isLoading) {
         return (
@@ -156,6 +238,7 @@ export default function PropertiesPage() {
                     </div>
 
                     <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm">
+
                         <button
                             onClick={() => setViewMode('gallery')}
                             className={`p-2 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
@@ -171,6 +254,15 @@ export default function PropertiesPage() {
                             <List size={18} />
                         </button>
                     </div>
+
+                    <button
+                        onClick={handleExportCSV}
+                        className="flex items-center gap-2 bg-card border border-border text-foreground px-4 py-2 rounded-lg hover:bg-muted transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                    >
+                        <Download size={18} />
+                        Exportar CSV
+                    </button>
+
 
                     <button
                         onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}

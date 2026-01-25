@@ -1,7 +1,8 @@
 export async function sendInvitationWhatsApp(phone: string, inviteLink: string, tenantName: string) {
     if (!process.env.WHATSAPP_API_URL) {
-        console.warn('WHATSAPP_API_URL is not set. WhatsApp message not sent.');
-        return;
+        const error = 'WHATSAPP_API_URL is not set. WhatsApp message not sent.';
+        console.warn(error);
+        return { error };
     }
 
     try {

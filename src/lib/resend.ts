@@ -4,13 +4,18 @@ const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function sendInvitationEmail(email: string, inviteLink: string, tenantName: string) {
     if (!process.env.RESEND_API_KEY) {
-        console.warn('RESEND_API_KEY is not set. Email not sent.');
-        return;
+        const error = 'RESEND_API_KEY is not set. Email not sent.';
+        console.warn(error);
+        return { error };
     }
 
     try {
+        const fromEmail = process.env.RESEND_FROM_EMAIL || 'CRM LAX <noreply@laxperience.online>';
+        
+        console.log(`Enviando e-mail para ${email} através do Resend...`);
+        
         const { data, error } = await resend.emails.send({
-            from: 'CRM LAX <onboarding@resend.dev>', // Update this with your verified domain
+            from: fromEmail,
             to: [email],
             subject: `Convite para participar da ${tenantName}`,
             html: `

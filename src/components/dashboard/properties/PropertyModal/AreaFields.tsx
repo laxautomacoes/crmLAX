@@ -9,7 +9,7 @@ interface AreaFieldsProps {
 
 export function AreaFields({ formData, setFormData }: AreaFieldsProps) {
     return (
-        <div className="grid grid-cols-4 col-span-2 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4">
             <FormInput
                 label="Área Privativa (m²)"
                 type="number"

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { updateInvitation, deleteInvitation } from '@/app/_actions/invitations';
@@ -15,14 +15,23 @@ interface EditInvitationModalProps {
 }
 
 export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: EditInvitationModalProps) {
-    const [name, setName] = useState(invitation?.name || '');
-    const [email, setEmail] = useState(invitation?.email || '');
-    const [phone, setPhone] = useState(invitation?.phone || '');
-    const [role, setRole] = useState<'admin' | 'user'>(invitation?.role || 'user');
-    const [permissions, setPermissions] = useState(invitation?.permissions || { dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: false });
-    const [expiresAt, setExpiresAt] = useState(invitation?.expires_at ? new Date(invitation.expires_at).toISOString().split('T')[0] : '');
+    const [name, setName] = useState('');
+    const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
+    const [role, setRole] = useState<'admin' | 'user'>('user');
+    const [permissions, setPermissions] = useState({ dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: false });
     const [loading, setLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
+
+    useEffect(() => {
+        if (invitation) {
+            setName(invitation.name || '');
+            setEmail(invitation.email || '');
+            setPhone(invitation.phone || '');
+            setRole(invitation.role || 'user');
+            setPermissions(invitation.permissions || { dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: false });
+        }
+    }, [invitation]);
 
     if (!invitation) return null;
 
@@ -38,7 +47,7 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
 
     const handleSave = async () => {
         setLoading(true);
-        const { error } = await updateInvitation(invitation.id, { name, email, phone, role, permissions, expires_at: new Date(expiresAt).toISOString() });
+        const { error } = await updateInvitation(invitation.id, { name, email, phone, role, permissions });
         if (error) alert('Erro: ' + error);
         else { onUpdate(); onClose(); }
         setLoading(false);
@@ -89,14 +98,6 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
                     </div>
                     <InvitationPermissions role={role} permissions={permissions} onToggle={togglePermission} />
                 </div>
-
-                <FormInput
-                    label="Expira em"
-                    type="date"
-                    value={expiresAt}
-                    onChange={(e) => setExpiresAt(e.target.value)}
-                    icon={Calendar}
-                />
 
                 <div className="flex gap-3 pt-4 border-t border-border">
                     <button onClick={handleDelete} disabled={isDeleting} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors">{isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Excluir</button>

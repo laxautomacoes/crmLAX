@@ -35,12 +35,18 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
         setLoading(true);
         setMessage(null);
 
-        const { success, invitation, error } = await createInvitation(email, role, name, permissions, phone);
+        const { success, invitation, error, warning } = await createInvitation(email, role, name, permissions, phone);
 
         if (error) {
             setMessage({ type: 'error', text: error });
+        } else if (warning) {
+            setMessage({ type: 'error', text: warning }); // Usando error para destacar o aviso de falha no envio
+            setEmail('');
+            setName('');
+            setPhone('');
+            onInviteCreated();
         } else {
-            setMessage({ type: 'success', text: 'Convite gerado com sucesso!' });
+            setMessage({ type: 'success', text: 'Convite enviado com sucesso!' });
             setEmail('');
             setName('');
             setPhone('');

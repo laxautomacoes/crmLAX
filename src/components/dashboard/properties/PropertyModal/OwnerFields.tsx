@@ -2,6 +2,8 @@
 
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
+import { fetchAddressByCep, formatCEP } from '@/lib/utils/cep'
+import { useState } from 'react'
 
 interface OwnerFieldsProps {
     formData: any
@@ -9,11 +11,49 @@ interface OwnerFieldsProps {
 }
 
 export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
+    const [cepLoading, setCepLoading] = useState(false)
+
+    const handleCepChange = async (cep: string) => {
+        const formattedCep = formatCEP(cep)
+        setFormData({
+            ...formData,
+            details: {
+                ...formData.details,
+                proprietario: { ...formData.details.proprietario, endereco_cep: formattedCep }
+            }
+        })
+
+        if (formattedCep.replace(/\D/g, '').length === 8) {
+            setCepLoading(true)
+            try {
+                const address = await fetchAddressByCep(formattedCep)
+                if (address) {
+                    setFormData((prev: any) => ({
+                        ...prev,
+                        details: {
+                            ...prev.details,
+                            proprietario: {
+                                ...prev.details.proprietario,
+                                endereco_rua: address.logradouro || prev.details.proprietario.endereco_rua,
+                                endereco_bairro: address.bairro || prev.details.proprietario.endereco_bairro,
+                                endereco_cidade: address.localidade || prev.details.proprietario.endereco_cidade,
+                                endereco_estado: address.uf || prev.details.proprietario.endereco_estado,
+                                endereco_cep: formattedCep
+                            }
+                        }
+                    }))
+                }
+            } finally {
+                setCepLoading(false)
+            }
+        }
+    }
+
     return (
-        <div className="col-span-2 pt-2">
+        <div className="pt-2">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Proprietário</h4>
-            <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
-                <div className="col-span-2">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                <div className="sm:col-span-2 lg:col-span-2">
                     <FormInput
                         label="Nome"
                         value={formData.details.proprietario.nome}
@@ -63,6 +103,60 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
                         type="date"
                         value={formData.details.proprietario.data_nascimento}
                         onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, data_nascimento: e.target.value } } })}
+                    />
+                </div>
+
+                <div>
+                    <FormInput
+                        label="CEP"
+                        value={formData.details.proprietario.endereco_cep}
+                        onChange={(e) => handleCepChange(e.target.value)}
+                        placeholder="00000-000"
+                        disabled={cepLoading}
+                    />
+                </div>
+                <div className="sm:col-span-2 lg:col-span-2">
+                    <FormInput
+                        label="Avenida | Rua"
+                        value={formData.details.proprietario.endereco_rua}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, endereco_rua: e.target.value } } })}
+                    />
+                </div>
+                <div>
+                    <FormInput
+                        label="nº"
+                        value={formData.details.proprietario.endereco_numero}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, endereco_numero: e.target.value } } })}
+                    />
+                </div>
+                <div>
+                    <FormInput
+                        label="Complemento"
+                        value={formData.details.proprietario.endereco_complemento}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, endereco_complemento: e.target.value } } })}
+                    />
+                </div>
+                <div>
+                    <FormInput
+                        label="Bairro"
+                        value={formData.details.proprietario.endereco_bairro}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, endereco_bairro: e.target.value } } })}
+                    />
+                </div>
+                <div>
+                    <FormInput
+                        label="Cidade"
+                        value={formData.details.proprietario.endereco_cidade}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, endereco_cidade: e.target.value } } })}
+                    />
+                </div>
+                <div>
+                    <FormInput
+                        label="Estado"
+                        value={formData.details.proprietario.endereco_estado}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, endereco_estado: e.target.value } } })}
+                        placeholder="Ex: SP"
+                        maxLength={2}
                     />
                 </div>
             </div>

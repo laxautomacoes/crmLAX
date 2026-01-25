@@ -80,6 +80,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                 {details.endereco?.numero && `${details.endereco.numero} - `}
                                 {details.endereco?.bairro || 'Bairro ñ inf.'}, 
                                 {details.endereco?.cidade || 'Cidade ñ inf.'}
+                                {details.endereco?.estado && ` - ${details.endereco.estado}`}
                             </span>
                         </div>
                     </div>
@@ -261,18 +262,18 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                 Proprietário
                             </h3>
                             <div className="space-y-3">
-                                <div className="font-bold text-foreground text-lg">{prop.owner_name || 'Não informado'}</div>
+                                <div className="font-bold text-foreground text-lg">{details.proprietario?.nome || prop.owner_name || 'Não informado'}</div>
                                 <div className="space-y-2">
-                                    {prop.owner_phone && (
+                                    {(details.proprietario?.telefone || prop.owner_phone) && (
                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                             <Phone size={14} />
-                                            {prop.owner_phone}
+                                            {details.proprietario?.telefone || prop.owner_phone}
                                         </div>
                                     )}
-                                    {prop.owner_email && (
+                                    {(details.proprietario?.email || prop.owner_email) && (
                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                             <Mail size={14} />
-                                            {prop.owner_email}
+                                            {details.proprietario?.email || prop.owner_email}
                                         </div>
                                     )}
                                     {details.proprietario?.cpf && (
@@ -291,6 +292,24 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                         <div className="flex items-center gap-2 text-sm text-muted-foreground">
                                             <Calendar size={14} />
                                             Nasc: {new Date(details.proprietario.data_nascimento).toLocaleDateString('pt-BR')}
+                                        </div>
+                                    )}
+                                    {(details.proprietario?.endereco_rua || details.proprietario?.endereco_bairro) && (
+                                        <div className="pt-2 mt-2 border-t border-secondary/10 space-y-1">
+                                            <div className="text-[10px] font-bold text-secondary uppercase tracking-wider">Endereço do Proprietário</div>
+                                            <div className="text-xs text-muted-foreground flex items-start gap-2">
+                                                <MapPin size={12} className="mt-0.5 flex-shrink-0" />
+                                                <span>
+                                                    {details.proprietario.endereco_rua}
+                                                    {details.proprietario.endereco_numero && `, ${details.proprietario.endereco_numero}`}
+                                                    {details.proprietario.endereco_complemento && ` - ${details.proprietario.endereco_complemento}`}
+                                                    <br />
+                                                    {details.proprietario.endereco_bairro && `${details.proprietario.endereco_bairro}, `}
+                                                    {details.proprietario.endereco_cidade && `${details.proprietario.endereco_cidade}`}
+                                                    {details.proprietario.endereco_estado && `/${details.proprietario.endereco_estado}`}
+                                                    {details.proprietario.endereco_cep && ` - CEP: ${details.proprietario.endereco_cep}`}
+                                                </span>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
