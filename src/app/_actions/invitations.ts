@@ -3,23 +3,32 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
+import { sendInvitationEmail } from '@/lib/resend'
+import { sendInvitationWhatsApp } from '@/lib/whatsapp'
+
 /**
  * Gera um convite para um novo usuário
  */
-export async function createInvitation(email: string, role: 'admin' | 'user' = 'user') {
+export async function createInvitation(
+    email: string,
+    role: 'admin' | 'user' = 'user',
+    name?: string,
+    permissions?: Record<string, boolean>,
+    phone?: string
+) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) return { error: 'Not authenticated' }
 
-    // Obter tenant_id do admin
+    // Obter tenant_id e nome do admin
     const { data: profile } = await supabase
         .from('profiles')
-        .select('tenant_id, role')
+        .select('tenant_id, role, tenants(name)')
         .eq('id', user.id)
         .single()
 
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin')) {
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && profile.role !== 'super administrador')) {
         return { error: 'Apenas administradores podem convidar usuários' }
     }
 
@@ -33,6 +42,9 @@ export async function createInvitation(email: string, role: 'admin' | 'user' = '
             tenant_id: profile.tenant_id,
             email,
             role,
+            name,
+            phone,
+            permissions,
             token,
             expires_at: expiresAt.toISOString()
         })
@@ -43,6 +55,15 @@ export async function createInvitation(email: string, role: 'admin' | 'user' = '
         console.error('Error creating invitation:', error)
         return { error: error.message }
     }
+
+    // Enviar notificações
+    const inviteLink = `${process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'http://localhost:3000'}/register?token=${data.token}`
+    const tenantName = profile.tenants?.name || 'CRM LAX'
+
+    await Promise.allSettled([
+        sendInvitationEmail(email, inviteLink, tenantName),
+        phone ? sendInvitationWhatsApp(phone, inviteLink, tenantName) : Promise.resolve()
+    ])
 
     revalidatePath('/settings/team')
     return { success: true, invitation: data }
@@ -94,4 +115,78 @@ export async function listInvitations() {
 
     if (error) return { error: error.message }
     return { invitations: data }
+}
+
+/**
+ * Atualiza um convite (apenas admin)
+ */
+export async function updateInvitation(
+    id: string,
+    updates: {
+        role?: 'admin' | 'user',
+        expires_at?: string,
+        name?: string,
+        email?: string,
+        phone?: string,
+        permissions?: Record<string, boolean>
+    }
+) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Not authenticated' }
+
+    // Verificar se é admin
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id, role')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && profile.role !== 'super administrador')) {
+        return { error: 'Apenas administradores podem gerenciar convites' }
+    }
+
+    const { error } = await supabase
+        .from('invitations')
+        .update(updates)
+        .eq('id', id)
+        .eq('tenant_id', profile.tenant_id) // Segurança extra
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/settings/team')
+    return { success: true }
+}
+
+/**
+ * Exclui um convite (apenas admin)
+ */
+export async function deleteInvitation(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Not authenticated' }
+
+    // Verificar se é admin
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id, role')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && profile.role !== 'super administrador')) {
+        return { error: 'Apenas administradores podem gerenciar convites' }
+    }
+
+    const { error } = await supabase
+        .from('invitations')
+        .delete()
+        .eq('id', id)
+        .eq('tenant_id', profile.tenant_id)
+
+    if (error) return { error: error.message }
+
+    revalidatePath('/settings/team')
+    return { success: true }
 }

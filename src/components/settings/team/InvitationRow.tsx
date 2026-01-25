@@ -1,13 +1,14 @@
 'use client';
 
-import { CheckCircle, XCircle, Clock, Copy } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Copy, Edit2 } from 'lucide-react';
 
 interface InvitationRowProps {
     invitation: any;
     onCopyLink: (token: string) => void;
+    onEdit: (invitation: any) => void;
 }
 
-export function InvitationRow({ invitation, onCopyLink }: InvitationRowProps) {
+export function InvitationRow({ invitation, onCopyLink, onEdit }: InvitationRowProps) {
     const isExpired = new Date(invitation.expires_at) < new Date();
     const isUsed = !!invitation.used_at;
     const canCopy = !isUsed && !isExpired;
@@ -42,15 +43,24 @@ export function InvitationRow({ invitation, onCopyLink }: InvitationRowProps) {
                 {new Date(invitation.expires_at).toLocaleDateString()}
             </td>
             <td className="px-6 py-4 text-right">
-                {canCopy && (
+                <div className="flex items-center justify-end gap-2">
                     <button
-                        onClick={() => onCopyLink(invitation.token)}
+                        onClick={() => onEdit(invitation)}
                         className="p-2 hover:bg-secondary/10 text-muted-foreground hover:text-secondary rounded-xl transition-all"
-                        title="Copiar Link"
+                        title="Editar Convite"
                     >
-                        <Copy className="w-4 h-4" />
+                        <Edit2 className="w-4 h-4" />
                     </button>
-                )}
+                    {canCopy && (
+                        <button
+                            onClick={() => onCopyLink(invitation.token)}
+                            className="p-2 hover:bg-secondary/10 text-muted-foreground hover:text-secondary rounded-xl transition-all"
+                            title="Copiar Link"
+                        >
+                            <Copy className="w-4 h-4" />
+                        </button>
+                    )}
+                </div>
             </td>
         </tr>
     );

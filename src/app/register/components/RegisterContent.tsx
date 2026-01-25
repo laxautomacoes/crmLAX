@@ -27,6 +27,7 @@ export function RegisterContent() {
                 else {
                     setInvitation(invitation);
                     setEmail(invitation.email);
+                    if (invitation.name) setName(invitation.name);
                 }
             });
         }

@@ -25,16 +25,33 @@ export default function TeamSettingsPage() {
 
     useEffect(() => {
         async function checkAccess() {
-            const { profile } = await getProfile();
-            if (profile?.role === 'user') {
+            try {
+                const { profile, error } = await getProfile();
+
+                if (error || !profile) {
+                    console.error('Error fetching profile:', error);
+                    router.push('/dashboard');
+                    return;
+                }
+
+                // Check for allowed roles (including variations)
+                const allowedRoles = ['admin', 'superadmin', 'super_admin', 'super administrador'];
+
+                if (profile.role === 'user' && !allowedRoles.includes(profile.role)) {
+                    router.push('/dashboard');
+                    return;
+                }
+
+                setIsAuthorized(true);
+                loadInvitations();
+            } catch (err) {
+                console.error('Unexpected error in checkAccess:', err);
                 router.push('/dashboard');
-                return;
             }
-            setIsAuthorized(true);
-            loadInvitations();
         }
         checkAccess();
     }, [router]);
+
 
     if (isAuthorized === null) {
         return (
