@@ -2,6 +2,7 @@
 
 import { Lock, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useState } from 'react';
+import { FormInput } from '@/components/shared/forms/FormInput';
 
 interface ResetFormProps {
     password: string;
@@ -27,32 +28,36 @@ export function ResetForm({
                 </div>
             )}
 
-            <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-foreground ml-1">Nova Senha</label>
-                <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <input
-                        type={showPassword ? "text" : "password"} required value={password} onChange={(e) => setPassword(e.target.value)}
-                        className="block w-full pl-11 pr-11 py-3.5 bg-muted/30 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary placeholder-muted-foreground text-sm font-medium transition-all"
-                        placeholder="•••••••••••"
-                    />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground transition-colors hover:text-foreground">
+            <FormInput
+                label="Nova Senha"
+                type={showPassword ? "text" : "password"}
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="•••••••••••"
+                icon={Lock}
+                className="py-3.5"
+                rightElement={
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="p-1 hover:text-foreground transition-colors"
+                    >
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
-                </div>
-            </div>
+                }
+            />
 
-            <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-foreground ml-1">Confirmar Nova Senha</label>
-                <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <input
-                        type={showPassword ? "text" : "password"} required value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="block w-full pl-11 pr-4 py-3.5 bg-muted/30 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary placeholder-muted-foreground text-sm font-medium transition-all"
-                        placeholder="•••••••••••"
-                    />
-                </div>
-            </div>
+            <FormInput
+                label="Confirmar Nova Senha"
+                type={showPassword ? "text" : "password"}
+                required
+                value={confirmPassword}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                placeholder="•••••••••••"
+                icon={Lock}
+                className="py-3.5"
+            />
 
             <button
                 type="submit" disabled={loading}

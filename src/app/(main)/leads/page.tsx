@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import { Plus } from 'lucide-react'
 import { formatPhone } from '@/lib/utils/phone'
+import { FormInput } from '@/components/shared/forms/FormInput'
 import { LeadsHeader } from '@/components/dashboard/leads/LeadsHeader'
 import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
 import { Modal } from '@/components/shared/Modal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
 import { getProfile } from '@/app/_actions/profile'
-import { getPipelineData, createStage, deleteStage, duplicateStage, updateStageName, deleteLead } from '@/app/_actions/leads'
+import { getPipelineData, deleteLead } from '@/app/_actions/leads'
+import { createStage, deleteStage, duplicateStage, updateStageName } from '@/app/_actions/stages'
 import { toast } from 'sonner'
 
 export const dynamic = 'force-dynamic'
@@ -136,19 +138,19 @@ export default function LeadsPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-foreground">Leads</h1>
-                <div className="flex flex-wrap items-center gap-3">
+                <h1 className="text-2xl font-bold text-foreground text-center md:text-left">Leads</h1>
+                <div className="flex items-center justify-center md:justify-end gap-3">
                     <LeadsHeader onSearch={handleSearch} />
                     <button
                         onClick={() => setIsStageModalOpen(true)}
-                        className="flex items-center gap-2 px-4 py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm"
+                        className="flex items-center gap-2 px-4 py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm whitespace-nowrap"
                     >
                         <Plus size={18} />
                         Novo Estágio
                     </button>
                     <button
                         onClick={() => handleOpenLeadModal()}
-                        className="flex items-center gap-2 px-4 py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99]"
+                        className="flex items-center gap-2 px-4 py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
                     >
                         <Plus size={18} />
                         Novo Lead
@@ -175,16 +177,12 @@ export default function LeadsPage() {
                 title="Novo Estágio"
             >
                 <div className="space-y-4">
-                    <div>
-                        <label className="block text-sm font-medium text-foreground mb-1">Nome do Estágio</label>
-                        <input
-                            type="text"
-                            value={newStageName}
-                            onChange={(e) => setNewStageName(e.target.value)}
-                            placeholder="Ex: Qualificação"
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none"
-                        />
-                    </div>
+                    <FormInput
+                        label="Nome do Estágio"
+                        value={newStageName}
+                        onChange={(e) => setNewStageName(e.target.value)}
+                        placeholder="Ex: Qualificação"
+                    />
                     <button
                         onClick={handleNewStage}
                         disabled={!newStageName.trim()}

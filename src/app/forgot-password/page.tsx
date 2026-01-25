@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { Mail, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
+import { FormInput } from '@/components/shared/forms/FormInput';
 
 export default function ForgotPasswordPage() {
     const [email, setEmail] = useState('');
@@ -50,24 +51,16 @@ export default function ForgotPasswordPage() {
                         </div>
                     )}
 
-                    <div className="space-y-1.5">
-                        <label className="block text-sm font-bold text-foreground ml-1">
-                            Email
-                        </label>
-                        <div className="relative">
-                            <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                                <Mail className="h-5 w-5 text-gray-400" />
-                            </div>
-                            <input
-                                type="email"
-                                required
-                                value={email}
-                                onChange={(e) => setEmail(e.target.value)}
-                                className="block w-full pl-11 pr-4 py-3.5 bg-muted/30 border border-border rounded-lg text-foreground placeholder-muted-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all text-sm font-medium"
-                                placeholder="seu@email.com"
-                            />
-                        </div>
-                    </div>
+                    <FormInput
+                        label="Email"
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        placeholder="seu@email.com"
+                        icon={Mail}
+                        className="py-3.5"
+                    />
 
                     <button
                         type="submit"

@@ -2,6 +2,8 @@
 
 import { useState } from 'react';
 import { UserPlus, Mail, Loader2, Phone } from 'lucide-react';
+import { FormInput } from '@/components/shared/forms/FormInput';
+import { FormCheckbox } from '@/components/shared/forms/FormCheckbox';
 import { createInvitation } from '@/app/_actions/invitations';
 import { MessageBanner } from '@/components/shared/MessageBanner';
 
@@ -107,55 +109,33 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
             <form onSubmit={handleInvite} className="space-y-4 flex-1 flex flex-col">
                 {message && <MessageBanner type={message.type} text={message.text} />}
 
-                <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-foreground ml-1">Nome do Colaborador</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <UserPlus className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <input
-                            type="text"
-                            required
-                            value={name}
-                            onChange={(e) => setName(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-lg text-sm text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all font-medium"
-                            placeholder="Nome Completo"
-                        />
-                    </div>
-                </div>
+                <FormInput
+                    label="Nome do Colaborador"
+                    required
+                    value={name}
+                    onChange={(e) => setName(e.target.value)}
+                    icon={UserPlus}
+                    placeholder="Nome Completo"
+                />
 
-                <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-foreground ml-1">Email do Colaborador</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Mail className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <input
-                            type="email"
-                            required
-                            value={email}
-                            onChange={(e) => setEmail(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-lg text-sm text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all font-medium"
-                            placeholder="exemplo@email.com"
-                        />
-                    </div>
-                </div>
+                <FormInput
+                    label="Email do Colaborador"
+                    type="email"
+                    required
+                    value={email}
+                    onChange={(e) => setEmail(e.target.value)}
+                    icon={Mail}
+                    placeholder="exemplo@email.com"
+                />
 
-                <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-foreground ml-1">Telefone / WhatsApp</label>
-                    <div className="relative">
-                        <div className="absolute inset-y-0 left-0 pl-4 flex items-center pointer-events-none">
-                            <Phone className="w-4 h-4 text-muted-foreground" />
-                        </div>
-                        <input
-                            type="tel"
-                            value={phone}
-                            onChange={(e) => setPhone(e.target.value)}
-                            className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-lg text-sm text-foreground placeholder-muted-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all font-medium"
-                            placeholder="(00) 00000-0000"
-                        />
-                    </div>
-                </div>
+                <FormInput
+                    label="Telefone / WhatsApp"
+                    type="tel"
+                    value={phone}
+                    onChange={(e) => setPhone(e.target.value)}
+                    icon={Phone}
+                    placeholder="(00) 00000-0000"
+                />
 
                 <div className="space-y-1.5">
                     <label className="text-sm font-bold text-foreground ml-1">Nível de Acesso</label>
@@ -184,16 +164,14 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                     <label className="text-sm font-bold text-foreground ml-1">Permissões de Acesso</label>
                     <div className="grid grid-cols-2 gap-2 bg-input/50 p-3 rounded-xl border border-border/50">
                         {Object.entries(permissionLabels).map(([key, label]) => (
-                            <label key={key} className={`flex items-center gap-2 text-sm p-1.5 rounded-lg transition-colors cursor-pointer ${role === 'admin' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted'}`}>
-                                <input
-                                    type="checkbox"
-                                    checked={permissions[key as keyof typeof permissions]}
-                                    onChange={() => togglePermission(key as keyof typeof permissions)}
-                                    disabled={role === 'admin'}
-                                    className="rounded border-gray-300 text-secondary focus:ring-secondary"
-                                />
-                                <span className="font-medium text-muted-foreground">{label}</span>
-                            </label>
+                            <FormCheckbox
+                                key={key}
+                                label={label}
+                                checked={permissions[key as keyof typeof permissions]}
+                                onChange={() => togglePermission(key as keyof typeof permissions)}
+                                disabled={role === 'admin'}
+                                className={role === 'admin' ? 'opacity-50 cursor-not-allowed' : ''}
+                            />
                         ))}
                     </div>
                 </div>

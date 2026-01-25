@@ -1,6 +1,8 @@
 'use client';
 
 import { Search, Filter, LayoutGrid, List } from 'lucide-react';
+import { FormInput } from '@/components/shared/forms/FormInput';
+import { FormSelect } from '@/components/shared/forms/FormSelect';
 
 interface AssetFiltersProps {
     filters: {
@@ -47,59 +49,47 @@ export function AssetFilters({ filters, onFilterChange, viewMode, onViewModeChan
 
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
                 <div className="lg:col-span-2">
-                    <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">
-                        Buscar
-                    </label>
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground" size={18} />
-                        <input
-                            type="text"
-                            value={filters.search}
-                            onChange={(e) => handleChange('search', e.target.value)}
-                            placeholder="Bairro, condomínio ou tipo de imóvel..."
-                            className="w-full pl-10 pr-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
-                        />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">
-                        Tipo
-                    </label>
-                    <input
-                        type="text"
-                        value={filters.tipo}
-                        onChange={(e) => handleChange('tipo', e.target.value)}
-                        placeholder="Ex: Apartamento, Casa, Terreno..."
-                        className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
+                    <FormInput
+                        label="Buscar"
+                        value={filters.search}
+                        onChange={(e) => handleChange('search', e.target.value)}
+                        placeholder="Bairro, condomínio ou tipo de imóvel..."
+                        icon={Search}
                     />
                 </div>
 
-                <div>
-                    <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">
-                        Quartos
-                    </label>
-                    <input
-                        type="text"
-                        value={filters.quartos}
-                        onChange={(e) => handleChange('quartos', e.target.value)}
-                        placeholder="Ex: 2 ou mais"
-                        className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
-                    />
-                </div>
+                <FormSelect
+                    label="Tipo"
+                    value={filters.tipo}
+                    onChange={(e) => handleChange('tipo', e.target.value)}
+                    options={[
+                        { value: '', label: 'Todos os tipos' },
+                        { value: 'house', label: 'Casa' },
+                        { value: 'apartment', label: 'Apartamento' },
+                        { value: 'land', label: 'Terreno' },
+                        { value: 'commercial', label: 'Comercial' },
+                        { value: 'penthouse', label: 'Cobertura' },
+                        { value: 'studio', label: 'Studio' },
+                        { value: 'rural', label: 'Rural' },
+                        { value: 'warehouse', label: 'Galpão' },
+                        { value: 'office', label: 'Sala/Escritório' },
+                        { value: 'store', label: 'Loja' }
+                    ]}
+                />
 
-                <div>
-                    <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">
-                        Preço até
-                    </label>
-                    <input
-                        type="text"
-                        value={filters.precoMax}
-                        onChange={(e) => handleChange('precoMax', e.target.value)}
-                        placeholder="Até R$ 1.500.000"
-                        className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
-                    />
-                </div>
+                <FormInput
+                    label="Quartos"
+                    value={filters.quartos}
+                    onChange={(e) => handleChange('quartos', e.target.value)}
+                    placeholder="Ex: 2 ou mais"
+                />
+
+                <FormInput
+                    label="Preço até"
+                    value={filters.precoMax}
+                    onChange={(e) => handleChange('precoMax', e.target.value)}
+                    placeholder="Até R$ 1.500.000"
+                />
             </div>
         </div>
     );

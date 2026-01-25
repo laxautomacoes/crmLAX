@@ -85,3 +85,22 @@ export async function deleteAsset(assetId: string) {
         return { success: false, error: error.message }
     }
 }
+
+export async function getAssetById(assetId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { data, error } = await supabase
+            .from('assets')
+            .select('*')
+            .eq('id', assetId)
+            .single()
+
+        if (error) throw error
+
+        return { success: true, data }
+    } catch (error: any) {
+        console.error('Error fetching asset by id:', error)
+        return { success: false, error: error.message }
+    }
+}

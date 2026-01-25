@@ -1,6 +1,7 @@
 'use client';
 
 import { formatPhone } from '@/lib/utils/phone';
+import { FormInput } from '@/components/shared/forms/FormInput';
 
 interface LeadFormFieldsProps {
     name: string;
@@ -22,54 +23,41 @@ export function LeadFormFields({
     error
 }: LeadFormFieldsProps) {
     return (
-        <>
+        <div className="space-y-4">
             {error && (
                 <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm">
                     {error}
                 </div>
             )}
 
-            <div>
-                <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">
-                    Nome Completo *
-                </label>
-                <input
-                    type="text"
-                    required
-                    value={name}
-                    onChange={(e) => onNameChange(e.target.value)}
-                    className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
-                    placeholder="Seu nome completo"
-                />
-            </div>
+            <FormInput
+                label="Nome Completo *"
+                required
+                value={name}
+                onChange={(e) => onNameChange(e.target.value)}
+                placeholder="Seu nome completo"
+                className="py-3"
+            />
 
-            <div>
-                <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">
-                    WhatsApp *
-                </label>
-                <input
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => onPhoneChange(formatPhone(e.target.value))}
-                    className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
-                    placeholder="(48) 99999 9999"
-                />
-            </div>
+            <FormInput
+                label="WhatsApp *"
+                type="tel"
+                required
+                value={phone}
+                onChange={(e) => onPhoneChange(formatPhone(e.target.value))}
+                placeholder="(48) 99999 9999"
+                className="py-3"
+            />
 
-            <div>
-                <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">
-                    Email (opcional)
-                </label>
-                <input
-                    type="email"
-                    value={email}
-                    onChange={(e) => onEmailChange(e.target.value)}
-                    className="w-full px-4 py-3 bg-input border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
-                    placeholder="seu@email.com"
-                />
-            </div>
-        </>
+            <FormInput
+                label="Email (opcional)"
+                type="email"
+                value={email}
+                onChange={(e) => onEmailChange(e.target.value)}
+                placeholder="seu@email.com"
+                className="py-3"
+            />
+        </div>
     );
 }
 

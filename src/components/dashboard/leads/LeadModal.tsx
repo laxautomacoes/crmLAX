@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { ChevronDown } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
 import { formatPhone } from '@/lib/utils/phone'
+import { FormInput } from '@/components/shared/forms/FormInput'
+import { FormSelect } from '@/components/shared/forms/FormSelect'
+import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { toast } from 'sonner'
 import { createLead, updateLead } from '@/app/_actions/leads'
 
@@ -108,80 +110,66 @@ export function LeadModal({
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
                     <div className="col-span-2">
-                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Nome completo *</label>
-                        <input
-                            type="text"
+                        <FormInput
+                            label="Nome completo *"
                             value={leadData.name}
                             onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
                             placeholder="Ex: João Silva"
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Telefone *</label>
-                        <input
-                            type="text"
+                        <FormInput
+                            label="Telefone *"
                             value={leadData.phone}
                             onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
                             placeholder="(48) 99999 9999"
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">E-mail</label>
-                        <input
+                        <FormInput
+                            label="E-mail"
                             type="email"
                             value={leadData.email}
                             onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
                             placeholder="joao@email.com"
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all"
                         />
                     </div>
                     <div className="col-span-2">
-                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Interesse</label>
-                        <input
-                            type="text"
+                        <FormInput
+                            label="Interesse"
                             value={leadData.interest}
                             onChange={(e) => setLeadData({ ...leadData, interest: e.target.value })}
                             placeholder="Ex: Casa 3 quartos com suíte"
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all"
                         />
                     </div>
                     <div>
-                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Estágio Inicial *</label>
-                        <div className="relative">
-                            <select
-                                value={leadData.stage_id}
-                                onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
-                                className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all appearance-none pr-10"
-                            >
-                                <option value="">Selecione um estágio</option>
-                                {stages.map((s) => (
-                                    <option key={s.id} value={s.id}>{s.name}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
-                        </div>
+                        <FormSelect
+                            label="Estágio Inicial *"
+                            value={leadData.stage_id}
+                            onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
+                            options={[
+                                { value: '', label: 'Selecione um estágio' },
+                                ...stages.map(s => ({ value: s.id, label: s.name }))
+                            ]}
+                        />
                     </div>
 
                     <div>
-                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Valor Estimado</label>
-                        <input
+                        <FormInput
+                            label="Valor Estimado"
                             type="number"
                             value={leadData.value}
                             onChange={(e) => setLeadData({ ...leadData, value: e.target.value })}
                             placeholder="0,00"
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all"
                         />
                     </div>
                     <div className="col-span-2">
-                        <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">Notas/Observações</label>
-                        <textarea
+                        <FormTextarea
+                            label="Notas/Observações"
                             value={leadData.notes}
                             onChange={(e) => setLeadData({ ...leadData, notes: e.target.value })}
                             rows={3}
                             placeholder="Alguma observação importante sobre o lead..."
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all resize-none"
                         />
                     </div>
                 </div>
@@ -195,7 +183,7 @@ export function LeadModal({
                     <button
                         onClick={handleSubmit}
                         disabled={isLoading}
-                        className="flex-1 py-3 bg-yellow-400 text-black rounded-lg font-bold hover:bg-yellow-500 shadow-sm active:scale-[0.99] transition-all disabled:opacity-50"
+                        className="flex-1 py-3 bg-primary text-primary-foreground rounded-lg font-bold hover:opacity-90 shadow-sm active:scale-[0.99] transition-all disabled:opacity-50"
                     >
                         {isLoading ? "Processando..." : (editingLead ? "Salvar Alterações" : "Criar Lead")}
                     </button>

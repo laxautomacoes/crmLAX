@@ -2,9 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/shared/Modal'
+import { FormInput } from '@/components/shared/forms/FormInput'
 import { Search, Mail, MessageCircle, Send, Loader2, User, CheckCircle2 } from 'lucide-react'
 import { getPipelineData } from '@/app/_actions/leads'
 import { sendPropertyEmail, logInteraction } from '@/app/_actions/messaging'
+import { getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
 import { formatPhone } from '@/lib/utils/phone'
 
@@ -22,12 +24,21 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     const [isLoading, setIsLoading] = useState(false)
     const [selectedLead, setSelectedLead] = useState<any>(null)
     const [sending, setSending] = useState(false)
+    const [currentBroker, setCurrentBroker] = useState<any>(null)
 
     useEffect(() => {
         if (isOpen) {
             fetchLeads()
+            fetchCurrentBroker()
         }
     }, [isOpen])
+
+    const fetchCurrentBroker = async () => {
+        const { profile } = await getProfile()
+        if (profile) {
+            setCurrentBroker(profile)
+        }
+    }
 
     const fetchLeads = async () => {
         setIsLoading(true)
@@ -69,7 +80,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         }
 
         const cleanPhone = selectedLead.phone.replace(/\D/g, '')
-        const message = `Olá ${selectedLead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste imóvel que pode te interessar:\n\n*${property.title}*\n💰 Valor: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}\n📍 ${property.details?.endereco?.bairro || ''} - ${property.details?.endereco?.cidade || ''}\n\nConfira todas as fotos e detalhes aqui: https://${tenantSlug}.laxperience.online/site/${tenantSlug}\n\nQualquer dúvida estou à disposição!`
+        const propertyUrl = `https://${tenantSlug}.laxperience.online/site/${tenantSlug}/property/${property.id}${currentBroker ? `?b=${currentBroker.id}` : ''}`
+        
+        const message = `Olá ${selectedLead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste imóvel que pode te interessar:\n\n*${property.title}*\n💰 Valor: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}\n📍 ${property.details?.endereco?.bairro || ''} - ${property.details?.endereco?.cidade || ''}\n\nConfira todas as fotos e detalhes aqui: ${propertyUrl}\n\nQualquer dúvida estou à disposição!`
         
         const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`
         
@@ -92,16 +105,12 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             <div className="space-y-6">
                 {!selectedLead ? (
                     <div className="space-y-4">
-                        <div className="relative">
-                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                            <input
-                                type="text"
-                                placeholder="Buscar lead por nome, email ou telefone..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                className="w-full pl-10 pr-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 outline-none transition-all"
-                            />
-                        </div>
+                        <FormInput
+                            placeholder="Buscar lead por nome, email ou telefone..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            icon={Search}
+                        />
 
                         <div className="max-h-[300px] overflow-y-auto space-y-2 pr-1">
                             {isLoading ? (

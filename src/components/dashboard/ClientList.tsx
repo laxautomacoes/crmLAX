@@ -3,6 +3,9 @@
 import { useState } from 'react'
 import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
+import { FormInput } from '@/components/shared/forms/FormInput'
+import { FormSelect } from '@/components/shared/forms/FormSelect'
+import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { formatPhone } from '@/lib/utils/phone'
 import { createNewClient, updateClient, deleteClient } from '@/app/_actions/clients'
 import { toast } from 'sonner'
@@ -152,14 +155,12 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
                 <div className="flex flex-wrap items-center gap-3">
-                    <div className="relative w-full md:w-[310px]">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                        <input
-                            type="text"
+                    <div className="w-full md:w-[310px]">
+                        <FormInput
                             placeholder="Buscar por nome ou email..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2 bg-card border border-border rounded-lg focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all text-foreground placeholder:text-muted-foreground shadow-sm text-sm"
+                            icon={Search}
                         />
                     </div>
                     <button
@@ -220,69 +221,54 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Informações Pessoais</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Nome Completo</label>
-                                <input
+                                <FormInput
+                                    label="Nome Completo"
                                     required
                                     value={formData.name}
                                     onChange={e => setFormData({ ...formData, name: e.target.value })}
                                     placeholder="Ex: João Silva"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
                                 />
                             </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">E-mail</label>
-                                <input
-                                    type="email"
-                                    required
-                                    value={formData.email}
-                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                    placeholder="joao@exemplo.com"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Telefone / WhatsApp</label>
-                                <input
-                                    required
-                                    value={formData.phone}
-                                    onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
-                                    placeholder="(48) 99999 9999"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">CPF</label>
-                                <input
-                                    value={formData.cpf}
-                                    onChange={e => setFormData({ ...formData, cpf: e.target.value })}
-                                    placeholder="000.000.000-00"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Data de Nascimento</label>
-                                <input
-                                    type="date"
-                                    value={formData.birth_date}
-                                    onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Estado Civil</label>
-                                <select
-                                    value={formData.marital_status}
-                                    onChange={e => setFormData({ ...formData, marital_status: e.target.value })}
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                >
-                                    <option value="">Selecione...</option>
-                                    <option value="Solteiro(a)">Solteiro(a)</option>
-                                    <option value="Casado(a)">Casado(a)</option>
-                                    <option value="Divorciado(a)">Divorciado(a)</option>
-                                    <option value="Viúvo(a)">Viúvo(a)</option>
-                                    <option value="União Estável">União Estável</option>
-                                </select>
-                            </div>
+                            <FormInput
+                                label="E-mail"
+                                type="email"
+                                required
+                                value={formData.email}
+                                onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                placeholder="joao@exemplo.com"
+                            />
+                            <FormInput
+                                label="Telefone / WhatsApp"
+                                required
+                                value={formData.phone}
+                                onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
+                                placeholder="(48) 99999 9999"
+                            />
+                            <FormInput
+                                label="CPF"
+                                value={formData.cpf}
+                                onChange={e => setFormData({ ...formData, cpf: e.target.value })}
+                                placeholder="000.000.000-00"
+                            />
+                            <FormInput
+                                label="Data de Nascimento"
+                                type="date"
+                                value={formData.birth_date}
+                                onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
+                            />
+                            <FormSelect
+                                label="Estado Civil"
+                                value={formData.marital_status}
+                                onChange={e => setFormData({ ...formData, marital_status: e.target.value })}
+                                options={[
+                                    { value: '', label: 'Selecione...' },
+                                    { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                                    { value: 'Casado(a)', label: 'Casado(a)' },
+                                    { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                                    { value: 'Viúvo(a)', label: 'Viúvo(a)' },
+                                    { value: 'União Estável', label: 'União Estável' }
+                                ]}
+                            />
                         </div>
                     </div>
 
@@ -291,69 +277,52 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Endereço</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <div className="md:col-span-2">
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Rua</label>
-                                <input
+                                <FormInput
+                                    label="Rua"
                                     value={formData.address_street}
                                     onChange={e => setFormData({ ...formData, address_street: e.target.value })}
                                     placeholder="Nome da rua"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
                                 />
                             </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Número</label>
-                                <input
-                                    value={formData.address_number}
-                                    onChange={e => setFormData({ ...formData, address_number: e.target.value })}
-                                    placeholder="123"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Complemento</label>
-                                <input
-                                    value={formData.address_complement}
-                                    onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
-                                    placeholder="Apto, Bloco, etc"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Bairro</label>
-                                <input
-                                    value={formData.address_neighborhood}
-                                    onChange={e => setFormData({ ...formData, address_neighborhood: e.target.value })}
-                                    placeholder="Bairro"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                />
-                            </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">CEP</label>
-                                <input
-                                    value={formData.address_zip_code}
-                                    onChange={e => setFormData({ ...formData, address_zip_code: e.target.value })}
-                                    placeholder="00000-000"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                />
-                            </div>
+                            <FormInput
+                                label="Número"
+                                value={formData.address_number}
+                                onChange={e => setFormData({ ...formData, address_number: e.target.value })}
+                                placeholder="123"
+                            />
+                            <FormInput
+                                label="Complemento"
+                                value={formData.address_complement}
+                                onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
+                                placeholder="Apto, Bloco, etc"
+                            />
+                            <FormInput
+                                label="Bairro"
+                                value={formData.address_neighborhood}
+                                onChange={e => setFormData({ ...formData, address_neighborhood: e.target.value })}
+                                placeholder="Bairro"
+                            />
+                            <FormInput
+                                label="CEP"
+                                value={formData.address_zip_code}
+                                onChange={e => setFormData({ ...formData, address_zip_code: e.target.value })}
+                                placeholder="00000-000"
+                            />
                             <div className="md:col-span-2">
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Cidade</label>
-                                <input
+                                <FormInput
+                                    label="Cidade"
                                     value={formData.address_city}
                                     onChange={e => setFormData({ ...formData, address_city: e.target.value })}
                                     placeholder="Cidade"
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
                                 />
                             </div>
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Estado</label>
-                                <input
-                                    value={formData.address_state}
-                                    onChange={e => setFormData({ ...formData, address_state: e.target.value })}
-                                    placeholder="UF"
-                                    maxLength={2}
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                />
-                            </div>
+                            <FormInput
+                                label="Estado"
+                                value={formData.address_state}
+                                onChange={e => setFormData({ ...formData, address_state: e.target.value })}
+                                placeholder="UF"
+                                maxLength={2}
+                            />
                         </div>
                     </div>
 
@@ -361,27 +330,24 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     <div className="space-y-4">
                         <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Interesse</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Tipo de Interesse</label>
-                                <select
-                                    value={formData.primary_interest}
-                                    onChange={e => setFormData({ ...formData, primary_interest: e.target.value })}
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm"
-                                >
-                                    <option value="">Selecione...</option>
-                                    <option value="compra">Compra</option>
-                                    <option value="venda">Venda</option>
-                                    <option value="aluguel">Aluguel</option>
-                                </select>
-                            </div>
+                            <FormSelect
+                                label="Tipo de Interesse"
+                                value={formData.primary_interest}
+                                onChange={e => setFormData({ ...formData, primary_interest: e.target.value })}
+                                options={[
+                                    { value: '', label: 'Selecione...' },
+                                    { value: 'compra', label: 'Compra' },
+                                    { value: 'venda', label: 'Venda' },
+                                    { value: 'aluguel', label: 'Aluguel' }
+                                ]}
+                            />
                             <div className="md:col-span-2">
-                                <label className="text-xs font-bold text-muted-foreground ml-1 uppercase">Detalhes do Interesse</label>
-                                <textarea
+                                <FormTextarea
+                                    label="Detalhes do Interesse"
                                     value={formData.interest}
                                     onChange={e => setFormData({ ...formData, interest: e.target.value })}
                                     placeholder="Ex: Apartamento 3 quartos no Centro"
                                     rows={2}
-                                    className="w-full p-2.5 rounded-lg border border-border bg-card focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all text-sm resize-none"
                                 />
                             </div>
                         </div>

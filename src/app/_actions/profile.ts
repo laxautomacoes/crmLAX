@@ -63,6 +63,25 @@ export async function updateProfileAvatar(avatarUrl: string) {
     return { success: true }
 }
 
+export async function getBrokerProfile(profileId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { data: profile, error } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url, whatsapp_number, role')
+            .eq('id', profileId)
+            .maybeSingle()
+
+        if (error) throw error
+
+        return { success: true, data: profile }
+    } catch (error: any) {
+        console.error('Error fetching broker profile:', error)
+        return { success: false, error: error.message }
+    }
+}
+
 export async function updateProfile(data: { full_name: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()

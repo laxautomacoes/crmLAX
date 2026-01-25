@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Modal } from '@/components/shared/Modal';
+import { FormInput } from '@/components/shared/forms/FormInput';
 import { updateInvitation, deleteInvitation } from '@/app/_actions/invitations';
 import { Loader2, Trash2, Calendar, ShieldCheck, User, Mail, Phone } from 'lucide-react';
 import { InvitationPermissions } from './InvitationPermissions';
@@ -57,9 +58,26 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
                 <div className="space-y-3">
                     <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Dados</label>
                     <div className="space-y-2">
-                        <div className="relative"><User className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" /><input type="text" value={name} onChange={(e) => setName(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-input border border-border rounded-lg text-sm outline-none" placeholder="Nome" /></div>
-                        <div className="relative"><Mail className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" /><input type="email" value={email} onChange={(e) => setEmail(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-input border border-border rounded-lg text-sm outline-none" placeholder="Email" /></div>
-                        <div className="relative"><Phone className="absolute left-3 top-2.5 w-4 h-4 text-muted-foreground" /><input type="tel" value={phone} onChange={(e) => setPhone(e.target.value)} className="w-full pl-9 pr-4 py-2 bg-input border border-border rounded-lg text-sm outline-none" placeholder="WhatsApp" /></div>
+                        <FormInput
+                            value={name}
+                            onChange={(e) => setName(e.target.value)}
+                            icon={User}
+                            placeholder="Nome"
+                        />
+                        <FormInput
+                            type="email"
+                            value={email}
+                            onChange={(e) => setEmail(e.target.value)}
+                            icon={Mail}
+                            placeholder="Email"
+                        />
+                        <FormInput
+                            type="tel"
+                            value={phone}
+                            onChange={(e) => setPhone(e.target.value)}
+                            icon={Phone}
+                            placeholder="WhatsApp"
+                        />
                     </div>
                 </div>
 
@@ -72,7 +90,13 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
                     <InvitationPermissions role={role} permissions={permissions} onToggle={togglePermission} />
                 </div>
 
-                <div className="space-y-1.5"><label className="text-sm font-bold flex gap-2 ml-1"><Calendar className="w-4 h-4" /> Expira em</label><input type="date" value={expiresAt} onChange={(e) => setExpiresAt(e.target.value)} className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm outline-none" /></div>
+                <FormInput
+                    label="Expira em"
+                    type="date"
+                    value={expiresAt}
+                    onChange={(e) => setExpiresAt(e.target.value)}
+                    icon={Calendar}
+                />
 
                 <div className="flex gap-3 pt-4 border-t border-border">
                     <button onClick={handleDelete} disabled={isDeleting} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors">{isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Excluir</button>

@@ -5,6 +5,9 @@ import { Rocket, Plus, Edit2, Trash2, CheckCircle2, Circle, Clock, AlertCircle, 
 import { getRoadmap, createRoadmapItem, updateRoadmapItem, deleteRoadmapItem } from '@/app/_actions/roadmap';
 import { getProfile } from '@/app/_actions/profile';
 import { useRouter } from 'next/navigation';
+import { FormInput } from '@/components/shared/forms/FormInput';
+import { FormSelect } from '@/components/shared/forms/FormSelect';
+import { FormTextarea } from '@/components/shared/forms/FormTextarea';
 
 export const dynamic = 'force-dynamic';
 
@@ -209,56 +212,43 @@ export default function RoadmapPage() {
                             </h2>
                         </div>
                         <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-foreground ml-1">Título</label>
-                                <input
-                                    type="text"
-                                    required
-                                    value={formData.title}
-                                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none transition-all font-medium text-foreground"
-                                    placeholder="Ex: Novo dashboard de métricas"
-                                />
-                            </div>
+                            <FormInput
+                                label="Título"
+                                required
+                                value={formData.title}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                placeholder="Ex: Novo dashboard de métricas"
+                            />
 
-                            <div className="space-y-1.5">
-                                <label className="text-sm font-bold text-foreground ml-1">Descrição</label>
-                                <textarea
-                                    rows={3}
-                                    value={formData.description}
-                                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                    className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none transition-all font-medium resize-none text-foreground"
-                                    placeholder="Descreva brevemente a funcionalidade..."
-                                />
-                            </div>
+                            <FormTextarea
+                                label="Descrição"
+                                rows={3}
+                                value={formData.description}
+                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                                placeholder="Descreva brevemente a funcionalidade..."
+                            />
 
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-foreground ml-1">Tipo</label>
-                                    <div className="relative">
-                                        <select
-                                            value={formData.type}
-                                            onChange={(e: any) => setFormData({ ...formData, type: e.target.value })}
-                                            className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none appearance-none font-medium text-foreground"
-                                        >
-                                            <option value="roadmap">Roadmap</option>
-                                            <option value="feature">Melhoria</option>
-                                            <option value="fix">Correção</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <div className="space-y-1.5">
-                                    <label className="text-sm font-bold text-foreground ml-1">Status</label>
-                                    <select
-                                        value={formData.status}
-                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                        className="w-full px-4 py-2.5 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none appearance-none font-medium text-foreground"
-                                    >
-                                        <option value="planned">Planejado</option>
-                                        <option value="in_progress">Em Progresso</option>
-                                        <option value="completed">Concluído</option>
-                                    </select>
-                                </div>
+                                <FormSelect
+                                    label="Tipo"
+                                    value={formData.type}
+                                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
+                                    options={[
+                                        { value: 'roadmap', label: 'Roadmap' },
+                                        { value: 'feature', label: 'Melhoria' },
+                                        { value: 'fix', label: 'Correção' }
+                                    ]}
+                                />
+                                <FormSelect
+                                    label="Status"
+                                    value={formData.status}
+                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                    options={[
+                                        { value: 'planned', label: 'Planejado' },
+                                        { value: 'in_progress', label: 'Em Progresso' },
+                                        { value: 'completed', label: 'Concluído' }
+                                    ]}
+                                />
                             </div>
 
                             <div className="flex items-center gap-3 pt-4">

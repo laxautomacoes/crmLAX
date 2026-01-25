@@ -4,45 +4,18 @@ import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { cleanPhone } from '@/lib/utils/phone';
 import { getTenantFromHeaders } from '@/lib/utils/tenant';
-
+import { getStages } from './stages';
 
 
 export async function getPipelineData(tenantId: string) {
     const supabase = await createClient();
 
-    // 1. Buscar estágios
-    let { data: stages, error: stagesError } = await supabase
-        .from('lead_stages')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .order('order_index', { ascending: true });
-
-    if (stagesError) {
-        return { success: false, error: stagesError.message };
+    // 1. Buscar estágios usando a nova função modularizada
+    const stagesResult = await getStages(tenantId);
+    if (!stagesResult.success) {
+        return { success: false, error: stagesResult.error };
     }
-
-    // Se não houver estágios, criar um padrão
-    if (!stages || stages.length === 0) {
-        const { error: insertError } = await supabase
-            .from('lead_stages')
-            .insert({
-                tenant_id: tenantId,
-                name: 'Novo Lead',
-                order_index: 0
-            });
-
-        if (insertError) {
-            console.error('Erro ao criar estágio padrão:', insertError);
-        } else {
-            // Re-buscar após criar
-            const { data: newStages } = await supabase
-                .from('lead_stages')
-                .select('*')
-                .eq('tenant_id', tenantId)
-                .order('order_index', { ascending: true });
-            stages = newStages;
-        }
-    }
+    const stages = stagesResult.data;
 
     // 2. Buscar leads com contatos
     const { data: leads, error: leadsError } = await supabase
@@ -82,36 +55,6 @@ export async function getPipelineData(tenantId: string) {
             leads: formattedLeads
         }
     };
-}
-
-export async function createStage(tenantId: string, name: string) {
-    const supabase = await createClient();
-
-    // Pegar o último order_index
-    const { data: lastStage } = await supabase
-        .from('lead_stages')
-        .select('order_index')
-        .eq('tenant_id', tenantId)
-        .order('order_index', { ascending: false })
-        .limit(1)
-        .single();
-
-    const nextOrder = lastStage ? lastStage.order_index + 1 : 0;
-
-    const { data, error } = await supabase
-        .from('lead_stages')
-        .insert({
-            tenant_id: tenantId,
-            name,
-            order_index: nextOrder
-        })
-        .select()
-        .single();
-
-    if (error) return { success: false, error: error.message };
-
-    revalidatePath('/leads');
-    return { success: true, data };
 }
 
 export async function updateLeadStage(leadId: string, stageId: string) {
@@ -161,6 +104,8 @@ export async function createLead(tenantId: string, data: any) {
     if (contactError) return { success: false, error: contactError.message };
 
     // 2. Criar lead
+    const { data: { user } } = await supabase.auth.getUser();
+
     const { error: leadError } = await supabase
         .from('leads')
         .insert({
@@ -169,75 +114,14 @@ export async function createLead(tenantId: string, data: any) {
             stage_id: data.stage_id || null,
             notes: data.notes,
             value: data.value,
-            source: data.interest || 'Direto'
+            source: data.interest || 'Direto',
+            assigned_to: data.assigned_to || user?.id
         });
 
     if (leadError) return { success: false, error: leadError.message };
 
     revalidatePath('/leads');
     return { success: true };
-}
-
-export async function updateStageName(stageId: string, name: string) {
-    const supabase = await createClient();
-
-    const { error } = await supabase
-        .from('lead_stages')
-        .update({ name })
-        .eq('id', stageId);
-
-    if (error) return { success: false, error: error.message };
-
-    revalidatePath('/leads');
-    return { success: true };
-}
-
-export async function deleteStage(stageId: string) {
-    const supabase = await createClient();
-
-    const { error } = await supabase
-        .from('lead_stages')
-        .delete()
-        .eq('id', stageId);
-
-    if (error) return { success: false, error: error.message };
-
-    revalidatePath('/leads');
-    return { success: true };
-}
-
-export async function duplicateStage(tenantId: string, stageId: string) {
-    const supabase = await createClient();
-
-    // 1. Buscar estágio original
-    const { data: stage } = await supabase
-        .from('lead_stages')
-        .select('*')
-        .eq('id', stageId)
-        .single();
-
-    if (!stage) return { success: false, error: 'Estágio não encontrado' };
-
-    // 2. Buscar todos os estágios para verificar nomes existentes
-    const { data: allStages } = await supabase
-        .from('lead_stages')
-        .select('name')
-        .eq('tenant_id', tenantId);
-
-    // 3. Gerar nome com sufixo incremental
-    const baseName = stage.name.replace(/ \(Cópia \d+\)$/, '');
-    let copyNumber = 1;
-    let newName = `${baseName} (Cópia ${copyNumber})`;
-
-    const existingNames = (allStages as any[])?.map((s) => s.name) || [];
-
-    while (existingNames.includes(newName)) {
-        copyNumber++;
-        newName = `${baseName} (Cópia ${copyNumber})`;
-    }
-
-    // 4. Criar nova cópia
-    return await createStage(tenantId, newName);
 }
 export async function updateLead(tenantId: string, leadId: string, data: any) {
     const supabase = await createClient();

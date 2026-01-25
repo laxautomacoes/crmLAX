@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { Plus, Search, LayoutGrid, List } from 'lucide-react'
+import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProfile } from '@/app/_actions/profile'
 import { getAssets, createAsset, updateAsset, deleteAsset } from '@/app/_actions/assets'
 import { initStorageBuckets } from '@/app/_actions/storage'
@@ -124,11 +125,19 @@ export default function PropertiesPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
+                <div className="text-center md:text-left">
                     <h1 className="text-2xl font-bold text-foreground">Imóveis</h1>
                     <p className="text-sm text-muted-foreground">{filteredProperties.length} imóveis encontrados</p>
                 </div>
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="flex items-center justify-center md:justify-end gap-3">
+                    <FormInput
+                        placeholder="Buscar imóveis..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        icon={Search}
+                        className="md:w-64"
+                    />
+
                     <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm">
                         <button
                             onClick={() => setViewMode('gallery')}
@@ -146,19 +155,9 @@ export default function PropertiesPage() {
                         </button>
                     </div>
 
-                    <div className="relative">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" size={18} />
-                        <input
-                            type="text"
-                            placeholder="Buscar imóveis..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="pl-10 pr-4 py-2 bg-card border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none w-full md:w-64"
-                        />
-                    </div>
                     <button
                         onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99]"
+                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
                     >
                         <Plus size={18} />
                         Novo Imóvel

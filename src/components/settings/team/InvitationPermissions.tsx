@@ -1,6 +1,7 @@
 'use client';
 
 import { Lock } from 'lucide-react';
+import { FormCheckbox } from '@/components/shared/forms/FormCheckbox';
 
 interface InvitationPermissionsProps {
     role: 'admin' | 'user';
@@ -26,19 +27,14 @@ export function InvitationPermissions({ role, permissions, onToggle }: Invitatio
             </h4>
             <div className="grid grid-cols-2 gap-2">
                 {Object.entries(permissionLabels).map(([key, label]) => (
-                    <label
+                    <FormCheckbox
                         key={key}
-                        className={`flex items-center gap-2 text-xs p-1 rounded-lg transition-colors cursor-pointer ${role === 'admin' ? 'opacity-50 cursor-not-allowed' : 'hover:bg-muted'}`}
-                    >
-                        <input
-                            type="checkbox"
-                            checked={permissions[key]}
-                            onChange={() => onToggle(key)}
-                            disabled={role === 'admin'}
-                            className="rounded border-gray-300 text-secondary focus:ring-secondary w-3.5 h-3.5"
-                        />
-                        <span className="font-medium">{label}</span>
-                    </label>
+                        label={label}
+                        checked={permissions[key]}
+                        onChange={() => onToggle(key)}
+                        disabled={role === 'admin'}
+                        className={role === 'admin' ? 'opacity-50 cursor-not-allowed' : ''}
+                    />
                 ))}
             </div>
         </div>

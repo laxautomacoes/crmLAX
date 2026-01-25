@@ -58,7 +58,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                         {lead.name}
                     </h4>
                     {lead.interest && (
-                        <span className="inline-block px-2.5 py-0.5 bg-secondary text-secondary-foreground rounded-full text-[10px] font-bold shadow-sm transition-colors">
+                        <span className="inline-block px-2.5 py-0.5 bg-muted text-muted-foreground rounded-full text-[10px] font-bold shadow-sm transition-colors border border-border">
                             {lead.interest}
                         </span>
                     )}

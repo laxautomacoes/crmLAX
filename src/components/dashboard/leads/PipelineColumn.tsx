@@ -84,7 +84,7 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
                             onChange={(e) => setEditValue(e.target.value)}
                             onBlur={handleRename}
                             onKeyDown={handleKeyDown}
-                            className="bg-card border border-primary dark:border-secondary text-[13px] font-bold text-foreground px-2 py-0.5 rounded-md outline-none w-full uppercase tracking-widest"
+                            className="bg-card border border-primary text-[13px] font-bold text-foreground px-2 py-0.5 rounded-md outline-none w-full uppercase tracking-widest"
                         />
                     ) : (
                         <h3 className="font-bold text-foreground/80 dark:text-foreground text-[13px] uppercase tracking-widest leading-none truncate">
@@ -159,9 +159,9 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
 
                 <button
                     onClick={() => onAddLead(id)}
-                    className="w-full py-2.5 border border-border rounded-lg text-muted-foreground flex items-center justify-center gap-2 hover:text-foreground dark:hover:text-secondary hover:bg-card transition-all text-xs font-bold group mt-2 shadow-sm"
+                    className="w-full py-2.5 border border-border rounded-lg text-muted-foreground flex items-center justify-center gap-2 hover:text-foreground hover:bg-card transition-all text-xs font-bold group mt-2 shadow-sm"
                 >
-                    <Plus size={14} className="group-hover:text-foreground dark:group-hover:text-secondary transition-colors" />
+                    <Plus size={14} className="group-hover:text-foreground transition-colors" />
                     Novo Lead
                 </button>
             </div>

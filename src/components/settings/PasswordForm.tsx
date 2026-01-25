@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Lock } from 'lucide-react';
+import { FormInput } from '@/components/shared/forms/FormInput';
 import { createClient } from '@/lib/supabase/client';
 import { MessageBanner } from '@/components/shared/MessageBanner';
 
@@ -53,27 +54,21 @@ export function PasswordForm() {
             <div className="space-y-4 flex-1 flex flex-col">
                 {message && <MessageBanner type={message.type} text={message.text} />}
                 
-                <div>
-                    <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">Nova Senha</label>
-                    <input
-                        type="password"
-                        placeholder="Mínimo 6 caracteres"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
-                        className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
-                    />
-                </div>
+                <FormInput
+                    label="Nova Senha"
+                    type="password"
+                    placeholder="Mínimo 6 caracteres"
+                    value={newPassword}
+                    onChange={(e) => setNewPassword(e.target.value)}
+                />
                 
-                <div>
-                    <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">Confirmar Nova Senha</label>
-                    <input
-                        type="password"
-                        placeholder="Digite novamente"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
-                    />
-                </div>
+                <FormInput
+                    label="Confirmar Nova Senha"
+                    type="password"
+                    placeholder="Digite novamente"
+                    value={confirmPassword}
+                    onChange={(e) => setConfirmPassword(e.target.value)}
+                />
 
                 <button
                     onClick={handlePasswordChange}

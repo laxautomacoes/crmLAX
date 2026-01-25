@@ -3,6 +3,7 @@
 import { Lock, Mail, User, Eye, EyeOff, Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import { FormInput } from '@/components/shared/forms/FormInput';
 
 interface RegisterFormProps {
     name: string;
@@ -31,44 +32,49 @@ export function RegisterForm({
                 </div>
             )}
 
-            <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-foreground ml-1">Nome Completo</label>
-                <div className="relative">
-                    <User className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <input
-                        type="text" required value={name} onChange={(e) => setName(e.target.value)}
-                        className="block w-full pl-11 pr-4 py-3.5 bg-muted/30 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary placeholder-muted-foreground text-sm font-medium transition-all"
-                        placeholder="João Silva"
-                    />
-                </div>
-            </div>
+            <FormInput
+                label="Nome Completo"
+                type="text"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                placeholder="João Silva"
+                icon={User}
+                className="py-3.5"
+            />
 
-            <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-foreground ml-1">Email</label>
-                <div className="relative">
-                    <Mail className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <input
-                        type="email" required readOnly={isInvited} value={email} onChange={(e) => setEmail(e.target.value)}
-                        className={`block w-full pl-11 pr-4 py-3.5 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary placeholder-muted-foreground text-sm font-medium transition-all ${isInvited ? 'bg-muted/50 cursor-not-allowed opacity-70' : 'bg-muted/30'}`}
-                        placeholder="seu@email.com"
-                    />
-                </div>
-            </div>
+            <FormInput
+                label="Email"
+                type="email"
+                required
+                readOnly={isInvited}
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder="seu@email.com"
+                icon={Mail}
+                className={`py-3.5 ${isInvited ? 'bg-muted/50 cursor-not-allowed opacity-70' : ''}`}
+            />
 
-            <div className="space-y-1.5">
-                <label className="block text-sm font-bold text-foreground ml-1">Senha</label>
-                <div className="relative">
-                    <Lock className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-                    <input
-                        type={showPassword ? "text" : "password"} required minLength={6} value={password} onChange={(e) => setPassword(e.target.value)}
-                        className="block w-full pl-11 pr-11 py-3.5 bg-muted/30 border border-border rounded-lg text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary placeholder-muted-foreground text-sm font-medium transition-all"
-                        placeholder="Mínimo 6 caracteres"
-                    />
-                    <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
+            <FormInput
+                label="Senha"
+                type={showPassword ? "text" : "password"}
+                required
+                minLength={6}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="Mínimo 6 caracteres"
+                icon={Lock}
+                className="py-3.5"
+                rightElement={
+                    <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="p-1 hover:text-foreground transition-colors"
+                    >
                         {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
                     </button>
-                </div>
-            </div>
+                }
+            />
 
             <button
                 type="submit" disabled={loading}

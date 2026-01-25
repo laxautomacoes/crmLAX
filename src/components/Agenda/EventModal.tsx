@@ -3,6 +3,9 @@
 import { useState, useEffect } from 'react';
 import { ChevronDown } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
+import { FormInput } from '@/components/shared/forms/FormInput';
+import { FormSelect } from '@/components/shared/forms/FormSelect';
+import { FormTextarea } from '@/components/shared/forms/FormTextarea';
 import { format, addHours, startOfHour } from 'date-fns';
 import { toast } from 'sonner';
 
@@ -146,99 +149,69 @@ export default function EventModal({
             title={editingEvent ? 'Editar Compromisso' : 'Novo Compromisso'}
         >
             <div className="space-y-4">
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground ml-1 mb-1 uppercase tracking-wider">Título *</label>
-                    <input
-                        type="text"
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="Ex: Reunião com Cliente"
-                        className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                    />
-                </div>
+                <FormInput
+                    label="Título *"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Ex: Reunião com Cliente"
+                />
 
                 <div className="grid grid-cols-2 gap-4">
-                    <div>
-                        <label className="block text-xs font-bold text-muted-foreground ml-1 mb-1 uppercase tracking-wider">Início *</label>
-                        <input
-                            type="datetime-local"
-                            value={formData.start_time}
-                            onChange={(e) => handleStartTimeChange(e.target.value)}
-                            className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                        />
-                    </div>
-                    <div>
-                        <label className="block text-xs font-bold text-muted-foreground ml-1 mb-1 uppercase tracking-wider">Fim</label>
-                        <input
-                            type="datetime-local"
-                            value={formData.end_time}
-                            onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-                            className="w-full px-3 py-2 text-xs rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                        />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground ml-1 mb-1 uppercase tracking-wider">Tipo</label>
-                    <div className="relative">
-                        <select
-                            value={formData.event_type}
-                            onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all appearance-none pr-10"
-                        >
-                            <option value="duty">Plantão de Venda</option>
-                            <option value="visit">Visita de Cliente</option>
-                            <option value="note">Anotação/Lembrete</option>
-                            <option value="other">Outro</option>
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground ml-1 mb-1 uppercase tracking-wider">Vincular Lead</label>
-                    <div className="relative">
-                        <select
-                            value={formData.lead_id}
-                            onChange={(e) => setFormData({ ...formData, lead_id: e.target.value })}
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all appearance-none pr-10"
-                        >
-                            <option value="">Nenhum lead selecionado</option>
-                            {leads.map(lead => (
-                                <option key={lead.id} value={lead.id}>{lead.name}</option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground ml-1 mb-1 uppercase tracking-wider">Vincular Imóvel (Produto)</label>
-                    <div className="relative">
-                        <select
-                            value={formData.asset_id}
-                            onChange={(e) => setFormData({ ...formData, asset_id: e.target.value })}
-                            className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all appearance-none pr-10"
-                        >
-                            <option value="">Nenhum imóvel selecionado</option>
-                            {assets.map(asset => (
-                                <option key={asset.id} value={asset.id}>{asset.title}</option>
-                            ))}
-                        </select>
-                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
-                    </div>
-                </div>
-
-                <div>
-                    <label className="block text-xs font-bold text-muted-foreground ml-1 mb-1 uppercase tracking-wider">Descrição</label>
-                    <textarea
-                        value={formData.description}
-                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                        rows={3}
-                        className="w-full px-4 py-2 rounded-lg border border-border bg-card text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none resize-none transition-all"
-                        placeholder="Detalhes do compromisso..."
+                    <FormInput
+                        label="Início *"
+                        type="datetime-local"
+                        value={formData.start_time}
+                        onChange={(e) => handleStartTimeChange(e.target.value)}
+                        className="text-xs"
+                    />
+                    <FormInput
+                        label="Fim"
+                        type="datetime-local"
+                        value={formData.end_time}
+                        onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
+                        className="text-xs"
                     />
                 </div>
+
+                <FormSelect
+                    label="Tipo"
+                    value={formData.event_type}
+                    onChange={(e) => setFormData({ ...formData, event_type: e.target.value })}
+                    options={[
+                        { value: 'duty', label: 'Plantão de Venda' },
+                        { value: 'visit', label: 'Visita de Cliente' },
+                        { value: 'note', label: 'Anotação/Lembrete' },
+                        { value: 'other', label: 'Outro' }
+                    ]}
+                />
+
+                <FormSelect
+                    label="Vincular Lead"
+                    value={formData.lead_id}
+                    onChange={(e) => setFormData({ ...formData, lead_id: e.target.value })}
+                    options={[
+                        { value: '', label: 'Nenhum lead selecionado' },
+                        ...leads.map(lead => ({ value: lead.id, label: lead.name }))
+                    ]}
+                />
+
+                <FormSelect
+                    label="Vincular Imóvel (Produto)"
+                    value={formData.asset_id}
+                    onChange={(e) => setFormData({ ...formData, asset_id: e.target.value })}
+                    options={[
+                        { value: '', label: 'Nenhum imóvel selecionado' },
+                        ...assets.map(asset => ({ value: asset.id, label: asset.title }))
+                    ]}
+                />
+
+                <FormTextarea
+                    label="Descrição"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Detalhes do compromisso..."
+                    rows={3}
+                />
 
                 <div className="flex gap-3 pt-4">
                     {editingEvent && onDelete && (

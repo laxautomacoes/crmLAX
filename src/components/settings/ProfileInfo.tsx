@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { User, Mail } from 'lucide-react';
+import { FormInput } from '@/components/shared/forms/FormInput';
 import { updateProfile } from '@/app/_actions/profile';
 import { MessageBanner } from '@/components/shared/MessageBanner';
 
@@ -49,23 +50,20 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
             <div className="space-y-4 flex-1 flex flex-col">
                 {message && <MessageBanner type={message.type} text={message.text} />}
                 
-                <div>
-                    <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">Nome Completo</label>
-                    <input
-                        type="text"
-                        value={profile?.full_name || ''}
-                        onChange={(e) => onProfileUpdate({ full_name: e.target.value })}
-                        className="w-full px-3 py-2 bg-muted/30 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm text-foreground placeholder-muted-foreground font-medium"
-                    />
-                </div>
+                <FormInput
+                    label="Nome Completo"
+                    value={profile?.full_name || ''}
+                    onChange={(e) => onProfileUpdate({ full_name: e.target.value })}
+                />
                 
                 <div>
-                    <label className="block text-sm font-bold text-foreground ml-1 mb-1.5">Email</label>
-                    <input
+                    <FormInput
+                        label="Email"
                         type="email"
                         value={profile?.email || ''}
-                        className="w-full px-3 py-2 border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-sm bg-muted/30 text-muted-foreground font-medium cursor-not-allowed"
                         readOnly
+                        disabled
+                        className="cursor-not-allowed"
                     />
                     <p className="mt-1 text-xs text-muted-foreground">
                         Ao alterar, você receberá um link de confirmação em ambos os emails.
