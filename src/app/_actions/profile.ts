@@ -19,28 +19,26 @@ export async function getProfile() {
             .eq('id', user.id)
             .maybeSingle()
 
-        avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture
-    }
         console.log('SERVER SIDE PROFILE FETCH:', {
-        id: user.id,
-        role: profile?.role,
-        raw_profile: profile
-    });
-
-    return {
-        profile: {
-            ...profile,
             id: user.id,
-            email: user.email || 'leocrm@lax.com',
-            full_name: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Léo Acosta',
-            role: profile?.role || 'user',
-            avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture
+            role: profile?.role,
+            raw_profile: profile
+        });
+
+        return {
+            profile: {
+                ...profile,
+                id: user.id,
+                email: user.email || 'leocrm@lax.com',
+                full_name: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Léo Acosta',
+                role: profile?.role || 'user',
+                avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture
+            }
         }
+    } catch (error) {
+        console.error('Error in getProfile:', error)
+        return { error: 'Failed to fetch profile' }
     }
-} catch (error) {
-    console.error('Error in getProfile:', error)
-    return { error: 'Failed to fetch profile' }
-}
 }
 
 export async function updateProfileAvatar(avatarUrl: string) {

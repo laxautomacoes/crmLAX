@@ -37,13 +37,14 @@ export default function TeamSettingsPage() {
                 // Check for allowed roles (including variations)
                 const allowedRoles = ['admin', 'superadmin', 'super_admin', 'super administrador'];
 
-                if (profile.role === 'user' && !allowedRoles.includes(profile.role)) {
+                if (!allowedRoles.includes(profile.role?.toLowerCase())) {
+                    console.warn('Unauthorized access attempt to team settings:', profile.role);
                     router.push('/dashboard');
                     return;
                 }
 
                 setIsAuthorized(true);
-                loadInvitations();
+                await loadInvitations();
             } catch (err) {
                 console.error('Unexpected error in checkAccess:', err);
                 router.push('/dashboard');
@@ -55,8 +56,9 @@ export default function TeamSettingsPage() {
 
     if (isAuthorized === null) {
         return (
-            <div className="flex h-[60vh] items-center justify-center">
+            <div className="flex h-[60vh] items-center justify-center flex-col gap-4">
                 <Loader2 className="w-8 h-8 animate-spin text-secondary" />
+                <p className="text-muted-foreground animate-pulse text-sm font-medium">Verificando permissões...</p>
             </div>
         );
     }

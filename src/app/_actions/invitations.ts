@@ -22,13 +22,16 @@ export async function createInvitation(
     if (!user) return { error: 'Not authenticated' }
 
     // Obter tenant_id e nome do admin
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('tenant_id, role, tenants(name)')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && profile.role !== 'super administrador')) {
+    const userRole = profile?.role?.toLowerCase();
+    const allowedRoles = ['admin', 'superadmin', 'super_admin', 'super administrador'];
+
+    if (profileError || !profile || !allowedRoles.includes(userRole)) {
         return { error: 'Apenas administradores podem convidar usuários' }
     }
 
@@ -94,27 +97,32 @@ export async function getInvitationByToken(token: string) {
  * Lista convites pendentes do tenant
  */
 export async function listInvitations() {
-    const supabase = await createClient()
-    const { data: { user } } = await supabase.auth.getUser()
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
 
-    if (!user) return { error: 'Not authenticated' }
+        if (!user) return { error: 'Not authenticated' }
 
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('id', user.id)
-        .single()
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', user.id)
+            .maybeSingle()
 
-    if (!profile) return { error: 'Profile not found' }
+        if (profileError || !profile) return { error: 'Profile not found' }
 
-    const { data, error } = await supabase
-        .from('invitations')
-        .select('*')
-        .eq('tenant_id', profile.tenant_id)
-        .order('created_at', { ascending: false })
+        const { data, error } = await supabase
+            .from('invitations')
+            .select('*')
+            .eq('tenant_id', profile.tenant_id)
+            .order('created_at', { ascending: false })
 
-    if (error) return { error: error.message }
-    return { invitations: data }
+        if (error) return { error: error.message }
+        return { invitations: data }
+    } catch (error: any) {
+        console.error('Error in listInvitations:', error)
+        return { error: 'Falha ao buscar convites' }
+    }
 }
 
 /**
@@ -137,13 +145,16 @@ export async function updateInvitation(
     if (!user) return { error: 'Not authenticated' }
 
     // Verificar se é admin
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('tenant_id, role')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && profile.role !== 'super administrador')) {
+    const userRole = profile?.role?.toLowerCase();
+    const allowedRoles = ['admin', 'superadmin', 'super_admin', 'super administrador'];
+
+    if (profileError || !profile || !allowedRoles.includes(userRole)) {
         return { error: 'Apenas administradores podem gerenciar convites' }
     }
 
@@ -169,13 +180,16 @@ export async function deleteInvitation(id: string) {
     if (!user) return { error: 'Not authenticated' }
 
     // Verificar se é admin
-    const { data: profile } = await supabase
+    const { data: profile, error: profileError } = await supabase
         .from('profiles')
         .select('tenant_id, role')
         .eq('id', user.id)
-        .single()
+        .maybeSingle()
 
-    if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && profile.role !== 'super administrador')) {
+    const userRole = profile?.role?.toLowerCase();
+    const allowedRoles = ['admin', 'superadmin', 'super_admin', 'super administrador'];
+
+    if (profileError || !profile || !allowedRoles.includes(userRole)) {
         return { error: 'Apenas administradores podem gerenciar convites' }
     }
 

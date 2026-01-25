@@ -70,7 +70,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const filteredMenuItems = menuItems
         .filter(item => {
             if ((item as any).roles) {
-                return (item as any).roles.includes(userRole);
+                return (item as any).roles.includes(userRole?.toLowerCase());
             }
             return true;
         })
@@ -80,7 +80,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                 newItem.subItems = newItem.subItems
                     .filter(sub => {
                         if ((sub as any).roles) {
-                            return (sub as any).roles.includes(userRole);
+                            return (sub as any).roles.includes(userRole?.toLowerCase());
                         }
                         return true;
                     })

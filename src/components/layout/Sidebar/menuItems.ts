@@ -15,14 +15,14 @@ export const menuItems = [
     },
     { name: 'Agenda', icon: Calendar, href: '/agenda' },
     { name: 'Relatórios', icon: FileText, href: '/reports' },
-    { name: 'Roadmap', icon: Rocket, href: '/roadmap', roles: ['admin', 'superadmin'] },
+    { name: 'Roadmap', icon: Rocket, href: '/roadmap', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
     {
         name: 'Configurações',
         icon: Settings,
         href: '/settings',
         subItems: [
             { name: 'Meu Perfil', href: '/settings' },
-            { name: 'Equipe', href: '/settings/team', roles: ['admin', 'superadmin'] },
+            { name: 'Equipe', href: '/settings/team', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
             { name: 'Notificações', href: '/settings?tab=notifications' }
         ]
     },
