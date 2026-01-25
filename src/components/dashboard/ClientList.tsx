@@ -52,9 +52,25 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
 
     const handleCepChange = async (cep: string) => {
         const formattedCep = formatCEP(cep)
-        setFormData({ ...formData, address_zip_code: formattedCep })
+        const digitsOnly = formattedCep.replace(/\D/g, '')
 
-        if (formattedCep.replace(/\D/g, '').length === 8) {
+        // Se o CEP for apagado ou alterado (menos de 8 dígitos), limpa os campos de endereço
+        if (digitsOnly.length < 8) {
+            setFormData(prev => ({
+                ...prev,
+                address_zip_code: formattedCep,
+                address_street: '',
+                address_neighborhood: '',
+                address_city: '',
+                address_state: '',
+                address_complement: '',
+                address_number: ''
+            }))
+        } else {
+            setFormData(prev => ({ ...prev, address_zip_code: formattedCep }))
+        }
+
+        if (digitsOnly.length === 8) {
             setCepLoading(true)
             try {
                 const address = await fetchAddressByCep(formattedCep)
@@ -344,7 +360,11 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Endereço</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormInput
-                                label="CEP"
+                                label={
+                                    <div className="flex items-center gap-1">
+                                        CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
+                                    </div>
+                                }
                                 value={formData.address_zip_code}
                                 onChange={e => handleCepChange(e.target.value)}
                                 placeholder="00000-000"
@@ -388,7 +408,6 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                 label="Estado"
                                 value={formData.address_state}
                                 onChange={e => setFormData({ ...formData, address_state: e.target.value })}
-                                placeholder="UF"
                                 maxLength={2}
                             />
                         </div>

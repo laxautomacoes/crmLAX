@@ -14,15 +14,37 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
 
     const handleCepChange = async (cep: string) => {
         const formattedCep = formatCEP(cep)
-        setFormData({
-            ...formData,
-            details: {
-                ...formData.details,
-                endereco: { ...formData.details.endereco, cep: formattedCep }
-            }
-        })
+        const digitsOnly = formattedCep.replace(/\D/g, '')
 
-        if (formattedCep.replace(/\D/g, '').length === 8) {
+        // Se o CEP for apagado ou alterado (menos de 8 dígitos), limpa os campos de endereço
+        if (digitsOnly.length < 8) {
+            setFormData({
+                ...formData,
+                details: {
+                    ...formData.details,
+                    endereco: {
+                        ...formData.details.endereco,
+                        cep: formattedCep,
+                        rua: '',
+                        bairro: '',
+                        cidade: '',
+                        estado: '',
+                        complemento: '',
+                        numero: ''
+                    }
+                }
+            })
+        } else {
+            setFormData({
+                ...formData,
+                details: {
+                    ...formData.details,
+                    endereco: { ...formData.details.endereco, cep: formattedCep }
+                }
+            })
+        }
+
+        if (digitsOnly.length === 8) {
             setLoading(true)
             try {
                 const address = await fetchAddressByCep(formattedCep)
@@ -53,7 +75,11 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Endereço</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <FormInput
-                    label="CEP"
+                    label={
+                        <div className="flex items-center gap-1">
+                            CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
+                        </div>
+                    }
                     type="text"
                     value={formData.details.endereco.cep}
                     onChange={(e) => handleCepChange(e.target.value)}
@@ -62,7 +88,7 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
                 />
                 <div className="sm:col-span-2 lg:col-span-2">
                     <FormInput
-                        label="Rua"
+                        label="Avenida | Rua"
                         type="text"
                         value={formData.details.endereco.rua}
                         onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, rua: e.target.value } } })}
@@ -73,6 +99,12 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
                     type="text"
                     value={formData.details.endereco.numero}
                     onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, numero: e.target.value } } })}
+                />
+                <FormInput
+                    label="Complemento"
+                    type="text"
+                    value={formData.details.endereco.complemento}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, complemento: e.target.value } } })}
                 />
                 <FormInput
                     label="Bairro"
@@ -91,7 +123,6 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
                     type="text"
                     value={formData.details.endereco.estado || ''}
                     onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, estado: e.target.value } } })}
-                    placeholder="UF"
                     maxLength={2}
                 />
             </div>

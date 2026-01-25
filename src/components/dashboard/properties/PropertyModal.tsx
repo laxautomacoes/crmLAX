@@ -55,8 +55,10 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             sala_cinema: false,
             playground: false,
             brinquedoteca: false,
+            home_market: false,
             proprietario: {
                 nome: '',
+                responsavel: '',
                 telefone: '',
                 email: '',
                 cpf: '',
@@ -73,6 +75,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             endereco: {
                 rua: '',
                 numero: '',
+                complemento: '',
                 bairro: '',
                 cidade: '',
                 estado: '',
@@ -120,8 +123,10 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     sala_cinema: editingProperty.details?.sala_cinema || false,
                     playground: editingProperty.details?.playground || false,
                     brinquedoteca: editingProperty.details?.brinquedoteca || false,
+                    home_market: editingProperty.details?.home_market || false,
                     proprietario: editingProperty.details?.proprietario || {
                         nome: '',
+                        responsavel: '',
                         telefone: '',
                         email: '',
                         cpf: '',
@@ -135,7 +140,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         endereco_estado: '',
                         endereco_cep: ''
                     },
-                    endereco: editingProperty.details?.endereco || { rua: '', numero: '', bairro: '', cidade: '', estado: '', cep: '' }
+                    endereco: editingProperty.details?.endereco || { rua: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', cep: '' }
                 }
             })
         } else {
@@ -174,8 +179,10 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     sala_cinema: false,
                     playground: false,
                     brinquedoteca: false,
+                    home_market: false,
                     proprietario: {
                         nome: '',
+                        responsavel: '',
                         telefone: '',
                         email: '',
                         cpf: '',
@@ -192,8 +199,10 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     endereco: {
                         rua: '',
                         numero: '',
+                        complemento: '',
                         bairro: '',
                         cidade: '',
+                        estado: '',
                         cep: ''
                     }
                 }
@@ -280,13 +289,14 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     <AreaFields formData={formData} setFormData={setFormData} />
                     <RoomsFields formData={formData} setFormData={setFormData} />
                     <AmenitiesFields formData={formData} setFormData={setFormData} />
+                    <AddressFields formData={formData} setFormData={setFormData} />
                     <MediaFields 
                         formData={formData} 
                         isUploading={isUploading} 
                         handleFileUpload={handleFileUpload} 
                         removeFile={removeFile} 
                     />
-                    <AddressFields formData={formData} setFormData={setFormData} />
+                    <div className="border-t border-border" />
                     <OwnerFields formData={formData} setFormData={setFormData} />
                 </div>
 

@@ -41,6 +41,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
         { id: 'sala_cinema', icon: <Film size={16} />, label: 'Cinema' },
         { id: 'playground', icon: <Play size={16} />, label: 'Playground' },
         { id: 'brinquedoteca', icon: <Baby size={16} />, label: 'Brinquedoteca' },
+        { id: 'home_market', icon: <Home size={16} />, label: 'Home Market' },
     ].filter(a => details[a.id]);
 
     const formattedPrice = prop.price

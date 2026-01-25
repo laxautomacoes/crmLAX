@@ -4,7 +4,7 @@ import { InputHTMLAttributes } from 'react'
 import { LucideIcon } from 'lucide-react'
 
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
-    label?: string
+    label?: React.ReactNode
     error?: string
     icon?: LucideIcon
     rightElement?: React.ReactNode

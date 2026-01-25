@@ -11,6 +11,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
         { id: 'academia', icon: <Dumbbell size={16} />, label: 'Academia' },
         { id: 'espaco_gourmet', icon: <Utensils size={16} />, label: 'Espaço Gourmet' },
         { id: 'salao_festas', icon: <PartyPopper size={16} />, label: 'Salão de Festas' },
+        { id: 'home_market', icon: <Home size={16} />, label: 'Home Market' },
     ].filter(a => details[a.id]);
 
     return (

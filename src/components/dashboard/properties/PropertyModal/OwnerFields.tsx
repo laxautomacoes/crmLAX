@@ -15,15 +15,37 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
 
     const handleCepChange = async (cep: string) => {
         const formattedCep = formatCEP(cep)
-        setFormData({
-            ...formData,
-            details: {
-                ...formData.details,
-                proprietario: { ...formData.details.proprietario, endereco_cep: formattedCep }
-            }
-        })
+        const digitsOnly = formattedCep.replace(/\D/g, '')
 
-        if (formattedCep.replace(/\D/g, '').length === 8) {
+        // Se o CEP for apagado ou alterado (menos de 8 dígitos), limpa os campos de endereço
+        if (digitsOnly.length < 8) {
+            setFormData({
+                ...formData,
+                details: {
+                    ...formData.details,
+                    proprietario: {
+                        ...formData.details.proprietario,
+                        endereco_cep: formattedCep,
+                        endereco_rua: '',
+                        endereco_bairro: '',
+                        endereco_cidade: '',
+                        endereco_estado: '',
+                        endereco_complemento: '',
+                        endereco_numero: ''
+                    }
+                }
+            })
+        } else {
+            setFormData({
+                ...formData,
+                details: {
+                    ...formData.details,
+                    proprietario: { ...formData.details.proprietario, endereco_cep: formattedCep }
+                }
+            })
+        }
+
+        if (digitsOnly.length === 8) {
             setCepLoading(true)
             try {
                 const address = await fetchAddressByCep(formattedCep)
@@ -51,7 +73,7 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
 
     return (
         <div className="pt-2">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Proprietário</h4>
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Proprietário | Construtora</h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <div className="sm:col-span-2 lg:col-span-2">
                     <FormInput
@@ -62,7 +84,14 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
                 </div>
                 <div>
                     <FormInput
-                        label="Telefone/WhatsApp"
+                        label="Responsável"
+                        value={formData.details.proprietario.responsavel}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, responsavel: e.target.value } } })}
+                    />
+                </div>
+                <div>
+                    <FormInput
+                        label="Telefone | WhatsApp"
                         value={formData.details.proprietario.telefone}
                         onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, telefone: e.target.value } } })}
                     />
@@ -106,9 +135,13 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
                     />
                 </div>
 
-                <div>
+                <div className="lg:col-start-1">
                     <FormInput
-                        label="CEP"
+                        label={
+                            <div className="flex items-center gap-1">
+                                CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
+                            </div>
+                        }
                         value={formData.details.proprietario.endereco_cep}
                         onChange={(e) => handleCepChange(e.target.value)}
                         placeholder="00000-000"
@@ -155,7 +188,6 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
                         label="Estado"
                         value={formData.details.proprietario.endereco_estado}
                         onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, endereco_estado: e.target.value } } })}
-                        placeholder="Ex: SP"
                         maxLength={2}
                     />
                 </div>

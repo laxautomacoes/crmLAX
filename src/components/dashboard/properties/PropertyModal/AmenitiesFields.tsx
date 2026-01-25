@@ -18,7 +18,8 @@ export function AmenitiesFields({ formData, setFormData }: AmenitiesFieldsProps)
         { id: 'sala_estudos_coworking', label: 'Estudos/Coworking' },
         { id: 'sala_cinema', label: 'Sala de Cinema' },
         { id: 'playground', label: 'Playground' },
-        { id: 'brinquedoteca', label: 'Brinquedoteca' }
+        { id: 'brinquedoteca', label: 'Brinquedoteca' },
+        { id: 'home_market', label: 'Home Market' }
     ]
 
     return (

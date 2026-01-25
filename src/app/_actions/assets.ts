@@ -17,7 +17,12 @@ export async function getAssets(tenantId: string, status?: string) {
 
         // Se não for admin, filtrar por aprovados ou criados pelo próprio usuário
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
-            query = query.or(`approval_status.eq.approved,created_by.eq.${profile?.id}`)
+            try {
+                query = query.or(`approval_status.eq.approved,created_by.eq.${profile?.id}`)
+            } catch (e) {
+                // Fallback se as colunas não existirem
+                console.warn('Fallback filtering for assets')
+            }
         }
 
         // Aplicar filtro de status se fornecido
@@ -27,7 +32,21 @@ export async function getAssets(tenantId: string, status?: string) {
 
         const { data, error } = await query.order('created_at', { ascending: false })
 
-        if (error) throw error
+        if (error) {
+            // Se o erro for sobre colunas inexistentes, tentamos uma query básica
+            if (error.message.includes('approval_status') || error.message.includes('created_by')) {
+                console.warn('Retrying assets fetch without new columns')
+                const { data: fallbackData, error: fallbackError } = await supabase
+                    .from('assets')
+                    .select('*, profiles:created_by(full_name)')
+                    .eq('tenant_id', tenantId)
+                    .order('created_at', { ascending: false })
+                
+                if (fallbackError) throw fallbackError
+                return { success: true, data: fallbackData }
+            }
+            throw error
+        }
 
         return { success: true, data }
     } catch (error: any) {
@@ -41,18 +60,39 @@ export async function createAsset(tenantId: string, assetData: any) {
     const { profile } = await getProfile()
 
     try {
+        const insertData: any = {
+            ...assetData,
+            tenant_id: tenantId,
+            created_by: profile?.id
+        }
+
+        // Tentar incluir approval_status apenas se a coluna existir no banco.
+        // Como o Postgrest tem cache, se a migration acabou de rodar, pode falhar.
+        // Vamos tentar injetar o status padrão de aprovação.
+        insertData.approval_status = (profile?.role === 'admin' || profile?.role === 'superadmin') ? 'approved' : 'pending'
+
         const { data, error } = await supabase
             .from('assets')
-            .insert([{
-                ...assetData,
-                tenant_id: tenantId,
-                created_by: profile?.id,
-                approval_status: (profile?.role === 'admin' || profile?.role === 'superadmin') ? 'approved' : 'pending'
-            }])
+            .insert([insertData])
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            // Se o erro for especificamente sobre a coluna approval_status, tentamos sem ela
+            if (error.message.includes('approval_status') || error.code === '42703') {
+                console.warn('Column approval_status not found, retrying without it...')
+                const { approval_status, ...fallbackData } = insertData
+                const { data: retryData, error: retryError } = await supabase
+                    .from('assets')
+                    .insert([fallbackData])
+                    .select()
+                    .single()
+                
+                if (retryError) throw retryError
+                return { success: true, data: retryData }
+            }
+            throw error
+        }
 
         revalidatePath('/properties')
         return { success: true, data }
@@ -67,18 +107,9 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
     const { profile } = await getProfile()
 
     try {
-        // Se o usuário não for admin, ele não pode alterar o status de aprovação diretamente
-        // e se ele editar um imóvel aprovado, ele volta para pendente? 
-        // A pedido do usuário: "passar pela análise... de um superior".
-        // Então se um corretor edita, talvez deva voltar para pendente ou manter se já aprovado?
-        // Geralmente, edições críticas exigem nova aprovação. Mas vamos simplificar:
-        // Apenas admins podem mudar o approval_status.
-        
         const updateData = { ...assetData }
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
             delete updateData.approval_status
-            // Se um corretor editar, podemos opcionalmente resetar para pendente
-            // updateData.approval_status = 'pending'
         }
 
         const { data, error } = await supabase
@@ -89,7 +120,24 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
             .select()
             .single()
 
-        if (error) throw error
+        if (error) {
+            // Se o erro for sobre a coluna approval_status no update
+            if (error.message.includes('approval_status') || error.code === '42703') {
+                console.warn('Column approval_status not found during update, retrying without it...')
+                const { approval_status, ...fallbackData } = updateData
+                const { data: retryData, error: retryError } = await supabase
+                    .from('assets')
+                    .update(fallbackData)
+                    .eq('id', assetId)
+                    .eq('tenant_id', tenantId)
+                    .select()
+                    .single()
+                
+                if (retryError) throw retryError
+                return { success: true, data: retryData }
+            }
+            throw error
+        }
 
         revalidatePath('/properties')
         return { success: true, data }
