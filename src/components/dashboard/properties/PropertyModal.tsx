@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { createClient } from '@/lib/supabase/client'
+import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
 import { AreaFields } from './PropertyModal/AreaFields'
 import { RoomsFields } from './PropertyModal/RoomsFields'
@@ -20,12 +21,15 @@ interface PropertyModalProps {
 }
 
 export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRole }: PropertyModalProps) {
+    const [brokers, setBrokers] = useState<any[]>([])
+    const [currentProfile, setCurrentProfile] = useState<any>(null)
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         price: '',
         type: 'house',
         status: 'Pendente',
+        created_by: null as string | null,
         images: [] as string[],
         videos: [] as string[],
         documents: [] as { name: string, url: string }[],
@@ -89,6 +93,27 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const [isUploading, setIsUploading] = useState<string | null>(null)
 
     useEffect(() => {
+        async function loadData() {
+            const { profile } = await getProfile()
+            if (profile) {
+                setCurrentProfile(profile)
+                if (profile.role === 'admin' || profile.role === 'superadmin') {
+                    const res = await getBrokers(profile.tenant_id)
+                    if (res.success) {
+                        setBrokers(res.data || [])
+                    }
+                } else if (!editingProperty) {
+                    // Se for corretor criando novo imóvel, já define o created_by
+                    setFormData(prev => ({ ...prev, created_by: profile.id }))
+                }
+            }
+        }
+        if (isOpen) {
+            loadData()
+        }
+    }, [isOpen])
+
+    useEffect(() => {
         if (editingProperty) {
             setFormData({
                 title: editingProperty.title || '',
@@ -96,6 +121,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 price: editingProperty.price?.toString() || '',
                 type: editingProperty.type || 'house',
                 status: editingProperty.status || 'Pendente',
+                created_by: editingProperty.created_by || null,
                 images: editingProperty.images || [],
                 videos: editingProperty.videos || [],
                 documents: editingProperty.documents || [],
@@ -162,6 +188,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 price: '',
                 type: 'house',
                 status: 'Pendente',
+                created_by: null,
                 images: [],
                 videos: [],
                 documents: [],
@@ -299,7 +326,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         >
             <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
                 <div className="flex flex-col gap-6">
-                    <BasicInfoFields formData={formData} setFormData={setFormData} userRole={userRole} />
+                    <BasicInfoFields 
+                        formData={formData} 
+                        setFormData={setFormData} 
+                        userRole={userRole}
+                        brokers={brokers}
+                        currentProfile={currentProfile}
+                    />
                     <AreaFields formData={formData} setFormData={setFormData} />
                     <RoomsFields formData={formData} setFormData={setFormData} />
                     <AmenitiesFields formData={formData} setFormData={setFormData} />

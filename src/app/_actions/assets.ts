@@ -73,9 +73,9 @@ export async function createAsset(tenantId: string, assetData: any) {
 
     try {
         const insertData: any = {
+            created_by: profile?.id,
             ...assetData,
             tenant_id: tenantId,
-            created_by: profile?.id
         }
 
         // Se não for admin, o status é sempre Pendente
@@ -160,9 +160,10 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
         delete updateData.tenant_id
         delete updateData.created_at
         delete updateData.profiles
-        delete updateData.created_by // Geralmente não mudamos quem criou
-
+        
+        // Só permite atualizar created_by se for admin
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+            delete updateData.created_by
             delete updateData.status
         }
 

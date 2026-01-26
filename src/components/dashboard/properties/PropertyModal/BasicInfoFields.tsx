@@ -8,19 +8,45 @@ interface BasicInfoFieldsProps {
     formData: any
     setFormData: (data: any) => void
     userRole?: string
+    brokers?: any[]
+    currentProfile?: any
 }
 
-export function BasicInfoFields({ formData, setFormData, userRole }: BasicInfoFieldsProps) {
+export function BasicInfoFields({ formData, setFormData, userRole, brokers = [], currentProfile }: BasicInfoFieldsProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
 
     return (
         <div className="space-y-4">
-            <FormInput
-                label="Imóvel | Empreendimento *"
-                value={formData.title}
-                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                placeholder="Ex: Apartamento 3 suítes Beira Mar"
-            />
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-4">
+                <FormInput
+                    label="Imóvel | Empreendimento *"
+                    value={formData.title}
+                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                    placeholder="Ex: Apartamento 3 suítes Beira Mar"
+                />
+
+                {isAdmin ? (
+                    <FormSelect
+                        label="Corretor"
+                        value={formData.created_by || 'all'}
+                        onChange={(e) => setFormData({ ...formData, created_by: e.target.value === 'all' ? null : e.target.value })}
+                        options={[
+                            { value: 'all', label: 'Todos' },
+                            ...brokers.map(broker => ({
+                                value: broker.id,
+                                label: broker.full_name
+                            }))
+                        ]}
+                    />
+                ) : (
+                    <FormInput
+                        label="Corretor"
+                        value={currentProfile?.full_name || ''}
+                        disabled
+                        onChange={() => {}}
+                    />
+                )}
+            </div>
 
             <FormTextarea
                 label="Descrição"
