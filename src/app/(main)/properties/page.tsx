@@ -28,6 +28,7 @@ export default function PropertiesPage() {
     const [tenantSlug, setTenantSlug] = useState<string>('')
     const [properties, setProperties] = useState<any[]>([])
     const [userRole, setUserRole] = useState<string>('user')
+    const [userId, setUserId] = useState<string | null>(null)
     const [editingProperty, setEditingProperty] = useState<any | null>(null)
     const [viewingProperty, setViewingProperty] = useState<any | null>(null)
     const [sendingProperty, setSendingProperty] = useState<any | null>(null)
@@ -55,6 +56,7 @@ export default function PropertiesPage() {
             if (profile?.tenant_id) {
                 setTenantId(profile.tenant_id)
                 setUserRole(profile.role || 'user')
+                setUserId(profile.id)
                 
                 // Buscar slug do tenant
                 const tenant = await getTenantByUserId(profile.id)
@@ -116,7 +118,8 @@ export default function PropertiesPage() {
 
     const handleDelete = async (id: string) => {
         if (!confirm('Excluir este imóvel?')) return
-        const result = await deleteAsset(id)
+        if (!tenantId) return
+        const result = await deleteAsset(tenantId, id)
         if (result.success) {
             toast.success('Imóvel excluído')
             fetchData()
@@ -324,6 +327,7 @@ export default function PropertiesPage() {
                     onView={handleView}
                     onSend={handleSend}
                     userRole={userRole}
+                    userId={userId}
                 />
             ) : (
                 <PropertyList
@@ -333,6 +337,7 @@ export default function PropertiesPage() {
                     onView={handleView}
                     onSend={handleSend}
                     userRole={userRole}
+                    userId={userId}
                 />
             )}
 

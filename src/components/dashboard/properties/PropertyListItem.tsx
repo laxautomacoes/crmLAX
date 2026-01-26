@@ -1,7 +1,7 @@
 'use client'
 
 import { Home, MapPin, BedDouble, Bath, Square, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send } from 'lucide-react'
-import { translatePropertyType } from '@/utils/property-translations'
+import { translatePropertyType, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
     prop: any
@@ -10,10 +10,13 @@ interface PropertyListItemProps {
     onView: (prop: any) => void
     onSend: (prop: any) => void
     userRole?: string
+    userId?: string | null
 }
 
-export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userRole }: PropertyListItemProps) {
+export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userRole, userId }: PropertyListItemProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
+    const isOwner = userId === prop.created_by
+    const canEdit = isAdmin || isOwner
     const formattedPrice = prop.price
         ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}`
         : 'Sob consulta'
@@ -56,7 +59,14 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userR
                                 <Home size={24} />
                             </div>
                         )}
-                        <div className="absolute bottom-0 right-0 flex gap-0.5 p-0.5 bg-black/50 rounded-tl-md">
+                        
+                        {prop.status === 'Pendente' && (
+                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                                <span className="text-[8px] font-black text-yellow-400 uppercase tracking-tighter">Pendente</span>
+                            </div>
+                        )}
+
+                        <div className="absolute bottom-0 right-0 flex gap-0.5 p-0.5 bg-black/50 rounded-tl-md z-10">
                             {prop.videos?.length > 0 && (
                                 <div title={`${prop.videos.length} vídeo(s)`}>
                                     <Video size={10} className="text-white" />
@@ -71,9 +81,9 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userR
                     </div>
                     <div className="text-left max-w-md">
                         <div className="font-bold text-foreground text-sm line-clamp-1">{prop.title}</div>
-                        {prop.description && (
-                            <div className="text-[10px] text-muted-foreground line-clamp-1 mt-0.5 italic">
-                                {prop.description}
+                        {prop.details?.situacao && (
+                            <div className={`mt-0.5 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest shadow-sm w-fit ${getSituacaoStyles(prop.details.situacao)}`}>
+                                {prop.details.situacao}
                             </div>
                         )}
                         <div className="flex flex-col gap-0.5 mt-0.5">
@@ -147,12 +157,8 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userR
             </td>
             <td className="px-6 py-4">
                 <div className="flex flex-col gap-1.5 items-center">
-                    {isAdmin && (
-                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit ${
-                            prop.status === 'Disponível' ? 'bg-green-100 text-green-700' : 
-                            prop.status === 'Pendente' ? 'bg-gray-100 text-gray-700' :
-                            'bg-yellow-100 text-yellow-700'
-                            }`}>
+                    {(isAdmin || prop.status === 'Pendente') && (
+                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
                             {prop.status}
                         </span>
                     )}
@@ -170,26 +176,30 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userR
                     >
                         <Send size={16} />
                     </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onEdit(prop)
-                        }}
-                        className="p-2 bg-gray-700 rounded-lg text-white hover:bg-gray-800 transition-colors shadow-sm"
-                        title="Editar"
-                    >
-                        <Edit size={16} />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onDelete(prop.id)
-                        }}
-                        className="p-2 bg-red-600 rounded-lg text-white hover:bg-red-700 transition-colors shadow-sm"
-                        title="Excluir"
-                    >
-                        <Trash2 size={16} />
-                    </button>
+                    {canEdit && (
+                        <>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEdit(prop)
+                                }}
+                                className="p-2 bg-gray-700 rounded-lg text-white hover:bg-gray-800 transition-colors shadow-sm"
+                                title="Editar"
+                            >
+                                <Edit size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onDelete(prop.id)
+                                }}
+                                className="p-2 bg-red-600 rounded-lg text-white hover:bg-red-700 transition-colors shadow-sm"
+                                title="Excluir"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </>
+                    )}
                 </div>
             </td>
         </tr>

@@ -167,11 +167,18 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
             delete updateData.status
         }
 
-        const { data, error } = await supabase
+        let query = supabase
             .from('assets')
             .update(updateData)
             .eq('id', assetId)
             .eq('tenant_id', tenantId)
+
+        // Se não for admin, só pode atualizar se for o criador
+        if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+            query = query.eq('created_by', profile?.id)
+        }
+
+        const { data, error } = await query
             .select()
             .single()
 
@@ -205,21 +212,33 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
                 
                 if (error.message.includes('created_by') || error.code === '42703') delete fallbackData.created_by
                 
-                const { data: retryData, error: retryError } = await supabase
+                let retryQuery = supabase
                     .from('assets')
                     .update(fallbackData)
                     .eq('id', assetId)
                     .eq('tenant_id', tenantId)
+
+                if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+                    retryQuery = retryQuery.eq('created_by', profile?.id)
+                }
+
+                const { data: retryData, error: retryError } = await retryQuery
                     .select('id, title, type, price, status, details, images, videos, documents')
                     .single()
                 
                 if (retryError) {
                     // Segundo fallback: update básico sem select
-                    const { error: finalError } = await supabase
+                    let finalQuery = supabase
                         .from('assets')
                         .update(fallbackData)
                         .eq('id', assetId)
                         .eq('tenant_id', tenantId)
+
+                    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+                        finalQuery = finalQuery.eq('created_by', profile?.id)
+                    }
+
+                    const { error: finalError } = await finalQuery
                     
                     if (finalError) throw finalError
                     return { success: true }
@@ -323,14 +342,23 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
     }
 }
 
-export async function deleteAsset(assetId: string) {
+export async function deleteAsset(tenantId: string, assetId: string) {
     const supabase = await createClient()
+    const { profile } = await getProfile()
 
     try {
-        const { error } = await supabase
+        let query = supabase
             .from('assets')
             .delete()
             .eq('id', assetId)
+            .eq('tenant_id', tenantId)
+
+        // Se não for admin, só pode excluir se for o criador
+        if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+            query = query.eq('created_by', profile?.id)
+        }
+
+        const { error } = await query
 
         if (error) throw error
 

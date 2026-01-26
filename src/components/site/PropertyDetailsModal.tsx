@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
 import { Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, Video, FileText, ExternalLink, Maximize2 } from 'lucide-react';
-import { translatePropertyType } from '@/utils/property-translations';
+import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
 
 export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boolean, onClose: () => void, asset: any }) {
@@ -100,11 +100,18 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             <span className="text-2xl font-bold text-foreground">
                                 {asset.price ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` : 'Sob consulta'}
                             </span>
-                            <div className="flex gap-2">
-                                <span className="px-2 py-1 bg-muted text-muted-foreground text-[10px] font-bold rounded uppercase tracking-wider">
+                            <div className="flex flex-wrap gap-2">
+                                {details.situacao && (
+                                    <span className={`px-2 py-1 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getSituacaoStyles(details.situacao)}`}>
+                                        {details.situacao}
+                                    </span>
+                                )}
+                                <span className={`px-2 py-1 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(asset.type || asset.details?.type)}`}>
                                     {translatePropertyType(asset.type || asset.details?.type)}
                                 </span>
-                                <span className="px-3 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-full uppercase">{asset.status}</span>
+                                <span className={`px-3 py-1 text-xs font-black rounded-full uppercase tracking-widest shadow-sm ${getStatusStyles(asset.status)}`}>
+                                    {asset.status}
+                                </span>
                             </div>
                         </div>
 

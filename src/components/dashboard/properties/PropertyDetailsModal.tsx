@@ -9,7 +9,7 @@ import {
     Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info, Send,
     ChevronLeft, ChevronRight, Maximize2, Map as MapIcon
 } from 'lucide-react';
-import { translatePropertyType } from '@/utils/property-translations';
+import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
 
 interface PropertyDetailsModalProps {
@@ -111,19 +111,15 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                                 <div className="flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 rounded-full bg-border" />
                                     {details.situacao && (
-                                        <span className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] font-bold rounded uppercase tracking-wider">
+                                        <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getSituacaoStyles(details.situacao)}`}>
                                             {details.situacao}
                                         </span>
                                     )}
-                                    <span className="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded uppercase tracking-wider">
+                                    <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
                                         {translatePropertyType(prop.type)}
                                     </span>
                                     {isAdmin && (
-                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
-                                            prop.status === 'Disponível' ? 'bg-green-500/10 text-green-500' :
-                                            prop.status === 'Pendente' ? 'bg-gray-500/10 text-gray-500' :
-                                            'bg-amber-500/10 text-amber-500'
-                                            }`}>
+                                        <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getStatusStyles(prop.status)}`}>
                                             {prop.status}
                                         </span>
                                     )}
@@ -248,6 +244,11 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                              </div>
                              
                              <div className="flex flex-col items-end gap-3">
+                                 {(isAdmin || prop.status === 'Pendente') && (
+                                     <span className={`text-[10px] font-black px-3 py-1 rounded-full uppercase tracking-widest shadow-sm ${getStatusStyles(prop.status)}`}>
+                                         {prop.status}
+                                     </span>
+                                 )}
                                  {prop.profiles?.full_name && (
                                      <div className="text-[10px] text-muted-foreground flex items-center gap-1.5">
                                          <User size={12} className="text-secondary/60" />

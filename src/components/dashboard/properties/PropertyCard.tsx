@@ -1,7 +1,7 @@
 'use client'
 
 import { Home, MapPin, BedDouble, Bath, Square, Car, Trash2, Edit, Video, FileText, Send } from 'lucide-react'
-import { translatePropertyType } from '@/utils/property-translations'
+import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations'
 
 interface PropertyCardProps {
     prop: any
@@ -10,26 +10,14 @@ interface PropertyCardProps {
     onView: (prop: any) => void
     onSend: (prop: any) => void
     userRole?: string
+    userId?: string | null
 }
 
-const getPropertyTypeStyles = (type: string) => {
-    const types: Record<string, string> = {
-        'apartment': 'bg-blue-600 text-white',
-        'house': 'bg-emerald-600 text-white',
-        'land': 'bg-amber-600 text-white',
-        'commercial': 'bg-indigo-600 text-white',
-        'penthouse': 'bg-purple-600 text-white',
-        'studio': 'bg-pink-600 text-white',
-        'rural': 'bg-green-600 text-white',
-        'warehouse': 'bg-slate-600 text-white',
-        'office': 'bg-cyan-600 text-white',
-        'store': 'bg-rose-600 text-white'
-    }
-    return types[type.toLowerCase()] || 'bg-primary text-primary-foreground'
-}
-
-export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole }: PropertyCardProps) {
+export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole, userId }: PropertyCardProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
+    const isOwner = userId === prop.created_by
+    const canEdit = isAdmin || isOwner
+    
     return (
         <div 
             onClick={() => onView(prop)}
@@ -43,7 +31,16 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole 
                         <Home size={40} strokeWidth={1} />
                     </div>
                 )}
-                <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                
+                {prop.status === 'Pendente' && (
+                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                        <div className="px-3 py-1.5 bg-yellow-400 text-yellow-900 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-xl border border-yellow-500/50 animate-pulse">
+                            Pendente de Aprovação
+                        </div>
+                    </div>
+                )}
+
+                <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
                     <button
                         onClick={(e) => {
                             e.stopPropagation()
@@ -54,32 +51,41 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole 
                     >
                         <Send size={16} />
                     </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onEdit(prop)
-                        }}
-                        className="p-2 bg-gray-700 rounded-lg shadow-sm text-white hover:bg-gray-800 transition-colors"
-                        title="Editar"
-                    >
-                        <Edit size={16} />
-                    </button>
-                    <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onDelete(prop.id)
-                        }}
-                        className="p-2 bg-red-600 rounded-lg shadow-sm text-white hover:bg-red-700 transition-colors"
-                        title="Excluir"
-                    >
-                        <Trash2 size={16} />
-                    </button>
+                    {canEdit && (
+                        <>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onEdit(prop)
+                                }}
+                                className="p-2 bg-gray-700 rounded-lg shadow-sm text-white hover:bg-gray-800 transition-colors"
+                                title="Editar"
+                            >
+                                <Edit size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onDelete(prop.id)
+                                }}
+                                className="p-2 bg-red-600 rounded-lg shadow-sm text-white hover:bg-red-700 transition-colors"
+                                title="Excluir"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                        </>
+                    )}
                 </div>
             </div>
 
             <div className="p-5 space-y-4">
                 <div className="space-y-3">
                     <div className="flex gap-2 flex-wrap">
+                        {prop.details?.situacao && (
+                            <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-sm ${getSituacaoStyles(prop.details.situacao)}`}>
+                                {prop.details.situacao}
+                            </div>
+                        )}
                         <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
                             {translatePropertyType(prop.type)}
                         </div>
@@ -98,11 +104,6 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole 
                     </div>
                     <div>
                         <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1">{prop.title}</h3>
-                        {prop.description && (
-                            <p className="text-xs text-muted-foreground line-clamp-1 mt-1 italic">
-                                {prop.description}
-                            </p>
-                        )}
                         <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
                             <MapPin size={12} />
                             <span className="line-clamp-1">{prop.details?.endereco?.bairro || 'Bairro ñ inf.'}, {prop.details?.endereco?.cidade || 'Cidade ñ inf.'}</span>
@@ -133,12 +134,8 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole 
                     <span className="text-lg font-bold text-foreground">
                         {prop.price ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}` : 'Sob consulta'}
                     </span>
-                    {isAdmin && (
-                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${
-                            prop.status === 'Disponível' ? 'bg-green-100 text-green-700' : 
-                            prop.status === 'Pendente' ? 'bg-gray-100 text-gray-700' :
-                            'bg-yellow-100 text-yellow-700'
-                            }`}>
+                    {(isAdmin || prop.status === 'Pendente') && (
+                        <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
                             {prop.status}
                         </span>
                     )}
