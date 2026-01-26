@@ -68,31 +68,20 @@ export function BasicInfoFields({ formData, setFormData, userRole }: BasicInfoFi
                     ]}
                 />
 
-                <FormSelect
-                    label="Status"
-                    value={formData.status}
-                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                    options={[
-                        { value: 'Disponível', label: 'Disponível' },
-                        { value: 'Vendido', label: 'Vendido' },
-                        { value: 'Reservado', label: 'Reservado' },
-                        { value: 'Suspenso', label: 'Suspenso' }
-                    ]}
-                />
-
-                <div className="sm:col-span-2 lg:col-span-2">
+                {isAdmin && (
                     <FormSelect
-                        label="Aprovação"
-                        value={formData.approval_status}
-                        onChange={(e) => setFormData({ ...formData, approval_status: e.target.value })}
-                        disabled={!isAdmin}
+                        label="Status"
+                        value={formData.status}
+                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                         options={[
-                            { value: 'pending', label: 'Pendente' },
-                            { value: 'approved', label: 'Aprovado' },
-                            { value: 'rejected', label: 'Rejeitado' }
+                            { value: 'Pendente', label: 'Pendente' },
+                            { value: 'Disponível', label: 'Disponível' },
+                            { value: 'Vendido', label: 'Vendido' },
+                            { value: 'Reservado', label: 'Reservado' },
+                            { value: 'Suspenso', label: 'Suspenso' }
                         ]}
                     />
-                </div>
+                )}
             </div>
         </div>
     )

@@ -15,10 +15,10 @@ export async function getAssets(tenantId: string, status?: string) {
             .select('*, profiles:created_by(full_name)')
             .eq('tenant_id', tenantId)
 
-        // Se não for admin, filtrar por aprovados ou criados pelo próprio usuário
+        // Se não for admin, filtrar por aprovados (não pendentes) ou criados pelo próprio usuário
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
             try {
-                query = query.or(`approval_status.eq.approved,created_by.eq.${profile?.id}`)
+                query = query.or(`status.neq.Pendente,created_by.eq.${profile?.id}`)
             } catch (e) {
                 // Fallback se as colunas não existirem
                 console.warn('Fallback filtering for assets')
@@ -27,14 +27,14 @@ export async function getAssets(tenantId: string, status?: string) {
 
         // Aplicar filtro de status se fornecido
         if (status) {
-            query = query.eq('approval_status', status)
+            query = query.eq('status', status)
         }
 
         const { data, error } = await query.order('created_at', { ascending: false })
 
         if (error) {
             // Se o erro for sobre colunas inexistentes, tentamos uma query básica
-            if (error.message.includes('approval_status') || error.message.includes('created_by') || error.message.includes('description')) {
+            if (error.message.includes('created_by') || error.message.includes('description')) {
                 console.warn('Retrying assets fetch without new columns')
                 const { data: fallbackData, error: fallbackError } = await supabase
                     .from('assets')
@@ -78,10 +78,10 @@ export async function createAsset(tenantId: string, assetData: any) {
             created_by: profile?.id
         }
 
-        // Tentar incluir approval_status apenas se a coluna existir no banco.
-        // Como o Postgrest tem cache, se a migration acabou de rodar, pode falhar.
-        // Vamos tentar injetar o status padrão de aprovação.
-        insertData.approval_status = (profile?.role === 'admin' || profile?.role === 'superadmin') ? 'approved' : 'pending'
+        // Se não for admin, o status é sempre Pendente
+        if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+            insertData.status = 'Pendente'
+        }
 
         const { data, error } = await supabase
             .from('assets')
@@ -95,7 +95,6 @@ export async function createAsset(tenantId: string, assetData: any) {
                 error.code === '42703' || 
                 error.message.includes('column') || 
                 error.message.includes('schema cache') ||
-                error.message.includes('approval_status') || 
                 error.message.includes('created_by') ||
                 error.message.includes('description');
 
@@ -112,7 +111,6 @@ export async function createAsset(tenantId: string, assetData: any) {
                     delete fallbackData.description
                 }
                 
-                if (error.message.includes('approval_status') || error.code === '42703') delete fallbackData.approval_status
                 if (error.message.includes('created_by') || error.code === '42703') delete fallbackData.created_by
                 
                 const { data: retryData, error: retryError } = await supabase
@@ -165,7 +163,7 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
         delete updateData.created_by // Geralmente não mudamos quem criou
 
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
-            delete updateData.approval_status
+            delete updateData.status
         }
 
         const { data, error } = await supabase
@@ -182,7 +180,6 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
                 error.code === '42703' || 
                 error.message.includes('column') || 
                 error.message.includes('schema cache') ||
-                error.message.includes('approval_status') || 
                 error.message.includes('created_by') ||
                 error.message.includes('description');
 
@@ -205,7 +202,6 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
                     delete fallbackData.description
                 }
                 
-                if (error.message.includes('approval_status') || error.code === '42703') delete fallbackData.approval_status
                 if (error.message.includes('created_by') || error.code === '42703') delete fallbackData.created_by
                 
                 const { data: retryData, error: retryError } = await supabase
@@ -251,13 +247,13 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
     const { profile } = await getProfile()
 
     try {
-        const approvalStatus = (profile?.role === 'admin' || profile?.role === 'superadmin') ? 'approved' : 'pending'
+        const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
         
         const insertData = assetsData.map(asset => ({
             ...asset,
             tenant_id: tenantId,
             created_by: profile?.id,
-            approval_status: approvalStatus
+            status: isAdmin ? (asset.status || 'Disponível') : 'Pendente'
         }))
 
         const { data, error } = await supabase
@@ -271,13 +267,12 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
                 error.code === '42703' || 
                 error.message.includes('column') || 
                 error.message.includes('schema cache') ||
-                error.message.includes('approval_status') || 
                 error.message.includes('created_by') ||
                 error.message.includes('description');
 
             if (isMissingColumnError) {
                 const fallbackData = assetsData.map(asset => {
-                    const { approval_status, created_by, ...rest } = asset as any
+                    const { created_by, ...rest } = asset as any
                     const item = {
                         ...rest,
                         tenant_id: tenantId
@@ -372,8 +367,8 @@ export async function getAssetById(assetId: string) {
             throw error
         }
 
-        // Se o imóvel não estiver aprovado, apenas o criador ou admins podem ver
-        if (data.approval_status && data.approval_status !== 'approved') {
+        // Se o imóvel estiver Pendente, apenas o criador ou admins podem ver
+        if (data.status === 'Pendente') {
             if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && data.created_by && data.created_by !== profile.id)) {
                 return { success: false, error: 'Not authorized' }
             }

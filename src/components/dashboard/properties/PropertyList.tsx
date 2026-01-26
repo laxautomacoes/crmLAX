@@ -8,9 +8,10 @@ interface PropertyListProps {
     onDelete: (id: string) => void
     onView: (prop: any) => void
     onSend: (prop: any) => void
+    userRole?: string
 }
 
-export function PropertyList({ properties, onEdit, onDelete, onView, onSend }: PropertyListProps) {
+export function PropertyList({ properties, onEdit, onDelete, onView, onSend, userRole }: PropertyListProps) {
     if (properties.length === 0) {
         return (
             <div className="text-center py-20 bg-card rounded-2xl border border-dashed border-border">
@@ -31,7 +32,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend }: P
                             <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Áreas</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Valores</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Status</th>
-                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-right">Ações</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-muted-foreground uppercase tracking-wider text-center">Ações</th>
                         </tr>
                     </thead>
                     <tbody className="divide-y divide-border">
@@ -43,6 +44,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend }: P
                                 onDelete={onDelete}
                                 onView={onView}
                                 onSend={onSend}
+                                userRole={userRole}
                             />
                         ))}
                     </tbody>

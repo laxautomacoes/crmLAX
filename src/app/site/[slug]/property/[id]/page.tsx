@@ -29,8 +29,8 @@ export default async function PropertyPage({ params, searchParams }: any) {
     const config = {
         title: sParams.ct !== '0',
         price: sParams.cp !== '0',
-        description: sParams.cd === 'n' ? 'none' : 'full',
-        location: sParams.cl === 'e' ? 'exact' : (sParams.cl === 'n' ? 'none' : 'approximate'),
+        description: (sParams.cd === 'n' ? 'none' : 'full') as 'none' | 'full',
+        location: (sParams.cl === 'e' ? 'exact' : (sParams.cl === 'n' ? 'none' : 'approximate')) as 'none' | 'exact' | 'approximate',
         showBedrooms: sParams.cbr !== '0',
         showSuites: sParams.cst !== '0',
         showArea: sParams.car !== '0',

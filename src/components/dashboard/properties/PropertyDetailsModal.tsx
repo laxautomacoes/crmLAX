@@ -17,9 +17,11 @@ interface PropertyDetailsModalProps {
     onClose: () => void;
     prop: any;
     onSend?: (prop: any) => void;
+    userRole?: string;
 }
 
-export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: PropertyDetailsModalProps) {
+export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }: PropertyDetailsModalProps) {
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin';
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
     const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
@@ -116,17 +118,15 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                     <span className="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded uppercase tracking-wider">
                                         {translatePropertyType(prop.type)}
                                     </span>
-                                    <span className="px-2 py-0.5 bg-secondary/10 text-secondary text-[10px] font-bold rounded uppercase tracking-wider">
-                                        {prop.status}
-                                    </span>
-                                    <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${prop.approval_status === 'approved' ? 'bg-blue-500/10 text-blue-500' :
-                                        prop.approval_status === 'rejected' ? 'bg-red-500/10 text-red-500' :
+                                    {isAdmin && (
+                                        <span className={`px-2 py-0.5 text-[10px] font-bold rounded uppercase tracking-wider ${
+                                            prop.status === 'Disponível' ? 'bg-green-500/10 text-green-500' :
+                                            prop.status === 'Pendente' ? 'bg-gray-500/10 text-gray-500' :
                                             'bg-amber-500/10 text-amber-500'
-                                        }`}>
-                                        {prop.approval_status === 'approved' ? 'Aprovado' :
-                                            prop.approval_status === 'rejected' ? 'Rejeitado' :
-                                                'Pendente'}
-                                    </span>
+                                            }`}>
+                                            {prop.status}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                         </div>

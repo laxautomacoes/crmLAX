@@ -8,9 +8,10 @@ interface PropertyGalleryProps {
     onDelete: (id: string) => void
     onView: (prop: any) => void
     onSend: (prop: any) => void
+    userRole?: string
 }
 
-export function PropertyGallery({ properties, onEdit, onDelete, onView, onSend }: PropertyGalleryProps) {
+export function PropertyGallery({ properties, onEdit, onDelete, onView, onSend, userRole }: PropertyGalleryProps) {
     if (properties.length === 0) {
         return (
             <div className="text-center py-20 bg-card rounded-2xl border border-dashed border-border">
@@ -29,6 +30,7 @@ export function PropertyGallery({ properties, onEdit, onDelete, onView, onSend }
                     onDelete={onDelete}
                     onView={onView}
                     onSend={onSend}
+                    userRole={userRole}
                 />
             ))}
         </div>

@@ -323,6 +323,7 @@ export default function PropertiesPage() {
                     onDelete={handleDelete}
                     onView={handleView}
                     onSend={handleSend}
+                    userRole={userRole}
                 />
             ) : (
                 <PropertyList
@@ -331,6 +332,7 @@ export default function PropertiesPage() {
                     onDelete={handleDelete}
                     onView={handleView}
                     onSend={handleSend}
+                    userRole={userRole}
                 />
             )}
 
@@ -353,6 +355,7 @@ export default function PropertiesPage() {
                 }}
                 prop={viewingProperty}
                 onSend={handleSend}
+                userRole={userRole}
             />
 
             {sendingProperty && tenantId && (
@@ -376,6 +379,7 @@ export default function PropertiesPage() {
                 onExport={handleExportCSV}
                 tenantId={tenantId}
                 onImportSuccess={fetchData}
+                userRole={userRole}
             />
         </div>
     )

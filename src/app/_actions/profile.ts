@@ -123,7 +123,7 @@ export async function requestEmailChange() {
 
         // Criar notificações para os admins (se houver)
         if (admins && admins.length > 0) {
-            const notificationPromises = admins.map(admin => 
+            const notificationPromises = admins.map((admin: any) => 
                 createNotification({
                     user_id: admin.id,
                     title: 'Solicitação de Alteração de E-mail',

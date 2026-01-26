@@ -17,6 +17,7 @@ interface PropertyFiltersModalProps {
     onExport: () => void
     tenantId: string | null
     onImportSuccess: () => void
+    userRole?: string
 }
 
 export function PropertyFiltersModal({
@@ -26,9 +27,11 @@ export function PropertyFiltersModal({
     setFilters,
     onExport,
     tenantId,
-    onImportSuccess
+    onImportSuccess,
+    userRole
 }: PropertyFiltersModalProps) {
     const [isImporting, setIsImporting] = useState(false)
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     const handleClearFilters = () => {
@@ -196,17 +199,21 @@ export function PropertyFiltersModal({
                             />
                         </div>
 
-                        <FormSelect
-                            label="Status de Aprovação"
-                            value={filters.status}
-                            onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                            options={[
-                                { value: 'all', label: 'Todos os Status' },
-                                { value: 'pending', label: 'Pendentes' },
-                                { value: 'approved', label: 'Aprovados' },
-                                { value: 'rejected', label: 'Rejeitados' }
-                            ]}
-                        />
+                        {isAdmin && (
+                            <FormSelect
+                                label="Status"
+                                value={filters.status}
+                                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                                options={[
+                                    { value: 'all', label: 'Todos os Status' },
+                                    { value: 'Pendente', label: 'Pendente' },
+                                    { value: 'Disponível', label: 'Disponível' },
+                                    { value: 'Vendido', label: 'Vendido' },
+                                    { value: 'Reservado', label: 'Reservado' },
+                                    { value: 'Suspenso', label: 'Suspenso' }
+                                ]}
+                            />
+                        )}
 
                         <FormSelect
                             label="Tipo de Imóvel"

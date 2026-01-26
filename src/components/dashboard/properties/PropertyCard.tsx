@@ -9,6 +9,7 @@ interface PropertyCardProps {
     onDelete: (id: string) => void
     onView: (prop: any) => void
     onSend: (prop: any) => void
+    userRole?: string
 }
 
 const getPropertyTypeStyles = (type: string) => {
@@ -27,7 +28,8 @@ const getPropertyTypeStyles = (type: string) => {
     return types[type.toLowerCase()] || 'bg-primary text-primary-foreground'
 }
 
-export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: PropertyCardProps) {
+export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole }: PropertyCardProps) {
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     return (
         <div 
             onClick={() => onView(prop)}
@@ -81,15 +83,6 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: Propert
                         <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
                             {translatePropertyType(prop.type)}
                         </div>
-                        <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-sm ${
-                            prop.approval_status === 'approved' ? 'bg-blue-700 text-white' :
-                            prop.approval_status === 'rejected' ? 'bg-red-700 text-white' :
-                            'bg-gray-700 text-white'
-                        }`}>
-                            {prop.approval_status === 'approved' ? 'Aprovado' :
-                                prop.approval_status === 'rejected' ? 'Rejeitado' :
-                                    'Pendente'}
-                        </div>
                         {prop.videos?.length > 0 && (
                             <div className="px-1.5 py-0.5 bg-violet-700 rounded flex items-center gap-1 text-[10px] font-black text-white shadow-sm" title={`${prop.videos.length} vídeo(s)`}>
                                 <Video size={10} strokeWidth={3} />
@@ -140,10 +133,15 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: Propert
                     <span className="text-lg font-bold text-foreground">
                         {prop.price ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}` : 'Sob consulta'}
                     </span>
-                    <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${prop.status === 'Disponível' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                        {prop.status}
-                    </span>
+                    {isAdmin && (
+                        <span className={`text-[10px] font-bold px-2 py-1 rounded-full uppercase ${
+                            prop.status === 'Disponível' ? 'bg-green-100 text-green-700' : 
+                            prop.status === 'Pendente' ? 'bg-gray-100 text-gray-700' :
+                            'bg-yellow-100 text-yellow-700'
+                            }`}>
+                            {prop.status}
+                        </span>
+                    )}
                 </div>
             </div>
         </div>

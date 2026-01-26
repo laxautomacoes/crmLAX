@@ -25,8 +25,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         description: '',
         price: '',
         type: 'house',
-        status: 'Disponível',
-        approval_status: 'pending',
+        status: 'Pendente',
         images: [] as string[],
         videos: [] as string[],
         documents: [] as { name: string, url: string }[],
@@ -96,8 +95,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 description: editingProperty.description || '',
                 price: editingProperty.price?.toString() || '',
                 type: editingProperty.type || 'house',
-                status: editingProperty.status || 'Disponível',
-                approval_status: editingProperty.approval_status || 'pending',
+                status: editingProperty.status || 'Pendente',
                 images: editingProperty.images || [],
                 videos: editingProperty.videos || [],
                 documents: editingProperty.documents || [],
@@ -163,8 +161,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 description: '',
                 price: '',
                 type: 'house',
-                status: 'Disponível',
-                approval_status: 'pending',
+                status: 'Pendente',
                 images: [],
                 videos: [],
                 documents: [],
@@ -218,7 +215,9 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         bairro: '',
                         cidade: '',
                         estado: '',
-                        cep: ''
+                        cep: '',
+                        latitude: null,
+                        longitude: null
                     }
                 }
             })

@@ -9,9 +9,11 @@ interface PropertyListItemProps {
     onDelete: (id: string) => void
     onView: (prop: any) => void
     onSend: (prop: any) => void
+    userRole?: string
 }
 
-export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: PropertyListItemProps) {
+export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userRole }: PropertyListItemProps) {
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const formattedPrice = prop.price
         ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}`
         : 'Sob consulta'
@@ -145,18 +147,15 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
             </td>
             <td className="px-6 py-4">
                 <div className="flex flex-col gap-1.5 items-center">
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit ${prop.status === 'Disponível' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'
-                        }`}>
-                        {prop.status}
-                    </span>
-                    <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit ${prop.approval_status === 'approved' ? 'bg-blue-100 text-blue-700' :
-                        prop.approval_status === 'rejected' ? 'bg-red-100 text-red-700' :
-                            'bg-gray-100 text-gray-700'
-                        }`}>
-                        {prop.approval_status === 'approved' ? 'Aprovado' :
-                            prop.approval_status === 'rejected' ? 'Rejeitado' :
-                                'Pendente'}
-                    </span>
+                    {isAdmin && (
+                        <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit ${
+                            prop.status === 'Disponível' ? 'bg-green-100 text-green-700' : 
+                            prop.status === 'Pendente' ? 'bg-gray-100 text-gray-700' :
+                            'bg-yellow-100 text-yellow-700'
+                            }`}>
+                            {prop.status}
+                        </span>
+                    )}
                 </div>
             </td>
             <td className="px-6 py-4 text-right">
