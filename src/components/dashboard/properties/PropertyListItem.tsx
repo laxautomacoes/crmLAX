@@ -166,7 +166,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
                             e.stopPropagation()
                             onSend(prop)
                         }}
-                        className="p-2 hover:bg-secondary/5 rounded-lg text-secondary transition-colors"
+                        className="p-2 bg-green-600 rounded-lg text-white hover:bg-green-700 transition-colors shadow-sm"
                         title="Enviar para Lead"
                     >
                         <Send size={16} />
@@ -176,7 +176,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
                             e.stopPropagation()
                             onEdit(prop)
                         }}
-                        className="p-2 hover:bg-primary/5 rounded-lg text-primary transition-colors"
+                        className="p-2 bg-gray-700 rounded-lg text-white hover:bg-gray-800 transition-colors shadow-sm"
                         title="Editar"
                     >
                         <Edit size={16} />
@@ -186,7 +186,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend }: Pro
                             e.stopPropagation()
                             onDelete(prop.id)
                         }}
-                        className="p-2 hover:bg-red-50 rounded-lg text-red-500 transition-colors"
+                        className="p-2 bg-red-600 rounded-lg text-white hover:bg-red-700 transition-colors shadow-sm"
                         title="Excluir"
                     >
                         <Trash2 size={16} />

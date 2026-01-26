@@ -30,7 +30,7 @@ export function ProfileTab() {
     if (!profile) {
         return (
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div className="col-span-3 flex items-center justify-center min-h-[400px]">
+                <div className="col-span-1 md:col-span-3 flex items-center justify-center min-h-[400px]">
                     <div className="w-8 h-8 border-4 border-secondary/30 border-t-secondary rounded-full animate-spin"></div>
                 </div>
             </div>

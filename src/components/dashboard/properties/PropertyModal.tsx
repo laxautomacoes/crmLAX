@@ -80,7 +80,9 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 bairro: '',
                 cidade: '',
                 estado: '',
-                cep: ''
+                cep: '',
+                latitude: null as number | null,
+                longitude: null as number | null
             }
         }
     })
@@ -142,7 +144,17 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         endereco_estado: '',
                         endereco_cep: ''
                     },
-                    endereco: editingProperty.details?.endereco || { rua: '', numero: '', complemento: '', bairro: '', cidade: '', estado: '', cep: '' }
+                    endereco: {
+                        rua: editingProperty.details?.endereco?.rua || '',
+                        numero: editingProperty.details?.endereco?.numero || '',
+                        complemento: editingProperty.details?.endereco?.complemento || '',
+                        bairro: editingProperty.details?.endereco?.bairro || '',
+                        cidade: editingProperty.details?.endereco?.cidade || '',
+                        estado: editingProperty.details?.endereco?.estado || '',
+                        cep: editingProperty.details?.endereco?.cep || '',
+                        latitude: editingProperty.details?.endereco?.latitude || null,
+                        longitude: editingProperty.details?.endereco?.longitude || null
+                    }
                 }
             })
         } else {

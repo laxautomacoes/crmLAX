@@ -47,7 +47,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: Propert
                             e.stopPropagation()
                             onSend(prop)
                         }}
-                        className="p-2 bg-white/90 backdrop-blur rounded-lg shadow-sm text-secondary hover:bg-white"
+                        className="p-2 bg-green-600 rounded-lg shadow-sm text-white hover:bg-green-700 transition-colors"
                         title="Enviar para Lead"
                     >
                         <Send size={16} />
@@ -57,7 +57,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: Propert
                             e.stopPropagation()
                             onEdit(prop)
                         }}
-                        className="p-2 bg-white/90 backdrop-blur rounded-lg shadow-sm text-primary hover:bg-white"
+                        className="p-2 bg-gray-700 rounded-lg shadow-sm text-white hover:bg-gray-800 transition-colors"
                         title="Editar"
                     >
                         <Edit size={16} />
@@ -67,7 +67,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend }: Propert
                             e.stopPropagation()
                             onDelete(prop.id)
                         }}
-                        className="p-2 bg-white/90 backdrop-blur rounded-lg shadow-sm text-red-500 hover:bg-white"
+                        className="p-2 bg-red-600 rounded-lg shadow-sm text-white hover:bg-red-700 transition-colors"
                         title="Excluir"
                     >
                         <Trash2 size={16} />

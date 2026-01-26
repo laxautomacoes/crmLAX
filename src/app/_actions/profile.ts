@@ -2,6 +2,10 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, unstable_noStore } from 'next/cache'
+import { createNotification } from './notifications'
+import { Resend } from 'resend'
+
+const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function getProfile() {
     unstable_noStore()
@@ -63,6 +67,99 @@ export async function updateProfileAvatar(avatarUrl: string) {
     return { success: true }
 }
 
+export async function deleteProfileAvatar() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ avatar_url: null })
+        .eq('id', user.id)
+
+    if (error) {
+        console.error('Error deleting profile avatar:', error)
+        return { error: error.message }
+    }
+
+    revalidatePath('/dashboard')
+    return { success: true }
+}
+
+export async function requestEmailChange() {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Not authenticated' }
+    }
+
+    try {
+        // Busca o perfil atual e o tenant
+        const { data: profile, error: profileError } = await supabase
+            .from('profiles')
+            .select('*, tenants(name)')
+            .eq('id', user.id)
+            .single()
+
+        if (profileError || !profile) {
+            console.error('Error fetching profile for email change:', profileError)
+            return { error: 'Perfil não encontrado' }
+        }
+
+        // Busca os admins do mesmo tenant
+        const { data: admins, error: adminsError } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('tenant_id', profile.tenant_id)
+            .in('role', ['admin', 'superadmin'])
+
+        if (adminsError) {
+            console.error('Error fetching admins:', adminsError)
+        }
+
+        // Criar notificações para os admins (se houver)
+        if (admins && admins.length > 0) {
+            const notificationPromises = admins.map(admin => 
+                createNotification({
+                    user_id: admin.id,
+                    title: 'Solicitação de Alteração de E-mail',
+                    message: `O usuário ${profile.full_name} deseja alterar o e-mail (${user.email}).`,
+                    type: 'email_change_request'
+                })
+            )
+            await Promise.all(notificationPromises)
+        }
+
+        // Enviar e-mail para o suporte/admin principal
+        await resend.emails.send({
+            from: 'CRM LAX <noreply@laxperience.online>',
+            to: ['contato@laxperience.online'], // E-mail central de suporte/admin
+            subject: `Solicitação de Alteração de E-mail - ${profile.full_name}`,
+            html: `
+                <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; padding: 24px;">
+                    <h2 style="color: #1a1a1a; margin-top: 0;">Solicitação de Alteração de E-mail</h2>
+                    <p style="color: #444; line-height: 1.6;">O usuário abaixo solicitou a alteração do seu endereço de e-mail através do painel de perfil.</p>
+                    <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; margin: 20px 0;">
+                        <p style="margin: 0 0 8px 0;"><strong>Usuário:</strong> ${profile.full_name}</p>
+                        <p style="margin: 0 0 8px 0;"><strong>E-mail Atual:</strong> ${user.email}</p>
+                        <p style="margin: 0;"><strong>Tenant:</strong> ${profile.tenants?.name || 'N/A'}</p>
+                    </div>
+                    <p style="color: #666; font-size: 14px;">Esta é uma mensagem automática do sistema CRM LAX.</p>
+                </div>
+            `
+        })
+
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error in requestEmailChange:', error)
+        return { error: error.message || 'Erro ao processar solicitação' }
+    }
+}
+
 export async function getBrokers(tenantId: string) {
     const supabase = await createClient()
 
@@ -101,7 +198,7 @@ export async function getBrokerProfile(profileId: string) {
     }
 }
 
-export async function updateProfile(data: { full_name: string }) {
+export async function updateProfile(data: { full_name: string, whatsapp_number?: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -120,7 +217,8 @@ export async function updateProfile(data: { full_name: string }) {
     const { error } = await supabase
         .from('profiles')
         .update({
-            full_name: data.full_name
+            full_name: data.full_name,
+            whatsapp_number: data.whatsapp_number
         })
         .eq('id', user.id)
 

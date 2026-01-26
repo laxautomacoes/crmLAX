@@ -7,9 +7,10 @@ import {
     Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, 
     PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, 
     Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info, Send,
-    ChevronLeft, ChevronRight, Maximize2
+    ChevronLeft, ChevronRight, Maximize2, Map as MapIcon
 } from 'lucide-react';
 import { translatePropertyType } from '@/utils/property-translations';
+import { PropertyMap } from '@/components/shared/PropertyMap';
 
 interface PropertyDetailsModalProps {
     isOpen: boolean;
@@ -104,6 +105,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                     <MapPin size={14} className="text-secondary" />
                                     {fullAddress || 'Endereço não informado'}
                                 </div>
+                                
                                 <div className="flex items-center gap-2">
                                     <span className="w-1.5 h-1.5 rounded-full bg-border" />
                                     {details.situacao && (
@@ -131,7 +133,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                     {onSend && (
                         <button
                             onClick={() => onSend(prop)}
-                            className="flex items-center gap-2 px-6 py-2 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 transition-all shadow-sm shadow-secondary/20 whitespace-nowrap"
+                            className="flex items-center gap-2 px-6 py-2 bg-green-600 text-white rounded-xl font-bold hover:bg-green-700 transition-all shadow-sm shadow-green-600/20 whitespace-nowrap"
                         >
                             <Send size={18} />
                             Enviar para Lead
@@ -262,7 +264,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                     {/* Key Features (Simplified - Line format) */}
                     <div className="space-y-4">
                         <div className="flex flex-col gap-4">
-                            <div className="flex items-center gap-4 group py-2 border-b border-border/40">
+                            <div className="flex items-center gap-4 group py-2 border-b border-muted-foreground/30">
                                 <div className="p-2.5 rounded-xl bg-secondary/10 text-secondary">
                                     <BedDouble size={18} />
                                 </div>
@@ -279,7 +281,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4 group py-2 border-b border-border/40">
+                            <div className="flex items-center gap-4 group py-2 border-b border-muted-foreground/30">
                                 <div className="p-2.5 rounded-xl bg-secondary/10 text-secondary">
                                     <Bath size={18} />
                                 </div>
@@ -291,7 +293,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                 </div>
                             </div>
 
-                            <div className="flex items-center gap-4 group py-2 border-b border-border/40">
+                            <div className="flex items-center gap-4 group py-2 border-b border-muted-foreground/30">
                                 <div className="p-2.5 rounded-xl bg-secondary/10 text-secondary">
                                     <Car size={18} />
                                 </div>
@@ -412,6 +414,24 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                         </div>
                     </div>
 
+                    {/* Map Location */}
+                    {endereco.latitude && endereco.longitude && (
+                        <div className="space-y-4">
+                            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                <MapPin size={20} className="text-secondary" />
+                                Localização
+                            </h3>
+                            <div className="rounded-2xl overflow-hidden border border-border bg-muted/30 p-1 aspect-[21/9] min-h-[300px]">
+                                <PropertyMap 
+                                    lat={endereco.latitude} 
+                                    lng={endereco.longitude} 
+                                    readOnly={true}
+                                    zoom={16}
+                                />
+                            </div>
+                        </div>
+                    )}
+
                     {/* Amenities (Full Width) */}
                     {amenities.length > 0 && (
                         <div className="space-y-4">
@@ -431,12 +451,12 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                     )}
 
                     {/* Secondary Info & Actions (Full Width Grid) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-border">
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-8 border-t border-muted-foreground/30">
                         {/* Monthly Values (Left Column) */}
                         <div className="space-y-4">
                             <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Valores Mensais</h3>
                             <div className="grid grid-cols-1 gap-3">
-                                <div className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card">
+                                <div className="flex items-center justify-between p-4 rounded-2xl border border-muted-foreground/30 bg-card">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
                                             <div className="text-secondary font-bold text-xs">C</div>
@@ -445,7 +465,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend }: Property
                                     </div>
                                     <span className="font-bold text-foreground">{formattedCondo}</span>
                                 </div>
-                                <div className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card">
+                                <div className="flex items-center justify-between p-4 rounded-2xl border border-muted-foreground/30 bg-card">
                                     <div className="flex items-center gap-3">
                                         <div className="w-10 h-10 rounded-xl bg-secondary/10 flex items-center justify-center">
                                             <div className="text-secondary font-bold text-xs">I</div>

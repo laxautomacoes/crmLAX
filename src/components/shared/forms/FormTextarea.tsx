@@ -17,8 +17,8 @@ export function FormTextarea({ label, error, className = '', ...props }: FormTex
             )}
             <textarea
                 className={`
-                    w-full rounded-lg border border-border bg-card text-foreground text-sm outline-none transition-all
-                    focus:ring-2 focus:ring-secondary/50
+                    w-full rounded-lg border border-muted-foreground/30 bg-card text-foreground text-sm outline-none transition-all
+                    focus:ring-2 focus:ring-secondary/50 focus:border-secondary
                     disabled:opacity-50 disabled:cursor-not-allowed
                     placeholder:text-muted-foreground/50
                     px-4 py-2

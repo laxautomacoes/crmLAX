@@ -257,10 +257,10 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             </div>
 
             {/* Table */}
-            <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm">
+            <div className="bg-card rounded-2xl border border-muted-foreground/30 overflow-hidden shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full text-left">
-                        <thead className="bg-muted/50 border-b border-border">
+                        <thead className="bg-muted/50 border-b border-muted-foreground/30">
                             <tr>
                                 <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Cliente</th>
                                 <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Contato</th>
@@ -268,7 +268,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                 <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Detalhes</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-muted-foreground/30">
                             {filteredClients.map(client => (
                                 <ClientListItem
                                     key={client.id}

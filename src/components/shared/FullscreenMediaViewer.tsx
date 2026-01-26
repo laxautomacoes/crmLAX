@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, ChevronLeft, ChevronRight, Maximize2 } from 'lucide-react';
 
@@ -11,26 +11,37 @@ interface MediaItem {
 
 interface FullscreenMediaViewerProps {
     isOpen: boolean;
-    onClose: () => void;
+    onClose: (index: number, time?: number) => void;
     media: MediaItem[];
     initialIndex?: number;
+    initialTime?: number;
 }
 
-export function FullscreenMediaViewer({ isOpen, onClose, media, initialIndex = 0 }: FullscreenMediaViewerProps) {
+export function FullscreenMediaViewer({ isOpen, onClose, media, initialIndex = 0, initialTime = 0 }: FullscreenMediaViewerProps) {
     const [currentIndex, setCurrentIndex] = useState(initialIndex);
     const [direction, setDirection] = useState(0);
+    const videoRef = useRef<HTMLVideoElement>(null);
 
     useEffect(() => {
         if (isOpen) {
             setCurrentIndex(initialIndex);
             document.body.style.overflow = 'hidden';
+            if (videoRef.current && initialTime > 0) {
+                videoRef.current.currentTime = initialTime;
+            }
         } else {
             document.body.style.overflow = 'unset';
         }
         return () => {
             document.body.style.overflow = 'unset';
         };
-    }, [isOpen, initialIndex]);
+    }, [isOpen, initialIndex, initialTime]);
+
+    const handleClose = (e?: React.MouseEvent) => {
+        if (e) e.stopPropagation();
+        const currentTime = videoRef.current?.currentTime;
+        onClose(currentIndex, currentTime);
+    };
 
     const handleNext = useCallback(() => {
         setDirection(1);
@@ -45,14 +56,14 @@ export function FullscreenMediaViewer({ isOpen, onClose, media, initialIndex = 0
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!isOpen) return;
-            if (e.key === 'Escape') onClose();
+            if (e.key === 'Escape') handleClose();
             if (e.key === 'ArrowRight') handleNext();
             if (e.key === 'ArrowLeft') handlePrev();
         };
 
         window.addEventListener('keydown', handleKeyDown);
         return () => window.removeEventListener('keydown', handleKeyDown);
-    }, [isOpen, onClose, handleNext, handlePrev]);
+    }, [isOpen, handleNext, handlePrev]);
 
     if (!isOpen || media.length === 0) return null;
 
@@ -78,11 +89,11 @@ export function FullscreenMediaViewer({ isOpen, onClose, media, initialIndex = 0
     return (
         <div 
             className="fixed inset-0 z-[100] flex items-center justify-center bg-black/95 backdrop-blur-md"
-            onClick={onClose}
+            onClick={handleClose}
         >
             {/* Close Button */}
             <button
-                onClick={onClose}
+                onClick={handleClose}
                 className="absolute top-6 right-6 z-[110] p-3 rounded-full bg-white/10 hover:bg-white/20 text-white transition-all backdrop-blur-md border border-white/10"
                 title="Fechar (Esc)"
             >
@@ -153,6 +164,7 @@ export function FullscreenMediaViewer({ isOpen, onClose, media, initialIndex = 0
                                 onPointerDown={(e) => e.stopPropagation()}
                             >
                                 <video
+                                    ref={videoRef}
                                     src={currentMedia.url}
                                     controls
                                     autoPlay

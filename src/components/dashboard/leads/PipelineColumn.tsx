@@ -72,7 +72,7 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
     return (
         <div
             ref={setNodeRef}
-            className="flex flex-col w-[310px] min-w-[310px] bg-input/50 dark:bg-muted/5 rounded-2xl p-4 border border-border/50 shadow-sm"
+            className="flex flex-col w-[310px] min-w-[310px] bg-input/50 dark:bg-muted/5 rounded-2xl p-4 border border-muted-foreground/30 shadow-sm"
         >
             <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-2 flex-1">
@@ -91,7 +91,7 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
                             {title}
                         </h3>
                     )}
-                    <span className="bg-card px-2 py-0.5 rounded-full text-[10px] font-bold text-muted-foreground border border-border flex-shrink-0">
+                    <span className="bg-card px-2 py-0.5 rounded-full text-[10px] font-bold text-muted-foreground border border-muted-foreground/30 flex-shrink-0">
                         {count}
                     </span>
                 </div>
@@ -110,7 +110,7 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
                                 initial={{ opacity: 0, scale: 0.95, y: -10 }}
                                 animate={{ opacity: 1, scale: 1, y: 0 }}
                                 exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                className="absolute right-0 mt-1 w-36 bg-card border border-border rounded-lg shadow-xl z-20 py-1"
+                                className="absolute right-0 mt-1 w-36 bg-card border border-muted-foreground/30 rounded-lg shadow-xl z-20 py-1"
                             >
                                 <button
                                     onClick={() => {
@@ -130,7 +130,7 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
                                 >
                                     <Copy size={12} /> Duplicar
                                 </button>
-                                <div className="h-px bg-border my-1" />
+                                <div className="h-px bg-muted-foreground/30 my-1" />
                                 <button
                                     onClick={() => {
                                         onDeleteStage(id)
@@ -159,7 +159,7 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
 
                 <button
                     onClick={() => onAddLead(id)}
-                    className="w-full py-2.5 border border-border rounded-lg text-muted-foreground flex items-center justify-center gap-2 hover:text-foreground hover:bg-card transition-all text-xs font-bold group mt-2 shadow-sm"
+                    className="w-full py-2.5 border border-muted-foreground/30 rounded-lg text-muted-foreground flex items-center justify-center gap-2 hover:text-foreground hover:bg-card transition-all text-xs font-bold group mt-2 shadow-sm"
                 >
                     <Plus size={14} className="group-hover:text-foreground transition-colors" />
                     Novo Lead

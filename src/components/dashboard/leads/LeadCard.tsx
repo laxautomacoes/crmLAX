@@ -50,7 +50,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
             {...attributes}
             {...listeners}
             onClick={() => !isDragging && setIsExpanded(!isExpanded)}
-            className={`bg-card p-4 rounded-2xl border border-border hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''} ${isExpanded ? 'shadow-sm' : ''}`}
+            className={`bg-card p-4 rounded-2xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''} ${isExpanded ? 'shadow-sm' : ''}`}
         >
             <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -58,7 +58,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                         {lead.name}
                     </h4>
                     {lead.interest && (
-                        <span className="inline-block px-2.5 py-0.5 bg-muted text-muted-foreground rounded-full text-[10px] font-bold shadow-sm transition-colors border border-border">
+                        <span className="inline-block px-2.5 py-0.5 bg-muted text-muted-foreground rounded-full text-[10px] font-bold shadow-sm transition-colors border border-muted-foreground/30">
                             {lead.interest}
                         </span>
                     )}
@@ -82,7 +82,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                                     initial={{ opacity: 0, scale: 0.95, y: -10 }}
                                     animate={{ opacity: 1, scale: 1, y: 0 }}
                                     exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                    className="absolute right-0 mt-1 w-36 bg-card border border-border rounded-lg shadow-xl z-20 py-1"
+                                    className="absolute right-0 mt-1 w-36 bg-card border border-muted-foreground/30 rounded-lg shadow-xl z-20 py-1"
                                 >
                                     <button
                                         onClick={(e) => {
@@ -94,7 +94,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                                     >
                                         <Edit size={12} /> Editar
                                     </button>
-                                    <div className="h-px bg-border my-1" />
+                                    <div className="h-px bg-muted-foreground/30 my-1" />
                                     <button
                                         onClick={(e) => {
                                             e.stopPropagation()
@@ -142,7 +142,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                                     </span>
                                 </div>
                             )}
-                            <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-medium pt-1 border-t border-border/50 mt-2">
+                            <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-medium pt-1 border-t border-muted-foreground/30 mt-2">
                                 <User size={12} className="text-primary" />
                                 <span className="text-primary/90 font-bold truncate">
                                     {lead.broker_name || 'Não atribuído'}
@@ -151,14 +151,14 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                         </div>
 
                         {lead.notes && (
-                            <div className="bg-muted/5 dark:bg-card/50 p-2 rounded-lg mb-4 border border-border/50">
+                            <div className="bg-muted/5 dark:bg-card/50 p-2 rounded-lg mb-4 border border-muted-foreground/30">
                                 <p className="text-[10px] text-muted-foreground italic line-clamp-2">"{lead.notes}"</p>
                             </div>
                         )}
 
                         <div className="flex flex-wrap gap-1 mb-4">
                             {lead.tags?.map(tag => (
-                                <span key={tag} className="px-2 py-0.5 bg-muted/5 text-muted-foreground rounded-full text-[9px] font-bold border border-border flex items-center gap-1">
+                                <span key={tag} className="px-2 py-0.5 bg-muted/5 text-muted-foreground rounded-full text-[9px] font-bold border border-muted-foreground/30 flex items-center gap-1">
                                     <Tag size={8} /> {tag}
                                 </span>
                             ))}

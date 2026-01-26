@@ -5,6 +5,7 @@ import { Modal } from '@/components/shared/Modal';
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
 import { Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, Video, FileText, ExternalLink, Maximize2 } from 'lucide-react';
 import { translatePropertyType } from '@/utils/property-translations';
+import { PropertyMap } from '@/components/shared/PropertyMap';
 
 export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boolean, onClose: () => void, asset: any }) {
     const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
@@ -106,6 +107,18 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 <span className="px-3 py-1 bg-secondary/10 text-secondary text-xs font-bold rounded-full uppercase">{asset.status}</span>
                             </div>
                         </div>
+
+                        <div className="flex items-start gap-2 text-muted-foreground text-sm">
+                            <MapPin size={16} className="text-secondary mt-1 flex-shrink-0" />
+                            <span>
+                                {details.endereco?.rua && `${details.endereco.rua}, `}
+                                {details.endereco?.numero && `${details.endereco.numero}, `}
+                                {details.endereco?.bairro && `${details.endereco.bairro}, `}
+                                {details.endereco?.cidade && `${details.endereco.cidade} - `}
+                                {details.endereco?.estado && `${details.endereco.estado}`}
+                            </span>
+                        </div>
+
                         <div className="space-y-3">
                             {/* Row 1: Basic Features */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
@@ -181,7 +194,26 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 </div>
                             )}
                         </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed">{asset.description || 'Sem descrição disponível.'}</p>
+                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{asset.description || 'Sem descrição disponível.'}</p>
+
+                        {/* Map Location */}
+                        {details.endereco?.latitude && details.endereco?.longitude && (
+                            <div className="pt-4 border-t border-border">
+                                <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
+                                    <MapPin size={18} className="text-secondary" />
+                                    Localização
+                                </h4>
+                                <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-1 aspect-video">
+                                    <PropertyMap 
+                                        lat={details.endereco.latitude} 
+                                        lng={details.endereco.longitude} 
+                                        readOnly={true}
+                                        zoom={16}
+                                    />
+                                </div>
+                            </div>
+                        )}
+
                         {amenities.length > 0 && (
                             <div className="pt-4 border-t border-border">
                                 <h4 className="text-sm font-bold text-foreground mb-3">Diferenciais</h4>

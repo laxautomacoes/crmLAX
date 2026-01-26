@@ -43,7 +43,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
             {kpiData.map((kpi, index) => (
                 <div
                     key={index}
-                    className="bg-card px-4 py-4 md:p-6 rounded-lg shadow-sm border border-border relative overflow-hidden 
+                    className="bg-card px-4 py-4 md:p-6 rounded-lg shadow-sm border border-muted-foreground/30 relative overflow-hidden 
                        grid grid-cols-4 md:grid-cols-2 items-center md:items-start gap-2 md:gap-x-0 md:gap-y-2 justify-items-center md:justify-items-start"
                 >
                     {/* Icon: Mobile Col 1. Desktop Row 1 Col 2 (Right aligned) */}

@@ -13,7 +13,7 @@ export function FormCheckbox({ label, error, className = '', ...props }: FormChe
             <label className="flex items-center gap-2 cursor-pointer group">
                 <input
                     type="checkbox"
-                    className={`w-4 h-4 rounded border-border bg-card text-secondary focus:ring-secondary/50 transition-all ${className}`}
+                    className={`w-4 h-4 rounded border border-muted-foreground/30 bg-card text-secondary focus:ring-secondary/50 transition-all ${className}`}
                     {...props}
                 />
                 <span className="text-xs font-medium text-foreground group-hover:text-secondary transition-colors">

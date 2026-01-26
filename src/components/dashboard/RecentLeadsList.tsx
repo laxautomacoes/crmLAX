@@ -34,12 +34,12 @@ export default function RecentLeadsList({ recentLeads }: RecentLeadsListProps) {
     };
 
     return (
-        <div className="bg-card p-6 rounded-lg shadow-sm border border-border">
+        <div className="bg-card p-6 rounded-lg shadow-sm border border-muted-foreground/30">
             <h3 className="text-lg font-bold text-foreground mb-6">Leads Recentes</h3>
             <div className="space-y-4">
                 {recentLeads.length > 0 ? (
                     recentLeads.map((lead) => (
-                        <div key={lead.id} className="flex items-center justify-between p-4 border border-border rounded-lg hover:bg-muted/50 transition-colors">
+                        <div key={lead.id} className="flex items-center justify-between p-4 border border-muted-foreground/30 rounded-lg hover:bg-muted/50 transition-colors">
                             <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 font-bold text-sm">
                                     {getInitials(lead.name)}

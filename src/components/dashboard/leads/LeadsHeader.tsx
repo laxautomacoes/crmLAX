@@ -23,7 +23,7 @@ export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin }: Lead
                 <div className="relative group">
                     <select
                         onChange={(e) => onBrokerChange?.(e.target.value)}
-                        className="appearance-none pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer hover:bg-muted/10 min-w-[160px]"
+                        className="appearance-none pl-9 pr-8 py-2 bg-card border border-muted-foreground/30 rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer hover:bg-muted/10 min-w-[160px]"
                     >
                         <option value="all">Todos os Corretores</option>
                         {brokers.map((broker) => (

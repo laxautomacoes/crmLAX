@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Camera } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
-import { updateProfileAvatar } from '@/app/_actions/profile';
+import { updateProfileAvatar, deleteProfileAvatar } from '@/app/_actions/profile';
 import { MessageBanner } from '@/components/shared/MessageBanner';
 import { ProfileAvatarUpload } from './ProfileAvatarUpload';
 
@@ -15,6 +15,24 @@ interface ProfileAvatarProps {
 export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) {
     const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+
+    const handleAvatarDelete = async () => {
+        try {
+            setUploading(true);
+            setMessage(null);
+
+            const result = await deleteProfileAvatar();
+            if (result.error) throw new Error(result.error);
+
+            onProfileUpdate({ avatar_url: null });
+            setMessage({ type: 'success', text: 'Foto removida com sucesso!' });
+            setTimeout(() => setMessage(null), 3000);
+        } catch (error: any) {
+            setMessage({ type: 'error', text: 'Erro ao remover foto: ' + error.message });
+        } finally {
+            setUploading(false);
+        }
+    };
 
     const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         try {
@@ -73,7 +91,7 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-full">
             <div className="flex items-center gap-2 mb-6">
                 <Camera className="text-muted-foreground" size={20} />
-                <h2 className="font-semibold text-foreground">Foto Perfil</h2>
+                <h2 className="font-semibold text-foreground">Foto</h2>
             </div>
 
             <div className="flex flex-col items-center flex-1 justify-center">
@@ -87,6 +105,7 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
                     profile={profile}
                     uploading={uploading}
                     onUpload={handleAvatarUpload}
+                    onDelete={handleAvatarDelete}
                 />
             </div>
         </div>

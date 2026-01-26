@@ -49,7 +49,7 @@ export default function DashboardClient({ metrics, profileName, tenantId }: Dash
                 <div className="flex items-center justify-center md:justify-end gap-3">
                     <button
                         onClick={() => setIsFilterOpen(true)}
-                        className="flex items-center gap-2 bg-card border border-border text-muted-foreground px-4 py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium"
+                        className="flex items-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-4 py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium"
                     >
                         <Filter size={18} />
                         Filtrar

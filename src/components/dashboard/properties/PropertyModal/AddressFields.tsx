@@ -2,7 +2,9 @@
 
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { fetchAddressByCep, formatCEP } from '@/lib/utils/cep'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+import { PropertyMap } from '@/components/shared/PropertyMap'
+import { MapPin } from 'lucide-react'
 
 interface AddressFieldsProps {
     formData: any
@@ -11,6 +13,25 @@ interface AddressFieldsProps {
 
 export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
     const [loading, setLoading] = useState(false)
+
+    const fullAddress = useMemo(() => {
+        const { rua, numero, bairro, cidade, estado } = formData.details.endereco
+        return [rua, numero, bairro, cidade, estado].filter(Boolean).join(', ')
+    }, [formData.details.endereco])
+
+    const handleLocationSelect = (latitude: number, longitude: number) => {
+        setFormData({
+            ...formData,
+            details: {
+                ...formData.details,
+                endereco: {
+                    ...formData.details.endereco,
+                    latitude,
+                    longitude
+                }
+            }
+        })
+    }
 
     const handleCepChange = async (cep: string) => {
         const formattedCep = formatCEP(cep)
@@ -72,7 +93,10 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
 
     return (
         <div className="pt-2">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3">Endereço</h4>
+            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+                <MapPin size={14} className="text-secondary" />
+                Endereço
+            </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                 <FormInput
                     label={
@@ -121,10 +145,25 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
                 <FormInput
                     label="Estado"
                     type="text"
-                    value={formData.details.endereco.estado || ''}
+                    value={formData.details.endereco.estado}
                     onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, estado: e.target.value } } })}
-                    maxLength={2}
+                    placeholder="UF"
                 />
+            </div>
+
+            <div className="mt-8 border-t border-border/40 pt-6">
+                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <MapPin size={14} className="text-secondary" />
+                    Localização
+                </h4>
+                <div className="rounded-2xl overflow-hidden border border-border bg-muted/30 p-1">
+                    <PropertyMap 
+                        address={fullAddress}
+                        lat={formData.details.endereco.latitude}
+                        lng={formData.details.endereco.longitude}
+                        onLocationSelect={handleLocationSelect}
+                    />
+                </div>
             </div>
         </div>
     )
