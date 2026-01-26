@@ -20,7 +20,7 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
                 {/* Imagens */}
                 <div>
                     <label className="block text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-                        <ImageIcon size={16} className="text-secondary" /> Imagens
+                        <ImageIcon size={16} className="text-primary" /> Imagens
                     </label>
                     <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-3">
                         {formData.images.map((url: string, index: number) => (
@@ -35,9 +35,9 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
                                 </button>
                             </div>
                         ))}
-                        <label className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-secondary/50 hover:bg-secondary/5 flex flex-col items-center justify-center cursor-pointer transition-all">
+                        <label className="aspect-square rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-all">
                             {isUploading === 'images' ? (
-                                <Loader2 className="w-6 h-6 text-secondary animate-spin" />
+                                <Loader2 className="w-6 h-6 text-primary animate-spin" />
                             ) : (
                                 <>
                                     <Upload size={20} className="text-muted-foreground mb-1" />
@@ -59,7 +59,7 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
                 {/* Vídeos */}
                 <div>
                     <label className="block text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-                        <Film size={16} className="text-secondary" /> Vídeos
+                        <Film size={16} className="text-primary" /> Vídeos
                     </label>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
                         {formData.videos.map((url: string, index: number) => (
@@ -74,9 +74,9 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
                                 </button>
                             </div>
                         ))}
-                        <label className="aspect-video rounded-lg border-2 border-dashed border-border hover:border-secondary/50 hover:bg-secondary/5 flex flex-col items-center justify-center cursor-pointer transition-all">
+                        <label className="aspect-video rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 flex flex-col items-center justify-center cursor-pointer transition-all">
                             {isUploading === 'videos' ? (
-                                <Loader2 className="w-6 h-6 text-secondary animate-spin" />
+                                <Loader2 className="w-6 h-6 text-primary animate-spin" />
                             ) : (
                                 <>
                                     <Upload size={20} className="text-muted-foreground mb-1" />
@@ -98,31 +98,31 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
                 {/* Documentos */}
                 <div>
                     <label className="block text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-                        <FileText size={16} className="text-secondary" /> Documentos
+                        <FileText size={16} className="text-primary" /> Documentos
                     </label>
-                    <div className="space-y-2">
-                        {formData.documents.map((doc: { name: string; url: string }, index: number) => (
-                            <div key={index} className="flex items-center justify-between p-2 rounded-lg border border-border bg-card hover:bg-accent/5 transition-colors group">
+                    <div className="space-y-2 mb-3">
+                        {formData.documents.map((doc: any, index: number) => (
+                            <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 border border-border group">
                                 <div className="flex items-center gap-2 min-w-0">
-                                    <FileText size={16} className="text-muted-foreground shrink-0" />
+                                    <FileText size={14} className="text-muted-foreground shrink-0" />
                                     <span className="text-xs font-medium truncate">{doc.name}</span>
                                 </div>
                                 <button
                                     type="button"
                                     onClick={() => removeFile(index, 'documents')}
-                                    className="p-1 text-muted-foreground hover:text-destructive transition-colors opacity-0 group-hover:opacity-100"
+                                    className="p-1 text-muted-foreground hover:text-destructive transition-colors"
                                 >
                                     <X size={14} />
                                 </button>
                             </div>
                         ))}
-                        <label className="flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-border hover:border-secondary/50 hover:bg-secondary/5 cursor-pointer transition-all">
+                        <label className="flex items-center justify-center gap-2 p-3 rounded-lg border-2 border-dashed border-border hover:border-primary/50 hover:bg-primary/5 cursor-pointer transition-all">
                             {isUploading === 'documents' ? (
-                                <Loader2 className="w-5 h-5 text-secondary animate-spin" />
+                                <Loader2 className="w-5 h-5 text-primary animate-spin" />
                             ) : (
                                 <>
-                                    <Upload size={18} className="text-muted-foreground" />
-                                    <span className="text-xs font-bold text-muted-foreground">Upload Documentos (PDF, etc)</span>
+                                    <Upload size={16} className="text-muted-foreground" />
+                                    <span className="text-sm font-medium text-muted-foreground">Adicionar Documento</span>
                                 </>
                             )}
                             <input

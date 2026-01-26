@@ -313,8 +313,8 @@ export function PropertyFiltersModal({
                             disabled={isImporting}
                             className="flex items-center justify-center gap-2 p-4 bg-card border border-border rounded-xl hover:bg-muted/50 transition-colors group disabled:opacity-50"
                         >
-                            <div className="p-2 bg-secondary/10 rounded-lg group-hover:bg-secondary/20 transition-colors">
-                                <Upload size={20} className="text-secondary-foreground" />
+                            <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
+                                <Upload size={20} className="text-primary" />
                             </div>
                             <div className="text-left">
                                 <p className="text-sm font-bold">

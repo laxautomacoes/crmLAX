@@ -85,7 +85,7 @@ export function PropertyMap({ address, lat, lng, onLocationSelect, readOnly = fa
     if (!isLoaded) {
         return (
             <div style={containerStyle} className="bg-muted flex items-center justify-center">
-                <Loader2 className="animate-spin text-secondary" />
+                <Loader2 className="animate-spin text-primary" />
             </div>
         )
     }

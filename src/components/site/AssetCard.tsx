@@ -42,7 +42,7 @@ export function AssetCard({ asset }: AssetCardProps) {
                         />
                         <div className="absolute top-4 right-4 bg-card/90 px-3 py-1 rounded-lg">
                             {asset.price && (
-                                <span className="text-lg font-bold text-secondary">
+                                <span className="text-lg font-bold text-primary">
                                     R$ {Number(asset.price).toLocaleString('pt-BR')}
                                 </span>
                             )}

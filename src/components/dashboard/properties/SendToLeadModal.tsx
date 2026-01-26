@@ -253,16 +253,16 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <div className="space-y-2">
                                 {isLoading ? (
                                     <div className="flex items-center justify-center py-8">
-                                        <Loader2 className="animate-spin text-secondary" size={24} />
+                                        <Loader2 className="animate-spin text-primary" size={24} />
                                     </div>
                                 ) : filteredLeads.length > 0 ? (
                                     filteredLeads.map(lead => (
                                         <div
                                             key={lead.id}
                                             onClick={() => setSelectedLead(lead)}
-                                            className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-secondary/50 hover:bg-secondary/5 transition-all text-left group cursor-pointer"
+                                            className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group cursor-pointer"
                                         >
-                                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-secondary/10 group-hover:text-secondary transition-colors">
+                                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                                                 <User size={20} />
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -280,8 +280,8 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                     ) : (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             {/* Lead Header */}
-                            <div className="flex items-center gap-4 p-4 rounded-xl bg-secondary/5 border border-secondary/20">
-                                <div className="w-12 h-12 rounded-full bg-secondary/10 flex items-center justify-center text-secondary">
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
+                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
                                     <User size={24} />
                                 </div>
                                 <div className="flex-1">
@@ -290,7 +290,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 </div>
                                 <button 
                                     onClick={() => setSelectedLead(null)}
-                                    className="text-sm font-bold text-secondary hover:underline"
+                                    className="text-sm font-bold text-primary hover:underline"
                                 >
                                     Alterar
                                 </button>
@@ -305,7 +305,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Info size={18} className="text-secondary" />
+                                            <Info size={18} className="text-primary" />
                                             <span className="font-bold text-foreground">Informações Básicas</span>
                                         </div>
                                         {expandedSections.basic ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -327,13 +327,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 <div className="flex gap-4">
                                                     <button 
                                                         onClick={() => setConfig({...config, description: 'full'})}
-                                                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${config.description === 'full' ? 'bg-secondary/10 border-secondary text-secondary font-bold' : 'border-border text-muted-foreground'}`}
+                                                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${config.description === 'full' ? 'bg-primary/10 border-primary text-primary font-bold' : 'border-border text-muted-foreground'}`}
                                                     >
                                                         Completa
                                                     </button>
                                                     <button 
                                                         onClick={() => setConfig({...config, description: 'none'})}
-                                                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${config.description === 'none' ? 'bg-secondary/10 border-secondary text-secondary font-bold' : 'border-border text-muted-foreground'}`}
+                                                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${config.description === 'none' ? 'bg-primary/10 border-primary text-primary font-bold' : 'border-border text-muted-foreground'}`}
                                                     >
                                                         Não enviar
                                                     </button>
@@ -350,7 +350,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Home size={18} className="text-secondary" />
+                                            <Home size={18} className="text-primary" />
                                             <span className="font-bold text-foreground">Detalhes (Cômodos/Áreas)</span>
                                         </div>
                                         {expandedSections.details ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -390,7 +390,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <MapPin size={18} className="text-secondary" />
+                                            <MapPin size={18} className="text-primary" />
                                             <span className="font-bold text-foreground">Localização</span>
                                         </div>
                                         {expandedSections.location ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -406,7 +406,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     <button 
                                                         key={opt.id}
                                                         onClick={() => setConfig({...config, location: opt.id as any})}
-                                                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${config.location === opt.id ? 'bg-secondary/10 border-secondary text-secondary font-bold' : 'border-border text-muted-foreground'}`}
+                                                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${config.location === opt.id ? 'bg-primary/10 border-primary text-primary font-bold' : 'border-border text-muted-foreground'}`}
                                                     >
                                                         {opt.label}
                                                     </button>
@@ -423,7 +423,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <ImageIcon size={18} className="text-secondary" />
+                                            <ImageIcon size={18} className="text-primary" />
                                             <span className="font-bold text-foreground">Imagens ({config.selectedImages.length})</span>
                                         </div>
                                         {expandedSections.images ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -441,7 +441,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                                     : [...config.selectedImages, img]
                                                                 setConfig({...config, selectedImages: newImages})
                                                             }}
-                                                            className={`relative aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-opacity ${selectedImagesSet.has(img) ? 'border-secondary' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                                            className={`relative aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-opacity ${selectedImagesSet.has(img) ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-100'}`}
                                                         >
                                                             <img 
                                                                 src={img} 
@@ -450,8 +450,8 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                                 alt={`Foto ${idx + 1}`}
                                                             />
                                                             {selectedImagesSet.has(img) && (
-                                                                <div className="absolute inset-0 bg-secondary/20 flex items-center justify-center">
-                                                                    <CheckCircle2 className="text-white fill-secondary" size={20} />
+                                                                <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
+                                                                    <CheckCircle2 className="text-white fill-primary" size={20} />
                                                                 </div>
                                                             )}
                                                         </div>
@@ -471,7 +471,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Video size={18} className="text-secondary" />
+                                            <Video size={18} className="text-primary" />
                                             <span className="font-bold text-foreground">Vídeos ({config.selectedVideos.length})</span>
                                         </div>
                                         {expandedSections.videos ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -509,7 +509,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <FileText size={18} className="text-secondary" />
+                                            <FileText size={18} className="text-primary" />
                                             <span className="font-bold text-foreground">Documentos ({config.selectedDocs.length})</span>
                                         </div>
                                         {expandedSections.docs ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -550,7 +550,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <button
                                 onClick={() => handleSendEmail(selectedLead)}
                                 disabled={sending || !selectedLead.email}
-                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-border hover:border-secondary/50 hover:bg-secondary/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
                             >
                                 <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
                                     <Mail size={20} />
@@ -577,7 +577,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                         </div>
 
                         {sending && (
-                            <div className="flex items-center justify-center gap-2 text-secondary font-bold mt-4">
+                            <div className="flex items-center justify-center gap-2 text-primary font-bold mt-4">
                                 <Loader2 className="animate-spin" size={20} />
                                 <span>Enviando...</span>
                             </div>

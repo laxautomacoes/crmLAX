@@ -112,7 +112,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             {config?.showType !== false && (
-                                <span className="px-2 py-1 bg-secondary/10 text-secondary text-[10px] font-bold rounded uppercase tracking-wider">
+                                <span className="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded uppercase tracking-wider">
                                     {translatePropertyType(asset.type || asset.details?.type)}
                                 </span>
                             )}
@@ -213,7 +213,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                                         ref={el => { thumbnailRefs.current[i] = el; }}
                                         onClick={() => setSelectedMediaIndex(i)}
                                         className={`relative flex-shrink-0 w-24 md:w-32 aspect-video rounded-xl overflow-hidden border-2 transition-all snap-start ${
-                                            selectedMediaIndex === i ? 'border-secondary ring-2 ring-secondary/20 scale-[1.02]' : 'border-transparent hover:border-border'
+                                            selectedMediaIndex === i ? 'border-primary ring-2 ring-primary/20 scale-[1.02]' : 'border-transparent hover:border-border'
                                         }`}
                                     >
                                         <img src={item.url} className="w-full h-full object-cover" alt="" />
@@ -226,7 +226,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                         {videoMedia.length > 0 && (
                             <div className="space-y-4 pt-4">
                                 <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
-                                    <Video className="text-secondary" size={20} />
+                                    <Video className="text-primary" size={20} />
                                     Vídeos do Imóvel
                                 </h3>
                                 <div className="flex gap-4 overflow-x-auto pb-4 pt-1 px-1 custom-scrollbar snap-x">
@@ -243,7 +243,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                                         >
                                             <video src={video.url} className="w-full h-full object-cover opacity-60" />
                                             <div className="absolute inset-0 flex items-center justify-center">
-                                                <div className="p-1.5 rounded-full bg-secondary/80 text-white shadow-xl group-hover:scale-110 transition-transform">
+                                                <div className="p-1.5 rounded-full bg-primary/80 text-white shadow-xl group-hover:scale-110 transition-transform">
                                                     <Play size={14} className="fill-white ml-0.5" />
                                                 </div>
                                             </div>
@@ -278,31 +278,31 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-card rounded-2xl border border-border shadow-sm">
                         {config?.showBedrooms !== false && (
                             <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
-                                <BedDouble className="text-secondary mb-2" size={24} />
+                                <BedDouble className="text-primary mb-2" size={24} />
                                 <span className="text-lg font-bold">{details.dormitorios || details.quartos || 0}</span>
                                 <span className="text-xs text-muted-foreground uppercase font-medium">Dormitórios</span>
                             </div>
                         )}
                         {config?.showSuites !== false && details.suites > 0 && (
                             <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
-                                <Bath className="text-secondary mb-2" size={24} />
+                                <Bath className="text-primary mb-2" size={24} />
                                 <span className="text-lg font-bold">{details.suites}</span>
                                 <span className="text-xs text-muted-foreground uppercase font-medium">Suítes</span>
                             </div>
                         )}
                         <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
-                            <Bath className="text-secondary mb-2" size={24} />
+                            <Bath className="text-primary mb-2" size={24} />
                             <span className="text-lg font-bold">{details.banheiros || 0}</span>
                             <span className="text-xs text-muted-foreground uppercase font-medium">Banheiros</span>
                         </div>
                         <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
-                            <Car className="text-secondary mb-2" size={24} />
+                            <Car className="text-primary mb-2" size={24} />
                             <span className="text-lg font-bold">{details.vagas || 0}</span>
                             <span className="text-xs text-muted-foreground uppercase font-medium">Vagas</span>
                         </div>
                         {config?.showArea !== false && (
                             <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
-                                <Square className="text-secondary mb-2" size={24} />
+                                <Square className="text-primary mb-2" size={24} />
                                 <span className="text-lg font-bold">{details.area_util || details.area_total || 0}m²</span>
                                 <span className="text-xs text-muted-foreground uppercase font-medium">Área</span>
                             </div>
@@ -321,7 +321,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                     {config?.location === 'exact' && details.endereco?.latitude && details.endereco?.longitude && (
                         <div className="space-y-4">
                             <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                                <MapPin className="text-secondary" size={24} />
+                                <MapPin className="text-primary" size={24} />
                                 Localização
                             </h2>
                             <PropertyMap 
@@ -337,7 +337,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                     {filteredDocs.length > 0 && (
                         <div className="space-y-4">
                             <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                                <FileText className="text-secondary" size={24} />
+                                <FileText className="text-primary" size={24} />
                                 Documentos
                             </h2>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -347,9 +347,9 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                                         href={doc.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-secondary/50 hover:bg-secondary/5 transition-all group"
+                                        className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
                                     >
-                                        <div className="p-2 rounded-lg bg-secondary/10 text-secondary group-hover:bg-secondary group-hover:text-white transition-colors">
+                                        <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                                             <FileText size={20} />
                                         </div>
                                         <div className="flex-1 min-w-0">
@@ -376,11 +376,11 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
 
                         <div className="pt-6 border-t border-border space-y-6">
                             <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full overflow-hidden bg-muted border-2 border-secondary/20 shadow-sm">
+                                <div className="w-16 h-16 rounded-full overflow-hidden bg-muted border-2 border-primary/20 shadow-sm">
                                     {broker?.avatar_url ? (
                                         <img src={broker.avatar_url} className="w-full h-full object-cover" alt={broker.full_name} />
                                     ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-secondary/10 text-secondary">
+                                        <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary">
                                             <Home size={32} />
                                         </div>
                                     )}

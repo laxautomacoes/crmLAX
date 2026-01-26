@@ -59,7 +59,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                     key={i} 
                                     onClick={() => setSelectedMediaIndex(i)}
                                     className={`relative flex-shrink-0 w-24 aspect-video rounded-lg overflow-hidden border-2 cursor-pointer transition-all snap-start ${
-                                        selectedMediaIndex === i ? 'border-secondary' : 'border-transparent hover:border-border'
+                                        selectedMediaIndex === i ? 'border-primary' : 'border-transparent hover:border-border'
                                     }`}
                                 >
                                     <img src={url} className="w-full h-full object-cover" alt="" />
@@ -71,7 +71,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         {asset.videos?.length > 0 && (
                             <div className="space-y-2 pt-2 border-t border-border/50">
                                 <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 px-1">
-                                    <Video size={12} className="text-secondary" />
+                                    <Video size={12} className="text-primary" />
                                     Vídeos
                                 </h4>
                                 <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar snap-x">
@@ -83,7 +83,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                                 setSelectedMediaIndex(videoIndex);
                                                 setIsFullscreenOpen(true);
                                             }}
-                                            className="relative flex-shrink-0 w-24 aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-secondary transition-all snap-start group bg-black cursor-pointer"
+                                            className="relative flex-shrink-0 w-24 aspect-video rounded-lg overflow-hidden border-2 border-transparent hover:border-primary transition-all snap-start group bg-black cursor-pointer"
                                         >
                                             <div className="absolute inset-0 flex items-center justify-center z-10">
                                                 <Play size={16} className="text-white fill-white group-hover:scale-110 transition-transform" />
@@ -116,7 +116,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         </div>
 
                         <div className="flex items-start gap-2 text-muted-foreground text-sm">
-                            <MapPin size={16} className="text-secondary mt-1 flex-shrink-0" />
+                            <MapPin size={16} className="text-primary mt-1 flex-shrink-0" />
                             <span>
                                 {details.endereco?.rua && `${details.endereco.rua}, `}
                                 {details.endereco?.numero && `${details.endereco.numero}, `}
@@ -130,7 +130,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             {/* Row 1: Basic Features */}
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <BedDouble size={16} className="text-secondary flex-shrink-0" /> 
+                                    <BedDouble size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Dormitórios</span>
                                         <div className="flex items-baseline gap-1">
@@ -142,14 +142,14 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Bath size={16} className="text-secondary flex-shrink-0" /> 
+                                    <Bath size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Banheiros</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.banheiros || 0}</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Car size={16} className="text-secondary flex-shrink-0" /> 
+                                    <Car size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Vagas de Garagem</span>
                                         <div className="flex items-baseline gap-1">
@@ -165,28 +165,28 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             {/* Row 2: Area Features */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Square size={16} className="text-secondary flex-shrink-0" /> 
+                                    <Square size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área Privativa</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_privativa || details.area_util || 0}m²</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Square size={16} className="text-secondary flex-shrink-0" /> 
+                                    <Square size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área Total</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_total || 0}m²</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Square size={16} className="text-secondary flex-shrink-0" /> 
+                                    <Square size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área do Terreno</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_terreno || 0}m²</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Square size={16} className="text-secondary flex-shrink-0" /> 
+                                    <Square size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área Construída</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_construida || 0}m²</span> 
@@ -207,7 +207,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         {details.endereco?.latitude && details.endereco?.longitude && (
                             <div className="pt-4 border-t border-border">
                                 <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                                    <MapPin size={18} className="text-secondary" />
+                                    <MapPin size={18} className="text-primary" />
                                     Localização
                                 </h4>
                                 <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-1 aspect-video">
@@ -227,7 +227,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 <div className="grid grid-cols-2 gap-3">
                                     {amenities.map(a => (
                                         <div key={a.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                                            <div className="p-1.5 bg-secondary/10 rounded-lg text-secondary">{a.icon}</div>
+                                            <div className="p-1.5 bg-primary/10 rounded-lg text-primary">{a.icon}</div>
                                             {a.label}
                                         </div>
                                     ))}
@@ -240,7 +240,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border">
                         {asset.videos?.length > 0 && (
                             <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-foreground flex items-center gap-2"><Video size={18} className="text-secondary" /> Vídeos</h4>
+                                <h4 className="text-sm font-bold text-foreground flex items-center gap-2"><Video size={18} className="text-primary" /> Vídeos</h4>
                                 <div className="space-y-2">
                                     {asset.videos.map((url: string, i: number) => (
                                         <button 
@@ -254,8 +254,8 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                         >
                                             <span className="text-xs font-medium">Vídeo {i + 1}</span>
                                             <div className="flex items-center gap-2">
-                                                <Maximize2 size={14} className="text-muted-foreground group-hover:text-secondary" />
-                                                <ExternalLink size={14} className="text-muted-foreground group-hover:text-secondary" />
+                                                <Maximize2 size={14} className="text-muted-foreground group-hover:text-primary" />
+                                                <ExternalLink size={14} className="text-muted-foreground group-hover:text-primary" />
                                             </div>
                                         </button>
                                     ))}
@@ -264,12 +264,12 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         )}
                         {asset.documents?.length > 0 && (
                             <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-foreground flex items-center gap-2"><FileText size={18} className="text-secondary" /> Documentos</h4>
+                                <h4 className="text-sm font-bold text-foreground flex items-center gap-2"><FileText size={18} className="text-primary" /> Documentos</h4>
                                 <div className="space-y-2">
                                     {asset.documents.map((doc: any, i: number) => (
                                         <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between p-3 rounded-xl border border-border bg-card hover:bg-muted transition-colors group">
                                             <span className="text-xs font-medium truncate pr-4">{doc.name}</span>
-                                            <ExternalLink size={14} className="text-muted-foreground group-hover:text-secondary" />
+                                            <ExternalLink size={14} className="text-muted-foreground group-hover:text-primary" />
                                         </a>
                                     ))}
                                 </div>

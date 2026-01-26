@@ -94,7 +94,7 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
     return (
         <div className="pt-2">
             <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
-                <MapPin size={14} className="text-secondary" />
+                <MapPin size={14} className="text-primary" />
                 Endereço
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -153,7 +153,7 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
 
             <div className="mt-8 border-t border-border/40 pt-6">
                 <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-                    <MapPin size={14} className="text-secondary" />
+                    <MapPin size={14} className="text-primary" />
                     Localização
                 </h4>
                 <div className="rounded-2xl overflow-hidden border border-border bg-muted/30 p-1">

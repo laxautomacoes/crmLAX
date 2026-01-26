@@ -180,7 +180,7 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
                         <div className="bg-secondary/10 border border-secondary/20 p-4 rounded-xl">
                             <div className="flex items-center justify-between mb-2">
                                 <h4 className="text-sm font-bold text-foreground flex items-center gap-2">
-                                    <Sparkles size={14} className="text-secondary" /> Insight IA
+                                    <Sparkles size={14} className="text-primary" /> Insight IA
                                 </h4>
                                 <button
                                     onClick={() => setIsAnalyzed(false)}
