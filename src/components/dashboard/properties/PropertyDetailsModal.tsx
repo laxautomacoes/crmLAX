@@ -255,6 +255,41 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                                 </div>
                             </div>
 
+                            {/* Condomínio */}
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/20">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <DollarSign size={14} className="text-primary/60" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Condomínio</span>
+                                </div>
+                                <div className="text-sm font-bold text-foreground">
+                                    {formattedCondo}
+                                </div>
+                            </div>
+
+                            {/* IPTU */}
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/20">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <DollarSign size={14} className="text-primary/60" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">IPTU</span>
+                                </div>
+                                <div className="text-sm font-bold text-foreground">
+                                    {formattedIptu}
+                                </div>
+                            </div>
+
+                            {/* Corretor Responsável */}
+                            {(prop.corretor_nome || details.corretor_nome) && (
+                                <div className="flex items-center justify-between py-1.5 border-b border-border/20">
+                                    <div className="flex items-center gap-2 text-muted-foreground">
+                                        <User size={14} className="text-primary/60" />
+                                        <span className="text-[10px] font-bold uppercase tracking-widest">Corretor</span>
+                                    </div>
+                                    <div className="text-sm font-bold text-foreground">
+                                        {prop.corretor_nome || details.corretor_nome}
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <BedDouble size={14} className="text-primary/60" />
@@ -367,32 +402,43 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                                     )}
                                 </div>
 
-                                {(details.proprietario?.telefone || prop.owner_phone || details.proprietario?.email || prop.owner_email) && (
-                                    <div className="flex flex-wrap gap-3">
-                                        {(details.proprietario?.telefone || prop.owner_phone) && (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-medium text-foreground">
-                                                <Phone size={14} className="text-primary" />
-                                                {details.proprietario?.telefone || prop.owner_phone}
-                                            </div>
-                                        )}
-                                        {(details.proprietario?.email || prop.owner_email) && (
-                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-medium text-foreground">
-                                                <Mail size={14} className="text-primary" />
-                                                {details.proprietario?.email || prop.owner_email}
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
+                                <div className="flex flex-wrap gap-3">
+                                    {(details.proprietario?.telefone || prop.owner_phone) && (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-medium text-foreground">
+                                            <Phone size={14} className="text-primary" />
+                                            {details.proprietario?.telefone || prop.owner_phone}
+                                        </div>
+                                    )}
+                                    {(details.proprietario?.email || prop.owner_email) && (
+                                        <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 border border-border/60 text-sm font-medium text-foreground">
+                                            <Mail size={14} className="text-primary" />
+                                            {details.proprietario?.email || prop.owner_email}
+                                        </div>
+                                    )}
+                                </div>
                             </div>
 
-                            {(details.proprietario?.endereco_rua || details.proprietario?.endereco_bairro) && (
-                                <div className="pt-1 flex items-start gap-2 text-sm text-muted-foreground leading-relaxed">
-                                    <MapPin size={16} className="mt-0.5 text-primary flex-shrink-0" />
-                                    <span>
-                                        {details.proprietario.endereco_rua}{details.proprietario.endereco_numero ? `, ${details.proprietario.endereco_numero}` : ''} - {details.proprietario.endereco_bairro}
-                                    </span>
+                            {/* Endereço do Proprietário / Construtora */}
+                            <div className="pt-2 flex flex-col gap-2">
+                                <div className="flex items-center gap-2 text-muted-foreground">
+                                    <MapPin size={14} className="text-primary/60" />
+                                    <span className="text-[10px] font-bold uppercase tracking-widest">Endereço do Proprietário / Construtora</span>
                                 </div>
-                            )}
+                                <div className="text-sm text-foreground bg-muted/30 p-3 rounded-xl border border-border/40">
+                                    {(details.proprietario?.endereco_rua || details.proprietario?.endereco_bairro) ? (
+                                        <div className="leading-relaxed">
+                                            {details.proprietario.endereco_rua}{details.proprietario.endereco_numero ? `, ${details.proprietario.endereco_numero}` : ''}
+                                            {details.proprietario.endereco_complemento ? ` - ${details.proprietario.endereco_complemento}` : ''}
+                                            <br />
+                                            {details.proprietario.endereco_bairro}{details.proprietario.endereco_cidade ? ` - ${details.proprietario.endereco_cidade}` : ''}
+                                            {details.proprietario.endereco_estado ? `/${details.proprietario.endereco_estado}` : ''}
+                                            {details.proprietario.endereco_cep ? ` - CEP: ${details.proprietario.endereco_cep}` : ''}
+                                        </div>
+                                    ) : (
+                                        <span className="text-muted-foreground italic text-xs">Endereço não informado</span>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     </div>
 
@@ -421,11 +467,11 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                                 <Waves size={20} className="text-primary" />
                                 Lazer e Diferenciais
                             </h3>
-                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-3">
+                            <div className="flex flex-col gap-1">
                                 {amenities.map(a => (
-                                    <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl border border-border bg-card">
+                                    <div key={a.id} className="flex items-center gap-3 py-1">
                                         <div className="text-primary">{a.icon}</div>
-                                        <span className="text-xs font-medium text-foreground">{a.label}</span>
+                                        <span className="text-sm font-medium text-foreground">{a.label}</span>
                                     </div>
                                 ))}
                             </div>
@@ -434,43 +480,18 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
 
                     {/* Secondary Info & Actions (Full Width Stack) */}
                     <div className="flex flex-col gap-8 pt-8 border-t border-muted-foreground/30">
-                        {/* Monthly Values */}
-                        <div className="space-y-4">
-                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Valores Mensais</h3>
-                            <div className="grid grid-cols-1 gap-3">
-                                <div className="flex items-center justify-between p-4 rounded-2xl border border-muted-foreground/30 bg-card">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                            <div className="text-primary font-bold text-xs">C</div>
-                                        </div>
-                                        <span className="text-sm font-medium text-foreground">Condomínio</span>
-                                    </div>
-                                    <span className="font-bold text-foreground">{formattedCondo}</span>
-                                </div>
-                                <div className="flex items-center justify-between p-4 rounded-2xl border border-muted-foreground/30 bg-card">
-                                    <div className="flex items-center gap-3">
-                                        <div className="w-10 h-10 rounded-xl bg-primary/10 flex items-center justify-center">
-                                            <div className="text-primary font-bold text-xs">I</div>
-                                        </div>
-                                        <span className="text-sm font-medium text-foreground">IPTU</span>
-                                    </div>
-                                    <span className="font-bold text-foreground">{formattedIptu}</span>
-                                </div>
-                            </div>
-                        </div>
-
                         {/* Files */}
                         {prop.documents?.length > 0 && (
                             <div className="space-y-4">
                                 <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Arquivos</h3>
-                                <div className="grid grid-cols-1 gap-3">
+                                <div className="flex flex-col gap-0">
                                     {prop.documents?.map((doc: any, i: number) => (
-                                        <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between p-4 rounded-2xl border border-border bg-card hover:bg-muted transition-all group">
-                                            <div className="flex items-center gap-3">
-                                                <FileText size={20} className="text-primary" />
-                                                <span className="text-sm font-medium text-foreground truncate max-w-[200px] md:max-w-xs">{doc.name}</span>
+                                        <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between py-1.5 border-b border-border/20 hover:bg-muted/30 transition-all group">
+                                            <div className="flex items-center gap-2 text-muted-foreground">
+                                                <FileText size={14} className="text-primary/60" />
+                                                <span className="text-[10px] font-bold uppercase tracking-widest truncate max-w-[250px] md:max-w-md">{doc.name}</span>
                                             </div>
-                                            <ExternalLink size={16} className="text-muted-foreground group-hover:text-primary" />
+                                            <ExternalLink size={14} className="text-muted-foreground group-hover:text-primary" />
                                         </a>
                                     ))}
                                 </div>
