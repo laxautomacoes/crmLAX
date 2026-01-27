@@ -132,7 +132,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
                                     <BedDouble size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Dormitórios</span>
+                                        <span className="text-sm font-bold text-muted-foreground">Dormitórios</span>
                                         <div className="flex items-baseline gap-1">
                                             <span className="font-black text-foreground text-lg leading-tight">{details.dormitorios || details.quartos || 0}</span>
                                             {Number(details.suites) > 0 && (
@@ -144,14 +144,14 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
                                     <Bath size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Banheiros</span>
+                                        <span className="text-sm font-bold text-muted-foreground">Banheiros</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.banheiros || 0}</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
                                     <Car size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Vagas de Garagem</span>
+                                        <span className="text-sm font-bold text-muted-foreground">Vagas de Garagem</span>
                                         <div className="flex items-baseline gap-1">
                                             <span className="font-black text-foreground text-lg leading-tight">{details.vagas || 0}</span>
                                             {details.vagas_numeracao && (
@@ -167,36 +167,36 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
                                     <Square size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área Privativa</span>
+                                        <span className="text-sm font-bold text-muted-foreground">Área Privativa</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_privativa || details.area_util || 0}m²</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
                                     <Square size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área Total</span>
+                                        <span className="text-sm font-bold text-muted-foreground">Área Total</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_total || 0}m²</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
                                     <Square size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área do Terreno</span>
+                                        <span className="text-sm font-bold text-muted-foreground">Área do Terreno</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_terreno || 0}m²</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
                                     <Square size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
-                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider">Área Construída</span>
+                                        <span className="text-sm font-bold text-muted-foreground">Área Construída</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_construida || 0}m²</span> 
                                     </div>
                                 </div>
                             </div>
                             
                             {details.torre_bloco && (
-                                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40 text-[10px] text-muted-foreground">
-                                    <span className="font-bold uppercase tracking-wider mr-2">Torre/Bloco:</span>
+                                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40 text-sm text-muted-foreground">
+                                    <span className="font-bold mr-2">Torre/Bloco:</span>
                                     <span className="text-foreground font-medium">{details.torre_bloco}</span>
                                 </div>
                             )}

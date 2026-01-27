@@ -248,7 +248,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <DollarSign size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Valor do Imóvel</span>
+                                    <span className="text-sm font-bold">Valor do Imóvel</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground">
                                     {formattedPrice}
@@ -259,7 +259,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <DollarSign size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Condomínio</span>
+                                    <span className="text-sm font-bold">Condomínio</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground">
                                     {formattedCondo}
@@ -270,7 +270,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <DollarSign size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">IPTU</span>
+                                    <span className="text-sm font-bold">IPTU</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground">
                                     {formattedIptu}
@@ -282,7 +282,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                                 <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                     <div className="flex items-center gap-2 text-muted-foreground">
                                         <User size={14} className="text-primary/60" />
-                                        <span className="text-[10px] font-bold uppercase tracking-widest">Corretor</span>
+                                        <span className="text-sm font-bold">Corretor</span>
                                     </div>
                                     <div className="text-sm font-bold text-foreground">
                                         {prop.corretor_nome || details.corretor_nome}
@@ -293,7 +293,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <BedDouble size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Dormitórios</span>
+                                    <span className="text-sm font-bold">Dormitórios</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground flex items-baseline gap-2">
                                     {details.dormitorios || details.quartos || 0}
@@ -308,7 +308,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Bath size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Banheiros</span>
+                                    <span className="text-sm font-bold">Banheiros</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground">
                                     {details.banheiros || 0}
@@ -318,7 +318,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Car size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Vagas</span>
+                                    <span className="text-sm font-bold">Vagas</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground flex items-baseline gap-2">
                                     {details.vagas || 0}
@@ -333,7 +333,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Square size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Área Privativa</span>
+                                    <span className="text-sm font-bold">Área Privativa</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground">{details.area_privativa || 0}m²</div>
                             </div>
@@ -341,7 +341,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Square size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Área Total</span>
+                                    <span className="text-sm font-bold">Área Total</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground">{details.area_total || 0}m²</div>
                             </div>
@@ -349,7 +349,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Square size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Área do Terreno</span>
+                                    <span className="text-sm font-bold">Área do Terreno</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground">{details.area_terreno || 0}m²</div>
                             </div>
@@ -357,7 +357,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="flex items-center justify-between py-1.5 border-b border-border/20">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <Square size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Área Construída</span>
+                                    <span className="text-sm font-bold">Área Construída</span>
                                 </div>
                                 <div className="text-sm font-bold text-foreground">{details.area_construida || 0}m²</div>
                             </div>
@@ -365,7 +365,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
 
                         {details.torre_bloco && (
                             <div className="flex items-center gap-2 text-xs text-muted-foreground py-2 px-3 bg-muted/30 rounded-lg w-fit">
-                                <span className="font-bold uppercase tracking-widest text-[9px]">Torre/Bloco:</span>
+                                <span className="font-bold text-sm">Torre/Bloco:</span>
                                 <span className="text-foreground font-semibold">{details.torre_bloco}</span>
                             </div>
                         )}
@@ -422,7 +422,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             <div className="pt-2 flex flex-col gap-2">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <MapPin size={14} className="text-primary/60" />
-                                    <span className="text-[10px] font-bold uppercase tracking-widest">Endereço do Proprietário / Construtora</span>
+                                    <span className="text-sm font-bold">Endereço do Proprietário / Construtora</span>
                                 </div>
                                 <div className="text-sm text-foreground bg-muted/30 p-3 rounded-xl border border-border/40">
                                     {(details.proprietario?.endereco_rua || details.proprietario?.endereco_bairro) ? (
@@ -489,7 +489,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                                         <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between py-1.5 border-b border-border/20 hover:bg-muted/30 transition-all group">
                                             <div className="flex items-center gap-2 text-muted-foreground">
                                                 <FileText size={14} className="text-primary/60" />
-                                                <span className="text-[10px] font-bold uppercase tracking-widest truncate max-w-[250px] md:max-w-md">{doc.name}</span>
+                                                <span className="text-sm font-bold truncate max-w-[250px] md:max-w-md">{doc.name}</span>
                                             </div>
                                             <ExternalLink size={14} className="text-muted-foreground group-hover:text-primary" />
                                         </a>
