@@ -32,6 +32,9 @@ export interface Lead {
     status: string
     assigned_to?: string
     broker_name?: string
+    images?: string[]
+    videos?: string[]
+    documents?: { name: string; url: string }[]
 }
 
 interface Stage {

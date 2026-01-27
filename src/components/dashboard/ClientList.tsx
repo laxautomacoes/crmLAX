@@ -1,11 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User } from 'lucide-react'
+import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
+import { MediaUpload } from '@/components/shared/MediaUpload'
 import { formatPhone } from '@/lib/utils/phone'
 import { fetchAddressByCep, formatCEP } from '@/lib/utils/cep'
 import { createNewClient, updateClient, deleteClient } from '@/app/_actions/clients'
@@ -44,8 +45,27 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         address_zip_code: '',
         marital_status: '',
         birth_date: '',
-        primary_interest: ''
+        primary_interest: '',
+        notes: '',
+        images: [] as string[],
+        videos: [] as string[],
+        documents: [] as { name: string; url: string }[]
     })
+
+    const handleMediaUpload = (type: 'images' | 'videos' | 'documents', files: any[]) => {
+        setFormData(prev => ({
+            ...prev,
+            [type]: [...prev[type], ...files]
+        }))
+    }
+
+    const handleMediaRemove = (type: 'images' | 'videos' | 'documents', index: number) => {
+        setFormData(prev => ({
+            ...prev,
+            [type]: prev[type].filter((_, i) => i !== index)
+        }))
+    }
+
     const [editingClientId, setEditingClientId] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [cepLoading, setCepLoading] = useState(false)
@@ -119,7 +139,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         setFormData({
             name: client.name,
             email: client.email,
-            phone: client.phone,
+            phone: client.phone ? formatPhone(client.phone) : '',
             interest: client.interest || '',
             cpf: client.cpf || '',
             address_street: client.address_street || '',
@@ -131,7 +151,11 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             address_zip_code: client.address_zip_code || '',
             marital_status: client.marital_status || '',
             birth_date: client.birth_date || '',
-            primary_interest: client.primary_interest || ''
+            primary_interest: client.primary_interest || '',
+            notes: client.notes || '',
+            images: client.images || [],
+            videos: client.videos || [],
+            documents: client.documents || []
         })
         setEditingClientId(client.id)
         setIsModalOpen(true)
@@ -153,7 +177,11 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             address_zip_code: '',
             marital_status: '',
             birth_date: '',
-            primary_interest: ''
+            primary_interest: '',
+            notes: '',
+            images: [],
+            videos: [],
+            documents: []
         })
         setEditingClientId(null)
         setIsModalOpen(true)
@@ -201,7 +229,11 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     address_zip_code: '',
                     marital_status: '',
                     birth_date: '',
-                    primary_interest: ''
+                    primary_interest: '',
+                    notes: '',
+                    images: [],
+                    videos: [],
+                    documents: []
                 })
                 setEditingClientId(null)
                 window.location.reload()
@@ -320,13 +352,26 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                 onChange={e => setFormData({ ...formData, email: e.target.value })}
                                 placeholder="joao@exemplo.com"
                             />
-                            <FormInput
-                                label="Telefone / WhatsApp"
-                                required
-                                value={formData.phone}
-                                onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
-                                placeholder="(48) 99999 9999"
-                            />
+                            <div>
+                                <FormInput
+                                    label="Telefone / WhatsApp"
+                                    required
+                                    value={formData.phone}
+                                    onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
+                                    placeholder="(48) 99999 9999"
+                                />
+                                {formData.phone && (
+                                    <a
+                                        href={`https://wa.me/55${formData.phone.replace(/\D/g, '')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors w-fit"
+                                    >
+                                        <MessageSquare size={12} />
+                                        Abrir conversa no WhatsApp
+                                    </a>
+                                )}
+                            </div>
                             <FormInput
                                 label="CPF"
                                 value={formData.cpf}
@@ -435,6 +480,31 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                     onChange={e => setFormData({ ...formData, interest: e.target.value })}
                                     placeholder="Ex: Apartamento 3 dormitórios no Centro"
                                     rows={2}
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Notas e Anexos */}
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Notas e Anexos</h3>
+                        <div className="space-y-4">
+                            <FormTextarea
+                                label="Notas/Observações"
+                                value={formData.notes}
+                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                placeholder="Alguma observação importante sobre o cliente..."
+                                rows={3}
+                            />
+                            
+                            <div className="space-y-3">
+                                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider opacity-70">Anexos</h4>
+                                <MediaUpload
+                                    images={formData.images}
+                                    videos={formData.videos}
+                                    documents={formData.documents}
+                                    onUpload={handleMediaUpload}
+                                    onRemove={handleMediaRemove}
                                 />
                             </div>
                         </div>

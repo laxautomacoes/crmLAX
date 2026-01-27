@@ -73,7 +73,8 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
 
     return (
         <div className="pt-2">
-            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
+            <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
+                <User size={14} className="text-foreground" />
                 Proprietário | Construtora
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">

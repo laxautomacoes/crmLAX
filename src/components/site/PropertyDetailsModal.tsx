@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
-import { Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, Video, FileText, ExternalLink, Maximize2 } from 'lucide-react';
+import { Home, MapPin, BedDouble, Bath, Car, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, Video, FileText, ExternalLink, Maximize2, Trees } from 'lucide-react';
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
 
@@ -165,28 +165,28 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             {/* Row 2: Area Features */}
                             <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Square size={16} className="text-primary flex-shrink-0" /> 
+                                    <Maximize2 size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold text-muted-foreground">Área Privativa</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_privativa || details.area_util || 0}m²</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Square size={16} className="text-primary flex-shrink-0" /> 
+                                    <Maximize2 size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold text-muted-foreground">Área Total</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_total || 0}m²</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Square size={16} className="text-primary flex-shrink-0" /> 
+                                    <Maximize2 size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold text-muted-foreground">Área do Terreno</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_terreno || 0}m²</span> 
                                     </div>
                                 </div>
                                 <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Square size={16} className="text-primary flex-shrink-0" /> 
+                                    <Maximize2 size={16} className="text-primary flex-shrink-0" /> 
                                     <div className="flex flex-col">
                                         <span className="text-sm font-bold text-muted-foreground">Área Construída</span>
                                         <span className="font-black text-foreground text-lg leading-tight">{details.area_construida || 0}m²</span> 
@@ -201,6 +201,9 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 </div>
                             )}
                         </div>
+
+                        <div className="border-t-2 border-border/100" />
+
                         <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{asset.description || 'Sem descrição disponível.'}</p>
 
                         {/* Map Location */}
@@ -224,7 +227,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         {amenities.length > 0 && (
                             <div className="pt-4 border-t border-border space-y-4">
                                 <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                                    <Waves size={14} className="text-primary" />
+                                    <Trees size={14} className="text-primary" />
                                     Área comum | Lazer
                                 </h4>
                                 <div className="grid grid-cols-2 gap-3">

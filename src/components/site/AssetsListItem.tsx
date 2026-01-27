@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { Home, MapPin, BedDouble, Bath, Square, Car, ChevronRight } from 'lucide-react';
+import { Home, MapPin, BedDouble, Bath, Car, ChevronRight, Maximize2 } from 'lucide-react';
 import { PropertyDetailsModal } from './PropertyDetailsModal';
 import { translatePropertyType } from '@/utils/property-translations';
 
@@ -36,7 +36,7 @@ export function AssetsListItem({ asset }: { asset: any }) {
                         <div className="flex flex-wrap items-center gap-6 mt-4 md:mt-0">
                             <div className="flex items-center gap-1.5 text-muted-foreground" title="Dormitórios"><BedDouble size={18} /><span className="text-sm font-semibold">{asset.details?.dormitorios || asset.details?.quartos || 0} Dorms</span></div>
                             <div className="flex items-center gap-1.5 text-muted-foreground" title="Banheiros"><Bath size={18} /><span className="text-sm font-semibold">{asset.details?.banheiros || 0} Banh</span></div>
-                            <div className="flex items-center gap-1.5 text-muted-foreground" title="Área"><Square size={18} /><span className="text-sm font-semibold">{asset.details?.area_util || 0}m²</span></div>
+                            <div className="flex items-center gap-1.5 text-muted-foreground" title="Área"><Maximize2 size={18} /><span className="text-sm font-semibold">{asset.details?.area_util || 0}m²</span></div>
                             <div className="flex-1 text-right">
                                 <button onClick={() => setShowDetails(true)} className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:gap-3 transition-all">Ver Detalhes<ChevronRight size={16} /></button>
                             </div>

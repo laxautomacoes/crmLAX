@@ -152,7 +152,7 @@ export function PropertyFiltersModal({
         <Modal isOpen={isOpen} onClose={onClose} title="Filtros e Ações" size="lg">
             <div className="space-y-8">
                 <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-primary font-bold">
+                    <div className="flex items-center gap-2 text-foreground font-bold">
                         <ArrowUpDown size={18} />
                         <h4 className="text-sm uppercase tracking-wider">Ordenação</h4>
                     </div>
@@ -174,15 +174,15 @@ export function PropertyFiltersModal({
                 </div>
 
                 {/* Seção de Filtros */}
-                <div className="space-y-4 pt-6 border-t border-border">
-                    <div className="flex items-center gap-2 text-primary font-bold">
+                <div className="space-y-4 pt-6">
+                    <div className="flex items-center gap-2 text-foreground font-bold">
                         <Filter size={18} />
                         <h4 className="text-sm uppercase tracking-wider">Filtros de Busca</h4>
                     </div>
                     
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-muted-foreground uppercase ml-1">Cidade</label>
+                            <label className="text-xs font-bold text-foreground uppercase ml-1">Cidade</label>
                             <FormInput
                                 placeholder="Filtrar por cidade"
                                 value={filters.city}
@@ -191,7 +191,7 @@ export function PropertyFiltersModal({
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-muted-foreground uppercase ml-1">Bairro</label>
+                            <label className="text-xs font-bold text-foreground uppercase ml-1">Bairro</label>
                             <FormInput
                                 placeholder="Filtrar por bairro"
                                 value={filters.neighborhood}
@@ -226,7 +226,7 @@ export function PropertyFiltersModal({
                         />
 
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-muted-foreground uppercase ml-1">Preço Mínimo</label>
+                            <label className="text-xs font-bold text-foreground uppercase ml-1">Preço Mínimo</label>
                             <FormInput
                                 type="number"
                                 placeholder="R$ 0,00"
@@ -236,7 +236,7 @@ export function PropertyFiltersModal({
                         </div>
 
                         <div className="space-y-1">
-                            <label className="text-xs font-bold text-muted-foreground uppercase ml-1">Preço Máximo</label>
+                            <label className="text-xs font-bold text-foreground uppercase ml-1">Preço Máximo</label>
                             <FormInput
                                 type="number"
                                 placeholder="R$ 0,00"
@@ -288,8 +288,8 @@ export function PropertyFiltersModal({
                 </div>
 
                 {/* Seção de Ações */}
-                <div className="pt-6 border-t border-border space-y-4">
-                    <div className="flex items-center gap-2 text-primary font-bold">
+                <div className="pt-6 space-y-4">
+                    <div className="flex items-center gap-2 text-foreground font-bold">
                         <Download size={18} />
                         <h4 className="text-sm uppercase tracking-wider">Importação e Exportação</h4>
                     </div>
@@ -297,30 +297,30 @@ export function PropertyFiltersModal({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
                             onClick={onExport}
-                            className="flex items-center justify-center gap-2 p-4 bg-card border border-border rounded-xl hover:bg-muted/50 transition-colors group"
+                            className="flex items-center justify-center gap-2 p-4 bg-card rounded-xl hover:bg-muted/50 transition-colors group"
                         >
-                            <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                                <Download size={20} className="text-primary" />
+                            <div className="p-2 bg-foreground/10 rounded-lg group-hover:bg-foreground/20 transition-colors">
+                                <Download size={20} className="text-foreground" />
                             </div>
                             <div className="text-left">
-                                <p className="text-sm font-bold">Exportar CSV</p>
-                                <p className="text-xs text-muted-foreground">Baixar lista filtrada</p>
+                                <p className="text-sm font-bold text-foreground">Exportar CSV</p>
+                                <p className="text-xs text-foreground">Baixar lista filtrada</p>
                             </div>
                         </button>
 
                         <button
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isImporting}
-                            className="flex items-center justify-center gap-2 p-4 bg-card border border-border rounded-xl hover:bg-muted/50 transition-colors group disabled:opacity-50"
+                            className="flex items-center justify-center gap-2 p-4 bg-card rounded-xl hover:bg-muted/50 transition-colors group disabled:opacity-50"
                         >
-                            <div className="p-2 bg-primary/10 rounded-lg group-hover:bg-primary/20 transition-colors">
-                                <Upload size={20} className="text-primary" />
+                            <div className="p-2 bg-foreground/10 rounded-lg group-hover:bg-foreground/20 transition-colors">
+                                <Upload size={20} className="text-foreground" />
                             </div>
                             <div className="text-left">
-                                <p className="text-sm font-bold">
+                                <p className="text-sm font-bold text-foreground">
                                     {isImporting ? 'Importando...' : 'Importar CSV'}
                                 </p>
-                                <p className="text-xs text-muted-foreground">Adicionar imóveis em lote</p>
+                                <p className="text-xs text-foreground">Adicionar imóveis em lote</p>
                             </div>
                         </button>
                         <input
@@ -337,7 +337,7 @@ export function PropertyFiltersModal({
                 <div className="pt-6 flex items-center justify-between">
                     <button
                         onClick={handleClearFilters}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-red-500 hover:bg-red-50 rounded-lg transition-colors"
+                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/10 rounded-lg transition-colors"
                     >
                         <Trash2 size={16} />
                         Limpar Filtros
@@ -346,13 +346,13 @@ export function PropertyFiltersModal({
                     <div className="flex gap-3">
                         <button
                             onClick={onClose}
-                            className="px-6 py-2 text-sm font-bold text-muted-foreground hover:bg-muted/50 rounded-lg transition-colors"
+                            className="px-6 py-2 text-sm font-bold text-foreground hover:bg-muted/50 rounded-lg transition-colors"
                         >
                             Fechar
                         </button>
                         <button
                             onClick={onClose}
-                            className="px-6 py-2 text-sm font-bold bg-[#404F4F] text-white hover:bg-[#2d3939] rounded-lg shadow-sm transition-all active:scale-95"
+                            className="px-6 py-2 text-sm font-bold bg-foreground text-background hover:bg-foreground/90 rounded-lg shadow-sm transition-all active:scale-95"
                         >
                             Aplicar Filtros
                         </button>

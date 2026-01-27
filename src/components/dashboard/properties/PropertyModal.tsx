@@ -343,20 +343,19 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         handleFileUpload={handleFileUpload} 
                         removeFile={removeFile} 
                     />
-                    <div className="border-t border-border" />
                     <OwnerFields formData={formData} setFormData={setFormData} />
                 </div>
 
-                <div className="flex gap-3 pt-4 border-t border-border">
+                <div className="flex gap-3 pt-4">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-3 bg-card text-foreground border border-border rounded-lg font-bold hover:bg-muted transition-all active:scale-[0.99]"
+                        className="flex-1 py-3 bg-card text-foreground rounded-lg font-bold hover:bg-muted transition-all active:scale-[0.99]"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleSaveLocal}
-                        className="flex-1 py-3 bg-yellow-400 text-black rounded-lg font-bold hover:bg-yellow-500 shadow-sm active:scale-[0.99] transition-all"
+                        className="flex-1 py-3 bg-foreground text-background rounded-lg font-bold hover:bg-foreground/90 shadow-sm active:scale-[0.99] transition-all"
                     >
                         {editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel"}
                     </button>

@@ -1,6 +1,6 @@
 'use client'
 
-import { Home, MapPin, BedDouble, Bath, Square, Car, Trash2, Edit, Video, FileText, Send } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2 } from 'lucide-react'
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations'
 
 interface PropertyCardProps {
@@ -21,20 +21,20 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole,
     return (
         <div 
             onClick={() => onView(prop)}
-            className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-shadow group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer"
+            className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer"
         >
             <div className="aspect-video bg-muted relative">
                 {prop.images?.[0] ? (
                     <img src={prop.images[0]} alt={prop.title} className="w-full h-full object-cover" />
                 ) : (
-                    <div className="w-full h-full flex items-center justify-center text-muted-foreground bg-muted/50">
+                    <div className="w-full h-full flex items-center justify-center text-foreground bg-muted/50">
                         <Home size={40} strokeWidth={1} />
                     </div>
                 )}
                 
                 {prop.status === 'Pendente' && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <div className="px-3 py-1.5 bg-yellow-400 text-yellow-900 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-xl border border-yellow-500/50 animate-pulse">
+                        <div className="px-3 py-1.5 bg-yellow-400 text-yellow-900 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">
                             Pendente de Aprovação
                         </div>
                     </div>
@@ -46,7 +46,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole,
                             e.stopPropagation()
                             onSend(prop)
                         }}
-                        className="p-2 bg-green-600 rounded-lg shadow-sm text-white hover:bg-green-700 transition-colors"
+                        className="p-2 bg-emerald-600 text-white rounded-lg shadow-sm hover:bg-emerald-700 transition-colors"
                         title="Enviar para Lead"
                     >
                         <Send size={16} />
@@ -58,7 +58,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole,
                                     e.stopPropagation()
                                     onEdit(prop)
                                 }}
-                                className="p-2 bg-gray-700 rounded-lg shadow-sm text-white hover:bg-gray-800 transition-colors"
+                                className="p-2 bg-foreground text-background rounded-lg shadow-sm hover:bg-foreground/90 transition-colors"
                                 title="Editar"
                             >
                                 <Edit size={16} />
@@ -68,7 +68,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole,
                                     e.stopPropagation()
                                     onDelete(prop.id)
                                 }}
-                                className="p-2 bg-red-600 rounded-lg shadow-sm text-white hover:bg-red-700 transition-colors"
+                                className="p-2 bg-foreground text-background rounded-lg shadow-sm hover:bg-foreground/90 transition-colors"
                                 title="Excluir"
                             >
                                 <Trash2 size={16} />
@@ -90,13 +90,13 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole,
                             {translatePropertyType(prop.type)}
                         </div>
                         {prop.videos?.length > 0 && (
-                            <div className="px-1.5 py-0.5 bg-violet-700 rounded flex items-center gap-1 text-[10px] font-black text-white shadow-sm" title={`${prop.videos.length} vídeo(s)`}>
+                            <div className="px-1.5 py-0.5 bg-foreground/10 rounded flex items-center gap-1 text-[10px] font-black text-foreground shadow-sm" title={`${prop.videos.length} vídeo(s)`}>
                                 <Video size={10} strokeWidth={3} />
                                 {prop.videos.length}
                             </div>
                         )}
                         {prop.documents?.length > 0 && (
-                            <div className="px-1.5 py-0.5 bg-orange-600 rounded flex items-center gap-1 text-[10px] font-black text-white shadow-sm" title={`${prop.documents.length} documento(s)`}>
+                            <div className="px-1.5 py-0.5 bg-foreground/10 rounded flex items-center gap-1 text-[10px] font-black text-foreground shadow-sm" title={`${prop.documents.length} documento(s)`}>
                                 <FileText size={10} strokeWidth={3} />
                                 {prop.documents.length}
                             </div>
@@ -104,28 +104,28 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole,
                     </div>
                     <div>
                         <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1">{prop.title}</h3>
-                        <div className="flex items-center gap-1 text-muted-foreground text-xs mt-1">
+                        <div className="flex items-center gap-1 text-foreground text-xs mt-1">
                             <MapPin size={12} />
                             <span className="line-clamp-1">{prop.details?.endereco?.bairro || 'Bairro ñ inf.'}, {prop.details?.endereco?.cidade || 'Cidade ñ inf.'}</span>
                         </div>
                     </div>
                 </div>
 
-                <div className="flex items-center justify-between py-3 border-y border-border">
-                    <div className="flex items-center gap-1 text-muted-foreground" title="Dormitórios">
+                <div className="flex items-center justify-between py-3">
+                    <div className="flex items-center gap-1 text-foreground" title="Dormitórios">
                         <BedDouble size={16} />
                         <span className="text-xs font-semibold">{prop.details?.dormitorios || prop.details?.quartos || 0}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-muted-foreground" title="Banheiros">
+                    <div className="flex items-center gap-1 text-foreground" title="Banheiros">
                         <Bath size={16} />
                         <span className="text-xs font-semibold">{prop.details?.banheiros || 0}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-muted-foreground" title="Vagas">
+                    <div className="flex items-center gap-1 text-foreground" title="Vagas">
                         <Car size={16} />
                         <span className="text-xs font-semibold">{prop.details?.vagas || 0}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-muted-foreground" title="Área Construída">
-                        <Square size={16} />
+                    <div className="flex items-center gap-1 text-foreground" title="Área Construída">
+                        <Maximize2 size={16} />
                         <span className="text-xs font-semibold">{prop.details?.area_construida || prop.details?.area_util || 0}m²</span>
                     </div>
                 </div>

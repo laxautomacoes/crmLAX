@@ -33,7 +33,7 @@ export function InvitationRow({ invitation, onCopyLink, onEdit }: InvitationRowP
                             <CheckCircle className="w-3.5 h-3.5" /> Aceito
                         </div>
                     ) : (
-                        <div className="flex items-center gap-1.5 text-blue-500 font-bold text-xs">
+                        <div className="flex items-center gap-1.5 px-2 py-1 bg-yellow-400/20 text-yellow-700 rounded-lg font-bold text-xs">
                             <Clock className="w-3.5 h-3.5" /> Pendente
                         </div>
                     )}

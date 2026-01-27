@@ -19,8 +19,8 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
     return (
         <div className="space-y-6">
             <div className="space-y-4">
-                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                    <Home size={14} className="text-primary" />
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                    <Home size={14} className="text-foreground" />
                     Imóvel | Empreendimento
                 </h4>
                 <div className="grid grid-cols-1 gap-x-3 gap-y-4">
@@ -34,8 +34,8 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
             </div>
 
             <div className="space-y-4">
-                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                    <User size={14} className="text-primary" />
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                    <User size={14} className="text-foreground" />
                     Corretor
                 </h4>
                 {isAdmin ? (
@@ -62,8 +62,8 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
             </div>
 
             <div className="space-y-4">
-                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                    <Info size={14} className="text-primary" />
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                    <Info size={14} className="text-foreground" />
                     Descrição
                 </h4>
                 <FormTextarea
@@ -75,7 +75,7 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                 />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4 pt-4 border-t border-border">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4 pt-4">
                 <FormInput
                     label="Preço (R$)"
                     type="number"

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, Phone, Mail, Calendar, Sparkles, MessageSquare, Edit, Trash2, MapPin, User, IdCard, Heart, Target } from 'lucide-react'
+import { ChevronDown, Phone, Mail, Calendar, Sparkles, MessageSquare, Edit, Trash2, MapPin, User, IdCard, Heart, Target, FileText, Image as ImageIcon, Video } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatPhone } from '@/lib/utils/phone'
 import { analyzeLeadProbability } from '@/app/_actions/ai-analysis'
@@ -165,9 +165,21 @@ function ClientExpandedContent({
                             <Mail size={16} className="text-muted-foreground" />
                             <span className="truncate">{client.email}</span>
                         </div>
-                        <div className="flex items-center gap-3 text-sm text-foreground">
-                            <Phone size={16} className="text-muted-foreground" />
-                            {formatPhone(client.phone)}
+                        <div className="flex items-center justify-between gap-3 text-sm text-foreground">
+                            <div className="flex items-center gap-3">
+                                <Phone size={16} className="text-muted-foreground" />
+                                {formatPhone(client.phone)}
+                            </div>
+                            <a
+                                href={`https://wa.me/55${client.phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1.5 bg-emerald-500/10 text-emerald-600 rounded-lg hover:bg-emerald-500/20 transition-colors"
+                                title="Abrir no WhatsApp"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <MessageSquare size={14} />
+                            </a>
                         </div>
                         {client.cpf && (
                             <div className="flex items-center gap-3 text-sm text-foreground">
@@ -302,6 +314,33 @@ function ClientLeadsSection({ client }: any) {
                     <p className="text-xs text-muted-foreground px-1">Sem notas registradas.</p>
                 )}
             </div>
+
+            {/* Anexos */}
+            {(client.images?.length > 0 || client.videos?.length > 0 || client.documents?.length > 0) && (
+                <div className="space-y-4">
+                    <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Anexos</h4>
+                    <div className="grid grid-cols-1 gap-2">
+                        {client.images?.map((img: string, i: number) => (
+                            <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors">
+                                <ImageIcon size={14} className="text-blue-500" />
+                                <span className="truncate">Imagem {i + 1}</span>
+                            </a>
+                        ))}
+                        {client.videos?.map((vid: string, i: number) => (
+                            <a key={i} href={vid} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors">
+                                <Video size={14} className="text-purple-500" />
+                                <span className="truncate">Vídeo {i + 1}</span>
+                            </a>
+                        ))}
+                        {client.documents?.map((doc: any, i: number) => (
+                            <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors">
+                                <FileText size={14} className="text-emerald-500" />
+                                <span className="truncate">{doc.name || `Documento ${i + 1}`}</span>
+                            </a>
+                        ))}
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

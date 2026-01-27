@@ -24,6 +24,9 @@ export interface ClientData {
     marital_status?: string
     birth_date?: string
     primary_interest?: string
+    images?: string[]
+    videos?: string[]
+    documents?: { name: string, url: string }[]
 }
 
 export async function getClients(tenantId: string) {
@@ -35,13 +38,7 @@ export async function getClients(tenantId: string) {
         .select(`
       *,
       leads (
-        id,
-        status,
-        stage_id,
-        created_at,
-        source,
-        asset_id,
-        assigned_to,
+        * ,
         profiles:assigned_to (
             full_name
         ),
@@ -98,8 +95,11 @@ export async function getClients(tenantId: string) {
             created_at: contact.created_at,
             interest,
             value: 0, // Implementar lógica de valor baseada em assets depois
-            notes: lastInteraction || '',
+            notes: contact.notes || lastInteraction || '',
             tags: contact.tags || [],
+            images: contact.images || [],
+            videos: contact.videos || [],
+            documents: contact.documents || [],
             broker_name: activeLead?.profiles?.full_name || 'Não atribuído',
             assigned_to: activeLead?.assigned_to,
             leads: (contact.leads as any[])?.map((l) => ({
@@ -134,7 +134,11 @@ export async function createNewClient(tenantId: string, data: ClientData) {
             address_zip_code: data.address_zip_code,
             marital_status: data.marital_status,
             birth_date: data.birth_date || null,
-            primary_interest: data.primary_interest
+            primary_interest: data.primary_interest,
+            notes: data.notes,
+            images: data.images || [],
+            videos: data.videos || [],
+            documents: data.documents || []
         })
         .select()
         .single()
@@ -151,7 +155,11 @@ export async function createNewClient(tenantId: string, data: ClientData) {
                 tenant_id: tenantId,
                 contact_id: contact.id,
                 source: 'Manual',
-                details: { interest: data.interest, value: data.value } // Salvando em details jsonb por enquanto
+                details: { interest: data.interest, value: data.value }, // Salvando em details jsonb por enquanto
+                notes: data.notes,
+                images: data.images || [],
+                videos: data.videos || [],
+                documents: data.documents || []
             })
 
         if (leadError) console.error('Error creating lead:', leadError)
@@ -181,7 +189,11 @@ export async function updateClient(clientId: string, data: Partial<ClientData>) 
             address_zip_code: data.address_zip_code,
             marital_status: data.marital_status,
             birth_date: data.birth_date || null,
-            primary_interest: data.primary_interest
+            primary_interest: data.primary_interest,
+            notes: data.notes,
+            images: data.images,
+            videos: data.videos,
+            documents: data.documents
         })
         .eq('id', clientId)
 

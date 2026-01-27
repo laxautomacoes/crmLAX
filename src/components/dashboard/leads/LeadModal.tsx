@@ -6,8 +6,10 @@ import { formatPhone } from '@/lib/utils/phone'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
+import { MediaUpload } from '@/components/shared/MediaUpload'
 import { toast } from 'sonner'
 import { createLead, updateLead } from '@/app/_actions/leads'
+import { MessageSquare } from 'lucide-react'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 
 interface LeadModalProps {
@@ -38,7 +40,10 @@ export function LeadModal({
         value: '',
         notes: '',
         stage_id: '',
-        assigned_to: ''
+        assigned_to: '',
+        images: [] as string[],
+        videos: [] as string[],
+        documents: [] as { name: string; url: string }[]
     })
 
     useEffect(() => {
@@ -58,6 +63,8 @@ export function LeadModal({
     }, [isOpen, tenantId])
 
     useEffect(() => {
+        if (!isOpen) return;
+
         if (editingLead) {
             setLeadData({
                 name: editingLead.name || '',
@@ -67,7 +74,10 @@ export function LeadModal({
                 value: editingLead.value?.toString() || '',
                 notes: editingLead.notes || '',
                 stage_id: editingLead.status || (stages.length > 0 ? stages[0].id : ''),
-                assigned_to: editingLead.assigned_to || ''
+                assigned_to: editingLead.assigned_to || '',
+                images: Array.isArray(editingLead.images) ? editingLead.images : [],
+                videos: Array.isArray(editingLead.videos) ? editingLead.videos : [],
+                documents: Array.isArray(editingLead.documents) ? editingLead.documents : []
             })
         } else {
             setLeadData({
@@ -78,10 +88,27 @@ export function LeadModal({
                 value: '',
                 notes: '',
                 stage_id: stages.length > 0 ? stages[0].id : '',
-                assigned_to: ''
+                assigned_to: '',
+                images: [],
+                videos: [],
+                documents: []
             })
         }
-    }, [editingLead, isOpen, stages])
+    }, [editingLead, isOpen]) // Removido stages daqui para evitar loops se stages mudar externamente
+
+    const handleMediaUpload = (type: 'images' | 'videos' | 'documents', files: any[]) => {
+        setLeadData(prev => ({
+            ...prev,
+            [type]: [...prev[type], ...files]
+        }))
+    }
+
+    const handleMediaRemove = (type: 'images' | 'videos' | 'documents', index: number) => {
+        setLeadData(prev => ({
+            ...prev,
+            [type]: prev[type].filter((_, i) => i !== index)
+        }))
+    }
 
     const handleSubmit = async () => {
         if (!leadData.name || !leadData.phone || !tenantId) {
@@ -128,6 +155,7 @@ export function LeadModal({
             isOpen={isOpen}
             onClose={onClose}
             title={editingLead ? "Editar Lead" : "Novo Lead"}
+            size="lg"
         >
             <div className="space-y-4">
                 <div className="grid grid-cols-2 gap-4">
@@ -146,6 +174,17 @@ export function LeadModal({
                             onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
                             placeholder="(48) 99999 9999"
                         />
+                        {leadData.phone && (
+                            <a
+                                href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors w-fit"
+                            >
+                                <MessageSquare size={12} />
+                                Abrir conversa no WhatsApp
+                            </a>
+                        )}
                     </div>
                     <div>
                         <FormInput
@@ -207,6 +246,17 @@ export function LeadModal({
                             onChange={(e) => setLeadData({ ...leadData, notes: e.target.value })}
                             rows={3}
                             placeholder="Alguma observação importante sobre o lead..."
+                        />
+                    </div>
+
+                    <div className="col-span-2">
+                        <h3 className="text-sm font-bold text-foreground mb-3">Anexos</h3>
+                        <MediaUpload
+                            images={leadData.images}
+                            videos={leadData.videos}
+                            documents={leadData.documents}
+                            onUpload={handleMediaUpload}
+                            onRemove={handleMediaRemove}
                         />
                     </div>
                 </div>

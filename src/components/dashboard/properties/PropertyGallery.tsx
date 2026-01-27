@@ -15,8 +15,8 @@ interface PropertyGalleryProps {
 export function PropertyGallery({ properties, onEdit, onDelete, onView, onSend, userRole, userId }: PropertyGalleryProps) {
     if (properties.length === 0) {
         return (
-            <div className="text-center py-20 bg-card rounded-2xl border border-dashed border-border">
-                <p className="text-muted-foreground font-medium">Nenhum imóvel cadastrado.</p>
+            <div className="text-center py-20 bg-card rounded-2xl">
+                <p className="text-foreground font-medium">Nenhum imóvel cadastrado.</p>
             </div>
         )
     }

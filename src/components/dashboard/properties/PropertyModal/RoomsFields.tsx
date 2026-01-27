@@ -12,8 +12,8 @@ export function RoomsFields({ formData, setFormData }: RoomsFieldsProps) {
     return (
         <div className="space-y-6 pt-2">
             <div className="space-y-4">
-                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                    <BedDouble size={14} className="text-primary" />
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                    <BedDouble size={14} className="text-foreground" />
                     Cômodos e Vagas
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4">
@@ -46,8 +46,8 @@ export function RoomsFields({ formData, setFormData }: RoomsFieldsProps) {
             </div>
 
             <div className="space-y-4">
-                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                    <Building2 size={14} className="text-primary" />
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                    <Building2 size={14} className="text-foreground" />
                     Estrutura e Custos
                 </h4>
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4">

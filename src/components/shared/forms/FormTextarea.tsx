@@ -11,7 +11,7 @@ export function FormTextarea({ label, error, className = '', ...props }: FormTex
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-sm font-bold text-muted-foreground ml-1 mb-1">
+                <label className="block text-sm font-bold text-foreground ml-1 mb-1">
                     {label}
                 </label>
             )}

@@ -18,47 +18,34 @@ export function translatePropertyType(type: string): string {
 }
 
 export function getPropertyTypeStyles(type: string): string {
-    const types: Record<string, string> = {
-        'apartment': 'bg-blue-600 text-white',
-        'house': 'bg-emerald-600 text-white',
-        'land': 'bg-amber-600 text-white',
-        'commercial': 'bg-indigo-600 text-white',
-        'penthouse': 'bg-purple-600 text-white',
-        'studio': 'bg-pink-600 text-white',
-        'rural': 'bg-green-600 text-white',
-        'warehouse': 'bg-slate-600 text-white',
-        'office': 'bg-cyan-600 text-white',
-        'store': 'bg-rose-600 text-white'
+    const normalizedType = type?.toLowerCase();
+    switch (normalizedType) {
+        case 'apartment': return 'bg-blue-500/10 text-blue-600';
+        case 'house': return 'bg-emerald-500/10 text-emerald-600';
+        case 'land': return 'bg-slate-500/10 text-slate-600';
+        case 'commercial': return 'bg-purple-500/10 text-purple-600';
+        default: return 'bg-foreground/10 text-foreground';
     }
-    return types[type?.toLowerCase()] || 'bg-primary text-primary-foreground'
 }
 
 export function getStatusStyles(status: string): string {
-    switch (status) {
-        case 'Disponível':
-            return 'bg-green-100 text-green-700';
-        case 'Pendente':
-            return 'bg-yellow-400 text-yellow-900';
-        case 'Vendido':
-        case 'Reservado':
-        case 'Suspenso':
-            return 'bg-yellow-100 text-yellow-700';
-        default:
-            return 'bg-gray-100 text-gray-700';
+    const normalizedStatus = status?.toLowerCase();
+    switch (normalizedStatus) {
+        case 'ativo': return 'bg-emerald-500/10 text-emerald-600';
+        case 'pendente': return 'bg-yellow-400/20 text-yellow-700';
+        case 'inativo': return 'bg-red-500/10 text-red-600';
+        default: return 'bg-foreground/10 text-foreground';
     }
 }
 
 export function getSituacaoStyles(situacao: string): string {
-    switch (situacao?.toLowerCase()) {
+    const normalizedSituacao = situacao?.toLowerCase();
+    switch (normalizedSituacao) {
         case 'lançamento':
-            return 'bg-purple-100 text-purple-700';
-        case 'em construção':
-            return 'bg-orange-100 text-orange-700';
-        case 'novo':
-            return 'bg-blue-100 text-blue-700';
-        case 'revenda':
-            return 'bg-slate-100 text-slate-700';
-        default:
-            return 'bg-muted text-muted-foreground';
+        case 'lancamento': return 'bg-emerald-500/10 text-emerald-600';
+        case 'pronto': return 'bg-blue-500/10 text-blue-600';
+        case 'em obras': return 'bg-orange-500/10 text-orange-600';
+        case 'na planta': return 'bg-purple-500/10 text-purple-600';
+        default: return 'bg-foreground/10 text-foreground';
     }
 }

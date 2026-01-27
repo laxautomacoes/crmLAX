@@ -253,59 +253,59 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <div className="space-y-2">
                                 {isLoading ? (
                                     <div className="flex items-center justify-center py-8">
-                                        <Loader2 className="animate-spin text-primary" size={24} />
+                                        <Loader2 className="animate-spin text-foreground" size={24} />
                                     </div>
                                 ) : filteredLeads.length > 0 ? (
                                     filteredLeads.map(lead => (
                                         <div
                                             key={lead.id}
                                             onClick={() => setSelectedLead(lead)}
-                                            className="w-full flex items-center gap-3 p-3 rounded-lg border border-border hover:border-primary/50 hover:bg-primary/5 transition-all text-left group cursor-pointer"
+                                            className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-foreground/5 transition-all text-left group cursor-pointer"
                                         >
-                                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-muted-foreground group-hover:bg-primary/10 group-hover:text-primary transition-colors">
+                                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground group-hover:bg-foreground/10 transition-colors">
                                                 <User size={20} />
                                             </div>
                                             <div className="flex-1 min-w-0">
                                                 <p className="font-bold text-foreground truncate">{lead.name}</p>
-                                                <p className="text-xs text-muted-foreground truncate">{lead.email || 'Sem e-mail'}</p>
-                                                <p className="text-[10px] font-medium text-muted-foreground">{formatPhone(lead.phone)}</p>
+                                                <p className="text-xs text-foreground truncate">{lead.email || 'Sem e-mail'}</p>
+                                                <p className="text-[10px] font-medium text-foreground">{formatPhone(lead.phone)}</p>
                                             </div>
                                         </div>
                                     ))
                                 ) : (
-                                    <p className="text-center py-8 text-muted-foreground">Nenhum lead encontrado.</p>
+                                    <p className="text-center py-8 text-foreground">Nenhum lead encontrado.</p>
                                 )}
                             </div>
                         </div>
                     ) : (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             {/* Lead Header */}
-                            <div className="flex items-center gap-4 p-4 rounded-xl bg-primary/5 border border-primary/20">
-                                <div className="w-12 h-12 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-foreground/5">
+                                <div className="w-12 h-12 rounded-full bg-foreground/10 flex items-center justify-center text-foreground">
                                     <User size={24} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-bold text-muted-foreground uppercase tracking-wider">Lead Selecionado</p>
+                                    <p className="text-sm font-bold text-foreground uppercase tracking-wider">Lead Selecionado</p>
                                     <p className="text-lg font-bold text-foreground">{selectedLead.name}</p>
                                 </div>
                                 <button 
                                     onClick={() => setSelectedLead(null)}
-                                    className="text-sm font-bold text-primary hover:underline"
+                                    className="text-sm font-bold text-foreground hover:underline"
                                 >
                                     Alterar
                                 </button>
                             </div>
 
                             {/* Configuration Options */}
-                            <div className="space-y-4 border border-border rounded-xl overflow-hidden bg-card">
+                            <div className="space-y-4 rounded-xl overflow-hidden bg-card">
                                 {/* Basic Info Section */}
-                                <div className="border-b border-border">
+                                <div className="">
                                     <button 
                                         onClick={() => toggleSection('basic')}
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Info size={18} className="text-primary" />
+                                            <Info size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Informações Básicas</span>
                                         </div>
                                         {expandedSections.basic ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -323,17 +323,17 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 onChange={(e) => setConfig({...config, price: e.target.checked})} 
                                             />
                                             <div className="flex flex-col gap-2 pt-1">
-                                                <p className="text-xs font-bold text-muted-foreground uppercase">Descrição</p>
+                                                <p className="text-xs font-bold text-foreground uppercase">Descrição</p>
                                                 <div className="flex gap-4">
                                                     <button 
                                                         onClick={() => setConfig({...config, description: 'full'})}
-                                                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${config.description === 'full' ? 'bg-primary/10 border-primary text-primary font-bold' : 'border-border text-muted-foreground'}`}
+                                                        className={`text-xs px-3 py-1.5 rounded-full transition-all ${config.description === 'full' ? 'bg-foreground/10 text-foreground font-bold' : 'text-foreground'}`}
                                                     >
                                                         Completa
                                                     </button>
                                                     <button 
                                                         onClick={() => setConfig({...config, description: 'none'})}
-                                                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${config.description === 'none' ? 'bg-primary/10 border-primary text-primary font-bold' : 'border-border text-muted-foreground'}`}
+                                                        className={`text-xs px-3 py-1.5 rounded-full transition-all ${config.description === 'none' ? 'bg-foreground/10 text-foreground font-bold' : 'text-foreground'}`}
                                                     >
                                                         Não enviar
                                                     </button>
@@ -344,13 +344,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 </div>
 
                                 {/* Details Section */}
-                                <div className="border-b border-border">
+                                <div className="">
                                     <button 
                                         onClick={() => toggleSection('details')}
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Home size={18} className="text-primary" />
+                                            <Home size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Detalhes (Cômodos/Áreas)</span>
                                         </div>
                                         {expandedSections.details ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -384,13 +384,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 </div>
 
                                 {/* Location Section */}
-                                <div className="border-b border-border">
+                                <div className="">
                                     <button 
                                         onClick={() => toggleSection('location')}
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <MapPin size={18} className="text-primary" />
+                                            <MapPin size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Localização</span>
                                         </div>
                                         {expandedSections.location ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -406,7 +406,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     <button 
                                                         key={opt.id}
                                                         onClick={() => setConfig({...config, location: opt.id as any})}
-                                                        className={`text-xs px-3 py-1.5 rounded-full border transition-all ${config.location === opt.id ? 'bg-primary/10 border-primary text-primary font-bold' : 'border-border text-muted-foreground'}`}
+                                                        className={`text-xs px-3 py-1.5 rounded-full transition-all ${config.location === opt.id ? 'bg-foreground/10 text-foreground font-bold' : 'text-foreground'}`}
                                                     >
                                                         {opt.label}
                                                     </button>
@@ -416,14 +416,14 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     )}
                                 </div>
 
-                                {/* Media - Images Section */}
-                                <div className="border-b border-border">
+                                {/* Media Sections (Images/Videos/Docs) */}
+                                <div className="">
                                     <button 
                                         onClick={() => toggleSection('images')}
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <ImageIcon size={18} className="text-primary" />
+                                            <ImageIcon size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Imagens ({config.selectedImages.length})</span>
                                         </div>
                                         {expandedSections.images ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -441,7 +441,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                                     : [...config.selectedImages, img]
                                                                 setConfig({...config, selectedImages: newImages})
                                                             }}
-                                                            className={`relative aspect-square rounded-lg overflow-hidden border-2 cursor-pointer transition-opacity ${selectedImagesSet.has(img) ? 'border-primary' : 'border-transparent opacity-60 hover:opacity-100'}`}
+                                                            className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-opacity ${selectedImagesSet.has(img) ? 'ring-2 ring-foreground ring-inset' : 'opacity-60 hover:opacity-100'}`}
                                                         >
                                                             <img 
                                                                 src={img} 
@@ -450,28 +450,27 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                                 alt={`Foto ${idx + 1}`}
                                                             />
                                                             {selectedImagesSet.has(img) && (
-                                                                <div className="absolute inset-0 bg-primary/20 flex items-center justify-center">
-                                                                    <CheckCircle2 className="text-white fill-primary" size={20} />
+                                                                <div className="absolute inset-0 bg-foreground/20 flex items-center justify-center">
+                                                                    <CheckCircle2 className="text-background fill-foreground" size={20} />
                                                                 </div>
                                                             )}
                                                         </div>
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-muted-foreground italic">Nenhuma imagem disponível.</p>
+                                                <p className="text-xs text-foreground italic">Nenhuma imagem disponível.</p>
                                             )}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Media - Videos Section */}
-                                <div className="border-b border-border">
+                                <div className="">
                                     <button 
                                         onClick={() => toggleSection('videos')}
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Video size={18} className="text-primary" />
+                                            <Video size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Vídeos ({config.selectedVideos.length})</span>
                                         </div>
                                         {expandedSections.videos ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -496,20 +495,19 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-muted-foreground italic">Nenhum vídeo disponível.</p>
+                                                <p className="text-xs text-foreground italic">Nenhum vídeo disponível.</p>
                                             )}
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Media - Documents Section */}
-                                <div>
+                                <div className="">
                                     <button 
                                         onClick={() => toggleSection('docs')}
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <FileText size={18} className="text-primary" />
+                                            <FileText size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Documentos ({config.selectedDocs.length})</span>
                                         </div>
                                         {expandedSections.docs ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
@@ -534,7 +532,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-muted-foreground italic">Nenhum documento disponível.</p>
+                                                <p className="text-xs text-foreground italic">Nenhum documento disponível.</p>
                                             )}
                                         </div>
                                     )}
@@ -545,39 +543,39 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 </div>
 
                 {selectedLead && (
-                    <div className="pt-6 border-t border-border mt-auto">
+                    <div className="pt-6 mt-auto">
                         <div className="grid grid-cols-2 gap-4">
                             <button
                                 onClick={() => handleSendEmail(selectedLead)}
                                 disabled={sending || !selectedLead.email}
-                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-border hover:border-primary/50 hover:bg-primary/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-foreground/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
                             >
-                                <div className="w-10 h-10 rounded-full bg-blue-500/10 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                                <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center text-foreground group-hover:scale-110 transition-transform">
                                     <Mail size={20} />
                                 </div>
                                 <div className="text-center">
                                     <p className="font-bold text-foreground text-sm">Enviar E-mail</p>
-                                    <p className="text-[10px] text-muted-foreground truncate max-w-[120px]">{selectedLead.email || 'Sem e-mail'}</p>
+                                    <p className="text-[10px] text-foreground truncate max-w-[120px]">{selectedLead.email || 'Sem e-mail'}</p>
                                 </div>
                             </button>
 
                             <button
                                 onClick={() => handleSendWhatsApp(selectedLead)}
                                 disabled={sending || !selectedLead.phone}
-                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl border border-border hover:border-green-500/50 hover:bg-green-500/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-foreground/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
                             >
-                                <div className="w-10 h-10 rounded-full bg-green-500/10 flex items-center justify-center text-green-500 group-hover:scale-110 transition-transform">
+                                <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center text-foreground group-hover:scale-110 transition-transform">
                                     <MessageCircle size={20} />
                                 </div>
                                 <div className="text-center">
                                     <p className="font-bold text-foreground text-sm">Enviar WhatsApp</p>
-                                    <p className="text-[10px] text-muted-foreground">{formatPhone(selectedLead.phone)}</p>
+                                    <p className="text-[10px] text-foreground">{formatPhone(selectedLead.phone)}</p>
                                 </div>
                             </button>
                         </div>
 
                         {sending && (
-                            <div className="flex items-center justify-center gap-2 text-primary font-bold mt-4">
+                            <div className="flex items-center justify-center gap-2 text-foreground font-bold mt-4">
                                 <Loader2 className="animate-spin" size={20} />
                                 <span>Enviando...</span>
                             </div>

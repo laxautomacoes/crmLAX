@@ -33,8 +33,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className={`bg-card rounded-2xl shadow-xl w-full ${sizeClasses[size]} overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border">
+            <div className={`bg-card rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
                     <h3 className="text-lg font-semibold text-foreground">{title}</h3>
                     <button
                         onClick={onClose}
@@ -43,7 +43,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
                         <X size={20} />
                     </button>
                 </div>
-                <div className="p-6">
+                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
                     {children}
                 </div>
             </div>

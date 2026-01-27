@@ -14,13 +14,13 @@ export function FormInput({ label, error, icon: Icon, rightElement, className = 
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-[11px] font-bold text-muted-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis uppercase tracking-tight">
+                <label className="block text-[11px] font-bold text-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis uppercase tracking-tight">
                     {label}
                 </label>
             )}
             <div className="relative">
                 {Icon && (
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground pointer-events-none">
                         <Icon size={18} />
                     </div>
                 )}
@@ -40,7 +40,7 @@ export function FormInput({ label, error, icon: Icon, rightElement, className = 
                     {...props}
                 />
                 {rightElement && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 text-foreground">
                         {rightElement}
                     </div>
                 )}

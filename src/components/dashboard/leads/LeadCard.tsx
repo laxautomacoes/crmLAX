@@ -1,4 +1,4 @@
-import { Phone, Mail, Tag, MessageSquare, MoreVertical, Sparkles, Edit, Trash2, User, ChevronDown, ChevronUp, CircleDollarSign } from 'lucide-react'
+import { Phone, Mail, Tag, MessageSquare, MoreVertical, Sparkles, Edit, Trash2, User, ChevronDown, ChevronUp, CircleDollarSign, FileText, Image as ImageIcon, Video } from 'lucide-react'
 import { formatPhone } from '@/lib/utils/phone'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useRef, useEffect } from 'react'
@@ -124,9 +124,21 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                         className="overflow-hidden"
                     >
                         <div className="space-y-1.5 mb-4 px-0.5">
-                            <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-medium">
-                                <Phone size={12} className="text-foreground/70" />
-                                <span className="text-foreground/70 dark:text-foreground/80">{formatPhone(lead.phone)}</span>
+                            <div className="flex items-center justify-between gap-2 text-[11px] text-foreground/80 font-medium">
+                                <div className="flex items-center gap-2">
+                                    <Phone size={12} className="text-foreground/70" />
+                                    <span className="text-foreground/70 dark:text-foreground/80">{formatPhone(lead.phone)}</span>
+                                </div>
+                                <a
+                                    href={`https://wa.me/55${lead.phone.replace(/\D/g, '')}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="p-1 bg-emerald-500/10 text-emerald-600 rounded-md hover:bg-emerald-500/20 transition-colors"
+                                    title="Abrir no WhatsApp"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <MessageSquare size={10} />
+                                </a>
                             </div>
                             {lead.email && (
                                 <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-medium">
@@ -153,6 +165,33 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                         {lead.notes && (
                             <div className="bg-muted/5 dark:bg-card/50 p-2 rounded-lg mb-4 border border-muted-foreground/30">
                                 <p className="text-[10px] text-muted-foreground italic line-clamp-2">"{lead.notes}"</p>
+                            </div>
+                        )}
+
+                        {/* Anexos do Lead */}
+                        {(lead.images?.length > 0 || lead.videos?.length > 0 || lead.documents?.length > 0) && (
+                            <div className="space-y-1.5 mb-4">
+                                <h5 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">Anexos</h5>
+                                <div className="grid grid-cols-1 gap-1">
+                                    {lead.images?.map((img: string, i: number) => (
+                                        <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors">
+                                            <ImageIcon size={10} className="text-blue-500" />
+                                            <span className="truncate">Imagem {i + 1}</span>
+                                        </a>
+                                    ))}
+                                    {lead.videos?.map((vid: string, i: number) => (
+                                        <a key={i} href={vid} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors">
+                                            <Video size={10} className="text-purple-500" />
+                                            <span className="truncate">Vídeo {i + 1}</span>
+                                        </a>
+                                    ))}
+                                    {lead.documents?.map((doc: any, i: number) => (
+                                        <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors">
+                                            <FileText size={10} className="text-emerald-500" />
+                                            <span className="truncate">{doc.name || `Doc ${i + 1}`}</span>
+                                        </a>
+                                    ))}
+                                </div>
                             </div>
                         )}
 

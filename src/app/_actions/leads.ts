@@ -50,7 +50,10 @@ export async function getPipelineData(tenantId: string) {
         value: lead.value,
         interest: lead.source, // Usando source como interesse por enquanto
         assigned_to: lead.assigned_to,
-        broker_name: lead.profiles?.full_name || 'Não atribuído'
+        broker_name: lead.profiles?.full_name || 'Não atribuído',
+        images: lead.images || [],
+        videos: lead.videos || [],
+        documents: lead.documents || []
     }));
 
     return {
@@ -120,7 +123,10 @@ export async function createLead(tenantId: string, data: any) {
             notes: data.notes,
             value: data.value,
             source: data.interest || 'Direto',
-            assigned_to: data.assigned_to || user?.id
+            assigned_to: data.assigned_to || user?.id,
+            images: data.images || [],
+            videos: data.videos || [],
+            documents: data.documents || []
         });
 
     if (leadError) return { success: false, error: leadError.message };
@@ -172,7 +178,10 @@ export async function updateLead(tenantId: string, leadId: string, data: any) {
             notes: data.notes,
             value: data.value,
             source: data.interest,
-            assigned_to: data.assigned_to
+            assigned_to: data.assigned_to,
+            images: data.images,
+            videos: data.videos,
+            documents: data.documents
         })
         .eq('id', leadId);
 
