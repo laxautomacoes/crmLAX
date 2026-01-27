@@ -99,17 +99,16 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
         <Modal isOpen={isOpen} onClose={onClose} title="Detalhes do Imóvel" size="xl">
             <div className="space-y-8 max-h-[85vh] overflow-y-auto pr-4 custom-scrollbar">
                 {/* Header Info */}
-                <div className="flex items-center justify-between gap-4 border-b border-border pb-6">
+                <div className="flex flex-col gap-6 border-b border-border pb-6">
+                    <div className="space-y-4">
+                        <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <Home size={14} className="text-primary" />
+                            Imóvel | Empreendimento
+                        </h4>
                         <div className="space-y-1">
                             <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                                <div className="flex items-center gap-1.5 text-muted-foreground text-sm font-medium">
-                                    <MapPin size={14} className="text-primary" />
-                                    {fullAddress || 'Endereço não informado'}
-                                </div>
-                                
                                 <div className="flex items-center gap-2">
-                                    <span className="w-1.5 h-1.5 rounded-full bg-border" />
                                     {details.situacao && (
                                         <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getSituacaoStyles(details.situacao)}`}>
                                             {details.situacao}
@@ -126,6 +125,18 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                                 </div>
                             </div>
                         </div>
+                    </div>
+
+                    <div className="space-y-4">
+                        <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                            <MapPin size={14} className="text-primary" />
+                            Endereço
+                        </h4>
+                        <div className="flex items-center gap-1.5 text-muted-foreground text-sm font-medium">
+                            {fullAddress || 'Endereço não informado'}
+                        </div>
+                    </div>
+
                     {onSend && (
                         <button
                             onClick={() => onSend(prop)}
@@ -139,6 +150,10 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
 
                 {/* Gallery */}
                 <div className="space-y-4">
+                    <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                        <Maximize2 size={14} className="text-primary" />
+                        Imagens
+                    </h4>
                     <div 
                         className="relative group w-full aspect-video rounded-3xl overflow-hidden bg-black/90 border border-border flex items-center justify-center"
                     >
@@ -209,10 +224,10 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
 
                     {/* Videos Carousel (Separated) */}
                     {prop.videos?.length > 0 && (
-                        <div className="space-y-2">
-                            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-2 px-1">
-                                <Video size={12} className="text-primary" />
-                                Vídeos do Imóvel
+                        <div className="space-y-4 pt-4">
+                            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                <Video size={14} className="text-primary" />
+                                Vídeos
                             </h4>
                             <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
                                 {prop.videos.map((url: string, i: number) => (
@@ -279,18 +294,23 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
 
                             {/* Corretor Responsável */}
                             {(prop.corretor_nome || details.corretor_nome) && (
-                                <div className="flex items-center justify-between py-1.5 border-b border-border/20">
-                                    <div className="flex items-center gap-2 text-muted-foreground">
-                                        <User size={14} className="text-primary/60" />
-                                        <span className="text-sm font-bold">Corretor</span>
-                                    </div>
-                                    <div className="text-sm font-bold text-foreground">
-                                        {prop.corretor_nome || details.corretor_nome}
+                                <div className="space-y-4 pt-4">
+                                    <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                        <User size={14} className="text-primary" />
+                                        Corretor
+                                    </h4>
+                                    <div className="flex items-center justify-between py-1.5 border-b border-border/20">
+                                        <div className="flex items-center gap-2 text-muted-foreground">
+                                            <span className="text-sm font-bold">Responsável</span>
+                                        </div>
+                                        <div className="text-sm font-bold text-foreground">
+                                            {prop.corretor_nome || details.corretor_nome}
+                                        </div>
                                     </div>
                                 </div>
                             )}
 
-                            <div className="flex items-center justify-between py-1.5 border-b border-border/20">
+                            <div className="flex items-center justify-between py-1.5 border-b border-border/20 pt-4">
                                 <div className="flex items-center gap-2 text-muted-foreground">
                                     <BedDouble size={14} className="text-primary/60" />
                                     <span className="text-sm font-bold">Dormitórios</span>
@@ -373,22 +393,22 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
 
                     {/* Description & Proprietary (Full Width) */}
                     <div className="grid grid-cols-1 gap-8">
-                        <div className="space-y-3">
-                            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                                <Info size={20} className="text-primary" />
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                <Info size={14} className="text-primary" />
                                 Descrição
-                            </h3>
+                            </h4>
                             <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
                                 {prop.description || 'Nenhuma descrição informada para este imóvel.'}
                             </p>
                         </div>
 
                         {/* Proprietário | Construtora Section (Standardized with Description style) */}
-                        <div className="space-y-3">
-                            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                                <User size={20} className="text-primary" />
+                        <div className="space-y-4">
+                            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                <User size={14} className="text-primary" />
                                 Proprietário | Construtora
-                            </h3>
+                            </h4>
                             
                             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                                 <div className="text-muted-foreground leading-relaxed">
@@ -445,10 +465,10 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                     {/* Map Location */}
                     {endereco.latitude && endereco.longitude && (
                         <div className="space-y-4">
-                            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                                <MapPin size={20} className="text-primary" />
+                            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                <MapPin size={14} className="text-primary" />
                                 Localização
-                            </h3>
+                            </h4>
                             <div className="rounded-2xl overflow-hidden border border-border bg-muted/30 p-1 aspect-[21/9] min-h-[300px]">
                                 <PropertyMap 
                                     lat={endereco.latitude} 
@@ -463,10 +483,10 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                     {/* Amenities (Full Width) */}
                     {amenities.length > 0 && (
                         <div className="space-y-4">
-                            <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                                <Waves size={20} className="text-primary" />
-                                Lazer e Diferenciais
-                            </h3>
+                            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                <Waves size={14} className="text-primary" />
+                                Área comum | Lazer
+                            </h4>
                             <div className="flex flex-col gap-1">
                                 {amenities.map(a => (
                                     <div key={a.id} className="flex items-center gap-3 py-1">
@@ -483,7 +503,10 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                         {/* Files */}
                         {prop.documents?.length > 0 && (
                             <div className="space-y-4">
-                                <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Arquivos</h3>
+                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                    <FileText size={14} className="text-primary" />
+                                    Documentos
+                                </h4>
                                 <div className="flex flex-col gap-0">
                                     {prop.documents?.map((doc: any, i: number) => (
                                         <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between py-1.5 border-b border-border/20 hover:bg-muted/30 transition-all group">

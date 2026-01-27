@@ -93,7 +93,7 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
 
     return (
         <div className="pt-2">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-3 flex items-center gap-2">
+            <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
                 <MapPin size={14} className="text-primary" />
                 Endereço
             </h4>
@@ -151,12 +151,12 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
                 />
             </div>
 
-            <div className="mt-8 border-t border-border/40 pt-6">
-                <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
+            <div className="mt-8 border-t border-border/40 pt-6 space-y-4">
+                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
                     <MapPin size={14} className="text-primary" />
                     Localização
                 </h4>
-                <div className="rounded-2xl overflow-hidden border border-border bg-muted/30 p-1">
+                <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-1 aspect-[21/9] min-h-[300px]">
                     <PropertyMap 
                         address={fullAddress}
                         lat={formData.details.endereco.latitude}

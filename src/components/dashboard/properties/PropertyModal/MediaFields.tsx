@@ -12,16 +12,13 @@ interface MediaFieldsProps {
 export function MediaFields({ formData, isUploading, handleFileUpload, removeFile }: MediaFieldsProps) {
     return (
         <div className="col-span-2 pt-4 border-t border-border">
-            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 flex items-center gap-2">
-                Mídia e Arquivos
-            </h4>
-            
-            <div className="space-y-6">
+            <div className="space-y-8">
                 {/* Imagens */}
                 <div>
-                    <label className="block text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-                        <ImageIcon size={16} className="text-primary" /> Imagens
-                    </label>
+                    <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <ImageIcon size={14} className="text-primary" />
+                        Imagens
+                    </h4>
                     <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-3">
                         {formData.images.map((url: string, index: number) => (
                             <div key={index} className="relative aspect-square rounded-lg overflow-hidden border border-border group">
@@ -58,9 +55,10 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
 
                 {/* Vídeos */}
                 <div>
-                    <label className="block text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-                        <Film size={16} className="text-primary" /> Vídeos
-                    </label>
+                    <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <Film size={14} className="text-primary" />
+                        Vídeos
+                    </h4>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
                         {formData.videos.map((url: string, index: number) => (
                             <div key={index} className="relative aspect-video rounded-lg overflow-hidden border border-border group bg-black/5 flex items-center justify-center">
@@ -97,9 +95,10 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
 
                 {/* Documentos */}
                 <div>
-                    <label className="block text-sm font-bold text-foreground mb-2 flex items-center gap-2">
-                        <FileText size={16} className="text-primary" /> Documentos
-                    </label>
+                    <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
+                        <FileText size={14} className="text-primary" />
+                        Documentos
+                    </h4>
                     <div className="space-y-2 mb-3">
                         {formData.documents.map((doc: any, index: number) => (
                             <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 border border-border group">

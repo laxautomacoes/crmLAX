@@ -3,6 +3,7 @@
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
+import { Home, User, Info } from 'lucide-react'
 
 interface BasicInfoFieldsProps {
     formData: any
@@ -16,18 +17,30 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
 
     return (
-        <div className="space-y-4">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-x-3 gap-y-4">
-                <FormInput
-                    label="Imóvel | Empreendimento *"
-                    value={formData.title}
-                    onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                    placeholder="Ex: Apartamento 3 suítes Beira Mar"
-                />
+        <div className="space-y-6">
+            <div className="space-y-4">
+                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <Home size={14} className="text-primary" />
+                    Imóvel | Empreendimento
+                </h4>
+                <div className="grid grid-cols-1 gap-x-3 gap-y-4">
+                    <FormInput
+                        label="Título do Imóvel *"
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="Ex: Apartamento 3 suítes Beira Mar"
+                    />
+                </div>
+            </div>
 
+            <div className="space-y-4">
+                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <User size={14} className="text-primary" />
+                    Corretor
+                </h4>
                 {isAdmin ? (
                     <FormSelect
-                        label="Corretor"
+                        label="Responsável"
                         value={formData.created_by || 'all'}
                         onChange={(e) => setFormData({ ...formData, created_by: e.target.value === 'all' ? null : e.target.value })}
                         options={[
@@ -40,7 +53,7 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                     />
                 ) : (
                     <FormInput
-                        label="Corretor"
+                        label="Responsável"
                         value={currentProfile?.full_name || ''}
                         disabled
                         onChange={() => {}}
@@ -48,15 +61,21 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                 )}
             </div>
 
-            <FormTextarea
-                label="Descrição"
-                value={formData.description}
-                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                placeholder="Descreva os principais detalhes do imóvel..."
-                rows={4}
-            />
+            <div className="space-y-4">
+                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                    <Info size={14} className="text-primary" />
+                    Descrição
+                </h4>
+                <FormTextarea
+                    label="Detalhes da descrição"
+                    value={formData.description}
+                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    placeholder="Descreva os principais detalhes do imóvel..."
+                    rows={4}
+                />
+            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4 pt-4 border-t border-border">
                 <FormInput
                     label="Preço (R$)"
                     type="number"

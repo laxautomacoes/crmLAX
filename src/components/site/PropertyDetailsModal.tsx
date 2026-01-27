@@ -69,9 +69,9 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
 
                         {/* Videos Carousel (Separated) */}
                         {asset.videos?.length > 0 && (
-                            <div className="space-y-2 pt-2 border-t border-border/50">
-                                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider flex items-center gap-1.5 px-1">
-                                    <Video size={12} className="text-primary" />
+                            <div className="space-y-4 pt-4 border-t border-border/50">
+                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                    <Video size={14} className="text-primary" />
                                     Vídeos
                                 </h4>
                                 <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar snap-x">
@@ -205,9 +205,9 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
 
                         {/* Map Location */}
                         {details.endereco?.latitude && details.endereco?.longitude && (
-                            <div className="pt-4 border-t border-border">
-                                <h4 className="text-sm font-bold text-foreground mb-3 flex items-center gap-2">
-                                    <MapPin size={18} className="text-primary" />
+                            <div className="pt-4 border-t border-border space-y-4">
+                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                    <MapPin size={14} className="text-primary" />
                                     Localização
                                 </h4>
                                 <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-1 aspect-video">
@@ -222,8 +222,11 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         )}
 
                         {amenities.length > 0 && (
-                            <div className="pt-4 border-t border-border">
-                                <h4 className="text-sm font-bold text-foreground mb-3">Diferenciais</h4>
+                            <div className="pt-4 border-t border-border space-y-4">
+                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                    <Waves size={14} className="text-primary" />
+                                    Área comum | Lazer
+                                </h4>
                                 <div className="grid grid-cols-2 gap-3">
                                     {amenities.map(a => (
                                         <div key={a.id} className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -239,8 +242,11 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                 {(asset.videos?.length > 0 || asset.documents?.length > 0) && (
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border">
                         {asset.videos?.length > 0 && (
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-foreground flex items-center gap-2"><Video size={18} className="text-primary" /> Vídeos</h4>
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                    <Video size={14} className="text-primary" />
+                                    Vídeos
+                                </h4>
                                 <div className="space-y-2">
                                     {asset.videos.map((url: string, i: number) => (
                                         <button 
@@ -263,8 +269,11 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             </div>
                         )}
                         {asset.documents?.length > 0 && (
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-foreground flex items-center gap-2"><FileText size={18} className="text-primary" /> Documentos</h4>
+                            <div className="space-y-4">
+                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
+                                    <FileText size={14} className="text-primary" />
+                                    Documentos
+                                </h4>
                                 <div className="space-y-2">
                                     {asset.documents.map((doc: any, i: number) => (
                                         <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between p-3 rounded-xl border border-border bg-card hover:bg-muted transition-colors group">
