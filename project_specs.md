@@ -47,7 +47,7 @@ Lógica Interna (CRM):
 - Aplicar tags de origem automaticamente.
 
 5. MÓDULO IA (GEMINI INTEGRATION)
-- Engine: Gemini 2.5 Flash.
+- Engine: Gemini 2.0 Flash.
 - Monitoramento: Cada requisição deve ser precedida por uma verificação de limites e seguida por um log em ai_usage.
 
 Funcionalidades:
