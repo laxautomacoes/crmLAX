@@ -13,7 +13,11 @@ import { RegisterContent } from './components/RegisterContent';
 
 export default function RegisterPage() {
     return (
-        <Suspense fallback={<div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">Carregando...</div>}>
+        <Suspense fallback={
+            <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+            </div>
+        }>
             <RegisterContent />
         </Suspense>
     );

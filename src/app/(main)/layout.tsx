@@ -31,7 +31,11 @@ export default function DashboardLayout({
                 />
 
                 <main className="flex-1 p-4 md:p-8 overflow-y-auto w-full">
-                    <Suspense fallback={<div className="p-8">Carregando...</div>}>
+                    <Suspense fallback={
+                        <div className="flex h-[60vh] items-center justify-center">
+                            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+                        </div>
+                    }>
                         {children}
                     </Suspense>
                 </main>

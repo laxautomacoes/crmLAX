@@ -6,7 +6,6 @@ import { getProfile } from '@/app/_actions/profile';
 import { listInvitations } from '@/app/_actions/invitations';
 import { InviteForm } from '@/components/settings/team/InviteForm';
 import { InvitationsTable } from '@/components/settings/team/InvitationsTable';
-import { Loader2 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -56,9 +55,8 @@ export default function TeamSettingsPage() {
 
     if (isAuthorized === null) {
         return (
-            <div className="flex h-[60vh] items-center justify-center flex-col gap-4">
-                <Loader2 className="w-8 h-8 animate-spin text-secondary" />
-                <p className="text-muted-foreground animate-pulse text-sm font-medium">Verificando permissões...</p>
+            <div className="flex h-[60vh] items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
         );
     }

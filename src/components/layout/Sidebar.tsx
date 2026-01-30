@@ -5,6 +5,7 @@ import { X } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { menuItems } from './Sidebar/menuItems';
+import { Logo } from '@/components/shared/Logo';
 import { NavItem } from './Sidebar/NavItem';
 import { Footer } from './Sidebar/Footer';
 
@@ -113,7 +114,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                             branding?.logo_icon ? (
                                 <img src={branding.logo_icon} alt="Icon" className="h-8 w-auto" />
                             ) : (
-                                <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold">L</div>
+                                <div className="w-8 h-8 bg-secondary rounded flex items-center justify-center text-secondary-foreground font-bold">L</div>
                             )
                         ) : (
                             branding?.logo_full ? (
@@ -124,9 +125,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                                     style={{ height: branding.logo_height ? `${branding.logo_height}px` : '32px', maxHeight: '48px' }}
                                 />
                             ) : (
-                                <div className="text-xl font-bold tracking-tight">
-                                    CRM <span className="text-primary">LAX</span>
-                                </div>
+                                <Logo size="sm" />
                             )
                         )}
                     </div>

@@ -111,9 +111,8 @@ export default function RoadmapPage() {
 
     if (loading) {
         return (
-            <div className="flex flex-col items-center justify-center min-h-[400px]">
-                <Loader2 className="w-8 h-8 animate-spin text-secondary" />
-                <p className="mt-4 text-muted-foreground font-medium text-sm">Carregando Roadmap...</p>
+            <div className="flex h-[60vh] items-center justify-center">
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
             </div>
         );
     }

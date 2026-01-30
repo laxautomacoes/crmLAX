@@ -9,7 +9,7 @@ export default function LoginPage() {
                 <div className="flex flex-col items-center mb-8">
                     <img src="/logo-full.png" alt="CRM LAX" className="h-10 w-auto mb-2" />
                     <p className="text-muted-foreground text-sm font-medium text-center">
-                        Gestão e controle financeiro com IA
+                        CRM e Organização Imobiliária
                     </p>
                 </div>
 
