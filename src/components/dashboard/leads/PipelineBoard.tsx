@@ -35,6 +35,7 @@ export interface Lead {
     images?: string[]
     videos?: string[]
     documents?: { name: string; url: string }[]
+    whatsapp_chat?: any[]
 }
 
 interface Stage {

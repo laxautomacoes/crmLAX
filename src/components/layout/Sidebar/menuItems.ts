@@ -23,6 +23,7 @@ export const menuItems = [
         subItems: [
             { name: 'Meu Perfil', href: '/settings' },
             { name: 'Equipe', href: '/settings/team', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
+            { name: 'Integração', href: '/settings/integrations' },
             { name: 'Notificações', href: '/settings?tab=notifications' }
         ]
     },

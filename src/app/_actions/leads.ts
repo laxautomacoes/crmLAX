@@ -53,7 +53,8 @@ export async function getPipelineData(tenantId: string) {
         broker_name: lead.profiles?.full_name || 'Não atribuído',
         images: lead.images || [],
         videos: lead.videos || [],
-        documents: lead.documents || []
+        documents: lead.documents || [],
+        whatsapp_chat: lead.whatsapp_chat || []
     }));
 
     return {

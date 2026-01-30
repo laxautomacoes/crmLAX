@@ -5,6 +5,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Lead } from './PipelineBoard'
+import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
 
 interface LeadCardProps {
     lead: Lead
@@ -167,6 +168,11 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                                 <p className="text-[10px] text-muted-foreground italic line-clamp-2">"{lead.notes}"</p>
                             </div>
                         )}
+
+                        <div className="space-y-1.5 mb-4">
+                            <h5 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">WhatsApp Mirror</h5>
+                            <LeadWhatsAppConversation chat={lead.whatsapp_chat || []} />
+                        </div>
 
                         {/* Anexos do Lead */}
                         {(lead.images?.length > 0 || lead.videos?.length > 0 || lead.documents?.length > 0) && (
