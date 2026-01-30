@@ -11,10 +11,11 @@ interface LeadCardProps {
     lead: Lead
     onEdit?: (lead: Lead) => void
     onDelete?: (leadId: string) => void
+    onArchive?: (leadId: string) => void
     isOverlay?: boolean
 }
 
-export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
+export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadCardProps) {
     const [showDropdown, setShowDropdown] = useState(false)
     const [isExpanded, setIsExpanded] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -94,6 +95,16 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                                         className="w-full text-left px-3 py-2 text-[11px] font-bold text-foreground hover:bg-muted/10 flex items-center gap-2 transition-colors"
                                     >
                                         <Edit size={12} /> Editar
+                                    </button>
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onArchive?.(lead.id)
+                                            setShowDropdown(false)
+                                        }}
+                                        className="w-full text-left px-3 py-2 text-[11px] font-bold text-foreground hover:bg-muted/10 flex items-center gap-2 transition-colors"
+                                    >
+                                        <FileText size={12} /> Arquivar
                                     </button>
                                     <div className="h-px bg-muted-foreground/30 my-1" />
                                     <button
@@ -175,7 +186,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete }: LeadCardProps) {
                         </div>
 
                         {/* Anexos do Lead */}
-                        {(lead.images?.length > 0 || lead.videos?.length > 0 || lead.documents?.length > 0) && (
+                        {((lead.images?.length ?? 0) > 0 || (lead.videos?.length ?? 0) > 0 || (lead.documents?.length ?? 0) > 0) && (
                             <div className="space-y-1.5 mb-4">
                                 <h5 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">Anexos</h5>
                                 <div className="grid grid-cols-1 gap-1">

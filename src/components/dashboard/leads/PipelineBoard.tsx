@@ -54,9 +54,10 @@ interface PipelineBoardProps {
     onRenameStage: (stageId: string, name: string) => void
     onEditLead: (lead: Lead) => void
     onDeleteLead: (leadId: string) => void
+    onArchiveLead: (leadId: string) => void
 }
 
-export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onEditLead, onDeleteLead }: PipelineBoardProps) {
+export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onEditLead, onDeleteLead, onArchiveLead }: PipelineBoardProps) {
     const [leads, setLeads] = useState<Lead[]>(initialLeads)
     const [activeLead, setActiveLead] = useState<Lead | null>(null)
 
@@ -139,8 +140,9 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
                         onDuplicateStage={onDuplicateStage}
                         onRenameStage={onRenameStage}
                         onEditLead={onEditLead}
-                        onDeleteLead={onDeleteLead}
-                    />
+                            onDeleteLead={onDeleteLead}
+                            onArchiveLead={onArchiveLead}
+                        />
                 ))}
             </div>
 

@@ -4,6 +4,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { fetchAddressByCep, formatCEP } from '@/lib/utils/cep'
 import { useState } from 'react'
+import { User } from 'lucide-react'
 
 interface OwnerFieldsProps {
     formData: any

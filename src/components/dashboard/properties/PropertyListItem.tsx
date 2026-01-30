@@ -1,19 +1,20 @@
 'use client'
 
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2 } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, Archive } from 'lucide-react'
 import { translatePropertyType, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
     prop: any
     onEdit: (prop: any) => void
     onDelete: (id: string) => void
+    onArchive: (id: string) => void
     onView: (prop: any) => void
     onSend: (prop: any) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userRole, userId }: PropertyListItemProps) {
+export function PropertyListItem({ prop, onEdit, onDelete, onArchive, onView, onSend, userRole, userId }: PropertyListItemProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId === prop.created_by
     const canEdit = isAdmin || isOwner
@@ -187,6 +188,16 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userR
                                 title="Editar"
                             >
                                 <Edit size={16} />
+                            </button>
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onArchive(prop.id)
+                                }}
+                                className="p-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors shadow-sm"
+                                title="Arquivar"
+                            >
+                                <Archive size={16} />
                             </button>
                             <button
                                 onClick={(e) => {

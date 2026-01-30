@@ -14,6 +14,7 @@ export async function getAssets(tenantId: string, status?: string) {
             .from('assets')
             .select('*, profiles:created_by(full_name)')
             .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
 
         // Se não for admin, filtrar por aprovados (não pendentes) ou criados pelo próprio usuário
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
@@ -40,6 +41,7 @@ export async function getAssets(tenantId: string, status?: string) {
                     .from('assets')
                     .select('id, title, type, price, status, details, images, videos, documents')
                     .eq('tenant_id', tenantId)
+                    .eq('is_archived', false)
                     .order('created_at', { ascending: false })
                 
                 if (fallbackError) throw fallbackError
@@ -366,6 +368,34 @@ export async function deleteAsset(tenantId: string, assetId: string) {
         return { success: true }
     } catch (error: any) {
         console.error('Error deleting asset:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+export async function archiveAsset(tenantId: string, assetId: string) {
+    const supabase = await createClient()
+    const { profile } = await getProfile()
+
+    try {
+        let query = supabase
+            .from('assets')
+            .update({ is_archived: true })
+            .eq('id', assetId)
+            .eq('tenant_id', tenantId)
+
+        // Se não for admin, só pode arquivar se for o criador
+        if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+            query = query.eq('created_by', profile?.id)
+        }
+
+        const { error } = await query
+
+        if (error) throw error
+
+        revalidatePath('/properties')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error archiving asset:', error)
         return { success: false, error: error.message }
     }
 }

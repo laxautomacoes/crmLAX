@@ -22,9 +22,10 @@ interface PipelineColumnProps {
     onRenameStage: (stageId: string, name: string) => void
     onEditLead: (lead: Lead) => void
     onDeleteLead: (leadId: string) => void
+    onArchiveLead: (leadId: string) => void
 }
 
-export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onEditLead, onDeleteLead }: PipelineColumnProps) {
+export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onEditLead, onDeleteLead, onArchiveLead }: PipelineColumnProps) {
     const [showDropdown, setShowDropdown] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [editValue, setEditValue] = useState(title)
@@ -153,7 +154,13 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
                     strategy={verticalListSortingStrategy}
                 >
                     {leads.map(lead => (
-                        <LeadCard key={lead.id} lead={lead} onEdit={onEditLead} onDelete={onDeleteLead} />
+                        <LeadCard 
+                            key={lead.id} 
+                            lead={lead} 
+                            onEdit={onEditLead} 
+                            onDelete={onDeleteLead} 
+                            onArchive={onArchiveLead}
+                        />
                     ))}
                 </SortableContext>
 

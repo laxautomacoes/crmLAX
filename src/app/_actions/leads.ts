@@ -32,7 +32,8 @@ export async function getPipelineData(tenantId: string) {
                 full_name
             )
         `)
-        .eq('tenant_id', tenantId);
+        .eq('tenant_id', tenantId)
+        .eq('is_archived', false);
 
     if (leadsError) {
         return { success: false, error: leadsError.message };
@@ -198,6 +199,20 @@ export async function deleteLead(leadId: string) {
     const { error } = await supabase
         .from('leads')
         .delete()
+        .eq('id', leadId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath('/leads');
+    return { success: true };
+}
+
+export async function archiveLead(leadId: string) {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from('leads')
+        .update({ is_archived: true })
         .eq('id', leadId);
 
     if (error) return { success: false, error: error.message };

@@ -8,9 +8,9 @@ export async function getRoadmap() {
         unstable_noStore()
         const supabase = await createClient()
         const { data, error } = await supabase
-            .from('roadmap')
+            .from('updates')
             .select('*')
-            .order('created_at', { ascending: false })
+            .order('published_at', { ascending: false })
 
         if (error) {
             console.error('Error fetching roadmap:', error)
@@ -47,7 +47,7 @@ export async function createRoadmapItem(data: {
         }
 
         const { error } = await supabase
-            .from('roadmap')
+            .from('updates')
             .insert([data])
 
         if (error) {
@@ -86,7 +86,7 @@ export async function updateRoadmapItem(id: string, data: {
         }
 
         const { error } = await supabase
-            .from('roadmap')
+            .from('updates')
             .update(data)
             .eq('id', id)
 
@@ -121,7 +121,7 @@ export async function deleteRoadmapItem(id: string) {
         }
 
         const { error } = await supabase
-            .from('roadmap')
+            .from('updates')
             .delete()
             .eq('id', id)
 

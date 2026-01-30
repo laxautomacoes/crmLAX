@@ -9,7 +9,7 @@ import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { MediaUpload } from '@/components/shared/MediaUpload'
 import { formatPhone } from '@/lib/utils/phone'
 import { fetchAddressByCep, formatCEP } from '@/lib/utils/cep'
-import { createNewClient, updateClient, deleteClient } from '@/app/_actions/clients'
+import { createNewClient, updateClient, deleteClient, archiveClient } from '@/app/_actions/clients'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
 import { ClientListItem } from './ClientListItem'
@@ -199,6 +199,18 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         }
     }
 
+    const handleArchive = async (id: string) => {
+        if (confirm('Tem certeza que deseja arquivar este cliente?')) {
+            const res = await archiveClient(id)
+            if (res.success) {
+                toast.success('Cliente arquivado com sucesso')
+                window.location.reload()
+            } else {
+                toast.error('Erro ao arquivar cliente')
+            }
+        }
+    }
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
@@ -311,6 +323,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                     onToggle={() => setExpandedId(expandedId === client.id ? null : client.id)}
                                     onEdit={() => handleEdit(client)}
                                     onDelete={() => handleDelete(client.id)}
+                                    onArchive={() => handleArchive(client.id)}
                                 />
                             ))}
                         </tbody>

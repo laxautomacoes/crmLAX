@@ -56,6 +56,7 @@ export async function getClients(tenantId: string) {
       )
     `)
         .eq('tenant_id', tenantId)
+        .eq('is_archived', false)
         .order('created_at', { ascending: false })
 
     if (error) {
@@ -213,9 +214,21 @@ export async function deleteClient(clientId: string) {
         .delete()
         .eq('id', clientId)
 
-    if (error) {
-        return { success: false, error: error.message }
-    }
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/clients')
+    return { success: true }
+}
+
+export async function archiveClient(clientId: string) {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+        .from('contacts')
+        .update({ is_archived: true })
+        .eq('id', clientId)
+
+    if (error) return { success: false, error: error.message }
 
     revalidatePath('/clients')
     return { success: true }

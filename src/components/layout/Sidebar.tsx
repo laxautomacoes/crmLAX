@@ -20,6 +20,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
     const [userRole, setUserRole] = useState<string | null>(null);
     const [tenantSlug, setTenantSlug] = useState<string | null>(null);
+    const [branding, setBranding] = useState<{ logo_full?: string; logo_icon?: string; logo_height?: number } | null>(null);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -40,16 +41,19 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
 
                 setUserRole(profile?.role || 'user');
 
-                // Buscar Slug do Tenant
+                // Buscar Slug e Branding do Tenant
                 if (profile?.tenant_id) {
                     const { data: tenant } = await supabase
                         .from('tenants')
-                        .select('slug')
+                        .select('slug, branding')
                         .eq('id', profile.tenant_id)
                         .maybeSingle();
 
                     if (tenant?.slug) {
                         setTenantSlug(tenant.slug);
+                    }
+                    if (tenant?.branding) {
+                        setBranding(tenant.branding as any);
                     }
                 }
             }
@@ -104,7 +108,28 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             {isOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />}
             <div className={`fixed inset-y-0 left-0 z-50 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col transition-all duration-300 md:translate-x-0 md:static ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}>
                 <div className="p-6 flex items-center relative justify-center">
-                    <h1 className={`${isCollapsed ? 'text-xl' : 'text-2xl'} font-bold text-secondary`}>{isCollapsed ? 'L' : 'CRM LAX'}</h1>
+                    <div className="flex items-center justify-center">
+                        {isCollapsed ? (
+                            branding?.logo_icon ? (
+                                <img src={branding.logo_icon} alt="Icon" className="h-8 w-auto" />
+                            ) : (
+                                <div className="w-8 h-8 bg-primary rounded flex items-center justify-center text-primary-foreground font-bold">L</div>
+                            )
+                        ) : (
+                            branding?.logo_full ? (
+                                <img 
+                                    src={branding.logo_full} 
+                                    alt="CRM LAX" 
+                                    className="w-auto" 
+                                    style={{ height: branding.logo_height ? `${branding.logo_height}px` : '32px', maxHeight: '48px' }}
+                                />
+                            ) : (
+                                <div className="text-xl font-bold tracking-tight">
+                                    CRM <span className="text-primary">LAX</span>
+                                </div>
+                            )
+                        )}
+                    </div>
                     <button onClick={onClose} className="md:hidden absolute right-4"><X size={24} /></button>
                 </div>
 

@@ -1,4 +1,5 @@
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
+import { Trees } from 'lucide-react'
 
 interface AmenitiesFieldsProps {
     formData: any

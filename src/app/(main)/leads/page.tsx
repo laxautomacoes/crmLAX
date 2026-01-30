@@ -9,7 +9,7 @@ import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
 import { Modal } from '@/components/shared/Modal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
 import { getProfile, getBrokers } from '@/app/_actions/profile'
-import { getPipelineData, deleteLead } from '@/app/_actions/leads'
+import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
 import { createStage, deleteStage, duplicateStage, updateStageName } from '@/app/_actions/stages'
 import { toast } from 'sonner'
 
@@ -105,7 +105,7 @@ export default function LeadsPage() {
     }
 
     const handleDeleteLead = async (leadId: string) => {
-        if (!confirm('Tem certeza que deseja excluir este lead?')) return
+        if (!confirm('Tem certeza que deseja excluir este lead permanentemente?')) return
 
         const result = await deleteLead(leadId)
         if (result.success) {
@@ -113,6 +113,18 @@ export default function LeadsPage() {
             fetchData()
         } else {
             toast.error('Erro ao excluir lead: ' + result.error)
+        }
+    }
+
+    const handleArchiveLead = async (leadId: string) => {
+        if (!confirm('Tem certeza que deseja arquivar este lead? Ele não aparecerá mais no funil.')) return
+
+        const result = await archiveLead(leadId)
+        if (result.success) {
+            toast.success('Lead arquivado com sucesso!')
+            fetchData()
+        } else {
+            toast.error('Erro ao arquivar lead: ' + result.error)
         }
     }
 
@@ -213,6 +225,7 @@ export default function LeadsPage() {
                 onRenameStage={handleRenameStage}
                 onEditLead={handleEditLead}
                 onDeleteLead={handleDeleteLead}
+                onArchiveLead={handleArchiveLead}
             />
 
             {/* Modal Novo Estágio */}

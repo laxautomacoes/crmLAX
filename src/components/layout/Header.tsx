@@ -81,9 +81,9 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         <span className="text-xs text-foreground/70">{formattedDate}</span>
                     </div>
 
-                    {/* Mobile Centered Logo ... */}
+                    {/* Mobile Centered Logo */}
                     <div className="md:hidden flex-1 flex justify-center">
-                        <span className="text-xl font-bold text-secondary text-shadow-sm ml-6">CRM LAX</span>
+                        <img src="/logo-full.png" alt="CRM LAX" className="h-6 w-auto ml-6" />
                     </div>
                 </div>
 

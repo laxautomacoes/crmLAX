@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, Phone, Mail, Calendar, Sparkles, MessageSquare, Edit, Trash2, MapPin, User, IdCard, Heart, Target, FileText, Image as ImageIcon, Video } from 'lucide-react'
+import { ChevronDown, Phone, Mail, Calendar, Sparkles, MessageSquare, Edit, Trash2, MapPin, User, IdCard, Heart, Target, FileText, Image as ImageIcon, Video, Archive } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatPhone } from '@/lib/utils/phone'
 import { analyzeLeadProbability } from '@/app/_actions/ai-analysis'
@@ -13,6 +13,7 @@ interface ClientListItemProps {
     onToggle: () => void
     onEdit: () => void
     onDelete: () => void
+    onArchive: () => void
     tenantId: string
     profileId: string
 }
@@ -23,6 +24,7 @@ export function ClientListItem({
     onToggle,
     onEdit,
     onDelete,
+    onArchive,
     tenantId,
     profileId
 }: ClientListItemProps) {
@@ -129,6 +131,7 @@ export function ClientListItem({
                                     client={client}
                                     onEdit={onEdit}
                                     onDelete={onDelete}
+                                    onArchive={onArchive}
                                     isAnalyzed={isAnalyzed}
                                     analysisLoading={analysisLoading}
                                     analysisResult={analysisResult}
@@ -148,6 +151,7 @@ function ClientExpandedContent({
     client,
     onEdit,
     onDelete,
+    onArchive,
     isAnalyzed,
     analysisLoading,
     analysisResult,
@@ -246,8 +250,14 @@ function ClientExpandedContent({
                         <Edit size={16} /> Editar Cadastro
                     </button>
                     <button
+                        onClick={(e) => { e.stopPropagation(); onArchive(); }}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm"
+                    >
+                        <Archive size={16} /> Arquivar Cliente
+                    </button>
+                    <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-red-50 text-red-600 rounded-lg text-sm font-bold hover:bg-red-100 transition-colors shadow-sm"
                     >
                         <Trash2 size={16} /> Excluir Cliente
                     </button>

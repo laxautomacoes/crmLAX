@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { Plus, Search, LayoutGrid, List, Download, Filter } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProfile } from '@/app/_actions/profile'
-import { getAssets, createAsset, updateAsset, deleteAsset } from '@/app/_actions/assets'
+import { getAssets, createAsset, updateAsset, deleteAsset, archiveAsset } from '@/app/_actions/assets'
 import { initStorageBuckets } from '@/app/_actions/storage'
 import { getTenantByUserId } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
@@ -117,14 +117,27 @@ export default function PropertiesPage() {
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Excluir este imóvel?')) return
+        if (!confirm('Tem certeza que deseja excluir este imóvel permanentemente?')) return
         if (!tenantId) return
         const result = await deleteAsset(tenantId, id)
         if (result.success) {
-            toast.success('Imóvel excluído')
+            toast.success('Imóvel excluído!')
             fetchData()
         } else {
             toast.error('Erro ao excluir')
+        }
+    }
+
+    const handleArchive = async (id: string) => {
+        if (!tenantId) return
+        if (!confirm('Tem certeza que deseja arquivar este imóvel? Ele não aparecerá mais na lista pública nem no dashboard.')) return
+
+        const result = await archiveAsset(tenantId, id)
+        if (result.success) {
+            toast.success('Imóvel arquivado!')
+            fetchData()
+        } else {
+            toast.error('Erro ao arquivar: ' + result.error)
         }
     }
 
@@ -324,6 +337,7 @@ export default function PropertiesPage() {
                     properties={filteredProperties}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onArchive={handleArchive}
                     onView={handleView}
                     onSend={handleSend}
                     userRole={userRole}
@@ -334,6 +348,7 @@ export default function PropertiesPage() {
                     properties={filteredProperties}
                     onEdit={handleEdit}
                     onDelete={handleDelete}
+                    onArchive={handleArchive}
                     onView={handleView}
                     onSend={handleSend}
                     userRole={userRole}
