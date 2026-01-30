@@ -9,7 +9,7 @@ import { Logo } from '@/components/shared/Logo';
 import { useTenantBranding } from '@/hooks/useTenantBranding';
 
 export default function ForgotPasswordPage() {
-  const { branding } = useTenantBranding({ systemOnly: true });
+  const { branding, loading: brandingLoading } = useTenantBranding({ systemOnly: true });
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -33,23 +33,27 @@ export default function ForgotPasswordPage() {
     };
 
     return (
-        <div className="h-screen w-screen bg-background flex flex-col justify-center items-center p-4 transition-colors overflow-hidden">
-            <div className="bg-card w-full max-w-[480px] rounded-2xl shadow-xl p-8 md:p-12 border border-border">
-                <div className="flex flex-col items-center mb-12">
+        <div className="min-h-screen w-full bg-background flex flex-col justify-center items-center p-4 md:p-6 transition-colors overflow-hidden">
+            <div className="bg-card w-full max-w-[440px] md:min-h-[640px] min-h-fit rounded-2xl shadow-2xl p-6 md:p-12 border border-border/50 flex flex-col justify-center animate-in fade-in zoom-in duration-300 overflow-hidden">
+                <div className="flex flex-col -mt-8 md:-mt-20">
+                    <div className="flex flex-col items-center mb-6 md:mb-10">
           <Logo 
             size="lg" 
-            className="mb-0" 
+            className="mb-0 scale-75 md:scale-100 transition-transform" 
             src={branding?.logo_full} 
             height={branding?.logo_height} 
+            loading={brandingLoading}
           />
-          <p className="text-white text-sm md:text-base font-medium text-center -mt-12 opacity-90">
-             A melhor experiência imobiliária
-           </p>
+          {!brandingLoading && (
+            <p className="text-white text-xs md:text-base font-medium text-center -mt-8 md:-mt-12 opacity-90">
+               A melhor experiência imobiliária
+             </p>
+          )}
         </div>
 
-                <form className="space-y-5" onSubmit={handleReset}>
+                <form className="space-y-4 md:space-y-5" onSubmit={handleReset}>
                     {message && (
-                        <div className={`border px-4 py-3 rounded-lg text-sm text-center ${message.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-600' : 'bg-red-500/10 border-red-500/20 text-red-600'}`}>
+                        <div className={`border px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm text-center ${message.type === 'success' ? 'bg-green-500/10 border-green-500/20 text-green-600' : 'bg-red-500/10 border-red-500/20 text-red-600'}`}>
                             {message.text}
                         </div>
                     )}
@@ -62,13 +66,13 @@ export default function ForgotPasswordPage() {
                         onChange={(e) => setEmail(e.target.value)}
                         placeholder="seu@email.com"
                         icon={Mail}
-                        className="py-3.5"
+                        className="py-3 md:py-3.5"
                     />
 
                     <button
                         type="submit"
                         disabled={loading}
-                        className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-secondary-foreground bg-secondary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary disabled:opacity-70 disabled:cursor-wait transition-all transform active:scale-[0.99]"
+                        className="w-full flex justify-center py-3 md:py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-secondary-foreground bg-secondary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary disabled:opacity-70 disabled:cursor-wait transition-all transform active:scale-[0.99]"
                     >
                         {loading ? (
                             <Loader2 className="h-5 w-5 animate-spin" />
@@ -77,16 +81,17 @@ export default function ForgotPasswordPage() {
                         )}
                     </button>
 
-                    <div className="flex justify-center items-center mt-6">
+                    <div className="flex justify-center items-center mt-4 md:mt-6">
                         <Link
                             href="/login"
-                            className="flex items-center gap-2 text-sm font-bold text-foreground hover:opacity-80 transition-opacity"
+                            className="flex items-center gap-2 text-xs md:text-sm font-bold text-foreground hover:opacity-80 transition-opacity"
                         >
                             <ArrowLeft className="h-4 w-4" />
                             Voltar para o Login
                         </Link>
                     </div>
                 </form>
+                    </div>
             </div>
         </div>
     );

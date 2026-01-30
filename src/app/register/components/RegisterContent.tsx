@@ -10,7 +10,7 @@ import { Logo } from '@/components/shared/Logo';
 import { useTenantBranding } from '@/hooks/useTenantBranding';
 
 export function RegisterContent() {
-    const { branding } = useTenantBranding({ systemOnly: true });
+    const { branding, loading: brandingLoading } = useTenantBranding({ systemOnly: true });
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -66,17 +66,19 @@ export function RegisterContent() {
     };
 
     return (
-        <div className="h-screen w-screen bg-background flex flex-col justify-center items-center p-4 transition-colors overflow-hidden">
-            <div className="bg-card w-full max-w-[480px] rounded-2xl shadow-xl p-8 md:p-12 border border-border">
-                <div className="flex flex-col items-center mb-12">
+        <div className="min-h-screen w-full bg-background flex flex-col justify-center items-center p-4 md:p-6 transition-colors overflow-hidden">
+            <div className="bg-card w-full max-w-[440px] md:min-h-[760px] min-h-fit rounded-2xl shadow-2xl p-6 md:p-12 border border-border/50 flex flex-col justify-center animate-in fade-in zoom-in duration-300 overflow-hidden">
+                <div className="flex flex-col -mt-8 md:-mt-20">
+                    <div className="flex flex-col items-center mb-6 md:mb-10">
                     <Logo 
                         size="lg" 
-                        className="mb-0" 
+                        className="mb-0 scale-75 md:scale-100 transition-transform" 
                         src={branding?.logo_full} 
                         height={branding?.logo_height} 
+                        loading={brandingLoading}
                     />
-                    {!isSuccess && (
-                        <p className="text-white text-sm md:text-base font-medium text-center -mt-12 opacity-90">
+                    {!isSuccess && !brandingLoading && (
+                        <p className="text-white text-xs md:text-base font-medium text-center -mt-8 md:-mt-12 opacity-90">
                             {invitation ? `Você foi convidado para participar da ${invitation.tenants?.name}` : "A melhor experiência imobiliária"}
                         </p>
                     )}
@@ -89,6 +91,7 @@ export function RegisterContent() {
                         error={error} isInvited={!!invitation} onSubmit={handleRegister}
                     />
                 )}
+                    </div>
             </div>
         </div>
     );

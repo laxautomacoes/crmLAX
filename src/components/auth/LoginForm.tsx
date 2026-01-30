@@ -43,9 +43,9 @@ export function LoginForm() {
     };
 
     return (
-        <form className="space-y-5" onSubmit={handleLogin}>
+        <form className="space-y-4 md:space-y-5" onSubmit={handleLogin}>
             {error && (
-                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded-lg text-sm text-center">
+                <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm text-center">
                     {error}
                 </div>
             )}
@@ -59,10 +59,10 @@ export function LoginForm() {
                 onToggleShowPassword={() => setShowPassword(!showPassword)}
             />
 
-            <div className="flex justify-center pt-1">
+            <div className="flex justify-center pt-0 md:pt-1">
                 <Link
                     href="/forgot-password"
-                    className="text-sm font-semibold text-foreground hover:opacity-80 transition-opacity"
+                    className="text-xs md:text-sm font-semibold text-foreground hover:opacity-80 transition-opacity"
                 >
                     Esqueceu a senha?
                 </Link>
@@ -71,16 +71,16 @@ export function LoginForm() {
             <button
                 type="submit"
                 disabled={loading}
-                className="w-full flex justify-center py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-secondary-foreground bg-secondary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary disabled:opacity-70 disabled:cursor-wait transition-all transform active:scale-[0.99]"
+                className="w-full flex justify-center py-3 md:py-3.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-bold text-secondary-foreground bg-secondary hover:opacity-90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-secondary disabled:opacity-70 disabled:cursor-wait transition-all transform active:scale-[0.99]"
             >
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Entrar'}
             </button>
 
-            <div className="relative my-6">
+            <div className="relative my-4 md:my-6">
                 <div className="absolute inset-0 flex items-center">
                     <div className="w-full border-t border-border"></div>
                 </div>
-                <div className="relative flex justify-center text-sm">
+                <div className="relative flex justify-center text-xs md:text-sm">
                     <span className="px-4 bg-card text-muted-foreground font-medium">
                         ou continue com
                     </span>
@@ -89,13 +89,13 @@ export function LoginForm() {
 
             <GoogleAuthButton />
 
-            <div className="flex justify-center items-center mt-6">
-                <span className="text-muted-foreground text-sm font-medium mr-1.5">
+            <div className="flex justify-center items-center mt-4 md:mt-6">
+                <span className="text-muted-foreground text-xs md:text-sm font-medium mr-1.5">
                     Não tem uma conta?
                 </span>
                 <Link
                     href="/register"
-                    className="text-sm font-bold text-foreground hover:opacity-80 transition-opacity"
+                    className="text-xs md:text-sm font-bold text-foreground hover:opacity-80 transition-opacity"
                 >
                     Cadastre-se
                 </Link>

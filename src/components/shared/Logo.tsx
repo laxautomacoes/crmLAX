@@ -5,20 +5,30 @@ interface LogoProps {
   size?: 'sm' | 'md' | 'lg';
   src?: string;
   height?: number;
+  loading?: boolean;
 }
 
-export function Logo({ className = '', size = 'md', src, height }: LogoProps) {
+export function Logo({ className = '', size = 'md', src, height, loading }: LogoProps) {
   const sizeClasses = {
-    sm: 'text-xl',
-    md: 'text-2xl',
-    lg: 'text-3xl',
+    sm: 'text-sm',
+    md: 'text-base',
+    lg: 'text-lg',
   };
 
-  const defaultHeight = size === 'sm' ? 32 : size === 'md' ? 40 : 220;
+  const defaultHeight = size === 'sm' ? 40 : size === 'md' ? 48 : 220;
   let logoHeight = height || defaultHeight;
   
   if (size === 'lg' && (!height || height < 220)) {
     logoHeight = 220;
+  }
+
+  if (loading) {
+    return (
+      <div 
+        className={`flex items-center justify-center ${className}`} 
+        style={{ height: `${logoHeight}px` }}
+      />
+    );
   }
 
   if (src) {

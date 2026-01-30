@@ -44,6 +44,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
     const [profile, setProfile] = useState<any>(null);
     const [branding, setBranding] = useState<{ logo_full?: string; logo_height?: number } | null>(null);
+    const [brandingLoading, setBrandingLoading] = useState(true);
 
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
@@ -51,23 +52,27 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
     useEffect(() => {
         setMounted(true);
         async function loadData() {
-            const { profile: profileData } = await getProfile();
-            if (profileData) {
-                setProfile(profileData);
-                
-                if (profileData.tenant_id) {
-                    const { createClient } = await import('@/lib/supabase/client');
-                    const supabase = createClient();
-                    const { data: tenant } = await supabase
-                        .from('tenants')
-                        .select('branding')
-                        .eq('id', profileData.tenant_id)
-                        .maybeSingle();
+            try {
+                const { profile: profileData } = await getProfile();
+                if (profileData) {
+                    setProfile(profileData);
                     
-                    if (tenant?.branding) {
-                        setBranding(tenant.branding as any);
+                    if (profileData.tenant_id) {
+                        const { createClient } = await import('@/lib/supabase/client');
+                        const supabase = createClient();
+                        const { data: tenant } = await supabase
+                            .from('tenants')
+                            .select('branding')
+                            .eq('id', profileData.tenant_id)
+                            .maybeSingle();
+                        
+                        if (tenant?.branding) {
+                            setBranding(tenant.branding as any);
+                        }
                     }
                 }
+            } finally {
+                setBrandingLoading(false);
             }
         }
         loadData();
@@ -104,10 +109,11 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                     {/* Mobile Centered Logo */}
                     <div className="md:hidden flex-1 flex justify-center">
                         <Logo 
-                            size="sm" 
+                            size="md" 
                             className="ml-6" 
                             src={branding?.logo_full} 
                             height={branding?.logo_height} 
+                            loading={brandingLoading}
                         />
                     </div>
                 </div>

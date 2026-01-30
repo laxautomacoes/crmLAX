@@ -22,6 +22,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const [userRole, setUserRole] = useState<string | null>(null);
     const [tenantSlug, setTenantSlug] = useState<string | null>(null);
     const [branding, setBranding] = useState<{ logo_full?: string; logo_icon?: string; logo_height?: number } | null>(null);
+    const [brandingLoading, setBrandingLoading] = useState(true);
 
     const handleLogout = async () => {
         await supabase.auth.signOut();
@@ -31,32 +32,36 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
 
     useEffect(() => {
         async function fetchData() {
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                // Buscar Role
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('role, tenant_id')
-                    .eq('id', user.id)
-                    .maybeSingle();
-
-                setUserRole(profile?.role || 'user');
-
-                // Buscar Slug e Branding do Tenant
-                if (profile?.tenant_id) {
-                    const { data: tenant } = await supabase
-                        .from('tenants')
-                        .select('slug, branding')
-                        .eq('id', profile.tenant_id)
+            try {
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    // Buscar Role
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('role, tenant_id')
+                        .eq('id', user.id)
                         .maybeSingle();
 
-                    if (tenant?.slug) {
-                        setTenantSlug(tenant.slug);
-                    }
-                    if (tenant?.branding) {
-                        setBranding(tenant.branding as any);
+                    setUserRole(profile?.role || 'user');
+
+                    // Buscar Slug e Branding do Tenant
+                    if (profile?.tenant_id) {
+                        const { data: tenant } = await supabase
+                            .from('tenants')
+                            .select('slug, branding')
+                            .eq('id', profile.tenant_id)
+                            .maybeSingle();
+
+                        if (tenant?.slug) {
+                            setTenantSlug(tenant.slug);
+                        }
+                        if (tenant?.branding) {
+                            setBranding(tenant.branding as any);
+                        }
                     }
                 }
+            } finally {
+                setBrandingLoading(false);
             }
         }
         fetchData();
@@ -108,7 +113,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
         <>
             {isOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />}
             <div className={`fixed inset-y-0 left-0 z-50 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col transition-all duration-300 md:translate-x-0 md:static ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}>
-                <div className="p-6 flex items-center relative justify-center">
+                <div className="py-4 px-6 flex items-center relative justify-center border-b border-border/50">
                     <div className="flex items-center justify-center">
                         {isCollapsed ? (
                             branding?.logo_icon ? (
@@ -118,9 +123,10 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                             )
                         ) : (
                             <Logo 
-                                size="sm" 
+                                size="md" 
                                 src={branding?.logo_full} 
                                 height={branding?.logo_height} 
+                                loading={brandingLoading}
                             />
                         )}
                     </div>

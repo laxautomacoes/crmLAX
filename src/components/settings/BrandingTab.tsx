@@ -143,12 +143,12 @@ export function BrandingTab() {
                             </div>
                             {branding.logo_full && (
                                 <div className="flex flex-col items-end gap-1">
-                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Altura: {branding.logo_height || 32}px</label>
+                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Altura: {branding.logo_height || 48}px</label>
                                     <input 
                                         type="range" 
                                         min="32" 
-                                        max="64" 
-                                        value={branding.logo_height || 32}
+                                        max="80" 
+                                        value={branding.logo_height || 48}
                                         onChange={(e) => setBranding(prev => ({ ...prev, logo_height: parseInt(e.target.value) }))}
                                         className="w-32 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-secondary"
                                     />

@@ -21,9 +21,9 @@ export function ResetForm({
     const [showPassword, setShowPassword] = useState(false);
 
     return (
-        <form className="space-y-5" onSubmit={onSubmit}>
+        <form className="space-y-4 md:space-y-5" onSubmit={onSubmit}>
             {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-600 px-4 py-3 rounded-lg text-sm text-center">
+                <div className="bg-red-500/10 border border-red-500/20 text-red-600 px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm text-center">
                     {error}
                 </div>
             )}
@@ -36,14 +36,14 @@ export function ResetForm({
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="•••••••••••"
                 icon={Lock}
-                className="py-3.5"
+                className="py-3 md:py-3.5"
                 rightElement={
                     <button
                         type="button"
                         onClick={() => setShowPassword(!showPassword)}
                         className="p-1 hover:text-foreground transition-colors"
                     >
-                        {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+                        {showPassword ? <EyeOff className="h-4 w-4 md:h-5 md:w-5" /> : <Eye className="h-4 w-4 md:h-5 md:w-5" />}
                     </button>
                 }
             />
@@ -56,12 +56,12 @@ export function ResetForm({
                 onChange={(e) => setConfirmPassword(e.target.value)}
                 placeholder="•••••••••••"
                 icon={Lock}
-                className="py-3.5"
+                className="py-3 md:py-3.5"
             />
 
             <button
                 type="submit" disabled={loading}
-                className="w-full flex justify-center py-3.5 border border-transparent rounded-lg shadow-sm text-sm font-bold text-secondary-foreground bg-secondary hover:opacity-90 disabled:opacity-70 transition-all transform active:scale-[0.99]"
+                className="w-full flex justify-center py-3 md:py-3.5 border border-transparent rounded-lg shadow-sm text-sm font-bold text-secondary-foreground bg-secondary hover:opacity-90 disabled:opacity-70 transition-all transform active:scale-[0.99]"
             >
                 {loading ? <Loader2 className="h-5 w-5 animate-spin" /> : 'Redefinir Senha'}
             </button>

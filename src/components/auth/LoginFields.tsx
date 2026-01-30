@@ -21,7 +21,7 @@ export function LoginFields({
     onToggleShowPassword
 }: LoginFieldsProps) {
     return (
-        <div className="space-y-4">
+        <div className="space-y-3 md:space-y-4">
             <FormInput
                 label="Email"
                 type="email"
@@ -30,7 +30,7 @@ export function LoginFields({
                 onChange={(e) => onEmailChange(e.target.value)}
                 placeholder="adm@laxperience.online"
                 icon={Mail}
-                className="py-3.5"
+                className="py-3 md:py-3.5"
             />
 
             <FormInput
@@ -41,14 +41,14 @@ export function LoginFields({
                 onChange={(e) => onPasswordChange(e.target.value)}
                 placeholder="•••••••••••"
                 icon={Lock}
-                className="py-3.5"
+                className="py-3 md:py-3.5"
                 rightElement={
                     <button
                         type="button"
                         onClick={onToggleShowPassword}
                         className="p-1 hover:text-foreground transition-colors"
                     >
-                        {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                        {showPassword ? <EyeOff className="h-4 w-4 md:h-5 md:w-5" /> : <Eye className="h-4 w-4 md:h-5 md:w-5" />}
                     </button>
                 }
             />
