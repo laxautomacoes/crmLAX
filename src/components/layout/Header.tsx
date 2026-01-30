@@ -9,6 +9,7 @@ import { getNotifications } from '@/app/_actions/notifications';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { getProfile } from '@/app/_actions/profile';
+import { Logo } from '@/components/shared/Logo';
 
 interface HeaderProps {
     onMenuClick: () => void;
@@ -42,15 +43,34 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
     const unreadCount = notifications.filter(n => !n.read).length;
 
     const [profile, setProfile] = useState<any>(null);
+    const [branding, setBranding] = useState<{ logo_full?: string; logo_height?: number } | null>(null);
 
     const { theme, setTheme } = useTheme();
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         setMounted(true);
-        getProfile().then((data) => {
-            if (data.profile) setProfile(data.profile);
-        });
+        async function loadData() {
+            const { profile: profileData } = await getProfile();
+            if (profileData) {
+                setProfile(profileData);
+                
+                if (profileData.tenant_id) {
+                    const { createClient } = await import('@/lib/supabase/client');
+                    const supabase = createClient();
+                    const { data: tenant } = await supabase
+                        .from('tenants')
+                        .select('branding')
+                        .eq('id', profileData.tenant_id)
+                        .maybeSingle();
+                    
+                    if (tenant?.branding) {
+                        setBranding(tenant.branding as any);
+                    }
+                }
+            }
+        }
+        loadData();
     }, []);
 
     return (
@@ -83,7 +103,12 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
                     {/* Mobile Centered Logo */}
                     <div className="md:hidden flex-1 flex justify-center">
-                        <img src="/logo-full.png" alt="CRM LAX" className="h-6 w-auto ml-6" />
+                        <Logo 
+                            size="sm" 
+                            className="ml-6" 
+                            src={branding?.logo_full} 
+                            height={branding?.logo_height} 
+                        />
                     </div>
                 </div>
 

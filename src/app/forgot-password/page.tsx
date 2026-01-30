@@ -5,8 +5,11 @@ import { createClient } from '@/lib/supabase/client';
 import { Mail, Loader2, ArrowLeft } from 'lucide-react';
 import Link from 'next/link';
 import { FormInput } from '@/components/shared/forms/FormInput';
+import { Logo } from '@/components/shared/Logo';
+import { useTenantBranding } from '@/hooks/useTenantBranding';
 
 export default function ForgotPasswordPage() {
+  const { branding } = useTenantBranding({ systemOnly: true });
     const [email, setEmail] = useState('');
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
@@ -18,27 +21,31 @@ export default function ForgotPasswordPage() {
 
         const supabase = createClient();
         const { error } = await supabase.auth.resetPasswordForEmail(email, {
-            redirectTo: `${location.origin}/reset-password`,
+            redirectTo: `${window.location.origin}/reset-password`,
         });
 
         if (error) {
             setMessage({ type: 'error', text: error.message });
         } else {
-            setMessage({ type: 'success', text: 'Instruções de recuperação enviadas para seu e-mail.' });
+            setMessage({ type: 'success', text: 'Enviamos as instruções para o seu email.' });
         }
         setLoading(false);
     };
 
     return (
-        <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 transition-colors">
+        <div className="h-screen w-screen bg-background flex flex-col justify-center items-center p-4 transition-colors overflow-hidden">
             <div className="bg-card w-full max-w-[480px] rounded-2xl shadow-xl p-8 md:p-12 border border-border">
-                {/* Logo Section */}
-                <div className="flex flex-col items-center mb-8">
-                    <img src="/logo-full.png" alt="CRM LAX" className="h-10 w-auto mb-2" />
-                    <p className="text-muted-foreground text-sm font-medium text-center">
-                        Recupere o acesso à sua conta
-                    </p>
-                </div>
+                <div className="flex flex-col items-center mb-12">
+          <Logo 
+            size="lg" 
+            className="mb-0" 
+            src={branding?.logo_full} 
+            height={branding?.logo_height} 
+          />
+          <p className="text-white text-sm md:text-base font-medium text-center -mt-12 opacity-90">
+             A melhor experiência imobiliária
+           </p>
+        </div>
 
                 <form className="space-y-5" onSubmit={handleReset}>
                     {message && (

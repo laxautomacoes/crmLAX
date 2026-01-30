@@ -143,12 +143,12 @@ export function BrandingTab() {
                             </div>
                             {branding.logo_full && (
                                 <div className="flex flex-col items-end gap-1">
-                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Altura: {branding.logo_height || 200}px</label>
+                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Altura: {branding.logo_height || 32}px</label>
                                     <input 
                                         type="range" 
-                                        min="200" 
-                                        max="600" 
-                                        value={branding.logo_height || 200}
+                                        min="32" 
+                                        max="64" 
+                                        value={branding.logo_height || 32}
                                         onChange={(e) => setBranding(prev => ({ ...prev, logo_height: parseInt(e.target.value) }))}
                                         className="w-32 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-secondary"
                                     />
@@ -162,12 +162,17 @@ export function BrandingTab() {
                                     <img 
                                           src={branding.logo_full} 
                                           alt="Logo Full" 
-                                          style={{ height: `${branding.logo_height || 200}px` }}
+                                          style={{ height: `${branding.logo_height || 32}px` }}
                                           className="max-w-[80%] object-contain transition-all" 
                                       />
                                     <button
-                                        onClick={() => handleRemove('logo_full')}
-                                        className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => {
+                                            if (confirm('Deseja remover o logo?')) {
+                                                handleRemove('logo_full')
+                                            }
+                                        }}
+                                        className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg transition-all z-10"
+                                        title="Remover Logo"
                                     >
                                         <Trash2 size={14} />
                                     </button>
@@ -213,8 +218,13 @@ export function BrandingTab() {
                                 <>
                                     <img src={branding.logo_icon} alt="Logo Icon" className="w-full h-full object-cover" />
                                     <button
-                                        onClick={() => handleRemove('logo_icon')}
-                                        className="absolute top-2 right-2 p-1.5 bg-destructive text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity"
+                                        onClick={() => {
+                                            if (confirm('Deseja remover o ícone?')) {
+                                                handleRemove('logo_icon')
+                                            }
+                                        }}
+                                        className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg transition-all z-10"
+                                        title="Remover Ícone"
                                     >
                                         <Trash2 size={14} />
                                     </button>

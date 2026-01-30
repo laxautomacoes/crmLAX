@@ -5,8 +5,11 @@ import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 import { ResetForm } from './components/ResetForm';
 import { ResetSuccess } from './components/ResetSuccess';
+import { Logo } from '@/components/shared/Logo';
+import { useTenantBranding } from '@/hooks/useTenantBranding';
 
 export default function ResetPasswordPage() {
+  const { branding } = useTenantBranding({ systemOnly: true });
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
@@ -34,12 +37,19 @@ export default function ResetPasswordPage() {
     };
 
     return (
-        <div className="min-h-screen bg-background flex flex-col justify-center items-center p-4 transition-colors">
-            <div className="bg-card w-full max-w-[480px] rounded-2xl shadow-xl p-8 md:p-12 border border-border">
-                <div className="flex flex-col items-center mb-8">
-                    <img src="/logo-full.png" alt="CRM LAX" className="h-10 w-auto mb-2" />
-                    <p className="text-muted-foreground text-sm font-medium text-center">Defina sua nova senha de acesso</p>
-                </div>
+    <div className="h-screen w-screen bg-background flex flex-col justify-center items-center p-4 transition-colors overflow-hidden">
+      <div className="bg-card w-full max-w-[480px] rounded-2xl shadow-xl p-8 md:p-12 border border-border">
+        <div className="flex flex-col items-center mb-12">
+         <Logo 
+           size="lg" 
+           className="mb-0" 
+           src={branding?.logo_full} 
+           height={branding?.logo_height} 
+         />
+         <p className="text-white text-sm md:text-base font-medium text-center -mt-12 opacity-90">
+            A melhor experiência imobiliária
+          </p>
+       </div>
 
                 {message?.type === 'success' ? (
                     <ResetSuccess message={message.text} />

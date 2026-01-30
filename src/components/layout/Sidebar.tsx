@@ -117,16 +117,11 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                                 <div className="w-8 h-8 bg-secondary rounded flex items-center justify-center text-secondary-foreground font-bold">L</div>
                             )
                         ) : (
-                            branding?.logo_full ? (
-                                <img 
-                                    src={branding.logo_full} 
-                                    alt="CRM LAX" 
-                                    className="w-auto" 
-                                    style={{ height: branding.logo_height ? `${branding.logo_height}px` : '32px', maxHeight: '48px' }}
-                                />
-                            ) : (
-                                <Logo size="sm" />
-                            )
+                            <Logo 
+                                size="sm" 
+                                src={branding?.logo_full} 
+                                height={branding?.logo_height} 
+                            />
                         )}
                     </div>
                     <button onClick={onClose} className="md:hidden absolute right-4"><X size={24} /></button>
