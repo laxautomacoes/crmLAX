@@ -6,6 +6,7 @@ import { createClient } from '@/lib/supabase/client'
 import { getProfile } from '@/app/_actions/profile'
 import { updateTenantBranding } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
+import { Logo } from '@/components/shared/Logo'
 
 interface BrandingData {
     logo_full?: string
@@ -45,6 +46,26 @@ export function BrandingTab() {
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo_full' | 'logo_icon') => {
         const file = e.target.files?.[0]
         if (!file || !profile?.tenant_id) return
+
+        // Validação de proporção para o logotipo completo
+        if (type === 'logo_full') {
+            const isValidRatio = await new Promise<boolean>((resolve) => {
+                const img = new Image()
+                img.onload = () => {
+                    const ratio = img.width / img.height
+                    // Aceita uma pequena margem de erro na proporção (ex: 1.9 a 2.1 para 2:1)
+                    resolve(Math.abs(ratio - 2) < 0.1)
+                }
+                img.onerror = () => resolve(false)
+                img.src = URL.createObjectURL(file)
+            })
+
+            if (!isValidRatio) {
+                toast.error('Proporção não aceita! O logotipo deve estar no padrão 2:1 (ex: 200x100px).')
+                e.target.value = ''
+                return
+            }
+        }
 
         setIsUploading(type)
         const supabase = createClient()
@@ -87,6 +108,8 @@ export function BrandingTab() {
         
         if (result.success) {
             toast.success('Configurações de marca salvas!')
+            // Disparar evento para atualizar outros componentes sem recarregar a página
+            window.dispatchEvent(new CustomEvent('branding-updated', { detail: branding }))
         } else {
             toast.error('Erro ao salvar: ' + result.error)
         }
@@ -110,7 +133,7 @@ export function BrandingTab() {
     if (!isAdmin) {
         return (
             <div className="bg-card border border-border rounded-xl p-8 text-center">
-                <p className="text-muted-foreground">Você não tem permissão para alterar a marca da empresa.</p>
+                <p className="text-muted-foreground">Você não tem permissão para alterar o branding empresarial.</p>
             </div>
         )
     }
@@ -120,59 +143,38 @@ export function BrandingTab() {
             <div className="bg-card border border-border rounded-xl p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-bold text-foreground">Marca da Empresa</h3>
-                        <p className="text-sm text-muted-foreground">Personalize os logos que aparecem no sistema.</p>
+                        <h3 className="text-lg font-bold text-foreground">Branding Empresarial</h3>
+                        <p className="text-sm text-muted-foreground">Personalize logotipo e ícone/favicon que aparecem no seu CRM.</p>
                     </div>
-                    <button
-                        onClick={handleSave}
-                        disabled={saving}
-                        className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
-                    >
-                        {saving ? <Loader2 size={16} className="animate-spin" /> : <Save size={16} />}
-                        Salvar Alterações
-                    </button>
                 </div>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-                    {/* Logo Completo */}
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div>
-                                <label className="text-sm font-bold text-foreground mb-1 block">Logo Completo</label>
-                                <p className="text-[11px] text-muted-foreground mb-3">Exibido na sidebar expandida e tela de login. Recomendado: retangular.</p>
-                            </div>
-                            {branding.logo_full && (
-                                <div className="flex flex-col items-end gap-1">
-                                    <label className="text-[10px] font-bold text-muted-foreground uppercase">Altura: {branding.logo_height || 48}px</label>
-                                    <input 
-                                        type="range" 
-                                        min="32" 
-                                        max="80" 
-                                        value={branding.logo_height || 48}
-                                        onChange={(e) => setBranding(prev => ({ ...prev, logo_height: parseInt(e.target.value) }))}
-                                        className="w-32 h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-secondary"
-                                    />
-                                </div>
-                            )}
+                <div className="flex flex-col md:flex-row md:items-stretch gap-8">
+                    {/* Logotipo */}
+                    <div className="flex-1 space-y-4 flex flex-col">
+                        <div className="min-h-[80px]">
+                            <label className="text-lg font-bold text-foreground mb-1 block">Logotipo</label>
+                            <p className="text-sm text-muted-foreground">Exibido na barra lateral expandida e nas mensagens</p>
+                            <p className="text-sm text-muted-foreground mb-3">Padrão obrigatório: 2:1 (Recomendado: 200x100px)</p>
                         </div>
                         
-                        <div className="relative group aspect-[3/1] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
+                        <div className="relative group min-h-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
                             {branding.logo_full ? (
                                 <>
-                                    <img 
-                                          src={branding.logo_full} 
-                                          alt="Logo Full" 
-                                          style={{ height: `${branding.logo_height || 32}px` }}
-                                          className="max-w-[80%] object-contain transition-all" 
-                                      />
+                                    <div className="flex items-center justify-center p-2">
+                                        <Logo 
+                                            size="lg" 
+                                            src={branding.logo_full} 
+                                            height={branding.logo_height || 100}
+                                        />
+                                    </div>
                                     <button
                                         onClick={() => {
-                                            if (confirm('Deseja remover o logo?')) {
+                                            if (confirm('Deseja remover o logotipo?')) {
                                                 handleRemove('logo_full')
                                             }
                                         }}
                                         className="absolute top-2 right-2 p-1.5 bg-red-500 hover:bg-red-600 text-white rounded-lg shadow-lg transition-all z-10"
-                                        title="Remover Logo"
+                                        title="Remover Logotipo"
                                     >
                                         <Trash2 size={14} />
                                     </button>
@@ -180,7 +182,7 @@ export function BrandingTab() {
                             ) : (
                                 <div className="text-center">
                                     <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                                    <span className="text-xs font-medium text-muted-foreground">Nenhum logo carregado</span>
+                                    <span className="text-xs font-medium text-muted-foreground">Nenhum logotipo carregado</span>
                                 </div>
                             )}
                             
@@ -191,7 +193,7 @@ export function BrandingTab() {
                                     ) : (
                                         <>
                                             <Upload className="w-6 h-6 mx-auto mb-1" />
-                                            <span className="text-xs font-bold uppercase tracking-wider">Trocar Logo</span>
+                                            <span className="text-xs font-bold uppercase tracking-wider">Trocar Logotipo</span>
                                         </>
                                     )}
                                 </div>
@@ -204,13 +206,35 @@ export function BrandingTab() {
                                 />
                             </label>
                         </div>
+
+                        {branding.logo_full && (
+                            <div className="flex items-center gap-4 mt-2 px-1">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase whitespace-nowrap">Tamanho: {(branding.logo_height || 100) * 2}x{branding.logo_height || 100}px</label>
+                                <input 
+                                    type="range" 
+                                    min="25" 
+                                    max="100" 
+                                    value={branding.logo_height || 100}
+                                    onChange={(e) => {
+                                        const val = parseInt(e.target.value);
+                                        setBranding(prev => ({ ...prev, logo_height: val }));
+                                    }}
+                                    className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-secondary"
+                                />
+                            </div>
+                        )}
                     </div>
 
+                    {/* Separador */}
+                    <div className="hidden md:block w-px bg-border self-stretch" />
+                    <div className="block md:hidden h-px bg-border w-full" />
+
                     {/* Ícone */}
-                    <div className="space-y-4">
-                        <div>
-                            <label className="text-sm font-bold text-foreground mb-1 block">Ícone (Favicon)</label>
-                            <p className="text-[11px] text-muted-foreground mb-3">Exibido na sidebar recolhida e aba do navegador. Recomendado: 1:1 (quadrado).</p>
+                    <div className="flex-1 space-y-4 flex flex-col">
+                        <div className="min-h-[80px]">
+                            <label className="text-lg font-bold text-foreground mb-1 block">Ícone | Favicon</label>
+                            <p className="text-sm text-muted-foreground">Exibido na barra lateral recolhida e nas mensagens</p>
+                            <p className="text-sm text-muted-foreground mb-3">Recomendado: 512x512 (quadrado)</p>
                         </div>
                         
                         <div className="relative group aspect-square max-w-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
@@ -260,9 +284,18 @@ export function BrandingTab() {
                 </div>
             </div>
 
-            <div className="bg-blue-500/10 border border-blue-500/20 rounded-xl p-4">
-                <p className="text-[11px] text-blue-500 font-medium">
-                    <strong>Dica:</strong> Após salvar, as alterações serão aplicadas em todo o sistema. Se os logos não atualizarem imediatamente, tente recarregar a página para limpar o cache do navegador.
+            <button
+                onClick={handleSave}
+                disabled={saving}
+                className="flex items-center justify-center gap-2 w-full md:w-fit px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+            >
+                {saving && <Loader2 size={18} className="animate-spin" />}
+                Salvar Alterações
+            </button>
+
+            <div className="bg-muted/30 border border-border rounded-xl p-4">
+                <p className="text-sm text-muted-foreground font-medium">
+                    <strong className="text-foreground">Dica:</strong> Após salvar, as alterações serão aplicadas em todo o sistema. Se os logos não atualizarem imediatamente, tente recarregar a página para limpar o cache do navegador.
                 </p>
             </div>
         </div>

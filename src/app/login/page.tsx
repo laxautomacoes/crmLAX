@@ -12,13 +12,13 @@ export default function LoginPage() {
             <div className="bg-card w-full max-w-[440px] md:min-h-[720px] min-h-fit rounded-2xl shadow-2xl p-6 md:p-12 border border-border/50 flex flex-col justify-center animate-in fade-in zoom-in duration-300 overflow-hidden">
                 <div className="flex flex-col relative -top-10 md:-top-20">
                     <div className="flex flex-col items-center mb-6 md:mb-10">
-                    <Logo 
-                        size="lg" 
-                        className="mb-2 scale-75 md:scale-100 transition-transform" 
-                        src={branding?.logo_full} 
-                        height={branding?.logo_height} 
-                        loading={loading}
-                    />
+                        <Logo 
+                            size="lg" 
+                            className="mb-2 scale-75 md:scale-100 transition-transform" 
+                            src={branding?.logo_full} 
+                            height={branding?.logo_height} 
+                            loading={loading}
+                        />
                     {!loading && (
                         <p className="text-white text-xs md:text-base font-medium text-center -mt-14 md:-mt-12 opacity-90">
                             A melhor experiência imobiliária

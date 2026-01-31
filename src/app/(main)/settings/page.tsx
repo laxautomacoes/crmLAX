@@ -32,7 +32,7 @@ export default function SettingsPage() {
 
     const tabs = [
         { id: 'profile', label: 'Perfil' },
-        ...(isAdmin ? [{ id: 'branding', label: 'Marca (Branding)' }] : [])
+        ...(isAdmin ? [{ id: 'branding', label: 'Branding' }] : [])
     ];
 
     if (loading) return null;
@@ -41,7 +41,7 @@ export default function SettingsPage() {
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-foreground text-center md:text-left">
-                    {activeTab === 'branding' ? 'Marca da Empresa' : activeTab === 'notifications' ? 'Notificações' : 'Meu Perfil'}
+                    {activeTab === 'notifications' ? 'Notificações' : 'Meu Perfil'}
                 </h1>
             </div>
 

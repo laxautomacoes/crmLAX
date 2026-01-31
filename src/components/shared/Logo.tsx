@@ -15,11 +15,20 @@ export function Logo({ className = '', size = 'md', src, height, loading }: Logo
     lg: 'text-lg',
   };
 
-  const defaultHeight = size === 'sm' ? 40 : size === 'md' ? 48 : 220;
+  const defaultHeight = size === 'sm' ? 40 : size === 'md' ? 48 : 100;
+  
+  // O height passado como prop tem precedência sobre o default do tamanho
   let logoHeight = height || defaultHeight;
   
-  if (size === 'lg' && (!height || height < 220)) {
-    logoHeight = 220;
+  // Para o tamanho 'md' (Sidebar/Header), limitamos o máximo para não quebrar o layout
+  if (size === 'md') {
+    logoHeight = Math.min(logoHeight, 60); 
+  }
+  
+  // No tamanho LG (login ou preview), garantimos que o height seja respeitado
+  // Se não houver height definido e for LG, usamos 100px para manter o padrão 2:1 sugerido
+  if (size === 'lg' && !height) {
+    logoHeight = 100;
   }
 
   if (loading) {
@@ -37,8 +46,11 @@ export function Logo({ className = '', size = 'md', src, height, loading }: Logo
         <img 
           src={src} 
           alt="Logo" 
-          style={{ height: `${logoHeight}px` }} 
-          className="object-contain w-auto block max-w-full"
+          style={{ 
+            height: `${logoHeight}px`,
+            width: `${logoHeight * 2}px` // Mantém a proporção 2:1 visualmente
+          }} 
+          className="object-contain block max-w-full"
         />
       </div>
     );

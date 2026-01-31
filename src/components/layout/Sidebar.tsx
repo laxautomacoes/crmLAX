@@ -31,6 +31,22 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     };
 
     useEffect(() => {
+        const handleBrandingUpdate = (event: any) => {
+            if (event.detail) {
+                // Adiciona um timestamp para forçar o recarregamento das imagens pelo navegador (cache busting)
+                const timestamp = Date.now();
+                const updatedBranding = { ...event.detail };
+                if (updatedBranding.logo_full) updatedBranding.logo_full = `${updatedBranding.logo_full}?t=${timestamp}`;
+                if (updatedBranding.logo_icon) updatedBranding.logo_icon = `${updatedBranding.logo_icon}?t=${timestamp}`;
+                setBranding(updatedBranding);
+            }
+        };
+
+        window.addEventListener('branding-updated', handleBrandingUpdate);
+        return () => window.removeEventListener('branding-updated', handleBrandingUpdate);
+    }, []);
+
+    useEffect(() => {
         async function fetchData() {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
@@ -113,7 +129,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
         <>
             {isOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />}
             <div className={`fixed inset-y-0 left-0 z-50 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col transition-all duration-300 md:translate-x-0 md:static ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}>
-                <div className="py-4 px-6 flex items-center relative justify-center border-b border-border/50">
+                <div className="h-16 px-6 flex items-center relative justify-center border-b border-border/50 flex-none">
                     <div className="flex items-center justify-center">
                         {isCollapsed ? (
                             branding?.logo_icon ? (
@@ -125,7 +141,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                             <Logo 
                                 size="md" 
                                 src={branding?.logo_full} 
-                                height={branding?.logo_height} 
+                                height={branding?.logo_height}
                                 loading={brandingLoading}
                             />
                         )}

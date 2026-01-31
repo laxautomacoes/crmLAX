@@ -50,6 +50,20 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
     const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
+        const handleBrandingUpdate = (event: any) => {
+            if (event.detail) {
+                const timestamp = Date.now();
+                const updatedBranding = { ...event.detail };
+                if (updatedBranding.logo_full) updatedBranding.logo_full = `${updatedBranding.logo_full}?t=${timestamp}`;
+                setBranding(updatedBranding);
+            }
+        };
+
+        window.addEventListener('branding-updated', handleBrandingUpdate);
+        return () => window.removeEventListener('branding-updated', handleBrandingUpdate);
+    }, []);
+
+    useEffect(() => {
         setMounted(true);
         async function loadData() {
             try {
@@ -112,7 +126,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                             size="md" 
                             className="ml-6" 
                             src={branding?.logo_full} 
-                            height={branding?.logo_height} 
+                            height={branding?.logo_height}
                             loading={brandingLoading}
                         />
                     </div>
