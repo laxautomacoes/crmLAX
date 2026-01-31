@@ -58,7 +58,7 @@ export function AvatarDropdown() {
                             label={theme === 'dark' ? "Modo Claro" : "Modo Escuro"}
                             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         />
-                        <MenuItem icon={Bell} label="Notificações" href="/settings?tab=notifications" />
+                        <MenuItem icon={Bell} label="Notificações" href="/notifications" />
                         <MenuItem icon={User} label="Configurações" href="/settings" />
                         <MenuItem icon={LogOut} label="Sair" isRed onClick={handleLogout} />
                     </div>
