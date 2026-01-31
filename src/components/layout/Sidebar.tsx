@@ -8,6 +8,7 @@ import { menuItems } from './Sidebar/menuItems';
 import { Logo } from '@/components/shared/Logo';
 import { NavItem } from './Sidebar/NavItem';
 import { Footer } from './Sidebar/Footer';
+import { SupportModal } from '@/components/shared/SupportModal';
 
 interface SidebarProps {
     isOpen: boolean; onClose: () => void; isCollapsed: boolean; toggleCollapse: () => void;
@@ -20,6 +21,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const supabase = createClient();
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
     const [userRole, setUserRole] = useState<string | null>(null);
+    const [userProfile, setUserProfile] = useState<any>(null);
+    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
     const [tenantSlug, setTenantSlug] = useState<string | null>(null);
     const [branding, setBranding] = useState<{ logo_full?: string; logo_icon?: string; logo_height?: number } | null>(null);
     const [brandingLoading, setBrandingLoading] = useState(true);
@@ -51,14 +54,15 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             try {
                 const { data: { user } } = await supabase.auth.getUser();
                 if (user) {
-                    // Buscar Role
+                    // Buscar Role e Perfil
                     const { data: profile } = await supabase
                         .from('profiles')
-                        .select('role, tenant_id')
+                        .select('role, tenant_id, full_name, avatar_url')
                         .eq('id', user.id)
                         .maybeSingle();
 
                     setUserRole(profile?.role || 'user');
+                    setUserProfile(profile);
 
                     // Buscar Slug e Branding do Tenant
                     if (profile?.tenant_id) {
@@ -149,18 +153,30 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                     <button onClick={onClose} className="md:hidden absolute right-4"><X size={24} /></button>
                 </div>
 
-                <nav className="flex-1 px-3 space-y-1 overflow-y-auto custom-scrollbar">
+                <nav className="flex-1 px-3 pt-6 space-y-1 overflow-y-auto custom-scrollbar">
                     {filteredMenuItems.map(item => (
                         <NavItem
                             key={item.name} item={item} pathname={pathname} searchParams={searchParams}
                             isCollapsed={isCollapsed} isExpanded={expandedItems.includes(item.name)}
                             onToggleExpand={(name) => setExpandedItems(prev => prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name])}
+                            onClose={onClose}
                         />
                     ))}
                 </nav>
 
-                <Footer isCollapsed={isCollapsed} onLogout={handleLogout} />
+                <Footer 
+                    isCollapsed={isCollapsed} 
+                    onLogout={handleLogout} 
+                    onClose={onClose}
+                    profile={userProfile}
+                    onSupportClick={() => setIsSupportModalOpen(true)}
+                />
             </div>
+
+            <SupportModal 
+                isOpen={isSupportModalOpen} 
+                onClose={() => setIsSupportModalOpen(false)} 
+            />
         </>
     );
 }
