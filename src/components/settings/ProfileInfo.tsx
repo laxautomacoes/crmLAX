@@ -49,7 +49,8 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
 
             const result = await updateProfile({
                 full_name: profile.full_name,
-                whatsapp_number: profile.whatsapp_number
+                whatsapp_number: profile.whatsapp_number,
+                email: profile.email
             });
 
             if (result.error) throw new Error(result.error);
@@ -81,8 +82,10 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
         }
     };
 
+    const isAdmin = ['admin', 'superadmin', 'super_admin', 'super administrador'].includes(profile?.role?.toLowerCase() || '');
+
     return (
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm h-full md:col-span-1 flex flex-col">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm h-full flex flex-col">
             <div className="flex items-center gap-2 mb-6">
                 <User className="text-muted-foreground" size={20} />
                 <h2 className="font-semibold text-foreground">Informações</h2>
@@ -102,23 +105,31 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
                         label="Email"
                         type="email"
                         value={profile?.email || ''}
-                        readOnly
-                        disabled
-                        className="cursor-not-allowed"
+                        onChange={isAdmin ? (e) => onProfileUpdate({ email: e.target.value }) : undefined}
+                        readOnly={!isAdmin}
+                        disabled={!isAdmin}
+                        className={!isAdmin ? "cursor-not-allowed" : ""}
                     />
-                    <div className="mt-2 flex items-center justify-between bg-background p-2 rounded-lg border border-muted-foreground/30">
-                        <p className="text-xs text-muted-foreground">
-                            Alteração de e-mail?
+                    {isAdmin && (
+                        <p className="text-[10px] text-muted-foreground mt-1 px-1">
+                            Um e-mail de confirmação será enviado para o novo e para o antigo endereço
                         </p>
-                        <button
-                            type="button"
-                            onClick={handleRequestEmailChange}
-                            disabled={requesting}
-                            className="text-xs font-bold bg-secondary text-secondary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity px-3 py-1.5 rounded-lg shadow-sm"
-                        >
-                            {requesting ? 'Enviando...' : 'Solicitar'}
-                        </button>
-                    </div>
+                    )}
+                    {!isAdmin && (
+                        <div className="mt-2 flex items-center justify-between bg-background p-2 rounded-lg border border-muted-foreground/30">
+                            <p className="text-xs text-muted-foreground">
+                                Alteração de e-mail?
+                            </p>
+                            <button
+                                type="button"
+                                onClick={handleRequestEmailChange}
+                                disabled={requesting}
+                                className="text-xs font-bold bg-secondary text-secondary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity px-3 py-1.5 rounded-lg shadow-sm"
+                            >
+                                {requesting ? 'Enviando...' : 'Solicitar'}
+                            </button>
+                        </div>
+                    )}
                 </div>
 
                 <FormInput

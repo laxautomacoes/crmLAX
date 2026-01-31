@@ -45,7 +45,7 @@ export function PasswordForm() {
     };
 
     return (
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm text-sm flex flex-col h-full">
+        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-full">
             <div className="flex items-center gap-2 mb-6">
                 <Lock className="text-muted-foreground" size={20} />
                 <h2 className="font-semibold text-foreground">Alterar Senha</h2>

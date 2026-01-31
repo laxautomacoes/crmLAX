@@ -198,7 +198,7 @@ export async function getBrokerProfile(profileId: string) {
     }
 }
 
-export async function updateProfile(data: { full_name: string, whatsapp_number?: string }) {
+export async function updateProfile(data: { full_name: string, whatsapp_number?: string, email?: string }) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -212,6 +212,21 @@ export async function updateProfile(data: { full_name: string, whatsapp_number?:
         .select('tenant_id, role')
         .eq('id', user.id)
         .maybeSingle()
+
+    const userRole = profile?.role?.toLowerCase() || '';
+    const isAdmin = ['admin', 'superadmin', 'super_admin', 'super administrador'].includes(userRole);
+
+    // Atualiza o e-mail se for admin/superadmin e o e-mail for diferente
+    if (isAdmin && data.email && data.email !== user.email) {
+        const { error: emailError } = await supabase.auth.updateUser({
+            email: data.email
+        })
+
+        if (emailError) {
+            console.error('Error updating email:', emailError)
+            return { error: 'Erro ao atualizar e-mail: ' + emailError.message }
+        }
+    }
 
     // Atualiza a tabela profiles
     const { error } = await supabase
