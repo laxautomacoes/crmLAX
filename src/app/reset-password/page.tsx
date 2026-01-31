@@ -39,7 +39,7 @@ export default function ResetPasswordPage() {
     return (
     <div className="min-h-screen w-full bg-background flex flex-col justify-center items-center p-4 md:p-6 transition-colors overflow-hidden">
       <div className="bg-card w-full max-w-[440px] md:min-h-[640px] min-h-fit rounded-2xl shadow-2xl p-6 md:p-12 border border-border/50 flex flex-col justify-center animate-in fade-in zoom-in duration-300 overflow-hidden">
-        <div className="flex flex-col -mt-8 md:-mt-20">
+        <div className="flex flex-col">
           <div className="flex flex-col items-center mb-6 md:mb-10">
          <Logo 
            size="lg" 
@@ -49,7 +49,7 @@ export default function ResetPasswordPage() {
            loading={brandingLoading}
          />
          {!brandingLoading && (
-           <p className="text-white text-xs md:text-base font-medium text-center -mt-8 md:-mt-12 opacity-90">
+           <p className="text-white text-xs md:text-base font-medium text-center opacity-90">
              A melhor experiência imobiliária
            </p>
          )}
