@@ -1,14 +1,14 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare } from 'lucide-react'
+import { useState, useEffect, useRef } from 'react'
+import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare, Loader2 } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { MediaUpload } from '@/components/shared/MediaUpload'
 import { formatPhone } from '@/lib/utils/phone'
-import { fetchAddressByCep, formatCEP } from '@/lib/utils/cep'
+import { fetchAddressByCep, formatCEP, fetchCepByAddress, ViaCEPResponse } from '@/lib/utils/cep'
 import { createNewClient, updateClient, deleteClient, archiveClient } from '@/app/_actions/clients'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
@@ -69,6 +69,63 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     const [editingClientId, setEditingClientId] = useState<string | null>(null)
     const [loading, setLoading] = useState(false)
     const [cepLoading, setCepLoading] = useState(false)
+    const [searchResults, setSearchResults] = useState<ViaCEPResponse[]>([])
+    const [showResults, setShowResults] = useState(false)
+    const resultsRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (resultsRef.current && !resultsRef.current.contains(event.target as Node)) {
+                setShowResults(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleSearchAddress = async () => {
+        const { address_street: rua, address_city: cidade, address_state: estado } = formData
+        
+        if (!estado || estado.length !== 2) {
+            toast.error('Informe o estado (UF) com 2 letras')
+            return
+        }
+        if (!cidade || cidade.length < 3) {
+            toast.error('Informe a cidade (mínimo 3 letras)')
+            return
+        }
+        if (!rua || rua.length < 3) {
+            toast.error('Informe a rua (mínimo 3 letras)')
+            return
+        }
+
+        setCepLoading(true)
+        try {
+            const results = await fetchCepByAddress(estado, cidade, rua)
+            setSearchResults(results)
+            setShowResults(true)
+            if (results.length === 0) {
+                toast.error('Nenhum CEP encontrado para este endereço')
+            }
+        } catch (error) {
+            console.error('Error searching address:', error)
+            toast.error('Erro ao buscar endereço')
+        } finally {
+            setCepLoading(false)
+        }
+    }
+
+    const selectAddress = (address: ViaCEPResponse) => {
+        setFormData(prev => ({
+            ...prev,
+            address_street: address.logradouro,
+            address_neighborhood: address.bairro,
+            address_city: address.localidade,
+            address_state: address.uf,
+            address_zip_code: formatCEP(address.cep)
+        }))
+        setShowResults(false)
+    }
 
     const handleCepChange = async (cep: string) => {
         const formattedCep = formatCEP(cep)
@@ -428,13 +485,48 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                 placeholder="00000-000"
                                 disabled={cepLoading}
                             />
-                            <div className="md:col-span-2">
+                            <div className="md:col-span-2 relative" ref={resultsRef}>
                                 <FormInput
                                     label="Rua"
                                     value={formData.address_street}
                                     onChange={e => setFormData({ ...formData, address_street: e.target.value })}
                                     placeholder="Rua / Avenida"
+                                    rightElement={
+                                        <button
+                                            type="button"
+                                            onClick={handleSearchAddress}
+                                            className="p-1 hover:bg-muted rounded-md transition-colors text-foreground"
+                                            title="Buscar CEP por endereço"
+                                            disabled={cepLoading}
+                                        >
+                                            {cepLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                                        </button>
+                                    }
                                 />
+
+                                {showResults && (
+                                    <div className="absolute z-50 w-full mt-1 bg-card border border-muted-foreground/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                        {searchResults.length > 0 ? (
+                                            searchResults.map((result, index) => (
+                                                <button
+                                                    key={index}
+                                                    type="button"
+                                                    onClick={() => selectAddress(result)}
+                                                    className="w-full text-left px-4 py-2 hover:bg-secondary/10 border-b border-muted-foreground/10 last:border-0 transition-colors"
+                                                >
+                                                    <div className="text-sm font-medium">{result.logradouro}</div>
+                                                    <div className="text-xs text-muted-foreground">
+                                                        {result.bairro}, {result.localidade} - {result.uf} | CEP: {result.cep}
+                                                    </div>
+                                                </button>
+                                            ))
+                                        ) : !cepLoading && (
+                                            <div className="p-4 text-center text-sm text-muted-foreground">
+                                                Nenhum endereço encontrado.
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
                             </div>
                             <FormInput
                                 label="Nº"
@@ -527,13 +619,13 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         <button
                             type="button"
                             onClick={() => setIsModalOpen(false)}
-                            className="flex-1 px-4 py-2.5 rounded-lg font-bold border border-border text-foreground hover:bg-muted transition-colors text-sm"
+                            className="flex-1 px-4 py-2.5 rounded-lg font-bold border border-border bg-muted text-foreground hover:bg-muted/80 transition-all text-sm"
                         >
                             Cancelar
                         </button>
                         <button
                             disabled={loading}
-                            className="flex-[2] bg-primary text-primary-foreground font-bold py-2.5 rounded-lg hover:opacity-90 transition-colors disabled:opacity-50 text-sm shadow-sm"
+                            className="flex-1 bg-secondary text-secondary-foreground font-bold py-2.5 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 text-sm shadow-sm"
                         >
                             {loading ? 'Salvando...' : (editingClientId ? 'Atualizar Dados' : 'Criar Cliente')}
                         </button>

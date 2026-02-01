@@ -2,7 +2,7 @@
 
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { FormTextarea } from '@/components/shared/forms/FormTextarea'
+import { FormRichTextarea } from '@/components/shared/forms/FormRichTextarea'
 import { Home, User, Info } from 'lucide-react'
 
 interface BasicInfoFieldsProps {
@@ -66,12 +66,11 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                     <Info size={14} className="text-foreground" />
                     Descrição
                 </h4>
-                <FormTextarea
+                <FormRichTextarea
                     label="Detalhes da descrição"
-                    value={formData.description}
-                    onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                    value={formData.description || ''}
+                    onChange={(val) => setFormData({ ...formData, description: val })}
                     placeholder="Descreva os principais detalhes do imóvel..."
-                    rows={4}
                 />
             </div>
 

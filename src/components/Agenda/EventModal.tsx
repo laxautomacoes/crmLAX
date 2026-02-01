@@ -228,7 +228,7 @@ export default function EventModal({
                     )}
                     <button
                         onClick={onClose}
-                        className="flex-1 py-3 bg-card text-foreground border border-border rounded-lg font-bold hover:bg-muted transition-all active:scale-[0.99]"
+                        className="flex-1 py-3 bg-muted text-foreground border border-border rounded-lg font-bold hover:bg-muted/80 transition-all active:scale-[0.99]"
                     >
                         Cancelar
                     </button>

@@ -1,13 +1,30 @@
 'use client'
 
-import { TextareaHTMLAttributes } from 'react'
+import { TextareaHTMLAttributes, useEffect, useRef } from 'react'
 
 interface FormTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string
     error?: string
+    autoExpand?: boolean
 }
 
-export function FormTextarea({ label, error, className = '', ...props }: FormTextareaProps) {
+export function FormTextarea({ label, error, className = '', autoExpand = false, ...props }: FormTextareaProps) {
+    const textareaRef = useRef<HTMLTextAreaElement>(null)
+
+    const adjustHeight = () => {
+        const textarea = textareaRef.current
+        if (textarea && autoExpand) {
+            textarea.style.height = 'auto'
+            textarea.style.height = `${textarea.scrollHeight}px`
+        }
+    }
+
+    useEffect(() => {
+        if (autoExpand) {
+            adjustHeight()
+        }
+    }, [props.value, autoExpand])
+
     return (
         <div className="w-full">
             {label && (
@@ -16,6 +33,7 @@ export function FormTextarea({ label, error, className = '', ...props }: FormTex
                 </label>
             )}
             <textarea
+                ref={textareaRef}
                 className={`
                     w-full rounded-lg border border-muted-foreground/30 bg-card text-foreground text-sm outline-none transition-all
                     focus:ring-2 focus:ring-secondary/50 focus:border-secondary
@@ -27,6 +45,10 @@ export function FormTextarea({ label, error, className = '', ...props }: FormTex
                     ${error ? 'border-red-500 focus:ring-red-500/20' : ''}
                     ${className}
                 `}
+                onInput={(e) => {
+                    if (autoExpand) adjustHeight()
+                    props.onInput?.(e)
+                }}
                 {...props}
             />
             {error && <span className="text-xs text-red-500 ml-1 mt-1">{error}</span>}

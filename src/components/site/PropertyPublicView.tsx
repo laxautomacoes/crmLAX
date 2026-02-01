@@ -9,6 +9,7 @@ import {
 import { translatePropertyType } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
+import { SafeMarkdownRenderer } from '@/components/shared/SafeMarkdownRenderer';
 
 interface PropertyPublicViewProps {
     asset: any;
@@ -312,9 +313,13 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                     {config?.description !== 'none' && (
                         <div className="space-y-4">
                             <h2 className="text-2xl font-bold text-foreground">Descrição</h2>
-                            <p className="text-muted-foreground leading-relaxed whitespace-pre-wrap">
-                                {asset.description || 'Sem descrição disponível.'}
-                            </p>
+                            <div className="text-muted-foreground leading-relaxed">
+                                {asset.description ? (
+                                    <SafeMarkdownRenderer content={asset.description} />
+                                ) : (
+                                    <p className="italic">Sem descrição disponível.</p>
+                                )}
+                            </div>
                         </div>
                     )}
 

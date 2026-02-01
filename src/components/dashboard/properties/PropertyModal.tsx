@@ -114,10 +114,11 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     }, [isOpen])
 
     useEffect(() => {
-        if (editingProperty) {
+        if (editingProperty && isOpen) {
+            console.log('Loading editingProperty:', editingProperty)
             setFormData({
                 title: editingProperty.title || '',
-                description: editingProperty.description || '',
+                description: editingProperty.description || editingProperty.details?.description || '',
                 price: editingProperty.price?.toString() || '',
                 type: editingProperty.type || 'house',
                 status: editingProperty.status || 'Pendente',
@@ -312,7 +313,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const handleSaveLocal = async () => {
         const propertyData = {
             ...formData,
-            price: formData.price ? parseFloat(formData.price.toString()) : 0
+            price: formData.price ? parseFloat(formData.price.toString()) : 0,
+            // Garantir que a descrição vá no objeto raiz e também dentro de details como redundância
+            description: formData.description,
+            details: {
+                ...formData.details,
+                description: formData.description
+            }
         }
         await onSave(propertyData)
     }
@@ -349,13 +356,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 <div className="flex gap-3 pt-4">
                     <button
                         onClick={onClose}
-                        className="flex-1 py-3 bg-card text-foreground rounded-lg font-bold hover:bg-muted transition-all active:scale-[0.99]"
+                        className="flex-1 py-3 bg-muted text-foreground border border-border rounded-lg font-bold hover:bg-muted/80 transition-all active:scale-[0.99]"
                     >
                         Cancelar
                     </button>
                     <button
                         onClick={handleSaveLocal}
-                        className="flex-1 py-3 bg-foreground text-background rounded-lg font-bold hover:bg-foreground/90 shadow-sm active:scale-[0.99] transition-all"
+                        className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 shadow-sm active:scale-[0.99] transition-all"
                     >
                         {editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel"}
                     </button>

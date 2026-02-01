@@ -35,13 +35,19 @@ export async function getAssets(tenantId: string, status?: string) {
 
         if (error) {
             // Se o erro for sobre colunas inexistentes, tentamos uma query básica
-            if (error.message.includes('created_by') || error.message.includes('description')) {
+            const isMissingColumn = 
+                error.message.includes('created_by') || 
+                error.message.includes('description') || 
+                error.message.includes('status') || 
+                error.message.includes('is_archived') ||
+                error.code === '42703';
+
+            if (isMissingColumn) {
                 console.warn('Retrying assets fetch without new columns')
                 const { data: fallbackData, error: fallbackError } = await supabase
                     .from('assets')
-                    .select('id, title, type, price, status, details, images, videos, documents')
+                    .select('id, title, type, price, details, images, videos, documents')
                     .eq('tenant_id', tenantId)
-                    .eq('is_archived', false)
                     .order('created_at', { ascending: false })
                 
                 if (fallbackError) throw fallbackError
@@ -49,7 +55,9 @@ export async function getAssets(tenantId: string, status?: string) {
                 // Mapear description do details se existir
                 const mappedData = (fallbackData || []).map((item: any) => ({
                     ...item,
-                    description: item.description || (item.details as any)?.description
+                    description: item.description || (item.details as any)?.description,
+                    status: item.status || 'Disponível',
+                    is_archived: item.is_archived || false
                 }))
                 return { success: true, data: mappedData }
             }
@@ -80,6 +88,11 @@ export async function createAsset(tenantId: string, assetData: any) {
             tenant_id: tenantId,
         }
 
+        // Se a descrição estiver em details mas não na raiz, traz para a raiz
+        if (!insertData.description && insertData.details?.description) {
+            insertData.description = insertData.details.description
+        }
+
         // Se não for admin, o status é sempre Pendente
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
             insertData.status = 'Pendente'
@@ -98,22 +111,31 @@ export async function createAsset(tenantId: string, assetData: any) {
                 error.message.includes('column') || 
                 error.message.includes('schema cache') ||
                 error.message.includes('created_by') ||
-                error.message.includes('description');
+                error.message.includes('description') ||
+                error.message.includes('status') ||
+                error.message.includes('is_archived');
 
             if (isMissingColumnError) {
                 console.warn('Column error detected during creation, applying definitive fallback...')
                 const fallbackData = { ...insertData } as any
                 
-                // Se a descrição falhar, vamos movê-la para dentro de 'details' para não perder a informação
-                if (error.message.includes('description') || error.code === '42703') {
+                // Em caso de erro de schema, vamos ser agressivos no fallback para garantir o salvamento
+                // Movemos a descrição para dentro de details se houver qualquer erro relacionado a colunas
+                if (fallbackData.description !== undefined) {
                     fallbackData.details = {
-                        ...fallbackData.details,
+                        ...(fallbackData.details || {}),
                         description: fallbackData.description
                     }
                     delete fallbackData.description
                 }
                 
-                if (error.message.includes('created_by') || error.code === '42703') delete fallbackData.created_by
+                // Removemos outras colunas que podem estar causando erro se o schema estiver desatualizado
+                delete fallbackData.created_by
+                delete fallbackData.is_archived
+                // Se o erro mencionar especificamente o status, removemos também
+                if (error.message.includes('status')) {
+                    delete fallbackData.status
+                }
                 
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
@@ -122,13 +144,25 @@ export async function createAsset(tenantId: string, assetData: any) {
                     .single()
                 
                 if (retryError) {
-                    // Se ainda der erro, tenta o insert mais básico sem select nenhum
-                    const { error: finalError } = await supabase
+                    console.error('Retry error:', retryError)
+                    // Se ainda der erro, tenta o insert mais básico possível, removendo quase tudo exceto o essencial
+                    const essentialData = {
+                        title: fallbackData.title,
+                        type: fallbackData.type,
+                        price: fallbackData.price,
+                        tenant_id: fallbackData.tenant_id,
+                        details: fallbackData.details,
+                        images: fallbackData.images
+                    }
+                    
+                    const { data: finalData, error: finalError } = await supabase
                         .from('assets')
-                        .insert([fallbackData])
+                        .insert([essentialData])
+                        .select('id')
+                        .single()
                     
                     if (finalError) throw finalError
-                    return { success: true }
+                    return { success: true, data: finalData }
                 }
 
                 // Se salvou no fallback (dentro de details), garantimos que o objeto retornado tenha a description na raiz para o UI
@@ -137,6 +171,7 @@ export async function createAsset(tenantId: string, assetData: any) {
                     description: retryData.description || retryData.details?.description
                 } : null
 
+                revalidatePath('/properties')
                 return { success: true, data: resultData }
             }
             throw error
@@ -157,6 +192,11 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
     try {
         const updateData = { ...assetData }
         
+        // Se a descrição estiver em details mas não na raiz, traz para a raiz
+        if (!updateData.description && updateData.details?.description) {
+            updateData.description = updateData.details.description
+        }
+
         // Remover campos que não devem ser atualizados ou que vêm de joins
         delete updateData.id
         delete updateData.tenant_id
@@ -191,28 +231,28 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
                 error.message.includes('column') || 
                 error.message.includes('schema cache') ||
                 error.message.includes('created_by') ||
-                error.message.includes('description');
+                error.message.includes('description') ||
+                error.message.includes('status') ||
+                error.message.includes('is_archived');
 
             if (isMissingColumnError) {
                 console.warn('Column error detected during update, applying definitive fallback...')
                 const fallbackData = { ...updateData } as any
                 
                 // Se a descrição falhar como coluna, movemos para details como fallback
-                if (error.message.includes('description') || error.code === '42703') {
-                    // Nota: No update, se quisermos salvar no details, precisamos garantir que 
-                    // estamos enviando o objeto details completo ou usando a sintaxe de patch do Supabase.
-                    // Para simplificar e garantir persistência, se description falhar, 
-                    // assumimos que ela deve ir para dentro do JSONB details.
-                    if (fallbackData.description) {
-                        fallbackData.details = {
-                            ...(fallbackData.details || {}),
-                            description: fallbackData.description
-                        }
+                if (fallbackData.description !== undefined) {
+                    fallbackData.details = {
+                        ...(fallbackData.details || {}),
+                        description: fallbackData.description
                     }
                     delete fallbackData.description
                 }
                 
-                if (error.message.includes('created_by') || error.code === '42703') delete fallbackData.created_by
+                delete fallbackData.created_by
+                delete fallbackData.is_archived
+                if (error.message.includes('status')) {
+                    delete fallbackData.status
+                }
                 
                 let retryQuery = supabase
                     .from('assets')
@@ -220,6 +260,7 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
                     .eq('id', assetId)
                     .eq('tenant_id', tenantId)
 
+                // Se não for admin, só pode atualizar se for o criador
                 if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
                     retryQuery = retryQuery.eq('created_by', profile?.id)
                 }
@@ -229,28 +270,32 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
                     .single()
                 
                 if (retryError) {
-                    // Segundo fallback: update básico sem select
-                    let finalQuery = supabase
+                    // Tenta o update mais básico possível se o anterior falhar
+                    const essentialUpdate = {
+                        title: fallbackData.title,
+                        type: fallbackData.type,
+                        price: fallbackData.price,
+                        details: fallbackData.details,
+                        images: fallbackData.images
+                    }
+                    
+                    const { error: finalError } = await supabase
                         .from('assets')
-                        .update(fallbackData)
+                        .update(essentialUpdate)
                         .eq('id', assetId)
                         .eq('tenant_id', tenantId)
-
-                    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
-                        finalQuery = finalQuery.eq('created_by', profile?.id)
-                    }
-
-                    const { error: finalError } = await finalQuery
                     
                     if (finalError) throw finalError
                     return { success: true }
                 }
 
+                // Garantir description no retorno
                 const resultData = retryData ? {
                     ...retryData,
                     description: retryData.description || retryData.details?.description
                 } : null
 
+                revalidatePath('/properties')
                 return { success: true, data: resultData }
             }
             throw error
@@ -302,11 +347,13 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
 
                     // Fallback para description dentro de details se necessário
                     if (error.message.includes('description') || error.code === '42703') {
-                        item.details = {
-                            ...(item.details || {}),
-                            description: item.description
+                        if (item.description !== undefined) {
+                            item.details = {
+                                ...(item.details || {}),
+                                description: item.description
+                            }
+                            delete item.description
                         }
-                        delete item.description
                     }
 
                     return item
@@ -413,15 +460,22 @@ export async function getAssetById(assetId: string) {
 
         if (error) {
             // Fallback se colunas novas não existirem
-            if (error.message.includes('created_by') || error.message.includes('description') || error.code === '42703') {
+            if (error.message.includes('created_by') || error.message.includes('description') || error.message.includes('status') || error.code === '42703') {
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
-                    .select('*')
+                    .select('id, title, type, price, details, images, videos, documents')
                     .eq('id', assetId)
                     .single()
                 
                 if (retryError) throw retryError
-                return { success: true, data: retryData }
+
+                // Garantir campos básicos no retorno
+                const mappedData = {
+                    ...retryData,
+                    description: retryData.description || retryData.details?.description,
+                    status: retryData.status || 'Disponível'
+                }
+                return { success: true, data: mappedData }
             }
             throw error
         }

@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
+import { SafeMarkdownRenderer } from '@/components/shared/SafeMarkdownRenderer';
 import { 
     Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, 
     PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, 
@@ -407,9 +408,13 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                                 <Info size={14} className="text-foreground" />
                                 Descrição
                             </h4>
-                            <p className="text-foreground leading-relaxed whitespace-pre-wrap">
-                                {prop.description || 'Nenhuma descrição informada para este imóvel.'}
-                            </p>
+                            <div className="text-foreground leading-relaxed">
+                                {prop.description ? (
+                                    <SafeMarkdownRenderer content={prop.description} />
+                                ) : (
+                                    <p className="italic text-muted-foreground">Nenhuma descrição informada para este imóvel.</p>
+                                )}
+                            </div>
                         </div>
 
                         <div className="border-t-2 border-border/100" />
@@ -482,7 +487,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                                 <MapPin size={14} className="text-foreground" />
                                 Localização
                             </h4>
-                            <div className="rounded-2xl overflow-hidden bg-muted/30 p-1 aspect-[21/9] min-h-[300px]">
+                            <div className="rounded-2xl overflow-hidden bg-muted/30 p-1">
                                 <PropertyMap 
                                     lat={endereco.latitude} 
                                     lng={endereco.longitude} 
