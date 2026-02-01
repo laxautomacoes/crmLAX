@@ -36,9 +36,9 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
     ].filter(a => details[a.id]);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={asset.title} size="xl">
+        <Modal isOpen={isOpen} onClose={onClose} title={asset.title} size="full">
             <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="grid grid-cols-1 gap-8">
                     <div className="space-y-4">
                         <div 
                             onClick={() => setIsFullscreenOpen(true)}
@@ -118,8 +118,6 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         <div className="flex items-start gap-2 text-muted-foreground text-sm">
                             <MapPin size={16} className="text-primary mt-1 flex-shrink-0" />
                             <span>
-                                {details.endereco?.rua && `${details.endereco.rua}, `}
-                                {details.endereco?.numero && `${details.endereco.numero}, `}
                                 {details.endereco?.bairro && `${details.endereco.bairro}, `}
                                 {details.endereco?.cidade && `${details.endereco.cidade} - `}
                                 {details.endereco?.estado && `${details.endereco.estado}`}
@@ -242,8 +240,8 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         )}
                     </div>
                 </div>
-                {(asset.videos?.length > 0 || asset.documents?.length > 0) && (
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-6 border-t border-border">
+                {asset.videos?.length > 0 && (
+                    <div className="grid grid-cols-1 gap-6 pt-6 border-t border-border">
                         {asset.videos?.length > 0 && (
                             <div className="space-y-4">
                                 <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
@@ -267,22 +265,6 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                                 <ExternalLink size={14} className="text-muted-foreground group-hover:text-primary" />
                                             </div>
                                         </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-                        {asset.documents?.length > 0 && (
-                            <div className="space-y-4">
-                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                                    <FileText size={14} className="text-primary" />
-                                    Documentos
-                                </h4>
-                                <div className="space-y-2">
-                                    {asset.documents.map((doc: any, i: number) => (
-                                        <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between p-3 rounded-xl border border-border bg-card hover:bg-muted transition-colors group">
-                                            <span className="text-xs font-medium truncate pr-4">{doc.name}</span>
-                                            <ExternalLink size={14} className="text-muted-foreground group-hover:text-primary" />
-                                        </a>
                                     ))}
                                 </div>
                             </div>

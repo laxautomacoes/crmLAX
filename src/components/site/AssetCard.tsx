@@ -34,11 +34,14 @@ export function AssetCard({ asset }: AssetCardProps) {
         <>
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                 {imageUrl ? (
-                    <div className="relative h-64 overflow-hidden">
+                    <div 
+                        onClick={() => setShowDetails(true)}
+                        className="relative h-64 overflow-hidden cursor-pointer group"
+                    >
                         <img
                             src={imageUrl}
                             alt={asset.title}
-                            className="w-full h-full object-cover"
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
                         <div className="absolute top-4 right-4 bg-card/90 px-3 py-1 rounded-lg">
                             {asset.price && (
@@ -49,7 +52,10 @@ export function AssetCard({ asset }: AssetCardProps) {
                         </div>
                     </div>
                 ) : (
-                    <div className="h-64 bg-muted flex items-center justify-center">
+                    <div 
+                        onClick={() => setShowDetails(true)}
+                        className="h-64 bg-muted flex items-center justify-center cursor-pointer"
+                    >
                         <Home className="w-16 h-16 text-muted-foreground/50" />
                     </div>
                 )}
@@ -79,7 +85,7 @@ export function AssetCard({ asset }: AssetCardProps) {
                         </button>
                         <button
                             onClick={() => setShowLeadForm(true)}
-                            className="flex-[1.5] bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-3 px-4 rounded-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2"
+                            className="flex-1 bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-3 px-4 rounded-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2"
                         >
                             <MessageCircle size={20} />
                             Tenho interesse
