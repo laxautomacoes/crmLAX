@@ -27,6 +27,17 @@ async function getTenantByCustomDomain(
     return data || null;
 }
 
+export async function getTenantBySlug(slug: string): Promise<TenantInfo | null> {
+    const supabase = await createClient();
+    const { data } = await supabase
+        .from('tenants')
+        .select('id, slug, name, custom_domain, branding')
+        .eq('slug', slug)
+        .single();
+
+    return data || null;
+}
+
 async function getTenantBySubdomain(
     supabase: SupabaseClient,
     hostname: string

@@ -1,6 +1,6 @@
 import { createClient } from '@/lib/supabase/server';
 import { headers } from 'next/headers';
-import { getTenantByHostname as queryTenantByHostname } from './tenant-query';
+import { getTenantByHostname as queryTenantByHostname, getTenantBySlug as queryTenantBySlug } from './tenant-query';
 
 import { TenantInfo } from './tenant-types';
 export type { TenantInfo };
@@ -24,16 +24,7 @@ export async function getTenantFromHeaders(): Promise<TenantInfo | null> {
     return tenant;
 }
 
-export async function getTenantBySlug(slug: string): Promise<TenantInfo | null> {
-    const supabase = await createClient();
-    const { data: tenant } = await supabase
-        .from('tenants')
-        .select('id, slug, name, custom_domain, branding')
-        .eq('slug', slug)
-        .single();
-
-    return tenant;
-}
+export { queryTenantBySlug as getTenantBySlug };
 
 export async function getTenantWhatsApp(tenantId: string): Promise<string | null> {
     const supabase = await createClient();

@@ -327,6 +327,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                 onClose={() => setShowLeadForm(false)}
                 assetId={asset.id}
                 assetTitle={asset.title}
+                tenantId={asset.tenant_id}
             />
         </Modal>
     );

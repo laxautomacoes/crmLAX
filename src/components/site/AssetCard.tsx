@@ -16,6 +16,7 @@ interface AssetCardProps {
         videos?: string[] | null;
         documents?: any[] | null;
         details?: Record<string, any> | null;
+        tenant_id?: string;
     };
 }
 
@@ -28,8 +29,9 @@ export function AssetCard({ asset }: AssetCardProps) {
         : null;
 
     const tipo = translatePropertyType(asset.details?.tipo_imovel || asset.details?.type || (asset as any).type);
-    const area = asset.details?.area_util || asset.details?.area || null;
-    const quartos = asset.details?.quartos || asset.details?.rooms || null;
+    const areaPrivativa = asset.details?.area_privativa || asset.details?.area_util || asset.details?.area || 0;
+    const quartos = asset.details?.dormitorios || asset.details?.quartos || asset.details?.rooms || 0;
+    const vagas = asset.details?.vagas || 0;
 
     return (
         <>
@@ -57,17 +59,18 @@ export function AssetCard({ asset }: AssetCardProps) {
                 <div className="p-6">
                     <div className="flex items-center justify-between gap-4 mb-1">
                         <h3 className="text-xl font-bold text-foreground truncate">{asset.title}</h3>
-                        <span className="text-lg text-primary whitespace-nowrap">
+                        <span className="text-lg text-white font-bold whitespace-nowrap">
                             {Number(asset.price) > 0 
                                 ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` 
                                 : 'Sob consulta'}
                         </span>
                     </div>
                     
-                    <div className="flex flex-wrap gap-4 mb-4 text-sm text-muted-foreground">
+                    <div className="flex flex-col gap-1 mb-4 text-sm text-muted-foreground">
                         <span><strong>Tipo:</strong> {tipo}</span>
-                        {area && <span><strong>Área:</strong> {area} m²</span>}
-                        {quartos && <span><strong>Dormitórios:</strong> {quartos}</span>}
+                        <span><strong>Dormitórios:</strong> {quartos}</span>
+                        <span><strong>Vagas:</strong> {vagas}</span>
+                        <span><strong>Área Privativa:</strong> {areaPrivativa} m²</span>
                     </div>
 
                     <div className="flex gap-2">
@@ -100,6 +103,7 @@ export function AssetCard({ asset }: AssetCardProps) {
                 onClose={() => setShowLeadForm(false)}
                 assetId={asset.id}
                 assetTitle={asset.title}
+                tenantId={asset.tenant_id}
             />
         </>
     );

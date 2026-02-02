@@ -34,10 +34,19 @@ export function AssetsListItem({ asset }: { asset: any }) {
                             </div>
                             <div className="text-xl font-bold text-foreground whitespace-nowrap">{formattedPrice}</div>
                         </div>
-                        <div className="flex flex-wrap items-center gap-6 mt-4 md:mt-0">
-                            <div className="flex items-center gap-1.5 text-muted-foreground" title="Dormitórios"><BedDouble size={18} /><span className="text-sm font-semibold">{asset.details?.dormitorios || asset.details?.quartos || 0} Dorms</span></div>
-                            <div className="flex items-center gap-1.5 text-muted-foreground" title="Banheiros"><Bath size={18} /><span className="text-sm font-semibold">{asset.details?.banheiros || 0} Banh</span></div>
-                            <div className="flex items-center gap-1.5 text-muted-foreground" title="Área"><Maximize2 size={18} /><span className="text-sm font-semibold">{asset.details?.area_util || 0}m²</span></div>
+                        <div className="flex flex-wrap items-center gap-4 mt-4 md:mt-0">
+                            <div className="flex items-center gap-1.5 text-muted-foreground" title="Dormitórios">
+                                <BedDouble size={18} />
+                                <span className="text-sm font-semibold">{asset.details?.dormitorios || asset.details?.quartos || 0} Dorms</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-muted-foreground" title="Vagas">
+                                <Car size={18} />
+                                <span className="text-sm font-semibold">{asset.details?.vagas || 0} Vagas</span>
+                            </div>
+                            <div className="flex items-center gap-1.5 text-muted-foreground" title="Área Privativa">
+                                <Maximize2 size={18} />
+                                <span className="text-sm font-semibold">{asset.details?.area_privativa || asset.details?.area_util || 0}m² Priv.</span>
+                            </div>
                             <div className="flex-1 text-right">
                                 <button onClick={() => setShowDetails(true)} className="inline-flex items-center gap-2 text-sm font-bold text-foreground hover:gap-3 transition-all">Ver Detalhes<ChevronRight size={16} /></button>
                             </div>

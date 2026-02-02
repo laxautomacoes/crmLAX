@@ -10,9 +10,10 @@ interface LeadFormModalProps {
     onClose: () => void;
     assetId?: string;
     assetTitle?: string;
+    tenantId?: string;
 }
 
-export function LeadFormModal({ isOpen, onClose, assetId, assetTitle }: LeadFormModalProps) {
+export function LeadFormModal({ isOpen, onClose, assetId, assetTitle, tenantId }: LeadFormModalProps) {
     const [success, setSuccess] = useState(false);
 
     if (!isOpen) return null;
@@ -50,6 +51,7 @@ export function LeadFormModal({ isOpen, onClose, assetId, assetTitle }: LeadForm
                     <LeadForm
                         assetId={assetId}
                         assetTitle={assetTitle}
+                        tenantId={tenantId}
                         onSubmit={handleSubmit}
                     />
                 )}

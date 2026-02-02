@@ -8,10 +8,11 @@ import { LeadFormFields } from './LeadFormFields';
 interface LeadFormProps {
     assetId?: string;
     assetTitle?: string;
+    tenantId?: string;
     onSubmit: (result: { success?: boolean; error?: string }) => void;
 }
 
-export function LeadForm({ assetId, assetTitle, onSubmit }: LeadFormProps) {
+export function LeadForm({ assetId, assetTitle, tenantId, onSubmit }: LeadFormProps) {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
@@ -27,7 +28,8 @@ export function LeadForm({ assetId, assetTitle, onSubmit }: LeadFormProps) {
             name,
             phone,
             email: email || undefined,
-            asset_id: assetId
+            asset_id: assetId,
+            tenant_id: tenantId
         });
 
         if (result.error) {

@@ -9,9 +9,16 @@ export async function createLeadFromSite(data: {
     phone: string;
     email?: string;
     asset_id?: string;
+    tenant_id?: string;
 }) {
-    const tenant = await getTenantFromHeaders();
-    if (!tenant) return { error: 'Tenant context not found' };
+    let tenantId = data.tenant_id;
+
+    if (!tenantId) {
+        const tenant = await getTenantFromHeaders();
+        tenantId = tenant?.id;
+    }
+
+    if (!tenantId) return { error: 'Tenant context not found' };
 
     const supabase = await createClient();
 
@@ -19,13 +26,13 @@ export async function createLeadFromSite(data: {
     const { data: stage } = await supabase
         .from('lead_stages')
         .select('id')
-        .eq('tenant_id', tenant.id)
+        .eq('tenant_id', tenantId)
         .order('order_index', { ascending: true })
         .limit(1)
         .single();
 
     // 2. Criar o lead usando a lógica centralizada em leads.ts
-    return await createLead(tenant.id, {
+    return await createLead(tenantId, {
         ...data,
         stage_id: stage?.id,
         interest: data.asset_id ? 'Interesse em Imóvel' : 'Contato Site'

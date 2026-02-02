@@ -1,16 +1,24 @@
 import { createServerClient } from '@supabase/ssr'
 import { NextResponse, type NextRequest } from 'next/server'
 import { isPublicRoute, isSiteRequest } from '@/lib/utils/tenant'
-import { getTenantByHostname } from '@/lib/utils/tenant-query'
+import { getTenantByHostname, getTenantBySlug } from '@/lib/utils/tenant-query'
 
 export default async function proxy(request: NextRequest) {
     const hostname = request.headers.get('host') || ''
     const pathname = request.nextUrl.pathname
 
     // 1. Identificar tenant pelo hostname (subdomínio ou custom domain)
-    const tenant = await getTenantByHostname(hostname)
+    let tenant = await getTenantByHostname(hostname)
 
-    // 2. Se for request de site público e temos tenant, redirecionar para /site/[slug]
+    // 2. Se não encontrou por hostname, tentar pelo path /site/[slug]
+    if (!tenant && pathname.startsWith('/site/')) {
+        const slug = pathname.split('/')[2]
+        if (slug) {
+            tenant = await getTenantBySlug(slug)
+        }
+    }
+
+    // 3. Se for request de site público e temos tenant, redirecionar para /site/[slug]
     if (tenant && !isSiteRequest(pathname) && !pathname.startsWith('/dashboard') && !pathname.startsWith('/api')) {
         // Se acessando raiz do site do tenant, redirecionar para /site/[slug]
         if (pathname === '/') {
