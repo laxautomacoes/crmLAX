@@ -281,31 +281,31 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                             <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
                                 <BedDouble className="text-primary mb-2" size={24} />
                                 <span className="text-lg font-bold">{details.dormitorios || details.quartos || 0}</span>
-                                <span className="text-xs text-muted-foreground uppercase font-medium">Dormitórios</span>
+                                <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Dormitórios</span>
                             </div>
                         )}
                         {config?.showSuites !== false && details.suites > 0 && (
                             <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
                                 <Bath className="text-primary mb-2" size={24} />
                                 <span className="text-lg font-bold">{details.suites}</span>
-                                <span className="text-xs text-muted-foreground uppercase font-medium">Suítes</span>
+                                <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Suítes</span>
                             </div>
                         )}
                         <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
                             <Bath className="text-primary mb-2" size={24} />
                             <span className="text-lg font-bold">{details.banheiros || 0}</span>
-                            <span className="text-xs text-muted-foreground uppercase font-medium">Banheiros</span>
+                            <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Banheiros</span>
                         </div>
                         <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
                             <Car className="text-primary mb-2" size={24} />
                             <span className="text-lg font-bold">{details.vagas || 0}</span>
-                            <span className="text-xs text-muted-foreground uppercase font-medium">Vagas</span>
+                            <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Vagas</span>
                         </div>
                         {config?.showArea !== false && (
                             <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
                                 <Square className="text-primary mb-2" size={24} />
                                 <span className="text-lg font-bold">{details.area_util || details.area_total || 0}m²</span>
-                                <span className="text-xs text-muted-foreground uppercase font-medium">Área</span>
+                                <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Área</span>
                             </div>
                         )}
                     </div>
@@ -371,7 +371,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                 <div className="space-y-6">
                     <div className="p-6 bg-card rounded-2xl border border-border shadow-sm sticky top-24">
                         <div className="mb-6">
-                            <span className="text-sm text-muted-foreground uppercase font-bold tracking-wider">Valor do Imóvel</span>
+                            <span className="text-sm font-bold text-muted-foreground dark:text-white uppercase tracking-widest">Valor do Imóvel</span>
                             <div className="flex items-baseline gap-2 mt-1">
                                 <span className="text-3xl font-black text-foreground">
                                     {displayPrice}
@@ -391,7 +391,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                                     )}
                                 </div>
                                 <div>
-                                    <p className="text-xs text-muted-foreground uppercase font-bold tracking-wider">Corretor Responsável</p>
+                                    <p className="text-xs text-muted-foreground dark:text-white uppercase font-bold tracking-wider">Corretor Responsável</p>
                                     <p className="text-lg font-bold text-foreground">{broker?.full_name || (broker?.id ? 'Léo Acosta' : tenant?.name)}</p>
                                 </div>
                             </div>

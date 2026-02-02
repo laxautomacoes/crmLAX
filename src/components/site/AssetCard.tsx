@@ -5,6 +5,7 @@ import { useState } from 'react';
 import { LeadFormModal } from './LeadFormModal';
 import { PropertyDetailsModal } from './PropertyDetailsModal';
 import { translatePropertyType } from '@/utils/property-translations';
+import { stripMarkdown } from '@/utils/text-utils';
 
 interface AssetCardProps {
     asset: {
@@ -43,13 +44,6 @@ export function AssetCard({ asset }: AssetCardProps) {
                             alt={asset.title}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                        <div className="absolute top-4 right-4 bg-card/90 px-3 py-1 rounded-lg">
-                            {asset.price && (
-                                <span className="text-lg font-bold text-primary">
-                                    R$ {Number(asset.price).toLocaleString('pt-BR')}
-                                </span>
-                            )}
-                        </div>
                     </div>
                 ) : (
                     <div 
@@ -61,14 +55,15 @@ export function AssetCard({ asset }: AssetCardProps) {
                 )}
 
                 <div className="p-6">
-                    <h3 className="text-xl font-bold text-foreground mb-1">{asset.title}</h3>
+                    <div className="flex items-center justify-between gap-4 mb-1">
+                        <h3 className="text-xl font-bold text-foreground truncate">{asset.title}</h3>
+                        <span className="text-lg text-primary whitespace-nowrap">
+                            {Number(asset.price) > 0 
+                                ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` 
+                                : 'Sob consulta'}
+                        </span>
+                    </div>
                     
-                    {(asset as any).description && (
-                        <p className="text-sm text-muted-foreground line-clamp-2 mb-3 italic">
-                            {(asset as any).description}
-                        </p>
-                    )}
-
                     <div className="flex flex-wrap gap-4 mb-4 text-sm text-muted-foreground">
                         <span><strong>Tipo:</strong> {tipo}</span>
                         {area && <span><strong>Área:</strong> {area} m²</span>}
@@ -78,16 +73,16 @@ export function AssetCard({ asset }: AssetCardProps) {
                     <div className="flex gap-2">
                         <button
                             onClick={() => setShowDetails(true)}
-                            className="flex-1 bg-muted hover:bg-muted/80 text-foreground font-bold py-3 px-4 rounded-lg transition-all flex items-center justify-center gap-2"
+                            className="flex-1 bg-muted hover:bg-muted/80 text-foreground font-bold py-3 px-2 md:px-4 rounded-lg transition-all flex items-center justify-center gap-1.5 md:gap-2 text-[11px] xs:text-xs md:text-sm whitespace-nowrap"
                         >
-                            <Info size={20} />
+                            <Info size={16} className="flex-shrink-0" />
                             Ver detalhes
                         </button>
                         <button
                             onClick={() => setShowLeadForm(true)}
-                            className="flex-1 bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-3 px-4 rounded-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2"
+                            className="flex-1 bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-3 px-2 md:px-4 rounded-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-1.5 md:gap-2 text-[11px] xs:text-xs md:text-sm whitespace-nowrap"
                         >
-                            <MessageCircle size={20} />
+                            <MessageCircle size={16} className="flex-shrink-0" />
                             Tenho interesse
                         </button>
                     </div>

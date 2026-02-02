@@ -6,12 +6,13 @@ import { useEffect } from 'react';
 interface ModalProps {
     isOpen: boolean;
     onClose: () => void;
-    title: string;
+    title: React.ReactNode;
     children: React.ReactNode;
     size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
+    titleClassName?: string;
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', titleClassName }: ModalProps) {
     const sizeClasses = {
         sm: 'max-w-sm',
         md: 'max-w-md',
@@ -36,11 +37,17 @@ export function Modal({ isOpen, onClose, title, children, size = 'md' }: ModalPr
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
             <div className={`bg-card rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200`}>
-                <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0">
-                    <h3 className="text-lg font-semibold text-foreground">{title}</h3>
+                <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0 gap-4">
+                    <div className={`flex-1 min-w-0 ${titleClassName || ''}`}>
+                        {typeof title === 'string' ? (
+                            <h3 className="text-lg font-semibold text-foreground truncate">{title}</h3>
+                        ) : (
+                            title
+                        )}
+                    </div>
                     <button
                         onClick={onClose}
-                        className="text-muted-foreground hover:text-foreground transition-colors"
+                        className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
                     >
                         <X size={20} />
                     </button>

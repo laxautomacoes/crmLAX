@@ -501,8 +501,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                     {/* Amenities (Full Width) */}
                 {amenities.length > 0 && (
                     <div className="space-y-4 pt-6">
-                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                            <Waves size={14} className="text-foreground" />
+                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                             Área comum | Lazer
                         </h4>
                         <div className="flex flex-col gap-0">

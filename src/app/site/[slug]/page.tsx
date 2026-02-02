@@ -58,18 +58,15 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
     return (
         <div className="min-h-screen bg-background">
             <div className="max-w-[1600px] mx-auto px-4 py-8">
-                <div className="mb-8 flex flex-col items-center md:items-start">
+                <div className="mb-12 flex flex-col items-start">
                     <Logo 
                         size="lg" 
                         src={tenant.branding?.logo_full} 
-                        height={tenant.branding?.logo_height} 
+                        height={100} 
                     />
                     {!tenant.branding?.logo_full && (
                         <h1 className="text-4xl font-bold text-foreground mt-2">{tenant.name}</h1>
                     )}
-                    <p className="mt-2 text-xl text-muted-foreground">
-                        Encontre o seu novo lar
-                    </p>
                 </div>
 
                 <SiteClient

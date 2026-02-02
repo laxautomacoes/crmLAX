@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { Home, MapPin, BedDouble, Bath, Car, ChevronRight, Maximize2 } from 'lucide-react';
 import { PropertyDetailsModal } from './PropertyDetailsModal';
 import { translatePropertyType } from '@/utils/property-translations';
+import { stripMarkdown } from '@/utils/text-utils';
 
 export function AssetsListItem({ asset }: { asset: any }) {
     const [showDetails, setShowDetails] = useState(false);
@@ -26,7 +27,7 @@ export function AssetsListItem({ asset }: { asset: any }) {
                                 <h3 className="font-bold text-foreground text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1">{asset.title}</h3>
                                 {asset.description && (
                                     <div className="text-xs text-muted-foreground line-clamp-1 mt-0.5 italic">
-                                        {asset.description}
+                                        {stripMarkdown(asset.description)}
                                     </div>
                                 )}
                                 <div className="flex items-center gap-1 text-muted-foreground text-sm mt-1"><MapPin size={14} /><span>{bairro}, {cidade}</span></div>

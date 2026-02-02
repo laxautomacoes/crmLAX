@@ -26,14 +26,17 @@ export function FullscreenMediaViewer({ isOpen, onClose, media, initialIndex = 0
         if (isOpen) {
             setCurrentIndex(initialIndex);
             document.body.style.overflow = 'hidden';
+            document.body.classList.add('media-fullscreen-open');
             if (videoRef.current && initialTime > 0) {
                 videoRef.current.currentTime = initialTime;
             }
         } else {
             document.body.style.overflow = 'unset';
+            document.body.classList.remove('media-fullscreen-open');
         }
         return () => {
             document.body.style.overflow = 'unset';
+            document.body.classList.remove('media-fullscreen-open');
         };
     }, [isOpen, initialIndex, initialTime]);
 

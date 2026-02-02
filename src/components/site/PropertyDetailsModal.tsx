@@ -3,13 +3,16 @@
 import { useState } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
-import { Home, MapPin, BedDouble, Bath, Car, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, Video, FileText, ExternalLink, Maximize2, Trees } from 'lucide-react';
+import { LeadFormModal } from './LeadFormModal';
+import { Home, MapPin, BedDouble, Bath, Car, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, Video, FileText, Info, DollarSign, ExternalLink, Maximize2, Trees, MessageCircle } from 'lucide-react';
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
+import { SafeMarkdownRenderer } from '@/components/shared/SafeMarkdownRenderer';
 
 export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boolean, onClose: () => void, asset: any }) {
     const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
     const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+    const [showLeadForm, setShowLeadForm] = useState(false);
 
     if (!asset) return null;
     const details = asset.details || {};
@@ -36,10 +39,39 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
     ].filter(a => details[a.id]);
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={asset.title} size="full">
-            <div className="space-y-6 max-h-[80vh] overflow-y-auto pr-2">
-                <div className="grid grid-cols-1 gap-8">
-                    <div className="space-y-4">
+        <Modal 
+            isOpen={isOpen} 
+            onClose={onClose} 
+            title={
+                <div className="flex flex-col gap-2 w-full pr-2 mt-1">
+                    <div className="flex items-center gap-4 w-full">
+                        <h2 className="text-lg font-bold text-muted-foreground dark:text-white uppercase tracking-widest flex items-center gap-2 min-w-0">
+                            <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                                <Home size={16} />
+                            </div>
+                            <span className="truncate">{asset.title}</span>
+                        </h2>
+                    </div>
+                    <div className="flex items-center gap-1.5 flex-nowrap whitespace-nowrap overflow-x-auto no-scrollbar">
+                        {details.situacao && (
+                            <span className={`px-2.5 py-1 text-[10px] font-black rounded-full uppercase tracking-tight md:tracking-widest shadow-sm ${getSituacaoStyles(details.situacao)}`}>
+                                {details.situacao}
+                            </span>
+                        )}
+                        <span className={`px-2.5 py-1 text-[10px] font-black rounded-full uppercase tracking-tight md:tracking-widest shadow-sm ${getPropertyTypeStyles(asset.type || asset.details?.type)}`}>
+                            {translatePropertyType(asset.type || asset.details?.type)}
+                        </span>
+                        <span className={`px-2.5 py-1 text-[10px] font-black rounded-full uppercase tracking-tight md:tracking-widest shadow-sm ${getStatusStyles(asset.status)}`}>
+                            {asset.status}
+                        </span>
+                    </div>
+                </div>
+            } 
+            size="2xl"
+        >
+            <div className="space-y-8 max-h-[80vh] overflow-y-auto pr-2">
+                <div className="flex flex-col gap-8">
+                    <div className="space-y-6">
                         <div 
                             onClick={() => setIsFullscreenOpen(true)}
                             className="relative group aspect-video rounded-xl overflow-hidden bg-black flex items-center justify-center cursor-zoom-in"
@@ -67,13 +99,15 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             ))}
                         </div>
 
-                        {/* Videos Carousel (Separated) */}
-                        {asset.videos?.length > 0 && (
-                            <div className="space-y-4 pt-4 border-t border-border/50">
-                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                                    <Video size={14} className="text-primary" />
-                                    Vídeos
-                                </h4>
+                        {/* Videos Section - Always Visible */}
+                        <div className="flex flex-col gap-3">
+                            <h4 className="text-lg font-bold text-muted-foreground dark:text-white uppercase tracking-widest flex items-center gap-2">
+                                <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                                    <Video size={16} />
+                                </div>
+                                Vídeos
+                            </h4>
+                            {asset.videos?.length > 0 ? (
                                 <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar snap-x">
                                     {asset.videos.map((url: string, i: number) => (
                                         <div 
@@ -92,123 +126,141 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                         </div>
                                     ))}
                                 </div>
-                            </div>
-                        )}
-                    </div>
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <span className="text-2xl font-bold text-foreground">
-                                {asset.price ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` : 'Sob consulta'}
-                            </span>
-                            <div className="flex flex-wrap gap-2">
-                                {details.situacao && (
-                                    <span className={`px-2 py-1 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getSituacaoStyles(details.situacao)}`}>
-                                        {details.situacao}
-                                    </span>
-                                )}
-                                <span className={`px-2 py-1 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(asset.type || asset.details?.type)}`}>
-                                    {translatePropertyType(asset.type || asset.details?.type)}
-                                </span>
-                                <span className={`px-3 py-1 text-xs font-black rounded-full uppercase tracking-widest shadow-sm ${getStatusStyles(asset.status)}`}>
-                                    {asset.status}
-                                </span>
-                            </div>
+                            ) : (
+                                <p className="italic text-base text-muted-foreground dark:text-white">Nenhum vídeo disponível.</p>
+                            )}
                         </div>
+                    </div>
 
-                        <div className="flex items-start gap-2 text-muted-foreground text-sm">
-                            <MapPin size={16} className="text-primary mt-1 flex-shrink-0" />
+                    <div className="border-t border-white/10" />
+
+                    <div className="flex flex-col gap-3">
+                        <h4 className="text-lg font-bold text-muted-foreground dark:text-white uppercase tracking-widest flex items-center gap-2">
+                            <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                                <DollarSign size={16} />
+                            </div>
+                            Valor do Imóvel
+                        </h4>
+                        <div className="text-base text-muted-foreground dark:text-white flex items-center gap-2">
+                            <span className="flex-shrink-0">•</span>
+                            <span>
+                                {Number(asset.price) > 0 
+                                    ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` 
+                                    : 'Sob consulta'}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-white/10" />
+
+                    <div className="flex flex-col gap-3">
+                        <h4 className="text-lg font-bold text-muted-foreground dark:text-white uppercase tracking-widest flex items-center gap-2">
+                            <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                                <MapPin size={16} />
+                            </div>
+                            Localização
+                        </h4>
+                        <div className="text-base text-muted-foreground dark:text-white flex items-center gap-2">
+                            <span className="flex-shrink-0">•</span>
                             <span>
                                 {details.endereco?.bairro && `${details.endereco.bairro}, `}
-                                {details.endereco?.cidade && `${details.endereco.cidade} - `}
+                                {details.endereco?.cidade && `${details.endereco.cidade} / `}
                                 {details.endereco?.estado && `${details.endereco.estado}`}
                             </span>
                         </div>
+                    </div>
 
-                        <div className="space-y-3">
-                            {/* Row 1: Basic Features */}
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <BedDouble size={16} className="text-primary flex-shrink-0" /> 
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-muted-foreground">Dormitórios</span>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="font-black text-foreground text-lg leading-tight">{details.dormitorios || details.quartos || 0}</span>
-                                            {Number(details.suites) > 0 && (
-                                                <span className="text-[10px] text-muted-foreground font-medium">({details.suites} suítes)</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Bath size={16} className="text-primary flex-shrink-0" /> 
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-muted-foreground">Banheiros</span>
-                                        <span className="font-black text-foreground text-lg leading-tight">{details.banheiros || 0}</span> 
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Car size={16} className="text-primary flex-shrink-0" /> 
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-muted-foreground">Vagas de Garagem</span>
-                                        <div className="flex items-baseline gap-1">
-                                            <span className="font-black text-foreground text-lg leading-tight">{details.vagas || 0}</span>
-                                            {details.vagas_numeracao && (
-                                                <span className="text-[10px] text-muted-foreground font-medium">({details.vagas_numeracao})</span>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
+                    <div className="border-t border-white/10" />
 
-                            {/* Row 2: Area Features */}
-                            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Maximize2 size={16} className="text-primary flex-shrink-0" /> 
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-muted-foreground">Área Privativa</span>
-                                        <span className="font-black text-foreground text-lg leading-tight">{details.area_privativa || details.area_util || 0}m²</span> 
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Maximize2 size={16} className="text-primary flex-shrink-0" /> 
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-muted-foreground">Área Total</span>
-                                        <span className="font-black text-foreground text-lg leading-tight">{details.area_total || 0}m²</span> 
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Maximize2 size={16} className="text-primary flex-shrink-0" /> 
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-muted-foreground">Área do Terreno</span>
-                                        <span className="font-black text-foreground text-lg leading-tight">{details.area_terreno || 0}m²</span> 
-                                    </div>
-                                </div>
-                                <div className="flex items-center gap-2.5 p-3 rounded-xl bg-muted/40 border border-border/60 min-w-0 hover:bg-muted/60 transition-colors">
-                                    <Maximize2 size={16} className="text-primary flex-shrink-0" /> 
-                                    <div className="flex flex-col">
-                                        <span className="text-sm font-bold text-muted-foreground">Área Construída</span>
-                                        <span className="font-black text-foreground text-lg leading-tight">{details.area_construida || 0}m²</span> 
-                                    </div>
-                                </div>
+                    <div className="flex flex-col gap-3">
+                        <h4 className="text-lg font-bold text-muted-foreground dark:text-white uppercase tracking-widest flex items-center gap-2">
+                            <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                                <Info size={16} />
                             </div>
-                            
+                            Dados
+                        </h4>
+                        <div className="flex flex-col gap-2">
+                            <div className="flex items-center gap-2">
+                                <span className="flex-shrink-0">•</span>
+                                <span className="text-base text-muted-foreground dark:text-white">Dormitórios:</span>
+                                <span className="text-base text-foreground dark:text-white">{details.dormitorios || details.quartos || 0}</span>
+                                {Number(details.suites) > 0 && (
+                                    <span className="text-xs text-muted-foreground dark:text-white font-medium">({details.suites} suítes)</span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="flex-shrink-0">•</span>
+                                <span className="text-base text-muted-foreground dark:text-white">Banheiros:</span>
+                                <span className="text-base text-foreground dark:text-white">{details.banheiros || 0}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="flex-shrink-0">•</span>
+                                <span className="text-base text-muted-foreground dark:text-white">Vagas:</span>
+                                <span className="text-base text-foreground dark:text-white">{details.vagas || 0}</span>
+                                {details.vagas_numeracao && (
+                                    <span className="text-xs text-muted-foreground dark:text-white font-medium">({details.vagas_numeracao})</span>
+                                )}
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="flex-shrink-0">•</span>
+                                <span className="text-base text-muted-foreground dark:text-white">Privativa:</span>
+                                <span className="text-base text-foreground dark:text-white">{details.area_privativa || details.area_util || 0}m²</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="flex-shrink-0">•</span>
+                                <span className="text-base text-muted-foreground dark:text-white">Total:</span>
+                                <span className="text-base text-foreground dark:text-white">{details.area_total || 0}m²</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="flex-shrink-0">•</span>
+                                <span className="text-base text-muted-foreground dark:text-white">Terreno:</span>
+                                <span className="text-base text-foreground dark:text-white">{details.area_terreno || 0}m²</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <span className="flex-shrink-0">•</span>
+                                <span className="text-base text-muted-foreground dark:text-white">Construída:</span>
+                                <span className="text-base text-foreground dark:text-white">{details.area_construida || 0}m²</span>
+                            </div>
                             {details.torre_bloco && (
-                                <div className="p-2.5 rounded-lg bg-muted/20 border border-border/40 text-sm text-muted-foreground">
-                                    <span className="font-bold mr-2">Torre/Bloco:</span>
-                                    <span className="text-foreground font-medium">{details.torre_bloco}</span>
+                                <div className="flex items-center gap-2">
+                                    <span className="flex-shrink-0">•</span>
+                                    <span className="text-base text-muted-foreground dark:text-white">Torre/Bloco:</span>
+                                    <span className="text-base text-foreground dark:text-white">{details.torre_bloco}</span>
                                 </div>
                             )}
                         </div>
+                    </div>
 
-                        <div className="border-t-2 border-border/100" />
+                    <div className="border-t border-white/10" />
 
-                        <p className="text-sm text-muted-foreground leading-relaxed whitespace-pre-wrap">{asset.description || 'Sem descrição disponível.'}</p>
+                    <div className="flex flex-col gap-3">
+                        <h4 className="text-lg font-bold text-muted-foreground dark:text-white uppercase tracking-widest flex items-center gap-2">
+                            <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                                <FileText size={16} />
+                            </div>
+                            Descrição
+                        </h4>
+                        <div className="text-base text-muted-foreground dark:text-white leading-relaxed flex items-start gap-2">
+                            <span className="flex-shrink-0">•</span>
+                            <div className="flex-1">
+                                {asset.description ? (
+                                    <SafeMarkdownRenderer content={asset.description} />
+                                ) : (
+                                    <p className="italic text-base text-muted-foreground dark:text-white">Sem descrição disponível.</p>
+                                )}
+                            </div>
+                        </div>
+                    </div>
 
-                        {/* Map Location */}
-                        {details.endereco?.latitude && details.endereco?.longitude && (
-                            <div className="pt-4 border-t border-border space-y-4">
-                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                                    <MapPin size={14} className="text-primary" />
+                    {/* Map Location */}
+                    {details.endereco?.latitude && details.endereco?.longitude && (
+                        <>
+                            <div className="border-t border-white/10" />
+                            <div className="flex flex-col gap-3">
+                                <h4 className="text-lg font-bold text-muted-foreground dark:text-white uppercase tracking-widest flex items-center gap-2">
+                                    <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                                        <MapPin size={16} />
+                                    </div>
                                     Localização
                                 </h4>
                                 <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-1 aspect-video">
@@ -220,64 +272,61 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                     />
                                 </div>
                             </div>
-                        )}
+                        </>
+                    )}
 
-                        {amenities.length > 0 && (
-                            <div className="pt-4 border-t border-border space-y-4">
-                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                                    <Trees size={14} className="text-primary" />
+                    {amenities.length > 0 && (
+                        <>
+                            <div className="border-t border-white/10" />
+                            <div className="flex flex-col gap-3">
+                                <h4 className="text-lg font-bold text-muted-foreground dark:text-white uppercase tracking-widest flex items-center gap-2">
+                                    <div className="p-1.5 bg-white/10 rounded-lg text-white">
+                                        <Trees size={16} />
+                                    </div>
                                     Área comum | Lazer
                                 </h4>
-                                <div className="grid grid-cols-2 gap-3">
+                                <div className="flex flex-col gap-3">
                                     {amenities.map(a => (
-                                        <div key={a.id} className="flex items-center gap-2 text-xs text-muted-foreground">
-                                            <div className="p-1.5 bg-primary/10 rounded-lg text-primary">{a.icon}</div>
-                                            {a.label}
-                                        </div>
+                                        <div key={a.id} className="text-base text-muted-foreground dark:text-white flex items-center gap-2">
+                                             <span className="flex-shrink-0">•</span>
+                                             <span>{a.label}</span>
+                                         </div>
                                     ))}
                                 </div>
                             </div>
-                        )}
-                    </div>
+                        </>
+                    )}
                 </div>
-                {asset.videos?.length > 0 && (
-                    <div className="grid grid-cols-1 gap-6 pt-6 border-t border-border">
-                        {asset.videos?.length > 0 && (
-                            <div className="space-y-4">
-                                <h4 className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-2">
-                                    <Video size={14} className="text-primary" />
-                                    Vídeos
-                                </h4>
-                                <div className="space-y-2">
-                                    {asset.videos.map((url: string, i: number) => (
-                                        <button 
-                                            key={i} 
-                                            onClick={() => {
-                                                const videoIndex = (asset.images?.length || 0) + i;
-                                                setSelectedMediaIndex(videoIndex);
-                                                setIsFullscreenOpen(true);
-                                            }}
-                                            className="w-full flex items-center justify-between p-3 rounded-xl border border-border bg-card hover:bg-muted transition-colors group"
-                                        >
-                                            <span className="text-xs font-medium">Vídeo {i + 1}</span>
-                                            <div className="flex items-center gap-2">
-                                                <Maximize2 size={14} className="text-muted-foreground group-hover:text-primary" />
-                                                <ExternalLink size={14} className="text-muted-foreground group-hover:text-primary" />
-                                            </div>
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
+
+                {/* Botão Flutuante de Interesse */}
+                {!isFullscreenOpen && (
+                    <div className="fixed bottom-24 right-6 z-[60] md:absolute md:bottom-24 md:right-8">
+                        <button
+                            onClick={() => setShowLeadForm(true)}
+                            className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-4 px-6 rounded-full shadow-lg transition-all transform hover:scale-105 active:scale-95 flex items-center justify-center gap-3 w-56"
+                        >
+                            <MessageCircle size={24} />
+                            <span className="hidden sm:inline">Tenho interesse</span>
+                        </button>
                     </div>
                 )}
             </div>
 
-            <FullscreenMediaViewer
+            <FullscreenMediaViewer 
                 isOpen={isFullscreenOpen}
-                onClose={() => setIsFullscreenOpen(false)}
+                onClose={(index) => {
+                    setIsFullscreenOpen(false);
+                    setSelectedMediaIndex(index);
+                }}
                 media={allMedia}
                 initialIndex={selectedMediaIndex}
+            />
+
+            <LeadFormModal 
+                isOpen={showLeadForm}
+                onClose={() => setShowLeadForm(false)}
+                assetId={asset.id}
+                assetTitle={asset.title}
             />
         </Modal>
     );

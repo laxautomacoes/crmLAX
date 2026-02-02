@@ -39,6 +39,9 @@ export function SafeMarkdownRenderer({ content, className = '' }: SafeMarkdownRe
             } else if (line.startsWith('## ')) {
                 flushList()
                 elements.push(<h2 key={index} className="text-xl font-bold mb-3 mt-5">{processInlineStyles(line.substring(3))}</h2>)
+            } else if (line.startsWith('### ')) {
+                flushList()
+                elements.push(<h3 key={index} className="text-lg font-bold mb-2 mt-4">{processInlineStyles(line.substring(4))}</h3>)
             }
             // Listas
             else if (line.startsWith('- ') || line.startsWith('* ')) {
@@ -77,23 +80,44 @@ export function SafeMarkdownRenderer({ content, className = '' }: SafeMarkdownRe
     }
 
     const processInlineStyles = (text: string) => {
-        // Processa negrito (**texto**), itálico (*texto*), e código (`texto`)
-        const parts: (string | React.ReactNode)[] = []
-        let remaining = text
+        // Processa negrito (**texto**), itálico (*texto*), sublinhado (__texto__), tachado (~~texto~~), e cores (<color:xxx>...</color>)
+        if (!text) return ''
 
-        // Regex para encontrar os padrões
-        const pattern = /(\*\*.*?\*\*|\*.*?\*|`.*?`)/g
+        // Regex para encontrar os padrões:
+        // 1. **bold**
+        // 2. *italic*
+        // 3. __underline__
+        // 4. ~~strikethrough~~
+        // 5. `code`
+        // 6. <color: #hex>text</color>
+        const pattern = /(\*\*.*?\*\*|\*.*?\*|__.*?__|~~.*?~~|`.*?`|<color:\s*[^>]+?>.*?<\/color>)/g
         const matches = text.split(pattern)
 
         return matches.map((part, i) => {
+            if (!part) return null
+
             if (part.startsWith('**') && part.endsWith('**')) {
-                return <strong key={i}>{part.slice(2, -2)}</strong>
+                return <strong key={i}>{processInlineStyles(part.slice(2, -2))}</strong>
+            }
+            if (part.startsWith('__') && part.endsWith('__')) {
+                return <u key={i}>{processInlineStyles(part.slice(2, -2))}</u>
             }
             if (part.startsWith('*') && part.endsWith('*')) {
-                return <em key={i}>{part.slice(1, -1)}</em>
+                return <em key={i}>{processInlineStyles(part.slice(1, -1))}</em>
+            }
+            if (part.startsWith('~~') && part.endsWith('~~')) {
+                return <strike key={i}>{processInlineStyles(part.slice(2, -2))}</strike>
             }
             if (part.startsWith('`') && part.endsWith('`')) {
                 return <code key={i} className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">{part.slice(1, -1)}</code>
+            }
+            if (part.startsWith('<color:') && part.includes('</color>')) {
+                const colorMatch = part.match(/<color:\s*([^>]+?)>(.*?)<\/color>/)
+                if (colorMatch) {
+                    const color = colorMatch[1]
+                    const content = colorMatch[2]
+                    return <span key={i} style={{ color }}>{processInlineStyles(content)}</span>
+                }
             }
             return part
         })

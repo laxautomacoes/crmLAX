@@ -15,7 +15,7 @@ export function Logo({ className = '', size = 'md', src, height, loading }: Logo
     lg: 'text-lg',
   };
 
-  const defaultHeight = size === 'sm' ? 40 : size === 'md' ? 48 : 100;
+  const defaultHeight = size === 'sm' ? 40 : size === 'md' ? 48 : 120;
   
   // O height passado como prop tem precedência sobre o default do tamanho
   let logoHeight = height || defaultHeight;
@@ -26,15 +26,15 @@ export function Logo({ className = '', size = 'md', src, height, loading }: Logo
   }
   
   // No tamanho LG (login ou preview), garantimos que o height seja respeitado
-  // Se não houver height definido e for LG, usamos 100px para manter o padrão 2:1 sugerido
+  // Se não houver height definido e for LG, usamos 120px para manter o padrão
   if (size === 'lg' && !height) {
-    logoHeight = 100;
+    logoHeight = 120;
   }
 
   if (loading) {
     return (
       <div 
-        className={`flex items-center justify-center ${className}`} 
+        className={`flex items-center ${className}`} 
         style={{ height: `${logoHeight}px` }}
       />
     );
@@ -42,13 +42,13 @@ export function Logo({ className = '', size = 'md', src, height, loading }: Logo
 
   if (src) {
     return (
-      <div className={`flex items-center justify-center gap-2 ${className}`}>
+      <div className={`flex items-center gap-2 ${className}`}>
         <img 
           src={src} 
           alt="Logo" 
           style={{ 
             height: `${logoHeight}px`,
-            width: `${logoHeight * 2}px` // Mantém a proporção 2:1 visualmente
+            width: 'auto' // Removido fixed width para manter proporção original
           }} 
           className="object-contain block max-w-full"
         />
@@ -57,8 +57,8 @@ export function Logo({ className = '', size = 'md', src, height, loading }: Logo
   }
 
   return (
-    <div className={`flex items-center justify-center gap-2 ${className}`}>
-      <div className={`${sizeClasses[size]} font-bold tracking-tight text-center`}>
+    <div className={`flex items-center gap-2 ${className}`}>
+      <div className={`${sizeClasses[size]} font-bold tracking-tight`}>
         CRM <span className="text-secondary inline-block transform -skew-x-12">LAX</span>
       </div>
     </div>
