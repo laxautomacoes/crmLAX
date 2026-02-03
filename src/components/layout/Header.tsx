@@ -1,6 +1,6 @@
 'use client';
 
-import { Bell, Sun, Moon, Menu, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Bell, Sun, Moon, Menu, ChevronLeft, ChevronRight, CloudDownload, RefreshCw, WifiOff } from 'lucide-react';
 import { AvatarDropdown } from './AvatarDropdown';
 import { Modal } from '@/components/shared/Modal';
 import { NotificationsList } from '@/components/dashboard/NotificationsList';
@@ -10,6 +10,42 @@ import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
 import { getProfile } from '@/app/_actions/profile';
 import { Logo } from '@/components/shared/Logo';
+import { useOfflineSync } from '@/hooks/use-offline-sync';
+
+function SyncButton() {
+    const { isOnline, isSyncing, syncData, syncProgress, lastSync } = useOfflineSync();
+
+    if (!isOnline) {
+        return (
+            <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20" title="Modo Offline">
+                <WifiOff size={14} />
+                <span className="hidden sm:inline">Offline</span>
+            </div>
+        )
+    }
+
+    return (
+        <button
+            onClick={syncData}
+            disabled={isSyncing}
+            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors text-xs font-medium border border-primary/20"
+            title={lastSync ? `Última sincronização: ${new Date(lastSync).toLocaleTimeString()}` : "Sincronizar dados para offline"}
+        >
+            {isSyncing ? (
+                <>
+                    <RefreshCw size={14} className="animate-spin" />
+                    <span className="hidden sm:inline">{syncProgress}%</span>
+                </>
+            ) : (
+                <>
+                    <CloudDownload size={14} />
+                    <span className="hidden sm:inline">Offline Sync</span>
+                </>
+            )}
+        </button>
+    )
+}
+
 
 interface HeaderProps {
     onMenuClick: () => void;
@@ -70,7 +106,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                 const { profile: profileData } = await getProfile();
                 if (profileData) {
                     setProfile(profileData);
-                    
+
                     if (profileData.tenant_id) {
                         const { createClient } = await import('@/lib/supabase/client');
                         const supabase = createClient();
@@ -79,7 +115,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                             .select('branding')
                             .eq('id', profileData.tenant_id)
                             .maybeSingle();
-                        
+
                         if (tenant?.branding) {
                             setBranding(tenant.branding as any);
                         }
@@ -122,10 +158,10 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
                     {/* Mobile Centered Logo */}
                     <div className="md:hidden flex-1 flex justify-center">
-                        <Logo 
-                            size="md" 
-                            className="ml-6" 
-                            src={branding?.logo_full} 
+                        <Logo
+                            size="md"
+                            className="ml-6"
+                            src={branding?.logo_full}
                             height={branding?.logo_height}
                             loading={brandingLoading}
                         />
@@ -133,6 +169,9 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                 </div>
 
                 <div className="flex items-center gap-6">
+                    {/* Offline Sync Button */}
+                    <SyncButton />
+
                     <div className="hidden md:flex items-center gap-4">
                         {mounted && (
                             <button

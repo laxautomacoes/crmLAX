@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, LayoutGrid, List, Download, Filter } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Download, Filter, WifiOff } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProfile } from '@/app/_actions/profile'
 import { getAssets, createAsset, updateAsset, deleteAsset, archiveAsset } from '@/app/_actions/assets'
@@ -14,10 +14,13 @@ import { PropertyModal } from '@/components/dashboard/properties/PropertyModal'
 import { PropertyDetailsModal } from '@/components/dashboard/properties/PropertyDetailsModal'
 import { SendToLeadModal } from '@/components/dashboard/properties/SendToLeadModal'
 import { PropertyFiltersModal } from '@/components/dashboard/properties/PropertyFiltersModal'
+import { useOfflineSync } from '@/hooks/use-offline-sync'
+import { getOfflineProperties } from '@/services/db'
 
 export const dynamic = 'force-dynamic'
 
 export default function PropertiesPage() {
+    const { isOnline } = useOfflineSync()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDetailsOpen, setIsDetailsOpen] = useState(false)
     const [isSendModalOpen, setIsSendModalOpen] = useState(false)
@@ -33,7 +36,7 @@ export default function PropertiesPage() {
     const [viewingProperty, setViewingProperty] = useState<any | null>(null)
     const [sendingProperty, setSendingProperty] = useState<any | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
-    
+
     const [filters, setFilters] = useState({
         status: 'all',
         type: 'all',
@@ -49,15 +52,29 @@ export default function PropertiesPage() {
 
     const fetchData = async () => {
         try {
+            // Check offline status first
+            if (typeof navigator !== 'undefined' && !navigator.onLine) {
+                console.log("Modo Offline: Buscando dados locais...")
+                const offlineProps = await getOfflineProperties()
+                if (offlineProps && offlineProps.length > 0) {
+                    setProperties(offlineProps)
+                    toast.info('Modo Offline: Exibindo dados salvos.')
+                } else {
+                    toast.warning('Você está offline e não há dados salvos.')
+                }
+                setIsLoading(false)
+                return
+            }
+
             // Tentar inicializar buckets se necessário
             await initStorageBuckets()
-            
+
             const { profile } = await getProfile()
             if (profile?.tenant_id) {
                 setTenantId(profile.tenant_id)
                 setUserRole(profile.role || 'user')
                 setUserId(profile.id)
-                
+
                 // Buscar slug do tenant
                 const tenant = await getTenantByUserId(profile.id)
                 if (tenant) {
@@ -71,7 +88,18 @@ export default function PropertiesPage() {
             }
         } catch (error) {
             console.error('Erro ao carregar imóveis:', error)
-            toast.error('Erro ao carregar lista de imóveis')
+            // Fallback
+            try {
+                const offlineProps = await getOfflineProperties()
+                if (offlineProps && offlineProps.length > 0) {
+                    setProperties(offlineProps)
+                    toast.info('Modo Offline (Erro de conexão)')
+                } else {
+                    toast.error('Erro ao carregar lista de imóveis')
+                }
+            } catch (e) {
+                toast.error('Erro ao carregar lista de imóveis')
+            }
         } finally {
             setIsLoading(false)
         }
@@ -149,7 +177,7 @@ export default function PropertiesPage() {
 
         // Definir cabeçalhos (expandindo o JSON 'details')
         const headers = [
-            'ID', 'Título', 'Tipo', 'Preço', 'Status', 
+            'ID', 'Título', 'Tipo', 'Preço', 'Status',
             'Bairro', 'Cidade', 'Rua', 'Número', 'CEP',
             'Área Privativa', 'Área Total', 'Área Terreno', 'Área Construída',
             'Dormitórios', 'Suítes', 'Banheiros', 'Vagas', 'Vagas Numeração',
@@ -163,7 +191,7 @@ export default function PropertiesPage() {
         const csvRows = filteredProperties.map(prop => {
             const d = prop.details || {}
             const e = d.endereco || {}
-            
+
             return [
                 prop.id,
                 `"${(prop.title || '').replace(/"/g, '""')}"`,
@@ -218,7 +246,7 @@ export default function PropertiesPage() {
         document.body.appendChild(link)
         link.click()
         document.body.removeChild(link)
-        
+
         toast.success('Exportação iniciada!')
     }
 
@@ -229,7 +257,7 @@ export default function PropertiesPage() {
             prop.details?.endereco?.cidade?.toLowerCase().includes(searchTerm.toLowerCase())
 
         const matchesType = filters.type === 'all' || prop.type === filters.type
-        
+
         const price = prop.price || 0
         const matchesMinPrice = !filters.minPrice || price >= parseFloat(filters.minPrice)
         const matchesMaxPrice = !filters.maxPrice || price <= parseFloat(filters.maxPrice)
@@ -243,15 +271,15 @@ export default function PropertiesPage() {
         const parking = prop.details?.vagas || 0
         const matchesParking = filters.parking === 'all' || parking >= parseInt(filters.parking)
 
-        const matchesCity = !filters.city || 
+        const matchesCity = !filters.city ||
             prop.details?.endereco?.cidade?.toLowerCase().includes(filters.city.toLowerCase())
-        
-        const matchesNeighborhood = !filters.neighborhood || 
+
+        const matchesNeighborhood = !filters.neighborhood ||
             prop.details?.endereco?.bairro?.toLowerCase().includes(filters.neighborhood.toLowerCase())
 
-        return matchesSearch && matchesType && matchesMinPrice && matchesMaxPrice && 
-               matchesBedrooms && matchesBathrooms && matchesParking && 
-               matchesCity && matchesNeighborhood
+        return matchesSearch && matchesType && matchesMinPrice && matchesMaxPrice &&
+            matchesBedrooms && matchesBathrooms && matchesParking &&
+            matchesCity && matchesNeighborhood
     }).sort((a, b) => {
         switch (filters.sortBy) {
             case 'price_high':
@@ -279,6 +307,15 @@ export default function PropertiesPage() {
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            {!isOnline && (
+                <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded shadow-sm mb-4" role="alert">
+                    <p className="font-bold flex items-center gap-2">
+                        <WifiOff size={18} />
+                        Modo Offline
+                    </p>
+                    <p className="text-sm">Você está vendo uma versão salva dos imóveis. Algumas funções como editar ou adicionar podem estar indisponíveis.</p>
+                </div>
+            )}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="text-center md:text-left">
                     <h1 className="text-2xl font-bold text-foreground">Imóveis</h1>
@@ -312,11 +349,10 @@ export default function PropertiesPage() {
 
                     <button
                         onClick={() => setIsFiltersOpen(true)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] ${
-                            isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest')
+                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest')
                             ? 'bg-primary text-primary-foreground border-primary'
                             : 'bg-card border-border text-foreground hover:bg-muted'
-                        }`}
+                            }`}
                     >
                         <Filter size={18} />
                         Filtros

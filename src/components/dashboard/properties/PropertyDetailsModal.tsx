@@ -97,15 +97,28 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
     ].filter(Boolean).join(', ');
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Detalhes do Imóvel" size="xl">
+        <Modal isOpen={isOpen} onClose={onClose} title={null} size="xl">
+            {/* Floating Send Button for Mobile */}
+            {onSend && (
+                <button
+                    onClick={() => onSend(prop)}
+                    className="md:hidden fixed bottom-8 right-8 z-[60] flex items-center justify-center w-14 h-14 bg-emerald-600 text-white rounded-full shadow-2xl hover:bg-emerald-700 transition-all active:scale-95 animate-in fade-in slide-in-from-bottom-4 duration-300"
+                    title="Enviar para Lead"
+                >
+                    <Send size={24} />
+                </button>
+            )}
+
             <div className="space-y-8 max-h-[85vh] overflow-y-auto pr-4 custom-scrollbar">
                 {/* Header Info */}
                 <div className="flex flex-col gap-6 pb-6">
                     <div className="space-y-4">
-                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                            <Home size={14} className="text-foreground" />
-                            Imóvel | Empreendimento
-                        </h4>
+                        <div className="flex items-center justify-between">
+                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                <Home size={14} className="text-foreground" />
+                                Imóvel | Empreendimento
+                            </h4>
+                        </div>
                         <div className="flex items-start justify-between gap-4">
                             <div className="space-y-1">
                                 <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
@@ -130,7 +143,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole }
                             {onSend && (
                                 <button
                                     onClick={() => onSend(prop)}
-                                    className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 whitespace-nowrap"
+                                    className="hidden md:flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 whitespace-nowrap"
                                 >
                                     <Send size={18} />
                                     Enviar para Lead
