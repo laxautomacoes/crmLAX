@@ -15,6 +15,9 @@ import { useOfflineSync } from '@/hooks/use-offline-sync';
 function SyncButton() {
     const { isOnline, isSyncing, syncData, syncProgress, lastSync } = useOfflineSync();
 
+    // Check if synced in the last hour (3600000 ms)
+    const isSyncedRecently = lastSync && (Date.now() - lastSync < 3600000);
+
     if (!isOnline) {
         return (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20" title="Modo Offline">
@@ -28,18 +31,26 @@ function SyncButton() {
         <button
             onClick={syncData}
             disabled={isSyncing}
-            className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-primary/10 hover:bg-primary/20 text-primary transition-colors text-xs font-medium border border-primary/20"
+            className={`
+                flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold border shadow-sm active:scale-[0.98]
+                ${isSyncedRecently && !isSyncing
+                    ? 'bg-secondary text-secondary-foreground border-border hover:bg-muted'
+                    : 'bg-primary text-primary-foreground border-primary hover:opacity-90'}
+            `}
             title={lastSync ? `Última sincronização: ${new Date(lastSync).toLocaleTimeString()}` : "Sincronizar dados para offline"}
         >
             {isSyncing ? (
                 <>
                     <RefreshCw size={14} className="animate-spin" />
-                    <span className="hidden sm:inline">{syncProgress}%</span>
+                    <span className="hidden sm:inline">Sincronizando {syncProgress}%</span>
                 </>
             ) : (
                 <>
-                    <CloudDownload size={14} />
-                    <span className="hidden sm:inline">Offline Sync</span>
+                    {/* Icon changes? Maybe check mark if synced? Keeping CloudDownload for now or Check if synced */}
+                    {isSyncedRecently ? <CloudDownload size={14} /> : <CloudDownload size={14} />}
+                    <span className="hidden sm:inline">
+                        {isSyncedRecently ? 'Sincronizado' : 'Sincronizar'}
+                    </span>
                 </>
             )}
         </button>
