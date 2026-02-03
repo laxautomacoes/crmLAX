@@ -61,17 +61,28 @@ export function useOfflineSync() {
                 let processed = 0;
 
                 const assetsToCache = properties.flatMap((p: any) => {
-                    // A coluna images é um array de strings (urls ou paths)
+                    const items = [];
+
+                    // 1. Imagens (Top 3)
                     if (p.images && Array.isArray(p.images) && p.images.length > 0) {
-                        return p.images.slice(0, 3).map((imgUrl: string) => {
-                            // Se for URL completa, usa ela. Se for path, gera publica.
+                        const imageUrls = p.images.slice(0, 3).map((imgUrl: string) => {
                             if (imgUrl.startsWith('http')) return imgUrl;
-                            // Se não for http, assume que é path no bucket 'properties' (ou 'assets'?)
-                            // Vamos tentar gerar url publica do bucket 'properties' por padrão
                             return supabase.storage.from('properties').getPublicUrl(imgUrl).data.publicUrl;
                         });
+                        items.push(...imageUrls);
                     }
-                    return [];
+
+                    // 2. Documentos (Todos os documentos para garantir acesso)
+                    // Assumindo estrutura similar: array de strings (paths ou urls)
+                    if (p.documents && Array.isArray(p.documents) && p.documents.length > 0) {
+                        const docUrls = p.documents.map((docUrl: string) => {
+                            if (docUrl.startsWith('http')) return docUrl;
+                            return supabase.storage.from('properties').getPublicUrl(docUrl).data.publicUrl;
+                        });
+                        items.push(...docUrls);
+                    }
+
+                    return items;
                 });
 
                 const uniqueUrls = [...new Set(assetsToCache)].filter((url): url is string => typeof url === 'string' && url.length > 0);
