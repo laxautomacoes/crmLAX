@@ -8,6 +8,7 @@ interface OfflineDB extends DBSchema {
     sync_metadata: {
         key: string;
         value: {
+            key: string;
             lastSync: number;
         };
     };

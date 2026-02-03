@@ -15,7 +15,7 @@ export function SafeMarkdownRenderer({ content, className = '' }: SafeMarkdownRe
     const renderContent = () => {
         const lines = content.split('\n')
         const elements: React.ReactNode[] = []
-        
+
         let currentList: React.ReactNode[] = []
         let listType: 'ul' | 'ol' | null = null
 
@@ -106,7 +106,7 @@ export function SafeMarkdownRenderer({ content, className = '' }: SafeMarkdownRe
                 return <em key={i}>{processInlineStyles(part.slice(1, -1))}</em>
             }
             if (part.startsWith('~~') && part.endsWith('~~')) {
-                return <strike key={i}>{processInlineStyles(part.slice(2, -2))}</strike>
+                return <s key={i}>{processInlineStyles(part.slice(2, -2))}</s>
             }
             if (part.startsWith('`') && part.endsWith('`')) {
                 return <code key={i} className="bg-muted px-1.5 py-0.5 rounded text-sm font-mono">{part.slice(1, -1)}</code>
