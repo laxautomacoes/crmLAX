@@ -2,6 +2,8 @@ import { createServerClient, type CookieOptions } from '@supabase/ssr'
 import { cookies } from 'next/headers'
 import { NextResponse } from 'next/server'
 
+import { acceptInvitation } from '@/app/_actions/invitations'
+
 export async function GET(request: Request) {
     const { searchParams, origin } = new URL(request.url)
     const code = searchParams.get('code')
@@ -32,12 +34,22 @@ export async function GET(request: Request) {
                 },
             }
         )
-        const { error } = await supabase.auth.exchangeCodeForSession(code)
+        const { data, error } = await supabase.auth.exchangeCodeForSession(code)
 
         if (error) {
             console.error('Erro ao trocar código por sessão:', error.message)
         } else {
             console.log('Sessão estabelecida com sucesso via código')
+
+            // Aceitar convite se houver token
+            if (data?.user?.user_metadata?.invitation_token) {
+                try {
+                    await acceptInvitation(data.user.user_metadata.invitation_token)
+                } catch (err) {
+                    console.error('Erro ao processar convite no callback:', err)
+                }
+            }
+
             return NextResponse.redirect(`${origin}${next}`)
         }
     }

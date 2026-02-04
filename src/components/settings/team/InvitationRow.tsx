@@ -1,6 +1,8 @@
 'use client';
 
-import { CheckCircle, XCircle, Clock, Copy, Edit2 } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Copy, Edit2, Send, Loader2 } from 'lucide-react';
+import { resendInvitation } from '@/app/_actions/invitations';
+import { useState } from 'react';
 
 interface InvitationRowProps {
     invitation: any;
@@ -9,8 +11,17 @@ interface InvitationRowProps {
 }
 
 export function InvitationRow({ invitation, onCopyLink, onEdit }: InvitationRowProps) {
+    const [isResending, setIsResending] = useState(false);
     const isUsed = !!invitation.used_at;
     const canCopy = !isUsed;
+
+    const handleResend = async () => {
+        setIsResending(true);
+        const { error } = await resendInvitation(invitation.id);
+        if (error) alert('Erro: ' + error);
+        else alert('Convite reenviado com sucesso!');
+        setIsResending(false);
+    };
 
     return (
         <tr className="hover:bg-muted/50 transition-colors">
@@ -49,13 +60,23 @@ export function InvitationRow({ invitation, onCopyLink, onEdit }: InvitationRowP
                         <Edit2 className="w-4 h-4" />
                     </button>
                     {canCopy && (
-                        <button
-                            onClick={() => onCopyLink(invitation.token)}
-                            className="p-2 hover:bg-secondary/10 text-muted-foreground hover:text-secondary rounded-xl transition-all"
-                            title="Copiar Link"
-                        >
-                            <Copy className="w-4 h-4" />
-                        </button>
+                        <>
+                            <button
+                                onClick={handleResend}
+                                disabled={isResending}
+                                className="p-2 hover:bg-secondary/10 text-muted-foreground hover:text-blue-600 rounded-xl transition-all disabled:opacity-50"
+                                title="Reenviar Convite"
+                            >
+                                {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />}
+                            </button>
+                            <button
+                                onClick={() => onCopyLink(invitation.token)}
+                                className="p-2 hover:bg-secondary/10 text-muted-foreground hover:text-secondary rounded-xl transition-all"
+                                title="Copiar Link"
+                            >
+                                <Copy className="w-4 h-4" />
+                            </button>
+                        </>
                     )}
                 </div>
             </td>

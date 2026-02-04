@@ -30,12 +30,25 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
         settings: false
     });
 
+    const formatPhone = (value: string) => {
+        if (!value) return '';
+        const numbers = value.replace(/\D/g, '');
+        if (numbers.length <= 11) {
+            return numbers
+                .replace(/^(\d{2})(\d)/g, '($1) $2')
+                .replace(/(\d{5})(\d)/, '$1 $2');
+        }
+        return value;
+    };
+
+    const cleanPhone = (value: string) => value.replace(/\D/g, '');
+
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
         setMessage(null);
 
-        const { success, invitation, error, warning } = await createInvitation(email, role, name, permissions, phone);
+        const { success, invitation, error, warning } = await createInvitation(email, role, name, permissions, cleanPhone(phone));
 
         if (error) {
             setMessage({ type: 'error', text: error });
@@ -109,7 +122,9 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
     return (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-6 h-full flex flex-col">
             <div className="flex items-center gap-3 text-foreground">
-                <h3 className="font-bold">Dados Colaborador</h3>
+                <h3 className="font-bold text-sm tracking-wider uppercase text-muted-foreground flex items-center gap-2">
+                    <UserPlus size={18} className="text-secondary" /> Dados Colaborador
+                </h3>
             </div>
 
             <form onSubmit={handleInvite} className="space-y-4 flex-1 flex flex-col">
@@ -139,9 +154,10 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                     type="tel"
                     required
                     value={phone}
-                    onChange={(e) => setPhone(e.target.value)}
+                    onChange={(e) => setPhone(formatPhone(e.target.value))}
                     icon={Phone}
-                    placeholder="(00) 00000-0000"
+                    placeholder="(00) 00000 0000"
+                    maxLength={15}
                 />
 
                 <div className="space-y-1.5">
@@ -150,14 +166,14 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                         <button
                             type="button"
                             onClick={() => handleRoleChange('admin')}
-                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'admin' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border hover:bg-muted'}`}
+                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'admin' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card text-foreground border-border hover:bg-muted'}`}
                         >
                             Admin
                         </button>
                         <button
                             type="button"
                             onClick={() => handleRoleChange('user')}
-                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'user' ? 'bg-primary text-primary-foreground border-primary' : 'bg-card text-foreground border-border hover:bg-muted'}`}
+                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'user' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card text-foreground border-border hover:bg-muted'}`}
                         >
                             Usuário
                         </button>

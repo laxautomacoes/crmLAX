@@ -21,21 +21,23 @@ const permissionLabels: Record<string, string> = {
 
 export function InvitationPermissions({ role, permissions, onToggle }: InvitationPermissionsProps) {
     return (
-        <div className="bg-muted/30 p-3 rounded-xl border border-border">
-            <h4 className="text-xs font-bold text-muted-foreground mb-2 flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Permissões da Página
+        <div className="space-y-2">
+            <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1 flex items-center gap-1">
+                <Lock className="w-3 h-3" /> Permissões
             </h4>
-            <div className="grid grid-cols-2 gap-2">
-                {Object.entries(permissionLabels).map(([key, label]) => (
-                    <FormCheckbox
-                        key={key}
-                        label={label}
-                        checked={permissions[key]}
-                        onChange={() => onToggle(key)}
-                        disabled={role === 'admin'}
-                        className={role === 'admin' ? 'opacity-50 cursor-not-allowed' : ''}
-                    />
-                ))}
+            <div className="bg-muted/30 p-3 rounded-xl border border-border">
+                <div className="grid grid-cols-2 gap-2">
+                    {Object.entries(permissionLabels).map(([key, label]) => (
+                        <FormCheckbox
+                            key={key}
+                            label={label}
+                            checked={permissions[key]}
+                            onChange={() => onToggle(key)}
+                            disabled={role === 'admin'}
+                            className={role === 'admin' ? 'opacity-50 cursor-not-allowed' : ''}
+                        />
+                    ))}
+                </div>
             </div>
         </div>
     );

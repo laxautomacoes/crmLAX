@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 import { sendInvitationEmail } from '@/lib/resend'
@@ -61,7 +62,7 @@ export async function createInvitation(
     const protocol = rootDomain.includes('localhost') ? 'http://' : 'https://'
     const baseUrl = rootDomain.startsWith('http') ? rootDomain : `${protocol}${rootDomain}`
     const inviteLink = `${baseUrl}/register?token=${data.token}`
-    
+
     const tenantName = profile.tenants?.name || 'CRM LAX'
 
     console.log(`Tentando enviar convite para ${email}. Link: ${inviteLink}`)
@@ -84,12 +85,12 @@ export async function createInvitation(
     })
 
     revalidatePath('/settings/team')
-    
+
     if (notificationError) {
-        return { 
-            success: true, 
-            invitation: data, 
-            warning: 'O convite foi criado, mas houve um erro ao enviar o e-mail. Você pode copiar o link manualmente.' 
+        return {
+            success: true,
+            invitation: data,
+            warning: 'O convite foi criado, mas houve um erro ao enviar o e-mail. Você pode copiar o link manualmente.'
         }
     }
 
@@ -224,5 +225,85 @@ export async function deleteInvitation(id: string) {
     if (error) return { error: error.message }
 
     revalidatePath('/settings/team')
+    return { success: true }
+}
+
+/**
+ * Aceita um convite (marca como usado)
+ */
+export async function acceptInvitation(token: string) {
+    const supabase = createAdminClient()
+
+    const { data: invitation, error: fetchError } = await supabase
+        .from('invitations')
+        .select('id, used_at')
+        .eq('token', token)
+        .single()
+
+    if (fetchError || !invitation) {
+        return { error: 'Convite não encontrado' }
+    }
+
+    if (invitation.used_at) {
+        return { success: true }
+    }
+
+    const { error } = await supabase
+        .from('invitations')
+        .update({ used_at: new Date().toISOString() })
+        .eq('token', token)
+
+    if (error) {
+        console.error('Erro ao aceitar convite:', error)
+        return { error: error.message }
+    }
+
+    revalidatePath('/settings/team')
+    return { success: true }
+}
+
+/**
+ * Reenvia um convite para o colaborador
+ */
+export async function resendInvitation(id: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) return { error: 'Not authenticated' }
+
+    // Buscar convite e detalhes do tenant
+    const { data: invitation, error: fetchError } = await supabase
+        .from('invitations')
+        .select('*, tenants(name)')
+        .eq('id', id)
+        .single()
+
+    if (fetchError || !invitation) return { error: 'Convite não encontrado' }
+    if (invitation.used_at) return { error: 'Convite já foi aceito' }
+
+    // Preparar link
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000'
+    const protocol = rootDomain.includes('localhost') ? 'http://' : 'https://'
+    const baseUrl = rootDomain.startsWith('http') ? rootDomain : `${protocol}${rootDomain}`
+    const inviteLink = `${baseUrl}/register?token=${invitation.token}`
+    const tenantName = invitation.tenants?.name || 'CRM LAX'
+
+    // Reenviar notificações
+    const results = await Promise.allSettled([
+        sendInvitationEmail(invitation.email, inviteLink, tenantName),
+        invitation.phone ? sendInvitationWhatsApp(invitation.phone, inviteLink, tenantName) : Promise.resolve()
+    ])
+
+    let notificationError = false
+    results.forEach((result, index) => {
+        if (result.status === 'rejected' || (result.value && 'error' in result.value)) {
+            if (index === 0) notificationError = true // Email é crítico
+        }
+    })
+
+    if (notificationError) {
+        return { error: 'Erro ao reenviar e-mail de convite.' }
+    }
+
     return { success: true }
 }
