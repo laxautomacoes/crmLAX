@@ -31,7 +31,7 @@ export function InvitationsTable({ invitations, fetching, onRefresh }: Invitatio
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
                 <div className="p-6 border-b border-border flex items-center justify-between">
                     <div className="flex items-center gap-3 text-foreground">
-                        <h3 className="font-bold">Convites Ativos</h3>
+                        <h3 className="font-bold">Colaboradores Ativos</h3>
                     </div>
                 </div>
 
@@ -39,7 +39,7 @@ export function InvitationsTable({ invitations, fetching, onRefresh }: Invitatio
                     <table className="w-full">
                         <thead>
                             <tr className="bg-muted/50 text-center text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                <th className="px-6 py-4 text-left">Usuário</th>
+                                <th className="px-6 py-4 text-left">COLABORADOR</th>
                                 <th className="px-6 py-4">Criado em</th>
                                 <th className="px-6 py-4">Papel</th>
                                 <th className="px-6 py-4">Status</th>

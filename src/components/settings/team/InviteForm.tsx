@@ -109,14 +109,14 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
     return (
         <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-6 h-full flex flex-col">
             <div className="flex items-center gap-3 text-foreground">
-                <h3 className="font-bold">Novo Convite</h3>
+                <h3 className="font-bold">Dados Colaborador</h3>
             </div>
 
             <form onSubmit={handleInvite} className="space-y-4 flex-1 flex flex-col">
                 {message && <MessageBanner type={message.type} text={message.text} />}
 
                 <FormInput
-                    label="Nome do Colaborador"
+                    label="Nome"
                     required
                     value={name}
                     onChange={(e) => setName(e.target.value)}
@@ -125,7 +125,7 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                 />
 
                 <FormInput
-                    label="Email do Colaborador"
+                    label="Email"
                     type="email"
                     required
                     value={email}
@@ -135,8 +135,9 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                 />
 
                 <FormInput
-                    label="Telefone / WhatsApp"
+                    label="Telefone | WhatsApp"
                     type="tel"
+                    required
                     value={phone}
                     onChange={(e) => setPhone(e.target.value)}
                     icon={Phone}
@@ -144,7 +145,7 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                 />
 
                 <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-foreground ml-1">Nível de Acesso</label>
+                    <label className="text-sm font-bold text-foreground ml-1">Papel</label>
                     <div className="grid grid-cols-2 gap-2">
                         <button
                             type="button"
@@ -167,7 +168,7 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-sm font-bold text-foreground ml-1">Permissões de Acesso</label>
+                    <label className="text-sm font-bold text-foreground ml-1">Permissões</label>
                     <div className="grid grid-cols-2 gap-2 bg-input/50 p-3 rounded-xl border border-border/50">
                         {Object.entries(permissionLabels).map(([key, label]) => (
                             <FormCheckbox
@@ -188,7 +189,7 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                     disabled={loading}
                     className="w-full mt-auto py-3 bg-secondary hover:opacity-90 text-secondary-foreground font-bold rounded-lg transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
                 >
-                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Gerar Link de Convite'}
+                    {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Gerar Convite'}
                 </button>
             </form>
         </div>
