@@ -18,8 +18,9 @@ export function DropdownHeader({ profile }: DropdownHeaderProps) {
                 </p>
                 <div className="flex flex-col gap-0.5 mt-1">
                     <span className="text-[10px] uppercase tracking-wider font-bold text-secondary-foreground bg-secondary px-1.5 py-0.5 rounded w-fit mb-1">
-                        {profile?.role === 'superadmin' ? 'Super Administrador' :
-                            profile?.role === 'admin' ? 'Administrador' : 'Colaborador'}
+                        {['superadmin', 'super_admin', 'super administrador'].includes(profile?.role?.toLowerCase())
+                            ? 'Super Administrador'
+                            : (profile?.role?.toLowerCase() === 'admin' ? 'Administrador' : 'Colaborador')}
                     </span>
                     <p className="text-sm text-muted-foreground">
                         {profile?.email}

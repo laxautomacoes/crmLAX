@@ -16,7 +16,6 @@ BEGIN
     FROM public.invitations 
     WHERE token = (new.raw_user_meta_data->>'invitation_token')
     AND email = new.email
-    AND expires_at > now()
     AND used_at IS NULL;
 
     IF invitation_record.id IS NOT NULL THEN
