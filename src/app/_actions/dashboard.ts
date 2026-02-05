@@ -77,31 +77,37 @@ export async function getDashboardMetrics(tenantId: string) {
 
         if (stagesError) throw stagesError
 
-        // Se não houver estágios, criar um padrão
+        // Se não houver estágios, retornar vazio ou erro suave (o getPipelineData deve lidar com a criação)
         if (!stages || stages.length === 0) {
-            const { error: insertError } = await supabase
-                .from('lead_stages')
-                .insert({
-                    tenant_id: tenantId,
-                    name: 'Novo Lead',
-                    order_index: 0
-                });
-
-            if (insertError) {
-                console.error('Erro ao criar estágio padrão na dashboard:', insertError);
-            } else {
-                // Re-buscar após criar
-                const { data: newStages } = await supabase
-                    .from('lead_stages')
-                    .select('id, name, order_index')
-                    .eq('tenant_id', tenantId)
-                    .order('order_index', { ascending: true });
-                stages = newStages;
-            }
+            console.log('Nenhum estágio encontrado para o tenant:', tenantId);
+            return {
+                success: true,
+                data: {
+                    kpis: {
+                        leadsAtivos: totalLeads || 0,
+                        leadsAtivosTrend: '+0%',
+                        imoveis: totalAssets || 0,
+                        imoveisTrend: '+0',
+                        conversoes: conversions || 0,
+                        conversoesTrend: '+0'
+                    },
+                    funnelSteps: [],
+                    recentLeads: []
+                } as DashboardMetrics
+            };
         }
 
+        // Deduplicar estágios por nome (camada extra de proteção)
+        const uniqueStagesMap = new Map();
+        (stages as any[]).forEach(stage => {
+            if (!uniqueStagesMap.has(stage.name)) {
+                uniqueStagesMap.set(stage.name, stage);
+            }
+        });
+        const uniqueStages = Array.from(uniqueStagesMap.values());
+
         const funnelSteps = await Promise.all(
-            (stages as any[] || []).map(async (stage) => {
+            uniqueStages.map(async (stage) => {
                 const { count } = await supabase
                     .from('leads')
                     .select('*', { count: 'exact', head: true })

@@ -61,6 +61,18 @@ export async function deleteStage(stageId: string) {
     return { success: true };
 }
 
+const DEFAULT_STAGES = [
+    'Novo',
+    'Em Atendimento',
+    'Atendimento',
+    'Visita',
+    'Negociação',
+    'Venda Feita',
+    'Venda Efetivada',
+    'Venda Perdida',
+    'Perdido'
+];
+
 export async function getStages(tenantId: string) {
     const supabase = await createClient();
 
@@ -72,23 +84,44 @@ export async function getStages(tenantId: string) {
 
     if (error) return { success: false, error: error.message };
 
-    // Se não houver estágios, criar um padrão
+    // Se não houver estágios, criar o conjunto padrão
     if (!stages || stages.length === 0) {
-        const { data: newStage, error: insertError } = await supabase
+        const stagesToInsert = DEFAULT_STAGES.map((name, index) => ({
+            tenant_id: tenantId,
+            name,
+            order_index: index
+        }));
+
+        const { data: newStages, error: insertError } = await supabase
             .from('lead_stages')
-            .insert({
-                tenant_id: tenantId,
-                name: 'Novo Lead',
-                order_index: 0
-            })
-            .select()
-            .single();
+            .insert(stagesToInsert)
+            .select();
 
         if (insertError) {
-            console.error('Erro ao criar estágio padrão:', insertError);
-            return { success: false, error: insertError.message };
+            // Se houver erro de conflito de unicidade (código 23505), 
+            // significa que outro processo já criou os estágios
+            // Neste caso, buscamos os estágios novamente
+            if (insertError.code === '23505') {
+                console.log('Estágios já foram criados por outro processo, buscando novamente...');
+                const { data: existingStages, error: refetchError } = await supabase
+                    .from('lead_stages')
+                    .select('*')
+                    .eq('tenant_id', tenantId)
+                    .order('order_index', { ascending: true });
+
+                if (refetchError) {
+                    console.error('Erro ao buscar estágios existentes:', refetchError);
+                    return { success: false, error: refetchError.message };
+                }
+
+                stages = existingStages;
+            } else {
+                console.error('Erro ao criar estágios padrão:', insertError);
+                return { success: false, error: insertError.message };
+            }
+        } else {
+            stages = newStages;
         }
-        stages = [newStage];
     }
 
     return { success: true, data: stages };

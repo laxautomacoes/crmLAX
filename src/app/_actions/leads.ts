@@ -15,7 +15,15 @@ export async function getPipelineData(tenantId: string) {
     if (!stagesResult.success) {
         return { success: false, error: stagesResult.error };
     }
-    const stages = stagesResult.data;
+
+    // Deduplicar estágios por order_index (camada extra de proteção)
+    const uniqueStagesMap = new Map();
+    (stagesResult.data || []).forEach((stage: any) => {
+        if (!uniqueStagesMap.has(stage.order_index)) {
+            uniqueStagesMap.set(stage.order_index, stage);
+        }
+    });
+    const stages = Array.from(uniqueStagesMap.values());
 
     // 2. Buscar leads com contatos e corretores
     const { data: leads, error: leadsError } = await supabase
