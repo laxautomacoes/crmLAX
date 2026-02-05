@@ -37,6 +37,7 @@ export default async function ReportsPage() {
             tenantId={profile.tenant_id}
             brokers={brokers}
             properties={properties}
+            userProfile={profile}
         />
     );
 }

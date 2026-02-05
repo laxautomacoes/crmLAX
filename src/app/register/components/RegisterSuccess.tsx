@@ -8,7 +8,7 @@ export function RegisterSuccess() {
         <div className="flex flex-col items-center space-y-4 md:space-y-6 animate-in fade-in zoom-in duration-300">
 
             <div className="text-center space-y-3 md:space-y-4">
-                <h3 className="text-lg md:text-xl font-bold text-foreground">
+                <h3 className="text-sm md:text-lg font-bold text-foreground whitespace-nowrap">
                     Obrigado por se cadastrar no CRM LAX!
                 </h3>
                 <p className="text-xs md:text-sm font-medium text-muted-foreground">

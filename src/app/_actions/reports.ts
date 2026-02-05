@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getProfile } from './profile'
 
 export interface ReportMetrics {
     kpis: {
@@ -60,6 +61,17 @@ export async function getReportMetrics(
 ) {
     const supabase = await createClient()
 
+    // Verificar permissões
+    const { profile } = await getProfile()
+    const userRole = profile?.role?.toLowerCase() || ''
+    const isAdmin = ['admin', 'superadmin', 'super_admin', 'super administrador'].includes(userRole)
+
+    // Se não for admin, forçar o brokerId a ser o ID do próprio usuário
+    let enforcedBrokerId = brokerId
+    if (!isAdmin && profile?.id) {
+        enforcedBrokerId = profile.id
+    }
+
     // Calcular data de início baseada no período
     const now = new Date()
     let startDate = new Date()
@@ -100,8 +112,8 @@ export async function getReportMetrics(
             .eq('tenant_id', tenantId)
             .gte('created_at', startDateIso)
 
-        if (brokerId && brokerId !== 'all') {
-            query = query.eq('profile_id', brokerId)
+        if (enforcedBrokerId && enforcedBrokerId !== 'all') {
+            query = query.eq('profile_id', enforcedBrokerId)
         }
 
         if (propertyId && propertyId !== 'all') {
@@ -129,7 +141,7 @@ export async function getReportMetrics(
 
         // 3. Processar KPIs
         const totalLeads = leads?.length || 0
-        const conversions = leads?.filter(l => winStageIds.includes(l.stage_id))?.length || 0
+        const conversions = leads?.filter((l: any) => winStageIds.includes(l.stage_id))?.length || 0
         // Active leads are those not in win stage (simplificação, idealmente excluiria perdas também)
         // Para simplificar: active = total - won
         // Melhor: active = leads que não estão em "Perdido" ou "Ganho" se tivéssemos essa distinção clara.
@@ -142,7 +154,7 @@ export async function getReportMetrics(
 
         // 4. Processar Leads por Origem (Source)
         const sourceMap = new Map<string, number>()
-        leads?.forEach(lead => {
+        leads?.forEach((lead: any) => {
             const source = lead.source || 'Desconhecido'
             sourceMap.set(source, (sourceMap.get(source) || 0) + 1)
         })
@@ -176,7 +188,7 @@ export async function getReportMetrics(
             dateIterator.setDate(dateIterator.getDate() + 1)
         }
 
-        leads?.forEach(lead => {
+        leads?.forEach((lead: any) => {
             const date = new Date(lead.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
             if (evolutionMap.has(date)) {
                 evolutionMap.set(date, (evolutionMap.get(date) || 0) + 1)
@@ -191,7 +203,7 @@ export async function getReportMetrics(
         // 6. Processar Performance da Equipe
         const teamMap = new Map<string, { name: string, leads: number, conversions: number }>()
 
-        leads?.forEach(lead => {
+        leads?.forEach((lead: any) => {
             const profileName = (lead.profiles as any)?.full_name || 'Sem Responsável'
             const profileId = lead.profile_id || 'unassigned'
 
@@ -216,7 +228,7 @@ export async function getReportMetrics(
         // 7. Processar Top Properties
         const propertiesMap = new Map<string, { title: string, leads: number, conversions: number }>()
 
-        leads?.forEach(lead => {
+        leads?.forEach((lead: any) => {
             if (lead.asset_id) {
                 const assetTitle = (lead.assets as any)?.title || 'Imóvel sem título'
                 const assetId = lead.asset_id

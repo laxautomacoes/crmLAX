@@ -14,6 +14,7 @@ interface ReportsClientProps {
     tenantId: string;
     brokers: Array<{ id: string; full_name: string }>;
     properties: Array<{ id: string; title: string }>;
+    userProfile: any;
 }
 
 const PERIODS = [
@@ -23,10 +24,15 @@ const PERIODS = [
     { label: 'Últimos 12 meses', value: '12_months' },
 ];
 
-export default function ReportsClient({ initialMetrics, tenantId, brokers, properties }: ReportsClientProps) {
+export default function ReportsClient({ initialMetrics, tenantId, brokers, properties, userProfile }: ReportsClientProps) {
+    // Determinar se o usuário tem acesso restrito (papel 'user')
+    const userRole = userProfile?.role?.toLowerCase() || ''
+    const isAdmin = ['admin', 'superadmin', 'super_admin', 'super administrador'].includes(userRole)
+
     const [metrics, setMetrics] = useState<ReportMetrics>(initialMetrics);
     const [period, setPeriod] = useState('30_days');
-    const [brokerId, setBrokerId] = useState('all');
+    // Se não for admin, o brokerId começa já filtrado pelo ID do usuário
+    const [brokerId, setBrokerId] = useState(!isAdmin ? userProfile.id : 'all');
     const [propertyId, setPropertyId] = useState('all');
     const [isPending, startTransition] = useTransition();
 
@@ -66,26 +72,28 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3">
-                    {/* Broker Filter */}
-                    <div className="relative">
-                        <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
-                        <select
-                            value={brokerId}
-                            onChange={(e) => handleBrokerChange(e.target.value)}
-                            disabled={isPending}
-                            className="pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[200px]"
-                        >
-                            <option value="all">Todos Corretores</option>
-                            {brokers.map((broker) => (
-                                <option key={broker.id} value={broker.id}>
-                                    {broker.full_name}
-                                </option>
-                            ))}
-                        </select>
-                        <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
-                            <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                    {/* Broker Filter - Only visible for admins */}
+                    {isAdmin && (
+                        <div className="relative">
+                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                            <select
+                                value={brokerId}
+                                onChange={(e) => handleBrokerChange(e.target.value)}
+                                disabled={isPending}
+                                className="pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[200px]"
+                            >
+                                <option value="all">Todos Corretores</option>
+                                {brokers.map((broker) => (
+                                    <option key={broker.id} value={broker.id}>
+                                        {broker.full_name}
+                                    </option>
+                                ))}
+                            </select>
+                            <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-muted-foreground">
+                                <svg className="fill-current h-4 w-4" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 20 20"><path d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z" /></svg>
+                            </div>
                         </div>
-                    </div>
+                    )}
 
                     {/* Property Filter */}
                     <div className="relative">
@@ -146,8 +154,8 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
             </div>
 
             {/* Tables Grid */}
-            <div className={`grid grid-cols-1 lg:grid-cols-2 gap-6 ${isPending ? 'opacity-50 transition-opacity' : 'transition-opacity'}`}>
-                <TeamPerformanceTable data={metrics.teamPerformance} />
+            <div className={`grid grid-cols-1 ${isAdmin ? 'lg:grid-cols-2' : ''} gap-6 ${isPending ? 'opacity-50 transition-opacity' : 'transition-opacity'}`}>
+                {isAdmin && <TeamPerformanceTable data={metrics.teamPerformance} />}
                 <TopPropertiesTable data={metrics.topProperties} />
             </div>
         </div>
