@@ -1,8 +1,10 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { createNotification } from '@/app/_actions/notifications';
+import { evolutionService } from '@/lib/evolution';
 
 export type CalendarEvent = {
     id: string;
@@ -48,7 +50,7 @@ export async function createEvent(data: Partial<CalendarEvent>) {
 
     // Define allowed fields
     const allowedFields = [
-        'tenant_id', 'profile_id', 'title', 'description', 'start_time', 'end_time', 
+        'tenant_id', 'profile_id', 'title', 'description', 'start_time', 'end_time',
         'event_type', 'lead_id', 'asset_id', 'metadata', 'reminder_sent'
     ];
 
@@ -93,7 +95,7 @@ export async function updateEvent(eventId: string, data: Partial<CalendarEvent>)
 
     // Define allowed fields to prevent extra data from causing errors
     const allowedFields = [
-        'title', 'description', 'start_time', 'end_time', 
+        'title', 'description', 'start_time', 'end_time',
         'event_type', 'lead_id', 'asset_id', 'metadata', 'reminder_sent'
     ];
 
@@ -134,7 +136,7 @@ export async function updateEvent(eventId: string, data: Partial<CalendarEvent>)
 
     revalidatePath('/agenda', 'page');
     revalidatePath('/(main)/agenda', 'page');
-    
+
     return { success: true, data: event };
 }
 
@@ -150,14 +152,14 @@ export async function deleteEvent(eventId: string) {
 
     revalidatePath('/agenda', 'page');
     revalidatePath('/(main)/agenda', 'page');
-    
+
     return { success: true };
 }
 
 export async function processAgendaReminders() {
     try {
-        const supabase = await createClient();
-        
+        const supabase = createAdminClient();
+
         // Get current time and time 1 hour from now
         const now = new Date();
         const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
@@ -192,6 +194,40 @@ export async function processAgendaReminders() {
                     type: 'calendar_reminder'
                 });
 
+                // Tenta enviar lembrete via WhatsApp se houver um lead vinculado e a opção estiver ativa
+                if (event.lead_id && event.metadata?.send_whatsapp_reminder) {
+                    const { data: lead } = await supabase
+                        .from('leads')
+                        .select('*, contacts(*)')
+                        .eq('id', event.lead_id)
+                        .single();
+
+                    if (lead?.contacts?.phone) {
+                        // Busca instância de WhatsApp conectada para este usuário
+                        const { data: instance } = await supabase
+                            .from('whatsapp_instances')
+                            .select('*')
+                            .eq('user_id', event.profile_id)
+                            .eq('status', 'connected')
+                            .maybeSingle();
+
+                        if (instance) {
+                            const dateStr = new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                            const message = `Olá ${lead.contacts.name}, confirmando nosso compromisso "${event.title}" hoje às ${dateStr}. Nos vemos lá!`;
+
+                            try {
+                                await evolutionService.sendMessage(
+                                    instance.instance_name,
+                                    lead.contacts.phone,
+                                    message
+                                );
+                            } catch (error) {
+                                console.error(`Erro ao enviar WhatsApp para evento ${event.id}:`, error);
+                            }
+                        }
+                    }
+                }
+
                 // Marca como lembrete enviado
                 await supabase
                     .from('calendar_events')
@@ -204,8 +240,8 @@ export async function processAgendaReminders() {
             }
         }
 
-        return { 
-            success: true, 
+        return {
+            success: true,
             processed: processedEvents.length,
             eventIds: processedEvents
         };

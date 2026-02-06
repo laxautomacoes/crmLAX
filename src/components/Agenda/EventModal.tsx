@@ -46,7 +46,7 @@ export default function EventModal({
             // Ao editar, garantimos que a data seja tratada como local para o input datetime-local
             const startDate = new Date(editingEvent.start_time);
             const endDate = new Date(editingEvent.end_time);
-            
+
             setFormData({
                 title: editingEvent.title,
                 description: editingEvent.description || '',
@@ -61,14 +61,14 @@ export default function EventModal({
             // Para novos eventos, usamos a hora atual "cheia" (ex: se agora são 17:20, sugere 18:00)
             const now = new Date();
             const start = startOfHour(addHours(now, 1));
-            
+
             // Se o usuário clicou em uma data específica no calendário, mantemos o dia mas usamos a hora sugerida
             if (initialDate) {
                 start.setFullYear(initialDate.getFullYear());
                 start.setMonth(initialDate.getMonth());
                 start.setDate(initialDate.getDate());
             }
-            
+
             const end = addHours(start, 1);
 
             setFormData({
@@ -122,10 +122,10 @@ export default function EventModal({
             }
         }
 
-        onSave({ 
-            ...formData, 
+        onSave({
+            ...formData,
             start_time: new Date(formData.start_time).toISOString(),
-            end_time: new Date(finalEndTime).toISOString() 
+            end_time: new Date(finalEndTime).toISOString()
         });
     };
 
@@ -194,6 +194,24 @@ export default function EventModal({
                         ...leads.map(lead => ({ value: lead.id, label: lead.name }))
                     ]}
                 />
+
+                {formData.lead_id && (
+                    <div className="flex items-center gap-2 px-1 py-1 bg-green-50 rounded-lg border border-green-100">
+                        <input
+                            type="checkbox"
+                            id="send_whatsapp_reminder"
+                            checked={(formData.metadata as any)?.send_whatsapp_reminder || false}
+                            onChange={(e) => setFormData({
+                                ...formData,
+                                metadata: { ...formData.metadata, send_whatsapp_reminder: e.target.checked }
+                            })}
+                            className="w-4 h-4 rounded border-gray-300 text-[#25D366] focus:ring-[#25D366]"
+                        />
+                        <label htmlFor="send_whatsapp_reminder" className="text-sm font-bold text-green-700 cursor-pointer">
+                            Enviar lembrete via WhatsApp (1h antes)
+                        </label>
+                    </div>
+                )}
 
                 <FormSelect
                     label="Vincular Imóvel (Produto)"
