@@ -5,10 +5,11 @@ import { createClient } from '@/lib/supabase/client';
 
 interface UseTenantBrandingOptions {
     systemOnly?: boolean;
+    tenantId?: string;
 }
 
 export function useTenantBranding(options?: UseTenantBrandingOptions) {
-    const [branding, setBranding] = useState<{ logo_full?: string; logo_height?: number } | null>(null);
+    const [branding, setBranding] = useState<{ logo_full?: string; logo_height?: number; logo_icon?: string } | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -16,7 +17,22 @@ export function useTenantBranding(options?: UseTenantBrandingOptions) {
             try {
                 const supabase = createClient();
 
-                // Se for systemOnly, buscamos direto o branding do sistema/superadmin
+                // 0. Se um tenantId for fornecido, buscamos diretamente dele
+                if (options?.tenantId) {
+                    const { data: tenant } = await supabase
+                        .from('tenants')
+                        .select('branding')
+                        .eq('id', options.tenantId)
+                        .maybeSingle();
+
+                    if (tenant?.branding) {
+                        setBranding(tenant.branding as any);
+                        setLoading(false);
+                        return;
+                    }
+                }
+
+                // 1. Se for systemOnly, buscamos direto o branding do sistema/superadmin
                 if (options?.systemOnly) {
                     console.log('useTenantBranding: Fetching system branding only');
                     const { data: systemTenant } = await supabase
@@ -62,7 +78,7 @@ export function useTenantBranding(options?: UseTenantBrandingOptions) {
 
                 // 2. Tentar por subdomínio
                 const subdomain = domainParts.length >= 2 ? domainParts[0] : null;
-                
+
                 if (subdomain && subdomain !== 'www' && subdomain !== 'app' && !hostname.includes('localhost')) {
                     console.log('useTenantBranding: Checking subdomain', subdomain);
                     const { data: tenantBySubdomain } = await supabase
@@ -85,7 +101,7 @@ export function useTenantBranding(options?: UseTenantBrandingOptions) {
                     .eq('profiles.role', 'superadmin')
                     .limit(1)
                     .maybeSingle();
-                
+
                 if (systemTenant?.branding) {
                     setBranding(systemTenant.branding as any);
                 } else {
@@ -104,7 +120,7 @@ export function useTenantBranding(options?: UseTenantBrandingOptions) {
             }
         }
         fetchBranding();
-    }, [options?.systemOnly]);
+    }, [options?.systemOnly, options?.tenantId]);
 
     return { branding, loading };
 }

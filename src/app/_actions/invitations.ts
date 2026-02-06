@@ -105,7 +105,7 @@ export async function getInvitationByToken(token: string) {
 
     const { data, error } = await supabase
         .from('invitations')
-        .select('*, tenants(name)')
+        .select('*, tenants(name, branding)')
         .eq('token', token)
         .is('used_at', null)
         .single()

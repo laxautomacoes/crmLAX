@@ -10,13 +10,15 @@ import { Logo } from '@/components/shared/Logo';
 import { useTenantBranding } from '@/hooks/useTenantBranding';
 
 export function RegisterContent() {
-    const { branding, loading: brandingLoading } = useTenantBranding({ systemOnly: true });
+    const [invitation, setInvitation] = useState<any>(null);
+    const { branding, loading: brandingLoading } = useTenantBranding({
+        tenantId: invitation?.tenant_id
+    });
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [invitation, setInvitation] = useState<any>(null);
     const [isSuccess, setIsSuccess] = useState(false);
 
     const router = useRouter();
@@ -70,28 +72,28 @@ export function RegisterContent() {
             <div className="bg-card w-full max-w-[440px] md:min-h-[760px] min-h-fit rounded-2xl shadow-2xl p-6 md:p-12 border border-border/50 flex flex-col justify-center animate-in fade-in zoom-in duration-300 overflow-hidden">
                 <div className="flex flex-col">
                     <div className="flex flex-col items-center mb-6 md:mb-10">
-                    <Logo 
-                        size="lg" 
-                        className="mb-0 scale-75 md:scale-100 transition-transform" 
-                        src={branding?.logo_full} 
-                        height={branding?.logo_height} 
-                        loading={brandingLoading}
-                    />
-                    {!isSuccess && !brandingLoading && (
-                        <p className="text-white text-xs md:text-base font-medium text-center opacity-90">
-                            {invitation ? `Você foi convidado para participar da ${invitation.tenants?.name}` : "A melhor experiência imobiliária"}
-                        </p>
+                        <Logo
+                            size="lg"
+                            className="mb-0 scale-75 md:scale-100 transition-transform"
+                            src={branding?.logo_full}
+                            height={branding?.logo_height}
+                            loading={brandingLoading}
+                        />
+                        {!isSuccess && !brandingLoading && (
+                            <p className="text-white text-xs md:text-base font-medium text-center opacity-90">
+                                {invitation ? `Você foi convidado para participar da ${invitation.tenants?.name}` : "A melhor experiência imobiliária"}
+                            </p>
+                        )}
+                    </div>
+
+                    {isSuccess ? <RegisterSuccess /> : (
+                        <RegisterForm
+                            name={name} setName={setName} email={email} setEmail={setEmail}
+                            password={password} setPassword={setPassword} loading={loading}
+                            error={error} isInvited={!!invitation} onSubmit={handleRegister}
+                        />
                     )}
                 </div>
-
-                {isSuccess ? <RegisterSuccess /> : (
-                    <RegisterForm
-                        name={name} setName={setName} email={email} setEmail={setEmail}
-                        password={password} setPassword={setPassword} loading={loading}
-                        error={error} isInvited={!!invitation} onSubmit={handleRegister}
-                    />
-                )}
-                    </div>
             </div>
         </div>
     );
