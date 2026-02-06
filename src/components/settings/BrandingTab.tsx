@@ -22,10 +22,18 @@ export function BrandingTab() {
     const [branding, setBranding] = useState<BrandingData>({})
 
     useEffect(() => {
+        const handleGlobalSave = () => {
+            handleSave()
+        }
+        window.addEventListener('trigger-save-settings', handleGlobalSave)
+        return () => window.removeEventListener('trigger-save-settings', handleGlobalSave)
+    }, [branding])
+
+    useEffect(() => {
         async function loadData() {
             const { profile } = await getProfile()
             setProfile(profile)
-            
+
             if (profile?.tenant_id) {
                 const supabase = createClient()
                 const { data: tenant } = await supabase
@@ -33,7 +41,7 @@ export function BrandingTab() {
                     .select('branding')
                     .eq('id', profile.tenant_id)
                     .single()
-                
+
                 if (tenant?.branding) {
                     setBranding(tenant.branding)
                 }
@@ -69,7 +77,7 @@ export function BrandingTab() {
 
         setIsUploading(type)
         const supabase = createClient()
-        
+
         try {
             const fileExt = file.name.split('.').pop()
             const fileName = `${type}-${Date.now()}.${fileExt}`
@@ -78,7 +86,7 @@ export function BrandingTab() {
             // Usaremos o bucket 'branding'
             const { error: uploadError } = await supabase.storage
                 .from('branding')
-                .upload(filePath, file, { 
+                .upload(filePath, file, {
                     upsert: true,
                     cacheControl: '3600'
                 })
@@ -103,9 +111,9 @@ export function BrandingTab() {
     const handleSave = async () => {
         if (!profile?.tenant_id) return
         setSaving(true)
-        
+
         const result = await updateTenantBranding(profile.tenant_id, branding)
-        
+
         if (result.success) {
             toast.success('Configurações de marca salvas!')
             // Disparar evento para atualizar outros componentes sem recarregar a página
@@ -156,14 +164,14 @@ export function BrandingTab() {
                             <p className="text-sm text-muted-foreground">Exibido na barra lateral expandida e nas mensagens</p>
                             <p className="text-sm text-muted-foreground mb-3">Padrão obrigatório: 2:1 (Recomendado: 200x100px)</p>
                         </div>
-                        
+
                         <div className="relative group min-h-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
                             {branding.logo_full ? (
                                 <>
                                     <div className="flex items-center justify-center p-2">
-                                        <Logo 
-                                            size="lg" 
-                                            src={branding.logo_full} 
+                                        <Logo
+                                            size="lg"
+                                            src={branding.logo_full}
                                             height={branding.logo_height || 100}
                                         />
                                     </div>
@@ -185,7 +193,7 @@ export function BrandingTab() {
                                     <span className="text-xs font-medium text-muted-foreground">Nenhum logotipo carregado</span>
                                 </div>
                             )}
-                            
+
                             <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 hover:bg-black/40 hover:opacity-100 transition-all">
                                 <div className="text-white text-center">
                                     {isUploading === 'logo_full' ? (
@@ -210,10 +218,10 @@ export function BrandingTab() {
                         {branding.logo_full && (
                             <div className="flex items-center gap-4 mt-2 px-1">
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase whitespace-nowrap">Tamanho: {(branding.logo_height || 100) * 2}x{branding.logo_height || 100}px</label>
-                                <input 
-                                    type="range" 
-                                    min="25" 
-                                    max="100" 
+                                <input
+                                    type="range"
+                                    min="25"
+                                    max="100"
                                     value={branding.logo_height || 100}
                                     onChange={(e) => {
                                         const val = parseInt(e.target.value);
@@ -236,7 +244,7 @@ export function BrandingTab() {
                             <p className="text-sm text-muted-foreground">Exibido na barra lateral recolhida e nas mensagens</p>
                             <p className="text-sm text-muted-foreground mb-3">Recomendado: 512x512 (quadrado)</p>
                         </div>
-                        
+
                         <div className="relative group aspect-square max-w-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
                             {branding.logo_icon ? (
                                 <>
@@ -259,7 +267,7 @@ export function BrandingTab() {
                                     <span className="text-[10px] font-medium text-muted-foreground">Nenhum ícone</span>
                                 </div>
                             )}
-                            
+
                             <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 hover:bg-black/40 hover:opacity-100 transition-all">
                                 <div className="text-white text-center p-1">
                                     {isUploading === 'logo_icon' ? (
@@ -287,7 +295,7 @@ export function BrandingTab() {
             <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 w-full md:w-fit px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="flex items-center justify-center gap-2 w-full md:hidden px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
             >
                 {saving && <Loader2 size={18} className="animate-spin" />}
                 Salvar Alterações

@@ -28,7 +28,7 @@ export default function SettingsPage() {
 
     const activeTab = tabParam || 'profile';
     const isAdmin = role === 'admin' || role === 'superadmin';
-    
+
     const tabs = [
         { id: 'profile', label: 'Perfil' },
         ...(isAdmin ? [{ id: 'branding', label: 'Branding' }] : [])
@@ -46,20 +46,29 @@ export default function SettingsPage() {
 
             {/* Tab Navigation */}
             {tabs.length > 1 && (
-                <div className="flex items-center gap-2 border-b border-border">
-                    {tabs.map((tab) => (
-                        <button
-                            key={tab.id}
-                            onClick={() => router.push(`/settings?tab=${tab.id}`)}
-                            className={`px-6 py-3 text-sm font-bold transition-all relative ${
-                                activeTab === tab.id 
-                                ? 'text-secondary border-b-2 border-secondary' 
-                                : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                        >
-                            {tab.label}
-                        </button>
-                    ))}
+                <div className="flex items-center justify-between border-b border-border">
+                    <div className="flex items-center gap-2">
+                        {tabs.map((tab) => (
+                            <button
+                                key={tab.id}
+                                onClick={() => router.push(`/settings?tab=${tab.id}`)}
+                                className={`px-6 py-3 text-sm font-bold transition-all relative ${activeTab === tab.id
+                                    ? 'text-foreground border-b-[3px] border-secondary'
+                                    : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                {tab.label}
+                            </button>
+                        ))}
+                    </div>
+
+                    {/* Botão Salvar Global (Desktop) */}
+                    <button
+                        onClick={() => window.dispatchEvent(new CustomEvent('trigger-save-settings'))}
+                        className="hidden md:flex items-center gap-2 px-6 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-all text-sm mb-2 shadow-sm active:scale-[0.98]"
+                    >
+                        Salvar Alterações
+                    </button>
                 </div>
             )}
 

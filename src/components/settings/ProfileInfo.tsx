@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { User, Mail } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { updateProfile, requestEmailChange } from '@/app/_actions/profile';
@@ -19,15 +19,15 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
     const formatPhone = (value: string) => {
         if (!value) return '';
         const numbers = value.replace(/\D/g, '');
-        
+
         if (numbers.length <= 2) return `(${numbers}`;
         if (numbers.length <= 6) return `(${numbers.slice(0, 2)}) ${numbers.slice(2)}`;
-        
+
         // 10 dígitos: (XX) 8888 9999
         if (numbers.length <= 10) {
             return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 6)} ${numbers.slice(6, 10)}`;
         }
-        
+
         // 11 dígitos: (XX) 99999 9999
         return `(${numbers.slice(0, 2)}) ${numbers.slice(2, 7)} ${numbers.slice(7, 11)}`;
     };
@@ -36,6 +36,14 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
         const formatted = formatPhone(e.target.value);
         onProfileUpdate({ whatsapp_number: formatted });
     };
+
+    useEffect(() => {
+        const handleGlobalSave = () => {
+            handleSaveProfile();
+        };
+        window.addEventListener('trigger-save-settings', handleGlobalSave);
+        return () => window.removeEventListener('trigger-save-settings', handleGlobalSave);
+    }, [profile]);
 
     const handleSaveProfile = async () => {
         if (!profile?.full_name?.trim()) {
@@ -93,13 +101,13 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
 
             <div className="space-y-4 flex-1 flex flex-col">
                 {message && <MessageBanner type={message.type} text={message.text} />}
-                
+
                 <FormInput
                     label="Nome Completo"
                     value={profile?.full_name || ''}
                     onChange={(e) => onProfileUpdate({ full_name: e.target.value })}
                 />
-                
+
                 <div>
                     <FormInput
                         label="Email"
@@ -142,7 +150,7 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
                 <button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="w-full mt-auto bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full mt-auto bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed md:hidden"
                 >
                     {saving ? (
                         <span className="flex items-center justify-center gap-2">
