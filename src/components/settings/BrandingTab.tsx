@@ -151,8 +151,8 @@ export function BrandingTab() {
             <div className="bg-card border border-border rounded-xl p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
-                        <h3 className="text-lg font-bold text-foreground">Branding Empresarial</h3>
-                        <p className="text-sm text-muted-foreground">Personalize logotipo e ícone/favicon que aparecem no seu CRM.</p>
+                        <h3 className="text-lg font-bold text-foreground">Branding</h3>
+                        <p className="text-sm text-muted-foreground">Personalize o logotipo e ícone | favicon da empresa.</p>
                     </div>
                 </div>
 
@@ -161,8 +161,8 @@ export function BrandingTab() {
                     <div className="flex-1 space-y-4 flex flex-col">
                         <div className="min-h-[80px]">
                             <label className="text-lg font-bold text-foreground mb-1 block">Logotipo</label>
-                            <p className="text-sm text-muted-foreground">Exibido na barra lateral expandida e nas mensagens</p>
-                            <p className="text-sm text-muted-foreground mb-3">Padrão obrigatório: 2:1 (Recomendado: 200x100px)</p>
+                            <p className="text-sm text-muted-foreground">Exibido na barra lateral expandida e nas mensagens.</p>
+                            <p className="text-sm text-muted-foreground mb-3">Medidas de referência: 200x100 px (2:1)</p>
                         </div>
 
                         <div className="relative group min-h-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
@@ -234,15 +234,15 @@ export function BrandingTab() {
                     </div>
 
                     {/* Separador */}
-                    <div className="hidden md:block w-px bg-border self-stretch" />
-                    <div className="block md:hidden h-px bg-border w-full" />
+                    <div className="hidden md:block w-px bg-border self-stretch opacity-80" />
+                    <div className="block md:hidden h-px bg-border w-full opacity-80" />
 
                     {/* Ícone */}
                     <div className="flex-1 space-y-4 flex flex-col">
                         <div className="min-h-[80px]">
                             <label className="text-lg font-bold text-foreground mb-1 block">Ícone | Favicon</label>
-                            <p className="text-sm text-muted-foreground">Exibido na barra lateral recolhida e nas mensagens</p>
-                            <p className="text-sm text-muted-foreground mb-3">Recomendado: 512x512 (quadrado)</p>
+                            <p className="text-sm text-muted-foreground">Exibido na barra lateral recolhida e nas mensagens.</p>
+                            <p className="text-sm text-muted-foreground mb-3">Medidas de referência: 200x200 px (1:1)</p>
                         </div>
 
                         <div className="relative group aspect-square max-w-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">

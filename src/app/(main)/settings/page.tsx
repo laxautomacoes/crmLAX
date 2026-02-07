@@ -53,7 +53,7 @@ export default function SettingsPage() {
                                 key={tab.id}
                                 onClick={() => router.push(`/settings?tab=${tab.id}`)}
                                 className={`px-6 py-3 text-sm font-bold transition-all relative ${activeTab === tab.id
-                                    ? 'text-foreground border-b-[3px] border-secondary'
+                                    ? 'text-foreground border-b-[3px] active-tab-indicator'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >

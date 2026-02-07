@@ -105,3 +105,12 @@ input[type="time"] {
 .custom-scrollbar::-webkit-scrollbar-thumb:hover {
   background: var(--secondary);
 }
+
+/* Tab Selection Contrast Fix */
+.active-tab-indicator {
+  border-bottom-color: #404F4F !important;
+}
+
+.dark .active-tab-indicator {
+  border-bottom-color: #FFE600 !important;
+}
