@@ -61,15 +61,15 @@ export function BrandingTab() {
                 const img = new Image()
                 img.onload = () => {
                     const ratio = img.width / img.height
-                    // Aceita uma pequena margem de erro na proporção (ex: 1.9 a 2.1 para 2:1)
-                    resolve(Math.abs(ratio - 2) < 0.1)
+                    // Aceita uma pequena margem de erro na proporção (ex: 4.8 a 5.2 para 5:1)
+                    resolve(Math.abs(ratio - 5) < 0.2)
                 }
                 img.onerror = () => resolve(false)
                 img.src = URL.createObjectURL(file)
             })
 
             if (!isValidRatio) {
-                toast.error('Proporção não aceita! O logotipo deve estar no padrão 2:1 (ex: 200x100px).')
+                toast.error('Proporção não aceita! O logotipo deve estar no padrão 5:1 (ex: 250x50px).')
                 e.target.value = ''
                 return
             }
@@ -159,10 +159,11 @@ export function BrandingTab() {
                 <div className="flex flex-col md:flex-row md:items-stretch gap-8">
                     {/* Logotipo */}
                     <div className="flex-1 space-y-4 flex flex-col">
-                        <div className="min-h-[80px]">
+                        <div className="min-h-[80px] space-y-2">
                             <label className="text-lg font-bold text-foreground mb-1 block">Logotipo</label>
-                            <p className="text-sm text-muted-foreground">Exibido na barra lateral expandida e nas mensagens.</p>
-                            <p className="text-sm text-muted-foreground mb-3">Medidas de referência: 200x100 px (2:1)</p>
+                            <p className="text-sm text-muted-foreground leading-none">Exibido na barra lateral expandida e nas mensagens.</p>
+                            <p className="text-sm text-muted-foreground leading-none">Medidas de referência: 250x50 px (5:1)</p>
+                            <p className="text-[11px] text-muted-foreground italic leading-none">Arquivos aceitos: JPG, PNG e WEBP</p>
                         </div>
 
                         <div className="relative group min-h-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
@@ -217,12 +218,12 @@ export function BrandingTab() {
 
                         {branding.logo_full && (
                             <div className="flex items-center gap-4 mt-2 px-1">
-                                <label className="text-[10px] font-bold text-muted-foreground uppercase whitespace-nowrap">Tamanho: {(branding.logo_height || 100) * 2}x{branding.logo_height || 100}px</label>
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase whitespace-nowrap">Tamanho: {(branding.logo_height || 50) * 5}x{branding.logo_height || 50}px</label>
                                 <input
                                     type="range"
-                                    min="25"
-                                    max="100"
-                                    value={branding.logo_height || 100}
+                                    min="20"
+                                    max="50"
+                                    value={branding.logo_height || 50}
                                     onChange={(e) => {
                                         const val = parseInt(e.target.value);
                                         setBranding(prev => ({ ...prev, logo_height: val }));
@@ -239,10 +240,11 @@ export function BrandingTab() {
 
                     {/* Ícone */}
                     <div className="flex-1 space-y-4 flex flex-col">
-                        <div className="min-h-[80px]">
+                        <div className="min-h-[80px] space-y-2">
                             <label className="text-lg font-bold text-foreground mb-1 block">Ícone | Favicon</label>
-                            <p className="text-sm text-muted-foreground">Exibido na barra lateral recolhida e nas mensagens.</p>
-                            <p className="text-sm text-muted-foreground mb-3">Medidas de referência: 200x200 px (1:1)</p>
+                            <p className="text-sm text-muted-foreground leading-none">Exibido na barra lateral recolhida e nas mensagens.</p>
+                            <p className="text-sm text-muted-foreground leading-none">Medidas de referência: 200x200 px (1:1)</p>
+                            <p className="text-[11px] text-muted-foreground italic leading-none">Arquivos aceitos: JPG, PNG e WEBP</p>
                         </div>
 
                         <div className="relative group aspect-square max-w-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
