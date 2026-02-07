@@ -13,7 +13,7 @@ interface FooterProps {
 
 export function Footer({ isCollapsed, onLogout, onClose, onSupportClick, profile }: FooterProps) {
     return (
-        <div className="px-3 py-6 mt-auto border-t border-border/50">
+        <div className="px-3 py-6 mt-auto border-t border-border/10">
             <button
                 onClick={() => {
                     onSupportClick?.();

@@ -133,7 +133,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
         <>
             {isOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />}
             <div className={`fixed inset-y-0 left-0 z-50 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col transition-all duration-300 md:translate-x-0 md:static ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}>
-                <div className="h-16 px-6 flex items-center relative justify-center border-b border-border/50 flex-none">
+                <div className="h-16 px-6 flex items-center relative justify-center border-b border-border/10 flex-none">
                     <div className="flex items-center justify-center">
                         {isCollapsed ? (
                             branding?.logo_icon ? (
