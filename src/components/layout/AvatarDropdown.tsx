@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Moon, Sun, Bell, Settings, LogOut, User } from 'lucide-react';
+import { Moon, Sun, Bell, Settings, LogOut, User, Users } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getProfile } from '@/app/_actions/profile';
@@ -60,6 +60,7 @@ export function AvatarDropdown() {
                         />
                         <MenuItem icon={Bell} label="Notificações" href="/notifications" />
                         <MenuItem icon={User} label="Configurações" href="/settings" />
+                        <MenuItem icon={Users} label="Trocar Conta" onClick={handleLogout} />
                         <MenuItem icon={LogOut} label="Sair" isRed onClick={handleLogout} />
                     </div>
                 </div>
