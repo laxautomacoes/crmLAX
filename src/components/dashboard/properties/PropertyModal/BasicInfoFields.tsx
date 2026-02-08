@@ -2,8 +2,7 @@
 
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { FormRichTextarea } from '@/components/shared/forms/FormRichTextarea'
-import { Home, User, Info } from 'lucide-react'
+import { Home, User } from 'lucide-react'
 
 interface BasicInfoFieldsProps {
     formData: any
@@ -19,13 +18,15 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
     return (
         <div className="space-y-6">
             <div className="space-y-4">
-                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
                     <Home size={14} className="text-foreground" />
                     Imóvel | Empreendimento
+                    <span className="ml-1 text-[10px] font-normal italic normal-case text-muted-foreground">
+                        (título do imóvel)
+                    </span>
                 </h4>
-                <div className="grid grid-cols-1 gap-x-3 gap-y-4">
+                <div className="grid grid-cols-1 gap-x-3 gap-y-6">
                     <FormInput
-                        label="Título do Imóvel *"
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
                         placeholder="Ex: Apartamento 3 suítes Beira Mar"
@@ -34,13 +35,12 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
             </div>
 
             <div className="space-y-4">
-                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
                     <User size={14} className="text-foreground" />
-                    Corretor
+                    Responsável | Corretor
                 </h4>
                 {isAdmin ? (
                     <FormSelect
-                        label="Responsável"
                         value={formData.created_by || 'all'}
                         onChange={(e) => setFormData({ ...formData, created_by: e.target.value === 'all' ? null : e.target.value })}
                         options={[
@@ -53,7 +53,6 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                     />
                 ) : (
                     <FormInput
-                        label="Responsável"
                         value={currentProfile?.full_name || ''}
                         disabled
                         onChange={() => {}}
@@ -61,20 +60,8 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                 )}
             </div>
 
-            <div className="space-y-4">
-                <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                    <Info size={14} className="text-foreground" />
-                    Descrição
-                </h4>
-                <FormRichTextarea
-                    label="Detalhes da descrição"
-                    value={formData.description || ''}
-                    onChange={(val) => setFormData({ ...formData, description: val })}
-                    placeholder="Descreva os principais detalhes do imóvel..."
-                />
-            </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6 pt-4">
                 <FormInput
                     label="Preço (R$)"
                     type="number"

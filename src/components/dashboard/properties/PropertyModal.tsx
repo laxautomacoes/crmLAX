@@ -8,6 +8,7 @@ import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
 import { AreaFields } from './PropertyModal/AreaFields'
 import { RoomsFields } from './PropertyModal/RoomsFields'
 import { AmenitiesFields } from './PropertyModal/AmenitiesFields'
+import { DescriptionField } from './PropertyModal/DescriptionField'
 import { MediaFields } from './PropertyModal/MediaFields'
 import { AddressFields } from './PropertyModal/AddressFields'
 import { OwnerFields } from './PropertyModal/OwnerFields'
@@ -332,7 +333,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             size="lg"
         >
             <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
-                <div className="flex flex-col gap-6">
+                <div className="flex flex-col gap-8">
                     <BasicInfoFields 
                         formData={formData} 
                         setFormData={setFormData} 
@@ -340,16 +341,24 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         brokers={brokers}
                         currentProfile={currentProfile}
                     />
+                    <div className="border-t border-border/60" />
                     <AreaFields formData={formData} setFormData={setFormData} />
+                    <div className="border-t border-border/60" />
                     <RoomsFields formData={formData} setFormData={setFormData} />
+                    <div className="border-t border-border/60" />
                     <AmenitiesFields formData={formData} setFormData={setFormData} />
+                    <div className="border-t border-border/60" />
+                    <DescriptionField formData={formData} setFormData={setFormData} />
+                    <div className="border-t border-border/60" />
                     <AddressFields formData={formData} setFormData={setFormData} />
+                    <div className="border-t border-border/60" />
                     <MediaFields 
                         formData={formData} 
                         isUploading={isUploading} 
                         handleFileUpload={handleFileUpload} 
                         removeFile={removeFile} 
                     />
+                    <div className="border-t border-border/60" />
                     <OwnerFields formData={formData} setFormData={setFormData} />
                 </div>
 

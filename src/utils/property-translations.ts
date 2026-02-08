@@ -32,7 +32,7 @@ export function getStatusStyles(status: string): string {
     const normalizedStatus = status?.toLowerCase();
     switch (normalizedStatus) {
         case 'ativo': return 'bg-emerald-500/10 text-emerald-600';
-        case 'pendente': return 'bg-yellow-400/20 text-yellow-700';
+        case 'pendente': return 'bg-secondary text-secondary-foreground';
         case 'inativo': return 'bg-red-500/10 text-red-600';
         default: return 'bg-foreground/10 text-foreground';
     }

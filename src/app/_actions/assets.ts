@@ -41,7 +41,7 @@ export async function getAssets(tenantId: string, status?: string) {
                 console.warn('Retrying assets fetch without new columns')
                 const { data: fallbackData, error: fallbackError } = await supabase
                     .from('assets')
-                    .select('id, title, type, price, details, images, videos, documents')
+                    .select('id, title, type, price, details, images, videos, documents, created_by, status, is_archived')
                     .eq('tenant_id', tenantId)
                     .order('created_at', { ascending: false })
                 
@@ -124,9 +124,15 @@ export async function createAsset(tenantId: string, assetData: any) {
                     delete fallbackData.description
                 }
                 
-                // Removemos outras colunas que podem estar causando erro se o schema estiver desatualizado
-                delete fallbackData.created_by
-                delete fallbackData.is_archived
+                // Removemos outras colunas apenas se o erro indicar que elas não existem
+                if (error.message.includes('created_by') || error.code === '42703') {
+                    delete fallbackData.created_by
+                }
+                
+                if (error.message.includes('is_archived') || error.code === '42703') {
+                    delete fallbackData.is_archived
+                }
+                
                 // Se o erro mencionar especificamente o status, removemos também
                 if (error.message.includes('status')) {
                     delete fallbackData.status
@@ -135,7 +141,7 @@ export async function createAsset(tenantId: string, assetData: any) {
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .insert([fallbackData])
-                    .select('id, title, type, price, status, details, images, videos, documents')
+                    .select('id, title, type, price, status, details, images, videos, documents, created_by')
                     .single()
                 
                 if (retryError) {
@@ -198,10 +204,11 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
         delete updateData.created_at
         delete updateData.profiles
         
-        // Só permite atualizar created_by se for admin
+        // Se não for admin, permitimos a edição mas forçamos o status para Pendente
+        // para que as alterações passem por aprovação do nível admin.
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
             delete updateData.created_by
-            delete updateData.status
+            updateData.status = 'Pendente'
         }
 
         let query = supabase
@@ -243,8 +250,14 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
                     delete fallbackData.description
                 }
                 
-                delete fallbackData.created_by
-                delete fallbackData.is_archived
+                if (error.message.includes('created_by') || error.code === '42703') {
+                    delete fallbackData.created_by
+                }
+                
+                if (error.message.includes('is_archived') || error.code === '42703') {
+                    delete fallbackData.is_archived
+                }
+                
                 if (error.message.includes('status')) {
                     delete fallbackData.status
                 }
@@ -261,7 +274,7 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
                 }
 
                 const { data: retryData, error: retryError } = await retryQuery
-                    .select('id, title, type, price, status, details, images, videos, documents')
+                    .select('id, title, type, price, status, details, images, videos, documents, created_by')
                     .single()
                 
                 if (retryError) {
@@ -356,7 +369,7 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
                     .insert(fallbackData)
-                    .select('id, title, type, price, status, details')
+                    .select('id, title, type, price, status, details, created_by')
                 
                 if (retryError) {
                     // Fallback final: insert básico
@@ -458,7 +471,7 @@ export async function getAssetById(assetId: string) {
             if (error.message.includes('created_by') || error.message.includes('description') || error.message.includes('status') || error.code === '42703') {
                 const { data: retryData, error: retryError } = await supabase
                     .from('assets')
-                    .select('id, title, type, price, details, images, videos, documents')
+                    .select('id, title, type, price, details, images, videos, documents, created_by, status')
                     .eq('id', assetId)
                     .single()
                 

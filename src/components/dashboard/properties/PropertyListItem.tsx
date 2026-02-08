@@ -1,22 +1,24 @@
 'use client'
 
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, Archive } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2 } from 'lucide-react'
 import { translatePropertyType, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
     prop: any
     onEdit: (prop: any) => void
     onDelete: (id: string) => void
-    onArchive: (id: string) => void
     onView: (prop: any) => void
     onSend: (prop: any) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyListItem({ prop, onEdit, onDelete, onArchive, onView, onSend, userRole, userId }: PropertyListItemProps) {
+export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userRole, userId }: PropertyListItemProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
-    const isOwner = userId === prop.created_by
+    const isOwner = userId && prop.created_by && (
+        userId === prop.created_by || 
+        userId === prop.created_by?.id
+    )
     const canEdit = isAdmin || isOwner
     const formattedPrice = prop.price
         ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}`
@@ -63,7 +65,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onArchive, onView, on
                         
                         {prop.status === 'Pendente' && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <span className="px-1.5 py-0.5 bg-yellow-400 text-yellow-900 rounded text-[8px] font-black uppercase tracking-tighter shadow-lg">Pendente</span>
+                                <span className="px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded-full text-[8px] font-black uppercase tracking-tighter shadow-lg">Pendente</span>
                             </div>
                         )}
 
@@ -83,7 +85,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onArchive, onView, on
                     <div className="text-left max-w-md">
                         <div className="font-bold text-foreground text-sm line-clamp-1">{prop.title}</div>
                         {prop.details?.situacao && (
-                            <div className={`mt-0.5 px-1.5 py-0.5 rounded text-[8px] font-black uppercase tracking-widest shadow-sm w-fit ${getSituacaoStyles(prop.details.situacao)}`}>
+                            <div className={`mt-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-sm w-fit ${getSituacaoStyles(prop.details.situacao)}`}>
                                 {prop.details.situacao}
                             </div>
                         )}
@@ -184,7 +186,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onArchive, onView, on
                                     e.stopPropagation()
                                     onEdit(prop)
                                 }}
-                                className="p-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors shadow-sm"
+                                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
                                 title="Editar"
                             >
                                 <Edit size={16} />
@@ -192,19 +194,9 @@ export function PropertyListItem({ prop, onEdit, onDelete, onArchive, onView, on
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation()
-                                    onArchive(prop.id)
-                                }}
-                                className="p-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors shadow-sm"
-                                title="Arquivar"
-                            >
-                                <Archive size={16} />
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
                                     onDelete(prop.id)
                                 }}
-                                className="p-2 bg-foreground text-background rounded-lg hover:bg-foreground/90 transition-colors shadow-sm"
+                                className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
                                 title="Excluir"
                             >
                                 <Trash2 size={16} />

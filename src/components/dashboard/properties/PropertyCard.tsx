@@ -1,22 +1,24 @@
 'use client'
 
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2, Archive } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2 } from 'lucide-react'
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations'
 
 interface PropertyCardProps {
     prop: any
     onEdit: (prop: any) => void
     onDelete: (id: string) => void
-    onArchive: (id: string) => void
     onView: (prop: any) => void
     onSend: (prop: any) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyCard({ prop, onEdit, onDelete, onArchive, onView, onSend, userRole, userId }: PropertyCardProps) {
+export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole, userId }: PropertyCardProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
-    const isOwner = userId === prop.created_by
+    const isOwner = userId && prop.created_by && (
+        userId === prop.created_by || 
+        userId === prop.created_by?.id
+    )
     const canEdit = isAdmin || isOwner
     
     return (
@@ -35,7 +37,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onArchive, onView, onSend
                 
                 {prop.status === 'Pendente' && (
                     <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                        <div className="px-3 py-1.5 bg-yellow-400 text-yellow-900 rounded-lg text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">
+                        <div className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">
                             Pendente de Aprovação
                         </div>
                     </div>
@@ -59,7 +61,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onArchive, onView, onSend
                                     e.stopPropagation()
                                     onEdit(prop)
                                 }}
-                                className="p-2 bg-foreground text-background rounded-lg shadow-sm hover:bg-foreground/90 transition-colors"
+                                className="p-2 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors"
                                 title="Editar"
                             >
                                 <Edit size={16} />
@@ -67,19 +69,9 @@ export function PropertyCard({ prop, onEdit, onDelete, onArchive, onView, onSend
                             <button
                                 onClick={(e) => {
                                     e.stopPropagation()
-                                    onArchive(prop.id)
-                                }}
-                                className="p-2 bg-foreground text-background rounded-lg shadow-sm hover:bg-foreground/90 transition-colors"
-                                title="Arquivar"
-                            >
-                                <Archive size={16} />
-                            </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
                                     onDelete(prop.id)
                                 }}
-                                className="p-2 bg-foreground text-background rounded-lg shadow-sm hover:bg-foreground/90 transition-colors"
+                                className="p-2 bg-red-600 text-white rounded-lg shadow-sm hover:bg-red-700 transition-colors"
                                 title="Excluir"
                             >
                                 <Trash2 size={16} />
@@ -93,11 +85,11 @@ export function PropertyCard({ prop, onEdit, onDelete, onArchive, onView, onSend
                 <div className="space-y-3">
                     <div className="flex gap-2 flex-wrap">
                         {prop.details?.situacao && (
-                            <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-sm ${getSituacaoStyles(prop.details.situacao)}`}>
+                            <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${getSituacaoStyles(prop.details.situacao)}`}>
                                 {prop.details.situacao}
                             </div>
                         )}
-                        <div className={`px-2 py-0.5 rounded text-[10px] font-black uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
+                        <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
                             {translatePropertyType(prop.type)}
                         </div>
                         {prop.videos?.length > 0 && (

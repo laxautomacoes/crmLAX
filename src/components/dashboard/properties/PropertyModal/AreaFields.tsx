@@ -10,12 +10,12 @@ interface AreaFieldsProps {
 
 export function AreaFields({ formData, setFormData }: AreaFieldsProps) {
     return (
-        <div className="space-y-4 pt-2">
-            <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+        <div className="space-y-4">
+            <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
                 <Maximize2 size={14} className="text-foreground" />
                 Áreas
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6">
             <FormInput
                 label="Área Privativa (m²)"
                 type="number"
