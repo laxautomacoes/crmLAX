@@ -7,6 +7,9 @@ import { Loader2 } from 'lucide-react';
 import Link from 'next/link';
 import { GoogleAuthButton } from './GoogleAuthButton';
 import { LoginFields } from './LoginFields';
+import { saveAccount } from '@/lib/utils/multi-account';
+import { getProfile } from '@/app/_actions/profile';
+import { toast } from 'sonner';
 
 export function LoginForm() {
     const [email, setEmail] = useState('');
@@ -23,18 +26,48 @@ export function LoginForm() {
 
         try {
             const supabase = createClient();
-            const { error } = await supabase.auth.signInWithPassword({
+            const { data: { session }, error: loginError } = await supabase.auth.signInWithPassword({
                 email,
                 password,
             });
 
-            if (error) {
-                setError(error.message);
+            if (loginError) {
+                setError(loginError.message);
                 return;
             }
 
-            router.push('/dashboard');
-            router.refresh();
+            if (session) {
+                // Save account to multi-account list without blocking redirect
+                // We use a self-invoking async function to handle profile fetch in background
+                (async () => {
+                    try {
+                        const { profile } = await getProfile();
+                        saveAccount({
+                            email: session.user.email!,
+                            name: profile?.full_name || session.user.user_metadata?.full_name || session.user.email!,
+                            avatar_url: profile?.avatar_url || null,
+                            role: profile?.role || null,
+                            tenant_id: profile?.tenant_id || null,
+                            session: session
+                        });
+                    } catch (err) {
+                        saveAccount({
+                            email: session.user.email!,
+                            name: session.user.user_metadata?.full_name || session.user.email!,
+                            avatar_url: null,
+                            role: null,
+                            tenant_id: null,
+                            session: session
+                        });
+                    }
+                })();
+            }
+
+            toast.success('Login realizado com sucesso!');
+            
+            // Usar window.location.href em vez de router.push para garantir 
+            // que o middleware processe a nova sessão corretamente com um reload total
+            window.location.href = '/dashboard';
         } catch (err: any) {
             setError(err?.message || 'Falha ao autenticar.');
         } finally {

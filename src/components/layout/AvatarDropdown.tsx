@@ -9,9 +9,12 @@ import { UserAvatar } from '@/components/shared/UserAvatar';
 import { MenuItem } from './AvatarDropdown/MenuItem';
 import { DropdownHeader } from './AvatarDropdown/DropdownHeader';
 import { useTheme } from 'next-themes';
+import { saveAccount, removeAccount } from '@/lib/utils/multi-account';
+import { SwitchAccountModal } from './AvatarDropdown/SwitchAccountModal';
 
 export function AvatarDropdown() {
     const [isOpen, setIsOpen] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [profile, setProfile] = useState<any>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
@@ -19,15 +22,36 @@ export function AvatarDropdown() {
     const { theme, setTheme } = useTheme();
 
     const handleLogout = async () => {
+        if (profile?.email) {
+            removeAccount(profile.email);
+        }
         await supabase.auth.signOut();
         router.push('/login');
         router.refresh();
     };
 
     useEffect(() => {
-        getProfile().then((data) => {
-            if (data.profile) setProfile(data.profile);
-        });
+        const syncAccount = async () => {
+            const { profile: fetchedProfile } = await getProfile();
+            if (fetchedProfile) {
+                setProfile(fetchedProfile);
+                
+                // Sync with multi-account list
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    saveAccount({
+                        email: session.user.email!,
+                        name: fetchedProfile.full_name || session.user.email!,
+                        avatar_url: fetchedProfile.avatar_url || null,
+                        role: fetchedProfile.role || null,
+                        tenant_id: fetchedProfile.tenant_id || null,
+                        session: session
+                    });
+                }
+            }
+        };
+
+        syncAccount();
 
         const handleProfileUpdate = (event: any) => {
             if (event.detail) {
@@ -71,11 +95,24 @@ export function AvatarDropdown() {
                         />
                         <MenuItem icon={Bell} label="Notificações" href="/notifications" />
                         <MenuItem icon={User} label="Configurações" href="/settings" />
-                        <MenuItem icon={Users} label="Trocar Conta" onClick={handleLogout} />
+                        <MenuItem 
+                            icon={Users} 
+                            label="Trocar Conta" 
+                            onClick={() => {
+                                setIsOpen(false);
+                                setIsModalOpen(true);
+                            }} 
+                        />
                         <MenuItem icon={LogOut} label="Sair" isRed onClick={handleLogout} />
                     </div>
                 </div>
             )}
+
+            <SwitchAccountModal 
+                isOpen={isModalOpen} 
+                onClose={() => setIsModalOpen(false)} 
+                currentEmail={profile?.email || profile?.user?.email}
+            />
         </div>
     );
 }

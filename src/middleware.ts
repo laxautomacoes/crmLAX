@@ -78,13 +78,31 @@ export default async function proxy(request: NextRequest) {
 
     // 5. Adicionar header com tenant_id se identificado
     if (tenant) {
+        const requestHeaders = new Headers(request.headers)
+        requestHeaders.set('x-tenant-id', tenant.id)
+        requestHeaders.set('x-tenant-slug', tenant.slug)
+
+        // Criar resposta com headers para o servidor
         const response = NextResponse.next({
             request: {
-                headers: new Headers(request.headers),
+                headers: requestHeaders,
             },
         })
-        response.headers.set('x-tenant-id', tenant.id)
-        response.headers.set('x-tenant-slug', tenant.slug)
+
+        // Copiar cookies da resposta do Supabase (importante para manter a sessão)
+        supabaseResponse.cookies.getAll().forEach((cookie) => {
+            response.cookies.set(cookie.name, cookie.value, {
+                ...cookie,
+                path: cookie.path,
+                domain: cookie.domain,
+                expires: cookie.expires,
+                maxAge: cookie.maxAge,
+                sameSite: cookie.sameSite,
+                secure: cookie.secure,
+                httpOnly: cookie.httpOnly,
+            })
+        })
+
         return response
     }
 
