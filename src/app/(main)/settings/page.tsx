@@ -5,6 +5,7 @@ import { useState, useEffect } from 'react';
 import { ProfileTab } from '@/components/settings/ProfileTab';
 import { BrandingTab } from '@/components/settings/BrandingTab';
 import { getProfile } from '@/app/_actions/profile';
+import { Save, Loader2 } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 
@@ -27,11 +28,14 @@ export default function SettingsPage() {
     }, []);
 
     const activeTab = tabParam || 'profile';
-    const isAdmin = role === 'admin' || role === 'superadmin';
+    // Admin e Superadmin têm acesso ao Branding da empresa.
+    // Colaboradores têm acesso individual apenas ao Perfil.
+    const userRole = role?.toLowerCase() || '';
+    const hasBrandingAccess = ['admin', 'superadmin', 'super_admin', 'super administrador', 'super admin', 'super_administrador'].includes(userRole);
 
     const tabs = [
         { id: 'profile', label: 'Perfil' },
-        ...(isAdmin ? [{ id: 'branding', label: 'Branding' }] : [])
+        ...(hasBrandingAccess ? [{ id: 'branding', label: 'Branding' }] : [])
     ];
 
     if (loading) return null;
@@ -40,7 +44,7 @@ export default function SettingsPage() {
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-foreground text-center md:text-left">
-                    Meu Perfil
+                    {activeTab === 'profile' ? 'Meu Perfil' : 'Branding da Empresa'}
                 </h1>
             </div>
 
@@ -62,19 +66,21 @@ export default function SettingsPage() {
                         ))}
                     </div>
 
-                    {/* Botão Salvar Global (Desktop) */}
-                    <button
-                        onClick={() => window.dispatchEvent(new CustomEvent('trigger-save-settings'))}
-                        className="hidden md:flex items-center gap-2 px-6 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-all text-sm mb-2 shadow-sm active:scale-[0.98]"
-                    >
-                        Salvar Alterações
-                    </button>
+                    {/* Botão Salvar para Branding no Desktop */}
+                    {activeTab === 'branding' && (
+                        <button
+                            onClick={() => window.dispatchEvent(new CustomEvent('trigger-save-settings'))}
+                            className="hidden md:flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity text-sm"
+                        >
+                            Salvar Alterações
+                        </button>
+                    )}
                 </div>
             )}
 
-            <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <div>
                 {activeTab === 'profile' && <ProfileTab />}
-                {activeTab === 'branding' && isAdmin && <BrandingTab />}
+                {activeTab === 'branding' && hasBrandingAccess && <BrandingTab />}
             </div>
         </div>
     );

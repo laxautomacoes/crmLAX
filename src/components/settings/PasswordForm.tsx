@@ -51,29 +51,31 @@ export function PasswordForm() {
                 <h2 className="font-semibold text-foreground">Alterar Senha</h2>
             </div>
 
-            <div className="space-y-4 flex-1 flex flex-col">
+            <div className="space-y-4 flex flex-col">
                 {message && <MessageBanner type={message.type} text={message.text} />}
                 
-                <FormInput
-                    label="Nova Senha"
-                    type="password"
-                    placeholder="Mínimo 6 caracteres"
-                    value={newPassword}
-                    onChange={(e) => setNewPassword(e.target.value)}
-                />
-                
-                <FormInput
-                    label="Confirmar Nova Senha"
-                    type="password"
-                    placeholder="Digite novamente"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                />
+                <div className="space-y-4 min-h-[260px]">
+                    <FormInput
+                        label="Nova Senha"
+                        type="password"
+                        placeholder="Mínimo 6 caracteres"
+                        value={newPassword}
+                        onChange={(e) => setNewPassword(e.target.value)}
+                    />
+                    
+                    <FormInput
+                        label="Confirmar Nova Senha"
+                        type="password"
+                        placeholder="Digite novamente"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                    />
+                </div>
 
                 <button
                     onClick={handlePasswordChange}
                     disabled={loading}
-                    className="w-full mt-auto bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                 >
                     {loading ? (
                         <span className="flex items-center justify-center gap-2">

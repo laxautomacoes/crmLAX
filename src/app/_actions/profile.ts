@@ -36,7 +36,7 @@ export async function getProfile() {
                 email: user.email || 'leocrm@lax.com',
                 full_name: profile?.full_name || user.user_metadata?.full_name || user.user_metadata?.name || user.email?.split('@')[0] || 'Léo Acosta',
                 role: profile?.role || 'user',
-                avatar_url: profile?.avatar_url || user.user_metadata?.avatar_url || user.user_metadata?.picture
+                avatar_url: profile?.avatar_url || null
             }
         }
     } catch (error) {
@@ -63,7 +63,7 @@ export async function updateProfileAvatar(avatarUrl: string) {
         return { error: error.message }
     }
 
-    revalidatePath('/dashboard')
+    revalidatePath('/', 'layout')
     return { success: true }
 }
 
@@ -85,7 +85,7 @@ export async function deleteProfileAvatar() {
         return { error: error.message }
     }
 
-    revalidatePath('/dashboard')
+    revalidatePath('/', 'layout')
     return { success: true }
 }
 

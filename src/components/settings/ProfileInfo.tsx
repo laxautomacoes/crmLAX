@@ -90,7 +90,7 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
         }
     };
 
-    const isAdmin = ['admin', 'superadmin', 'super_admin', 'super administrador'].includes(profile?.role?.toLowerCase() || '');
+    const isAdmin = ['admin', 'superadmin', 'super_admin', 'super administrador', 'super admin', 'super_administrador'].includes(profile?.role?.toLowerCase() || '');
 
     return (
         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm h-full flex flex-col">
@@ -99,58 +99,60 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
                 <h2 className="font-semibold text-foreground">Informações</h2>
             </div>
 
-            <div className="space-y-4 flex-1 flex flex-col">
+            <div className="space-y-4 flex flex-col">
                 {message && <MessageBanner type={message.type} text={message.text} />}
 
-                <FormInput
-                    label="Nome Completo"
-                    value={profile?.full_name || ''}
-                    onChange={(e) => onProfileUpdate({ full_name: e.target.value })}
-                />
-
-                <div>
+                <div className="space-y-4 min-h-[260px]">
                     <FormInput
-                        label="Email"
-                        type="email"
-                        value={profile?.email || ''}
-                        onChange={isAdmin ? (e) => onProfileUpdate({ email: e.target.value }) : undefined}
-                        readOnly={!isAdmin}
-                        disabled={!isAdmin}
-                        className={!isAdmin ? "cursor-not-allowed" : ""}
+                        label="Nome Completo"
+                        value={profile?.full_name || ''}
+                        onChange={(e) => onProfileUpdate({ full_name: e.target.value })}
                     />
-                    {isAdmin && (
-                        <p className="text-[10px] text-muted-foreground mt-1 px-1">
-                            Um e-mail de confirmação será enviado para o novo e para o antigo endereço
-                        </p>
-                    )}
-                    {!isAdmin && (
-                        <div className="mt-2 flex items-center justify-between bg-background p-2 rounded-lg border border-muted-foreground/30">
-                            <p className="text-xs text-muted-foreground">
-                                Alteração de e-mail?
-                            </p>
-                            <button
-                                type="button"
-                                onClick={handleRequestEmailChange}
-                                disabled={requesting}
-                                className="text-xs font-bold bg-secondary text-secondary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity px-3 py-1.5 rounded-lg shadow-sm"
-                            >
-                                {requesting ? 'Enviando...' : 'Solicitar'}
-                            </button>
-                        </div>
-                    )}
-                </div>
 
-                <FormInput
-                    label="Telefone | WhatsApp"
-                    value={formatPhone(profile?.whatsapp_number || '')}
-                    onChange={handlePhoneChange}
-                    placeholder="(48) 98823 1720"
-                />
+                    <div>
+                        <FormInput
+                            label="Email"
+                            type="email"
+                            value={profile?.email || ''}
+                            onChange={isAdmin ? (e) => onProfileUpdate({ email: e.target.value }) : undefined}
+                            readOnly={!isAdmin}
+                            disabled={!isAdmin}
+                            className={!isAdmin ? "cursor-not-allowed" : ""}
+                        />
+                        {isAdmin && (
+                            <p className="text-[10px] text-muted-foreground mt-1 px-1">
+                                Um e-mail de confirmação será enviado para o novo e para o antigo endereço
+                            </p>
+                        )}
+                        {!isAdmin && (
+                            <div className="mt-2 flex items-center justify-between bg-background p-2 rounded-lg border border-muted-foreground/30">
+                                <p className="text-xs text-muted-foreground">
+                                    Alteração de e-mail?
+                                </p>
+                                <button
+                                    type="button"
+                                    onClick={handleRequestEmailChange}
+                                    disabled={requesting}
+                                    className="text-xs font-bold bg-secondary text-secondary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity px-3 py-1.5 rounded-lg shadow-sm"
+                                >
+                                    {requesting ? 'Enviando...' : 'Solicitar'}
+                                </button>
+                            </div>
+                        )}
+                    </div>
+
+                    <FormInput
+                        label="Telefone | WhatsApp"
+                        value={formatPhone(profile?.whatsapp_number || '')}
+                        onChange={handlePhoneChange}
+                        placeholder="(48) 98823 1720"
+                    />
+                </div>
 
                 <button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="w-full mt-auto bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed md:hidden"
+                    className="w-full bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                 >
                     {saving ? (
                         <span className="flex items-center justify-center gap-2">

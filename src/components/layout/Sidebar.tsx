@@ -45,8 +45,18 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             }
         };
 
+        const handleProfileUpdate = (event: any) => {
+            if (event.detail) {
+                setUserProfile((prev: any) => ({ ...prev, ...event.detail }));
+            }
+        };
+
         window.addEventListener('branding-updated', handleBrandingUpdate);
-        return () => window.removeEventListener('branding-updated', handleBrandingUpdate);
+        window.addEventListener('profile-updated', handleProfileUpdate);
+        return () => {
+            window.removeEventListener('branding-updated', handleBrandingUpdate);
+            window.removeEventListener('profile-updated', handleProfileUpdate);
+        };
     }, []);
 
     useEffect(() => {

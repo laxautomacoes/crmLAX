@@ -25,6 +25,7 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
             if (result.error) throw new Error(result.error);
 
             onProfileUpdate({ avatar_url: null });
+            window.dispatchEvent(new CustomEvent('profile-updated', { detail: { avatar_url: null } }));
             setMessage({ type: 'success', text: 'Foto removida com sucesso!' });
             setTimeout(() => setMessage(null), 3000);
         } catch (error: any) {
@@ -76,6 +77,7 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
             if (result.error) throw new Error(result.error);
 
             onProfileUpdate({ avatar_url: publicUrl });
+            window.dispatchEvent(new CustomEvent('profile-updated', { detail: { avatar_url: publicUrl } }));
             setMessage({ type: 'success', text: 'Avatar atualizado com sucesso!' });
             setTimeout(() => setMessage(null), 3000);
         } catch (error: any) {

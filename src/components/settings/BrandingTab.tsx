@@ -97,7 +97,12 @@ export function BrandingTab() {
                 .from('branding')
                 .getPublicUrl(filePath)
 
-            setBranding(prev => ({ ...prev, [type]: publicUrl }))
+            setBranding(prev => {
+                const newBranding = { ...prev, [type]: publicUrl };
+                // Disparar evento imediatamente após o upload para atualização visual instantânea
+                window.dispatchEvent(new CustomEvent('branding-updated', { detail: newBranding }));
+                return newBranding;
+            })
             toast.success(`${type === 'logo_full' ? 'Logo' : 'Ícone'} carregado com sucesso!`)
         } catch (error: any) {
             console.error(`Error uploading ${type}:`, error)
@@ -125,20 +130,26 @@ export function BrandingTab() {
     }
 
     const handleRemove = (type: 'logo_full' | 'logo_icon') => {
-        setBranding(prev => ({ ...prev, [type]: undefined }))
+        setBranding(prev => {
+            const newBranding = { ...prev, [type]: undefined };
+            window.dispatchEvent(new CustomEvent('branding-updated', { detail: newBranding }));
+            return newBranding;
+        })
     }
 
     if (loading) {
         return (
-            <div className="flex items-center justify-center p-12">
-                <Loader2 className="w-8 h-8 animate-spin text-primary" />
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="w-8 h-8 border-4 border-secondary/30 border-t-secondary rounded-full animate-spin"></div>
             </div>
         )
     }
 
-    const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+    const userRole = profile?.role?.toLowerCase() || '';
+    const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador', 'super admin', 'super_administrador'].includes(userRole);
+    const hasBrandingAccess = ['admin', ...(['superadmin', 'super_admin', 'super administrador', 'super admin', 'super_administrador'])].includes(userRole);
 
-    if (!isAdmin) {
+    if (!hasBrandingAccess) {
         return (
             <div className="bg-card border border-border rounded-xl p-8 text-center">
                 <p className="text-muted-foreground">Você não tem permissão para alterar o branding empresarial.</p>
@@ -147,7 +158,7 @@ export function BrandingTab() {
     }
 
     return (
-        <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="space-y-6">
             <div className="bg-card border border-border rounded-xl p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
@@ -297,7 +308,7 @@ export function BrandingTab() {
             <button
                 onClick={handleSave}
                 disabled={saving}
-                className="flex items-center justify-center gap-2 w-full md:hidden px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50"
+                className="flex items-center justify-center gap-2 w-full px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50 md:hidden"
             >
                 {saving && <Loader2 size={18} className="animate-spin" />}
                 Salvar Alterações

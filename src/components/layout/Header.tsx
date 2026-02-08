@@ -106,8 +106,18 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
             }
         };
 
+        const handleProfileUpdate = (event: any) => {
+            if (event.detail) {
+                setProfile((prev: any) => ({ ...prev, ...event.detail }));
+            }
+        };
+
         window.addEventListener('branding-updated', handleBrandingUpdate);
-        return () => window.removeEventListener('branding-updated', handleBrandingUpdate);
+        window.addEventListener('profile-updated', handleProfileUpdate);
+        return () => {
+            window.removeEventListener('branding-updated', handleBrandingUpdate);
+            window.removeEventListener('profile-updated', handleProfileUpdate);
+        };
     }, []);
 
     useEffect(() => {

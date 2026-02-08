@@ -32,27 +32,18 @@ export function useTenantBranding(options?: UseTenantBrandingOptions) {
                     }
                 }
 
-                // 1. Se for systemOnly, buscamos direto o branding do sistema/superadmin
+                // 1. Se for systemOnly, buscamos direto o branding do sistema (primeiro tenant)
                 if (options?.systemOnly) {
                     console.log('useTenantBranding: Fetching system branding only');
                     const { data: systemTenant } = await supabase
                         .from('tenants')
-                        .select('branding, profiles!inner(role)')
-                        .eq('profiles.role', 'superadmin')
+                        .select('branding')
+                        .order('created_at', { ascending: true })
                         .limit(1)
                         .maybeSingle();
 
                     if (systemTenant?.branding) {
                         setBranding(systemTenant.branding as any);
-                    } else {
-                        // Fallback para o primeiro tenant se não houver superadmin
-                        const { data: firstTenant } = await supabase
-                            .from('tenants')
-                            .select('branding')
-                            .order('created_at', { ascending: true })
-                            .limit(1)
-                            .maybeSingle();
-                        if (firstTenant?.branding) setBranding(firstTenant.branding as any);
                     }
                     setLoading(false);
                     return;
@@ -95,23 +86,16 @@ export function useTenantBranding(options?: UseTenantBrandingOptions) {
                 }
 
                 // 3. Fallback para System Branding se não encontrar nada específico
+                // Buscamos o primeiro tenant criado que geralmente é o do sistema/master
                 const { data: systemTenant } = await supabase
                     .from('tenants')
-                    .select('branding, profiles!inner(role)')
-                    .eq('profiles.role', 'superadmin')
+                    .select('branding')
+                    .order('created_at', { ascending: true })
                     .limit(1)
                     .maybeSingle();
 
                 if (systemTenant?.branding) {
                     setBranding(systemTenant.branding as any);
-                } else {
-                    const { data: firstTenant } = await supabase
-                        .from('tenants')
-                        .select('branding')
-                        .order('created_at', { ascending: true })
-                        .limit(1)
-                        .maybeSingle();
-                    if (firstTenant?.branding) setBranding(firstTenant.branding as any);
                 }
             } catch (error) {
                 console.error('Error fetching tenant branding:', error);

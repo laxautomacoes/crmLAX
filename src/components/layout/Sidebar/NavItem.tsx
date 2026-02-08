@@ -46,7 +46,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
                                 const targetTab = new URLSearchParams(params).get('tab');
                                 subActive = pathname === path && searchParams.get('tab') === targetTab;
                             } else {
-                                subActive = sub.href === '/settings' ? (pathname === sub.href && !searchParams.has('tab')) : pathname === sub.href;
+                                subActive = sub.href === '/settings' ? pathname === sub.href : pathname === sub.href;
                             }
                             return (
                                 <Link

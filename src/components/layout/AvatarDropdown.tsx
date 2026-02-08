@@ -29,11 +29,22 @@ export function AvatarDropdown() {
             if (data.profile) setProfile(data.profile);
         });
 
+        const handleProfileUpdate = (event: any) => {
+            if (event.detail) {
+                setProfile((prev: any) => ({ ...prev, ...event.detail }));
+            }
+        };
+
         const handleClickOutside = (e: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setIsOpen(false);
         };
+
+        window.addEventListener('profile-updated', handleProfileUpdate);
         document.addEventListener('mousedown', handleClickOutside);
-        return () => document.removeEventListener('mousedown', handleClickOutside);
+        return () => {
+            window.removeEventListener('profile-updated', handleProfileUpdate);
+            document.removeEventListener('mousedown', handleClickOutside);
+        };
     }, []);
 
     return (
