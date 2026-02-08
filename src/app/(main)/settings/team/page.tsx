@@ -65,7 +65,7 @@ export default function TeamSettingsPage() {
         <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div>
                 <h2 className="text-2xl font-bold text-foreground">Gestão da Equipe</h2>
-                <p className="text-muted-foreground">Convide novos membros para colaborar no CRM LAX</p>
+                <p className="text-muted-foreground">Convide novos colaboradores para a sua empresa</p>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">

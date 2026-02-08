@@ -34,7 +34,7 @@ export function InvitationRow({ invitation, onCopyLink, onEdit }: InvitationRowP
             </td>
             <td className="px-6 py-4 text-center">
                 <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${invitation.role === 'admin' ? 'bg-secondary text-secondary-foreground' : 'bg-muted text-muted-foreground'}`}>
-                    {invitation.role}
+                    {invitation.role === 'user' ? 'Colaborador' : invitation.role}
                 </span>
             </td>
             <td className="px-6 py-4 text-center">

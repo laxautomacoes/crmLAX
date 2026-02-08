@@ -27,7 +27,7 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
         properties: true,
         calendar: true,
         reports: true,
-        settings: false
+        settings: true
     });
 
     const formatPhone = (value: string) => {
@@ -70,7 +70,7 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                 properties: true,
                 calendar: true,
                 reports: true,
-                settings: false
+                settings: true
             });
             onInviteCreated();
         }
@@ -99,7 +99,7 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                 properties: true,
                 calendar: true,
                 reports: true,
-                settings: false
+                settings: true
             });
         }
     };
@@ -120,48 +120,54 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
     };
 
     return (
-        <div className="bg-card rounded-2xl shadow-sm border border-border p-6 space-y-6 h-full flex flex-col">
-            <div className="flex items-center gap-3 text-foreground">
-                <h3 className="font-bold text-sm tracking-wider uppercase text-muted-foreground flex items-center gap-2">
-                    <UserPlus size={18} className="text-secondary" /> Dados Colaborador
-                </h3>
+        <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden h-full flex flex-col">
+            <div className="p-6 flex items-center h-[89px]">
+                <h3 className="font-bold text-foreground">Dados Colaborador</h3>
             </div>
 
-            <form onSubmit={handleInvite} className="space-y-4 flex-1 flex flex-col">
+            <form onSubmit={handleInvite} className="p-6 pt-0 space-y-4 flex-1 flex flex-col">
                 {message && <MessageBanner type={message.type} text={message.text} />}
 
-                <FormInput
-                    label="Nome"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                    icon={UserPlus}
-                    placeholder="Nome Completo"
-                />
-
-                <FormInput
-                    label="Email"
-                    type="email"
-                    required
-                    value={email}
-                    onChange={(e) => setEmail(e.target.value)}
-                    icon={Mail}
-                    placeholder="exemplo@email.com"
-                />
-
-                <FormInput
-                    label="Telefone | WhatsApp"
-                    type="tel"
-                    required
-                    value={phone}
-                    onChange={(e) => setPhone(formatPhone(e.target.value))}
-                    icon={Phone}
-                    placeholder="(00) 00000 0000"
-                    maxLength={15}
-                />
+                <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-foreground ml-1">Nome</label>
+                    <FormInput
+                        required
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        icon={UserPlus}
+                        placeholder="Nome Completo"
+                    />
+                </div>
 
                 <div className="space-y-1.5">
-                    <label className="text-sm font-bold text-foreground ml-1">Papel</label>
+                    <label className="text-sm font-bold text-foreground ml-1">Email</label>
+                    <FormInput
+                        type="email"
+                        required
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        icon={Mail}
+                        placeholder="exemplo@email.com"
+                    />
+                </div>
+
+                <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-foreground ml-1">Telefone | WhatsApp</label>
+                    <FormInput
+                        type="tel"
+                        required
+                        value={phone}
+                        onChange={(e) => setPhone(formatPhone(e.target.value))}
+                        icon={Phone}
+                        placeholder="(00) 00000 0000"
+                        maxLength={15}
+                    />
+                </div>
+
+                <div className="w-full border-t border-border/50 my-2" />
+
+                <div className="space-y-1.5">
+                    <label className="text-sm font-bold text-foreground ml-1">Nível Acesso</label>
                     <div className="grid grid-cols-2 gap-2">
                         <button
                             type="button"
@@ -175,13 +181,15 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                             onClick={() => handleRoleChange('user')}
                             className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'user' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card text-foreground border-border hover:bg-muted'}`}
                         >
-                            Usuário
+                            Colaborador
                         </button>
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-1 ml-1">
                         {role === 'admin' ? 'Acesso total ao sistema.' : 'Acesso restrito conforme permissões abaixo.'}
                     </p>
                 </div>
+
+                <div className="w-full border-t border-border/50 my-2" />
 
                 <div className="space-y-2">
                     <label className="text-sm font-bold text-foreground ml-1">Permissões</label>

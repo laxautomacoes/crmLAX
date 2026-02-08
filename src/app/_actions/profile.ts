@@ -127,7 +127,7 @@ export async function requestEmailChange() {
                 createNotification({
                     user_id: admin.id,
                     title: 'Solicitação de Alteração de E-mail',
-                    message: `O usuário ${profile.full_name} deseja alterar o e-mail (${user.email}).`,
+                    message: `O colaborador ${profile.full_name} deseja alterar o e-mail (${user.email}).`,
                     type: 'email_change_request'
                 })
             )
@@ -142,9 +142,9 @@ export async function requestEmailChange() {
             html: `
                 <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; padding: 24px;">
                     <h2 style="color: #1a1a1a; margin-top: 0;">Solicitação de Alteração de E-mail</h2>
-                    <p style="color: #444; line-height: 1.6;">O usuário abaixo solicitou a alteração do seu endereço de e-mail através do painel de perfil.</p>
+                    <p style="color: #444; line-height: 1.6;">O colaborador abaixo solicitou a alteração do seu endereço de e-mail através do painel de perfil.</p>
                     <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; margin: 20px 0;">
-                        <p style="margin: 0 0 8px 0;"><strong>Usuário:</strong> ${profile.full_name}</p>
+                        <p style="margin: 0 0 8px 0;"><strong>Colaborador:</strong> ${profile.full_name}</p>
                         <p style="margin: 0 0 8px 0;"><strong>E-mail Atual:</strong> ${user.email}</p>
                         <p style="margin: 0;"><strong>Tenant:</strong> ${profile.tenants?.name || 'N/A'}</p>
                     </div>

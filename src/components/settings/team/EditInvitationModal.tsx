@@ -32,7 +32,7 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [role, setRole] = useState<'admin' | 'user'>('user');
-    const [permissions, setPermissions] = useState({ dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: false });
+    const [permissions, setPermissions] = useState({ dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: true });
     const [loading, setLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isResending, setIsResending] = useState(false);
@@ -43,7 +43,7 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
             setEmail(invitation.email || '');
             setPhone(formatPhone(invitation.phone || ''));
             setRole(invitation.role || 'user');
-            setPermissions(invitation.permissions || { dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: false });
+            setPermissions(invitation.permissions || { dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: true });
         }
     }, [invitation]);
 
@@ -125,7 +125,7 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
                     <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1 flex gap-1 items-center"><ShieldCheck className="w-3 h-3" /> Acesso</label>
                     <div className="grid grid-cols-2 gap-2">
                         <button type="button" onClick={() => handleRoleChange('admin')} className={`py-2 rounded-lg text-sm font-bold border ${role === 'admin' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card'}`}>Admin</button>
-                        <button type="button" onClick={() => handleRoleChange('user')} className={`py-2 rounded-lg text-sm font-bold border ${role === 'user' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card'}`}>Usuário</button>
+                        <button type="button" onClick={() => handleRoleChange('user')} className={`py-2 rounded-lg text-sm font-bold border ${role === 'user' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card'}`}>Colaborador</button>
                     </div>
                 </div>
 
