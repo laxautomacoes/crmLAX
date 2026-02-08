@@ -32,6 +32,7 @@ export function FormSelect({ label, error, icon: Icon, options, className = '', 
                         appearance-none pr-10
                         ${Icon ? 'pl-10' : 'px-3'}
                         py-2
+                        py-2
                         ${error ? 'border-red-500 focus:ring-red-500/20' : ''}
                         ${className}
                     `}

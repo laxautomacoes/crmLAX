@@ -138,8 +138,8 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
 
     return (
         <div className="space-y-4">
-            <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
-                <User size={14} className="text-foreground" />
+            <h4 className="text-[11px] font-black text-foreground/70 uppercase tracking-widest flex items-center gap-2 mb-4">
+                <User size={14} className="text-foreground/50" />
                 Proprietário | Construtora
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6">
@@ -157,6 +157,9 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
                         onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, responsavel: e.target.value } } })}
                     />
                 </div>
+
+                <div className="col-span-full border-t border-border/40 my-6" />
+
                 <div>
                     <FormInput
                         label="Telefone | WhatsApp"
@@ -202,6 +205,8 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
                         onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, data_nascimento: e.target.value } } })}
                     />
                 </div>
+
+                <div className="col-span-full border-t border-border/40 my-6" />
 
                 <div className="lg:col-start-1">
                     <FormInput

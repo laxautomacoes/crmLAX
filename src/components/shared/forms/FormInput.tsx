@@ -48,7 +48,7 @@ export function FormInput({ label, error, icon: Icon, rightElement, className = 
                     {...props}
                 />
                 {finalRightElement && (
-                    <div className={`absolute right-3 top-1/2 -translate-y-1/2 text-foreground ${isDateInput && !rightElement ? 'pointer-events-none z-0' : 'z-10'}`}>
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
                         {finalRightElement}
                     </div>
                 )}
