@@ -16,14 +16,9 @@ export async function getAssets(tenantId: string, status?: string) {
             .eq('tenant_id', tenantId)
             .eq('is_archived', false)
 
-        // Se não for admin, filtrar por aprovados (não pendentes) ou criados pelo próprio usuário
+        // Se não for admin, filtrar apenas pelos imóveis do próprio colaborador
         if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
-            try {
-                query = query.or(`status.neq.Pendente,created_by.eq.${profile?.id}`)
-            } catch (e) {
-                // Fallback se as colunas não existirem
-                console.warn('Fallback filtering for assets')
-            }
+            query = query.eq('created_by', profile?.id)
         }
 
         // Aplicar filtro de status se fornecido

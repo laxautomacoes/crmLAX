@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { getProfile } from './profile'
 
 export interface DashboardMetrics {
     kpis: {
@@ -27,21 +28,37 @@ export interface DashboardMetrics {
 
 export async function getDashboardMetrics(tenantId: string) {
     const supabase = await createClient()
+    const { profile } = await getProfile()
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
 
     try {
         // 1. Buscar total de leads ativos
-        const { count: totalLeads, error: leadsError } = await supabase
+        let leadsQuery = supabase
             .from('leads')
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
+
+        if (!isAdmin && profile?.id) {
+            leadsQuery = leadsQuery.eq('assigned_to', profile.id)
+        }
+
+        const { count: totalLeads, error: leadsError } = await leadsQuery
 
         if (leadsError) throw leadsError
 
         // 2. Buscar total de assets (imóveis)
-        const { count: totalAssets, error: assetsError } = await supabase
+        let assetsQuery = supabase
             .from('assets')
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
+
+        if (!isAdmin && profile?.id) {
+            assetsQuery = assetsQuery.eq('created_by', profile.id)
+        }
+
+        const { count: totalAssets, error: assetsError } = await assetsQuery
 
         if (assetsError) throw assetsError
 
@@ -60,11 +77,17 @@ export async function getDashboardMetrics(tenantId: string) {
 
         let conversions = 0
         if (winStage) {
-            const { count } = await supabase
+            let convQuery = supabase
                 .from('leads')
                 .select('*', { count: 'exact', head: true })
                 .eq('tenant_id', tenantId)
                 .eq('stage_id', winStage.id)
+
+            if (!isAdmin && profile?.id) {
+                convQuery = convQuery.eq('assigned_to', profile.id)
+            }
+
+            const { count } = await convQuery
             conversions = count || 0
         }
 
@@ -108,11 +131,18 @@ export async function getDashboardMetrics(tenantId: string) {
 
         const funnelSteps = await Promise.all(
             uniqueStages.map(async (stage) => {
-                const { count } = await supabase
+                let stageLeadsQuery = supabase
                     .from('leads')
                     .select('*', { count: 'exact', head: true })
                     .eq('tenant_id', tenantId)
                     .eq('stage_id', stage.id)
+                    .eq('is_archived', false)
+
+                if (!isAdmin && profile?.id) {
+                    stageLeadsQuery = stageLeadsQuery.eq('assigned_to', profile.id)
+                }
+
+                const { count } = await stageLeadsQuery
 
                 return {
                     label: stage.name,
@@ -123,7 +153,7 @@ export async function getDashboardMetrics(tenantId: string) {
         )
 
         // 5. Buscar leads recentes (últimos 5)
-        const { data: recentLeadsData, error: recentError } = await supabase
+        let recentLeadsQuery = supabase
             .from('leads')
             .select(`
                 id,
@@ -135,8 +165,15 @@ export async function getDashboardMetrics(tenantId: string) {
                 )
             `)
             .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
             .order('created_at', { ascending: false })
             .limit(5)
+
+        if (!isAdmin && profile?.id) {
+            recentLeadsQuery = recentLeadsQuery.eq('assigned_to', profile.id)
+        }
+
+        const { data: recentLeadsData, error: recentError } = await recentLeadsQuery
 
         if (recentError) throw recentError
 

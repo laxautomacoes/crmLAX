@@ -1,6 +1,7 @@
 'use client';
 
 import { Users, Home, TrendingUp } from 'lucide-react';
+import { useRouter } from 'next/navigation';
 
 interface KPICardsProps {
     kpis: {
@@ -14,6 +15,8 @@ interface KPICardsProps {
 }
 
 export default function KPICards({ kpis }: KPICardsProps) {
+    const router = useRouter();
+
     const kpiData = [
         {
             title: 'Leads Ativos',
@@ -21,6 +24,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
             trend: kpis.leadsAtivosTrend,
             trendUp: true,
             icon: Users,
+            href: '/leads',
         },
         {
             title: 'Imóveis',
@@ -28,6 +32,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
             trend: kpis.imoveisTrend,
             trendUp: true,
             icon: Home,
+            href: '/properties',
         },
         {
             title: 'Conversões',
@@ -35,6 +40,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
             trend: kpis.conversoesTrend,
             trendUp: true,
             icon: TrendingUp,
+            href: '/reports',
         },
     ];
 
@@ -43,14 +49,16 @@ export default function KPICards({ kpis }: KPICardsProps) {
             {kpiData.map((kpi, index) => (
                 <div
                     key={index}
+                    onClick={() => router.push(kpi.href)}
                     className="bg-card px-4 py-4 md:p-6 rounded-lg shadow-sm border border-muted-foreground/30 relative overflow-hidden 
-                       grid grid-cols-4 md:grid-cols-2 items-center md:items-start gap-2 md:gap-x-0 md:gap-y-2 justify-items-center md:justify-items-start"
+                       grid grid-cols-4 md:grid-cols-2 items-center md:items-start gap-2 md:gap-x-0 md:gap-y-2 justify-items-center md:justify-items-start
+                       cursor-pointer hover:bg-muted/30 transition-all hover:shadow-md group"
                 >
                     {/* Icon: Mobile Col 1. Desktop Row 1 Col 2 (Right aligned) */}
-                    <kpi.icon className="text-gray-400 md:justify-self-end md:col-start-2 md:row-start-1" size={20} />
+                    <kpi.icon className="text-gray-400 group-hover:text-primary transition-colors md:justify-self-end md:col-start-2 md:row-start-1" size={20} />
 
                     {/* Title: Mobile Col 2. Desktop Row 1 Col 1 */}
-                    <span className="text-muted-foreground text-sm md:text-sm font-medium md:col-span-1 md:row-start-1 whitespace-nowrap text-center md:text-left">
+                    <span className="text-muted-foreground text-sm md:text-sm font-medium md:col-span-1 md:row-start-1 whitespace-nowrap text-center md:text-left group-hover:text-foreground transition-colors">
                         {kpi.title}
                     </span>
 

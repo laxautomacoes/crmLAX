@@ -5,10 +5,13 @@ import { revalidatePath } from 'next/cache';
 import { cleanPhone } from '@/lib/utils/phone';
 import { getTenantFromHeaders } from '@/lib/utils/tenant';
 import { getStages } from './stages';
+import { getProfile } from './profile';
 
 
 export async function getPipelineData(tenantId: string) {
     const supabase = await createClient();
+    const { profile } = await getProfile();
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin';
 
     // 1. Buscar estágios usando a nova função modularizada
     const stagesResult = await getStages(tenantId);
@@ -26,7 +29,7 @@ export async function getPipelineData(tenantId: string) {
     const stages = Array.from(uniqueStagesMap.values());
 
     // 2. Buscar leads com contatos e corretores
-    const { data: leads, error: leadsError } = await supabase
+    let query = supabase
         .from('leads')
         .select(`
             *,
@@ -42,6 +45,12 @@ export async function getPipelineData(tenantId: string) {
         `)
         .eq('tenant_id', tenantId)
         .eq('is_archived', false);
+
+    if (!isAdmin && profile?.id) {
+        query = query.eq('assigned_to', profile.id);
+    }
+
+    const { data: leads, error: leadsError } = await query;
 
     if (leadsError) {
         return { success: false, error: leadsError.message };
