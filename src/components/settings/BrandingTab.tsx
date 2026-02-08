@@ -237,7 +237,11 @@ export function BrandingTab() {
                                     value={branding.logo_height || 50}
                                     onChange={(e) => {
                                         const val = parseInt(e.target.value);
-                                        setBranding(prev => ({ ...prev, logo_height: val }));
+                                        setBranding(prev => {
+                                            const newBranding = { ...prev, logo_height: val };
+                                            window.dispatchEvent(new CustomEvent('branding-updated', { detail: newBranding }));
+                                            return newBranding;
+                                        });
                                     }}
                                     className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-secondary"
                                 />
