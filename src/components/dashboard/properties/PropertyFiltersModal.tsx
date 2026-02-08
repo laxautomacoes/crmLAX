@@ -113,7 +113,7 @@ export function PropertyFiltersModal({
 
                         return {
                             title: clean(values[1]) || 'Imóvel Importado',
-                            type: clean(values[2]) || 'house',
+                            type: clean(values[2]) || 'apartment',
                             price: parseFloat(clean(values[3])) || 0,
                             status: clean(values[4]) || 'Disponível',
                             details: details,
