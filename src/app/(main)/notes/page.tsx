@@ -42,7 +42,7 @@ function AttachmentsDropdown({ attachments }: { attachments: any[] }) {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl border border-border/60 shadow-xl overflow-hidden z-[100] animate-in fade-in zoom-in-95 duration-150 origin-top-right">
+                <div className="absolute right-0 top-full mt-2 w-64 bg-white rounded-xl border border-border/60 shadow-2xl overflow-hidden z-[1000] animate-in fade-in zoom-in-95 duration-150 origin-top-right">
                     <div className="bg-muted/50 px-4 py-2 border-b border-border/60">
                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Arquivos Anexados ({attachments.length})</span>
                     </div>
