@@ -48,7 +48,7 @@ export function FormInput({ label, error, icon: Icon, rightElement, className = 
                     {...props}
                 />
                 {finalRightElement && (
-                    <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none flex items-center">
+                    <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center">
                         {finalRightElement}
                     </div>
                 )}
