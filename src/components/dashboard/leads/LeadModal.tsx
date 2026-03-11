@@ -9,8 +9,9 @@ import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { MediaUpload } from '@/components/shared/MediaUpload'
 import { toast } from 'sonner'
 import { createLead, updateLead } from '@/app/_actions/leads'
-import { MessageSquare } from 'lucide-react'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
+import { AssetAutocomplete } from '@/components/dashboard/assets/AssetAutocomplete'
+import { Calendar, MessageSquare } from 'lucide-react'
 
 interface LeadModalProps {
     isOpen: boolean
@@ -37,6 +38,9 @@ export function LeadModal({
         phone: '',
         email: '',
         interest: '',
+        asset_id: '',
+        selectedAsset: null as any,
+        date: new Date().toISOString().split('T')[0],
         value: '',
         notes: '',
         stage_id: '',
@@ -71,6 +75,9 @@ export function LeadModal({
                 phone: editingLead.phone ? formatPhone(editingLead.phone) : '',
                 email: editingLead.email || '',
                 interest: editingLead.interest || '',
+                asset_id: editingLead.asset_id || '',
+                selectedAsset: editingLead.asset_id ? { id: editingLead.asset_id, title: editingLead.interest } : null,
+                date: editingLead.date || new Date().toISOString().split('T')[0],
                 value: editingLead.value?.toString() || '',
                 notes: editingLead.notes || '',
                 stage_id: editingLead.status || (stages.length > 0 ? stages[0].id : ''),
@@ -85,6 +92,9 @@ export function LeadModal({
                 phone: '',
                 email: '',
                 interest: '',
+                asset_id: '',
+                selectedAsset: null,
+                date: new Date().toISOString().split('T')[0],
                 value: '',
                 notes: '',
                 stage_id: stages.length > 0 ? stages[0].id : '',
@@ -158,14 +168,25 @@ export function LeadModal({
             size="lg"
         >
             <div className="space-y-4">
-                <div className="grid grid-cols-2 gap-4">
-                    <div className="col-span-2">
-                        <FormInput
-                            label="Nome completo *"
-                            value={leadData.name}
-                            onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
-                            placeholder="Ex: João Silva"
-                        />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {/* Linha 1: Nome e Data */}
+                    <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
+                        <div className="flex-1 md:flex-[2]">
+                            <FormInput
+                                label="Nome completo *"
+                                value={leadData.name}
+                                onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
+                                placeholder="Ex: João Silva"
+                            />
+                        </div>
+                        <div className="w-full md:w-[160px]">
+                            <FormInput
+                                label="Data"
+                                type="date"
+                                value={leadData.date}
+                                onChange={(e) => setLeadData({ ...leadData, date: e.target.value })}
+                            />
+                        </div>
                     </div>
                     <div>
                         <FormInput
@@ -195,17 +216,19 @@ export function LeadModal({
                             placeholder="joao@email.com"
                         />
                     </div>
-                    <div className="col-span-2">
-                        <FormInput
+                    <div className="col-span-1 md:col-span-2">
+                        <AssetAutocomplete
+                            tenantId={tenantId}
                             label="Interesse"
-                            value={leadData.interest}
-                            onChange={(e) => setLeadData({ ...leadData, interest: e.target.value })}
                             placeholder="Ex: Casa 3 dormitórios com suíte"
+                            selectedItem={leadData.selectedAsset}
+                            onSelect={(asset) => setLeadData({ ...leadData, interest: asset.title, asset_id: asset.id, selectedAsset: asset })}
+                            onClear={() => setLeadData({ ...leadData, interest: '', asset_id: '', selectedAsset: null })}
                         />
                     </div>
 
                     {(userRole === 'admin' || userRole === 'superadmin') && (
-                        <div className="col-span-2">
+                        <div className="col-span-1 md:col-span-2">
                             <FormSelect
                                 label="Corretor Responsável"
                                 value={leadData.assigned_to}
@@ -239,7 +262,7 @@ export function LeadModal({
                             placeholder="0,00"
                         />
                     </div>
-                    <div className="col-span-2">
+                    <div className="col-span-1 md:col-span-2">
                         <FormTextarea
                             label="Notas/Observações"
                             value={leadData.notes}
@@ -249,7 +272,7 @@ export function LeadModal({
                         />
                     </div>
 
-                    <div className="col-span-2">
+                    <div className="col-span-1 md:col-span-2">
                         <h3 className="text-sm font-bold text-foreground mb-3">Anexos</h3>
                         <MediaUpload
                             pathPrefix={`leads/${tenantId}`}
