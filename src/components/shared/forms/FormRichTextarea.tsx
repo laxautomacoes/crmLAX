@@ -267,7 +267,7 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                 .rich-text-editor h1 { font-size: 1.5rem; font-weight: bold; margin-bottom: 0.5rem; display: block; }
                 .rich-text-editor h2 { font-size: 1.25rem; font-weight: bold; margin-bottom: 0.4rem; display: block; }
                 .rich-text-editor h3 { font-size: 1.125rem; font-weight: bold; margin-bottom: 0.3rem; display: block; }
-                .rich-text-editor blockquote { border-left: 4px solid #e5e7eb; padding-left: 1rem; margin-left: 0; font-style: italic; color: #6b7280; display: block; }
+                .rich-text-editor blockquote { border-left: 4px solid var(--border); padding-left: 1rem; margin-left: 0; font-style: italic; color: var(--muted-foreground); display: block; }
                 .rich-text-editor ul { list-style-type: disc; padding-left: 1.5rem; margin-bottom: 0.5rem; display: block; }
                 .rich-text-editor ol { list-style-type: decimal; padding-left: 1.5rem; margin-bottom: 0.5rem; display: block; }
                 .rich-text-editor li { display: list-item; }

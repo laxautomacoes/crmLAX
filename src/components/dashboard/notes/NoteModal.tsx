@@ -124,13 +124,13 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
 
                 {/* Área de Escrita */}
                 <div className="space-y-2">
-                    <label className="block text-sm font-bold text-gray-800 ml-1">
+                    <label className="block text-[11px] font-bold text-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis uppercase tracking-tight">
                         Conteúdo da Nota
                     </label>
                     <FormRichTextarea
                         value={formData.content}
                         onChange={(val) => setFormData(prev => ({ ...prev, content: val }))}
-                        placeholder="Escreva sua nota aqui..."
+                        placeholder="Escreva sua nota aqui"
                     />
                 </div>
 
@@ -138,7 +138,7 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
 
                 {/* Upload de Arquivos */}
                 <div className="space-y-2">
-                    <label className="block text-sm font-bold text-gray-800 ml-1">
+                    <label className="block text-[11px] font-bold text-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis uppercase tracking-tight">
                         Anexos (PDF, Imagens)
                     </label>
                     <MediaUpload

@@ -6,12 +6,14 @@ import { getProfile } from './profile'
 
 export async function getNotes(tenantId: string) {
     const supabase = await createClient()
+    const { profile } = await getProfile()
     
     try {
         const { data, error } = await supabase
             .from('notes')
             .select('*, profiles:profile_id(full_name), leads:lead_id(contacts!inner(name)), assets:asset_id(title)')
             .eq('tenant_id', tenantId)
+            .eq('profile_id', profile?.id)
             .order('date', { ascending: false })
             .order('created_at', { ascending: false })
 

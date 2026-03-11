@@ -19,7 +19,7 @@ export function LeadAutocomplete({
     onSelect, 
     onClear,
     label = "Lead Relacionado",
-    placeholder = "Buscar lead..."
+    placeholder = "Buscar lead"
 }: LeadAutocompleteProps) {
     const fetchLeads = async (search: string) => {
         const supabase = createClient()

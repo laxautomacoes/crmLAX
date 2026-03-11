@@ -63,22 +63,36 @@ export function useOfflineSync() {
                 const assetsToCache = properties.flatMap((p: any) => {
                     const items = [];
 
-                    // 1. Imagens (Top 3)
+                    // 1. Imagens (Todas)
                     if (p.images && Array.isArray(p.images) && p.images.length > 0) {
-                        const imageUrls = p.images.slice(0, 3).map((imgUrl: string) => {
-                            if (imgUrl.startsWith('http')) return imgUrl;
-                            return supabase.storage.from('properties').getPublicUrl(imgUrl).data.publicUrl;
-                        });
+                        const imageUrls = p.images.map((img: any) => {
+                            const url = typeof img === 'string' ? img : img?.url;
+                            if (!url || typeof url !== 'string') return null;
+                            if (url.startsWith('http')) return url;
+                            return supabase.storage.from('property-assets').getPublicUrl(url).data.publicUrl;
+                        }).filter(Boolean);
                         items.push(...imageUrls);
                     }
 
-                    // 2. Documentos (Todos os documentos para garantir acesso)
-                    // Assumindo estrutura similar: array de strings (paths ou urls)
+                    // 2. Vídeos (Todos)
+                    if (p.videos && Array.isArray(p.videos) && p.videos.length > 0) {
+                        const videoUrls = p.videos.map((vid: any) => {
+                            const url = typeof vid === 'string' ? vid : vid?.url;
+                            if (!url || typeof url !== 'string') return null;
+                            if (url.startsWith('http')) return url;
+                            return supabase.storage.from('property-assets').getPublicUrl(url).data.publicUrl;
+                        }).filter(Boolean);
+                        items.push(...videoUrls);
+                    }
+
+                    // 3. Documentos (Todos)
                     if (p.documents && Array.isArray(p.documents) && p.documents.length > 0) {
-                        const docUrls = p.documents.map((docUrl: string) => {
-                            if (docUrl.startsWith('http')) return docUrl;
-                            return supabase.storage.from('properties').getPublicUrl(docUrl).data.publicUrl;
-                        });
+                        const docUrls = p.documents.map((doc: any) => {
+                            const url = typeof doc === 'string' ? doc : doc?.url;
+                            if (!url || typeof url !== 'string') return null;
+                            if (url.startsWith('http')) return url;
+                            return supabase.storage.from('property-assets').getPublicUrl(url).data.publicUrl;
+                        }).filter(Boolean);
                         items.push(...docUrls);
                     }
 

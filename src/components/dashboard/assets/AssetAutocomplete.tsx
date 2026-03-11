@@ -19,7 +19,7 @@ export function AssetAutocomplete({
     onSelect, 
     onClear,
     label = "Imóvel Relacionado",
-    placeholder = "Buscar imóvel..."
+    placeholder = "Buscar imóvel"
 }: AssetAutocompleteProps) {
     const fetchAssets = async (search: string) => {
         const supabase = createClient()

@@ -18,7 +18,7 @@ interface AutocompleteProps {
 
 export function Autocomplete({
     label,
-    placeholder = 'Buscar...',
+    placeholder = 'Buscar',
     onSelect,
     onClear,
     fetchItems,
@@ -67,17 +67,17 @@ export function Autocomplete({
     return (
         <div className="space-y-1 relative" ref={containerRef}>
             {label && (
-                <label className="block text-sm font-bold text-gray-800 ml-1">
+                <label className="block text-[11px] font-bold text-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis uppercase tracking-tight">
                     {label}
                 </label>
             )}
 
             <div className="relative">
                 {selectedItem ? (
-                    <div className="flex items-center justify-between w-full p-3 bg-muted/30 border border-gray-200 rounded-lg group">
+                    <div className="flex items-center justify-between w-full p-3 bg-muted/40 border border-muted-foreground/30 rounded-lg group">
                         <div className="flex items-center gap-2 truncate">
                             <Icon size={16} className="text-muted-foreground shrink-0" />
-                            <span className="text-sm font-medium text-gray-900 truncate">
+                            <span className="text-sm font-medium text-foreground truncate">
                                 {itemToString(selectedItem)}
                             </span>
                         </div>
@@ -96,7 +96,7 @@ export function Autocomplete({
                         </div>
                         <input
                             type="text"
-                            className="w-full pl-10 pr-4 py-3 bg-white border border-gray-100 rounded-lg text-sm text-gray-900 focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] outline-none transition-all placeholder:text-gray-500"
+                            className="w-full pl-10 pr-4 py-3 bg-card border border-muted-foreground/30 rounded-lg text-sm text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all placeholder:text-muted-foreground/50"
                             placeholder={placeholder}
                             value={searchTerm}
                             onChange={(e) => {
@@ -109,11 +109,11 @@ export function Autocomplete({
                 )}
 
                 {isOpen && !selectedItem && searchTerm.length >= 2 && (
-                    <div className="absolute top-full left-0 w-full mt-1 bg-white border border-gray-100 rounded-xl shadow-xl z-50 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute top-full left-0 w-full mt-1 bg-card border border-border rounded-xl shadow-xl z-50 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                         {isLoading ? (
                             <div className="px-4 py-3 text-xs text-muted-foreground flex items-center gap-2 font-medium italic">
                                 <Loader2 size={12} className="animate-spin" />
-                                Buscando...
+                                Buscando
                             </div>
                         ) : items.length > 0 ? (
                             items.map((item) => (
@@ -125,9 +125,9 @@ export function Autocomplete({
                                         setIsOpen(false)
                                         setSearchTerm('')
                                     }}
-                                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-gray-50 transition-colors flex items-center justify-between group"
+                                    className="w-full px-4 py-2.5 text-left text-sm hover:bg-muted transition-colors flex items-center justify-between group"
                                 >
-                                    <span className="font-medium text-gray-700 group-hover:text-gray-900 truncate">
+                                    <span className="font-medium text-foreground/80 group-hover:text-foreground truncate transition-colors">
                                         {itemToString(item)}
                                     </span>
                                 </button>
