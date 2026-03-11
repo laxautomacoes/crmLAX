@@ -31,11 +31,14 @@ function SyncButton() {
         <button
             onClick={syncData}
             disabled={isSyncing}
+            style={{ 
+                backgroundColor: isSyncedRecently && !isSyncing ? '#3EBC79' : 'var(--secondary)',
+                borderColor: isSyncedRecently && !isSyncing ? '#3EBC79' : 'var(--secondary)',
+                color: isSyncedRecently && !isSyncing ? '#FFFFFF' : 'var(--secondary-foreground)'
+            }}
             className={`
                 flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold border shadow-sm active:scale-[0.98]
-                ${isSyncedRecently && !isSyncing
-                    ? 'bg-secondary text-secondary-foreground border-border hover:bg-muted'
-                    : 'bg-primary text-primary-foreground border-primary hover:opacity-90'}
+                ${!isSyncedRecently || isSyncing ? 'hover:opacity-90' : 'hover:brightness-110'}
             `}
             title={lastSync ? `Última sincronização: ${new Date(lastSync).toLocaleTimeString()}` : "Sincronizar dados para offline"}
         >
