@@ -14,8 +14,8 @@ export const menuItems = [
         ]
     },
     { name: 'Agenda', icon: Calendar, href: '/agenda' },
-    { name: 'Relatórios', icon: FileText, href: '/reports' },
     { name: 'Notas', icon: StickyNote, href: '/notes' },
+    { name: 'Relatórios', icon: FileText, href: '/reports' },
     { name: 'Roadmap', icon: Rocket, href: '/roadmap', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
     {
         name: 'Configurações',
