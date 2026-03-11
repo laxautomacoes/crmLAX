@@ -605,6 +605,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                             <div className="space-y-3">
                                 <h4 className="text-xs font-bold text-foreground uppercase tracking-wider opacity-70">Anexos</h4>
                                 <MediaUpload
+                                    pathPrefix={`clients/${tenantId}`}
                                     images={formData.images}
                                     videos={formData.videos}
                                     documents={formData.documents}

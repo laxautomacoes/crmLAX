@@ -252,6 +252,7 @@ export function LeadModal({
                     <div className="col-span-2">
                         <h3 className="text-sm font-bold text-foreground mb-3">Anexos</h3>
                         <MediaUpload
+                            pathPrefix={`leads/${tenantId}`}
                             images={leadData.images}
                             videos={leadData.videos}
                             documents={leadData.documents}

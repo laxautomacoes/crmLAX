@@ -10,9 +10,10 @@ interface MediaUploadProps {
     documents: { name: string; url: string }[]
     onUpload: (type: 'images' | 'videos' | 'documents', urls: any[]) => void
     onRemove: (type: 'images' | 'videos' | 'documents', index: number) => void
+    pathPrefix?: string
 }
 
-export function MediaUpload({ images, videos, documents, onUpload, onRemove }: MediaUploadProps) {
+export function MediaUpload({ images, videos, documents, onUpload, onRemove, pathPrefix }: MediaUploadProps) {
     const [isUploading, setIsUploading] = useState<'images' | 'videos' | 'documents' | null>(null)
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'images' | 'videos' | 'documents') => {
@@ -35,7 +36,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove }: M
 
                 const fileExt = file.name.split('.').pop()
                 const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`
-                const filePath = `${type}/${fileName}`
+                const filePath = pathPrefix ? `${pathPrefix}/${type}/${fileName}` : `${type}/${fileName}`
 
                 const { error: uploadError } = await supabase.storage
                     .from('crm-attachments')
@@ -114,14 +115,23 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove }: M
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                     {videos.map((url, index) => (
-                        <div key={index} className="relative aspect-video rounded-lg overflow-hidden group bg-muted/30 flex items-center justify-center border border-border">
-                            <Film size={20} className="text-muted-foreground" />
+                        <div key={index} className="relative aspect-video rounded-lg overflow-hidden group bg-black flex items-center justify-center border border-border/60 shadow-sm">
+                            <video 
+                                src={`${url}#t=0.1`} 
+                                className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
+                                preload="metadata"
+                                muted
+                                playsInline
+                            />
+                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 group-hover:opacity-20 transition-opacity">
+                                <Film size={24} className="text-white" />
+                            </div>
                             <button
                                 type="button"
                                 onClick={() => onRemove('videos', index)}
-                                className="absolute top-1 right-1 p-1 bg-destructive/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-1.5 right-1.5 p-1.5 bg-destructive/90 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-lg z-10"
                             >
-                                <X size={10} />
+                                <X size={12} />
                             </button>
                         </div>
                     ))}
