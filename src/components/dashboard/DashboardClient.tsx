@@ -45,21 +45,22 @@ export default function DashboardClient({ metrics, profileName, tenantId }: Dash
                 <h1 className="text-2xl font-bold text-foreground text-center md:text-left">
                     Dashboard
                 </h1>
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
 
-                <div className="flex items-center justify-center md:justify-end gap-3">
-                    <button
-                        onClick={() => setIsFilterOpen(true)}
-                        className="flex items-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-4 py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium"
-                    >
-                        <Filter size={18} />
-                        Filtrar
-                    </button>
+                <div className="flex flex-row items-center justify-center md:justify-end gap-3 w-full md:w-auto">
                     <button
                         onClick={() => setIsLeadModalOpen(true)}
-                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold shadow-sm"
+                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold shadow-sm flex-1 md:flex-none"
                     >
                         <Plus size={18} />
                         Novo Lead
+                    </button>
+                    <button
+                        onClick={() => setIsFilterOpen(true)}
+                        className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium flex-1 md:flex-none"
+                    >
+                        <Filter size={18} />
+                        Filtrar
                     </button>
                 </div>
             </div>

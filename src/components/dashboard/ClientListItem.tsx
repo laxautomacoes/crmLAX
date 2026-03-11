@@ -61,24 +61,14 @@ export function ClientListItem({
         <>
             <tr className={`hover:bg-muted/50 transition-colors cursor-pointer group ${isExpanded ? 'bg-muted/50' : ''}`} onClick={onToggle}>
                 <td className="px-6 py-5">
-                    <div className="flex items-center gap-3 justify-center">
-                        <div className="w-10 h-10 rounded-xl bg-primary/5 flex items-center justify-center text-sm font-bold text-foreground shrink-0">
-                            {client.name.split(' ').map((n: string) => n[0]).join('').substring(0, 2).toUpperCase()}
-                        </div>
-                        <div className="flex flex-col text-left">
+                    <div className="flex flex-col text-left">
                             <span className="font-bold text-foreground">{client.name}</span>
-                            <div className="flex items-center gap-2">
-                                <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider font-medium">
-                                    <Calendar size={10} /> {new Date(client.created_at).toLocaleDateString('pt-BR')}
+                            {client.broker_name && (
+                                <span className="text-[10px] text-primary flex items-center gap-1 uppercase tracking-wider font-bold mt-0.5">
+                                    {client.broker_name}
                                 </span>
-                                {client.broker_name && (
-                                    <span className="text-[10px] text-primary flex items-center gap-1 uppercase tracking-wider font-bold">
-                                        <User size={10} /> {client.broker_name}
-                                    </span>
-                                )}
-                            </div>
+                            )}
                         </div>
-                    </div>
                 </td>
                 <td className="px-6 py-5">
                     <div className="flex flex-col text-sm items-center">
@@ -91,7 +81,10 @@ export function ClientListItem({
                     </div>
                 </td>
                 <td className="px-6 py-5 hidden lg:table-cell">
-                    <div className="flex flex-wrap gap-2 justify-center">
+                    <div className="flex flex-wrap gap-2 justify-center items-center">
+                        <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider font-medium mr-1">
+                            {new Date(client.created_at).toLocaleDateString('pt-BR')}
+                        </span>
                         {client.leads && client.leads.length > 0 ? (
                             <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded uppercase border border-green-100">
                                 {client.leads.length} {client.leads.length === 1 ? 'Lead Ativo' : 'Leads Ativos'}
@@ -283,7 +276,12 @@ function ClientLeadsSection({ client }: any) {
     return (
         <div className="lg:col-span-5 space-y-6">
             <div className="space-y-4">
-                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Leads e Interesses</h4>
+                <div className="flex items-center justify-between px-1">
+                    <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Leads e Interesses</h4>
+                    <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider font-medium">
+                        {new Date(client.created_at).toLocaleDateString('pt-BR')}
+                    </span>
+                </div>
                 <div className="space-y-3">
                     {client.leads && client.leads.length > 0 ? (
                         client.leads.map((lead: any) => (

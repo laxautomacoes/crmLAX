@@ -1,8 +1,10 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare, Loader2 } from 'lucide-react'
+import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare, Loader2, Calendar, LayoutGrid, List } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
+import { ClientFilterModal } from './ClientFilterModal'
+import ClientCard from './ClientCard'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
@@ -28,6 +30,22 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     const [brokers, setBrokers] = useState<any[]>([])
     const [userRole, setUserRole] = useState<string>('user')
     const [expandedId, setExpandedId] = useState<string | null>(null)
+    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+    const [filters, setFilters] = useState({
+        startDate: '',
+        endDate: '',
+        interest: '',
+        primaryInterest: '',
+        brokerId: 'all',
+        maritalStatus: ''
+    })
+
+    useEffect(() => {
+        if (selectedBroker !== filters.brokerId) {
+            setFilters(prev => ({ ...prev, brokerId: selectedBroker }))
+        }
+    }, [selectedBroker])
 
     // Form States
     const [formData, setFormData] = useState({
@@ -187,9 +205,32 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             client.email.toLowerCase().includes(searchTerm.toLowerCase())
         
-        const matchesBroker = selectedBroker === 'all' || client.assigned_to === selectedBroker
+        const matchesBroker = filters.brokerId === 'all' || client.assigned_to === filters.brokerId
 
-        return matchesSearch && matchesBroker
+        const matchesInterest = !filters.interest || 
+            (client.interest && client.interest.toLowerCase().includes(filters.interest.toLowerCase())) ||
+            (client.primary_interest && client.primary_interest.toLowerCase().includes(filters.interest.toLowerCase()))
+
+        const matchesPrimaryInterest = !filters.primaryInterest || client.primary_interest === filters.primaryInterest
+        
+        const matchesMaritalStatus = !filters.maritalStatus || client.marital_status === filters.maritalStatus
+
+        const clientDate = client.created_at ? new Date(client.created_at) : null
+        let matchesDate = true
+        if (clientDate) {
+            if (filters.startDate) {
+                const start = new Date(filters.startDate)
+                start.setHours(0, 0, 0, 0)
+                if (clientDate < start) matchesDate = false
+            }
+            if (filters.endDate) {
+                const end = new Date(filters.endDate)
+                end.setHours(23, 59, 59, 999)
+                if (clientDate > end) matchesDate = false
+            }
+        }
+
+        return matchesSearch && matchesBroker && matchesInterest && matchesPrimaryInterest && matchesMaritalStatus && matchesDate
     })
 
     const handleEdit = (client: any) => {
@@ -320,9 +361,54 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         <div className="space-y-4 md:space-y-6">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-foreground">Clientes</h1>
-                <div className="flex flex-wrap items-center gap-3">
-                    <div className="w-full md:w-[310px]">
+                <div className="flex flex-col md:flex-row md:items-center gap-4">
+                    <h1 className="text-2xl font-bold text-foreground text-center md:text-left">Clientes</h1>
+                </div>
+
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-1 mb-4" />
+                <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+                    <button
+                        onClick={handleOpenCreate}
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] flex-1 md:flex-none order-1 md:order-4"
+                    >
+                        <Plus size={18} />
+                        Novo Cliente
+                    </button>
+                    
+                    {/* View Toggle */}
+                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm w-fit order-2 md:order-2">
+                        <button
+                            onClick={() => setViewMode('list')}
+                            className={`p-1.5 rounded-md transition-all ${
+                                viewMode === 'list' 
+                                    ? 'bg-secondary text-secondary-foreground' 
+                                    : 'text-muted-foreground hover:bg-muted'
+                            }`}
+                            title="Visualização em Lista"
+                        >
+                            <List size={18} />
+                        </button>
+                        <button
+                            onClick={() => setViewMode('grid')}
+                            className={`p-1.5 rounded-md transition-all ${
+                                viewMode === 'grid' 
+                                    ? 'bg-secondary text-secondary-foreground' 
+                                    : 'text-muted-foreground hover:bg-muted'
+                            }`}
+                            title="Visualização em Quadro"
+                        >
+                            <LayoutGrid size={18} />
+                        </button>
+                    </div>
+
+                    <button
+                        onClick={() => setIsFilterModalOpen(true)}
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] flex-1 md:flex-none order-3 md:order-3"
+                    >
+                        <Filter size={18} />
+                        Filtrar
+                    </button>
+                    <div className="w-full md:w-[310px] order-4 md:order-1">
                         <FormInput
                             placeholder="Buscar por nome ou email..."
                             value={searchTerm}
@@ -331,10 +417,13 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         />
                     </div>
                     {(userRole === 'admin' || userRole === 'superadmin') && brokers.length > 0 && (
-                        <div className="relative group min-w-[180px]">
+                        <div className="hidden md:block relative group min-w-[180px] order-2 md:order-2">
                             <select
                                 value={selectedBroker}
-                                onChange={(e) => setSelectedBroker(e.target.value)}
+                                onChange={(e) => {
+                                    setSelectedBroker(e.target.value);
+                                    setFilters(prev => ({ ...prev, brokerId: e.target.value }));
+                                }}
                                 className="w-full appearance-none pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer hover:bg-muted/10"
                             >
                                 <option value="all">Todos os Corretores</option>
@@ -347,46 +436,58 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                             <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                         </div>
                     )}
-                    <button
-                        onClick={handleOpenCreate}
-                        className="flex items-center gap-2 px-4 py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99]"
-                    >
-                        <Plus size={18} />
-                        Novo Cliente
-                    </button>
                 </div>
             </div>
 
-            {/* Table */}
-            <div className="bg-card rounded-2xl border border-muted-foreground/30 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left">
-                        <thead className="bg-muted/50 border-b border-muted-foreground/30">
-                            <tr>
-                                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Cliente</th>
-                                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Contato</th>
-                                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell">Leads e Interesses</th>
-                                <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Detalhes</th>
-                            </tr>
-                        </thead>
-                        <tbody className="divide-y divide-muted-foreground/30">
-                            {filteredClients.map(client => (
-                                <ClientListItem
-                                    key={client.id}
-                                    client={client}
-                                    tenantId={tenantId}
-                                    profileId={profileId}
-                                    isExpanded={expandedId === client.id}
-                                    onToggle={() => setExpandedId(expandedId === client.id ? null : client.id)}
-                                    onEdit={() => handleEdit(client)}
-                                    onDelete={() => handleDelete(client.id)}
-                                    onArchive={() => handleArchive(client.id)}
-                                />
-                            ))}
-                        </tbody>
-                    </table>
+            {/* Content Area */}
+            {viewMode === 'list' ? (
+                <div className="bg-card rounded-2xl border border-muted-foreground/30 overflow-hidden shadow-sm">
+                    <div className="overflow-x-auto">
+                        <table className="w-full text-left">
+                            <thead className="bg-muted/50 border-b border-muted-foreground/30">
+                                <tr>
+                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Cliente</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Contato</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell">Leads e Interesses</th>
+                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Detalhes</th>
+                                </tr>
+                            </thead>
+                            <tbody className="divide-y divide-muted-foreground/30">
+                                {filteredClients.map(client => (
+                                    <ClientListItem
+                                        key={client.id}
+                                        client={client}
+                                        tenantId={tenantId}
+                                        profileId={profileId}
+                                        isExpanded={expandedId === client.id}
+                                        onToggle={() => setExpandedId(expandedId === client.id ? null : client.id)}
+                                        onEdit={() => handleEdit(client)}
+                                        onDelete={() => handleDelete(client.id)}
+                                        onArchive={() => handleArchive(client.id)}
+                                    />
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
-            </div>
+            ) : (
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {filteredClients.map(client => (
+                        <ClientCard
+                            key={client.id}
+                            client={{
+                                ...client,
+                                tags: client.tags || [],
+                                value: client.value || 0,
+                                notes: client.notes || ''
+                            }}
+                            tenantId={tenantId}
+                            profileId={profileId}
+                            onEdit={handleEdit}
+                        />
+                    ))}
+                </div>
+            )}
 
             {filteredClients.length === 0 && (
                 <div className="text-center py-20 bg-card rounded-2xl border border-dashed border-border">
@@ -633,6 +734,25 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     </div>
                 </form>
             </Modal>
+            <ClientFilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                filters={filters}
+                setFilters={setFilters}
+                brokers={brokers}
+                isAdmin={userRole === 'admin' || userRole === 'superadmin'}
+                onClear={() => {
+                    setFilters({
+                        startDate: '',
+                        endDate: '',
+                        interest: '',
+                        primaryInterest: '',
+                        brokerId: 'all',
+                        maritalStatus: ''
+                    });
+                    setSelectedBroker('all');
+                }}
+            />
         </div>
     )
 }

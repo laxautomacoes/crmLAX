@@ -46,6 +46,7 @@ export default function SettingsPage() {
                 <h1 className="text-2xl font-bold text-foreground text-center md:text-left">
                     {activeTab === 'profile' ? 'Meu Perfil' : 'Branding da Empresa'}
                 </h1>
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
             </div>
 
             {/* Tab Navigation */}

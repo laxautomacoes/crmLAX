@@ -125,6 +125,7 @@ export default function RoadmapPage() {
                     <h1 className="text-2xl font-bold text-foreground">Roadmap do Produto</h1>
                     <p className="text-muted-foreground text-sm">Acompanhe as próximas funcionalidades e melhorias do CRM LAX</p>
                 </div>
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
                 {isSuperAdmin && (
                     <button
                         onClick={() => handleOpenModal()}

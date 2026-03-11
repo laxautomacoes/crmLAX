@@ -308,6 +308,7 @@ export default function PropertiesPage() {
                     <h1 className="text-2xl font-bold text-foreground">Imóveis</h1>
                     <p className="text-sm text-muted-foreground">{filteredProperties.length} imóveis encontrados</p>
                 </div>
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
                 <div className="flex items-center justify-center md:justify-end gap-3">
                     <div className="flex items-center bg-card border border-border rounded-lg p-0.5 shadow-sm">
                         <button

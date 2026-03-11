@@ -12,6 +12,7 @@ export default function IntegrationsSettingsPage() {
                     <h1 className="text-2xl font-bold text-foreground">Integrações</h1>
                     <p className="text-muted-foreground">Gerencie as conexões do sistema com ferramentas externas.</p>
                 </div>
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
             </div>
 
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 max-w-4xl">

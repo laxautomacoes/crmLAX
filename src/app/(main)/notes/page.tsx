@@ -120,6 +120,7 @@ export default function NotesPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-foreground text-center md:text-left">Notas</h1>
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
                 <div className="flex items-center justify-center md:justify-end gap-3">
                     <FormInput
                         placeholder="Buscar notas..."

@@ -11,6 +11,7 @@ export default function NotificationsPage() {
                 <h1 className="text-2xl font-bold text-foreground text-center md:text-left">
                     Notificações
                 </h1>
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
             </div>
 
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">

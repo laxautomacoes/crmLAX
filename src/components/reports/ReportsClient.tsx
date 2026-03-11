@@ -70,6 +70,7 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                         Acompanhe o desempenho do seu negócio e da sua equipe.
                     </p>
                 </div>
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
 
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Broker Filter - Only visible for admins */}
