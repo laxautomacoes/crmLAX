@@ -12,7 +12,7 @@ import { useTheme } from 'next-themes';
 import { saveAccount, removeAccount } from '@/lib/utils/multi-account';
 import { SwitchAccountModal } from './AvatarDropdown/SwitchAccountModal';
 
-export function AvatarDropdown() {
+export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [profile, setProfile] = useState<any>(null);
@@ -82,6 +82,9 @@ export function AvatarDropdown() {
                     name={profile?.full_name}
                     className="h-8 w-8 text-sm"
                 />
+                {unreadCount > 0 && (
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-card"></span>
+                )}
             </button>
 
             {isOpen && (

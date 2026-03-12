@@ -108,7 +108,7 @@ export function ServiceQueueToggle({ initialStatus = false, tenantId, companyNam
                     ) : (
                         <Headphones size={14} />
                     )}
-                    <span className="hidden sm:inline">
+                    <span>
                         {isActive ? 'Em Atendimento' : 'Atendimento'}
                     </span>
                 </button>

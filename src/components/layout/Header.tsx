@@ -23,7 +23,7 @@ function SyncButton() {
         return (
             <div className="flex items-center gap-2 px-3 py-1.5 rounded-full bg-destructive/10 text-destructive text-xs font-medium border border-destructive/20" title="Modo Offline">
                 <WifiOff size={14} />
-                <span className="hidden sm:inline">Offline</span>
+                <span>Offline</span>
             </div>
         )
     }
@@ -46,13 +46,13 @@ function SyncButton() {
             {isSyncing ? (
                 <>
                     <RefreshCw size={14} className="animate-spin" />
-                    <span className="hidden sm:inline">Sincronizando {syncProgress}%</span>
+                    <span>Sincronizando {syncProgress}%</span>
                 </>
             ) : (
                 <>
                     {/* Icon changes? Maybe check mark if synced? Keeping CloudDownload for now or Check if synced */}
                     {isSyncedRecently ? <CloudDownload size={14} /> : <CloudDownload size={14} />}
-                    <span className="hidden sm:inline">
+                    <span>
                         {isSyncedRecently ? 'Sincronizado' : 'Sincronizar'}
                     </span>
                 </>
@@ -172,82 +172,93 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
     return (
         <>
-            <header className="h-16 bg-card border-b border-border flex items-center justify-between px-6 flex-none sticky top-0 z-40">
-                <div className="flex items-center gap-4 flex-1">
-                    {/* Mobile Menu Button ... */}
-                    <button
-                        onClick={onMenuClick}
-                        className="md:hidden text-foreground/70 hover:text-foreground absolute left-4"
-                    >
-                        <Menu size={24} />
-                    </button>
+            <header className="h-auto md:h-16 bg-card border-b border-border flex flex-col md:flex-row sticky top-0 z-40 transition-all">
+                {/* Primeira Linha (Mobile & Desktop) */}
+                <div className="h-16 flex items-center justify-between px-6 w-full flex-none">
+                    <div className="flex items-center gap-4 flex-1">
+                        {/* Mobile Menu Button */}
+                        <button
+                            onClick={onMenuClick}
+                            className="md:hidden text-foreground/70 hover:text-foreground transition-colors"
+                        >
+                            <Menu size={24} />
+                        </button>
 
-                    {/* Desktop Collapse Button */}
-                    <button
-                        onClick={toggleSidebar}
-                        className="hidden md:block text-foreground/70 hover:text-foreground transition-colors"
-                    >
-                        {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
-                    </button>
+                        {/* Desktop Collapse Button */}
+                        <button
+                            onClick={toggleSidebar}
+                            className="hidden md:block text-foreground/70 hover:text-foreground transition-colors"
+                        >
+                            {isSidebarCollapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+                        </button>
 
-                    {/* Desktop Welcome & Date */}
-                    <div className="hidden md:flex flex-col ml-4">
-                        <h2 className="text-lg font-semibold text-foreground">
-                            Bem-vindo, {profile?.full_name || 'Léo Acosta'}
-                        </h2>
-                        <span className="text-xs text-foreground/70">{formattedDate}</span>
+                        {/* Desktop Welcome & Date */}
+                        <div className="hidden md:flex flex-col ml-4">
+                            <h2 className="text-lg font-semibold text-foreground">
+                                Bem-vindo, {profile?.full_name || 'Léo Acosta'}
+                            </h2>
+                            <span className="text-xs text-foreground/70">{formattedDate}</span>
+                        </div>
+
+                        {/* Mobile Centered Logo */}
+                        <div className="md:hidden flex-1 flex justify-center pr-6">
+                            <Logo
+                                size="md"
+                                src={branding?.logo_full}
+                                height={branding?.logo_height}
+                                loading={brandingLoading}
+                            />
+                        </div>
                     </div>
 
-                    {/* Mobile Centered Logo */}
-                    <div className="md:hidden flex-1 flex justify-center">
-                        <Logo
-                            size="md"
-                            className="ml-6"
-                            src={branding?.logo_full}
-                            height={branding?.logo_height}
-                            loading={brandingLoading}
+                    {/* Desktop - Right Section (Atendimento, Sincronizar, Theme, Bell, Avatar) */}
+                    <div className="hidden md:flex items-center gap-6">
+                        <ServiceQueueToggle 
+                            initialStatus={profile?.is_active_for_service} 
+                            tenantId={profile?.tenant_id} 
+                            companyName={companyName}
                         />
+
+                        <SyncButton />
+
+                        <div className="flex items-center gap-4">
+                            {mounted && (
+                                <button
+                                    onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
+                                    className="text-foreground/70 hover:text-foreground transition-colors"
+                                >
+                                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                                </button>
+                            )}
+                            <button
+                                onClick={() => setIsNotificationsOpen(true)}
+                                className="text-foreground/70 hover:text-foreground relative"
+                            >
+                                <Bell size={20} />
+                                {unreadCount > 0 && (
+                                    <span className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-card"></span>
+                                )}
+                            </button>
+                            <div className="relative">
+                                <AvatarDropdown unreadCount={unreadCount} />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Mobile - Only Avatar Dropdown on Right in First Row */}
+                    <div className="md:hidden flex items-center gap-3">
+                        <AvatarDropdown unreadCount={unreadCount} />
                     </div>
                 </div>
 
-                <div className="flex items-center gap-6">
-                    {/* Service Queue Toggle */}
+                {/* Segunda Linha (Apenas Mobile) */}
+                <div className="md:hidden flex items-center justify-center gap-4 px-6 pb-5 pt-1 w-full">
                     <ServiceQueueToggle 
                         initialStatus={profile?.is_active_for_service} 
                         tenantId={profile?.tenant_id} 
                         companyName={companyName}
                     />
-
-                    {/* Offline Sync Button */}
                     <SyncButton />
-
-                    <div className="hidden md:flex items-center gap-4">
-                        {mounted && (
-                            <button
-                                onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
-                                className="text-foreground/70 hover:text-foreground transition-colors"
-                            >
-                                {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
-                            </button>
-                        )}
-                        <button
-                            onClick={() => setIsNotificationsOpen(true)}
-                            className="text-foreground/70 hover:text-foreground relative"
-                        >
-                            <Bell size={20} />
-                            {unreadCount > 0 && (
-                                <span className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-card"></span>
-                            )}
-                        </button>
-                        <div className="relative">
-                            <AvatarDropdown />
-                        </div>
-                    </div>
-
-                    {/* Mobile Avatar Dropdown ... */}
-                    <div className="md:hidden">
-                        <AvatarDropdown />
-                    </div>
                 </div>
             </header>
 
