@@ -274,7 +274,7 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                 .rich-text-editor p { margin-bottom: 0.5rem; }
             `}</style>
             {label && (
-                <label className="block text-sm font-bold text-foreground ml-1">
+                <label className="block text-sm font-bold text-foreground/80 ml-1">
                     {label}
                 </label>
             )}

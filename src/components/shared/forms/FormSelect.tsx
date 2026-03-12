@@ -14,7 +14,7 @@ export function FormSelect({ label, error, icon: Icon, options, className = '', 
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-sm font-bold text-gray-800 ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis tracking-tight">
+                <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis tracking-tight">
                     {label}
                 </label>
             )}

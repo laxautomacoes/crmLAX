@@ -167,7 +167,7 @@ export async function getDashboardMetrics(tenantId: string) {
             .eq('tenant_id', tenantId)
             .eq('is_archived', false)
             .order('created_at', { ascending: false })
-            .limit(5)
+            .limit(10)
 
         if (!isAdmin && profile?.id) {
             recentLeadsQuery = recentLeadsQuery.eq('assigned_to', profile.id)

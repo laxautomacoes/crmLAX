@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
 import { formatPhone } from '@/lib/utils/phone'
 import { FormInput } from '@/components/shared/forms/FormInput'
@@ -29,6 +30,8 @@ export default function LeadsPage() {
     const [selectedBroker, setSelectedBroker] = useState('all')
     const [editingLead, setEditingLead] = useState<any | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const searchParams = useSearchParams()
+    const leadIdFromUrl = searchParams.get('id')
 
     const fetchData = async () => {
         try {
@@ -84,6 +87,16 @@ export default function LeadsPage() {
 
         setFilteredLeads(result)
     }, [searchTerm, selectedBroker, leads])
+
+    useEffect(() => {
+        if (leadIdFromUrl && leads.length > 0) {
+            const leadToEdit = leads.find(l => l.id === leadIdFromUrl)
+            if (leadToEdit) {
+                setEditingLead(leadToEdit)
+                setIsLeadModalOpen(true)
+            }
+        }
+    }, [leadIdFromUrl, leads])
 
     const handleNewStage = async () => {
         if (!newStageName.trim() || !tenantId) return
