@@ -68,6 +68,7 @@ export async function getPipelineData(tenantId: string) {
         value: lead.value,
         interest: lead.source, // Mantendo por compatibilidade se algo usar
         lead_source: lead.lead_source || 'Direto',
+        campaign: lead.campaign,
         asset_id: lead.asset_id,
         date: lead.date || (lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : null),
         assigned_to: lead.assigned_to,
@@ -146,6 +147,7 @@ export async function createLead(tenantId: string, data: any) {
             value: data.value,
             source: data.interest || 'Direto',
             lead_source: data.lead_source || 'Direto',
+            campaign: data.campaign || null,
             asset_id: data.asset_id || null,
             date: data.date || new Date().toISOString().split('T')[0],
             assigned_to: data.assigned_to || user?.id,
@@ -205,6 +207,7 @@ export async function updateLead(tenantId: string, leadId: string, data: any) {
             value: data.value,
             source: data.interest,
             lead_source: data.lead_source,
+            campaign: data.campaign || null,
             asset_id: data.asset_id || null,
             date: data.date || null,
             assigned_to: data.assigned_to,
