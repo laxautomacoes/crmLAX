@@ -8,10 +8,10 @@ import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { MediaUpload } from '@/components/shared/MediaUpload'
 import { toast } from 'sonner'
-import { createLead, updateLead } from '@/app/_actions/leads'
+import { createLead, updateLead, getLeadSources, createLeadSource } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { AssetAutocomplete } from '@/components/dashboard/assets/AssetAutocomplete'
-import { Calendar, MessageSquare } from 'lucide-react'
+import { Calendar, MessageSquare, X } from 'lucide-react'
 
 interface LeadModalProps {
     isOpen: boolean
@@ -33,11 +33,15 @@ export function LeadModal({
     const [isLoading, setIsLoading] = useState(false)
     const [brokers, setBrokers] = useState<any[]>([])
     const [userRole, setUserRole] = useState<string>('user')
+    const [sources, setSources] = useState<any[]>([])
+    const [isAddingSource, setIsAddingSource] = useState(false)
+    const [newSource, setNewSource] = useState('')
     const [leadData, setLeadData] = useState({
         name: '',
         phone: '',
         email: '',
         interest: '',
+        lead_source: '',
         asset_id: '',
         selectedAsset: null as any,
         date: new Date().toISOString().split('T')[0],
@@ -50,6 +54,8 @@ export function LeadModal({
         documents: [] as { name: string; url: string }[]
     })
 
+    const INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira']
+
     useEffect(() => {
         async function fetchContext() {
             const { profile } = await getProfile()
@@ -61,6 +67,16 @@ export function LeadModal({
                         setBrokers(res.data || [])
                     }
                 }
+            }
+
+            const sourcesRes = await getLeadSources(tenantId)
+            if (sourcesRes.success) {
+                // Mesclar iniciais com as do banco
+                const dbSources = (sourcesRes.data || []).map((s: any) => s.name)
+                const merged = Array.from(new Set([...INITIAL_SOURCES, ...dbSources]))
+                setSources(merged)
+            } else {
+                setSources(INITIAL_SOURCES)
             }
         }
         if (isOpen) fetchContext()
@@ -75,6 +91,7 @@ export function LeadModal({
                 phone: editingLead.phone ? formatPhone(editingLead.phone) : '',
                 email: editingLead.email || '',
                 interest: editingLead.interest || '',
+                lead_source: editingLead.lead_source || '',
                 asset_id: editingLead.asset_id || '',
                 selectedAsset: editingLead.asset_id ? { id: editingLead.asset_id, title: editingLead.interest } : null,
                 date: editingLead.date || new Date().toISOString().split('T')[0],
@@ -92,6 +109,7 @@ export function LeadModal({
                 phone: '',
                 email: '',
                 interest: '',
+                lead_source: '',
                 asset_id: '',
                 selectedAsset: null,
                 date: new Date().toISOString().split('T')[0],
@@ -133,8 +151,18 @@ export function LeadModal({
 
         setIsLoading(true)
         try {
+            // Se o usuário escreveu uma nova origem, salvar primeiro
+            let finalSource = leadData.lead_source
+            if (isAddingSource && newSource.trim()) {
+                const res = await createLeadSource(tenantId, newSource.trim())
+                if (res.success) {
+                    finalSource = newSource.trim()
+                }
+            }
+
             const dataToSubmit = {
                 ...leadData,
+                lead_source: finalSource,
                 value: leadData.value ? parseFloat(leadData.value) : 0
             }
 
@@ -216,15 +244,58 @@ export function LeadModal({
                             placeholder="joao@email.com"
                         />
                     </div>
-                    <div className="col-span-1 md:col-span-2">
-                        <AssetAutocomplete
-                            tenantId={tenantId}
-                            label="Interesse"
-                            placeholder="Ex: Casa 3 dormitórios com suíte"
-                            selectedItem={leadData.selectedAsset}
-                            onSelect={(asset) => setLeadData({ ...leadData, interest: asset.title, asset_id: asset.id, selectedAsset: asset })}
-                            onClear={() => setLeadData({ ...leadData, interest: '', asset_id: '', selectedAsset: null })}
-                        />
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <div className="md:col-span-1">
+                            {!isAddingSource ? (
+                                <FormSelect
+                                    label="Origem"
+                                    value={leadData.lead_source}
+                                    onChange={(e) => {
+                                        if (e.target.value === 'ADD_NEW') {
+                                            setIsAddingSource(true)
+                                        } else {
+                                            setLeadData({ ...leadData, lead_source: e.target.value })
+                                        }
+                                    }}
+                                    options={[
+                                        { value: '', label: 'Selecione a origem' },
+                                        ...sources.map(s => ({ value: s, label: s })),
+                                        { value: 'ADD_NEW', label: 'Outra' }
+                                    ]}
+                                />
+                            ) : (
+                                <FormInput
+                                    label="Origem (Nova)"
+                                    value={newSource}
+                                    onChange={(e) => setNewSource(e.target.value)}
+                                    placeholder="Ex: WhatsApp"
+                                    rightElement={
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                setIsAddingSource(false)
+                                                setNewSource('')
+                                            }}
+                                            className="text-muted-foreground hover:text-foreground p-1"
+                                            title="Cancelar"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    }
+                                />
+                            )}
+                        </div>
+                        <div className="md:col-span-2">
+                            <AssetAutocomplete
+                                tenantId={tenantId}
+                                label="Interesse"
+                                placeholder="Ex: Apto 3 dormitórios"
+                                icon={() => null}
+                                selectedItem={leadData.selectedAsset}
+                                onSelect={(asset) => setLeadData({ ...leadData, interest: asset.title, asset_id: asset.id, selectedAsset: asset })}
+                                onClear={() => setLeadData({ ...leadData, interest: '', asset_id: '', selectedAsset: null })}
+                            />
+                        </div>
                     </div>
 
                     {(userRole === 'admin' || userRole === 'superadmin') && (
@@ -273,7 +344,7 @@ export function LeadModal({
                     </div>
 
                     <div className="col-span-1 md:col-span-2">
-                        <h3 className="text-sm font-bold text-foreground mb-3">Anexos</h3>
+                        <h3 className="text-sm font-bold text-gray-800 ml-1 mb-3">Anexos</h3>
                         <MediaUpload
                             pathPrefix={`leads/${tenantId}`}
                             images={leadData.images}

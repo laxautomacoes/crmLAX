@@ -66,7 +66,8 @@ export async function getPipelineData(tenantId: string) {
         status: lead.stage_id,
         notes: lead.notes,
         value: lead.value,
-        interest: lead.source,
+        interest: lead.source, // Mantendo por compatibilidade se algo usar
+        lead_source: lead.lead_source || 'Direto',
         asset_id: lead.asset_id,
         date: lead.date || (lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : null),
         assigned_to: lead.assigned_to,
@@ -144,6 +145,7 @@ export async function createLead(tenantId: string, data: any) {
             notes: data.notes,
             value: data.value,
             source: data.interest || 'Direto',
+            lead_source: data.lead_source || 'Direto',
             asset_id: data.asset_id || null,
             date: data.date || new Date().toISOString().split('T')[0],
             assigned_to: data.assigned_to || user?.id,
@@ -157,6 +159,7 @@ export async function createLead(tenantId: string, data: any) {
     revalidatePath('/leads');
     return { success: true };
 }
+
 export async function updateLead(tenantId: string, leadId: string, data: any) {
     const supabase = await createClient();
 
@@ -201,6 +204,7 @@ export async function updateLead(tenantId: string, leadId: string, data: any) {
             notes: data.notes,
             value: data.value,
             source: data.interest,
+            lead_source: data.lead_source,
             asset_id: data.asset_id || null,
             date: data.date || null,
             assigned_to: data.assigned_to,
@@ -242,4 +246,28 @@ export async function archiveLead(leadId: string) {
 
     revalidatePath('/leads');
     return { success: true };
+}
+
+export async function getLeadSources(tenantId: string) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('lead_sources')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('name', { ascending: true });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+}
+
+export async function createLeadSource(tenantId: string, name: string) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('lead_sources')
+        .upsert({ tenant_id: tenantId, name }, { onConflict: 'tenant_id,name' })
+        .select()
+        .single();
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
 }

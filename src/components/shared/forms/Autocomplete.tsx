@@ -67,7 +67,7 @@ export function Autocomplete({
     return (
         <div className="space-y-1 relative" ref={containerRef}>
             {label && (
-                <label className="block text-[11px] font-bold text-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis uppercase tracking-tight">
+                <label className="block text-sm font-bold text-gray-800 ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis tracking-tight">
                     {label}
                 </label>
             )}

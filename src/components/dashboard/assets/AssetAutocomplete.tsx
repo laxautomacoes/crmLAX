@@ -11,6 +11,7 @@ interface AssetAutocompleteProps {
     onClear: () => void
     label?: string
     placeholder?: string
+    icon?: any
 }
 
 export function AssetAutocomplete({ 
@@ -19,7 +20,8 @@ export function AssetAutocomplete({
     onSelect, 
     onClear,
     label = "Imóvel Relacionado",
-    placeholder = "Buscar imóvel"
+    placeholder = "Buscar imóvel",
+    icon = Building2
 }: AssetAutocompleteProps) {
     const fetchAssets = async (search: string) => {
         const supabase = createClient()
@@ -42,7 +44,7 @@ export function AssetAutocomplete({
         <Autocomplete
             label={label}
             placeholder={placeholder}
-            icon={Building2}
+            icon={icon}
             selectedItem={selectedItem}
             onSelect={onSelect}
             onClear={onClear}
