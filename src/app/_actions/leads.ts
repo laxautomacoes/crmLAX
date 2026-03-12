@@ -137,6 +137,17 @@ export async function createLead(tenantId: string, data: any) {
     // 2. Criar lead
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Lógica de Distribuição Automática (Round Robin)
+    let assignedTo = data.assigned_to;
+    if (!assignedTo) {
+        const brokerRes = await getNextBrokerForDistribution(tenantId);
+        if (brokerRes.success && brokerRes.data) {
+            assignedTo = brokerRes.data.id;
+        } else {
+            assignedTo = user?.id; // Fallback para Admin se ninguém na fila
+        }
+    }
+
     const { error: leadError } = await supabase
         .from('leads')
         .insert({
@@ -150,13 +161,21 @@ export async function createLead(tenantId: string, data: any) {
             campaign: data.campaign || null,
             asset_id: data.asset_id || null,
             date: data.date || new Date().toISOString().split('T')[0],
-            assigned_to: data.assigned_to || user?.id,
+            assigned_to: assignedTo,
             images: data.images || [],
             videos: data.videos || [],
             documents: data.documents || []
         });
 
     if (leadError) return { success: false, error: leadError.message };
+
+    // Se foi distribuído, atualizar o timestamp do corretor
+    if (assignedTo && assignedTo !== user?.id) {
+        await supabase
+            .from('profiles')
+            .update({ last_lead_assigned_at: new Date().toISOString() })
+            .eq('id', assignedTo);
+    }
 
     revalidatePath('/leads');
     return { success: true };
@@ -268,6 +287,52 @@ export async function createLeadSource(tenantId: string, name: string) {
     const { data, error } = await supabase
         .from('lead_sources')
         .upsert({ tenant_id: tenantId, name }, { onConflict: 'tenant_id,name' })
+        .select()
+        .single();
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+}
+
+export async function getNextBrokerForDistribution(tenantId: string) {
+    const supabase = await createClient();
+    
+    // Buscar o corretor ativo na fila que está há mais tempo sem receber lead
+    const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('tenant_id', tenantId)
+        .eq('is_active_for_service', true)
+        .order('last_lead_assigned_at', { ascending: true, nullsFirst: true })
+        .limit(1)
+        .single();
+
+    if (error && error.code !== 'PGRST116') { // Ignorar erro de "não encontrado" (PGRST116)
+        console.error('Error fetching next broker:', error);
+        return { success: false, error: error.message };
+    }
+
+    return { success: true, data };
+}
+
+export async function getLeadCampaigns(tenantId: string, sourceName: string) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('lead_campaigns')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .eq('source_name', sourceName)
+        .order('name', { ascending: true });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+}
+
+export async function createLeadCampaign(tenantId: string, sourceName: string, name: string) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('lead_campaigns')
+        .upsert({ tenant_id: tenantId, source_name: sourceName, name }, { onConflict: 'tenant_id,source_name,name' })
         .select()
         .single();
 

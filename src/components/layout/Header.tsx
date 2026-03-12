@@ -8,9 +8,10 @@ import { Notification } from '@/components/dashboard/NotificationItem';
 import { getNotifications } from '@/app/_actions/notifications';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { getProfile } from '@/app/_actions/profile';
+import { getProfile, updateLastSeen } from '@/app/_actions/profile';
 import { Logo } from '@/components/shared/Logo';
 import { useOfflineSync } from '@/hooks/use-offline-sync';
+import { ServiceQueueToggle } from './ServiceQueueToggle';
 
 function SyncButton() {
     const { isOnline, isSyncing, syncData, syncProgress, lastSync } = useOfflineSync();
@@ -94,6 +95,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
     const [profile, setProfile] = useState<any>(null);
     const [branding, setBranding] = useState<{ logo_full?: string; logo_height?: number } | null>(null);
+    const [companyName, setCompanyName] = useState<string>('');
     const [brandingLoading, setBrandingLoading] = useState(true);
 
     const { theme, setTheme } = useTheme();
@@ -136,12 +138,13 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         const supabase = createClient();
                         const { data: tenant } = await supabase
                             .from('tenants')
-                            .select('branding')
+                            .select('name, branding')
                             .eq('id', profileData.tenant_id)
                             .maybeSingle();
 
-                        if (tenant?.branding) {
-                            setBranding(tenant.branding as any);
+                        if (tenant) {
+                            if (tenant.branding) setBranding(tenant.branding as any);
+                            if (tenant.name) setCompanyName(tenant.name);
                         }
                     }
                 }
@@ -151,6 +154,21 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
         }
         loadData();
     }, []);
+
+    // Heartbeat para status online
+    useEffect(() => {
+        if (profile?.id) {
+            // Atualizar status ao montar
+            updateLastSeen();
+            
+            // Intervalo de 2 minutos
+            const interval = setInterval(() => {
+                updateLastSeen();
+            }, 120000);
+            
+            return () => clearInterval(interval);
+        }
+    }, [profile?.id]);
 
     return (
         <>
@@ -193,6 +211,13 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                 </div>
 
                 <div className="flex items-center gap-6">
+                    {/* Service Queue Toggle */}
+                    <ServiceQueueToggle 
+                        initialStatus={profile?.is_active_for_service} 
+                        tenantId={profile?.tenant_id} 
+                        companyName={companyName}
+                    />
+
                     {/* Offline Sync Button */}
                     <SyncButton />
 

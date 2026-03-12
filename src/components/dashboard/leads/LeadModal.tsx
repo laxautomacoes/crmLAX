@@ -8,7 +8,7 @@ import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { MediaUpload } from '@/components/shared/MediaUpload'
 import { toast } from 'sonner'
-import { createLead, updateLead, getLeadSources, createLeadSource } from '@/app/_actions/leads'
+import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { AssetAutocomplete } from '@/components/dashboard/assets/AssetAutocomplete'
 import { Calendar, MessageSquare, X } from 'lucide-react'
@@ -34,14 +34,18 @@ export function LeadModal({
     const [brokers, setBrokers] = useState<any[]>([])
     const [userRole, setUserRole] = useState<string>('user')
     const [sources, setSources] = useState<any[]>([])
+    const [campaigns, setCampaigns] = useState<any[]>([])
     const [isAddingSource, setIsAddingSource] = useState(false)
+    const [isAddingCampaign, setIsAddingCampaign] = useState(false)
     const [newSource, setNewSource] = useState('')
+    const [newCampaign, setNewCampaign] = useState('')
     const [leadData, setLeadData] = useState({
         name: '',
         phone: '',
         email: '',
         interest: '',
         lead_source: '',
+        campaign: '',
         asset_id: '',
         selectedAsset: null as any,
         date: new Date().toISOString().split('T')[0],
@@ -83,6 +87,22 @@ export function LeadModal({
     }, [isOpen, tenantId])
 
     useEffect(() => {
+        async function fetchCampaigns() {
+            if (leadData.lead_source) {
+                const res = await getLeadCampaigns(tenantId, leadData.lead_source)
+                if (res.success) {
+                    setCampaigns((res.data || []).map((c: any) => c.name))
+                } else {
+                    setCampaigns([])
+                }
+            } else {
+                setCampaigns([])
+            }
+        }
+        fetchCampaigns()
+    }, [leadData.lead_source, tenantId])
+
+    useEffect(() => {
         if (!isOpen) return;
 
         if (editingLead) {
@@ -92,6 +112,7 @@ export function LeadModal({
                 email: editingLead.email || '',
                 interest: editingLead.interest || '',
                 lead_source: editingLead.lead_source || '',
+                campaign: editingLead.campaign || '',
                 asset_id: editingLead.asset_id || '',
                 selectedAsset: editingLead.asset_id ? { id: editingLead.asset_id, title: editingLead.interest } : null,
                 date: editingLead.date || new Date().toISOString().split('T')[0],
@@ -110,6 +131,7 @@ export function LeadModal({
                 email: '',
                 interest: '',
                 lead_source: '',
+                campaign: '',
                 asset_id: '',
                 selectedAsset: null,
                 date: new Date().toISOString().split('T')[0],
@@ -160,9 +182,19 @@ export function LeadModal({
                 }
             }
 
+            // Se o usuário escreveu uma nova campanha, salvar primeiro
+            let finalCampaign = leadData.campaign
+            if (isAddingCampaign && newCampaign.trim()) {
+                const res = await createLeadCampaign(tenantId, finalSource, newCampaign.trim())
+                if (res.success) {
+                    finalCampaign = newCampaign.trim()
+                }
+            }
+
             const dataToSubmit = {
                 ...leadData,
                 lead_source: finalSource,
+                campaign: finalCampaign,
                 value: leadData.value ? parseFloat(leadData.value) : 0
             }
 
@@ -295,6 +327,50 @@ export function LeadModal({
                                 onSelect={(asset) => setLeadData({ ...leadData, interest: asset.title, asset_id: asset.id, selectedAsset: asset })}
                                 onClear={() => setLeadData({ ...leadData, interest: '', asset_id: '', selectedAsset: null })}
                             />
+                        </div>
+                    </div>
+
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div className="md:col-span-1">
+                            {!isAddingCampaign ? (
+                                <FormSelect
+                                    label="Campanha"
+                                    value={leadData.campaign}
+                                    disabled={!leadData.lead_source}
+                                    onChange={(e) => {
+                                        if (e.target.value === 'ADD_NEW') {
+                                            setIsAddingCampaign(true)
+                                        } else {
+                                            setLeadData({ ...leadData, campaign: e.target.value })
+                                        }
+                                    }}
+                                    options={[
+                                        { value: '', label: leadData.lead_source ? 'Selecione a campanha' : 'Selecione uma origem primeiro' },
+                                        ...campaigns.map(c => ({ value: c, label: c })),
+                                        { value: 'ADD_NEW', label: 'Outra' }
+                                    ]}
+                                />
+                            ) : (
+                                <FormInput
+                                    label="Campanha (Nova)"
+                                    value={newCampaign}
+                                    onChange={(e) => setNewCampaign(e.target.value)}
+                                    placeholder="Ex: Verão 2026"
+                                    rightElement={
+                                        <button 
+                                            type="button"
+                                            onClick={() => {
+                                                setIsAddingCampaign(false)
+                                                setNewCampaign('')
+                                            }}
+                                            className="text-muted-foreground hover:text-foreground p-1"
+                                            title="Cancelar"
+                                        >
+                                            <X size={14} />
+                                        </button>
+                                    }
+                                />
+                            )}
                         </div>
                     </div>
 

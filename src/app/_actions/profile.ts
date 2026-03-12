@@ -268,3 +268,62 @@ export async function updateProfile(data: { full_name: string, whatsapp_number?:
     revalidatePath('/dashboard')
     return { success: true }
 }
+
+export async function toggleServiceStatus(isActive: boolean) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    if (!user) {
+        return { error: 'Not authenticated' }
+    }
+
+    const { error } = await supabase
+        .from('profiles')
+        .update({ is_active_for_service: isActive })
+        .eq('id', user.id)
+
+    if (error) {
+        console.error('Error toggling service status:', error)
+        return { error: error.message }
+    }
+
+    revalidatePath('/', 'layout')
+    return { success: true }
+}
+
+export async function getServiceQueue(tenantId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { data: users, error } = await supabase
+            .from('profiles')
+            .select('id, full_name, avatar_url, is_active_for_service, updated_at')
+            .eq('tenant_id', tenantId)
+            .order('full_name')
+
+        if (error) throw error
+
+        return { success: true, data: users }
+    } catch (error: any) {
+        console.error('Error fetching service queue:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+export async function updateLastSeen() {
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { success: false, error: 'Not authenticated' }
+
+        const { error } = await supabase
+            .from('profiles')
+            .update({ updated_at: new Date().toISOString() })
+            .eq('id', user.id)
+
+        if (error) throw error
+        return { success: true }
+    } catch (error: any) {
+        return { success: false, error: error.message }
+    }
+}
