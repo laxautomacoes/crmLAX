@@ -15,14 +15,7 @@ export async function POST(req: Request) {
         let priceId = '';
         if (planId === 'starter') priceId = process.env.STRIPE_PRICE_ID_STARTER!;
         if (planId === 'pro') priceId = process.env.STRIPE_PRICE_ID_PRO!;
-
-        // Caso especial para Freemium: redirecionar direto para registro
-        if (planId === 'freemium') {
-            const domain = process.env.NEXT_PUBLIC_ROOT_DOMAIN?.startsWith('http') 
-                ? process.env.NEXT_PUBLIC_ROOT_DOMAIN 
-                : `http://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`;
-            return NextResponse.json({ url: `${domain}/register?plan=freemium` });
-        }
+        if (planId === 'freemium') priceId = process.env.STRIPE_PRICE_ID_FREEMIUN!;
 
         if (!priceId || priceId.includes('...')) {
             return NextResponse.json({ error: 'Configuração do Stripe incompleta (Price ID ausente)' }, { status: 400 });
