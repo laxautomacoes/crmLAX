@@ -40,6 +40,13 @@ export function RegisterContent() {
 
     const handleRegister = async (e: React.FormEvent) => {
         e.preventDefault();
+
+        // Se não for um convite, redirecionar para landing page
+        if (!invitation) {
+            router.push('/conheca');
+            return;
+        }
+
         setLoading(true);
         setError(null);
 
