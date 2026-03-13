@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, Suspense } from 'react';
+import { useState, Suspense, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
+import { WelcomePopup } from '@/components/shared/WelcomePopup';
+import { createClient } from '@/lib/supabase/client';
 
 export default function DashboardLayout({
     children,
@@ -11,9 +13,18 @@ export default function DashboardLayout({
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [user, setUser] = useState<any>(null);
+
+    useEffect(() => {
+        const supabase = createClient();
+        supabase.auth.getUser().then(({ data }) => {
+            setUser(data.user);
+        });
+    }, []);
 
     return (
-        <div className="flex h-screen bg-background overflow-hidden">
+        <div className="flex h-screen bg-background overflow-hidden text-foreground">
+            {user && <WelcomePopup user={user} />}
             <Suspense fallback={null}>
                 <Sidebar
                     isOpen={sidebarOpen}

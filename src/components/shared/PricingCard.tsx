@@ -1,6 +1,6 @@
 'use client';
 
-import { Check } from 'lucide-react';
+import { Check, Loader2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import Link from 'next/link';
 
@@ -17,6 +17,8 @@ interface PricingCardProps {
   isPopular?: boolean;
   isSelected?: boolean;
   onClick?: () => void;
+  onAction?: () => void;
+  loading?: boolean;
 }
 
 export default function PricingCard({ 
@@ -26,7 +28,9 @@ export default function PricingCard({
   features, 
   isPopular,
   isSelected,
-  onClick
+  onClick,
+  onAction,
+  loading
 }: PricingCardProps) {
   return (
     <motion.div 
@@ -78,16 +82,20 @@ export default function PricingCard({
         })}
       </ul>
 
-      <Link
-        href="/register"
-        className={`mt-auto block w-full py-3 px-6 rounded-lg text-sm font-bold text-center transition-all ${
+      <button
+        onClick={(e) => {
+          e.stopPropagation();
+          onAction?.();
+        }}
+        disabled={loading}
+        className={`mt-auto block w-full py-3 px-6 rounded-lg text-sm font-bold text-center transition-all flex items-center justify-center gap-2 ${
           isSelected
             ? 'bg-[#FFE600] text-[#404F4F] hover:bg-[#F2DB00] shadow-md active:scale-95'
             : 'bg-white/10 text-white hover:bg-white/20 active:scale-95 border border-white/10'
-        }`}
+        } disabled:opacity-50 disabled:cursor-not-allowed`}
       >
-        Começar Agora
-      </Link>
+        {loading ? <Loader2 className="w-5 h-5 animate-spin" /> : 'Começar Agora'}
+      </button>
     </motion.div>
   );
 }

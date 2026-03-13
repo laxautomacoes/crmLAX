@@ -20,7 +20,34 @@ import Image from 'next/image';
 
 export default function LandingPage() {
   const [selectedPlan, setSelectedPlan] = React.useState<string>('Starter');
+  const [loadingPlan, setLoadingPlan] = React.useState<string | null>(null);
 
+  const handleCheckout = async (planId: string) => {
+    try {
+      setLoadingPlan(planId);
+      const response = await fetch('/api/checkout', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ planId: planId.toLowerCase() }),
+      });
+
+      const data = await response.json();
+
+      if (data.url) {
+        window.location.href = data.url;
+      } else {
+        console.error('Erro ao gerar checkout:', data.error);
+        alert(`Erro no checkout: ${data.error || 'Ocorreu um erro inesperado. Tente novamente.'}`);
+      }
+    } catch (error) {
+      console.error('Erro no checkout:', error);
+      alert('Erro de conexão ou erro interno ao processar o checkout.');
+    } finally {
+      setLoadingPlan(null);
+    }
+  };
   const containerVariants = {
     hidden: { opacity: 0 },
     visible: {
@@ -163,6 +190,8 @@ export default function LandingPage() {
               price="Grátis"
               isSelected={selectedPlan === 'Freemium'}
               onClick={() => setSelectedPlan('Freemium')}
+              onAction={() => handleCheckout('freemium')}
+              loading={loadingPlan === 'freemium'}
               description="Ideal para corretores que estão começando agora."
               features={[
                 "Até 30 Leads",
@@ -179,6 +208,8 @@ export default function LandingPage() {
               isPopular
               isSelected={selectedPlan === 'Starter'}
               onClick={() => setSelectedPlan('Starter')}
+              onAction={() => handleCheckout('starter')}
+              loading={loadingPlan === 'starter'}
               description="Para profissionais que precisam de escala e automação."
               features={[
                 "Leads Ilimitados",
@@ -194,6 +225,8 @@ export default function LandingPage() {
               price="R$ 197"
               onClick={() => setSelectedPlan('Pro')}
               isSelected={selectedPlan === 'Pro'}
+              onAction={() => handleCheckout('pro')}
+              loading={loadingPlan === 'pro'}
               description="Potência total para imobiliárias e agências de elite."
               features={[
                 { 

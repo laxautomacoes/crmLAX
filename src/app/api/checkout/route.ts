@@ -9,16 +9,20 @@ const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
 export async function POST(req: Request) {
     try {
         const { planId } = await req.json();
-        const { profile, error: profileError } = await getProfile();
-
-        if (profileError || !profile?.tenant_id) {
-            return NextResponse.json({ error: 'Não autorizado' }, { status: 401 });
-        }
+        const { profile } = await getProfile();
 
         // Mapear plano para Price ID do Stripe
         let priceId = '';
         if (planId === 'starter') priceId = process.env.STRIPE_PRICE_ID_STARTER!;
         if (planId === 'pro') priceId = process.env.STRIPE_PRICE_ID_PRO!;
+
+        // Caso especial para Freemium: redirecionar direto para registro
+        if (planId === 'freemium') {
+            const domain = process.env.NEXT_PUBLIC_ROOT_DOMAIN?.startsWith('http') 
+                ? process.env.NEXT_PUBLIC_ROOT_DOMAIN 
+                : `http://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`;
+            return NextResponse.json({ url: `${domain}/register?plan=freemium` });
+        }
 
         if (!priceId || priceId.includes('...')) {
             return NextResponse.json({ error: 'Configuração do Stripe incompleta (Price ID ausente)' }, { status: 400 });
@@ -40,10 +44,11 @@ export async function POST(req: Request) {
             success_url: `${domain}/settings/subscription?success=true`,
             cancel_url: `${domain}/settings/subscription?canceled=true`,
             metadata: {
-                tenantId: profile.tenant_id,
+                tenantId: profile?.tenant_id || '',
                 planId: planId,
+                origin: profile?.tenant_id ? 'dashboard' : 'landing_page'
             },
-            customer_email: profile.email,
+            customer_email: profile?.email || undefined,
         });
 
         return NextResponse.json({ url: session.url });

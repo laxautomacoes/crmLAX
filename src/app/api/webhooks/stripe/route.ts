@@ -2,10 +2,15 @@ import { NextResponse } from 'next/server';
 import { headers } from 'next/headers';
 import Stripe from 'stripe';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
+import { Resend } from 'resend';
+import { evolutionService } from '@/lib/evolution';
 
 const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
     apiVersion: '2025-01-27.acacia' as any,
 });
+
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
     const body = await req.text();
@@ -29,15 +34,19 @@ export async function POST(req: Request) {
     }
 
     const supabase = await createClient();
+    const adminSupabase = createAdminClient();
 
     try {
-        // Lidar com eventos específicos
         if (event.type === 'checkout.session.completed') {
             const session = event.data.object as Stripe.Checkout.Session;
             const tenantId = session.metadata?.tenantId;
-            const planId = session.metadata?.planId;
+            const planId = session.metadata?.planId || 'starter';
+            const customerEmail = session.customer_details?.email;
+            const customerName = session.customer_details?.name || 'Novo Cliente';
+            const customerPhone = session.customer_details?.phone;
 
-            if (tenantId && planId) {
+            if (tenantId) {
+                // Caso o usuário já tenha tenant (upgrade/renovação no dashboard)
                 await supabase
                     .from('tenants')
                     .update({
@@ -47,13 +56,92 @@ export async function POST(req: Request) {
                         subscription_status: 'active'
                     })
                     .eq('id', tenantId);
+            } else if (session.metadata?.origin === 'landing_page' && customerEmail) {
+                // CASO NOVO CLIENTE (Landing Page -> Checkout -> Automação)
+                
+                // 1. Gerar senha provisória
+                const tempPassword = Math.random().toString(36).substring(2, 12) + '!';
+                
+                // 2. Criar Tenant
+                const slug = customerEmail.split('@')[0].toLowerCase().replace(/[^a-z0-9]/g, '') + Math.random().toString(36).substring(2, 5);
+                const { data: newTenant, error: tenantError } = await adminSupabase
+                    .from('tenants')
+                    .insert({
+                        name: customerName,
+                        slug: slug,
+                        plan_type: planId,
+                        stripe_customer_id: session.customer as string,
+                        stripe_subscription_id: session.subscription as string,
+                        subscription_status: 'active'
+                    })
+                    .select()
+                    .single();
+
+                if (tenantError) throw tenantError;
+
+                // 3. Criar Usuário Admin
+                const { data: authUser, error: authError } = await adminSupabase.auth.admin.createUser({
+                    email: customerEmail,
+                    password: tempPassword,
+                    email_confirm: true,
+                    user_metadata: { 
+                        full_name: customerName,
+                        welcome_required: true 
+                    }
+                });
+
+                if (authError) throw authError;
+
+                // 4. Vincular Perfil ao Tenant e Role
+                const { error: profileUpdateError } = await adminSupabase
+                    .from('profiles')
+                    .update({
+                        tenant_id: newTenant.id,
+                        role: 'admin',
+                        full_name: customerName,
+                        whatsapp_number: customerPhone || null
+                    })
+                    .eq('id', authUser.user.id);
+
+                if (profileUpdateError) throw profileUpdateError;
+
+                // 5. Enviar Notificações
+                const loginUrl = `${process.env.NEXT_PUBLIC_ROOT_DOMAIN?.startsWith('http') ? '' : 'https://'}${process.env.NEXT_PUBLIC_ROOT_DOMAIN}/login`;
+                
+                // E-mail
+                await resend.emails.send({
+                    from: 'CRM LAX <noreply@laxperience.online>',
+                    to: [customerEmail],
+                    subject: 'Seja bem-vindo ao CRM LAX - Suas credenciais de acesso',
+                    html: `
+                        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto;">
+                            <h2>Olá ${customerName}, parabéns pela sua assinatura!</h2>
+                            <p>Sua conta no CRM LAX foi criada com sucesso. Aqui estão seus dados de acesso:</p>
+                            <div style="background: #f4f4f4; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                                <p><strong>Login:</strong> ${customerEmail}</p>
+                                <p><strong>Senha Provisória:</strong> ${tempPassword}</p>
+                            </div>
+                            <p><a href="${loginUrl}" style="background: #FFE600; color: #404F4F; padding: 12px 24px; text-decoration: none; border-radius: 6px; font-weight: bold;">Acessar Dashboard</a></p>
+                            <p>Ao entrar, recomendamos que sua primeira ação seja criar uma nova senha segura.</p>
+                        </div>
+                    `
+                });
+
+                // WhatsApp (se houver número)
+                if (customerPhone) {
+                    const waMessage = `Olá ${customerName}! Bem-vindo ao CRM LAX. \n\nSeu acesso foi liberado: \nLogin: ${customerEmail} \nSenha: ${tempPassword} \n\nAcesse aqui: ${loginUrl}`;
+                    try {
+                        const instanceName = process.env.EVOLUTION_GLOBAL_INSTANCE || 'main';
+                        await evolutionService.sendMessage(instanceName, customerPhone, waMessage);
+                    } catch (waError) {
+                        console.error('Erro ao enviar WhatsApp de boas-vindas:', waError);
+                    }
+                }
             }
         }
 
         if (event.type === 'customer.subscription.deleted' || event.type === 'customer.subscription.updated') {
             const subscription = event.data.object as Stripe.Subscription;
-            
-            // Buscar tenant por ID da assinatura
             const { data: tenant } = await supabase
                 .from('tenants')
                 .select('id')
@@ -63,12 +151,9 @@ export async function POST(req: Request) {
             if (tenant) {
                 await supabase
                     .from('tenants')
-                    .update({
-                        subscription_status: subscription.status
-                    })
+                    .update({ subscription_status: subscription.status })
                     .eq('id', tenant.id);
                 
-                // Se a assinatura for cancelada ou expirar, volta para o plano freemium
                 if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
                     await supabase
                         .from('tenants')
@@ -84,3 +169,4 @@ export async function POST(req: Request) {
         return NextResponse.json({ error: 'Erro interno ao processar webhook' }, { status: 500 });
     }
 }
+
