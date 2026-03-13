@@ -72,6 +72,6 @@ Interface Site: Galeria de fotos otimizada, busca com filtros (Tipo, Quartos, Pr
 Página de Roadmap: /updates - Timeline vertical pública para transparência com o cliente.
 
 8. REQUISITOS DE MONETIZAÇÃO
-- Freemium: Limite de 20 leads/mês.
+- Freemium: Limite de 30 leads/mês.
 - Starter: Domínio crmlax.com/sualoja.
 - Pro: Domínio Próprio, IA ilimitada (ou créditos altos) e Módulo de Site.

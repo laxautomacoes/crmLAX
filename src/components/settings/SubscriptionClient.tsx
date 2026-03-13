@@ -130,7 +130,8 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
+        <div className="bg-card -m-4 md:-m-8 p-4 md:p-8 min-h-screen">
+            <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="text-center md:text-left">
                     <h1 className="text-2xl font-bold text-foreground">Assinatura</h1>
@@ -166,7 +167,7 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
                             onClick={() => {
                                 setSelectedPlan(plan.key);
                             }}
-                            className={`relative flex flex-col rounded-2xl border-2 bg-card p-6 transition-all cursor-pointer hover:shadow-xl hover:-translate-y-1 ${
+                            className={`relative flex flex-col rounded-2xl border-2 bg-background p-6 transition-all cursor-pointer hover:shadow-xl hover:-translate-y-1 ${
                                 plan.key === selectedPlan 
                                     ? 'border-[#FFE600] shadow-lg shadow-[#FFE600]/10' 
                                     : 'border-border'
@@ -253,6 +254,7 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
             <p className="text-center text-xs text-muted-foreground">
                 Para upgrades ou dúvidas, entre em contato: <a href="mailto:contato@laxperience.online" className="font-semibold text-foreground hover:underline">contato@laxperience.online</a>
             </p>
+            </div>
         </div>
     );
 }
