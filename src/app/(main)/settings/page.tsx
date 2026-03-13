@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ProfileTab } from '@/components/settings/ProfileTab';
 import { BrandingTab } from '@/components/settings/BrandingTab';
+import { DomainTab } from '@/components/settings/DomainTab';
 import { getProfile } from '@/app/_actions/profile';
 import { Save, Loader2 } from 'lucide-react';
 
@@ -35,7 +36,10 @@ export default function SettingsPage() {
 
     const tabs = [
         { id: 'profile', label: 'Perfil' },
-        ...(hasBrandingAccess ? [{ id: 'branding', label: 'Branding' }] : [])
+        ...(hasBrandingAccess ? [
+            { id: 'branding', label: 'Branding' },
+            { id: 'domain', label: 'Domínio' }
+        ] : [])
     ];
 
     if (loading) return null;
@@ -82,6 +86,7 @@ export default function SettingsPage() {
             <div>
                 {activeTab === 'profile' && <ProfileTab />}
                 {activeTab === 'branding' && hasBrandingAccess && <BrandingTab />}
+                {activeTab === 'domain' && hasBrandingAccess && <DomainTab />}
             </div>
         </div>
     );

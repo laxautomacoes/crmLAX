@@ -18,13 +18,25 @@ export default async function proxy(request: NextRequest) {
         }
     }
 
-    // 3. Se for request de site público e temos tenant, redirecionar para /site/[slug]
-    if (tenant && !isSiteRequest(pathname) && !pathname.startsWith('/dashboard') && !pathname.startsWith('/api')) {
-        // Se acessando raiz do site do tenant, redirecionar para /site/[slug]
+    // 3. Se for request de site público (não dashboard/api) e temos tenant
+    if (tenant && !pathname.startsWith('/dashboard') && !pathname.startsWith('/api') && !pathname.startsWith('/_next')) {
+        // Se acessando raiz do site do tenant, redirecionar ou reescrever
         if (pathname === '/') {
+            // Se for domínio customizado, fazemos um REWRITE interno para manter a URL limpa
+            if (tenant.custom_domain && hostname.includes(tenant.custom_domain)) {
+                return NextResponse.rewrite(new URL(`/site/${tenant.slug}`, request.url))
+            }
+            
+            // Se for subdomínio padrão, fazemos REDIRECT para a estrutura de slugs (opcional, mas mantendo compatibilidade atual)
             const url = request.nextUrl.clone()
             url.pathname = `/site/${tenant.slug}`
             return NextResponse.redirect(url)
+        }
+
+        // Se o domínio for customizado e a URL não começar com /site/
+        // fazemos o rewrite interno para /site/[slug]/...
+        if (tenant.custom_domain && hostname.includes(tenant.custom_domain) && !pathname.startsWith('/site/')) {
+            return NextResponse.rewrite(new URL(`/site/${tenant.slug}${pathname}`, request.url))
         }
     }
 

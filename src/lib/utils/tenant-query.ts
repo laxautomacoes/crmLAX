@@ -20,7 +20,7 @@ async function getTenantByCustomDomain(
 ): Promise<TenantInfo | null> {
     const { data } = await supabase
         .from('tenants')
-        .select('id, slug, name, custom_domain')
+        .select('id, slug, name, custom_domain, custom_domain_verified')
         .eq('custom_domain', hostname)
         .single();
 
@@ -31,7 +31,7 @@ export async function getTenantBySlug(slug: string): Promise<TenantInfo | null> 
     const supabase = await createClient();
     const { data } = await supabase
         .from('tenants')
-        .select('id, slug, name, custom_domain, branding')
+        .select('id, slug, name, custom_domain, branding, custom_domain_verified, plan_type')
         .eq('slug', slug)
         .single();
 
@@ -57,7 +57,7 @@ async function getTenantBySubdomain(
 
     const { data } = await supabase
         .from('tenants')
-        .select('id, slug, name, custom_domain')
+        .select('id, slug, name, custom_domain, custom_domain_verified')
         .eq('slug', subdomain)
         .single();
 

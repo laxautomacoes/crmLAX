@@ -10,6 +10,8 @@ import { sendPropertyEmail, logInteraction } from '@/app/_actions/messaging'
 import { getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
 import { formatPhone } from '@/lib/utils/phone'
+import { getPropertyUrl } from '@/lib/utils/url'
+import { createClient } from '@/lib/supabase/client'
 
 interface SendToLeadModalProps {
     isOpen: boolean
@@ -26,6 +28,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     const [selectedLead, setSelectedLead] = useState<any>(null)
     const [sending, setSending] = useState(false)
     const [currentBroker, setCurrentBroker] = useState<any>(null)
+    const [tenant, setTenant] = useState<any>(null)
     
     // Configuration State
     const [config, setConfig] = useState<{
@@ -83,8 +86,20 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (isOpen) {
             fetchLeads()
             fetchCurrentBroker()
+            fetchTenant()
         }
     }, [isOpen])
+
+    const fetchTenant = async () => {
+        const supabase = createClient()
+        const { data } = await supabase
+            .from('tenants')
+            .select('slug, custom_domain, custom_domain_verified')
+            .eq('id', tenantId)
+            .single()
+        
+        if (data) setTenant(data)
+    }
 
     const fetchCurrentBroker = async () => {
         const { profile } = await getProfile()
@@ -141,8 +156,6 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         setSending(true)
         const cleanPhone = lead.phone.replace(/\D/g, '')
         
-        const origin = typeof window !== 'undefined' ? window.location.origin : 'http://localhost:3000'
-        
         // Build config query params
         const queryParams = new URLSearchParams()
         if (currentBroker) queryParams.set('b', currentBroker.id)
@@ -180,7 +193,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         }
 
         const queryString = queryParams.toString()
-        const propertyUrl = `${origin}/site/${tenantSlug}/property/${property.id}${queryString ? `?${queryString}` : ''}`
+        const propertyUrl = getPropertyUrl(tenant || { slug: tenantSlug }, property.id) + (queryString ? `?${queryString}` : '')
         
         // Build dynamic message
         let message = `Olá ${lead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste imóvel que pode te interessar:\n\n`

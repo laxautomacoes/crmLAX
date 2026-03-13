@@ -3,6 +3,7 @@
 import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { getTenantFromHeaders } from '@/lib/utils/tenant'
+import { getPropertyUrl } from '@/lib/utils/url'
 import { headers } from 'next/headers'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
@@ -14,12 +15,6 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     const brokerId = user?.id
-
-    // Obter o host atual para construir a URL
-    const headersList = await headers()
-    const host = headersList.get('host') || 'laxperience.online'
-    const protocol = host.includes('localhost') ? 'http' : 'https'
-    
     // Build config query params for the URL
     const queryParams = new URLSearchParams()
     if (brokerId) queryParams.set('b', brokerId)
@@ -64,7 +59,7 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
     }
 
     const queryString = queryParams.toString()
-    const propertyUrl = `${protocol}://${host}/site/${tenant.slug}/property/${propertyData.id}${queryString ? `?${queryString}` : ''}`
+    const propertyUrl = getPropertyUrl(tenant, propertyData.id) + (queryString ? `?${queryString}` : '')
 
     // Apply configuration if provided
     const displayTitle = config?.title !== false ? propertyData.title : 'Imóvel disponível'

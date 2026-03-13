@@ -51,3 +51,56 @@ export async function updateTenantBranding(tenantId: string, brandingData: any) 
     
     return { success: true }
 }
+export async function updateTenantDomain(tenantId: string, domain: string | null) {
+    const supabase = await createClient()
+
+    // Validação básica de formato se não for null
+    if (domain && !/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/.test(domain)) {
+        return { success: false, error: 'Formato de domínio inválido.' }
+    }
+
+    const { error } = await supabase
+        .from('tenants')
+        .update({ 
+            custom_domain: domain,
+            custom_domain_verified: false, // Resetar verificação ao mudar
+            custom_domain_updated_at: new Date().toISOString()
+        })
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/settings')
+    
+    return { success: true }
+}
+
+export async function verifyTenantDomain(tenantId: string) {
+    const supabase = await createClient()
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('id', tenantId)
+        .single()
+
+    if (!tenant?.custom_domain) return { success: false, error: 'Nenhum domínio configurado.' }
+
+    // TODO: Integrar com API da Vercel para verificar status real
+    // Por enquanto, simulamos uma verificação bem-sucedida se o domínio estiver preenchido
+    // para que o usuário possa testar o fluxo básico.
+    
+    const { error } = await supabase
+        .from('tenants')
+        .update({ 
+            custom_domain_verified: true,
+            custom_domain_updated_at: new Date().toISOString()
+        })
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/settings')
+    
+    return { success: true }
+}
