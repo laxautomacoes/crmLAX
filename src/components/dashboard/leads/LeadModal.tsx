@@ -11,7 +11,8 @@ import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { AssetAutocomplete } from '@/components/dashboard/assets/AssetAutocomplete'
-import { Calendar, MessageSquare, X } from 'lucide-react'
+import { Calendar, MessageSquare, X, Sparkles, User, Info } from 'lucide-react'
+import LeadAICard from '@/components/ai/LeadAICard'
 
 interface LeadModalProps {
     isOpen: boolean
@@ -20,6 +21,7 @@ interface LeadModalProps {
     stages: Array<{ id: string; name: string }>
     onSuccess: () => void
     editingLead?: any // Para edição
+    hasAIAccess: boolean
 }
 
 export function LeadModal({
@@ -28,7 +30,8 @@ export function LeadModal({
     tenantId,
     stages,
     onSuccess,
-    editingLead
+    editingLead,
+    hasAIAccess
 }: LeadModalProps) {
     const [isLoading, setIsLoading] = useState(false)
     const [brokers, setBrokers] = useState<any[]>([])
@@ -57,6 +60,7 @@ export function LeadModal({
         videos: [] as string[],
         documents: [] as { name: string; url: string }[]
     })
+    const [activeTab, setActiveTab] = useState<'info' | 'ai'>('info')
 
     const INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira']
 
@@ -227,8 +231,30 @@ export function LeadModal({
             title={editingLead ? "Editar Lead" : "Novo Lead"}
             size="lg"
         >
-            <div className="space-y-4">
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-6">
+                {/* Tabs for IA if editing */}
+                {editingLead?.id && (
+                    <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl mb-6">
+                        <button
+                            onClick={() => setActiveTab('info')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'info' ? 'bg-white text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            <User size={16} />
+                            Informações
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('ai')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'ai' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                        >
+                            <Sparkles size={16} />
+                            IA & Matchmaking
+                        </button>
+                    </div>
+                )}
+
+                {activeTab === 'info' ? (
+                    <div className="space-y-4">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {/* Linha 1: Nome e Data */}
                     <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
                         <div className="flex-1 md:flex-[2]">
@@ -431,6 +457,23 @@ export function LeadModal({
                         />
                     </div>
                 </div>
+            </div>
+            ) : (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <LeadAICard 
+                            leadId={editingLead.id}
+                            tenantId={tenantId}
+                            profileId={editingLead.assigned_to}
+                            leadName={leadData.name}
+                            leadSource={leadData.lead_source}
+                            interactions={(editingLead.whatsapp_chat || []).map((m: any) => 
+                                `${m.fromMe ? 'Corretor' : 'Lead'}: ${m.message || m.text || ''}`
+                            )}
+                            hasAIAccess={hasAIAccess}
+                        />
+                    </div>
+                )}
+
                 <div className="flex gap-3 pt-2">
                     <button
                         onClick={onClose}

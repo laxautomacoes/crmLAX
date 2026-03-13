@@ -8,6 +8,7 @@ import LeadsBySourceChart from './LeadsBySourceChart';
 import LeadsEvolutionChart from './LeadsEvolutionChart';
 import TeamPerformanceTable from './TeamPerformanceTable';
 import TopPropertiesTable from './TopPropertiesTable';
+import AIInsightsCard from '@/components/ai/AIInsightsCard';
 
 interface ReportsClientProps {
     initialMetrics: ReportMetrics;
@@ -15,6 +16,7 @@ interface ReportsClientProps {
     brokers: Array<{ id: string; full_name: string }>;
     properties: Array<{ id: string; title: string }>;
     userProfile: any;
+    hasAIAccess: boolean;
 }
 
 const PERIODS = [
@@ -24,7 +26,7 @@ const PERIODS = [
     { label: 'Últimos 12 meses', value: '12_months' },
 ];
 
-export default function ReportsClient({ initialMetrics, tenantId, brokers, properties, userProfile }: ReportsClientProps) {
+export default function ReportsClient({ initialMetrics, tenantId, brokers, properties, userProfile, hasAIAccess }: ReportsClientProps) {
     // Determinar se o usuário tem acesso restrito (papel 'user')
     const userRole = userProfile?.role?.toLowerCase() || ''
     const isAdmin = ['admin', 'superadmin', 'super_admin', 'super administrador'].includes(userRole)
@@ -138,6 +140,13 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                     </div>
                 </div>
             </div>
+
+            {/* IA Insights */}
+            <AIInsightsCard 
+                tenantId={tenantId} 
+                metrics={metrics} 
+                hasAccess={hasAIAccess} 
+            />
 
             {/* KPIs */}
             <div className={isPending ? 'opacity-50 transition-opacity' : 'transition-opacity'}>

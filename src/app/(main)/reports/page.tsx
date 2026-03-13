@@ -2,6 +2,7 @@ import { getProfile } from '@/app/_actions/profile';
 import { getReportMetrics, getBrokers, getProperties } from '@/app/_actions/reports';
 import ReportsClient from '@/components/reports/ReportsClient';
 import { redirect } from 'next/navigation';
+import { checkPlanFeature } from '@/lib/utils/plan-guard';
 
 export const dynamic = 'force-dynamic';
 
@@ -12,10 +13,11 @@ export default async function ReportsPage() {
         redirect('/login');
     }
 
-    const [metricsResult, brokers, properties] = await Promise.all([
+    const [metricsResult, brokers, properties, hasAIAccess] = await Promise.all([
         getReportMetrics(profile.tenant_id, '30_days'),
         getBrokers(profile.tenant_id),
-        getProperties(profile.tenant_id)
+        getProperties(profile.tenant_id),
+        checkPlanFeature(profile.tenant_id, 'ai')
     ]);
 
     const initialMetrics = metricsResult.success && metricsResult.data ? metricsResult.data : {
@@ -38,6 +40,7 @@ export default async function ReportsPage() {
             brokers={brokers}
             properties={properties}
             userProfile={profile}
+            hasAIAccess={hasAIAccess}
         />
     );
 }

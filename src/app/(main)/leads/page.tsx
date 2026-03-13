@@ -12,6 +12,7 @@ import { LeadModal } from '@/components/dashboard/leads/LeadModal'
 import { getProfile, getBrokers } from '@/app/_actions/profile'
 import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
 import { createStage, deleteStage, duplicateStage, updateStageName } from '@/app/_actions/stages'
+import { checkPlanFeatureAction } from '@/app/_actions/plan'
 import { toast } from 'sonner'
 
 export const dynamic = 'force-dynamic'
@@ -30,6 +31,7 @@ export default function LeadsPage() {
     const [selectedBroker, setSelectedBroker] = useState('all')
     const [editingLead, setEditingLead] = useState<any | null>(null)
     const [isLoading, setIsLoading] = useState(true)
+    const [hasAIAccess, setHasAIAccess] = useState(false)
     const searchParams = useSearchParams()
     const leadIdFromUrl = searchParams.get('id')
 
@@ -40,11 +42,12 @@ export default function LeadsPage() {
                 setTenantId(profile.tenant_id)
                 setUserRole(profile.role)
 
-                const [pipelineResult, brokersResult] = await Promise.all([
+                const [pipelineResult, brokersResult, aiAccessResult] = await Promise.all([
                     getPipelineData(profile.tenant_id),
                     profile.role === 'admin' || profile.role === 'superadmin' 
                         ? getBrokers(profile.tenant_id) 
-                        : Promise.resolve({ success: true, data: [] })
+                        : Promise.resolve({ success: true, data: [] }),
+                    checkPlanFeatureAction(profile.tenant_id, 'ai')
                 ])
 
                 if (pipelineResult.success && pipelineResult.data) {
@@ -56,6 +59,7 @@ export default function LeadsPage() {
                 if (brokersResult.success) {
                     setBrokers(brokersResult.data || [])
                 }
+                setHasAIAccess(aiAccessResult)
             }
         } catch (error) {
             console.error('Erro ao carregar dados:', error)
@@ -279,6 +283,7 @@ export default function LeadsPage() {
                     stages={stages}
                     onSuccess={fetchData}
                     editingLead={editingLead}
+                    hasAIAccess={hasAIAccess}
                 />
             )}
         </div>

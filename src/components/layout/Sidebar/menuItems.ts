@@ -25,7 +25,8 @@ export const menuItems = [
             { name: 'Meu Perfil', href: '/settings' },
             { name: 'Equipe', href: '/settings/team', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
             { name: 'Integração', href: '/settings/integrations' },
-            { name: 'Notificações', href: '/notifications' }
+            { name: 'Notificações', href: '/notifications' },
+            { name: 'Assinatura', href: '/settings/subscription', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] }
         ]
     },
 ];

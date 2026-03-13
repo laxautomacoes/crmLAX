@@ -7,6 +7,7 @@ import { getProfile } from '@/app/_actions/profile'
 import { getAssets, createAsset, updateAsset, deleteAsset } from '@/app/_actions/assets'
 import { initStorageBuckets } from '@/app/_actions/storage'
 import { getTenantByUserId } from '@/app/_actions/tenant'
+import { checkPlanFeatureAction } from '@/app/_actions/plan'
 import { toast } from 'sonner'
 import { PropertyGallery } from '@/components/dashboard/properties/PropertyGallery'
 import { PropertyList } from '@/components/dashboard/properties/PropertyList'
@@ -26,6 +27,7 @@ export default function PropertiesPage() {
     const [isSendModalOpen, setIsSendModalOpen] = useState(false)
     const [isFiltersOpen, setIsFiltersOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
+    const [hasAIAccess, setHasAIAccess] = useState(false)
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery')
     const [tenantId, setTenantId] = useState<string | null>(null)
     const [tenantSlug, setTenantSlug] = useState<string>('')
@@ -81,10 +83,14 @@ export default function PropertiesPage() {
                     setTenantSlug(tenant.slug)
                 }
 
-                const result = await getAssets(profile.tenant_id, filters.status === 'all' ? undefined : filters.status)
+                const [result, aiAccessResult] = await Promise.all([
+                    getAssets(profile.tenant_id, filters.status === 'all' ? undefined : filters.status),
+                    checkPlanFeatureAction(profile.tenant_id, 'ai')
+                ])
                 if (result.success) {
                     setProperties(result.data || [])
                 }
+                setHasAIAccess(aiAccessResult)
             }
         } catch (error) {
             console.error('Erro ao carregar imóveis:', error)
@@ -398,6 +404,8 @@ export default function PropertiesPage() {
                 prop={viewingProperty}
                 onSend={handleSend}
                 userRole={userRole}
+                hasAIAccess={hasAIAccess}
+                tenantId={tenantId || ''}
             />
 
             {sendingProperty && tenantId && (
