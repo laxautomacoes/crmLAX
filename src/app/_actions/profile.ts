@@ -5,7 +5,7 @@ import { revalidatePath, unstable_noStore } from 'next/cache'
 import { createNotification } from './notifications'
 import { Resend } from 'resend'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+
 
 export async function getProfile() {
     unstable_noStore()
@@ -135,6 +135,14 @@ export async function requestEmailChange() {
         }
 
         // Enviar e-mail para o suporte/admin principal
+        const resendApiKey = process.env.RESEND_API_KEY;
+        if (!resendApiKey) {
+            console.error('ERRO: RESEND_API_KEY não encontrada.');
+            return { error: 'Serviço de e-mail não configurado' };
+        }
+        
+        const resend = new Resend(resendApiKey);
+
         await resend.emails.send({
             from: 'CRM LAX <noreply@laxperience.online>',
             to: ['contato@laxperience.online'], // E-mail central de suporte/admin

@@ -1,12 +1,17 @@
 import { GoogleGenerativeAI } from "@google/generative-ai";
 
-const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
+/**
+ * Obtém o modelo Gemini 2.0 Flash — motor principal de IA do CRM LAX.
+ * Inicialização "lazy" para evitar erros durante o build se as chaves não estiverem presentes.
+ */
+export function getAIModel() {
+    const apiKey = process.env.GOOGLE_GEMINI_API_KEY;
 
-if (!apiKey) {
-    console.warn('Aviso: GOOGLE_GEMINI_API_KEY não encontrada nas variáveis de ambiente.');
+    if (!apiKey) {
+        console.error('ERRO: GOOGLE_GEMINI_API_KEY não encontrada nas variáveis de ambiente.');
+        throw new Error('Configuração de IA incompleta.');
+    }
+
+    const genAI = new GoogleGenerativeAI(apiKey);
+    return genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });
 }
-
-const genAI = new GoogleGenerativeAI(apiKey || '');
-
-/** Modelo Gemini 2.0 Flash — motor principal de IA do CRM LAX */
-export const aiModel = genAI.getGenerativeModel({ model: 'gemini-2.0-flash' });

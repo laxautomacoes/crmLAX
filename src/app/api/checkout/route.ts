@@ -2,11 +2,18 @@ import { NextResponse } from 'next/server';
 import Stripe from 'stripe';
 import { getProfile } from '@/app/_actions/profile';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-01-27.acacia' as any,
-});
-
 export async function POST(req: Request) {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    
+    if (!stripeSecretKey) {
+        console.error('ERRO: STRIPE_SECRET_KEY não encontrada.');
+        return NextResponse.json({ error: 'Configuração de pagamento incompleta' }, { status: 500 });
+    }
+
+    const stripe = new Stripe(stripeSecretKey, {
+        apiVersion: '2025-01-27.acacia' as any,
+    });
+
     try {
         const { planId } = await req.json();
         const { profile } = await getProfile();

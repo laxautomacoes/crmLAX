@@ -1,6 +1,6 @@
 'use server'
 
-import { aiModel } from '@/lib/ai/gemini';
+import { getAIModel } from '@/lib/ai/gemini';
 import { createClient } from '@/lib/supabase/server';
 import { requirePlanFeature } from '@/lib/utils/plan-guard';
 
@@ -85,7 +85,8 @@ TAREFA:
 Inclua no máximo 5 imóveis com score acima de 50. Se nenhum tiver score > 50, retorne os 3 mais próximos.`;
 
     try {
-        const result = await aiModel.generateContent(prompt);
+        const model = getAIModel();
+        const result = await model.generateContent(prompt);
         const rawText = result.response.text().trim();
 
         // Parse do JSON retornado pelo Gemini

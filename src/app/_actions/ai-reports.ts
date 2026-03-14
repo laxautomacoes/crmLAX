@@ -1,6 +1,6 @@
 'use server'
 
-import { aiModel } from '@/lib/ai/gemini';
+import { getAIModel } from '@/lib/ai/gemini';
 import { createClient } from '@/lib/supabase/server';
 import { requirePlanFeature } from '@/lib/utils/plan-guard';
 import { getReportMetrics } from './reports';
@@ -79,7 +79,8 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
 }`;
 
     try {
-        const result = await aiModel.generateContent(prompt);
+        const model = getAIModel();
+        const result = await model.generateContent(prompt);
         const rawText = result.response.text().trim();
 
         const jsonStart = rawText.indexOf('{');

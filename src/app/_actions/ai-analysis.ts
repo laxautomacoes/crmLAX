@@ -1,6 +1,6 @@
 'use server'
 
-import { aiModel } from "@/lib/ai/gemini";
+import { getAIModel } from "@/lib/ai/gemini";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlanFeature } from "@/lib/utils/plan-guard";
 
@@ -32,7 +32,8 @@ Retorne:
 2. Resumo conciso (2-3 frases) sobre o perfil e principais sinais de interesse ou desinteresse.`;
 
     try {
-        const result = await aiModel.generateContent(prompt);
+        const model = getAIModel();
+        const result = await model.generateContent(prompt);
         const text = result.response.text();
         const supabase = await createClient();
 
