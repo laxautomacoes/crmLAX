@@ -1,9 +1,25 @@
 'use client'
 
 import { useState } from 'react';
-import { Check, Loader2, Plus, Sparkles, Trash2 } from 'lucide-react';
+import { Check, GripVertical, Loader2, Plus, Sparkles, Trash2, Eye, EyeOff } from 'lucide-react';
 import { toast } from 'sonner';
 import { updatePlanConfig, type PlanConfigInput } from '@/app/_actions/plan';
+
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    verticalListSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface PlanCardSuperadminProps {
     plan: PlanConfigInput & {
@@ -43,6 +59,37 @@ export default function PlanCardSuperadmin({ plan, onSaved }: PlanCardSuperadmin
 
     const removeAiFeature = (index: number) =>
         updateField('ai_features', data.ai_features.filter((_, i) => i !== index));
+
+    const toggleIcon = (listKey: 'features' | 'ai_features', index: number) => {
+        const list = [...(data as any)[listKey]];
+        const text = list[index];
+        if (text.startsWith('[no-icon]')) {
+            list[index] = text.replace('[no-icon]', '').trim();
+        } else {
+            list[index] = `[no-icon] ${text}`.trim();
+        }
+        updateField(listKey, list);
+    };
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        })
+    );
+
+    const handleDragEnd = (listKey: 'features' | 'ai_features', event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const list = [...(data as any)[listKey]];
+        const oldIndex = Number(active.id.toString().split('-').pop());
+        const newIndex = Number(over.id.toString().split('-').pop());
+
+        const newList = arrayMove(list, oldIndex, newIndex);
+        updateField(listKey, newList);
+    };
 
     const handleSave = async () => {
         setIsSaving(true);
@@ -113,49 +160,72 @@ export default function PlanCardSuperadmin({ plan, onSaved }: PlanCardSuperadmin
             </div>
 
             {/* Features */}
-            <ul className="mb-4 flex-1 space-y-2">
-                {data.features.map((f, i) => (
-                    <li key={i} className="flex items-center gap-2">
-                        <Check className="h-4 w-4 shrink-0 text-[#00B087]" />
-                        <input
-                            value={f}
-                            onChange={(e) => updateFeature(i, e.target.value)}
-                            className={`${inputCls} flex-1`}
-                        />
-                        <button onClick={() => removeFeature(i)} className="text-red-400 hover:text-red-600 transition-colors">
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                    </li>
-                ))}
+            <div className="mb-4 flex-1">
+                <DndContext 
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(e) => handleDragEnd('features', e)}
+                >
+                    <SortableContext 
+                        items={data.features.map((_, i) => `feat-${i}`)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <ul className="space-y-2">
+                            {data.features.map((f, i) => (
+                                <SortableFeatureItem 
+                                    key={`feat-${i}`} 
+                                    id={`feat-${i}`}
+                                    text={f}
+                                    onUpdate={(val: string) => updateFeature(i, val)}
+                                    onRemove={() => removeFeature(i)}
+                                    onToggleIcon={() => toggleIcon('features', i)}
+                                    inputCls={inputCls}
+                                />
+                            ))}
+                        </ul>
+                    </SortableContext>
+                </DndContext>
                 <button
                     onClick={() => updateField('features', [...data.features, ''])}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 ml-6"
                 >
                     <Plus className="h-3.5 w-3.5" /> Adicionar feature
                 </button>
-            </ul>
+            </div>
 
             {/* AI Features */}
-            <div className="mb-4 rounded-xl bg-[#FFE600]/10 p-3 space-y-2">
-                <p className="flex items-center gap-1.5 text-xs font-bold text-foreground">
+            <div className="mb-4 rounded-xl bg-[#FFE600]/10 p-3">
+                <p className="flex items-center gap-1.5 text-xs font-bold text-foreground mb-2">
                     <Sparkles className="h-3.5 w-3.5" /> Inteligência Artificial
                 </p>
-                {data.ai_features.map((f, i) => (
-                    <div key={i} className="flex items-center gap-2">
-                        <Check className="h-3.5 w-3.5 shrink-0 text-[#FFE600]" />
-                        <input
-                            value={f}
-                            onChange={(e) => updateAiFeature(i, e.target.value)}
-                            className={`${inputCls} flex-1 text-xs`}
-                        />
-                        <button onClick={() => removeAiFeature(i)} className="text-red-400 hover:text-red-600 transition-colors">
-                            <Trash2 className="h-3.5 w-3.5" />
-                        </button>
-                    </div>
-                ))}
+                <DndContext 
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={(e) => handleDragEnd('ai_features', e)}
+                >
+                    <SortableContext 
+                        items={data.ai_features.map((_, i) => `ai-feat-${i}`)}
+                        strategy={verticalListSortingStrategy}
+                    >
+                        <div className="space-y-2">
+                            {data.ai_features.map((f, i) => (
+                                <SortableFeatureItem 
+                                    key={`ai-feat-${i}`} 
+                                    id={`ai-feat-${i}`}
+                                    text={f}
+                                    onUpdate={(val: string) => updateAiFeature(i, val)}
+                                    onRemove={() => removeAiFeature(i)}
+                                    onToggleIcon={() => toggleIcon('ai_features', i)}
+                                    inputCls={inputCls}
+                                    isAi
+                                />
+                            ))}
+                        </div>
+                    </SortableContext>
+                </DndContext>
                 <button
                     onClick={() => updateField('ai_features', [...data.ai_features, ''])}
-                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-1"
+                    className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground transition-colors mt-2 ml-6"
                 >
                     <Plus className="h-3.5 w-3.5" /> Adicionar IA feature
                 </button>
@@ -210,5 +280,63 @@ export default function PlanCardSuperadmin({ plan, onSaved }: PlanCardSuperadmin
                 {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Salvar Plano'}
             </button>
         </div>
+    );
+}
+
+function SortableFeatureItem({ id, text, onUpdate, onRemove, onToggleIcon, inputCls, isAi }: any) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 50 : undefined,
+    };
+
+    const hasNoIcon = text.startsWith('[no-icon]');
+    const displayText = hasNoIcon ? text.replace('[no-icon]', '').trim() : text;
+
+    return (
+        <li ref={setNodeRef} style={style} className="flex items-center gap-2 group">
+            <button {...attributes} {...listeners} className="cursor-grab text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity">
+                <GripVertical className="h-3.5 w-3.5" />
+            </button>
+            
+            <button 
+                onClick={onToggleIcon}
+                className={`flex h-6 w-6 shrink-0 items-center justify-center rounded-md border transition-all ${
+                    hasNoIcon 
+                        ? 'border-dashed border-border hover:border-muted-foreground bg-muted/30' 
+                        : 'border-transparent bg-transparent'
+                }`}
+                title={hasNoIcon ? "Ativar ícone de check" : "Desativar ícone de check"}
+            >
+                {!hasNoIcon && (
+                    <Check className={`h-3.5 w-3.5 ${isAi ? 'text-[#FFE600]' : 'text-[#00B087]'}`} />
+                )}
+                {hasNoIcon && (
+                    <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />
+                )}
+            </button>
+
+            <input
+                value={displayText}
+                onChange={(e) => onUpdate(hasNoIcon ? `[no-icon] ${e.target.value}` : e.target.value)}
+                className={`${inputCls} ${isAi ? 'text-xs' : ''} flex-1`}
+            />
+
+            <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                <button onClick={onRemove} className="text-red-400 hover:text-red-600 transition-colors p-1">
+                    <Trash2 className="h-3.5 w-3.5" />
+                </button>
+            </div>
+        </li>
     );
 }

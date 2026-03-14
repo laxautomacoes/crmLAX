@@ -65,12 +65,16 @@ export default function PricingCard({
       </div>
 
       <ul className="mb-4 flex-1 space-y-2.5 text-left">
-        {features.map((f, index) => (
-          <li key={index} className="flex items-start gap-2 text-sm text-gray-300">
-            <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#00B087]" />
-            {f}
-          </li>
-        ))}
+        {features.map((f, index) => {
+          const hasNoIcon = f.startsWith('[no-icon]');
+          const displayText = hasNoIcon ? f.replace('[no-icon]', '').trim() : f;
+          return (
+            <li key={index} className={`flex items-start gap-2 text-sm text-gray-300 ${hasNoIcon ? 'ml-6' : ''}`}>
+              {!hasNoIcon && <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#00B087]" />}
+              {displayText}
+            </li>
+          );
+        })}
       </ul>
 
       {aiFeatures.length > 0 && (
@@ -78,12 +82,16 @@ export default function PricingCard({
           <p className="flex items-center gap-1.5 text-xs font-black text-[#FFE600] uppercase tracking-wider">
             <Sparkles className="h-3.5 w-3.5" /> Inteligência Artificial
           </p>
-          {aiFeatures.map((f, index) => (
-            <p key={index} className="flex items-start gap-2 text-xs text-gray-300">
-              <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FFE600]" />
-              {f.replace('IA: ', '')}
-            </p>
-          ))}
+          {aiFeatures.map((f, index) => {
+            const hasNoIcon = f.startsWith('[no-icon]');
+            const displayText = hasNoIcon ? f.replace('[no-icon]', '').trim() : f.replace('IA: ', '');
+            return (
+              <p key={index} className={`flex items-start gap-2 text-xs text-gray-300 ${hasNoIcon ? 'ml-5' : ''}`}>
+                {!hasNoIcon && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FFE600]" />}
+                {displayText}
+              </p>
+            );
+          })}
         </div>
       )}
 

@@ -29,7 +29,7 @@ export default async function SubscriptionPage() {
     const { data: allPlanLimits } = await supabase
         .from('plan_limits')
         .select('*')
-        .order('plan_type');
+        .order('display_order');
 
     return (
         <SubscriptionClient

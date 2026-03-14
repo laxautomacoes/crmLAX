@@ -112,6 +112,7 @@ export interface PlanConfigInput {
     has_ai: boolean;
     has_custom_domain: boolean;
     ai_requests_per_month: number;
+    display_order?: number;
 }
 
 /**
@@ -150,8 +151,43 @@ export async function updatePlanConfig(input: PlanConfigInput) {
             has_ai: input.has_ai,
             has_custom_domain: input.has_custom_domain,
             ai_requests_per_month: input.ai_requests_per_month,
+            display_order: input.display_order,
         })
         .eq('plan_type', input.plan_type)
+
+    if (error) return { error: error.message }
+    return { success: true }
+}
+
+/**
+ * Atualiza a ordem de exibição dos planos em lote.
+ */
+export async function updatePlansOrderAction(orders: { plan_type: string, display_order: number }[]) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Não autenticado' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'superadmin') {
+        return { error: 'Sem permissão.' }
+    }
+
+    // Executa atualizações individuais (Supabase não tem bulk update via .update() que varie o valor por ID facilmente sem RPC)
+    const promises = orders.map(item => 
+        supabase
+            .from('plan_limits')
+            .update({ display_order: item.display_order })
+            .eq('plan_type', item.plan_type)
+    )
+
+    const results = await Promise.all(promises)
+    const error = results.find(r => r.error)?.error
 
     if (error) return { error: error.message }
     return { success: true }

@@ -44,7 +44,7 @@ export default function LandingPage() {
       const { data, error } = await supabase
         .from('plan_limits')
         .select('*')
-        .order('plan_type');
+        .order('display_order');
 
       if (error) {
         console.error('Erro ao carregar planos:', error);

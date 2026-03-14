@@ -68,12 +68,16 @@ export default function PlanCardAdmin({
             </div>
 
             <ul className="mb-4 flex-1 space-y-2.5">
-                {plan.features.map((f) => (
-                    <li key={f} className="flex items-start gap-2 text-sm text-foreground/80">
-                        <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#00B087]" />
-                        {f}
-                    </li>
-                ))}
+                {plan.features.map((f) => {
+                    const hasNoIcon = f.startsWith('[no-icon]');
+                    const displayText = hasNoIcon ? f.replace('[no-icon]', '').trim() : f;
+                    return (
+                        <li key={f} className={`flex items-start gap-2 text-sm text-foreground/80 ${hasNoIcon ? 'ml-6' : ''}`}>
+                            {!hasNoIcon && <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#00B087]" />}
+                            {displayText}
+                        </li>
+                    );
+                })}
             </ul>
 
             {plan.aiFeatures.length > 0 && (
@@ -81,12 +85,16 @@ export default function PlanCardAdmin({
                     <p className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                         <Sparkles className="h-3.5 w-3.5" /> Inteligência Artificial
                     </p>
-                    {plan.aiFeatures.map((f) => (
-                        <p key={f} className="flex items-start gap-2 text-xs text-foreground/80">
-                            <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FFE600]" />
-                            {f.replace('IA: ', '')}
-                        </p>
-                    ))}
+                    {plan.aiFeatures.map((f) => {
+                        const hasNoIcon = f.startsWith('[no-icon]');
+                        const displayText = hasNoIcon ? f.replace('[no-icon]', '').trim() : f.replace('IA: ', '');
+                        return (
+                            <p key={f} className={`flex items-start gap-2 text-xs text-foreground/80 ${hasNoIcon ? 'ml-5' : ''}`}>
+                                {!hasNoIcon && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FFE600]" />}
+                                {displayText}
+                            </p>
+                        );
+                    })}
                 </div>
             )}
 

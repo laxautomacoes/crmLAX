@@ -7,6 +7,24 @@ import { getStripePortalUrl, type PlanConfigInput } from '@/app/_actions/plan';
 import { useSearchParams } from 'next/navigation';
 import PlanCardAdmin from './PlanCardAdmin';
 import PlanCardSuperadmin from './PlanCardSuperadmin';
+import { updatePlansOrderAction } from '@/app/_actions/plan';
+
+import {
+    DndContext,
+    closestCenter,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragEndEvent,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    verticalListSortingStrategy,
+    rectSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
 
 interface Plan {
     key: string;
@@ -40,9 +58,10 @@ const planIcons: Record<string, React.ReactNode> = {
 
 import { useRouter } from 'next/navigation';
 
-export default function SubscriptionClient({ currentPlan, aiUsageCount, aiRequestsLimit, userRole, allPlanLimits }: SubscriptionClientProps) {
+export default function SubscriptionClient({ currentPlan, aiUsageCount, aiRequestsLimit, userRole, allPlanLimits: initialPlanLimits }: SubscriptionClientProps) {
     const isSuperadmin = userRole === 'superadmin';
     const router = useRouter();
+    const [allPlanLimits, setAllPlanLimits] = useState(initialPlanLimits);
     const [selectedPlan, setSelectedPlan] = useState<string>(currentPlan);
     const [isSubscribing, setIsSubscribing] = useState<string | null>(null);
     const [isPortaling, setIsPortaling] = useState(false);
@@ -101,6 +120,39 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
         }
     };
 
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 8,
+            },
+        })
+    );
+
+    const handleDragEnd = async (event: DragEndEvent) => {
+        const { active, over } = event;
+        if (!over || active.id === over.id) return;
+
+        const oldIndex = allPlanLimits.findIndex((p) => p.plan_type === active.id);
+        const newIndex = allPlanLimits.findIndex((p) => p.plan_type === over.id);
+
+        const newOrder = arrayMove(allPlanLimits, oldIndex, newIndex);
+        setAllPlanLimits(newOrder);
+
+        // Salvar nova ordem no banco
+        const orderData = newOrder.map((p, index) => ({
+            plan_type: p.plan_type,
+            display_order: index + 1,
+        }));
+
+        const result = await updatePlansOrderAction(orderData);
+        if (result.error) {
+            toast.error('Erro ao salvar nova ordem: ' + result.error);
+            setAllPlanLimits(allPlanLimits); // Revert on error
+        } else {
+            router.refresh();
+        }
+    };
+
     return (
         <div className="bg-card -m-4 md:-m-8 p-4 md:p-8 min-h-screen">
             <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
@@ -141,56 +193,39 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
 
 
             {/* Cards de Planos */}
-            <div className="grid grid-cols-1 gap-6 md:grid-cols-3 mt-4 md:mt-10">
-                {allPlanLimits.map((planLimit) => {
-                    const isCurrent = planLimit.plan_type === currentPlan;
-                    const planData: any = {
-                        key: planLimit.plan_type,
-                        plan_type: planLimit.plan_type,
-                        name: planLimit.display_name || planLimit.plan_type,
-                        price: planLimit.price_text || 'R$ 0',
-                        period: planLimit.period_text || '',
-                        description: planLimit.description_text || '',
-                        features: planLimit.features_list || [],
-                        aiFeatures: planLimit.ai_features_list || [],
-                        ai_features: planLimit.ai_features_list || [],
-                        highlighted: planLimit.is_highlighted || false,
-                        icon: planIcons[planLimit.plan_type as keyof typeof planIcons] || <Zap />,
-                        cta: isCurrent ? 'Plano atual' : `Assinar ${planLimit.display_name || planLimit.plan_type}`,
-                        max_leads_per_month: planLimit.max_leads_per_month ?? 0,
-                        max_assets: planLimit.max_assets ?? 0,
-                        max_users: planLimit.max_users ?? 0,
-                        has_whatsapp: planLimit.has_whatsapp ?? false,
-                        has_ai: planLimit.has_ai ?? false,
-                        has_custom_domain: planLimit.has_custom_domain ?? false,
-                        ai_requests_per_month: planLimit.ai_requests_per_month ?? 0,
-                    };
-
-                    if (isSuperadmin) {
-                        return (
-                            <PlanCardSuperadmin
-                                key={planLimit.plan_type}
-                                plan={planData}
-                                onSaved={() => router.refresh()}
-                            />
-                        );
-                    }
-
-                    return (
-                        <PlanCardAdmin
-                            key={planLimit.plan_type}
-                            plan={planData}
-                            isCurrent={isCurrent}
-                            isSelected={planLimit.plan_type === selectedPlan}
-                            isSubscribing={isSubscribing}
-                            onSelect={() => setSelectedPlan(planLimit.plan_type)}
-                            onSubscribe={(e) => {
-                                e.stopPropagation();
-                                handleSubscribe(planLimit.plan_type);
-                            }}
-                        />
-                    );
-                })}
+            <div className="mt-4 md:mt-10">
+                <DndContext 
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragEnd={handleDragEnd}
+                >
+                    <SortableContext 
+                        items={allPlanLimits.map(p => p.plan_type)}
+                        strategy={rectSortingStrategy}
+                        disabled={!isSuperadmin}
+                    >
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                            {allPlanLimits.map((planLimit) => (
+                                <SortableItem 
+                                    key={planLimit.plan_type} 
+                                    id={planLimit.plan_type}
+                                    disabled={!isSuperadmin}
+                                >
+                                    <PlanItem 
+                                        planLimit={planLimit}
+                                        currentPlan={currentPlan}
+                                        isSuperadmin={isSuperadmin}
+                                        selectedPlan={selectedPlan}
+                                        isSubscribing={isSubscribing}
+                                        setSelectedPlan={setSelectedPlan}
+                                        handleSubscribe={handleSubscribe}
+                                        router={router}
+                                    />
+                                </SortableItem>
+                            ))}
+                        </div>
+                    </SortableContext>
+                </DndContext>
             </div>
 
             {!isSuperadmin && (
@@ -200,5 +235,91 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
             )}
             </div>
         </div>
+    );
+}
+
+function SortableItem({ id, children, disabled }: { id: string; children: React.ReactNode; disabled?: boolean }) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id, disabled });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        zIndex: isDragging ? 50 : undefined,
+        opacity: isDragging ? 0.3 : 1,
+    };
+
+    return (
+        <div ref={setNodeRef} style={style} {...attributes} {...listeners} className="h-full">
+            {children}
+        </div>
+    );
+}
+
+function PlanItem({ 
+    planLimit, 
+    currentPlan, 
+    isSuperadmin, 
+    selectedPlan, 
+    isSubscribing, 
+    setSelectedPlan, 
+    handleSubscribe,
+    router
+}: any) {
+    const isCurrent = planLimit.plan_type === currentPlan;
+    const planData: any = {
+        key: planLimit.plan_type,
+        plan_type: planLimit.plan_type,
+        name: planLimit.display_name || planLimit.plan_type,
+        price: planLimit.price_text || 'R$ 0',
+        period: planLimit.period_text || '',
+        description: planLimit.description_text || '',
+        features: planLimit.features_list || [],
+        aiFeatures: planLimit.ai_features_list || [],
+        ai_features: planLimit.ai_features_list || [],
+        highlighted: planLimit.is_highlighted || false,
+        icon: planIcons[planLimit.plan_type as keyof typeof planIcons] || <Zap />,
+        cta: isCurrent ? 'Plano atual' : `Assinar ${planLimit.display_name || planLimit.plan_type}`,
+        max_leads_per_month: planLimit.max_leads_per_month ?? 0,
+        max_assets: planLimit.max_assets ?? 0,
+        max_users: planLimit.max_users ?? 0,
+        has_whatsapp: planLimit.has_whatsapp ?? false,
+        has_ai: planLimit.has_ai ?? false,
+        has_custom_domain: planLimit.has_custom_domain ?? false,
+        ai_requests_per_month: planLimit.ai_requests_per_month ?? 0,
+        display_order: planLimit.display_order ?? 0,
+    };
+
+    if (isSuperadmin) {
+        return (
+            <PlanCardSuperadmin
+                key={planLimit.plan_type}
+                plan={planData}
+                onSaved={() => router.refresh()}
+            />
+        );
+    }
+
+    return (
+        <SortableItem id={planLimit.plan_type} disabled={true}> {/* Only Superadmin can drag */}
+            <PlanCardAdmin
+                key={planLimit.plan_type}
+                plan={planData}
+                isCurrent={isCurrent}
+                isSelected={planLimit.plan_type === selectedPlan}
+                isSubscribing={isSubscribing}
+                onSelect={() => setSelectedPlan(planLimit.plan_type)}
+                onSubscribe={(e: any) => {
+                    e.stopPropagation();
+                    handleSubscribe(planLimit.plan_type);
+                }}
+            />
+        </SortableItem>
     );
 }
