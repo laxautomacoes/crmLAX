@@ -77,6 +77,7 @@ export default function DashboardClient({ metrics, profileName, tenantId }: Dash
                 tenantId={tenantId}
                 stages={stages}
                 onSuccess={handleSuccess}
+                hasAIAccess={false}
             />
         </div>
     )

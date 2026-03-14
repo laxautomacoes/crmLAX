@@ -144,8 +144,9 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
             {/* IA Insights */}
             <AIInsightsCard 
                 tenantId={tenantId} 
-                metrics={metrics} 
-                hasAccess={hasAIAccess} 
+                profileId={userProfile.id}
+                period={period}
+                hasAIAccess={hasAIAccess} 
             />
 
             {/* KPIs */}
