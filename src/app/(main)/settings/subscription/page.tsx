@@ -23,6 +23,13 @@ export default async function SubscriptionPage() {
     const currentPlan = tenant?.plan_type || 'freemium';
     const limits = await getPlanLimits(profile.tenant_id);
     const aiUsageCount = (aiUsage as any)?.length || 0;
+    const userRole = profile.role || 'user';
+
+    // Para Superadmin: buscar todos os planos disponíveis para edição
+    const { data: allPlanLimits } = await supabase
+        .from('plan_limits')
+        .select('*')
+        .order('plan_type');
 
     return (
         <SubscriptionClient
@@ -30,6 +37,8 @@ export default async function SubscriptionPage() {
             limits={limits}
             aiUsageCount={aiUsageCount}
             aiRequestsLimit={limits?.ai_requests_per_month || 0}
+            userRole={userRole}
+            allPlanLimits={allPlanLimits || []}
         />
     );
 }

@@ -95,3 +95,64 @@ export async function getStripePortalUrl() {
         return { error: error.message }
     }
 }
+
+export interface PlanConfigInput {
+    plan_type: string;
+    name: string;
+    price: string;
+    period: string;
+    description: string;
+    features: string[];
+    ai_features: string[];
+    highlighted: boolean;
+    max_leads_per_month: number;
+    max_assets: number;
+    max_users: number;
+    has_whatsapp: boolean;
+    has_ai: boolean;
+    has_custom_domain: boolean;
+    ai_requests_per_month: number;
+}
+
+/**
+ * Atualiza as configurações de um plano. Apenas Superadmin pode executar.
+ */
+export async function updatePlanConfig(input: PlanConfigInput) {
+    const supabase = await createClient()
+
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { error: 'Não autenticado' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'superadmin') {
+        return { error: 'Sem permissão. Apenas Superadmin pode editar planos.' }
+    }
+
+    const { error } = await supabase
+        .from('plan_limits')
+        .update({
+            display_name: input.name,
+            price_text: input.price,
+            period_text: input.period,
+            description_text: input.description,
+            features_list: input.features,
+            ai_features_list: input.ai_features,
+            is_highlighted: input.highlighted,
+            max_leads_per_month: input.max_leads_per_month,
+            max_assets: input.max_assets,
+            max_users: input.max_users,
+            has_whatsapp: input.has_whatsapp,
+            has_ai: input.has_ai,
+            has_custom_domain: input.has_custom_domain,
+            ai_requests_per_month: input.ai_requests_per_month,
+        })
+        .eq('plan_type', input.plan_type)
+
+    if (error) return { error: error.message }
+    return { success: true }
+}
