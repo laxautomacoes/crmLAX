@@ -11,16 +11,53 @@ import {
   CheckCircle2, 
   MessageSquare,
   Smartphone,
-  Cpu
+  Cpu,
+  Loader2,
+  Sparkles
 } from 'lucide-react';
 import LandingHeader from '@/components/layout/LandingHeader';
 import PricingCard from '@/components/shared/PricingCard';
 import Link from 'next/link';
 import Image from 'next/image';
+import { createClient } from '@/lib/supabase/client';
+import { toast } from 'sonner';
+
+// Mapeamento de ícones por chave de plano (igual ao SubscriptionClient)
+const planIcons: Record<string, React.ReactNode> = {
+  freemium: <Zap className="h-5 w-5 text-amber-500" />,
+  starter: <Sparkles className="h-5 w-5 text-blue-500" />,
+  pro: <Crown className="h-5 w-5 text-[#FFE600]" />,
+};
+
+import { useRouter } from 'next/navigation';
+import { Crown } from 'lucide-react';
 
 export default function LandingPage() {
   const [selectedPlan, setSelectedPlan] = React.useState<string>('Starter');
   const [loadingPlan, setLoadingPlan] = React.useState<string | null>(null);
+  const [plans, setPlans] = React.useState<any[]>([]);
+  const [isLoadingPlans, setIsLoadingPlans] = React.useState(true);
+
+  React.useEffect(() => {
+    async function fetchPlans() {
+      const supabase = createClient();
+      const { data, error } = await supabase
+        .from('plan_limits')
+        .select('*')
+        .order('plan_type');
+
+      if (error) {
+        console.error('Erro ao carregar planos:', error);
+      } else if (data) {
+        setPlans(data);
+        // Tenta encontrar o plano Starter para deixar selecionado por padrão
+        const starterPlan = data.find((p: any) => p.plan_type === 'starter');
+        if (starterPlan) setSelectedPlan(starterPlan.display_name || 'Starter');
+      }
+      setIsLoadingPlans(false);
+    }
+    fetchPlans();
+  }, []);
 
   const handleCheckout = async (planId: string) => {
     try {
@@ -185,60 +222,29 @@ export default function LandingPage() {
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-            <PricingCard 
-              title="Freemium"
-              price="Grátis"
-              isSelected={selectedPlan === 'Freemium'}
-              onClick={() => setSelectedPlan('Freemium')}
-              onAction={() => handleCheckout('freemium')}
-              loading={loadingPlan === 'freemium'}
-              description="Ideal para corretores que estão começando agora."
-              features={[
-                "Até 30 Leads",
-                "Até 50 Imóveis",
-                "Pipeline de Funil de Vendas",
-                "Até 30 agendamentos",
-                "Relatórios Básicos",
-                "Domínio crmlax.com/sua-loja"
-              ]}
-            />
-            <PricingCard 
-              title="Starter"
-              price="R$ 97"
-              isPopular
-              isSelected={selectedPlan === 'Starter'}
-              onClick={() => setSelectedPlan('Starter')}
-              onAction={() => handleCheckout('starter')}
-              loading={loadingPlan === 'starter'}
-              description="Para profissionais que precisam de escala e automação."
-              features={[
-                "Leads Ilimitados",
-                "Até 200 Imóveis",
-                "Agendamentos Ilimitados",
-                "Relatórios Personalizáveis",
-                <span key="ia-starter" className="text-white font-bold">Acesso completo à IA</span>,
-                "Suporte Via WhatsApp"
-              ]}
-            />
-            <PricingCard 
-              title="Pro"
-              price="R$ 197"
-              onClick={() => setSelectedPlan('Pro')}
-              isSelected={selectedPlan === 'Pro'}
-              onAction={() => handleCheckout('pro')}
-              loading={loadingPlan === 'pro'}
-              description="Potência total para imobiliárias e agências de elite."
-              features={[
-                { 
-                  content: <span className="text-white font-bold text-base uppercase tracking-wide">Tudo do Starter</span>,
-                  hideIcon: true 
-                },
-                "Múltiplos Usuários",
-                "Domínio Próprio",
-                "Site Vitrine",
-                "Suporte Prioritário"
-              ]}
-            />
+            {isLoadingPlans ? (
+              // Skeleton loading ou apenas um loader simples
+              <div className="col-span-1 md:col-span-3 flex justify-center py-20">
+                <Loader2 className="w-8 h-8 animate-spin text-[#FFE600]" />
+              </div>
+            ) : (
+              plans.map((plan) => (
+                <PricingCard 
+                  key={plan.plan_type}
+                  title={plan.display_name || plan.plan_type}
+                  price={plan.price_text || 'R$ 0'}
+                  isSelected={selectedPlan === (plan.display_name || plan.plan_type)}
+                  isPopular={plan.is_highlighted}
+                  onClick={() => setSelectedPlan(plan.display_name || plan.plan_type)}
+                  onAction={() => handleCheckout(plan.plan_type)}
+                  loading={loadingPlan === plan.plan_type}
+                  description={plan.description_text || ''}
+                  features={plan.features_list || []}
+                  aiFeatures={plan.ai_features_list || []}
+                  icon={planIcons[plan.plan_type as keyof typeof planIcons]}
+                />
+              ))
+            )}
           </div>
         </div>
       </section>
