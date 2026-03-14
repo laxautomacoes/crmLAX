@@ -6,13 +6,22 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { Resend } from 'resend';
 import { evolutionService } from '@/lib/evolution';
 
-const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-    apiVersion: '2025-01-27.acacia' as any,
-});
 
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 export async function POST(req: Request) {
+    const stripeSecretKey = process.env.STRIPE_SECRET_KEY;
+    const stripeWebhookSecret = process.env.STRIPE_WEBHOOK_SECRET;
+    const resendApiKey = process.env.RESEND_API_KEY;
+
+    if (!stripeSecretKey || !stripeWebhookSecret) {
+        console.error('ERRO: Variáveis de ambiente do Stripe ausentes.');
+        return NextResponse.json({ error: 'Configuração de pagamento incompleta' }, { status: 500 });
+    }
+
+    const stripe = new Stripe(stripeSecretKey, {
+        apiVersion: '2025-01-27.acacia' as any,
+    });
+
     const body = await req.text();
     const signature = (await headers()).get('stripe-signature');
 
@@ -26,7 +35,7 @@ export async function POST(req: Request) {
         event = stripe.webhooks.constructEvent(
             body,
             signature,
-            process.env.STRIPE_WEBHOOK_SECRET!
+            stripeWebhookSecret
         );
     } catch (err: any) {
         console.error(`Webhook Error: ${err.message}`);
@@ -109,7 +118,9 @@ export async function POST(req: Request) {
                 const loginUrl = `${process.env.NEXT_PUBLIC_ROOT_DOMAIN?.startsWith('http') ? '' : 'https://'}${process.env.NEXT_PUBLIC_ROOT_DOMAIN}/login`;
                 
                 // E-mail
-                await resend.emails.send({
+                if (resendApiKey) {
+                    const resend = new Resend(resendApiKey);
+                    await resend.emails.send({
                     from: 'CRM LAX <noreply@laxperience.online>',
                     to: [customerEmail],
                     subject: 'Seja bem-vindo ao CRM LAX - Suas credenciais de acesso',
@@ -125,7 +136,8 @@ export async function POST(req: Request) {
                             <p>Ao entrar, recomendamos que sua primeira ação seja criar uma nova senha segura.</p>
                         </div>
                     `
-                });
+                    });
+                }
 
                 // WhatsApp (se houver número)
                 if (customerPhone) {

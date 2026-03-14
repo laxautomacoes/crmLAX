@@ -6,7 +6,7 @@ import { getTenantFromHeaders } from '@/lib/utils/tenant'
 import { getPropertyUrl } from '@/lib/utils/url'
 import { headers } from 'next/headers'
 
-const resend = new Resend(process.env.RESEND_API_KEY)
+
 
 export async function sendPropertyEmail(leadId: string, leadEmail: string, propertyData: any, config?: any) {
     const tenant = await getTenantFromHeaders()
@@ -70,6 +70,12 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
     const details = propertyData.details || {}
     
     try {
+        if (!process.env.RESEND_API_KEY) {
+            console.error('ERRO: RESEND_API_KEY não encontrada.')
+            return { success: false, error: 'Serviço de e-mail não configurado' }
+        }
+
+        const resend = new Resend(process.env.RESEND_API_KEY)
         const { data, error } = await resend.emails.send({
             from: `${tenant.name} <noreply@laxperience.online>`,
             to: [leadEmail],

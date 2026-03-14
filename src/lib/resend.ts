@@ -1,13 +1,13 @@
 import { Resend } from 'resend';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-
 export async function sendInvitationEmail(email: string, inviteLink: string, tenantName: string) {
     if (!process.env.RESEND_API_KEY) {
         const error = 'RESEND_API_KEY is not set. Email not sent.';
         console.warn(error);
         return { error };
     }
+
+    const resend = new Resend(process.env.RESEND_API_KEY);
 
     try {
         const fromEmail = process.env.RESEND_FROM_EMAIL || 'CRM LAX <noreply@laxperience.online>';
