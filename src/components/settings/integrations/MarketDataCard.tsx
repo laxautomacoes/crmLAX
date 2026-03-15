@@ -18,7 +18,7 @@ const cubByUF: Record<string, string> = {
     'RJ': 'R$ 1.892,10',
     'MG': 'R$ 1.815,45',
     'RS': 'R$ 1.983,12',
-    'SC': 'R$ 2.012,50',
+    'SC': 'R$ 3.028,45',
     'PR': 'R$ 1.874,30',
     'BA': 'R$ 1.654,12',
     'PE': 'R$ 1.702,90',
@@ -30,7 +30,13 @@ export function MarketDataCard() {
     const [selectedUF, setSelectedUF] = useState('SP');
 
     const marketData: MarketData[] = [
-        { name: `CUB/${selectedUF}`, value: cubByUF[selectedUF], trend: 'up', change: '+0,45%', period: 'Fev/2026' },
+        { 
+            name: `CUB/${selectedUF}`, 
+            value: cubByUF[selectedUF], 
+            trend: 'up', 
+            change: selectedUF === 'SC' ? '+0,30%' : '+0,45%', 
+            period: 'Fev/2026' 
+        },
         { name: 'IGP-M', value: '0,15%', trend: 'down', change: '-0,05%', period: 'Mar/2026' },
         { name: 'INCC-M', value: '0,32%', trend: 'up', change: '+0,12%', period: 'Fev/2026' },
     ];
