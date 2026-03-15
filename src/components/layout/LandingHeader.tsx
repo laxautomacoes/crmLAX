@@ -23,13 +23,13 @@ export default function LandingHeader() {
       </div>
 
       <nav className="hidden md:flex items-center gap-8">
-        <a href="#funcoes" className="text-base font-bold text-[#FFE600] hover:opacity-80 transition-opacity">
+        <a href="#funcoes" className="text-base font-bold text-white hover:opacity-80 transition-opacity">
           Funcionalidades
         </a>
-        <a href="#planos" className="text-base font-bold text-[#FFE600] hover:opacity-80 transition-opacity">
+        <a href="#planos" className="text-base font-bold text-white hover:opacity-80 transition-opacity">
           Planos
         </a>
-        <a href="#garantias" className="text-base font-bold text-[#FFE600] hover:opacity-80 transition-opacity">
+        <a href="#garantias" className="text-base font-bold text-white hover:opacity-80 transition-opacity">
           Garantias
         </a>
       </nav>
