@@ -39,23 +39,18 @@ export function IntegrationEndpointCard({
         <div className="group bg-card hover:bg-muted/30 rounded-2xl border border-border hover:border-secondary/50 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-secondary/5 hover:-translate-y-1">
             <div className="p-6">
                 <div className="flex items-start justify-between gap-4 mb-6">
-                    <div className="flex items-center gap-4">
-                        <div className={`p-3.5 rounded-2xl ${iconColor} shadow-sm transition-transform duration-500 group-hover:rotate-12`}>
-                            <Icon size={26} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2 mb-1">
-                                <h3 className="text-lg font-black text-foreground tracking-tight">{title}</h3>
-                                <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20">
-                                    <span className="relative flex h-2 w-2">
-                                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
-                                    </span>
-                                    <span className="text-[10px] font-bold uppercase tracking-wider">Ativo</span>
-                                </div>
+                    <div>
+                        <div className="flex items-center gap-2 mb-1">
+                            <h3 className="text-lg font-black text-foreground tracking-tight">{title}</h3>
+                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20">
+                                <span className="relative flex h-2 w-2">
+                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                                </span>
+                                <span className="text-[10px] font-bold uppercase tracking-wider">Ativo</span>
                             </div>
-                            <p className="text-sm text-muted-foreground leading-relaxed max-w-[240px]">{description}</p>
                         </div>
+                        <p className="text-sm text-muted-foreground leading-relaxed max-w-full">{description}</p>
                     </div>
                 </div>
 
