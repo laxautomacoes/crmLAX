@@ -99,5 +99,31 @@ export const evolutionService = {
                 textMessage: { text: message },
             }),
         });
+    },
+
+    async sendMedia(instanceName: string, number: string, mediaUrl: string, mediaType: 'image' | 'video', caption?: string) {
+        const endpoint = mediaType === 'image' ? `/message/sendImage/${instanceName}` : `/message/sendVideo/${instanceName}`;
+        return evolutionFetch(endpoint, {
+            method: 'POST',
+            body: JSON.stringify({
+                number,
+                options: { delay: 1200, presence: 'composing' },
+                media: mediaUrl,
+                caption: caption || ''
+            }),
+        });
+    },
+
+    async sendDocument(instanceName: string, number: string, documentUrl: string, fileName: string, caption?: string) {
+        return evolutionFetch(`/message/sendDocument/${instanceName}`, {
+            method: 'POST',
+            body: JSON.stringify({
+                number,
+                options: { delay: 1200, presence: 'composing' },
+                document: documentUrl,
+                fileName,
+                caption: caption || ''
+            }),
+        });
     }
 };
