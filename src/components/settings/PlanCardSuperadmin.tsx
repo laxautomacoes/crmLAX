@@ -107,8 +107,8 @@ export default function PlanCardSuperadmin({ plan, onSaved }: PlanCardSuperadmin
         'w-full rounded-lg border border-border bg-muted px-2 py-1 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] transition-all';
 
     return (
-        <div className={`relative flex flex-col rounded-2xl border-2 bg-background p-6 transition-all ${
-            data.highlighted ? 'border-[#FFE600] shadow-lg shadow-[#FFE600]/10' : 'border-border'
+        <div className={`relative flex flex-col rounded-2xl border bg-background p-6 transition-all ${
+            data.highlighted ? 'border-[#FFE600] shadow-xl shadow-[#FFE600]/10' : 'border-muted-foreground/50'
         }`}>
             {/* Badge "Mais Popular" toggle */}
             <button

@@ -35,10 +35,10 @@ export default function PlanCardAdmin({
     return (
         <div
             onClick={onSelect}
-            className={`relative flex flex-col rounded-2xl border-2 bg-background p-6 transition-all cursor-pointer hover:shadow-xl hover:-translate-y-1 ${
+            className={`relative flex flex-col rounded-2xl border bg-background p-6 transition-all cursor-pointer hover:shadow-xl hover:-translate-y-1 ${
                 isSelected
                     ? 'border-[#FFE600] shadow-lg shadow-[#FFE600]/10'
-                    : 'border-border'
+                    : 'border-muted-foreground/50'
             } ${isCurrent ? 'ring-2 ring-primary/30 !cursor-default !hover:translate-y-0 !hover:shadow-none' : ''}`}
         >
             {plan.highlighted && (

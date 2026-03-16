@@ -50,7 +50,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
                 <div
                     key={index}
                     onClick={() => router.push(kpi.href)}
-                    className="bg-card px-4 py-4 md:p-6 rounded-lg shadow-sm border border-muted-foreground/30 relative overflow-hidden 
+                    className="bg-card px-4 py-4 md:p-6 rounded-lg border border-muted-foreground/50 relative overflow-hidden 
                        grid grid-cols-4 md:grid-cols-2 items-center md:items-start gap-2 md:gap-x-0 md:gap-y-2 justify-items-center md:justify-items-start
                        cursor-pointer hover:bg-muted/30 transition-all hover:shadow-md group"
                 >

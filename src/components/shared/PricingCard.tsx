@@ -37,10 +37,10 @@ export default function PricingCard({
       onClick={onClick}
       whileHover={{ y: -5 }}
       whileTap={{ scale: 0.98 }}
-      className={`relative flex flex-col rounded-2xl border-2 bg-[#1A2020] p-6 transition-all cursor-pointer ${
+      className={`relative flex flex-col rounded-2xl border bg-card p-6 transition-all cursor-pointer ${
         isSelected
             ? 'border-[#FFE600] shadow-xl shadow-[#FFE600]/10 ring-1 ring-[#FFE600]'
-            : 'border-white/5 hover:border-[#FFE600]/20'
+            : 'border-muted-foreground/50 hover:border-[#FFE600]/20'
       }`}
     >
       {isPopular && (
@@ -54,14 +54,14 @@ export default function PricingCard({
           {icon || <Sparkles className="h-5 w-5 text-[#FFE600]" />}
         </div>
         <div>
-          <p className="font-bold text-white text-base">{title}</p>
-          <p className="text-xs text-gray-400">{description}</p>
+          <p className="font-bold text-foreground text-base">{title}</p>
+          <p className="text-xs text-muted-foreground">{description}</p>
         </div>
       </div>
 
       <div className="mb-6 text-left">
-        <span className="text-3xl font-bold text-white">{price}</span>
-        <span className="text-sm text-gray-400 ml-1">{period}</span>
+        <span className="text-3xl font-bold text-foreground">{price}</span>
+        <span className="text-sm text-muted-foreground ml-1">{period}</span>
       </div>
 
       <ul className="mb-4 flex-1 space-y-2.5 text-left">
@@ -69,7 +69,7 @@ export default function PricingCard({
           const hasNoIcon = f.startsWith('[no-icon]');
           const displayText = hasNoIcon ? f.replace('[no-icon]', '').trim() : f;
           return (
-            <li key={index} className={`flex items-start gap-2 text-sm text-gray-300 ${hasNoIcon ? 'ml-6' : ''}`}>
+            <li key={index} className={`flex items-start gap-2 text-sm text-foreground/80 ${hasNoIcon ? 'ml-6' : ''}`}>
               {!hasNoIcon && <Check className="mt-0.5 h-4 w-4 shrink-0 text-[#00B087]" />}
               {displayText}
             </li>
@@ -86,7 +86,7 @@ export default function PricingCard({
             const hasNoIcon = f.startsWith('[no-icon]');
             const displayText = hasNoIcon ? f.replace('[no-icon]', '').trim() : f.replace('IA: ', '');
             return (
-              <p key={index} className={`flex items-start gap-2 text-xs text-gray-300 ${hasNoIcon ? 'ml-5' : ''}`}>
+              <p key={index} className={`flex items-start gap-2 text-xs text-foreground/80 ${hasNoIcon ? 'ml-5' : ''}`}>
                 {!hasNoIcon && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FFE600]" />}
                 {displayText}
               </p>

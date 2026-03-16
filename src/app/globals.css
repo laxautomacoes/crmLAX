@@ -12,11 +12,11 @@ html {
 
 :root {
   color-scheme: light;
-  --background: #F0F2F5;
+  --background: #FFFFFF;
   --foreground: #404F4F;
-  --card: #FFFFFF;
+  --card: #F0F2F5;
   --card-foreground: #404F4F;
-  --popover: #FFFFFF;
+  --popover: #F0F2F5;
   --popover-foreground: #404F4F;
   --primary: #404F4F;
   --primary-foreground: #FFFFFF;
