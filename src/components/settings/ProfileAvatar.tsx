@@ -90,13 +90,13 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
     };
 
     return (
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-full">
-            <div className="flex items-center gap-2 mb-6">
+        <div className="bg-card p-6 pt-5 rounded-2xl border border-border shadow-sm flex flex-col h-full">
+            <div className="flex items-center gap-2 mb-4">
                 <Camera className="text-muted-foreground" size={20} />
                 <h2 className="font-semibold text-foreground">Foto</h2>
             </div>
 
-            <div className="flex flex-col items-center flex-1 justify-center">
+            <div className="flex flex-col items-center justify-start pt-8">
                 {message && (
                     <div className="mb-4 w-full">
                         <MessageBanner type={message.type} text={message.text} />

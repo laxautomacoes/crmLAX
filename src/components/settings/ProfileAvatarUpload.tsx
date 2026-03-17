@@ -15,7 +15,7 @@ export function ProfileAvatarUpload({ profile, uploading, onUpload, onDelete }: 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     return (
-        <div className="flex flex-col items-center flex-1 justify-center">
+        <div className="flex flex-col items-center">
             <div className="relative group">
                 <div
                     className="cursor-pointer"
@@ -65,6 +65,7 @@ export function ProfileAvatarUpload({ profile, uploading, onUpload, onDelete }: 
                 {uploading ? 'Enviando...' : 'JPG, PNG ou WebP'}
             </p>
             <p className="text-xs text-muted-foreground">Máximo 2MB</p>
+            <p className="text-[11px] text-muted-foreground mt-0.5">Tamanho sugerido: 1:1 (200x200 px)</p>
         </div>
     );
 }

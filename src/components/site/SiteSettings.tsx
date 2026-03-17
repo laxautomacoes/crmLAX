@@ -1,0 +1,629 @@
+'use client'
+
+import { useState, useEffect } from 'react'
+import { 
+    Image as ImageIcon, 
+    Upload, 
+    Loader2, 
+    Trash2, 
+    Globe, 
+    CheckCircle2, 
+    AlertCircle, 
+    Copy, 
+    Info, 
+    ExternalLink,
+    MapPin,
+    Share2,
+    Palette
+} from 'lucide-react'
+import { createClient } from '@/lib/supabase/client'
+import { getProfile } from '@/app/_actions/profile'
+import { updateTenantBranding, updateTenantDomain, verifyTenantDomain } from '@/app/_actions/tenant'
+import { toast } from 'sonner'
+import { Logo } from '@/components/shared/Logo'
+
+interface BrandingData {
+    logo_full?: string
+    logo_icon?: string
+    logo_height?: number
+    address?: {
+        street?: string
+        number?: string
+        complement?: string
+        neighborhood?: string
+        city?: string
+        state?: string
+        zip_code?: string
+    }
+    social_links?: {
+        instagram?: string
+        facebook?: string
+        linkedin?: string
+        youtube?: string
+        whatsapp?: string
+    }
+    site_description?: string
+}
+
+export function SiteSettings() {
+    const [activeTab, setActiveTab] = useState<'branding' | 'address' | 'social' | 'domain'>('branding')
+    const [loading, setLoading] = useState(true)
+    const [saving, setSaving] = useState(false)
+    const [verifying, setVerifying] = useState(false)
+    const [isUploading, setIsUploading] = useState<'logo_full' | 'logo_icon' | null>(null)
+    const [profile, setProfile] = useState<any>(null)
+    const [tenant, setTenant] = useState<any>(null)
+    const [branding, setBranding] = useState<BrandingData>({})
+    const [domain, setDomain] = useState('')
+
+    useEffect(() => {
+        async function loadData() {
+            const { profile: userProfile } = await getProfile()
+            setProfile(userProfile)
+
+            if (userProfile?.tenant_id) {
+                const supabase = createClient()
+                const { data: tenantData } = await supabase
+                    .from('tenants')
+                    .select('*')
+                    .eq('id', userProfile.tenant_id)
+                    .single()
+
+                if (tenantData) {
+                    setTenant(tenantData)
+                    if (tenantData.branding) {
+                        setBranding(tenantData.branding)
+                    }
+                    if (tenantData.custom_domain) {
+                        setDomain(tenantData.custom_domain)
+                    }
+                }
+            }
+            setLoading(false)
+        }
+        loadData()
+    }, [])
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo_full' | 'logo_icon') => {
+        const file = e.target.files?.[0]
+        if (!file || !profile?.tenant_id) return
+
+        if (type === 'logo_full') {
+            const isValidRatio = await new Promise<boolean>((resolve) => {
+                const img = new Image()
+                img.onload = () => {
+                    const ratio = img.width / img.height
+                    resolve(Math.abs(ratio - 5) < 0.2)
+                }
+                img.onerror = () => resolve(false)
+                img.src = URL.createObjectURL(file)
+            })
+
+            if (!isValidRatio) {
+                toast.error('Proporção não aceita! O logotipo deve estar no padrão 5:1 (ex: 250x50px).')
+                e.target.value = ''
+                return
+            }
+        }
+
+        setIsUploading(type)
+        const supabase = createClient()
+
+        try {
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${type}-${Date.now()}.${fileExt}`
+            const filePath = `${profile.tenant_id}/${fileName}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('branding')
+                .upload(filePath, file, {
+                    upsert: true,
+                    cacheControl: '3600'
+                })
+
+            if (uploadError) throw uploadError
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('branding')
+                .getPublicUrl(filePath)
+
+            const newBranding = { ...branding, [type]: publicUrl };
+            setBranding(newBranding)
+            
+            // Salvar automaticamente após upload do logo
+            await updateTenantBranding(profile.tenant_id, newBranding)
+            
+            window.dispatchEvent(new CustomEvent('branding-updated', { detail: newBranding }))
+            toast.success(`${type === 'logo_full' ? 'Logo' : 'Ícone'} carregado com sucesso!`)
+        } catch (error: any) {
+            console.error(`Error uploading ${type}:`, error)
+            toast.error(`Erro ao carregar imagem: ${error.message}`)
+        } finally {
+            setIsUploading(null)
+            e.target.value = ''
+        }
+    }
+
+    const handleSaveMain = async () => {
+        if (!profile?.tenant_id) return
+        setSaving(true)
+
+        const result = await updateTenantBranding(profile.tenant_id, branding)
+
+        if (result.success) {
+            toast.success('Configurações salvas com sucesso!')
+            window.dispatchEvent(new CustomEvent('branding-updated', { detail: branding }))
+        } else {
+            toast.error('Erro ao salvar: ' + result.error)
+        }
+        setSaving(false)
+    }
+
+    const handleSaveDomain = async () => {
+        if (!profile?.tenant_id) return
+        setSaving(true)
+
+        const result = await updateTenantDomain(profile.tenant_id, domain || null)
+
+        if (result.success) {
+            toast.success('Configurações de domínio salvas!')
+            setTenant({ ...tenant, custom_domain: domain, custom_domain_verified: false })
+        } else {
+            toast.error('Erro ao salvar: ' + result.error)
+        }
+        setSaving(false)
+    }
+
+    const handleVerifyDomain = async () => {
+        if (!profile?.tenant_id) return
+        setVerifying(true)
+
+        const result = await verifyTenantDomain(profile.tenant_id)
+
+        if (result.success) {
+            toast.success('Domínio verificado com sucesso!')
+            setTenant({ ...tenant, custom_domain_verified: true })
+        } else {
+            toast.error('Erro ao verificar: ' + result.error)
+        }
+        setVerifying(false)
+    }
+
+    const handleRemoveLogo = (type: 'logo_full' | 'logo_icon') => {
+        if (confirm(`Deseja remover o ${type === 'logo_full' ? 'logotipo' : 'ícone'}?`)) {
+            const newBranding = { ...branding, [type]: undefined };
+            setBranding(newBranding);
+            updateTenantBranding(profile.tenant_id, newBranding);
+            window.dispatchEvent(new CustomEvent('branding-updated', { detail: newBranding }));
+        }
+    }
+
+    const copyToClipboard = (text: string, label: string) => {
+        navigator.clipboard.writeText(text)
+        toast.success(`${label} copiado!`)
+    }
+
+    const updateAddress = (field: string, value: string) => {
+        setBranding(prev => ({
+            ...prev,
+            address: {
+                ...(prev.address || {}),
+                [field]: value
+            }
+        }))
+    }
+
+    const updateSocial = (field: string, value: string) => {
+        setBranding(prev => ({
+            ...prev,
+            social_links: {
+                ...(prev.social_links || {}),
+                [field]: value
+            }
+        }))
+    }
+
+    if (loading) {
+        return (
+            <div className="flex items-center justify-center min-h-[400px]">
+                <div className="w-8 h-8 border-4 border-secondary/30 border-t-secondary rounded-full animate-spin"></div>
+            </div>
+        )
+    }
+
+    const isPro = tenant?.plan_type === 'pro'
+
+    return (
+        <div className="space-y-6">
+            {/* Tab Navigation */}
+            <div className="flex items-center border-b border-border">
+                <button
+                    onClick={() => setActiveTab('branding')}
+                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'branding' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    <Palette size={16} />
+                    Identidade
+                </button>
+                <button
+                    onClick={() => setActiveTab('address')}
+                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'address' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    <MapPin size={16} />
+                    Endereço
+                </button>
+                <button
+                    onClick={() => setActiveTab('social')}
+                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'social' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    <Share2 size={16} />
+                    Redes Sociais
+                </button>
+                <button
+                    onClick={() => setActiveTab('domain')}
+                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'domain' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    <Globe size={16} />
+                    Domínio
+                </button>
+            </div>
+
+            <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                {/* BRANDING TAB */}
+                {activeTab === 'branding' && (
+                    <div className="space-y-6">
+                        <div className="bg-card border border-border rounded-2xl p-6">
+                            <div className="mb-6">
+                                <h3 className="text-lg font-bold text-foreground">Identidade Visual</h3>
+                                <p className="text-sm text-muted-foreground">Logotipo e favicon exibidos no site e no dashboard.</p>
+                            </div>
+
+                            <div className="flex flex-col md:flex-row gap-8">
+                                {/* Logo Full */}
+                                <div className="flex-1 space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-bold text-foreground">Logotipo Principal</label>
+                                        <p className="text-xs text-muted-foreground">Ideal: 250x50px (5:1)</p>
+                                    </div>
+                                    <div className="relative group min-h-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
+                                        {branding.logo_full ? (
+                                            <>
+                                                <div className="p-4">
+                                                    <Logo size="lg" src={branding.logo_full} height={branding.logo_height || 50} />
+                                                </div>
+                                                <button onClick={() => handleRemoveLogo('logo_full')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <div className="text-center p-4">
+                                                <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                                                <span className="text-xs text-muted-foreground">Clique para fazer upload</span>
+                                            </div>
+                                        )}
+                                        <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 hover:bg-black/20 hover:opacity-100 transition-all">
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo_full')} disabled={!!isUploading} />
+                                            {isUploading === 'logo_full' && <Loader2 className="animate-spin text-white" />}
+                                        </label>
+                                    </div>
+                                    {branding.logo_full && (
+                                        <div className="space-y-2">
+                                            <label className="text-[10px] font-bold text-foreground/60 dark:text-muted-foreground uppercase">Ajustar Tamanho</label>
+                                            <input
+                                                type="range"
+                                                min="20"
+                                                max="60"
+                                                value={branding.logo_height || 50}
+                                                onChange={(e) => setBranding(prev => ({ ...prev, logo_height: parseInt(e.target.value) }))}
+                                                onMouseUp={handleSaveMain}
+                                                className="w-full h-1.5 bg-gray-200 dark:bg-muted rounded-lg appearance-none cursor-pointer accent-secondary transition-colors"
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Logo Icon */}
+                                <div className="flex-1 space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-bold text-foreground">Ícone (Favicon)</label>
+                                        <p className="text-xs text-muted-foreground">Ideal: 200x200px (1:1)</p>
+                                    </div>
+                                    <div className="relative group aspect-square max-w-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
+                                        {branding.logo_icon ? (
+                                            <>
+                                                <img src={branding.logo_icon} className="w-full h-full object-contain p-4" alt="Icon" />
+                                                <button onClick={() => handleRemoveLogo('logo_icon')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                                    <Trash2 size={14} />
+                                                </button>
+                                            </>
+                                        ) : (
+                                            <div className="text-center p-4">
+                                                <ImageIcon className="w-6 h-6 text-muted-foreground mx-auto mb-1" />
+                                                <span className="text-[10px] text-muted-foreground">Upload 1:1</span>
+                                            </div>
+                                        )}
+                                        <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 hover:bg-black/20 hover:opacity-100 transition-all">
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo_icon')} disabled={!!isUploading} />
+                                            {isUploading === 'logo_icon' && <Loader2 className="animate-spin text-white" />}
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* ADDRESS TAB */}
+                {activeTab === 'address' && (
+                    <div className="bg-card border border-border rounded-2xl p-6">
+                        <div className="mb-6">
+                            <h3 className="text-lg font-bold text-foreground">Localização da Imobiliária</h3>
+                            <p className="text-sm text-muted-foreground">Informações de endereço exibidas no rodapé do seu site.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1 md:col-span-2">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Logradouro / Rua</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.address?.street || ''} 
+                                    onChange={(e) => updateAddress('street', e.target.value)}
+                                    placeholder="Ex: Av. Atlântica"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Número</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.address?.number || ''} 
+                                    onChange={(e) => updateAddress('number', e.target.value)}
+                                    placeholder="Ex: 500"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Complemento</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.address?.complement || ''} 
+                                    onChange={(e) => updateAddress('complement', e.target.value)}
+                                    placeholder="Ex: Sala 201"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Bairro</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.address?.neighborhood || ''} 
+                                    onChange={(e) => updateAddress('neighborhood', e.target.value)}
+                                    placeholder="Ex: Centro"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Cidade</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.address?.city || ''} 
+                                    onChange={(e) => updateAddress('city', e.target.value)}
+                                    placeholder="Ex: Balneário Camboriú"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Estado (UF)</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.address?.state || ''} 
+                                    onChange={(e) => updateAddress('state', e.target.value)}
+                                    placeholder="Ex: SC"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">CEP</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.address?.zip_code || ''} 
+                                    onChange={(e) => updateAddress('zip_code', e.target.value)}
+                                    placeholder="00000-000"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-border flex justify-end">
+                            <button
+                                onClick={handleSaveMain}
+                                disabled={saving}
+                                className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+                            >
+                                {saving && <Loader2 size={18} className="animate-spin" />}
+                                Salvar Endereço
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* SOCIAL LINKS TAB */}
+                {activeTab === 'social' && (
+                    <div className="bg-card border border-border rounded-2xl p-6">
+                        <div className="mb-6">
+                            <h3 className="text-lg font-bold text-foreground">Redes Sociais</h3>
+                            <p className="text-sm text-muted-foreground">Links para as redes sociais exibidos no site.</p>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Instagram</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.social_links?.instagram || ''} 
+                                    onChange={(e) => updateSocial('instagram', e.target.value)}
+                                    placeholder="https://instagram.com/sua_empresa"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Facebook</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.social_links?.facebook || ''} 
+                                    onChange={(e) => updateSocial('facebook', e.target.value)}
+                                    placeholder="https://facebook.com/sua_empresa"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">LinkedIn</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.social_links?.linkedin || ''} 
+                                    onChange={(e) => updateSocial('linkedin', e.target.value)}
+                                    placeholder="https://linkedin.com/company/sua_empresa"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                            <div className="space-y-1">
+                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">YouTube</label>
+                                <input 
+                                    type="text" 
+                                    value={branding.social_links?.youtube || ''} 
+                                    onChange={(e) => updateSocial('youtube', e.target.value)}
+                                    placeholder="https://youtube.com/@sua_empresa"
+                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                />
+                            </div>
+                        </div>
+
+                        <div className="mt-8 pt-6 border-t border-border flex justify-end">
+                            <button
+                                onClick={handleSaveMain}
+                                disabled={saving}
+                                className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+                            >
+                                {saving && <Loader2 size={18} className="animate-spin" />}
+                                Salvar Redes Sociais
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* DOMAIN TAB */}
+                {activeTab === 'domain' && (
+                    <div className="space-y-6">
+                        {!isPro ? (
+                            <div className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center text-center space-y-6">
+                                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
+                                    <Globe size={32} />
+                                </div>
+                                <div className="max-w-md space-y-2">
+                                    <h3 className="text-xl font-bold text-foreground">Domínio Próprio</h3>
+                                    <p className="text-muted-foreground">
+                                        Use seu próprio domínio (ex: imoveis.suaempresa.com.br). Disponível no plano <strong className="text-secondary">PRO</strong>.
+                                    </p>
+                                </div>
+                                <button className="px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity">
+                                    Fazer Upgrade para PRO
+                                </button>
+                            </div>
+                        ) : (
+                            <div className="bg-card border border-border rounded-2xl p-6">
+                                <div className="mb-6">
+                                    <h3 className="text-lg font-bold text-foreground">Domínio Customizado</h3>
+                                    <p className="text-sm text-muted-foreground">Configure um domínio oficial para seu site vitrine.</p>
+                                </div>
+
+                                <div className="space-y-6">
+                                    <div className="max-w-xl">
+                                        <label className="text-sm font-bold text-gray-800 ml-1 mb-2 block uppercase tracking-wider">Seu Domínio</label>
+                                        <div className="flex gap-2">
+                                            <div className="relative flex-1">
+                                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                                    <Globe className="h-4 w-4 text-muted-foreground" />
+                                                </div>
+                                                <input
+                                                    type="text"
+                                                    value={domain}
+                                                    onChange={(e) => setDomain(e.target.value.toLowerCase())}
+                                                    placeholder="ex: imoveis.suaempresa.com.br"
+                                                    className="w-full pl-10 pr-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                                />
+                                            </div>
+                                            <button
+                                                onClick={handleSaveDomain}
+                                                disabled={saving || domain === tenant?.custom_domain}
+                                                className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50 text-sm"
+                                            >
+                                                {saving ? <Loader2 size={18} className="animate-spin" /> : 'Salvar'}
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    {tenant?.custom_domain && (
+                                        <div className="border border-border rounded-xl overflow-hidden bg-muted/10">
+                                            <div className="p-4 bg-muted/20 border-b border-border flex items-center justify-between">
+                                                <div className="flex items-center gap-2">
+                                                    <h4 className="font-bold text-sm text-foreground">Configuração de DNS</h4>
+                                                    {tenant.custom_domain_verified ? (
+                                                        <div className="flex items-center gap-1 text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
+                                                            <CheckCircle2 size={12} />
+                                                            <span className="text-[10px] font-bold uppercase">Verificado</span>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="flex items-center gap-1 text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full">
+                                                            <AlertCircle size={12} />
+                                                            <span className="text-[10px] font-bold uppercase">Pendente</span>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                {!tenant.custom_domain_verified && (
+                                                    <button onClick={handleVerifyDomain} disabled={verifying} className="text-xs font-bold text-secondary hover:underline flex items-center gap-1">
+                                                        {verifying && <Loader2 size={12} className="animate-spin" />}
+                                                        Verificar
+                                                    </button>
+                                                )}
+                                            </div>
+                                            
+                                            <div className="p-4 space-y-4">
+                                                {/* DNS Records UI (Simplified from DomainTab) */}
+                                                <div className="space-y-2">
+                                                    <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Tipo: CNAME</span>
+                                                            <span className="font-mono">www</span>
+                                                        </div>
+                                                        <div className="flex flex-col items-end">
+                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Valor</span>
+                                                            <span className="font-mono">cname.vercel-dns.com</span>
+                                                        </div>
+                                                        <button onClick={() => copyToClipboard('cname.vercel-dns.com', 'Valor')} className="text-muted-foreground hover:text-foreground">
+                                                            <Copy size={12} />
+                                                        </button>
+                                                    </div>
+                                                </div>
+                                                <div className="flex items-start gap-2 bg-secondary/5 rounded-lg p-3">
+                                                    <Info size={14} className="text-secondary mt-0.5" />
+                                                    <p className="text-[10px] text-muted-foreground leading-tight">
+                                                        A propagação do DNS pode levar até 24h.
+                                                    </p>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+                    </div>
+                )}
+            </div>
+
+            <div className="bg-muted/30 border border-border rounded-xl p-4">
+                <p className="text-xs text-muted-foreground">
+                    <strong className="text-foreground">Lembrete:</strong> Estas configurações afetam apenas o seu Site Vitrine público. O Dashboard interno utiliza as cores padrão do sistema para manter a consistência operacional.
+                </p>
+            </div>
+        </div>
+    )
+}

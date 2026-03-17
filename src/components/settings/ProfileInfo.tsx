@@ -99,10 +99,10 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
                 <h2 className="font-semibold text-foreground">Informações</h2>
             </div>
 
-            <div className="space-y-4 flex flex-col">
+            <div className="space-y-4 flex flex-col flex-1">
                 {message && <MessageBanner type={message.type} text={message.text} />}
 
-                <div className="space-y-4 min-h-[260px]">
+                <div className="space-y-4 flex-1">
                     <FormInput
                         label="Nome Completo"
                         value={profile?.full_name || ''}
@@ -152,7 +152,7 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
                 <button
                     onClick={handleSaveProfile}
                     disabled={saving}
-                    className="w-full bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                    className="w-full bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-auto"
                 >
                     {saving ? (
                         <span className="flex items-center justify-center gap-2">

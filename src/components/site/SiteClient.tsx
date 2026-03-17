@@ -5,14 +5,16 @@ import { AssetFilters } from './AssetFilters';
 import { AssetsGrid } from './AssetsGrid';
 import { AssetsList } from './AssetsList';
 import { WhatsAppButton } from './WhatsAppButton';
+import { Instagram, Facebook, Linkedin, Youtube, MapPin } from 'lucide-react';
 
 interface SiteClientProps {
     assets: any[];
     tenantName: string;
     whatsappNumber?: string | null;
+    branding?: any;
 }
 
-export function SiteClient({ assets, tenantName, whatsappNumber }: SiteClientProps) {
+export function SiteClient({ assets, tenantName, whatsappNumber, branding }: SiteClientProps) {
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery');
     const [filters, setFilters] = useState({
         tipo: '',
@@ -88,6 +90,67 @@ export function SiteClient({ assets, tenantName, whatsappNumber }: SiteClientPro
                 <AssetsList assets={filteredAssets} />
             )}
             {whatsappNumber && <WhatsAppButton phone={whatsappNumber} />}
+
+            {/* Footer */}
+            <footer className="mt-20 py-12 border-t border-border">
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <div>
+                        <h4 className="font-bold text-lg mb-4 text-[#404F4F]">{tenantName}</h4>
+                        <p className="text-sm text-muted-foreground max-w-xs transition-all">
+                            Sua melhor escolha em imóveis com a tecnologia do CRM LAX.
+                        </p>
+                    </div>
+
+                    <div>
+                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4 text-[#404F4F]">Localização</h4>
+                        {branding?.address?.street ? (
+                            <div className="flex items-start gap-2 text-sm text-muted-foreground">
+                                <MapPin size={18} className="text-secondary shrink-0 mt-0.5" />
+                                <div>
+                                    <p>{branding.address.street}, {branding.address.number}</p>
+                                    <p>{branding.address.neighborhood}</p>
+                                    <p>{branding.address.city} - {branding.address.state}</p>
+                                    <p>{branding.address.zip_code}</p>
+                                </div>
+                            </div>
+                        ) : (
+                            <p className="text-sm text-muted-foreground">Endereço não informado.</p>
+                        )}
+                    </div>
+
+                    <div className="flex flex-col gap-4">
+                        <h4 className="font-bold text-sm uppercase tracking-widest mb-2 text-[#404F4F]">Siga-nos</h4>
+                        <div className="flex items-center gap-4">
+                            {branding?.social_links?.instagram && (
+                                <a href={branding.social_links.instagram} target="_blank" className="p-2 bg-muted/50 rounded-lg hover:bg-secondary hover:text-white transition-all">
+                                    <Instagram size={20} />
+                                </a>
+                            )}
+                            {branding?.social_links?.facebook && (
+                                <a href={branding.social_links.facebook} target="_blank" className="p-2 bg-muted/50 rounded-lg hover:bg-secondary hover:text-white transition-all">
+                                    <Facebook size={20} />
+                                </a>
+                            )}
+                            {branding?.social_links?.linkedin && (
+                                <a href={branding.social_links.linkedin} target="_blank" className="p-2 bg-muted/50 rounded-lg hover:bg-secondary hover:text-white transition-all">
+                                    <Linkedin size={20} />
+                                </a>
+                            )}
+                            {branding?.social_links?.youtube && (
+                                <a href={branding.social_links.youtube} target="_blank" className="p-2 bg-muted/50 rounded-lg hover:bg-secondary hover:text-white transition-all">
+                                    <Youtube size={20} />
+                                </a>
+                            )}
+                        </div>
+                    </div>
+                </div>
+                <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-muted-foreground uppercase font-bold tracking-tighter">
+                    <p>© {new Date().getFullYear()} {tenantName} - Todos os direitos reservados.</p>
+                    <p className="flex items-center gap-1">
+                        Desenvolvido por <span className="text-[#404F4F] font-black">CRM LAX</span>
+                    </p>
+                </div>
+            </footer>
         </>
     );
 }

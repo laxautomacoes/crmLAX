@@ -70,8 +70,8 @@ export function PasswordForm() {
                 <h2 className="font-semibold text-foreground">Alterar Senha</h2>
             </div>
 
-            <div className="space-y-4 flex flex-col">
-                <div className="space-y-4">
+            <div className="space-y-4 flex flex-col flex-1">
+                <div className="space-y-4 flex-1">
                     <FormInput
                         label="Senha Atual"
                         type={showPasswords ? "text" : "password"}
@@ -114,7 +114,7 @@ export function PasswordForm() {
                 <button
                     onClick={handlePasswordChange}
                     disabled={loading}
-                    className="w-full bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-3 px-4 rounded-lg transition-all transform active:scale-[0.99] text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                    className="w-full bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-3 px-4 rounded-lg transition-all transform active:scale-[0.99] text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-auto"
                 >
                     {loading ? (
                         <span className="flex items-center justify-center gap-2">

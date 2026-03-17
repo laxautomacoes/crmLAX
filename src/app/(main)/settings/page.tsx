@@ -35,11 +35,7 @@ export default function SettingsPage() {
     const hasBrandingAccess = ['admin', 'superadmin', 'super_admin', 'super administrador', 'super admin', 'super_administrador'].includes(userRole);
 
     const tabs = [
-        { id: 'profile', label: 'Perfil' },
-        ...(hasBrandingAccess ? [
-            { id: 'branding', label: 'Branding' },
-            { id: 'domain', label: 'Domínio' }
-        ] : [])
+        { id: 'profile', label: 'Perfil' }
     ];
 
     if (loading) return null;
@@ -48,12 +44,12 @@ export default function SettingsPage() {
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <h1 className="text-2xl font-bold text-foreground text-center md:text-left">
-                    {activeTab === 'profile' ? 'Meu Perfil' : 'Branding da Empresa'}
+                    Meu Perfil
                 </h1>
                 <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
             </div>
 
-            {/* Tab Navigation */}
+            {/* Tab Navigation removemos se houver só uma aba, mas vou manter o padrão visual */}
             {tabs.length > 1 && (
                 <div className="flex items-center justify-between border-b border-border">
                     <div className="flex items-center gap-2">
@@ -70,23 +66,11 @@ export default function SettingsPage() {
                             </button>
                         ))}
                     </div>
-
-                    {/* Botão Salvar para Branding no Desktop */}
-                    {activeTab === 'branding' && (
-                        <button
-                            onClick={() => window.dispatchEvent(new CustomEvent('trigger-save-settings'))}
-                            className="hidden md:flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity text-sm"
-                        >
-                            Salvar Alterações
-                        </button>
-                    )}
                 </div>
             )}
 
             <div>
                 {activeTab === 'profile' && <ProfileTab />}
-                {activeTab === 'branding' && hasBrandingAccess && <BrandingTab />}
-                {activeTab === 'domain' && hasBrandingAccess && <DomainTab />}
             </div>
         </div>
     );

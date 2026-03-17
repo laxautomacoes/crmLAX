@@ -73,6 +73,7 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
                     assets={assets}
                     tenantName={tenant.name}
                     whatsappNumber={whatsappNumber}
+                    branding={tenant.branding}
                 />
             </div>
         </div>
