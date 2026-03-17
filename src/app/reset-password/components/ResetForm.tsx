@@ -22,12 +22,6 @@ export function ResetForm({
 
     return (
         <form className="space-y-4 md:space-y-5" onSubmit={onSubmit}>
-            {error && (
-                <div className="bg-red-500/10 border border-red-500/20 text-red-600 px-4 py-2.5 md:py-3 rounded-lg text-xs md:text-sm text-center">
-                    {error}
-                </div>
-            )}
-
             <FormInput
                 label="Nova Senha"
                 type={showPassword ? "text" : "password"}

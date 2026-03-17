@@ -1,44 +1,63 @@
-'use client';
-
 import { useState } from 'react';
-import { Lock } from 'lucide-react';
+import { Lock, Eye, EyeOff } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { createClient } from '@/lib/supabase/client';
-import { MessageBanner } from '@/components/shared/MessageBanner';
+import { toast } from 'sonner';
 
 export function PasswordForm() {
+    const [currentPassword, setCurrentPassword] = useState('');
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [showPasswords, setShowPasswords] = useState(false);
 
     const handlePasswordChange = async () => {
+        if (!currentPassword) {
+            toast.error('Informe a senha atual para continuar.');
+            return;
+        }
+
         if (!newPassword || newPassword.length < 6) {
-            setMessage({ type: 'error', text: 'A senha deve ter pelo menos 6 caracteres.' });
+            toast.error('A nova senha deve ter pelo menos 6 caracteres.');
             return;
         }
 
         if (newPassword !== confirmPassword) {
-            setMessage({ type: 'error', text: 'As senhas não coincidem.' });
+            toast.error('As senhas não coincidem.');
             return;
         }
 
         try {
             setLoading(true);
-            setMessage(null);
 
             const supabase = createClient();
-            const { error } = await supabase.auth.updateUser({
+
+            // 1. Verificar a senha atual (Re-autenticação)
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user?.email) throw new Error('Usuário não encontrado.');
+
+            const { error: signInError } = await supabase.auth.signInWithPassword({
+                email: user.email,
+                password: currentPassword,
+            });
+
+            if (signInError) {
+                throw new Error('Senha atual incorreta.');
+            }
+
+            // 2. Atualizar para a nova senha
+            const { error: updateError } = await supabase.auth.updateUser({
                 password: newPassword
             });
 
-            if (error) throw error;
+            if (updateError) throw updateError;
 
-            setMessage({ type: 'success', text: 'Senha alterada com sucesso!' });
+            toast.success('Senha alterada com sucesso!');
+            setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
         } catch (error: any) {
-            setMessage({ type: 'error', text: 'Erro ao alterar senha: ' + error.message });
+            toast.error(error.message);
         } finally {
             setLoading(false);
         }
@@ -52,30 +71,50 @@ export function PasswordForm() {
             </div>
 
             <div className="space-y-4 flex flex-col">
-                {message && <MessageBanner type={message.type} text={message.text} />}
-                
-                <div className="space-y-4 min-h-[260px]">
+                <div className="space-y-4">
                     <FormInput
-                        label="Nova Senha"
-                        type="password"
-                        placeholder="Mínimo 6 caracteres"
-                        value={newPassword}
-                        onChange={(e) => setNewPassword(e.target.value)}
+                        label="Senha Atual"
+                        type={showPasswords ? "text" : "password"}
+                        placeholder="Sua senha atual"
+                        value={currentPassword}
+                        onChange={(e) => setCurrentPassword(e.target.value)}
+                        icon={Lock}
+                        rightElement={
+                            <button
+                                type="button"
+                                onClick={() => setShowPasswords(!showPasswords)}
+                                className="p-1 hover:text-foreground transition-colors"
+                            >
+                                {showPasswords ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        }
                     />
+
+                    <div className="pt-2 border-t border-border/50">
+                        <FormInput
+                            label="Nova Senha"
+                            type={showPasswords ? "text" : "password"}
+                            placeholder="Mínimo 6 caracteres"
+                            value={newPassword}
+                            onChange={(e) => setNewPassword(e.target.value)}
+                            icon={Lock}
+                        />
+                    </div>
                     
                     <FormInput
                         label="Confirmar Nova Senha"
-                        type="password"
+                        type={showPasswords ? "text" : "password"}
                         placeholder="Digite novamente"
                         value={confirmPassword}
                         onChange={(e) => setConfirmPassword(e.target.value)}
+                        icon={Lock}
                     />
                 </div>
 
                 <button
                     onClick={handlePasswordChange}
                     disabled={loading}
-                    className="w-full bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2 px-4 rounded-lg transition-opacity text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                    className="w-full bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-3 px-4 rounded-lg transition-all transform active:scale-[0.99] text-sm disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                 >
                     {loading ? (
                         <span className="flex items-center justify-center gap-2">
