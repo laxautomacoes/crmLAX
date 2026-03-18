@@ -83,7 +83,7 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
                     className="h-8 w-8 text-sm"
                 />
                 {unreadCount > 0 && (
-                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-card"></span>
+                    <span className="absolute -top-0.5 -right-0.5 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-card md:hidden"></span>
                 )}
             </button>
 
@@ -96,7 +96,9 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
                             label={theme === 'dark' ? "Modo Claro" : "Modo Escuro"}
                             onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                         />
-                        <MenuItem icon={Bell} label="Notificações" href="/notifications" />
+                        <div className="md:hidden">
+                            <MenuItem icon={Bell} label="Notificações" href="/notifications" />
+                        </div>
                         <MenuItem icon={User} label="Configurações" href="/settings" />
                         <MenuItem 
                             icon={Users} 

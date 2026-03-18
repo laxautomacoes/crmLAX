@@ -22,7 +22,7 @@ export function NotificationsHeader({
     onDelete
 }: NotificationsHeaderProps) {
     return (
-        <div className="flex items-center justify-between p-4 px-6 sticky top-0 z-10 bg-card border-b border-border/50 h-[72px]">
+        <div className="flex items-center justify-between p-4 px-4 md:px-6 sticky top-0 z-10 bg-card border-b border-border/50 h-14 md:h-[72px]">
             <div className="flex items-center">
                 <button
                     onClick={onToggleSelectAll}
@@ -35,7 +35,8 @@ export function NotificationsHeader({
                             <Square size={18} className="text-muted-foreground/45 group-hover:text-muted-foreground/60 transition-colors" />
                         )}
                     </div>
-                    <span className="tracking-tight">Selecionar todos</span>
+                    <span className="tracking-tight hidden sm:inline">Selecionar todos</span>
+                    <span className="tracking-tight sm:hidden">Todos</span>
                 </button>
             </div>
 
@@ -60,12 +61,12 @@ export function NotificationsHeader({
                         </button>
                     </div>
                 )}
-                <div className="flex items-center gap-1.5">
-                    <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/90">Total</span>
-                    <span className="text-xs font-bold text-foreground leading-none">{totalCount}</span>
+                <div className="flex items-center gap-1">
+                    <span className="text-[10px] uppercase tracking-wider font-bold text-muted-foreground/90">Lidas</span>
+                    <span className="text-xs font-bold text-foreground leading-none">{totalCount - unreadCount}</span>
                 </div>
                 <div className="h-3 w-px bg-border/50" />
-                <div className="flex items-center gap-1.5">
+                <div className="flex items-center gap-1">
                     <span className="text-[10px] uppercase tracking-wider font-bold text-red-500/90">Não lidas</span>
                     <span className="text-xs font-bold text-red-500 leading-none">{unreadCount}</span>
                 </div>

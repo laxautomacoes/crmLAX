@@ -67,7 +67,7 @@ export function NotificationItem({
                 notification.read ? 'border-l-transparent opacity-75' : 'border-l-secondary'
             } ${isExpanded ? 'ring-1 ring-secondary/20 shadow-md ring-offset-0' : ''}`}
         >
-            <div className="flex items-start gap-4 p-4 px-6 h-[72px] shrink-0">
+            <div className="flex items-start gap-4 p-4 px-4 md:px-6 h-auto md:h-[72px] shrink-0">
                 <div className="flex items-center gap-3 shrink-0 pt-0.5 mt-1">
                     <button
                         onClick={(e) => {
@@ -91,7 +91,7 @@ export function NotificationItem({
                         {notification.title}
                     </h4>
                     {!isExpanded && (
-                        <p className="text-xs text-foreground/75 truncate">
+                        <p className="text-xs text-foreground/75 truncate mt-0.5">
                             {notification.message}
                         </p>
                     )}
@@ -107,25 +107,25 @@ export function NotificationItem({
 
             {/* Area Expansível (Dropdown) */}
             {isExpanded && (
-                <div className="px-6 pb-6 pt-0 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 ml-[36px]">
-                    <div className="flex items-start justify-between gap-4">
-                        <div className="space-y-4 flex-1">
-                            <div className="bg-muted/30 p-4 rounded-xl border border-border/40"> {/* Suavizada para o padrão do sistema */}
+                <div className="px-4 md:px-6 pb-4 pt-0 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200 ml-0 md:ml-[36px]">
+                    <div className="flex flex-col items-start gap-3">
+                        <div className="w-full">
+                            <div className="bg-muted/30 p-3 py-2.5 rounded-xl border border-border/40">
                                 <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
                                     {notification.message}
                                 </p>
                             </div>
 
                             {notification.type === 'email_change_request' && (
-                                <div className="bg-secondary/5 p-3 rounded-lg border border-secondary/20 max-w-2xl"> {/* Suavizada também aqui */}
+                                <div className="bg-secondary/5 p-3 rounded-lg border border-secondary/20 w-full">
                                     <p className="text-[10px] text-muted-foreground leading-snug">
                                         Esta é uma solicitação de segurança. Ao aprovar, o e-mail do colaborador será atualizado imediatamente no sistema de autenticação.
                                     </p>
                                 </div>
                             )}
                         </div>
-
-                        <div className="flex flex-col items-end gap-1.5 shrink-0 pt-1">
+                        
+                        <div className="flex flex-col items-start gap-2 w-full">
                             {notification.type === 'email_change_request' && (
                                 <button
                                     onClick={handleApprove}
@@ -141,7 +141,7 @@ export function NotificationItem({
                                 </button>
                             )}
                             
-                            <div className="flex items-center gap-1.5 text-[9px] text-foreground/50 uppercase font-bold tracking-widest">
+                            <div className="flex items-center gap-1.5 text-[9px] text-foreground/50 uppercase font-bold tracking-widest ml-1">
                                 <Clock size={10} />
                                 {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
                             </div>
