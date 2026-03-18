@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { getInvitationByToken } from '@/app/_actions/invitations';
+import { signUpWithTenant } from '@/app/_actions/auth';
 import { RegisterForm } from './RegisterForm';
 import { RegisterSuccess } from './RegisterSuccess';
 import { Logo } from '@/components/shared/Logo';
@@ -28,11 +29,14 @@ export function RegisterContent() {
     useEffect(() => {
         if (token) {
             getInvitationByToken(token).then(({ invitation, error }) => {
-                if (error) setError('Convite inválido ou expirado.');
-                else {
+                if (invitation) {
                     setInvitation(invitation);
                     setEmail(invitation.email);
                     if (invitation.name) setName(invitation.name);
+                }
+                
+                if (error) {
+                    setError(error);
                 }
             });
         }
@@ -50,28 +54,27 @@ export function RegisterContent() {
         setLoading(true);
         setError(null);
 
-        const supabase = createClient();
-        const { data, error: signUpError } = await supabase.auth.signUp({
-            email, password,
-            options: {
-                emailRedirectTo: `${location.origin}/auth/callback`,
-                data: { full_name: name, invitation_token: token }
+        try {
+            const result = await signUpWithTenant(
+                email,
+                password,
+                name,
+                invitation.tenant_id,
+                token || undefined
+            );
+
+            if (result.error) {
+                setError(result.error);
+                setLoading(false);
+                return;
             }
-        });
 
-        if (signUpError) {
-            setError(signUpError.message);
+            setIsSuccess(true);
+        } catch (err: any) {
+            setError(err.message || 'Ocorreu um erro ao realizar o cadastro.');
+        } finally {
             setLoading(false);
-            return;
         }
-
-        if (data.user) {
-            if (data.session) {
-                router.push('/dashboard');
-                router.refresh();
-            } else setIsSuccess(true);
-        }
-        setLoading(false);
     };
 
     return (
@@ -93,7 +96,7 @@ export function RegisterContent() {
                         )}
                     </div>
 
-                    {isSuccess ? <RegisterSuccess /> : (
+                    {isSuccess ? <RegisterSuccess tenantId={invitation?.tenant_id} /> : (
                         <RegisterForm
                             name={name} setName={setName} email={email} setEmail={setEmail}
                             password={password} setPassword={setPassword} loading={loading}

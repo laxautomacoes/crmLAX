@@ -5,7 +5,7 @@ import { UserPlus, Mail, Loader2, Phone } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox';
 import { createInvitation } from '@/app/_actions/invitations';
-import { MessageBanner } from '@/components/shared/MessageBanner';
+import { toast } from 'sonner';
 
 interface InviteFormProps {
     onInviteCreated: () => void;
@@ -17,7 +17,6 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
     const [phone, setPhone] = useState('');
     const [role, setRole] = useState<'admin' | 'user'>('user');
     const [loading, setLoading] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     // Initial permissions state
     const [permissions, setPermissions] = useState({
@@ -46,20 +45,19 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
     const handleInvite = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
-        setMessage(null);
 
         const { success, invitation, error, warning } = await createInvitation(email, role, name, permissions, cleanPhone(phone));
 
         if (error) {
-            setMessage({ type: 'error', text: error });
+            toast.error(error);
         } else if (warning) {
-            setMessage({ type: 'error', text: warning }); // Usando error para destacar o aviso de falha no envio
+            toast.error(warning); // Usando error para destacar o aviso de falha no envio
             setEmail('');
             setName('');
             setPhone('');
             onInviteCreated();
         } else {
-            setMessage({ type: 'success', text: 'Convite enviado com sucesso!' });
+            toast.success('Convite enviado com sucesso!');
             setEmail('');
             setName('');
             setPhone('');
@@ -126,7 +124,6 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
             </div>
 
             <form onSubmit={handleInvite} className="p-6 pt-0 space-y-4 flex-1 flex flex-col">
-                {message && <MessageBanner type={message.type} text={message.text} />}
 
                 <div className="space-y-1.5">
                     <label className="text-sm font-bold text-foreground ml-1">Nome</label>

@@ -107,11 +107,14 @@ export async function getInvitationByToken(token: string) {
         .from('invitations')
         .select('*, tenants(name, branding)')
         .eq('token', token)
-        .is('used_at', null)
         .single()
 
     if (error || !data) {
         return { error: 'Convite inválido ou expirado' }
+    }
+
+    if (data.used_at) {
+        return { invitation: data, error: 'Este convite já foi utilizado.' }
     }
 
     return { invitation: data }
