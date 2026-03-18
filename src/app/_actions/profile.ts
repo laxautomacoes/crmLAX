@@ -89,12 +89,16 @@ export async function deleteProfileAvatar() {
     return { success: true }
 }
 
-export async function requestEmailChange() {
+export async function requestEmailChange(newEmail: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
     if (!user) {
         return { error: 'Not authenticated' }
+    }
+
+    if (!newEmail || !newEmail.includes('@')) {
+        return { error: 'E-mail inválido' }
     }
 
     try {
@@ -127,7 +131,7 @@ export async function requestEmailChange() {
                 createNotification({
                     user_id: admin.id,
                     title: 'Solicitação de Alteração de E-mail',
-                    message: `O colaborador ${profile.full_name} deseja alterar o e-mail (${user.email}).`,
+                    message: `O colaborador ${profile.full_name} deseja alterar o e-mail de ${user.email} para ${newEmail}.`,
                     type: 'email_change_request'
                 })
             )
@@ -154,6 +158,7 @@ export async function requestEmailChange() {
                     <div style="background: #f9f9f9; padding: 16px; border-radius: 8px; margin: 20px 0;">
                         <p style="margin: 0 0 8px 0;"><strong>Colaborador:</strong> ${profile.full_name}</p>
                         <p style="margin: 0 0 8px 0;"><strong>E-mail Atual:</strong> ${user.email}</p>
+                        <p style="margin: 0 0 8px 0;"><strong>Novo E-mail Solicitado:</strong> ${newEmail}</p>
                         <p style="margin: 0;"><strong>Tenant:</strong> ${profile.tenants?.name || 'N/A'}</p>
                     </div>
                     <p style="color: #666; font-size: 14px;">Esta é uma mensagem automática do sistema CRM LAX.</p>

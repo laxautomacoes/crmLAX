@@ -55,7 +55,7 @@ export async function signUpWithTenant(
         email: email,
         password: password,
         options: {
-            redirectTo: `${baseUrl}/auth/callback?tenant=${tenantId}`
+            redirectTo: `${baseUrl}/auth/confirm?tenant=${tenantId}`
         }
     });
 

@@ -9,7 +9,9 @@ export function PasswordForm() {
     const [newPassword, setNewPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [loading, setLoading] = useState(false);
-    const [showPasswords, setShowPasswords] = useState(false);
+    const [showCurrentPassword, setShowCurrentPassword] = useState(false);
+    const [showNewPassword, setShowNewPassword] = useState(false);
+    const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
     const handlePasswordChange = async () => {
         if (!currentPassword) {
@@ -56,6 +58,9 @@ export function PasswordForm() {
             setCurrentPassword('');
             setNewPassword('');
             setConfirmPassword('');
+            setShowCurrentPassword(false);
+            setShowNewPassword(false);
+            setShowConfirmPassword(false);
         } catch (error: any) {
             toast.error(error.message);
         } finally {
@@ -73,41 +78,62 @@ export function PasswordForm() {
             <div className="space-y-4 flex flex-col flex-1">
                 <div className="space-y-4 flex-1">
                     <FormInput
+                        key={`current-${showCurrentPassword}`}
                         label="Senha Atual"
-                        type={showPasswords ? "text" : "password"}
+                        type={showCurrentPassword ? "text" : "password"}
                         placeholder="Sua senha atual"
                         value={currentPassword}
+                        autoComplete="current-password"
                         onChange={(e) => setCurrentPassword(e.target.value)}
-                        icon={Lock}
                         rightElement={
                             <button
                                 type="button"
-                                onClick={() => setShowPasswords(!showPasswords)}
-                                className="p-1 hover:text-foreground transition-colors"
+                                onClick={() => setShowCurrentPassword(!showCurrentPassword)}
+                                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
                             >
-                                {showPasswords ? <EyeOff size={18} /> : <Eye size={18} />}
+                                {showCurrentPassword ? <Eye size={18} /> : <EyeOff size={18} />}
                             </button>
                         }
                     />
 
                     <div className="pt-2 border-t border-border/50">
                         <FormInput
+                            key={`new-${showNewPassword}`}
                             label="Nova Senha"
-                            type={showPasswords ? "text" : "password"}
+                            type={showNewPassword ? "text" : "password"}
                             placeholder="Mínimo 6 caracteres"
                             value={newPassword}
+                            autoComplete="new-password"
                             onChange={(e) => setNewPassword(e.target.value)}
-                            icon={Lock}
+                            rightElement={
+                                <button
+                                    type="button"
+                                    onClick={() => setShowNewPassword(!showNewPassword)}
+                                    className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    {showNewPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                                </button>
+                            }
                         />
                     </div>
                     
                     <FormInput
+                        key={`confirm-${showConfirmPassword}`}
                         label="Confirmar Nova Senha"
-                        type={showPasswords ? "text" : "password"}
+                        type={showConfirmPassword ? "text" : "password"}
                         placeholder="Digite novamente"
                         value={confirmPassword}
+                        autoComplete="new-password"
                         onChange={(e) => setConfirmPassword(e.target.value)}
-                        icon={Lock}
+                        rightElement={
+                            <button
+                                type="button"
+                                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                className="p-1 text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                {showConfirmPassword ? <Eye size={18} /> : <EyeOff size={18} />}
+                            </button>
+                        }
                     />
                 </div>
 

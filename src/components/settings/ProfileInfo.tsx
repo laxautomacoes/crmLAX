@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react';
 import { User, Mail } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { updateProfile, requestEmailChange } from '@/app/_actions/profile';
-import { MessageBanner } from '@/components/shared/MessageBanner';
+import { toast } from 'sonner';
 
 interface ProfileInfoProps {
     profile: any;
@@ -14,7 +14,7 @@ interface ProfileInfoProps {
 export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
     const [saving, setSaving] = useState(false);
     const [requesting, setRequesting] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
+    const [requestEmail, setRequestEmail] = useState('');
 
     const formatPhone = (value: string) => {
         if (!value) return '';
@@ -47,13 +47,12 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
 
     const handleSaveProfile = async () => {
         if (!profile?.full_name?.trim()) {
-            setMessage({ type: 'error', text: 'O nome completo é obrigatório.' });
+            toast.error('O nome completo é obrigatório.');
             return;
         }
 
         try {
             setSaving(true);
-            setMessage(null);
 
             const result = await updateProfile({
                 full_name: profile.full_name,
@@ -63,28 +62,40 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
 
             if (result.error) throw new Error(result.error);
 
-            setMessage({ type: 'success', text: 'Perfil atualizado com sucesso!' });
-            setTimeout(() => setMessage(null), 3000);
+            // Disparar evento para atualizar outros componentes (Header, Sidebar, etc.)
+            window.dispatchEvent(new CustomEvent('profile-updated', { 
+                detail: { 
+                    full_name: profile.full_name,
+                    whatsapp_number: profile.whatsapp_number,
+                    email: profile.email
+                } 
+            }));
+
+            toast.success('Perfil atualizado com sucesso!');
         } catch (error: any) {
-            setMessage({ type: 'error', text: 'Erro ao salvar: ' + error.message });
+            toast.error('Erro ao salvar: ' + error.message);
         } finally {
             setSaving(false);
         }
     };
 
     const handleRequestEmailChange = async () => {
+        if (!requestEmail || !requestEmail.includes('@')) {
+            toast.error('Informe um e-mail válido para a solicitação.');
+            return;
+        }
+
         try {
             setRequesting(true);
-            setMessage(null);
 
-            const result = await requestEmailChange();
+            const result = await requestEmailChange(requestEmail);
 
             if (result.error) throw new Error(result.error);
 
-            setMessage({ type: 'success', text: 'Solicitação enviada com sucesso! O administrador entrará em contato.' });
-            setTimeout(() => setMessage(null), 5000);
+            toast.success('Solicitação enviada com sucesso! O administrador entrará em contato.');
+            setRequestEmail('');
         } catch (error: any) {
-            setMessage({ type: 'error', text: 'Erro ao enviar solicitação: ' + error.message });
+            toast.error('Erro ao enviar solicitação: ' + error.message);
         } finally {
             setRequesting(false);
         }
@@ -100,7 +111,6 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
             </div>
 
             <div className="space-y-4 flex flex-col flex-1">
-                {message && <MessageBanner type={message.type} text={message.text} />}
 
                 <div className="space-y-4 flex-1">
                     <FormInput
@@ -119,24 +129,28 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
                             disabled={!isAdmin}
                             className={!isAdmin ? "cursor-not-allowed" : ""}
                         />
-                        {isAdmin && (
-                            <p className="text-[10px] text-muted-foreground mt-1 px-1">
-                                Um e-mail de confirmação será enviado para o novo e para o antigo endereço
-                            </p>
-                        )}
                         {!isAdmin && (
-                            <div className="mt-2 flex items-center justify-between bg-background p-2 rounded-lg border border-muted-foreground/30">
-                                <p className="text-xs text-muted-foreground">
-                                    Alteração de e-mail?
-                                </p>
-                                <button
-                                    type="button"
-                                    onClick={handleRequestEmailChange}
-                                    disabled={requesting}
-                                    className="text-xs font-bold bg-secondary text-secondary-foreground hover:opacity-90 disabled:opacity-50 transition-opacity px-3 py-1.5 rounded-lg shadow-sm"
-                                >
-                                    {requesting ? 'Enviando...' : 'Solicitar'}
-                                </button>
+                            <div className="mt-4 space-y-1.5 w-full">
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase px-1">
+                                    Solicitar alteração de e-mail
+                                </label>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="email"
+                                        placeholder="Novo e-mail"
+                                        value={requestEmail}
+                                        onChange={(e) => setRequestEmail(e.target.value)}
+                                        className="flex-1 bg-card text-sm px-4 py-2 rounded-lg border border-muted-foreground/30 focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
+                                    />
+                                    <button
+                                        type="button"
+                                        onClick={handleRequestEmailChange}
+                                        disabled={requesting || !requestEmail}
+                                        className="bg-secondary text-secondary-foreground text-xs font-bold px-6 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center whitespace-nowrap shadow-sm h-[38px]"
+                                    >
+                                        {requesting ? '...' : 'Solicitar'}
+                                    </button>
+                                </div>
                             </div>
                         )}
                     </div>

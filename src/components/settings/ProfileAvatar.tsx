@@ -4,7 +4,7 @@ import { useState } from 'react';
 import { Camera } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { updateProfileAvatar, deleteProfileAvatar } from '@/app/_actions/profile';
-import { MessageBanner } from '@/components/shared/MessageBanner';
+import { toast } from 'sonner';
 import { ProfileAvatarUpload } from './ProfileAvatarUpload';
 
 interface ProfileAvatarProps {
@@ -14,22 +14,19 @@ interface ProfileAvatarProps {
 
 export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) {
     const [uploading, setUploading] = useState(false);
-    const [message, setMessage] = useState<{ type: 'success' | 'error', text: string } | null>(null);
 
     const handleAvatarDelete = async () => {
         try {
             setUploading(true);
-            setMessage(null);
 
             const result = await deleteProfileAvatar();
             if (result.error) throw new Error(result.error);
 
             onProfileUpdate({ avatar_url: null });
             window.dispatchEvent(new CustomEvent('profile-updated', { detail: { avatar_url: null } }));
-            setMessage({ type: 'success', text: 'Foto removida com sucesso!' });
-            setTimeout(() => setMessage(null), 3000);
+            toast.success('Foto removida com sucesso!');
         } catch (error: any) {
-            setMessage({ type: 'error', text: 'Erro ao remover foto: ' + error.message });
+            toast.error('Erro ao remover foto: ' + error.message);
         } finally {
             setUploading(false);
         }
@@ -38,7 +35,6 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
     const handleAvatarUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
         try {
             setUploading(true);
-            setMessage(null);
 
             if (!profile?.id) {
                 throw new Error('Perfil não carregado. Por favor, recarregue a página.');
@@ -78,12 +74,11 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
 
             onProfileUpdate({ avatar_url: publicUrl });
             window.dispatchEvent(new CustomEvent('profile-updated', { detail: { avatar_url: publicUrl } }));
-            setMessage({ type: 'success', text: 'Avatar atualizado com sucesso!' });
-            setTimeout(() => setMessage(null), 3000);
+            toast.success('Avatar atualizado com sucesso!');
         } catch (error: any) {
             console.error('Erro detalhado no upload:', error);
             const errorMessage = error.message || (typeof error === 'string' ? error : 'Erro desconhecido');
-            setMessage({ type: 'error', text: 'Erro ao atualizar avatar: ' + errorMessage });
+            toast.error('Erro ao atualizar avatar: ' + errorMessage);
         } finally {
             setUploading(false);
         }
@@ -97,11 +92,6 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
             </div>
 
             <div className="flex flex-col items-center justify-start pt-8">
-                {message && (
-                    <div className="mb-4 w-full">
-                        <MessageBanner type={message.type} text={message.text} />
-                    </div>
-                )}
                 
                 <ProfileAvatarUpload
                     profile={profile}
