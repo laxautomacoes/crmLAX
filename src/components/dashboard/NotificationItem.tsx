@@ -1,8 +1,11 @@
 'use client';
 
-import { CheckSquare, Square, Mail, Bell, Info, AlertCircle, Calendar, UserPlus } from 'lucide-react';
+import { useState } from 'react';
+import { CheckSquare, Square, Clock, Check, ChevronDown } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { approveEmailChange } from '@/app/_actions/profile';
+import { toast } from 'sonner';
 
 export interface Notification {
     id: string;
@@ -16,30 +19,21 @@ export interface Notification {
 interface NotificationItemProps {
     notification: Notification;
     isSelected: boolean;
-    onToggleSelect: (id: string) => void;
+    isExpanded: boolean;
+    onToggleSelect: () => void;
+    onToggleExpand: () => void;
+    onRefresh: () => void;
 }
 
-export function NotificationItem({ notification, isSelected, onToggleSelect }: NotificationItemProps) {
-    const getIcon = () => {
-        const iconSize = 18;
-        switch (notification.type) {
-            case 'email_change_request':
-                return <Mail size={iconSize} className="text-blue-500 transition-colors" />;
-            case 'appointment':
-            case 'reminder':
-                return <Calendar size={iconSize} className="text-orange-500 transition-colors" />;
-            case 'new_user':
-            case 'invite':
-                return <UserPlus size={iconSize} className="text-green-500 transition-colors" />;
-            case 'alert':
-            case 'warning':
-                return <AlertCircle size={iconSize} className="text-red-500 transition-colors" />;
-            case 'info':
-                return <Info size={iconSize} className="text-blue-400 transition-colors" />;
-            default:
-                return <Bell size={iconSize} className="text-muted-foreground/60 transition-colors" />;
-        }
-    };
+export function NotificationItem({ 
+    notification, 
+    isSelected, 
+    isExpanded, 
+    onToggleSelect, 
+    onToggleExpand,
+    onRefresh 
+}: NotificationItemProps) {
+    const [isApproving, setIsApproving] = useState(false);
 
     const formatRelativeDate = (dateString: string) => {
         try {
@@ -51,50 +45,110 @@ export function NotificationItem({ notification, isSelected, onToggleSelect }: N
         }
     };
 
+    const handleApprove = async (e: React.MouseEvent) => {
+        e.stopPropagation();
+        try {
+            setIsApproving(true);
+            const result = await approveEmailChange(notification.id);
+            if (result.error) throw new Error(result.error);
+            toast.success('Solicitação aprovada com sucesso!');
+            onRefresh();
+        } catch (error: any) {
+            toast.error('Erro ao aprovar: ' + error.message);
+        } finally {
+            setIsApproving(false);
+        }
+    };
+
     return (
         <div
-            className={`flex items-start gap-4 p-5 border-b border-border transition-all hover:bg-muted/10 relative group
-                ${!notification.read ? 'bg-secondary/[0.03] border-l-4 border-l-secondary shadow-sm' : 'border-l-4 border-l-transparent'}
-                ${isSelected ? 'bg-secondary/10' : ''}`}
+            onClick={onToggleExpand}
+            className={`group flex flex-col transition-all cursor-pointer border-l-4 rounded-xl bg-card border border-border/80 shadow-sm overflow-hidden hover:shadow-md hover:scale-[1.002] active:scale-[0.998] ${
+                notification.read ? 'border-l-transparent opacity-75' : 'border-l-secondary'
+            } ${isExpanded ? 'ring-1 ring-secondary/20 shadow-md ring-offset-0' : ''}`}
         >
-            <div className="flex items-center gap-3 shrink-0 pt-0.5">
-                <button
-                    onClick={() => onToggleSelect(notification.id)}
-                    className="focus:outline-none focus:ring-2 focus:ring-secondary/20 rounded-md transition-all active:scale-95"
-                >
-                    {isSelected ? (
-                        <CheckSquare size={18} className="text-secondary" />
-                    ) : (
-                        <Square size={18} className="text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors" />
-                    )}
-                </button>
-                <div className={`p-2.5 rounded-xl transition-all ${
-                    !notification.read 
-                    ? 'bg-background shadow-sm ring-1 ring-border/50' 
-                    : 'bg-muted/30 opacity-60'
-                }`}>
-                    {getIcon()}
+            <div className="flex items-start gap-4 p-4 px-6 h-[72px] shrink-0">
+                <div className="flex items-center gap-3 shrink-0 pt-0.5 mt-1">
+                    <button
+                        onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleSelect();
+                        }}
+                        className="focus:outline-none focus:ring-2 focus:ring-secondary/20 rounded-md transition-all active:scale-95"
+                    >
+                        {isSelected ? (
+                            <CheckSquare size={18} className="text-foreground" />
+                        ) : (
+                            <Square size={18} className="text-muted-foreground/20 group-hover:text-muted-foreground/40 transition-colors" />
+                        )}
+                    </button>
                 </div>
-            </div>
 
-            <div className="flex-1 min-w-0">
-                <div className="flex items-start justify-between gap-4 mb-1">
-                    <h4 className={`text-sm tracking-tight leading-snug group-hover:text-foreground transition-colors ${
-                        !notification.read ? 'font-bold text-foreground' : 'font-semibold text-muted-foreground'
+                <div className="flex-1 min-w-0 py-1">
+                    <h4 className={`text-sm tracking-tight leading-snug truncate transition-colors ${
+                        !notification.read ? 'font-bold text-foreground' : 'font-semibold text-foreground/85'
                     }`}>
                         {notification.title}
                     </h4>
-                    <span className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground/30 whitespace-nowrap pt-1">
-                        {formatRelativeDate(notification.created_at)}
-                    </span>
+                    {!isExpanded && (
+                        <p className="text-xs text-foreground/75 truncate">
+                            {notification.message}
+                        </p>
+                    )}
                 </div>
-                <p className={`text-xs leading-relaxed transition-colors ${
-                    !notification.read ? 'text-foreground/80 font-medium' : 'text-muted-foreground/50'
-                }`}>
-                    {notification.message}
-                </p>
+                
+                <div className="flex items-center gap-4 pt-2 shrink-0">
+                    <ChevronDown 
+                        size={14} 
+                        className={`text-muted-foreground/30 transition-transform duration-300 ease-in-out ${isExpanded ? 'rotate-180 text-secondary' : 'group-hover:text-muted-foreground/60'}`} 
+                    />
+                </div>
             </div>
+
+            {/* Area Expansível (Dropdown) */}
+            {isExpanded && (
+                <div className="px-6 pb-6 pt-0 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200 ml-[36px]">
+                    <div className="flex items-start justify-between gap-4">
+                        <div className="space-y-4 flex-1">
+                            <div className="bg-muted/30 p-4 rounded-xl border border-border/40"> {/* Suavizada para o padrão do sistema */}
+                                <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
+                                    {notification.message}
+                                </p>
+                            </div>
+
+                            {notification.type === 'email_change_request' && (
+                                <div className="bg-secondary/5 p-3 rounded-lg border border-secondary/20 max-w-2xl"> {/* Suavizada também aqui */}
+                                    <p className="text-[10px] text-muted-foreground leading-snug">
+                                        Esta é uma solicitação de segurança. Ao aprovar, o e-mail do colaborador será atualizado imediatamente no sistema de autenticação.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="flex flex-col items-end gap-1.5 shrink-0 pt-1">
+                            {notification.type === 'email_change_request' && (
+                                <button
+                                    onClick={handleApprove}
+                                    disabled={isApproving}
+                                    className="bg-secondary text-secondary-foreground font-black uppercase tracking-wider px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] disabled:opacity-50 text-[10px]"
+                                >
+                                    {isApproving ? (
+                                        <div className="w-3.5 h-3.5 border-2 border-secondary-foreground/30 border-t-secondary-foreground rounded-full animate-spin" />
+                                    ) : (
+                                        <Check size={14} />
+                                    )}
+                                    Aprovar
+                                </button>
+                            )}
+                            
+                            <div className="flex items-center gap-1.5 text-[9px] text-foreground/50 uppercase font-bold tracking-widest">
+                                <Clock size={10} />
+                                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
-

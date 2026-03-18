@@ -84,6 +84,7 @@ export async function createNotification(data: {
     title: string;
     message: string;
     type?: string;
+    metadata?: any;
 }) {
     try {
         const supabase = await createClient()

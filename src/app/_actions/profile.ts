@@ -2,8 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, unstable_noStore } from 'next/cache'
-import { createNotification } from './notifications'
+import { createNotification, deleteNotifications } from './notifications'
 import { Resend } from 'resend'
+import { createAdminClient } from '@/lib/supabase/admin'
 
 
 
@@ -89,6 +90,66 @@ export async function deleteProfileAvatar() {
     return { success: true }
 }
 
+export async function approveEmailChange(notificationId: string) {
+    const supabase = await createClient()
+    const { data: { user: adminUser } } = await supabase.auth.getUser()
+
+    if (!adminUser) return { error: 'Not authenticated' }
+
+    try {
+        // Verificar se é admin
+        const { data: adminProfile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', adminUser.id)
+            .single()
+
+        const allowedRoles = ['admin', 'superadmin', 'super_admin', 'super administrador'];
+        if (!allowedRoles.includes(adminProfile?.role?.toLowerCase())) {
+            return { error: 'Unauthorized' }
+        }
+
+        // Buscar a notificação
+        const { data: notification, error: notifError } = await supabase
+            .from('notifications')
+            .select('*')
+            .eq('id', notificationId)
+            .single()
+
+        if (notifError || !notification || !notification.metadata) {
+            return { error: 'Solicitação não encontrada' }
+        }
+
+        const { requesting_user_id, new_email, user_name } = notification.metadata
+
+        // Usar cliente admin para atualizar o e-mail no Auth do Supabase
+        const supabaseAdmin = createAdminClient()
+        const { error: updateError } = await supabaseAdmin.auth.admin.updateUserById(
+            requesting_user_id,
+            { email: new_email, email_confirm: true } // Opcional: já confirmar o e-mail
+        )
+
+        if (updateError) throw updateError
+
+        // Notificar o usuário que foi aprovado
+        await createNotification({
+            user_id: requesting_user_id,
+            title: 'E-mail Alterado com Sucesso',
+            message: `Olá ${user_name}, sua solicitação de alteração de e-mail para ${new_email} foi aprovada.`,
+            type: 'system'
+        })
+
+        // Deletar a notificação do admin
+        await deleteNotifications([notificationId])
+
+        revalidatePath('/', 'layout')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error in approveEmailChange:', error)
+        return { error: error.message }
+    }
+}
+
 export async function requestEmailChange(newEmail: string) {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -132,7 +193,13 @@ export async function requestEmailChange(newEmail: string) {
                     user_id: admin.id,
                     title: 'Solicitação de Alteração de E-mail',
                     message: `O colaborador ${profile.full_name} deseja alterar o e-mail de ${user.email} para ${newEmail}.`,
-                    type: 'email_change_request'
+                    type: 'email_change_request',
+                    metadata: {
+                        requesting_user_id: user.id,
+                        new_email: newEmail,
+                        current_email: user.email,
+                        user_name: profile.full_name
+                    }
                 })
             )
             await Promise.all(notificationPromises)

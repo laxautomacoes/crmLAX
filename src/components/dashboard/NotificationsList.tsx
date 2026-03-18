@@ -4,7 +4,6 @@ import { useState } from 'react';
 import { Bell } from 'lucide-react';
 import { markAsRead, deleteNotifications } from '@/app/_actions/notifications';
 import { NotificationsHeader } from './NotificationsHeader';
-import { NotificationsBulkActions } from './NotificationsBulkActions';
 import { NotificationItem, Notification } from './NotificationItem';
 
 interface NotificationsListProps {
@@ -13,6 +12,7 @@ interface NotificationsListProps {
 }
 
 export function NotificationsList({ notifications, onRefresh }: NotificationsListProps) {
+    const [expandedId, setExpandedId] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -59,39 +59,38 @@ export function NotificationsList({ notifications, onRefresh }: NotificationsLis
     const unreadCount = notifications.filter(n => !n.read).length;
 
     return (
-        <div className="flex flex-col h-full bg-card">
-            <NotificationsHeader
-                totalCount={notifications.length}
-                unreadCount={unreadCount}
-                selectedCount={selectedIds.length}
-                onToggleSelectAll={toggleSelectAll}
-            />
+        <div className="flex flex-col h-full overflow-hidden">
+            <div className="border-b border-border/50 bg-card z-10">
+                <NotificationsHeader
+                    totalCount={notifications.length}
+                    unreadCount={unreadCount}
+                    selectedCount={selectedIds.length}
+                    isProcessing={isProcessing}
+                    onToggleSelectAll={toggleSelectAll}
+                    onMarkAsRead={handleMarkAsRead}
+                    onDelete={handleDelete}
+                />
+            </div>
 
-            <NotificationsBulkActions
-                selectedCount={selectedIds.length}
-                isProcessing={isProcessing}
-                onMarkAsRead={handleMarkAsRead}
-                onDelete={handleDelete}
-            />
-
-            <div className="flex-1 overflow-y-auto custom-scrollbar">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 space-y-4">
                 {notifications.length === 0 ? (
-                    <div className="flex flex-col items-center justify-center h-[300px] text-muted-foreground">
+                    <div className="flex flex-col items-center justify-center py-24 text-muted-foreground animate-in fade-in zoom-in duration-300">
                         <Bell size={48} className="mb-4 opacity-10 text-foreground" />
                         <p className="font-bold text-foreground">Nenhuma notificação</p>
                         <p className="text-sm">Sua caixa de entrada está limpa.</p>
                     </div>
                 ) : (
-                    <div>
-                        {notifications.map((notification) => (
-                            <NotificationItem
-                                key={notification.id}
-                                notification={notification}
-                                isSelected={selectedIds.includes(notification.id)}
-                                onToggleSelect={toggleSelect}
-                            />
-                        ))}
-                    </div>
+                    notifications.map((notification) => (
+                        <NotificationItem
+                            key={notification.id}
+                            notification={notification}
+                            isSelected={selectedIds.includes(notification.id)}
+                            isExpanded={expandedId === notification.id}
+                            onToggleSelect={() => toggleSelect(notification.id)}
+                            onToggleExpand={() => setExpandedId(expandedId === notification.id ? null : notification.id)}
+                            onRefresh={onRefresh}
+                        />
+                    ))
                 )}
             </div>
         </div>
