@@ -2,6 +2,15 @@
 
 import { useState, useEffect } from 'react';
 import { Plus } from 'lucide-react';
+import { 
+    setHours, 
+    setMinutes, 
+    setSeconds, 
+    differenceInMinutes, 
+    addMinutes,
+    parseISO,
+    isSameDay
+} from 'date-fns';
 import CalendarGrid from '@/components/Agenda/CalendarGrid';
 import EventModal from '@/components/Agenda/EventModal';
 import { getEvents, createEvent, updateEvent, deleteEvent } from '@/app/_actions/calendar';
@@ -67,6 +76,38 @@ export default function AgendaPage() {
         setEditingEvent(event);
         setSelectedDate(undefined);
         setIsModalOpen(true);
+    };
+
+    const handleEventMove = async (eventId: string, newDate: Date) => {
+        const eventToMove = events.find(e => e.id === eventId);
+        if (!eventToMove) return;
+
+        try {
+            const oldStart = new Date(eventToMove.start_time);
+            const oldEnd = new Date(eventToMove.end_time);
+            
+            // Mantém o horário original, mas altera a data
+            const newStart = setSeconds(setMinutes(setHours(newDate, oldStart.getHours()), oldStart.getMinutes()), 0);
+            
+            // Calcula a duração original para manter no novo horário de término
+            const durationMinutes = differenceInMinutes(oldEnd, oldStart);
+            const newEnd = addMinutes(newStart, durationMinutes);
+
+            const result = await updateEvent(eventId, {
+                start_time: newStart.toISOString(),
+                end_time: newEnd.toISOString()
+            });
+
+            if (result.success) {
+                toast.success('Compromisso movido!');
+                await fetchData();
+            } else {
+                toast.error('Erro ao mover compromisso');
+            }
+        } catch (error) {
+            console.error('Erro ao mover evento:', error);
+            toast.error('Erro ao processar movimentação');
+        }
     };
 
     const handleSaveEvent = async (formData: any) => {
@@ -138,6 +179,7 @@ export default function AgendaPage() {
                 events={events}
                 onAddEvent={handleAddEvent}
                 onEditEvent={handleEditEvent}
+                onEventMove={handleEventMove}
             />
 
             <EventModal

@@ -89,7 +89,7 @@ export function SwitchAccountModal({ isOpen, onClose, currentEmail }: SwitchAcco
                                     disabled={switching !== null}
                                     className={`flex items-center justify-between p-3 rounded-xl border transition-all group ${
                                         isCurrent 
-                                        ? 'border-primary/50 bg-primary/5' 
+                                        ? 'border-[#FFE600]/50 bg-[#FFE600]/10' 
                                         : 'border-border hover:border-primary/30 hover:bg-muted/50'
                                     }`}
                                 >
@@ -99,27 +99,27 @@ export function SwitchAccountModal({ isOpen, onClose, currentEmail }: SwitchAcco
                                             name={account.name} 
                                             className="h-10 w-10"
                                         />
-                                        <div className="flex flex-col items-start overflow-hidden">
-                                            <span className="text-sm font-bold text-foreground truncate w-full max-w-[150px]">
+                                        <div className="flex flex-col items-start justify-center overflow-hidden flex-1 min-w-0 h-10 text-left">
+                                            <div className="text-sm font-bold text-foreground truncate w-full max-w-[220px]">
                                                 {account.name}
-                                            </span>
-                                            <span className="text-xs text-muted-foreground truncate w-full max-w-[150px]">
+                                            </div>
+                                            <div className="text-xs text-muted-foreground truncate w-full max-w-[220px]">
                                                 {account.email}
-                                            </span>
+                                            </div>
                                         </div>
                                     </div>
                                     
-                                    <div className="flex items-center gap-2">
+                                    <div className="flex items-center justify-end w-8 shrink-0">
                                         {isCurrent ? (
-                                            <div className="h-6 w-6 rounded-full bg-primary/20 flex items-center justify-center text-primary">
-                                                <Check size={14} />
+                                            <div className="h-6 w-6 rounded-full bg-[#FFE600] flex items-center justify-center text-[#404F4F] shrink-0">
+                                                <Check size={14} strokeWidth={3} />
                                             </div>
                                         ) : switching === account.email ? (
-                                            <Loader2 size={16} className="animate-spin text-primary" />
+                                            <Loader2 size={16} className="animate-spin text-primary shrink-0" />
                                         ) : (
                                             <button
                                                 onClick={(e) => handleRemoveAccount(e, account.email)}
-                                                className="p-2 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all"
+                                                className="p-2 text-muted-foreground hover:text-red-500 opacity-0 group-hover:opacity-100 transition-all shrink-0"
                                             >
                                                 <Trash2 size={14} />
                                             </button>
@@ -134,10 +134,10 @@ export function SwitchAccountModal({ isOpen, onClose, currentEmail }: SwitchAcco
                 <div className="pt-4 flex flex-col gap-2">
                     <button
                         onClick={handleAddAccount}
-                        className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-border rounded-xl text-sm font-bold text-muted-foreground hover:text-foreground hover:border-primary/50 transition-all"
+                        className="w-full flex items-center justify-center gap-2 py-3 bg-[#FFE600] text-[#404F4F] rounded-xl text-sm font-bold hover:bg-[#F2DB00] transition-all transform active:scale-[0.99]"
                     >
                         <Plus size={18} />
-                        Adicionar outra conta
+                        Adicionar conta
                     </button>
                     
                     <button
