@@ -1,9 +1,10 @@
 'use client';
 
 import { useState } from 'react';
-import { CheckSquare, Square, Clock, Check, ChevronDown } from 'lucide-react';
+import { CheckSquare, Square, Bell, Clock, Check, ChevronDown, CheckCircle, Info, Zap, AlertTriangle, MessageCircle, Mail } from 'lucide-react';
 import { formatDistanceToNow } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
+import { markAsRead } from '@/app/_actions/notifications';
 import { approveEmailChange } from '@/app/_actions/profile';
 import { toast } from 'sonner';
 
@@ -25,13 +26,13 @@ interface NotificationItemProps {
     onRefresh: () => void;
 }
 
-export function NotificationItem({ 
-    notification, 
-    isSelected, 
-    isExpanded, 
-    onToggleSelect, 
+export function NotificationItem({
+    notification,
+    isSelected,
+    isExpanded,
+    onToggleSelect,
     onToggleExpand,
-    onRefresh 
+    onRefresh
 }: NotificationItemProps) {
     const [isApproving, setIsApproving] = useState(false);
 
@@ -60,14 +61,30 @@ export function NotificationItem({
         }
     };
 
+    const handleToggleExpand = async () => {
+        onToggleExpand();
+        if (!notification.read) {
+            try {
+                const result = await markAsRead([notification.id]);
+                if (result.success) {
+                    onRefresh();
+                }
+            } catch (error) {
+                console.error('Error marking as read on expand:', error);
+            }
+        }
+    };
+
     return (
         <div
-            onClick={onToggleExpand}
-            className={`group flex flex-col transition-all cursor-pointer border-l-4 rounded-xl bg-card border border-border/80 shadow-sm overflow-hidden hover:shadow-md hover:scale-[1.002] active:scale-[0.998] ${
+            className={`group flex flex-col w-full bg-card rounded-2xl border border-border/50 transition-all duration-300 shadow-md ring-1 ring-secondary/20 overflow-hidden ${
                 notification.read ? 'border-l-transparent opacity-75' : 'border-l-secondary'
-            } ${isExpanded ? 'ring-1 ring-secondary/20 shadow-md ring-offset-0' : ''}`}
+            } ${isExpanded ? 'scale-[1.005]' : 'hover:border-border/80 hover:bg-muted/5'}`}
         >
-            <div className="flex items-start gap-4 p-4 px-4 md:px-6 h-auto md:h-[72px] shrink-0">
+            <div
+                className="flex items-start gap-4 p-4 px-4 md:px-6 h-auto md:h-[72px] shrink-0 cursor-pointer"
+                onClick={handleToggleExpand}
+            >
                 <div className="flex items-center gap-3 shrink-0 pt-0.5 mt-1">
                     <button
                         onClick={(e) => {
