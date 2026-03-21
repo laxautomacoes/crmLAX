@@ -15,6 +15,10 @@ import {
 } from 'lucide-react';
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
+import { Switch } from '@/components/ui/Switch';
+import { updateAsset } from '@/app/_actions/assets';
+import { toast } from 'sonner';
+import { cn } from '@/lib/utils';
 
 interface PropertyDetailsModalProps {
     isOpen: boolean;
@@ -30,7 +34,14 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
     const isAdmin = userRole === 'admin' || userRole === 'superadmin';
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
+    const [isPublished, setIsPublished] = useState(prop?.is_published || false);
+    const [isUpdating, setIsUpdating] = useState(false);
+    const [activeTab, setActiveTab] = useState<'details' | 'ai_copy'>('details');
     const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
+
+    useEffect(() => {
+        setIsPublished(prop?.is_published || false);
+    }, [prop?.is_published, isOpen]);
 
     useEffect(() => {
         if (isOpen) {
@@ -58,6 +69,26 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
     const handlePrev = () => {
         if (allMedia.length === 0) return;
         setSelectedImageIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
+    };
+
+    const handleTogglePublished = async (checked: boolean) => {
+        try {
+            setIsUpdating(true);
+            setIsPublished(checked);
+            const res = await updateAsset(tenantId, prop.id, { is_published: checked });
+            if (!res.success) {
+                setIsPublished(!checked);
+                toast.error('Erro ao atualizar status de publicação');
+            } else {
+                toast.success(checked ? 'Imóvel publicado no site' : 'Imóvel removido do site');
+            }
+        } catch (error) {
+            console.error('Error toggling published:', error);
+            setIsPublished(!checked);
+            toast.error('Ocorreu um erro inesperado');
+        } finally {
+            setIsUpdating(false);
+        }
     };
 
     const allMedia = [
@@ -103,22 +134,36 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
 
     return (
         <Modal isOpen={isOpen} onClose={onClose} title={null} size="xl">
-            <Tabs defaultValue="details" className="w-full">
-                <div className="flex items-center justify-between mb-2">
-                    <TabsList className="bg-muted/50 p-1 rounded-xl">
-                        <TabsTrigger value="details" className="rounded-lg font-bold data-[state=active]:bg-white data-[state=active]:shadow-sm">Detalhes</TabsTrigger>
-                        {prop?.id && (
-                            <TabsTrigger value="ai_copy" className="rounded-lg font-bold gap-2 data-[state=active]:bg-[#FFE600] data-[state=active]:text-[#404F4F]">
-                                <Sparkles size={14} />
-                                Copy com IA
-                            </TabsTrigger>
-                        )}
-                    </TabsList>
+            <div className="w-full">
+                <div className="flex items-center gap-4 mb-2">
+                    {prop?.id && (
+                        <button 
+                            onClick={() => setActiveTab(activeTab === 'details' ? 'ai_copy' : 'details')}
+                            className={cn(
+                                "rounded-lg font-bold gap-2 flex items-center px-3 py-1.5 transition-all text-xs uppercase tracking-widest border",
+                                activeTab === 'ai_copy' 
+                                    ? "bg-[#FFE600] text-[#404F4F] border-[#FFE600] shadow-sm" 
+                                    : "bg-white text-foreground border-border hover:bg-muted/10 shadow-sm"
+                            )}
+                        >
+                            <Sparkles size={14} className={activeTab === 'ai_copy' ? 'text-[#404F4F]' : 'text-foreground'} />
+                            Copy com IA
+                        </button>
+                    )}
+                    
+                    <Switch 
+                        checked={isPublished}
+                        onChange={handleTogglePublished}
+                        label="Site"
+                        disabled={isUpdating}
+                        className="bg-muted/30 px-3 py-1.5 rounded-xl border border-border/50"
+                    />
                 </div>
 
-                <TabsContent value="details">
-                    {/* Floating Send Button for Mobile */}
-                    {onSend && (
+                {activeTab === 'details' ? (
+                    <>
+                        {/* Floating Send Button for Mobile */}
+                        {onSend && (
                         <button
                             onClick={() => onSend(prop)}
                             className="md:hidden fixed bottom-8 right-8 z-[60] flex items-center justify-center w-14 h-14 bg-emerald-600 text-white rounded-full shadow-2xl hover:bg-emerald-700 transition-all active:scale-95 animate-in fade-in slide-in-from-bottom-4 duration-300"
@@ -568,10 +613,9 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                             )}
                         </div>
                     </div>
-                </TabsContent>
-
-                {prop?.id && (
-                    <TabsContent value="ai_copy" className="animate-in fade-in slide-in-from-right-4 duration-300">
+                </>
+            ) : (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="p-1 px-4">
                             <PropertyCopyCard 
                                 assetId={prop.id} 
@@ -580,9 +624,9 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                                 hasAIAccess={hasAIAccess} 
                             />
                         </div>
-                    </TabsContent>
+                    </div>
                 )}
-            </Tabs>
+            </div>
 
             <FullscreenMediaViewer 
                 isOpen={isFullscreenOpen}

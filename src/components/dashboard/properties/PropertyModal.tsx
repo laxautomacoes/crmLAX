@@ -12,6 +12,7 @@ import { DescriptionField } from './PropertyModal/DescriptionField'
 import { MediaFields } from './PropertyModal/MediaFields'
 import { AddressFields } from './PropertyModal/AddressFields'
 import { OwnerFields } from './PropertyModal/OwnerFields'
+import { Switch } from '@/components/ui/Switch'
 
 interface PropertyModalProps {
     isOpen: boolean
@@ -34,6 +35,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         images: [] as string[],
         videos: [] as string[],
         documents: [] as { name: string, url: string }[],
+        is_published: false,
         details: {
             situacao: 'lançamento',
             area_privativa: '',
@@ -127,6 +129,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 images: editingProperty.images || [],
                 videos: editingProperty.videos || [],
                 documents: editingProperty.documents || [],
+                is_published: editingProperty.is_published || false,
                 details: {
                     situacao: editingProperty.details?.situacao || 'lançamento',
                     area_privativa: editingProperty.details?.area_privativa || '',
@@ -194,6 +197,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 images: [],
                 videos: [],
                 documents: [],
+                is_published: false,
                 details: {
                     situacao: 'lançamento',
                     area_privativa: '',
@@ -330,6 +334,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             isOpen={isOpen}
             onClose={onClose}
             title={editingProperty ? "Editar Imóvel" : "Novo Imóvel"}
+            extraHeaderContent={
+                <Switch 
+                    checked={formData.is_published}
+                    onChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
+                    label="Site"
+                />
+            }
             size="lg"
         >
             <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">

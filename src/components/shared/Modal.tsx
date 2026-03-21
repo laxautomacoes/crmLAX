@@ -10,6 +10,7 @@ interface ModalProps {
     children: React.ReactNode;
     size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
     titleClassName?: string;
+    extraHeaderContent?: React.ReactNode;
 }
 
 export function Modal({ isOpen, onClose, title, children, size = 'md', titleClassName }: ModalProps) {
@@ -46,20 +47,26 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
                                 title
                             )}
                         </div>
+                        <div className="flex items-center gap-4">
+                            {extraHeaderContent}
+                            <button
+                                onClick={onClose}
+                                className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                            >
+                                <X size={20} />
+                            </button>
+                        </div>
+                    </div>
+                ) : (
+                    <div className="absolute top-4 right-4 z-50 flex items-center gap-4">
+                        {extraHeaderContent}
                         <button
                             onClick={onClose}
-                            className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                            className="p-2 rounded-full bg-background/50 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-all hover:bg-background/80"
                         >
                             <X size={20} />
                         </button>
                     </div>
-                ) : (
-                    <button
-                        onClick={onClose}
-                        className="absolute top-4 right-4 z-50 p-2 rounded-full bg-background/50 backdrop-blur-sm text-muted-foreground hover:text-foreground transition-all hover:bg-background/80"
-                    >
-                        <X size={20} />
-                    </button>
                 )}
                 <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
                     {children}
