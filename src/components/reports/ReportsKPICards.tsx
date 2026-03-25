@@ -18,7 +18,7 @@ export default function ReportsKPICards({ metrics }: ReportsKPICardsProps) {
             value: metrics.totalLeads,
             icon: Users,
             color: 'text-blue-500',
-            bgColor: 'bg-blue-50',
+            bgColor: 'bg-blue-500/10',
             description: 'No período selecionado'
         },
         {
@@ -26,7 +26,7 @@ export default function ReportsKPICards({ metrics }: ReportsKPICardsProps) {
             value: metrics.activeLeads,
             icon: Filter,
             color: 'text-indigo-500',
-            bgColor: 'bg-indigo-50',
+            bgColor: 'bg-indigo-500/10',
             description: 'Em atendimento'
         },
         {
@@ -34,7 +34,7 @@ export default function ReportsKPICards({ metrics }: ReportsKPICardsProps) {
             value: metrics.conversions,
             icon: CheckCircle2,
             color: 'text-emerald-500',
-            bgColor: 'bg-emerald-50',
+            bgColor: 'bg-emerald-500/10',
             description: 'Negócios ganhos'
         },
         {
@@ -42,7 +42,7 @@ export default function ReportsKPICards({ metrics }: ReportsKPICardsProps) {
             value: metrics.conversionRate,
             icon: TrendingUp,
             color: 'text-amber-500',
-            bgColor: 'bg-amber-50',
+            bgColor: 'bg-amber-500/10',
             description: 'De Leads para Ganhos'
         }
     ];
@@ -52,7 +52,7 @@ export default function ReportsKPICards({ metrics }: ReportsKPICardsProps) {
             {kpis.map((kpi, index) => {
                 const Icon = kpi.icon;
                 return (
-                    <div key={index} className="bg-card rounded-2xl p-6 shadow-sm border border-border/50 flex flex-col justify-between h-full">
+                    <div key={index} className="bg-card rounded-2xl p-6 shadow-sm border border-border flex flex-col justify-between h-full">
                         <div className="flex items-start justify-between mb-4">
                             <div>
                                 <h3 className="text-sm font-medium text-muted-foreground">{kpi.label}</h3>

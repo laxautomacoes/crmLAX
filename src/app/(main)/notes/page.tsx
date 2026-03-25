@@ -312,9 +312,11 @@ export default function NotesPage() {
                         <FileText size={48} className="text-muted-foreground/40" />
                     </div>
                     <h3 className="text-lg font-bold text-foreground">Nenhuma nota encontrada</h3>
-                    <p className="text-muted-foreground text-sm max-w-xs text-center mt-2">
-                        {searchTerm ? 'Tente buscar por termos diferentes ou limpe a busca.' : 'Comece criando sua primeira anotação para organizar seu fluxo de trabalho.'}
-                    </p>
+                    {searchTerm && (
+                        <p className="text-muted-foreground text-sm max-w-xs text-center mt-2">
+                            Tente buscar por termos diferentes ou limpe a busca.
+                        </p>
+                    )}
                     <button
                         onClick={() => setIsModalOpen(true)}
                         className="mt-6 text-secondary font-bold text-sm hover:underline"
