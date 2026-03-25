@@ -8,15 +8,18 @@ import SalesFunnel from '@/components/dashboard/SalesFunnel'
 import RecentLeadsList from '@/components/dashboard/RecentLeadsList'
 import { FilterModal } from '@/components/dashboard/FilterModal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
-import type { DashboardMetrics } from '@/app/_actions/dashboard'
+import ROIDashboard from '@/components/dashboard/ROIDashboard'
+import { BarChart3 } from 'lucide-react'
+import type { DashboardMetrics, ROIMetrics } from '@/app/_actions/dashboard'
 
 interface DashboardClientProps {
     metrics: DashboardMetrics
+    roiData: ROIMetrics
     profileName: string
     tenantId: string
 }
 
-export default function DashboardClient({ metrics, profileName, tenantId }: DashboardClientProps) {
+export default function DashboardClient({ metrics, roiData, profileName, tenantId }: DashboardClientProps) {
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)
     const router = useRouter()
@@ -66,6 +69,16 @@ export default function DashboardClient({ metrics, profileName, tenantId }: Dash
             </div>
 
             <KPICards kpis={metrics.kpis} />
+
+            {/* Seção ROI */}
+            <div className="space-y-4 pt-4">
+                <div className="flex items-center gap-2 text-foreground font-bold">
+                    <BarChart3 size={20} className="text-primary" />
+                    <h2 className="text-lg uppercase tracking-wider">Desempenho Financeiro & ROI</h2>
+                </div>
+                <ROIDashboard data={roiData} />
+            </div>
+
             <SalesFunnel funnelSteps={metrics.funnelSteps} />
             <RecentLeadsList recentLeads={metrics.recentLeads} />
 

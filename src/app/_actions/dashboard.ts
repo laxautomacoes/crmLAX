@@ -26,6 +26,14 @@ export interface DashboardMetrics {
     }>
 }
 
+export interface ROIMetrics {
+    totalCustos: number
+    totalReceita: number
+    roi: number
+    cpl: number // Custo por Lead
+    leadsCount: number
+}
+
 export async function getDashboardMetrics(tenantId: string) {
     const supabase = await createClient()
     const { profile } = await getProfile()
@@ -206,5 +214,70 @@ export async function getDashboardMetrics(tenantId: string) {
             success: false,
             error: error.message
         }
+    }
+}
+export async function getROIMetrics(tenantId: string): Promise<{ success: boolean; data?: ROIMetrics; error?: string }> {
+    const supabase = await createClient()
+    
+    try {
+        // 1. Total de Custos (Marketing)
+        const { data: trafficData, error: trafficError } = await supabase
+            .from('origens_trafego')
+            .select('custo')
+            .eq('tenant_id', tenantId)
+
+        if (trafficError) throw trafficError
+        const totalCustos = (trafficData || []).reduce((acc: number, curr: any) => acc + (Number(curr.custo) || 0), 0)
+
+        // 2. Total de Receita (Vendas Ganhas - usando valor_estimado como proxy inicial)
+        // Buscando estágio 'Ganho'
+        const { data: allStages } = await supabase
+            .from('lead_stages')
+            .select('id, name')
+            .eq('tenant_id', tenantId)
+
+        const winStage = (allStages as any[])?.find((s) =>
+            s.name.toLowerCase().includes('ganho') ||
+            s.name.toLowerCase().includes('fechado') ||
+            s.name.toLowerCase().includes('concluído')
+        )
+
+        let totalReceita = 0
+        if (winStage) {
+            const { data: leadsData, error: leadsError } = await supabase
+                .from('leads')
+                .select('valor_estimado')
+                .eq('tenant_id', tenantId)
+                .eq('stage_id', winStage.id)
+
+            if (leadsError) throw leadsError
+            totalReceita = (leadsData || []).reduce((acc: number, curr: any) => acc + (Number(curr.valor_estimado) || 0), 0)
+        }
+
+        // 3. Contagem de Leads para CPL
+        const { count: leadsCount, error: countError } = await supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId)
+
+        if (countError) throw countError
+
+        // 4. Cálculos
+        const roi = totalCustos > 0 ? ((totalReceita - totalCustos) / totalCustos) * 100 : 0
+        const cpl = (leadsCount || 0) > 0 ? totalCustos / (leadsCount || 1) : 0
+
+        return {
+            success: true,
+            data: {
+                totalCustos,
+                totalReceita,
+                roi,
+                cpl,
+                leadsCount: leadsCount || 0
+            }
+        }
+    } catch (error: any) {
+        console.error('Error fetching ROI metrics:', error)
+        return { success: false, error: error.message }
     }
 }

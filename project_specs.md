@@ -9,8 +9,8 @@ O diferencial é ser um sistema "limpo", focado em automação real e inteligên
 - Linguagem: TypeScript (Strict Mode).
 - UI/UX: Tailwind CSS, Shadcn/UI, Lucide Icons.
 - Backend: Supabase (PostgreSQL, Auth, Storage, Edge Functions).
-- IA: Google Generative AI (Gemini 1.5 Flash).
-- Integrações: N8N (Webhooks), Resend (E-mail), API WhatsApp (Oficial/Não-Oficial).
+- IA: Google Generative AI (Gemini 2.0 Flash).
+- Integrações: Supabase Edge Functions (Webhooks/Ingestion), Resend (E-mail), API WhatsApp (Oficial/Não-Oficial).
 - Hospedagem: Vercel (Frontend/Middleware).
 
 Regras de Ouro (Engineering Constraints):
@@ -35,13 +35,13 @@ IA & Logs:
 - ai_usage: id, tenant_id, profile_id, model, total_tokens, feature_context.
 - updates: id, title, description, type (feature|fix|roadmap), status, published_at. (Público).
 
-4. FLUXO DE LEADS & AUTOMAÇÃO (N8N)
-O sistema não terá lógica de negócio no n8n. O n8n é o Ingestion Layer.
+4. FLUXO DE LEADS & AUTOMAÇÃO (SUPABASE EDGE FUNCTIONS)
+O sistema utilizará Edge Functions como Ingestion Layer principal.
 
 Endpoint Único: /api/v1/webhooks/leads.
 
 Lógica Interna (CRM):
-- Receber Payload do n8n (Ads, Site, Whats).
+- Receber Payload direto nas Edge Functions (Meta, Google, Portais).
 - Upsert no contacts (pelo telefone).
 - Criar nova entrada em leads vinculada ao contato.
 - Aplicar tags de origem automaticamente.

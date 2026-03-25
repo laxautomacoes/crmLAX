@@ -23,6 +23,7 @@ interface PropertyModalProps {
 }
 
 export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRole }: PropertyModalProps) {
+    const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const [brokers, setBrokers] = useState<any[]>([])
     const [currentProfile, setCurrentProfile] = useState<any>(null)
     const [formData, setFormData] = useState({
@@ -335,11 +336,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             onClose={onClose}
             title={editingProperty ? "Editar Imóvel" : "Novo Imóvel"}
             extraHeaderContent={
-                <Switch 
-                    checked={formData.is_published}
-                    onChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
-                    label="Site"
-                />
+                isAdmin ? (
+                    <Switch 
+                        checked={formData.is_published}
+                        onChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
+                        label="Site"
+                    />
+                ) : null
             }
             size="lg"
         >

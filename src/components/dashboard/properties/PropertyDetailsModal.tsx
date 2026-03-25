@@ -151,13 +151,15 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                         </button>
                     )}
                     
-                    <Switch 
-                        checked={isPublished}
-                        onChange={handleTogglePublished}
-                        label="Site"
-                        disabled={isUpdating}
-                        className="bg-muted/30 px-3 py-1.5 rounded-xl border border-border/50"
-                    />
+                    {isAdmin && (
+                        <Switch 
+                            checked={isPublished}
+                            onChange={handleTogglePublished}
+                            label="Site"
+                            disabled={isUpdating}
+                            className="bg-muted/30 px-3 py-1.5 rounded-xl border border-border/50"
+                        />
+                    )}
                 </div>
 
                 {activeTab === 'details' ? (

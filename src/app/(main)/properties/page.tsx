@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Plus, Search, LayoutGrid, List, Download, Filter, WifiOff } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Download, Filter, WifiOff, FileText } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProfile } from '@/app/_actions/profile'
 import { getAssets, createAsset, updateAsset, deleteAsset } from '@/app/_actions/assets'
@@ -15,6 +15,7 @@ import { PropertyModal } from '@/components/dashboard/properties/PropertyModal'
 import { PropertyDetailsModal } from '@/components/dashboard/properties/PropertyDetailsModal'
 import { SendToLeadModal } from '@/components/dashboard/properties/SendToLeadModal'
 import { PropertyFiltersModal } from '@/components/dashboard/properties/PropertyFiltersModal'
+import { PropertyImportPDFModal } from '@/components/dashboard/properties/PropertyImportPDFModal'
 import { useOfflineSync } from '@/hooks/use-offline-sync'
 import { getOfflineProperties } from '@/services/db'
 
@@ -26,6 +27,7 @@ export default function PropertiesPage() {
     const [isDetailsOpen, setIsDetailsOpen] = useState(false)
     const [isSendModalOpen, setIsSendModalOpen] = useState(false)
     const [isFiltersOpen, setIsFiltersOpen] = useState(false)
+    const [isImportPDFOpen, setIsImportPDFOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [hasAIAccess, setHasAIAccess] = useState(false)
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery')
@@ -359,6 +361,15 @@ export default function PropertiesPage() {
                         <Plus size={18} />
                         Novo Imóvel
                     </button>
+
+                    <button
+                        onClick={() => setIsImportPDFOpen(true)}
+                        className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg hover:bg-primary/20 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                        title="Importar Tabela de Preços via IA"
+                    >
+                        <FileText size={18} />
+                        Importar PDF
+                    </button>
                 </div>
             </div>
 
@@ -430,6 +441,13 @@ export default function PropertiesPage() {
                 tenantId={tenantId}
                 onImportSuccess={fetchData}
                 userRole={userRole}
+            />
+
+            <PropertyImportPDFModal
+                isOpen={isImportPDFOpen}
+                onClose={() => setIsImportPDFOpen(false)}
+                tenantId={tenantId}
+                onImportSuccess={fetchData}
             />
         </div>
     )

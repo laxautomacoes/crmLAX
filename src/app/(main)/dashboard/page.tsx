@@ -1,6 +1,7 @@
-import { getDashboardMetrics } from '@/app/_actions/dashboard';
+import { getDashboardMetrics, getROIMetrics } from '@/app/_actions/dashboard';
 import { getProfile } from '@/app/_actions/profile';
 import DashboardClient from '@/components/dashboard/DashboardClient';
+import type { ROIMetrics } from '@/app/_actions/dashboard';
 
 export const dynamic = 'force-dynamic';
 
@@ -15,9 +16,12 @@ export default async function DashboardPage() {
         );
     }
 
-    const result = await getDashboardMetrics(profile.tenant_id);
+    const [metricsResult, roiResult] = await Promise.all([
+        getDashboardMetrics(profile.tenant_id),
+        getROIMetrics(profile.tenant_id)
+    ]);
 
-    const metrics = result.success && result.data ? result.data : {
+    const metrics = metricsResult.success && metricsResult.data ? metricsResult.data : {
         kpis: {
             leadsAtivos: 0,
             leadsAtivosTrend: '+0%',
@@ -30,5 +34,20 @@ export default async function DashboardPage() {
         recentLeads: []
     };
 
-    return <DashboardClient metrics={metrics} profileName={profile.full_name} tenantId={profile.tenant_id} />;
+    const roiData: ROIMetrics = roiResult.success && roiResult.data ? roiResult.data : {
+        totalCustos: 0,
+        totalReceita: 0,
+        roi: 0,
+        cpl: 0,
+        leadsCount: 0
+    };
+
+    return (
+        <DashboardClient 
+            metrics={metrics} 
+            roiData={roiData}
+            profileName={profile.full_name} 
+            tenantId={profile.tenant_id} 
+        />
+    );
 }
