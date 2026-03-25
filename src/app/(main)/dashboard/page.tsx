@@ -48,6 +48,7 @@ export default async function DashboardPage() {
             roiData={roiData}
             profileName={profile.full_name} 
             tenantId={profile.tenant_id} 
+            userRole={profile.role}
         />
     );
 }

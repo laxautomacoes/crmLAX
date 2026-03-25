@@ -17,9 +17,10 @@ interface DashboardClientProps {
     roiData: ROIMetrics
     profileName: string
     tenantId: string
+    userRole: string
 }
 
-export default function DashboardClient({ metrics, roiData, profileName, tenantId }: DashboardClientProps) {
+export default function DashboardClient({ metrics, roiData, profileName, tenantId, userRole }: DashboardClientProps) {
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)
     const router = useRouter()
@@ -70,14 +71,16 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
 
             <KPICards kpis={metrics.kpis} />
 
-            {/* Seção ROI */}
-            <div className="space-y-4 pt-4">
-                <div className="flex items-center gap-2 text-foreground font-bold">
-                    <BarChart3 size={20} className="text-primary" />
-                    <h2 className="text-lg uppercase tracking-wider">Desempenho Financeiro & ROI</h2>
+            {/* Seção ROI - Apenas para Admins */}
+            {(userRole === 'admin' || userRole === 'superadmin' || userRole === 'super_admin' || userRole === 'super administrador') && (
+                <div className="space-y-4 pt-4">
+                    <div className="flex items-center gap-2 text-foreground font-bold">
+                        <BarChart3 size={20} className="text-primary" />
+                        <h2 className="text-lg uppercase tracking-wider">Desempenho Financeiro & ROI</h2>
+                    </div>
+                    <ROIDashboard data={roiData} />
                 </div>
-                <ROIDashboard data={roiData} />
-            </div>
+            )}
 
             <SalesFunnel funnelSteps={metrics.funnelSteps} />
             <RecentLeadsList recentLeads={metrics.recentLeads} />
