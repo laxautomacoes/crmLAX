@@ -136,20 +136,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
         <Modal isOpen={isOpen} onClose={onClose} title={null} size="xl">
             <div className="w-full">
                 <div className="flex items-center gap-4 mb-2">
-                    {prop?.id && (
-                        <button 
-                            onClick={() => setActiveTab(activeTab === 'details' ? 'ai_copy' : 'details')}
-                            className={cn(
-                                "rounded-lg font-bold gap-2 flex items-center px-3 py-1.5 transition-all text-xs uppercase tracking-widest border",
-                                activeTab === 'ai_copy' 
-                                    ? "bg-[#FFE600] text-[#404F4F] border-[#FFE600] shadow-sm" 
-                                    : "bg-white text-foreground border-border hover:bg-muted/10 shadow-sm"
-                            )}
-                        >
-                            <Sparkles size={14} className={activeTab === 'ai_copy' ? 'text-[#404F4F]' : 'text-foreground'} />
-                            Copy com IA
-                        </button>
-                    )}
+                    {/* O botão foi movido para a seção de Descrição */}
                     
                     {isAdmin && (
                         <Switch 
@@ -379,17 +366,15 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                                     </div>
 
                                     {/* Corretor Responsável */}
-                                    {(prop.corretor_nome || details.corretor_nome) && (
-                                        <div className="flex items-center justify-between py-1.5">
-                                            <div className="flex items-center gap-2 text-foreground">
-                                                <User size={14} className="text-foreground" />
-                                                <span className="text-sm font-medium">Corretor</span>
-                                            </div>
-                                            <div className="text-sm font-medium text-foreground">
-                                                {prop.corretor_nome || details.corretor_nome}
-                                            </div>
+                                    <div className="flex items-center justify-between py-1.5">
+                                        <div className="flex items-center gap-2 text-foreground">
+                                            <User size={14} className="text-foreground" />
+                                            <span className="text-sm font-medium">Corretor</span>
                                         </div>
-                                    )}
+                                        <div className="text-sm font-medium text-foreground">
+                                            {prop.corretor_nome || details.corretor_nome || 'Não informado'}
+                                        </div>
+                                    </div>
 
                                     <div className="flex items-center justify-between py-1.5">
                                         <div className="flex items-center gap-2 text-foreground">
@@ -463,15 +448,13 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                                         <div className="text-sm font-medium text-foreground">{details.area_construida || 0}m²</div>
                                     </div>
 
-                                    {details.torre_bloco && (
-                                        <div className="flex items-center justify-between py-1.5">
-                                            <div className="flex items-center gap-2 text-foreground">
-                                                <Home size={14} className="text-foreground" />
-                                                <span className="text-sm font-medium">Torre/Bloco</span>
-                                            </div>
-                                            <div className="text-sm font-medium text-foreground">{details.torre_bloco}</div>
+                                    <div className="flex items-center justify-between py-1.5">
+                                        <div className="flex items-center gap-2 text-foreground">
+                                            <Home size={14} className="text-foreground" />
+                                            <span className="text-sm font-medium">Torre/Bloco</span>
                                         </div>
-                                    )}
+                                        <div className="text-sm font-medium text-foreground">{details.torre_bloco || 'Não informado'}</div>
+                                    </div>
                                 </div>
                             </div>
 
@@ -480,10 +463,21 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                             {/* Description & Proprietary */}
                             <div className="grid grid-cols-1 gap-8">
                                 <div className="space-y-4 pt-6">
-                                    <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                        <Info size={14} className="text-foreground" />
-                                        Descrição
-                                    </h4>
+                                    <div className="flex items-center justify-between gap-4">
+                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                            <Info size={14} className="text-foreground" />
+                                            Descrição
+                                        </h4>
+                                        {prop?.id && (
+                                            <button 
+                                                onClick={() => setActiveTab('ai_copy')}
+                                                className="rounded-lg font-bold gap-2 flex items-center px-3 py-1.5 transition-all text-xs uppercase tracking-widest border bg-white text-foreground border-border hover:bg-muted/10 shadow-sm"
+                                            >
+                                                <Sparkles size={14} className="text-foreground" />
+                                                Copy com IA
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="text-foreground leading-relaxed">
                                         {prop.description ? (
                                             <SafeMarkdownRenderer content={prop.description} />
@@ -514,18 +508,14 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                                         </div>
 
                                         <div className="flex flex-wrap gap-3">
-                                            {(details.proprietario?.telefone || prop.owner_phone) && (
-                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 text-sm font-medium text-foreground">
-                                                    <Phone size={14} className="text-foreground" />
-                                                    {details.proprietario?.telefone || prop.owner_phone}
-                                                </div>
-                                            )}
-                                            {(details.proprietario?.email || prop.owner_email) && (
-                                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 text-sm font-medium text-foreground">
-                                                    <Mail size={14} className="text-foreground" />
-                                                    {details.proprietario?.email || prop.owner_email}
-                                                </div>
-                                            )}
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 text-sm font-medium text-foreground">
+                                                <Phone size={14} className="text-foreground" />
+                                                {details.proprietario?.telefone || prop.owner_phone || 'Não informado'}
+                                            </div>
+                                            <div className="flex items-center gap-2 px-3 py-1.5 rounded-xl bg-muted/40 text-sm font-medium text-foreground">
+                                                <Mail size={14} className="text-foreground" />
+                                                {details.proprietario?.email || prop.owner_email || 'Não informado'}
+                                            </div>
                                         </div>
                                     </div>
 
@@ -618,6 +608,15 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                 </>
             ) : (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <div className="mb-4">
+                            <button 
+                                onClick={() => setActiveTab('details')}
+                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
+                            >
+                                <ChevronLeft size={16} />
+                                Voltar para o Imóvel
+                            </button>
+                        </div>
                         <div className="p-1 px-4">
                             <PropertyCopyCard 
                                 assetId={prop.id} 
