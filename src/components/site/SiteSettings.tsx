@@ -46,7 +46,7 @@ interface BrandingData {
 }
 
 export function SiteSettings() {
-    const [activeTab, setActiveTab] = useState<'branding' | 'address' | 'social' | 'domain'>('branding')
+    const [activeTab, setActiveTab] = useState<'branding' | 'footer' | 'domain'>('branding')
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [verifying, setVerifying] = useState(false)
@@ -245,18 +245,11 @@ export function SiteSettings() {
                     Identidade
                 </button>
                 <button
-                    onClick={() => setActiveTab('address')}
-                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'address' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    onClick={() => setActiveTab('footer')}
+                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'footer' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                     <MapPin size={16} />
-                    Endereço
-                </button>
-                <button
-                    onClick={() => setActiveTab('social')}
-                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'social' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                    <Share2 size={16} />
-                    Redes Sociais
+                    Rodapé
                 </button>
                 <button
                     onClick={() => setActiveTab('domain')}
@@ -352,159 +345,149 @@ export function SiteSettings() {
                     </div>
                 )}
 
-                {/* ADDRESS TAB */}
-                {activeTab === 'address' && (
-                    <div className="bg-card border border-border rounded-2xl p-6">
-                        <div className="mb-6">
-                            <h3 className="text-lg font-bold text-foreground">Localização da Imobiliária</h3>
-                            <p className="text-sm text-muted-foreground">Informações de endereço exibidas no rodapé do seu site.</p>
+                {/* FOOTER TAB (Address + Social) */}
+                {activeTab === 'footer' && (
+                    <div className="space-y-6">
+                        {/* Address Section */}
+                        <div className="bg-card border border-border rounded-2xl p-6">
+                            <div className="mb-6">
+                                <h3 className="text-lg font-bold text-foreground">Localização da Imobiliária</h3>
+                                <p className="text-sm text-muted-foreground">Informações de endereço exibidas no rodapé do seu site.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1 md:col-span-2">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Logradouro / Rua</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.address?.street || ''} 
+                                        onChange={(e) => updateAddress('street', e.target.value)}
+                                        placeholder="Ex: Av. Atlântica"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Número</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.address?.number || ''} 
+                                        onChange={(e) => updateAddress('number', e.target.value)}
+                                        placeholder="Ex: 500"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Complemento</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.address?.complement || ''} 
+                                        onChange={(e) => updateAddress('complement', e.target.value)}
+                                        placeholder="Ex: Sala 201"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Bairro</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.address?.neighborhood || ''} 
+                                        onChange={(e) => updateAddress('neighborhood', e.target.value)}
+                                        placeholder="Ex: Centro"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Cidade</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.address?.city || ''} 
+                                        onChange={(e) => updateAddress('city', e.target.value)}
+                                        placeholder="Ex: Balneário Camboriú"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Estado (UF)</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.address?.state || ''} 
+                                        onChange={(e) => updateAddress('state', e.target.value)}
+                                        placeholder="Ex: SC"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">CEP</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.address?.zip_code || ''} 
+                                        onChange={(e) => updateAddress('zip_code', e.target.value)}
+                                        placeholder="00000-000"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                            </div>
                         </div>
 
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1 md:col-span-2">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Logradouro / Rua</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.address?.street || ''} 
-                                    onChange={(e) => updateAddress('street', e.target.value)}
-                                    placeholder="Ex: Av. Atlântica"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
+                        {/* Social Links Section */}
+                        <div className="bg-card border border-border rounded-2xl p-6">
+                            <div className="mb-6">
+                                <h3 className="text-lg font-bold text-foreground">Redes Sociais</h3>
+                                <p className="text-sm text-muted-foreground">Links para as redes sociais exibidos no site.</p>
                             </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Número</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.address?.number || ''} 
-                                    onChange={(e) => updateAddress('number', e.target.value)}
-                                    placeholder="Ex: 500"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Complemento</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.address?.complement || ''} 
-                                    onChange={(e) => updateAddress('complement', e.target.value)}
-                                    placeholder="Ex: Sala 201"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Bairro</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.address?.neighborhood || ''} 
-                                    onChange={(e) => updateAddress('neighborhood', e.target.value)}
-                                    placeholder="Ex: Centro"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Cidade</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.address?.city || ''} 
-                                    onChange={(e) => updateAddress('city', e.target.value)}
-                                    placeholder="Ex: Balneário Camboriú"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Estado (UF)</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.address?.state || ''} 
-                                    onChange={(e) => updateAddress('state', e.target.value)}
-                                    placeholder="Ex: SC"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">CEP</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.address?.zip_code || ''} 
-                                    onChange={(e) => updateAddress('zip_code', e.target.value)}
-                                    placeholder="00000-000"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
+
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Instagram</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.social_links?.instagram || ''} 
+                                        onChange={(e) => updateSocial('instagram', e.target.value)}
+                                        placeholder="https://instagram.com/sua_empresa"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Facebook</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.social_links?.facebook || ''} 
+                                        onChange={(e) => updateSocial('facebook', e.target.value)}
+                                        placeholder="https://facebook.com/sua_empresa"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">LinkedIn</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.social_links?.linkedin || ''} 
+                                        onChange={(e) => updateSocial('linkedin', e.target.value)}
+                                        placeholder="https://linkedin.com/company/sua_empresa"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">YouTube</label>
+                                    <input 
+                                        type="text" 
+                                        value={branding.social_links?.youtube || ''} 
+                                        onChange={(e) => updateSocial('youtube', e.target.value)}
+                                        placeholder="https://youtube.com/@sua_empresa"
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
+                                </div>
                             </div>
                         </div>
 
-                        <div className="mt-8 pt-6 border-t border-border flex justify-end">
+                        <div className="mt-8 pt-6 flex justify-end">
                             <button
                                 onClick={handleSaveMain}
                                 disabled={saving}
                                 className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
                             >
                                 {saving && <Loader2 size={18} className="animate-spin" />}
-                                Salvar Endereço
-                            </button>
-                        </div>
-                    </div>
-                )}
-
-                {/* SOCIAL LINKS TAB */}
-                {activeTab === 'social' && (
-                    <div className="bg-card border border-border rounded-2xl p-6">
-                        <div className="mb-6">
-                            <h3 className="text-lg font-bold text-foreground">Redes Sociais</h3>
-                            <p className="text-sm text-muted-foreground">Links para as redes sociais exibidos no site.</p>
-                        </div>
-
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Instagram</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.social_links?.instagram || ''} 
-                                    onChange={(e) => updateSocial('instagram', e.target.value)}
-                                    placeholder="https://instagram.com/sua_empresa"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Facebook</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.social_links?.facebook || ''} 
-                                    onChange={(e) => updateSocial('facebook', e.target.value)}
-                                    placeholder="https://facebook.com/sua_empresa"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">LinkedIn</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.social_links?.linkedin || ''} 
-                                    onChange={(e) => updateSocial('linkedin', e.target.value)}
-                                    placeholder="https://linkedin.com/company/sua_empresa"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                            <div className="space-y-1">
-                                <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">YouTube</label>
-                                <input 
-                                    type="text" 
-                                    value={branding.social_links?.youtube || ''} 
-                                    onChange={(e) => updateSocial('youtube', e.target.value)}
-                                    placeholder="https://youtube.com/@sua_empresa"
-                                    className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                        </div>
-
-                        <div className="mt-8 pt-6 border-t border-border flex justify-end">
-                            <button
-                                onClick={handleSaveMain}
-                                disabled={saving}
-                                className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
-                            >
-                                {saving && <Loader2 size={18} className="animate-spin" />}
-                                Salvar Redes Sociais
+                                Salvar Rodapé
                             </button>
                         </div>
                     </div>
@@ -589,16 +572,62 @@ export function SiteSettings() {
                                             <div className="p-4 space-y-4">
                                                 {/* DNS Records UI (Simplified from DomainTab) */}
                                                 <div className="space-y-2">
+                                                    {/* Tipo: CNAME */}
                                                     <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
                                                         <div className="flex flex-col">
-                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Tipo: CNAME</span>
-                                                            <span className="font-mono">www</span>
+                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Tipo</span>
+                                                            <span className="font-mono font-bold">CNAME</span>
                                                         </div>
-                                                        <div className="flex flex-col items-end">
-                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Valor</span>
-                                                            <span className="font-mono">cname.vercel-dns.com</span>
+                                                        <button 
+                                                            onClick={() => copyToClipboard('CNAME', 'Tipo')} 
+                                                            className="text-muted-foreground hover:text-secondary transition-colors"
+                                                            title="Copiar Tipo"
+                                                        >
+                                                            <Copy size={12} />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Nome / Host */}
+                                                    <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Nome / Host</span>
+                                                            <span className="font-mono font-bold">{domain.split('.')[0] || 'www'}</span>
                                                         </div>
-                                                        <button onClick={() => copyToClipboard('cname.vercel-dns.com', 'Valor')} className="text-muted-foreground hover:text-foreground">
+                                                        <button 
+                                                            onClick={() => copyToClipboard(domain.split('.')[0] || 'www', 'Host')} 
+                                                            className="text-muted-foreground hover:text-secondary transition-colors"
+                                                            title="Copiar Host"
+                                                        >
+                                                            <Copy size={12} />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Valor / Destino */}
+                                                    <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Valor / Destino</span>
+                                                            <span className="font-mono font-bold">cname.vercel-dns.com</span>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => copyToClipboard('cname.vercel-dns.com', 'Valor')} 
+                                                            className="text-muted-foreground hover:text-secondary transition-colors"
+                                                            title="Copiar Valor"
+                                                        >
+                                                            <Copy size={12} />
+                                                        </button>
+                                                    </div>
+
+                                                    {/* TTL */}
+                                                    <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
+                                                        <div className="flex flex-col">
+                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">TTL</span>
+                                                            <span className="font-mono font-bold">3600 (Padrão)</span>
+                                                        </div>
+                                                        <button 
+                                                            onClick={() => copyToClipboard('3600', 'TTL')} 
+                                                            className="text-muted-foreground hover:text-secondary transition-colors"
+                                                            title="Copiar TTL"
+                                                        >
                                                             <Copy size={12} />
                                                         </button>
                                                     </div>

@@ -1,4 +1,5 @@
 import { createAdminClient } from '@/lib/supabase/admin';
+import { evolutionService } from '@/lib/evolution';
 
 export interface LeadCreateData {
     tenant_id: string;
@@ -57,5 +58,65 @@ export async function processLeadInbound(data: LeadCreateData) {
 
     if (leadError) throw leadError;
 
-    return { contact_id: contact.id, lead_id: lead.id };
+    // 3. Distribuição Automática (Round Robin)
+    let assignedTo = null;
+    try {
+        const { data: broker, error: brokerError } = await supabase
+            .from('profiles')
+            .select('id, full_name, whatsapp_number')
+            .eq('tenant_id', tenant_id)
+            .eq('is_active_for_service', true)
+            .order('last_lead_assigned_at', { ascending: true, nullsFirst: true })
+            .limit(1)
+            .single();
+
+        if (broker && !brokerError) {
+            assignedTo = broker.id;
+            await supabase
+                .from('leads')
+                .update({ assigned_to: assignedTo })
+                .eq('id', lead.id);
+
+            await supabase
+                .from('profiles')
+                .update({ last_lead_assigned_at: new Date().toISOString() })
+                .eq('id', assignedTo);
+
+            // 4. Notificação Interna (Sininho)
+            await supabase
+                .from('notifications')
+                .insert({
+                    user_id: assignedTo,
+                    tenant_id,
+                    title: 'Novo Lead Recebido',
+                    message: `Você recebeu um novo lead: ${name}. Origem: ${source || 'Direto'}`,
+                    type: 'new_lead',
+                    metadata: { lead_id: lead.id }
+                });
+
+            // 5. Notificação via WhatsApp para o Corretor
+            if (broker.whatsapp_number) {
+                const { data: instance } = await supabase
+                    .from('whatsapp_instances')
+                    .select('instance_name')
+                    .eq('tenant_id', tenant_id)
+                    .eq('status', 'connected')
+                    .limit(1)
+                    .single();
+
+                if (instance?.instance_name) {
+                    const message = `🔔 *Novo Lead Recebido!*\n\n*Nome:* ${name}\n*Origem:* ${source || 'Direto'}\n*Interesse:* ${data.asset_id ? 'Ver no CRM' : 'Geral'}\n\n_Acesse o CRM para iniciar o atendimento._`;
+                    await evolutionService.sendMessage(
+                        instance.instance_name,
+                        broker.whatsapp_number.replace(/\D/g, ''),
+                        message
+                    ).catch(err => console.error('Erro ao enviar WhatsApp de notificação:', err));
+                }
+            }
+        }
+    } catch (distError) {
+        console.error('Erro na distribuição/notificação de lead:', distError);
+    }
+
+    return { contact_id: contact.id, lead_id: lead.id, assigned_to: assignedTo };
 }

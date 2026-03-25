@@ -54,8 +54,8 @@ export async function updateTenantBranding(tenantId: string, brandingData: any) 
 export async function updateTenantDomain(tenantId: string, domain: string | null) {
     const supabase = await createClient()
 
-    // Validação básica de formato se não for null
-    if (domain && !/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}(:[0-9]{1,5})?(\/.*)?$/.test(domain)) {
+    // Validação básica de formato se não for null (suportando TLDs longos como .photography, .marketing, .online)
+    if (domain && !/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,14}(:[0-9]{1,5})?(\/.*)?$/.test(domain)) {
         return { success: false, error: 'Formato de domínio inválido.' }
     }
 
@@ -86,21 +86,39 @@ export async function verifyTenantDomain(tenantId: string) {
 
     if (!tenant?.custom_domain) return { success: false, error: 'Nenhum domínio configurado.' }
 
-    // TODO: Integrar com API da Vercel para verificar status real
-    // Por enquanto, simulamos uma verificação bem-sucedida se o domínio estiver preenchido
-    // para que o usuário possa testar o fluxo básico.
-    
-    const { error } = await supabase
-        .from('tenants')
-        .update({ 
-            custom_domain_verified: true,
-            custom_domain_updated_at: new Date().toISOString()
-        })
-        .eq('id', tenantId)
+    try {
+        // Verificação real via Cloudflare DNS-over-HTTPS
+        const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${tenant.custom_domain}&type=CNAME`, {
+            headers: { 'Accept': 'application/dns-json' }
+        });
+        const dnsData = await response.json();
 
-    if (error) return { success: false, error: error.message }
+        // Verificar se existe um registro CNAME e se o valor é o esperado
+        const hasValidCname = dnsData.Answer?.some((ans: any) => 
+            ans.type === 5 && (ans.data === 'cname.vercel-dns.com.' || ans.data === 'cname.vercel-dns.com')
+        );
 
-    revalidatePath('/settings')
-    
-    return { success: true }
+        if (!hasValidCname) {
+            return { 
+                success: false, 
+                error: 'Registro CNAME não encontrado ou ainda não propagado. Verifique as configurações no seu provedor.' 
+            }
+        }
+        
+        const { error } = await supabase
+            .from('tenants')
+            .update({ 
+                custom_domain_verified: true,
+                custom_domain_updated_at: new Date().toISOString()
+            })
+            .eq('id', tenantId)
+
+        if (error) return { success: false, error: error.message }
+
+        revalidatePath('/settings')
+        return { success: true }
+    } catch (error: any) {
+        console.error('DNS Verification Error:', error);
+        return { success: false, error: 'Erro ao conectar com o serviço de verificação DNS.' }
+    }
 }

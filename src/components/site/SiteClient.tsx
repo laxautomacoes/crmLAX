@@ -62,20 +62,6 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
 
         return true;
     });
-
-    if (!assets || assets.length === 0) {
-        return (
-            <div className="text-center py-12 bg-card rounded-2xl border border-border">
-                <p className="text-lg font-semibold text-foreground mb-2">
-                    Nenhum imóvel disponível no momento
-                </p>
-                <p className="text-sm text-muted-foreground">
-                    Volte em breve para ver nossos imóveis!
-                </p>
-            </div>
-        );
-    }
-
     return (
         <>
             <AssetFilters
@@ -84,10 +70,22 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
             />
-            {viewMode === 'gallery' ? (
-                <AssetsGrid assets={filteredAssets} />
+
+            {assets.length === 0 || filteredAssets.length === 0 ? (
+                <div className="text-center py-20 bg-card rounded-2xl border border-border animate-in fade-in zoom-in duration-500">
+                    <p className="text-xl font-bold text-foreground mb-2">
+                        Nenhum imóvel disponível no momento
+                    </p>
+                    <p className="text-sm text-muted-foreground">
+                        Volte em breve para ver nossos imóveis!
+                    </p>
+                </div>
             ) : (
-                <AssetsList assets={filteredAssets} />
+                viewMode === 'gallery' ? (
+                    <AssetsGrid assets={filteredAssets} />
+                ) : (
+                    <AssetsList assets={filteredAssets} />
+                )
             )}
             {whatsappNumber && <WhatsAppButton phone={whatsappNumber} />}
 

@@ -51,8 +51,12 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
 
         return data;
     } catch (error: any) {
-        console.error('Fetch error in evolutionFetch:', error);
-        throw error;
+        console.error('Fetch error in evolutionFetch:', {
+            url,
+            message: error.message,
+            cause: error.cause
+        });
+        throw new Error(`Falha na conexão com o servidor de WhatsApp. Verifique se ${baseUrl} está online.`);
     }
 }
 

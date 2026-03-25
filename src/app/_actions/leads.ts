@@ -179,6 +179,49 @@ export async function createLead(tenantId: string, data: any) {
 
     if (leadError) return { success: false, error: leadError.message };
 
+    // 3. Notificar o Corretor (Interna e WhatsApp)
+    if (assignedTo) {
+        try {
+            // Notificação Interna
+            await createNotification({
+                user_id: assignedTo,
+                title: 'Novo Lead Atribuído',
+                message: `Um novo lead foi atribuído a você: ${data.name}.`,
+                type: 'new_lead',
+                metadata: { name: data.name }
+            });
+
+            // Notificação WhatsApp
+            const { data: broker } = await supabase
+                .from('profiles')
+                .select('whatsapp_number')
+                .eq('id', assignedTo)
+                .single();
+
+            if (broker?.whatsapp_number) {
+                const { data: instance } = await supabase
+                    .from('whatsapp_instances')
+                    .select('instance_name')
+                    .eq('tenant_id', tenantId)
+                    .eq('status', 'connected')
+                    .limit(1)
+                    .single();
+
+                if (instance?.instance_name) {
+                    const { evolutionService } = await import('@/lib/evolution');
+                    const message = `🔔 *Novo Lead Atribuído!*\n\n*Nome:* ${data.name}\n*Origem:* Cadastro Manual\n\n_Acesse o CRM para iniciar o atendimento._`;
+                    await evolutionService.sendMessage(
+                        instance.instance_name,
+                        broker.whatsapp_number.replace(/\D/g, ''),
+                        message
+                    ).catch(err => console.error('Erro WhatsApp:', err));
+                }
+            }
+        } catch (notifError) {
+            console.error('Erro ao notificar corretor:', notifError);
+        }
+    }
+
     // Log the action
     await createLog({
         action: 'create_lead',

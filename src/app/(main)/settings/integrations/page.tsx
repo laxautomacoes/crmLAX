@@ -12,13 +12,13 @@ import { getProfile } from '@/app/_actions/profile';
 export const dynamic = 'force-dynamic';
 
 export default function IntegrationsSettingsPage() {
-    const [tenantId, setTenantId] = useState<string | null>(null);
+    const [tenant, setTenant] = useState<any>(null);
 
     useEffect(() => {
         async function loadProfile() {
             const { profile } = await getProfile();
-            if (profile?.tenant_id) {
-                setTenantId(profile.tenant_id);
+            if (profile?.tenants) {
+                setTenant(profile.tenants);
             }
         }
         loadProfile();
@@ -62,7 +62,9 @@ export default function IntegrationsSettingsPage() {
                             icon={Facebook}
                             iconColor="bg-[#1877F2]/10 text-[#1877F2]"
                             endpoint="/api/v1/connectors/facebook"
-                            tenantId={tenantId || ''}
+                            tenantId={tenant?.id || ''}
+                            slug={tenant?.slug}
+                            customDomain={tenant?.custom_domain}
                         />
                         <IntegrationEndpointCard 
                             title="Google Ads"
@@ -70,7 +72,9 @@ export default function IntegrationsSettingsPage() {
                             icon={Chrome}
                             iconColor="bg-foreground/10 text-foreground"
                             endpoint="/api/v1/connectors/google"
-                            tenantId={tenantId || ''}
+                            tenantId={tenant?.id || ''}
+                            slug={tenant?.slug}
+                            customDomain={tenant?.custom_domain}
                         />
                         <IntegrationEndpointCard 
                             title="Portais Imobiliários"
@@ -78,7 +82,9 @@ export default function IntegrationsSettingsPage() {
                             icon={Building2}
                             iconColor="bg-emerald-500/10 text-emerald-500"
                             endpoint="/api/v1/connectors/portals"
-                            tenantId={tenantId || ''}
+                            tenantId={tenant?.id || ''}
+                            slug={tenant?.slug}
+                            customDomain={tenant?.custom_domain}
                         />
                     </div>
                 </div>
