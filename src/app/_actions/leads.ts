@@ -6,6 +6,7 @@ import { cleanPhone } from '@/lib/utils/phone';
 import { getTenantFromHeaders } from '@/lib/utils/tenant';
 import { getStages } from './stages';
 import { getProfile } from './profile';
+import { createLog } from '@/lib/utils/logging';
 
 
 export async function getPipelineData(tenantId: string) {
@@ -98,6 +99,14 @@ export async function updateLeadStage(leadId: string, stageId: string) {
 
     if (error) return { success: false, error: error.message };
 
+    // Log the action
+    await createLog({
+        action: 'update_lead_stage',
+        entityType: 'lead',
+        entityId: leadId,
+        details: { stage_id: stageId || null }
+    });
+
     revalidatePath('/leads');
     return { success: true };
 }
@@ -169,6 +178,13 @@ export async function createLead(tenantId: string, data: any) {
 
     if (leadError) return { success: false, error: leadError.message };
 
+    // Log the action
+    await createLog({
+        action: 'create_lead',
+        entityType: 'lead',
+        details: { name: data.name, phone: data.phone }
+    });
+
     // Se foi distribuído, atualizar o timestamp do corretor
     if (assignedTo && assignedTo !== user?.id) {
         await supabase
@@ -238,6 +254,14 @@ export async function updateLead(tenantId: string, leadId: string, data: any) {
 
     if (leadError) return { success: false, error: leadError.message };
 
+    // Log the action
+    await createLog({
+        action: 'update_lead',
+        entityType: 'lead',
+        entityId: leadId,
+        details: { name: data.name }
+    });
+
     revalidatePath('/leads');
     return { success: true };
 }
@@ -252,6 +276,13 @@ export async function deleteLead(leadId: string) {
 
     if (error) return { success: false, error: error.message };
 
+    // Log the action
+    await createLog({
+        action: 'delete_lead',
+        entityType: 'lead',
+        entityId: leadId
+    });
+
     revalidatePath('/leads');
     return { success: true };
 }
@@ -265,6 +296,13 @@ export async function archiveLead(leadId: string) {
         .eq('id', leadId);
 
     if (error) return { success: false, error: error.message };
+
+    // Log the action
+    await createLog({
+        action: 'archive_lead',
+        entityType: 'lead',
+        entityId: leadId
+    });
 
     revalidatePath('/leads');
     return { success: true };

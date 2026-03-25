@@ -1,4 +1,4 @@
-import { LayoutDashboard, Filter, Users, Home, Calendar, FileText, Rocket, Settings, StickyNote, Globe } from 'lucide-react';
+import { LayoutDashboard, Filter, Users, Home, Calendar, FileText, Rocket, Settings, StickyNote, Globe, ShieldAlert } from 'lucide-react';
 
 export const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -32,6 +32,7 @@ export const menuItems = [
             { name: 'Notificações', href: '/notifications' },
             { name: 'Disparador em Massa', href: '/tools/whatsapp-bulk' },
             { name: 'Integrações', href: '/settings/integrations' },
+            { name: 'Logs do Sistema', href: '/settings/logs', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
             { name: 'Assinatura', href: '/settings/subscription', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] }
         ]
     },

@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 
 import { getProfile } from './profile'
+import { createLog } from '@/lib/utils/logging'
 
 export async function getAssets(tenantId: string, status?: string) {
     const supabase = await createClient()
@@ -179,6 +180,14 @@ export async function createAsset(tenantId: string, assetData: any) {
         }
 
         revalidatePath('/properties')
+        
+        await createLog({
+            action: 'create_asset',
+            entityType: 'asset',
+            entityId: (data as any)?.id,
+            details: { title: (data as any)?.title }
+        })
+
         return { success: true, data }
     } catch (error: any) {
         console.error('Error creating asset:', error)
@@ -310,6 +319,14 @@ export async function updateAsset(tenantId: string, assetId: string, assetData: 
         }
 
         revalidatePath('/properties')
+
+        await createLog({
+            action: 'update_asset',
+            entityType: 'asset',
+            entityId: (data as any)?.id,
+            details: { title: (data as any)?.title }
+        })
+
         return { success: true, data }
     } catch (error: any) {
         console.error('Error updating asset:', error)
@@ -419,6 +436,12 @@ export async function deleteAsset(tenantId: string, assetId: string) {
 
         if (error) throw error
 
+        await createLog({
+            action: 'delete_asset',
+            entityType: 'asset',
+            entityId: assetId
+        })
+
         revalidatePath('/properties')
         return { success: true }
     } catch (error: any) {
@@ -446,6 +469,12 @@ export async function archiveAsset(tenantId: string, assetId: string) {
         const { error } = await query
 
         if (error) throw error
+
+        await createLog({
+            action: 'archive_asset',
+            entityType: 'asset',
+            entityId: assetId
+        })
 
         revalidatePath('/properties')
         return { success: true }

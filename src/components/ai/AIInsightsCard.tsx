@@ -66,7 +66,7 @@ export default function AIInsightsCard({ tenantId, profileId, period, hasAIAcces
                     </div>
                     <div>
                         <p className="font-bold text-foreground">Insights de IA</p>
-                        <p className="text-sm text-muted-foreground">Análise inteligente do período selecionado via Gemini.</p>
+                        <p className="text-sm text-muted-foreground">Análise inteligente do período selecionado.</p>
                     </div>
                 </div>
                 {error && <p className="text-sm text-red-500">{error}</p>}

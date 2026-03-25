@@ -1,8 +1,8 @@
 'use server';
 
-import { createClient } from '@/lib/supabase/server';
-import { createAdminClient } from '@/lib/supabase/admin';
 import { sendConfirmationEmail } from '@/lib/resend';
+import { createLog } from '@/lib/utils/logging';
+import { createClient as createServerClient } from '@/lib/supabase/server';
 
 export async function signUpWithTenant(
     email: string,

@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 
 import { sendInvitationEmail } from '@/lib/resend'
 import { sendInvitationWhatsApp } from '@/lib/whatsapp'
+import { createLog } from '@/lib/utils/logging'
 
 /**
  * Gera um convite para um novo usuário
@@ -85,6 +86,14 @@ export async function createInvitation(
     })
 
     revalidatePath('/settings/team')
+
+    // Log the action
+    await createLog({
+        action: 'send_invitation',
+        entityType: 'invitation',
+        entityId: data.id,
+        details: { email: data.email, role: data.role }
+    })
 
     if (notificationError) {
         return {
@@ -227,6 +236,13 @@ export async function deleteInvitation(id: string) {
 
     if (error) return { error: error.message }
 
+    // Log the action
+    await createLog({
+        action: 'delete_invitation',
+        entityType: 'invitation',
+        entityId: id
+    })
+
     revalidatePath('/settings/team')
     return { success: true }
 }
@@ -307,6 +323,14 @@ export async function resendInvitation(id: string) {
     if (notificationError) {
         return { error: 'Erro ao reenviar e-mail de convite.' }
     }
+
+    // Log the action
+    await createLog({
+        action: 'send_invitation',
+        entityType: 'invitation',
+        entityId: id,
+        details: { resend: true, email: invitation.email }
+    })
 
     return { success: true }
 }
