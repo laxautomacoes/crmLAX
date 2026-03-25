@@ -27,13 +27,11 @@ export default function IntegrationsSettingsPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 pb-12">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-[#404F4F]">Integrações</h1>
-                    <p className="text-muted-foreground">Gerencie as conexões, dados de mercado e interações externas.</p>
+                <div className="flex items-center gap-4">
+                    <h1 className="text-2xl font-bold text-foreground">Integrações</h1>
                 </div>
-                <div className="flex items-center gap-2 px-4 py-2 bg-[#404F4F]/5 rounded-xl border border-[#404F4F]/10">
-                    <span className="text-xs font-bold text-[#404F4F] uppercase tracking-wider">Centro de Operações</span>
-                </div>
+                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
+                {/* Aqui poderiam entrar filtros como na página de Logs se necessário no futuro */}
             </div>
 
             <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 space-y-12">
@@ -45,7 +43,7 @@ export default function IntegrationsSettingsPage() {
                         <div className="h-px bg-border flex-1" />
                     </div>
 
-                    <div className="max-w-4xl">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
                         <WhatsAppCard />
                     </div>
                 </div>
