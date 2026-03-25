@@ -9,6 +9,7 @@ import { Logo } from '@/components/shared/Logo';
 import { NavItem } from './Sidebar/NavItem';
 import { Footer } from './Sidebar/Footer';
 import { SupportModal } from '@/components/shared/SupportModal';
+import { recordAccessLog } from '@/app/_actions/auth-logs';
 
 interface SidebarProps {
     isOpen: boolean; onClose: () => void; isCollapsed: boolean; toggleCollapse: () => void;
@@ -28,6 +29,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const [brandingLoading, setBrandingLoading] = useState(true);
 
     const handleLogout = async () => {
+        await recordAccessLog('logout').catch(console.error);
         await supabase.auth.signOut();
         router.push('/login');
         router.refresh();

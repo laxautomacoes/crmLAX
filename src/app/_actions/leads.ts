@@ -7,6 +7,7 @@ import { getTenantFromHeaders } from '@/lib/utils/tenant';
 import { getStages } from './stages';
 import { getProfile } from './profile';
 import { createLog } from '@/lib/utils/logging';
+import { createNotification } from './notifications';
 
 
 export async function getPipelineData(tenantId: string) {
@@ -283,6 +284,33 @@ export async function deleteLead(leadId: string) {
         entityId: leadId
     });
 
+    // Notificar administradores do mesmo tenant
+    try {
+        const { profile: currentProfile } = await getProfile();
+        if (currentProfile?.tenant_id) {
+            const { data: admins } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('tenant_id', currentProfile.tenant_id)
+                .in('role', ['admin', 'superadmin'])
+                .neq('id', currentProfile.id); // Não notificar a si mesmo
+
+            if (admins && admins.length > 0) {
+                await Promise.all(admins.map((admin: any) => 
+                    createNotification({
+                        user_id: admin.id,
+                        title: 'Lead Excluído',
+                        message: `O lead #${leadId.slice(0, 8)} foi excluído por ${currentProfile.full_name}.`,
+                        type: 'critical_deletion',
+                        metadata: { lead_id: leadId, action_by: currentProfile.id }
+                    })
+                ));
+            }
+        }
+    } catch (e) {
+        console.error('Error sending admin notifications:', e);
+    }
+
     revalidatePath('/leads');
     return { success: true };
 }
@@ -303,6 +331,33 @@ export async function archiveLead(leadId: string) {
         entityType: 'lead',
         entityId: leadId
     });
+
+    // Notificar administradores
+    try {
+        const { profile: currentProfile } = await getProfile();
+        if (currentProfile?.tenant_id) {
+            const { data: admins } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('tenant_id', currentProfile.tenant_id)
+                .in('role', ['admin', 'superadmin'])
+                .neq('id', currentProfile.id);
+
+            if (admins && admins.length > 0) {
+                await Promise.all(admins.map((admin: any) => 
+                    createNotification({
+                        user_id: admin.id,
+                        title: 'Lead Arquivado',
+                        message: `O lead #${leadId.slice(0, 8)} foi arquivado por ${currentProfile.full_name}.`,
+                        type: 'system',
+                        metadata: { lead_id: leadId }
+                    })
+                ));
+            }
+        }
+    } catch (e) {
+        console.error('Error sending admin notifications:', e);
+    }
 
     revalidatePath('/leads');
     return { success: true };

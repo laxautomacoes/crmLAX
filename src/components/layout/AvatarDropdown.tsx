@@ -11,6 +11,7 @@ import { DropdownHeader } from './AvatarDropdown/DropdownHeader';
 import { useTheme } from 'next-themes';
 import { saveAccount, removeAccount } from '@/lib/utils/multi-account';
 import { SwitchAccountModal } from './AvatarDropdown/SwitchAccountModal';
+import { recordAccessLog } from '@/app/_actions/auth-logs';
 
 export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
     const [isOpen, setIsOpen] = useState(false);
@@ -22,6 +23,7 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
     const { theme, setTheme } = useTheme();
 
     const handleLogout = async () => {
+        await recordAccessLog('logout').catch(console.error);
         if (profile?.email) {
             removeAccount(profile.email);
         }

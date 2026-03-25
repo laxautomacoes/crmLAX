@@ -1,4 +1,5 @@
 import { createClient } from '@/lib/supabase/server';
+import { headers } from 'next/headers';
 
 export type LogAction = 
   | 'login' 
@@ -7,6 +8,7 @@ export type LogAction =
   | 'update_lead' 
   | 'delete_lead' 
   | 'archive_lead' 
+  | 'critical_deletion'
   | 'update_lead_stage'
   | 'create_asset' 
   | 'update_asset' 
@@ -41,6 +43,20 @@ export async function createLog({
     details = {}
 }: CreateLogParams) {
     const supabase = await createClient();
+    const headersList = await headers();
+    
+    // Captura metadados de rede (IP e User-Agent)
+    const ip = headersList.get('x-forwarded-for')?.split(',')[0] || '127.0.0.1';
+    const userAgent = headersList.get('user-agent') || 'unknown';
+
+    const extendedDetails = {
+        ...details,
+        _metadata: {
+            ip,
+            userAgent,
+            timestamp: new Date().toISOString()
+        }
+    };
 
     try {
         // 1. Obter usuário atual
@@ -71,7 +87,7 @@ export async function createLog({
                 action,
                 entity_type: entityType,
                 entity_id: entityId,
-                details
+                details: extendedDetails
             });
 
         if (logError) {

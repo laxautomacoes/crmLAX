@@ -12,7 +12,8 @@ import {
     ChevronLeft, 
     ChevronRight,
     Activity,
-    Calendar
+    Calendar,
+    Download
 } from 'lucide-react';
 import { getSystemLogs } from '@/app/_actions/logs';
 import { getBrokers } from '@/app/_actions/profile';
@@ -81,6 +82,35 @@ export function LogsTable({ tenantId }: LogsTableProps) {
     useEffect(() => {
         fetchLogs();
     }, [page, actionType, profileId, startDate, endDate]);
+    
+    const exportToCSV = () => {
+        if (logs.length === 0) return;
+        
+        const headers = ["Usuário", "Ação", "Entidade", "Tipo Entidade", "Data", "Detalhes"];
+        const rows = logs.map(log => [
+            log.profiles?.full_name || 'Sistema',
+            getActionLabel(log.action),
+            log.entity_id || '',
+            log.entity_type,
+            format(new Date(log.created_at), "dd/MM/yyyy HH:mm"),
+            JSON.stringify(log.details).replace(/"/g, '""')
+        ]);
+        
+        const csvContent = [
+            headers.join(","),
+            ...rows.map(row => row.map(cell => `"${cell}"`).join(","))
+        ].join("\n");
+        
+        const blob = new Blob(["\ufeff" + csvContent], { type: 'text/csv;charset=utf-8;' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement("a");
+        link.setAttribute("href", url);
+        link.setAttribute("download", `logs-crmlax-${format(new Date(), "yyyy-MM-dd")}.csv`);
+        link.style.visibility = 'hidden';
+        document.body.appendChild(link);
+        link.click();
+        document.body.removeChild(link);
+    };
 
     const getActionBadge = (action: string) => {
         const base = "px-2 py-0.5 rounded-full text-[10px] font-bold uppercase tracking-wider ";
@@ -111,6 +141,16 @@ export function LogsTable({ tenantId }: LogsTableProps) {
                 </div>
 
                 <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+                    {/* Botão Exportar (Dashboard Style) */}
+                    <button 
+                        onClick={exportToCSV}
+                        disabled={logs.length === 0 || loading}
+                        className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-3 h-9 rounded-lg hover:bg-muted/50 disabled:opacity-50 transition-colors text-sm font-medium min-w-[120px] shadow-sm"
+                    >
+                        <Download size={18} className="text-muted-foreground" />
+                        Exportar CSV
+                    </button>
+
                     {/* Filtro de Datas (Período) */}
                     <div className="relative">
                         <button 

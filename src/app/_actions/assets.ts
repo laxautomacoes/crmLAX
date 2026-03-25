@@ -5,6 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { getProfile } from './profile'
 import { createLog } from '@/lib/utils/logging'
+import { createNotification } from './notifications'
 
 export async function getAssets(tenantId: string, status?: string) {
     const supabase = await createClient()
@@ -442,6 +443,33 @@ export async function deleteAsset(tenantId: string, assetId: string) {
             entityId: assetId
         })
 
+        // Notificar administradores do mesmo tenant
+        try {
+            const { profile: currentProfile } = await getProfile();
+            if (currentProfile?.tenant_id) {
+                const { data: admins } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('tenant_id', currentProfile.tenant_id)
+                    .in('role', ['admin', 'superadmin'])
+                    .neq('id', currentProfile.id);
+
+                if (admins && admins.length > 0) {
+                    await Promise.all(admins.map((admin: any) => 
+                        createNotification({
+                            user_id: admin.id,
+                            title: 'Imóvel Excluído',
+                            message: `O imóvel #${assetId.slice(0, 8)} foi excluído por ${currentProfile.full_name}.`,
+                            type: 'critical_deletion',
+                            metadata: { asset_id: assetId, action_by: currentProfile.id }
+                        })
+                    ));
+                }
+            }
+        } catch (e) {
+            console.error('Error sending admin notifications:', e);
+        }
+
         revalidatePath('/properties')
         return { success: true }
     } catch (error: any) {
@@ -475,6 +503,33 @@ export async function archiveAsset(tenantId: string, assetId: string) {
             entityType: 'asset',
             entityId: assetId
         })
+
+        // Notificar administradores
+        try {
+            const { profile: currentProfile } = await getProfile();
+            if (currentProfile?.tenant_id) {
+                const { data: admins } = await supabase
+                    .from('profiles')
+                    .select('id')
+                    .eq('tenant_id', currentProfile.tenant_id)
+                    .in('role', ['admin', 'superadmin'])
+                    .neq('id', currentProfile.id);
+
+                if (admins && admins.length > 0) {
+                    await Promise.all(admins.map((admin: any) => 
+                        createNotification({
+                            user_id: admin.id,
+                            title: 'Imóvel Arquivado',
+                            message: `O imóvel #${assetId.slice(0, 8)} foi arquivado por ${currentProfile.full_name}.`,
+                            type: 'system',
+                            metadata: { asset_id: assetId }
+                        })
+                    ));
+                }
+            }
+        } catch (e) {
+            console.error('Error sending admin notifications:', e);
+        }
 
         revalidatePath('/properties')
         return { success: true }

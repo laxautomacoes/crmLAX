@@ -9,6 +9,7 @@ import { GoogleAuthButton } from './GoogleAuthButton';
 import { LoginFields } from './LoginFields';
 import { saveAccount } from '@/lib/utils/multi-account';
 import { getProfile } from '@/app/_actions/profile';
+import { recordAccessLog } from '@/app/_actions/auth-logs';
 import { toast } from 'sonner';
 
 export function LoginForm() {
@@ -37,6 +38,9 @@ export function LoginForm() {
             }
 
             if (session) {
+                // Registrar log de acesso (async)
+                recordAccessLog('login').catch(console.error);
+
                 // Save account to multi-account list without blocking redirect
                 // We use a self-invoking async function to handle profile fetch in background
                 (async () => {
