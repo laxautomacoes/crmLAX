@@ -71,7 +71,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole,
                                     e.stopPropagation()
                                     onDelete(prop.id)
                                 }}
-                                className="p-2 bg-red-600 text-white rounded-lg shadow-sm hover:bg-red-700 transition-colors"
+                                className="p-2 bg-[#EF4444] text-white rounded-lg shadow-sm hover:bg-[#DC2626] transition-colors"
                                 title="Excluir"
                             >
                                 <Trash2 size={16} />

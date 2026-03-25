@@ -54,7 +54,7 @@ export function NotificationsHeader({
                         <button
                             onClick={onDelete}
                             disabled={isProcessing}
-                            className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider bg-red-500 text-white hover:bg-red-600 rounded-lg transition-all flex items-center gap-1.5 shadow-sm active:scale-[0.98] disabled:opacity-50"
+                            className="px-3 py-1.5 text-[10px] font-black uppercase tracking-wider bg-[#EF4444] text-white hover:bg-[#DC2626] rounded-lg transition-all flex items-center gap-1.5 shadow-sm active:scale-[0.98] disabled:opacity-50"
                         >
                             <Trash2 size={14} />
                             Excluir

@@ -239,20 +239,14 @@ export default function EventModal({
                                     onDelete(editingEvent.id);
                                 }
                             }}
-                            className="px-6 py-3 bg-red-600/10 text-red-500 rounded-lg font-bold hover:bg-red-600 hover:text-white transition-all border border-red-600/20 active:scale-[0.99]"
+                            className="px-6 py-3 bg-[#EF4444] text-white rounded-lg font-bold hover:bg-[#DC2626] transition-all active:scale-[0.99] shadow-sm"
                         >
                             Excluir
                         </button>
                     )}
                     <button
-                        onClick={onClose}
-                        className="flex-1 py-3 bg-muted text-foreground border border-border rounded-lg font-bold hover:bg-muted/80 transition-all active:scale-[0.99]"
-                    >
-                        Cancelar
-                    </button>
-                    <button
                         onClick={handleSubmit}
-                        className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 shadow-sm active:scale-[0.99] transition-all"
+                        className="flex-1 whitespace-nowrap py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:bg-[#F2DB00] shadow-sm transform active:scale-[0.99] transition-all"
                     >
                         {editingEvent ? 'Salvar Alterações' : 'Agendar'}
                     </button>

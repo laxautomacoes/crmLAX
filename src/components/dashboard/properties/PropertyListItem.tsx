@@ -196,7 +196,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userR
                                     e.stopPropagation()
                                     onDelete(prop.id)
                                 }}
-                                className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+                                className="p-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#DC2626] transition-colors shadow-sm"
                                 title="Excluir"
                             >
                                 <Trash2 size={16} />

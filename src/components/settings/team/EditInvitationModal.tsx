@@ -136,7 +136,7 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
                 <hr className="border-border/50" />
 
                 <div className="flex gap-2 pt-1">
-                    <button onClick={handleDelete} disabled={isDeleting || isResending || loading} className="flex-1 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors disabled:opacity-50 text-xs">
+                    <button onClick={handleDelete} disabled={isDeleting || isResending || loading} className="flex-1 py-3 bg-[#EF4444] hover:bg-[#DC2626] text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors disabled:opacity-50 text-xs">
                         {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Excluir
                     </button>
                     <button onClick={handleResend} disabled={isDeleting || isResending || loading} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors disabled:opacity-50 text-xs">
