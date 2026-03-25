@@ -120,8 +120,9 @@ function DroppableDay({
     return (
         <div
             ref={setNodeRef}
+            onDoubleClick={() => onAddEvent(day)}
             className={`
-                border-r border-b border-border p-2 transition-colors relative group min-h-[100px] md:min-h-[140px]
+                border-r border-b border-border p-2 transition-colors relative group min-h-[100px] md:min-h-[140px] cursor-pointer
                 ${!isCurrentMonth ? 'bg-muted/5' : 'bg-card'}
                 ${idx % 7 === 6 ? 'border-r-0' : ''}
                 ${isOver ? 'bg-secondary/20 ring-2 ring-secondary ring-inset z-10' : ''}
