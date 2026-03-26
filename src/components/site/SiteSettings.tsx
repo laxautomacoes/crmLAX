@@ -42,6 +42,8 @@ interface BrandingData {
         youtube?: string
         whatsapp?: string
     }
+    privacy_policy?: string
+    terms_of_service?: string
     site_description?: string
 }
 
@@ -480,14 +482,44 @@ export function SiteSettings() {
                             </div>
                         </div>
 
+                        {/* Policies Section */}
+                        <div className="bg-card border border-border rounded-2xl p-6">
+                            <div className="mb-6">
+                                <h3 className="text-lg font-bold text-foreground">Políticas e Termos</h3>
+                                <p className="text-sm text-muted-foreground">Textos de privacidade e termos de serviço exibidos no rodapé.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 gap-6">
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Política de Privacidade</label>
+                                    <textarea 
+                                        value={branding.privacy_policy || 'Sua privacidade é importante para nós. Coletamos apenas as informações necessárias para prestar nossos serviços imobiliários de forma eficiente e segura. Seus dados (nome, telefone e e-mail) são utilizados exclusivamente para entrar em contato sobre os imóveis de seu interesse e não são compartilhados com terceiros sem sua autorização. Garantimos a segurança das suas informações através de práticas modernas de proteção de dados. Você pode solicitar a exclusão de suas informações a qualquer momento através de nossos canais de atendimento.'} 
+                                        onChange={(e) => setBranding(prev => ({ ...prev, privacy_policy: e.target.value }))}
+                                        placeholder="Insira o texto da sua Política de Privacidade aqui..."
+                                        rows={4}
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
+                                    />
+                                </div>
+                                <div className="space-y-1">
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Termos de Serviço</label>
+                                    <textarea 
+                                        value={branding.terms_of_service || 'Ao utilizar nosso site vitrine, você concorda com os seguintes termos: 1. As informações dos imóveis (preços, disponibilidade e características) estão sujeitas a alterações sem aviso prévio. 2. O conteúdo deste site é para fins informativos e não constitui uma proposta jurídica vinculante até a assinatura de contrato formal. 3. O uso de robôs ou scripts para extração de dados é proibido. 4. Todas as imagens e logotipos são protegidos por direitos autorais. Nos reservamos o direito de atualizar estes termos periodicamente para melhor atender nossos usuários.'} 
+                                        onChange={(e) => setBranding(prev => ({ ...prev, terms_of_service: e.target.value }))}
+                                        placeholder="Insira o texto dos seus Termos de Serviço aqui..."
+                                        rows={4}
+                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="mt-8 pt-6 flex justify-end">
                             <button
                                 onClick={handleSaveMain}
                                 disabled={saving}
                                 className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
                             >
-                                {saving && <Loader2 size={18} className="animate-spin" />}
-                                Salvar Rodapé
+                                Salvar
                             </button>
                         </div>
                     </div>

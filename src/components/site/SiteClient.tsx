@@ -6,6 +6,7 @@ import { AssetsGrid } from './AssetsGrid';
 import { AssetsList } from './AssetsList';
 import { WhatsAppButton } from './WhatsAppButton';
 import { Instagram, Facebook, Linkedin, Youtube, MapPin } from 'lucide-react';
+import { Modal } from '@/components/shared/Modal';
 
 interface SiteClientProps {
     assets: any[];
@@ -16,6 +17,8 @@ interface SiteClientProps {
 
 export function SiteClient({ assets, tenantName, whatsappNumber, branding }: SiteClientProps) {
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery');
+    const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
+    const [isTermsOpen, setIsTermsOpen] = useState(false);
     const [filters, setFilters] = useState({
         tipo: '',
         quartos: '',
@@ -90,8 +93,8 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
             {whatsappNumber && <WhatsAppButton phone={whatsappNumber} />}
 
             {/* Footer */}
-            <footer className="mt-20 py-12 border-t border-border">
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <footer className="mt-20 py-12 border-t border-border font-sans">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
                         <h4 className="font-bold text-lg mb-4 text-[#404F4F]">{tenantName}</h4>
                         <p className="text-sm text-muted-foreground max-w-xs transition-all">
@@ -114,6 +117,28 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
                         ) : (
                             <p className="text-sm text-muted-foreground">Endereço não informado.</p>
                         )}
+                    </div>
+
+                    <div>
+                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4 text-[#404F4F]">Políticas</h4>
+                        <ul className="space-y-3">
+                            <li>
+                                <button 
+                                    onClick={() => setIsPrivacyOpen(true)}
+                                    className="text-sm text-muted-foreground hover:text-secondary transition-colors"
+                                >
+                                    Política de Privacidade
+                                </button>
+                            </li>
+                            <li>
+                                <button 
+                                    onClick={() => setIsTermsOpen(true)}
+                                    className="text-sm text-muted-foreground hover:text-secondary transition-colors"
+                                >
+                                    Termos de Serviço
+                                </button>
+                            </li>
+                        </ul>
                     </div>
 
                     <div className="flex flex-col gap-4">
@@ -149,6 +174,33 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
                     </p>
                 </div>
             </footer>
+
+            {/* Modals de Políticas */}
+            <Modal
+                isOpen={isPrivacyOpen}
+                onClose={() => setIsPrivacyOpen(false)}
+                title="Política de Privacidade"
+                size="lg"
+            >
+                <div className="prose prose-sm max-w-none">
+                    <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                        {branding?.privacy_policy || 'A Política de Privacidade ainda não foi configurada para este site.'}
+                    </p>
+                </div>
+            </Modal>
+
+            <Modal
+                isOpen={isTermsOpen}
+                onClose={() => setIsTermsOpen(false)}
+                title="Termos de Serviço"
+                size="lg"
+            >
+                <div className="prose prose-sm max-w-none">
+                    <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
+                        {branding?.terms_of_service || 'Os Termos de Serviço ainda não foram configurados para este site.'}
+                    </p>
+                </div>
+            </Modal>
         </>
     );
 }
