@@ -1,11 +1,23 @@
 'use client';
 
-import { useState } from 'react';
-import { Copy, Check, ExternalLink, LucideIcon } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { 
+    Copy, 
+    Check, 
+    ExternalLink, 
+    LucideIcon, 
+    ChevronDown, 
+    Key, 
+    BookOpen 
+} from 'lucide-react';
 import { toast } from 'sonner';
-import { getIntegration, saveIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
-import { useEffect } from 'react';
+import { 
+    getIntegration, 
+    saveIntegration, 
+    updateIntegrationStatus 
+} from '@/app/_actions/integrations';
 import { Switch } from '@/components/ui/Switch';
+import { motion, AnimatePresence } from 'framer-motion';
 
 interface IntegrationEndpointCardProps {
     title: string;
@@ -34,9 +46,9 @@ export function IntegrationEndpointCard({
     const [accessToken, setAccessToken] = useState('');
     const [isSaving, setIsSaving] = useState(false);
     const [hasToken, setHasToken] = useState(false);
-    const [showConfig, setShowConfig] = useState(false);
     const [isActive, setIsActive] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
+    const [isExpanded, setIsExpanded] = useState(false);
     
     useEffect(() => {
         if (tenantId) {
@@ -73,23 +85,19 @@ export function IntegrationEndpointCard({
         } else {
             toast.success('Token salvo com sucesso!');
             setHasToken(true);
-            setShowConfig(false);
         }
     };
     
     const baseUrl = typeof window !== 'undefined' ? window.location.origin : '';
     
-    // Construção inteligente da URL base
     let effectiveBaseUrl = baseUrl;
     if (customDomain) {
         effectiveBaseUrl = `https://${customDomain}`;
     } else if (slug && !baseUrl.includes('localhost')) {
-        // Em produção, tenta manter o domínio principal mas trocar o subdomínio pelo slug do tenant
         const parts = baseUrl.replace('https://', '').replace('http://', '').split('.');
         const domain = parts.length > 2 ? parts.slice(1).join('.') : parts.join('.');
         effectiveBaseUrl = `https://${slug}.${domain}`;
     } else if (slug && baseUrl.includes('localhost')) {
-        // Se for localhost, mantém localhost para testes mas o ideal seria mostrar o slug no futuro
         effectiveBaseUrl = baseUrl;
     }
 
@@ -103,104 +111,156 @@ export function IntegrationEndpointCard({
     };
 
     return (
-        <div className="group bg-card hover:bg-muted/30 rounded-2xl border border-border hover:border-secondary/50 overflow-hidden transition-all duration-300 hover:shadow-xl hover:shadow-secondary/5 hover:-translate-y-1">
-            <div className="p-6">
-                <div className="flex items-start justify-between gap-4 mb-6">
-                    <div>
-                        <div className="flex items-center gap-2 mb-1">
-                            <h3 className="text-lg font-black text-foreground tracking-tight">{title}</h3>
+        <div className="group bg-card hover:bg-muted/5 rounded-2xl border border-border overflow-hidden transition-all duration-300">
+            <div 
+                className="px-6 py-4 border-b border-border bg-muted/30 cursor-pointer select-none"
+                onClick={() => setIsExpanded(!isExpanded)}
+            >
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4 flex-1">
+                        <div className={`p-2.5 rounded-xl ${iconColor}`}>
+                            <Icon size={20} />
+                        </div>
+                        <div>
                             <div className="flex items-center gap-2">
-                                <Switch 
-                                    checked={isActive} 
-                                    onChange={handleToggleStatus}
-                                    disabled={isUpdatingStatus}
-                                    className="scale-90"
-                                />
-                                <span className={`text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
-                                    {isActive ? 'Ativo' : 'Desativado'}
-                                </span>
+                                <h3 className="text-base font-bold text-foreground">{title}</h3>
+                                <span className={`flex h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
                             </div>
-                        </div>
-                        <p className="text-sm text-muted-foreground leading-relaxed max-w-full">{description}</p>
-                    </div>
-                </div>
-
-                <div className="space-y-4">
-                    <div className="space-y-3">
-                        <div className="flex items-center justify-between px-1">
-                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                Endpoint de Conexão
-                            </label>
-                        </div>
-                        
-                        <div className="relative group/url">
-                            <div className="flex items-center gap-2 p-3.5 bg-muted/50 rounded-xl border border-border group-hover/url:border-secondary/30 transition-colors">
-                                <code className="text-[13px] text-foreground/80 break-all flex-1 font-mono leading-none truncate">
-                                    {fullUrl}
-                                </code>
-                                <button
-                                    onClick={handleCopy}
-                                    className="flex items-center gap-2 px-3 py-1.5 bg-background border border-border hover:border-secondary hover:text-secondary rounded-lg transition-all active:scale-95 shadow-sm"
-                                >
-                                    {copied ? (
-                                        <Check size={14} className="text-emerald-500" />
-                                    ) : (
-                                        <Copy size={14} />
-                                    )}
-                                    <span className="text-[11px] font-bold uppercase">Copiar</span>
-                                </button>
-                            </div>
+                            <p className="text-xs text-muted-foreground max-w-xl line-clamp-1">{description}</p>
                         </div>
                     </div>
 
-                    {title.includes('Facebook') && (
-                        <div className="space-y-3 pt-2">
-                            <button 
-                                onClick={() => setShowConfig(!showConfig)}
-                                className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] hover:underline"
-                            >
-                                {hasToken ? '✓ Token de Acesso Configurado' : '+ Configurar Token de Acesso'}
-                            </button>
-
-                            {showConfig && (
-                                <div className="flex gap-2 animate-in fade-in slide-in-from-top-2 duration-300">
-                                    <input 
-                                        type="password"
-                                        placeholder="Cole o Page Access Token aqui..."
-                                        className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-secondary transition-colors"
-                                        value={accessToken}
-                                        onChange={(e) => setAccessToken(e.target.value)}
-                                    />
-                                    <button 
-                                        disabled={isSaving}
-                                        onClick={handleSaveToken}
-                                        className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
-                                    >
-                                        {isSaving ? 'Salvando...' : 'Salvar'}
-                                    </button>
-                                </div>
-                            )}
+                    <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => handleToggleStatus(!isActive)}>
+                            <span className={`text-[10px] font-black uppercase tracking-wider hidden sm:block ${isActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
+                                {isActive ? 'Ativo' : 'Desativado'}
+                            </span>
+                            <Switch 
+                                checked={isActive} 
+                                onChange={handleToggleStatus}
+                                disabled={isUpdatingStatus}
+                                className="scale-75"
+                            />
                         </div>
-                    )}
-                </div>
 
-                <div className="flex items-center justify-between mt-6 pt-4 border-t border-border/50">
-                    <span className="text-[10px] text-muted-foreground/60 font-medium">
-                        Webhook v1.0
-                    </span>
-                    {docsUrl && (
-                        <a
-                            href={docsUrl}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="group/doc text-xs font-bold text-secondary flex items-center gap-1.5 hover:opacity-80 transition-opacity"
+                        <div className="h-6 w-px bg-border hidden sm:block" />
+
+                        <button 
+                            className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+                            onClick={() => setIsExpanded(!isExpanded)}
                         >
-                            Documentação 
-                            <ExternalLink size={12} className="transition-transform group-hover/doc:translate-x-0.5 group-hover/doc:-translate-y-0.5" />
-                        </a>
-                    )}
+                            <motion.div
+                                animate={{ rotate: isExpanded ? 180 : 0 }}
+                                transition={{ duration: 0.3 }}
+                            >
+                                <ChevronDown size={20} />
+                            </motion.div>
+                        </button>
+                    </div>
                 </div>
             </div>
+
+            <AnimatePresence>
+                {isExpanded && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.3, ease: 'easeInOut' }}
+                        className="overflow-hidden"
+                    >
+                        <div className="p-6 border-t border-border/50">
+                            <div className="space-y-6">
+                                <div className="space-y-3">
+                                    <div className="flex items-center justify-between px-1">
+                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                                            Endpoint de Conexão
+                                        </label>
+                                        {docsUrl && (
+                                            <a 
+                                                href={docsUrl} 
+                                                target="_blank" 
+                                                rel="noopener noreferrer"
+                                                className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] hover:underline flex items-center gap-1"
+                                                onClick={(e) => e.stopPropagation()}
+                                            >
+                                                <BookOpen size={10} />
+                                                Documentação
+                                            </a>
+                                        )}
+                                    </div>
+                                    
+                                    <div className="relative group/url">
+                                        <div className="flex items-center gap-2 p-3.5 bg-muted/50 rounded-xl border border-border group-hover/url:border-secondary/30 transition-colors">
+                                            <code className="text-[13px] text-foreground/80 break-all flex-1 font-mono leading-none truncate">
+                                                {fullUrl}
+                                            </code>
+                                            <button
+                                                onClick={handleCopy}
+                                                className="flex items-center gap-2 px-3 py-1.5 bg-background border border-border hover:border-secondary hover:text-secondary rounded-lg transition-all active:scale-95 shadow-sm"
+                                            >
+                                                {copied ? (
+                                                    <Check size={14} className="text-emerald-500" />
+                                                ) : (
+                                                    <Copy size={14} />
+                                                )}
+                                                <span className="text-[11px] font-bold uppercase">Copiar</span>
+                                            </button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {title.includes('Facebook') && (
+                                    <div className="space-y-3 pt-2">
+                                        <div className="flex items-center justify-between px-1">
+                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                                                Token de Acesso (Facebook)
+                                            </label>
+                                            <div className="flex items-center gap-2">
+                                                {hasToken && (
+                                                    <div className="flex items-center gap-1.5 text-[9px] text-emerald-500 font-bold uppercase tracking-wider">
+                                                        <div className="h-1 w-1 bg-emerald-500 rounded-full animate-pulse" />
+                                                        Configurado
+                                                    </div>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        <div className="flex gap-2">
+                                            <input 
+                                                type="password"
+                                                placeholder="Cole o Page Access Token aqui..."
+                                                className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-secondary transition-colors"
+                                                value={accessToken}
+                                                onChange={(e) => setAccessToken(e.target.value)}
+                                            />
+                                            <button 
+                                                disabled={isSaving}
+                                                onClick={handleSaveToken}
+                                                className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
+                                            >
+                                                {isSaving ? 'Salvando...' : 'Salvar'}
+                                            </button>
+                                        </div>
+                                    </div>
+                                )}
+
+                                <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                                    <span className="text-[10px] text-muted-foreground/60 font-medium tracking-wider uppercase">
+                                        Webhook v1.0
+                                    </span>
+                                    {isActive && (
+                                        <div className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-bold uppercase tracking-wider">
+                                            <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />
+                                            Sincronizando
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 }

@@ -43,7 +43,7 @@ export default function IntegrationsSettingsPage() {
                         <div className="h-px bg-border flex-1" />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="flex flex-col gap-6">
                         <WhatsAppCard />
                     </div>
                 </div>
@@ -55,7 +55,7 @@ export default function IntegrationsSettingsPage() {
                         <div className="h-px bg-border flex-1" />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="flex flex-col gap-6">
                         <IntegrationEndpointCard 
                             title="Facebook & Instagram Ads"
                             description="Capture leads do Facebook e Instagram em tempo real."
@@ -96,8 +96,9 @@ export default function IntegrationsSettingsPage() {
                         <div className="h-px bg-border flex-1" />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <GatewayCard tenantId={tenant?.id} />
+                    <div className="flex flex-col gap-6">
+                        <GatewayCard tenantId={tenant?.id} provider="stripe" />
+                        <GatewayCard tenantId={tenant?.id} provider="checkout_lax" />
                     </div>
                 </div>
 
@@ -108,23 +109,12 @@ export default function IntegrationsSettingsPage() {
                         <div className="h-px bg-border flex-1" />
                     </div>
 
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                    <div className="flex flex-col gap-6">
                         <MarketDataCard tenantId={tenant?.id} />
                         <NewsFeedCard tenantId={tenant?.id} />
                     </div>
                 </div>
 
-                {/* DICA PREMIUM */}
-                <div className="bg-[#404F4F] text-white p-8 rounded-2xl flex items-center gap-6 shadow-xl shadow-[#404F4F]/10">
-                    <div>
-                        <h4 className="font-bold text-lg mb-1">Dica de Automação Premium</h4>
-                        <p className="text-white/70 text-sm max-w-2xl">
-                            Ao manter seus dados de mercado e portais integrados diretamente no Hub LAX, sua equipe ganha agilidade 
-                            sem precisar sair do CRM para consultar índices ou cadastrar leads manualmente. 
-                            <strong> A eficiência é o seu maior ativo.</strong>
-                        </p>
-                    </div>
-                </div>
             </div>
         </div>
     );
