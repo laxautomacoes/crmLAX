@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { evolutionService } from '@/lib/evolution';
+import { notificationService } from './notification-service';
 
 export interface LeadCreateData {
     tenant_id: string;
@@ -82,37 +83,17 @@ export async function processLeadInbound(data: LeadCreateData) {
                 .update({ last_lead_assigned_at: new Date().toISOString() })
                 .eq('id', assignedTo);
 
-            // 4. Notificação Interna (Sininho)
-            await supabase
-                .from('notifications')
-                .insert({
-                    user_id: assignedTo,
-                    tenant_id,
-                    title: 'Novo Lead Recebido',
-                    message: `Você recebeu um novo lead: ${name}. Origem: ${source || 'Direto'}`,
-                    type: 'new_lead',
-                    metadata: { lead_id: lead.id }
-                });
-
-            // 5. Notificação via WhatsApp para o Corretor
-            if (broker.whatsapp_number) {
-                const { data: instance } = await supabase
-                    .from('whatsapp_instances')
-                    .select('instance_name')
-                    .eq('tenant_id', tenant_id)
-                    .eq('status', 'connected')
-                    .limit(1)
-                    .single();
-
-                if (instance?.instance_name) {
-                    const message = `🔔 *Novo Lead Recebido!*\n\n*Nome:* ${name}\n*Origem:* ${source || 'Direto'}\n*Interesse:* ${data.asset_id ? 'Ver no CRM' : 'Geral'}\n\n_Acesse o CRM para iniciar o atendimento._`;
-                    await evolutionService.sendMessage(
-                        instance.instance_name,
-                        broker.whatsapp_number.replace(/\D/g, ''),
-                        message
-                    ).catch(err => console.error('Erro ao enviar WhatsApp de notificação:', err));
-                }
-            }
+            // 4. Notificação Interna e WhatsApp via Service
+            await notificationService.create({
+                user_id: assignedTo,
+                tenant_id,
+                title: 'Novo Lead Recebido',
+                message: `Você recebeu um novo lead: ${name}. Origem: ${source || 'Direto'}`,
+                type: 'new_lead',
+                metadata: { lead_id: lead.id },
+                send_whatsapp: !!broker.whatsapp_number,
+                whatsapp_number: broker.whatsapp_number
+            });
         }
     } catch (distError) {
         console.error('Erro na distribuição/notificação de lead:', distError);

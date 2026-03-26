@@ -7,7 +7,7 @@ import { getTenantFromHeaders } from '@/lib/utils/tenant';
 import { getStages } from './stages';
 import { getProfile } from './profile';
 import { createLog } from '@/lib/utils/logging';
-import { createNotification } from './notifications';
+import { notificationService } from '@/services/notification-service';
 
 
 export async function getPipelineData(tenantId: string) {
@@ -182,41 +182,24 @@ export async function createLead(tenantId: string, data: any) {
     // 3. Notificar o Corretor (Interna e WhatsApp)
     if (assignedTo) {
         try {
-            // Notificação Interna
-            await createNotification({
-                user_id: assignedTo,
-                title: 'Novo Lead Atribuído',
-                message: `Um novo lead foi atribuído a você: ${data.name}.`,
-                type: 'new_lead',
-                metadata: { name: data.name }
-            });
-
-            // Notificação WhatsApp
+            // Buscar o broker para pegar o número do WhatsApp
             const { data: broker } = await supabase
                 .from('profiles')
                 .select('whatsapp_number')
                 .eq('id', assignedTo)
                 .single();
 
-            if (broker?.whatsapp_number) {
-                const { data: instance } = await supabase
-                    .from('whatsapp_instances')
-                    .select('instance_name')
-                    .eq('tenant_id', tenantId)
-                    .eq('status', 'connected')
-                    .limit(1)
-                    .single();
-
-                if (instance?.instance_name) {
-                    const { evolutionService } = await import('@/lib/evolution');
-                    const message = `🔔 *Novo Lead Atribuído!*\n\n*Nome:* ${data.name}\n*Origem:* Cadastro Manual\n\n_Acesse o CRM para iniciar o atendimento._`;
-                    await evolutionService.sendMessage(
-                        instance.instance_name,
-                        broker.whatsapp_number.replace(/\D/g, ''),
-                        message
-                    ).catch(err => console.error('Erro WhatsApp:', err));
-                }
-            }
+            // Notificação Interna via Service
+            await notificationService.create({
+                user_id: assignedTo,
+                tenant_id: tenantId,
+                title: 'Novo Lead Atribuído',
+                message: `Um novo lead foi atribuído a você: ${data.name}.`,
+                type: 'new_lead',
+                metadata: { name: data.name },
+                send_whatsapp: true,
+                whatsapp_number: broker?.whatsapp_number
+            });
         } catch (notifError) {
             console.error('Erro ao notificar corretor:', notifError);
         }
@@ -340,11 +323,12 @@ export async function deleteLead(leadId: string) {
 
             if (admins && admins.length > 0) {
                 await Promise.all(admins.map((admin: any) => 
-                    createNotification({
+                    notificationService.create({
                         user_id: admin.id,
+                        tenant_id: currentProfile.tenant_id as string,
                         title: 'Lead Excluído',
                         message: `O lead #${leadId.slice(0, 8)} foi excluído por ${currentProfile.full_name}.`,
-                        type: 'critical_deletion',
+                        type: 'error',
                         metadata: { lead_id: leadId, action_by: currentProfile.id }
                     })
                 ));
@@ -388,11 +372,12 @@ export async function archiveLead(leadId: string) {
 
             if (admins && admins.length > 0) {
                 await Promise.all(admins.map((admin: any) => 
-                    createNotification({
+                    notificationService.create({
                         user_id: admin.id,
+                        tenant_id: currentProfile.tenant_id as string,
                         title: 'Lead Arquivado',
                         message: `O lead #${leadId.slice(0, 8)} foi arquivado por ${currentProfile.full_name}.`,
-                        type: 'system',
+                        type: 'info',
                         metadata: { lead_id: leadId }
                     })
                 ));

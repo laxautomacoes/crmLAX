@@ -79,8 +79,15 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
     // Capitalize month if needed, though default is lowercase in pt-BR. User example showed "Janeira" (typo?) "Janeiro".
     const formattedDate = `Hoje é ${dateString}`;
 
+    const [profile, setProfile] = useState<any>(null);
+    const [branding, setBranding] = useState<{ logo_full?: string; logo_height?: number } | null>(null);
+    const [companyName, setCompanyName] = useState<string>('');
+    const [brandingLoading, setBrandingLoading] = useState(true);
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+
+    const { theme, setTheme } = useTheme();
+    const [mounted, setMounted] = useState(false);
 
     const fetchNotifications = async () => {
         const { notifications: data } = await getNotifications();
@@ -89,17 +96,50 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
     useEffect(() => {
         fetchNotifications();
-    }, []);
+
+        // Configurar Realtime para novas notificações
+        const setupRealtime = async () => {
+            const { createClient: createBrowserClient } = await import('@/lib/supabase/client');
+            const supabase = createBrowserClient();
+            
+            const channel = supabase
+                .channel('realtime_notifications')
+                .on(
+                    'postgres_changes',
+                    {
+                        event: '*',
+                        schema: 'public',
+                        table: 'notifications',
+                        filter: profile?.id ? `user_id=eq.${profile.id}` : undefined
+                    },
+                    (payload: any) => {
+                        console.log('Realtime notification change:', payload);
+                        if (payload.eventType === 'INSERT') {
+                            setNotifications(prev => [payload.new as Notification, ...prev]);
+                        } else if (payload.eventType === 'UPDATE') {
+                            setNotifications(prev => prev.map(n => n.id === (payload.new as any).id ? (payload.new as Notification) : n));
+                        } else if (payload.eventType === 'DELETE') {
+                            setNotifications(prev => prev.filter(n => n.id !== (payload.old as any).id));
+                        }
+                    }
+                )
+                .subscribe();
+
+            return channel;
+        };
+
+        const channelPromise = setupRealtime();
+
+        return () => {
+            channelPromise.then(channel => {
+                const { createClient: createBrowserClient } = require('@/lib/supabase/client');
+                const supabase = createBrowserClient();
+                supabase.removeChannel(channel);
+            });
+        };
+    }, [profile?.id]);
 
     const unreadCount = notifications.filter(n => !n.read).length;
-
-    const [profile, setProfile] = useState<any>(null);
-    const [branding, setBranding] = useState<{ logo_full?: string; logo_height?: number } | null>(null);
-    const [companyName, setCompanyName] = useState<string>('');
-    const [brandingLoading, setBrandingLoading] = useState(true);
-
-    const { theme, setTheme } = useTheme();
-    const [mounted, setMounted] = useState(false);
 
     useEffect(() => {
         const handleBrandingUpdate = (event: any) => {

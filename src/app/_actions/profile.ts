@@ -2,9 +2,9 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, unstable_noStore } from 'next/cache'
-import { createNotification, deleteNotifications } from './notifications'
-import { Resend } from 'resend'
 import { createAdminClient } from '@/lib/supabase/admin'
+import { notificationService } from '@/services/notification-service'
+import { Resend } from 'resend'
 
 
 
@@ -132,15 +132,16 @@ export async function approveEmailChange(notificationId: string) {
         if (updateError) throw updateError
 
         // Notificar o usuário que foi aprovado
-        await createNotification({
+        await notificationService.create({
             user_id: requesting_user_id,
+            tenant_id: notification.tenant_id,
             title: 'E-mail Alterado com Sucesso',
             message: `Olá ${user_name}, sua solicitação de alteração de e-mail para ${new_email} foi aprovada.`,
-            type: 'system'
+            type: 'success'
         })
 
         // Deletar a notificação do admin
-        await deleteNotifications([notificationId])
+        await notificationService.delete([notificationId])
 
         revalidatePath('/', 'layout')
         return { success: true }
@@ -189,8 +190,9 @@ export async function requestEmailChange(newEmail: string) {
         // Criar notificações para os admins (se houver)
         if (admins && admins.length > 0) {
             const notificationPromises = admins.map((admin: any) => 
-                createNotification({
+                notificationService.create({
                     user_id: admin.id,
+                    tenant_id: profile.tenant_id,
                     title: 'Solicitação de Alteração de E-mail',
                     message: `O colaborador ${profile.full_name} deseja alterar o e-mail de ${user.email} para ${newEmail}.`,
                     type: 'email_change_request',

@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { createNotification } from '@/app/_actions/notifications';
+import { notificationService } from '@/services/notification-service';
 import { evolutionService } from '@/lib/evolution';
 
 export type CalendarEvent = {
@@ -78,8 +78,9 @@ export async function createEvent(data: Partial<CalendarEvent>) {
 
     // Create notification for the user
     if (event.profile_id) {
-        await createNotification({
+        await notificationService.create({
             user_id: event.profile_id,
+            tenant_id: event.tenant_id,
             title: 'Novo compromisso agendado',
             message: `Você agendou: ${event.title}`,
             type: 'calendar'
@@ -126,8 +127,9 @@ export async function updateEvent(eventId: string, data: Partial<CalendarEvent>)
 
     // Create notification for the user
     if (event.profile_id) {
-        await createNotification({
+        await notificationService.create({
             user_id: event.profile_id,
+            tenant_id: event.tenant_id,
             title: 'Compromisso atualizado',
             message: `O compromisso "${event.title}" foi alterado`,
             type: 'calendar'
@@ -187,8 +189,9 @@ export async function processAgendaReminders() {
         for (const event of events) {
             try {
                 // Cria a notificação para o usuário dono do evento
-                await createNotification({
+                await notificationService.create({
                     user_id: event.profile_id,
+                    tenant_id: event.tenant_id,
                     title: 'Lembrete de Agenda',
                     message: `O evento "${event.title}" começa em 1 hora (${new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}).`,
                     type: 'calendar_reminder'
@@ -203,28 +206,15 @@ export async function processAgendaReminders() {
                         .single();
 
                     if (lead?.contacts?.phone) {
-                        // Busca instância de WhatsApp conectada para este usuário
-                        const { data: instance } = await supabase
-                            .from('whatsapp_instances')
-                            .select('*')
-                            .eq('user_id', event.profile_id)
-                            .eq('status', 'connected')
-                            .maybeSingle();
-
-                        if (instance) {
-                            const dateStr = new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                            const message = `Olá ${lead.contacts.name}, confirmando nosso compromisso "${event.title}" hoje às ${dateStr}. Nos vemos lá!`;
-
-                            try {
-                                await evolutionService.sendMessage(
-                                    instance.instance_name,
-                                    lead.contacts.phone,
-                                    message
-                                );
-                            } catch (error) {
-                                console.error(`Erro ao enviar WhatsApp para evento ${event.id}:`, error);
-                            }
-                        }
+                        const dateStr = new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        const message = `Olá ${lead.contacts.name}, confirmando nosso compromisso "${event.title}" hoje às ${dateStr}. Nos vemos lá!`;
+                        
+                        await notificationService.sendWhatsApp(
+                            event.tenant_id,
+                            event.profile_id,
+                            lead.contacts.phone,
+                            message
+                        );
                     }
                 }
 

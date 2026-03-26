@@ -5,7 +5,7 @@ import { revalidatePath } from 'next/cache'
 
 import { getProfile } from './profile'
 import { createLog } from '@/lib/utils/logging'
-import { createNotification } from './notifications'
+import { notificationService } from '@/services/notification-service'
 
 export async function getAssets(tenantId: string, status?: string) {
     const supabase = await createClient()
@@ -456,11 +456,12 @@ export async function deleteAsset(tenantId: string, assetId: string) {
 
                 if (admins && admins.length > 0) {
                     await Promise.all(admins.map((admin: any) => 
-                        createNotification({
+                        notificationService.create({
                             user_id: admin.id,
+                            tenant_id: currentProfile.tenant_id as string,
                             title: 'Imóvel Excluído',
                             message: `O imóvel #${assetId.slice(0, 8)} foi excluído por ${currentProfile.full_name}.`,
-                            type: 'critical_deletion',
+                            type: 'error',
                             metadata: { asset_id: assetId, action_by: currentProfile.id }
                         })
                     ));
@@ -517,11 +518,12 @@ export async function archiveAsset(tenantId: string, assetId: string) {
 
                 if (admins && admins.length > 0) {
                     await Promise.all(admins.map((admin: any) => 
-                        createNotification({
+                        notificationService.create({
                             user_id: admin.id,
+                            tenant_id: currentProfile.tenant_id as string,
                             title: 'Imóvel Arquivado',
                             message: `O imóvel #${assetId.slice(0, 8)} foi arquivado por ${currentProfile.full_name}.`,
-                            type: 'system',
+                            type: 'info',
                             metadata: { asset_id: assetId }
                         })
                     ));
