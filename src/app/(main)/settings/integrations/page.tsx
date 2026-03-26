@@ -97,7 +97,7 @@ export default function IntegrationsSettingsPage() {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <GatewayCard />
+                        <GatewayCard tenantId={tenant?.id} />
                     </div>
                 </div>
 
@@ -109,8 +109,8 @@ export default function IntegrationsSettingsPage() {
                     </div>
 
                     <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <MarketDataCard />
-                        <NewsFeedCard />
+                        <MarketDataCard tenantId={tenant?.id} />
+                        <NewsFeedCard tenantId={tenant?.id} />
                     </div>
                 </div>
 

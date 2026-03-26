@@ -44,10 +44,15 @@ export async function POST(req: NextRequest) {
         
         const { data: integration } = await supabase
             .from('integrations')
-            .select('credentials')
+            .select('credentials, status')
             .eq('tenant_id', tenantId)
             .eq('provider', 'facebook & instagram ads') // Usando o título do card como chave
             .maybeSingle();
+
+        if (integration?.status !== 'active') {
+            console.warn('Facebook Integration is disabled for tenant:', tenantId);
+            return NextResponse.json({ error: 'Integration disabled' }, { status: 403 });
+        }
 
         const accessToken = integration?.credentials?.access_token;
 

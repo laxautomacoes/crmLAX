@@ -3,8 +3,9 @@
 import { useState } from 'react';
 import { Copy, Check, ExternalLink, LucideIcon } from 'lucide-react';
 import { toast } from 'sonner';
-import { getIntegration, saveIntegration } from '@/app/_actions/integrations';
+import { getIntegration, saveIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
 import { useEffect } from 'react';
+import { Switch } from '@/components/ui/Switch';
 
 interface IntegrationEndpointCardProps {
     title: string;
@@ -34,6 +35,8 @@ export function IntegrationEndpointCard({
     const [isSaving, setIsSaving] = useState(false);
     const [hasToken, setHasToken] = useState(false);
     const [showConfig, setShowConfig] = useState(false);
+    const [isActive, setIsActive] = useState(false);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     
     useEffect(() => {
         if (tenantId) {
@@ -42,9 +45,23 @@ export function IntegrationEndpointCard({
                     setHasToken(true);
                     setAccessToken(data.credentials.access_token);
                 }
+                setIsActive(data?.status === 'active');
             });
         }
     }, [tenantId, title]);
+
+    const handleToggleStatus = async (checked: boolean) => {
+        setIsUpdatingStatus(true);
+        const { error } = await updateIntegrationStatus(title.toLowerCase(), checked ? 'active' : 'inactive');
+        
+        if (error) {
+            toast.error('Erro ao atualizar status: ' + error);
+        } else {
+            setIsActive(checked);
+            toast.success(`Integração ${checked ? 'ativada' : 'desativada'} com sucesso!`);
+        }
+        setIsUpdatingStatus(false);
+    };
 
     const handleSaveToken = async () => {
         setIsSaving(true);
@@ -92,12 +109,16 @@ export function IntegrationEndpointCard({
                     <div>
                         <div className="flex items-center gap-2 mb-1">
                             <h3 className="text-lg font-black text-foreground tracking-tight">{title}</h3>
-                            <div className="flex items-center gap-1.5 px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20">
-                                <span className="relative flex h-2 w-2">
-                                    <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
-                                    <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                            <div className="flex items-center gap-2">
+                                <Switch 
+                                    checked={isActive} 
+                                    onChange={handleToggleStatus}
+                                    disabled={isUpdatingStatus}
+                                    className="scale-90"
+                                />
+                                <span className={`text-[10px] font-black uppercase tracking-wider ${isActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
+                                    {isActive ? 'Ativo' : 'Desativado'}
                                 </span>
-                                <span className="text-[10px] font-bold uppercase tracking-wider">Ativo</span>
                             </div>
                         </div>
                         <p className="text-sm text-muted-foreground leading-relaxed max-w-full">{description}</p>

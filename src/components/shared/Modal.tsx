@@ -13,7 +13,7 @@ interface ModalProps {
     extraHeaderContent?: React.ReactNode;
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md', titleClassName }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', titleClassName, extraHeaderContent }: ModalProps) {
     const sizeClasses = {
         sm: 'max-w-sm',
         md: 'max-w-md',

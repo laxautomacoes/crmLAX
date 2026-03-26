@@ -1,7 +1,11 @@
 'use client';
-
+ 
 import { Newspaper, ExternalLink, RefreshCw } from 'lucide-react';
-
+import { useState, useEffect } from 'react';
+import { Switch } from '@/components/ui/Switch';
+import { getIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
+import { toast } from 'sonner';
+ 
 interface NewsItem {
     id: string;
     title: string;
@@ -9,7 +13,7 @@ interface NewsItem {
     date: string;
     url: string;
 }
-
+ 
 const mockNews: NewsItem[] = [
     { 
         id: '1', 
@@ -33,8 +37,29 @@ const mockNews: NewsItem[] = [
         url: '#' 
     },
 ];
+ 
+export function NewsFeedCard({ tenantId }: { tenantId?: string }) {
+    const [isActive, setIsActive] = useState(false);
+    const [loading, setLoading] = useState(false);
 
-export function NewsFeedCard() {
+    useEffect(() => {
+        if (tenantId) {
+            getIntegration('news_feed').then(({ data }) => setIsActive(data?.status === 'active'));
+        }
+    }, [tenantId]);
+
+    const handleToggle = async (checked: boolean) => {
+        setLoading(true);
+        const { error } = await updateIntegrationStatus('news_feed', checked ? 'active' : 'inactive');
+        if (error) {
+            toast.error('Erro ao atualizar: ' + error);
+        } else {
+            setIsActive(checked);
+            toast.success('Status atualizado!');
+        }
+        setLoading(false);
+    };
+
     return (
         <div className="bg-card rounded-2xl border border-border overflow-hidden flex flex-col h-full">
             <div className="p-6 border-b border-border bg-muted/30">
@@ -43,9 +68,20 @@ export function NewsFeedCard() {
                         <h3 className="text-lg font-bold text-foreground">Notícias do Setor</h3>
                         <p className="text-sm text-muted-foreground">Fique por dentro das novidades do mercado imobiliário.</p>
                     </div>
+                    <div className="flex items-center gap-2 px-1">
+                        <Switch 
+                            checked={isActive} 
+                            onChange={handleToggle}
+                            disabled={loading}
+                            className="scale-90"
+                        />
+                        <span className={`text-[10px] font-black uppercase tracking-wider hidden sm:block ${isActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
+                            {isActive ? 'Ativo' : 'Desativado'}
+                        </span>
+                    </div>
                 </div>
             </div>
-
+ 
             <div className="flex-1 overflow-auto p-2">
                 <div className="space-y-1">
                     {mockNews.map((news) => (
@@ -71,7 +107,7 @@ export function NewsFeedCard() {
                     ))}
                 </div>
             </div>
-
+ 
             <div className="p-4 border-t border-border/50 bg-muted/10">
                 <button className="w-full py-2 flex items-center justify-center gap-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
                     <RefreshCw size={14} />

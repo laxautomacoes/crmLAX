@@ -4,21 +4,42 @@ import { useState, useEffect } from 'react';
 import { MessageCircle, QrCode, Loader2, CheckCircle2, AlertCircle, RefreshCw, Power } from 'lucide-react';
 import { setupWhatsAppInstance, getWhatsAppInstance, getQrCode, refreshInstanceStatus, disconnectWhatsApp } from '@/app/_actions/whatsapp';
 import { toast } from 'sonner';
+import { Switch } from '@/components/ui/Switch';
+import { getIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
 
 export function WhatsAppCard() {
     const [instance, setInstance] = useState<any>(null);
     const [qrCode, setQrCode] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
+    const [isActive, setIsActive] = useState(false);
+    const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
 
     const loadData = async () => {
         setLoading(true);
+        // Carrega o status mestre da integração
+        const { data: integData } = await getIntegration('whatsapp');
+        setIsActive(integData?.status === 'active');
+
         const { data } = await getWhatsAppInstance();
         setInstance(data);
         if (data && data.status === 'disconnected') {
             await fetchQrCode(data.instance_name);
         }
         setLoading(false);
+    };
+
+    const handleToggleStatus = async (checked: boolean) => {
+        setIsUpdatingStatus(true);
+        const { error } = await updateIntegrationStatus('whatsapp', checked ? 'active' : 'inactive');
+        
+        if (error) {
+            toast.error('Erro ao atualizar status: ' + error);
+        } else {
+            setIsActive(checked);
+            toast.success(`Integração ${checked ? 'ativada' : 'desativada'} com sucesso!`);
+        }
+        setIsUpdatingStatus(false);
     };
 
     const fetchQrCode = async (instanceName: string) => {
@@ -87,13 +108,27 @@ export function WhatsAppCard() {
     return (
         <div className="bg-card rounded-2xl border border-border overflow-hidden">
             <div className="p-6 border-b border-border bg-muted/30">
-                <div className="flex items-center gap-4">
-                    <div className="p-3 rounded-xl bg-[#25D366]/10 text-[#25D366]">
-                        <MessageCircle size={24} />
+                <div className="flex items-center justify-between gap-4">
+                    <div className="flex items-center gap-4">
+                        <div className="p-3 rounded-xl bg-[#25D366]/10 text-[#25D366]">
+                            <MessageCircle size={24} />
+                        </div>
+                        <div>
+                            <h3 className="text-lg font-bold text-foreground">WhatsApp</h3>
+                            <p className="text-sm text-muted-foreground">Conecte seu WhatsApp para enviar mensagens e sincronizar conversas.</p>
+                        </div>
                     </div>
-                    <div>
-                        <h3 className="text-lg font-bold text-foreground">WhatsApp</h3>
-                        <p className="text-sm text-muted-foreground">Conecte seu WhatsApp para enviar mensagens e sincronizar conversas.</p>
+
+                    <div className="flex items-center gap-2 px-1">
+                        <Switch 
+                            checked={isActive} 
+                            onChange={handleToggleStatus}
+                            disabled={isUpdatingStatus}
+                            className="scale-90"
+                        />
+                        <span className={`text-[10px] font-black uppercase tracking-wider hidden sm:block ${isActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
+                            {isActive ? 'Ativo' : 'Desativado'}
+                        </span>
                     </div>
                 </div>
             </div>

@@ -9,6 +9,22 @@ export async function POST(req: NextRequest) {
         // Identificamos o portal pelo header ou pelo corpo
         const portal = req.headers.get('x-portal-name') || body.portal_name || 'Portal';
         const tenant_id = searchParams.get('tenant_id') || body.tenant_id;
+
+        if (!tenant_id) return NextResponse.json({ error: 'Missing tenant_id' }, { status: 400 });
+
+        // Verificar se a integração está ativa
+        const { createAdminClient } = await import('@/lib/supabase/admin');
+        const supabase = createAdminClient();
+        const { data: integration } = await supabase
+            .from('integrations')
+            .select('status')
+            .eq('tenant_id', tenant_id)
+            .eq('provider', 'portais imobiliários')
+            .maybeSingle();
+
+        if (integration?.status !== 'active') {
+            return NextResponse.json({ error: 'Integration disabled' }, { status: 403 });
+        }
         
         const leadData = {
             tenant_id,

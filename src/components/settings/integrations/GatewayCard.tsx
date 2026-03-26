@@ -1,8 +1,36 @@
 'use client';
 
 import { CreditCard, ExternalLink, Settings2, ShieldCheck } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Switch } from '@/components/ui/Switch';
+import { getIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
+import { toast } from 'sonner';
 
-export function GatewayCard() {
+export function GatewayCard({ tenantId }: { tenantId?: string }) {
+    const [stripeActive, setStripeActive] = useState(false);
+    const [checkoutActive, setCheckoutActive] = useState(false);
+    const [loading, setLoading] = useState(false);
+
+    useEffect(() => {
+        if (tenantId) {
+            getIntegration('stripe').then(({ data }) => setStripeActive(data?.status === 'active'));
+            getIntegration('checkout_lax').then(({ data }) => setCheckoutActive(data?.status === 'active'));
+        }
+    }, [tenantId]);
+
+    const handleToggle = async (provider: string, checked: boolean) => {
+        setLoading(true);
+        const { error } = await updateIntegrationStatus(provider, checked ? 'active' : 'inactive');
+        if (error) {
+            toast.error('Erro ao atualizar: ' + error);
+        } else {
+            if (provider === 'stripe') setStripeActive(checked);
+            if (provider === 'checkout_lax') setCheckoutActive(checked);
+            toast.success('Status atualizado!');
+        }
+        setLoading(false);
+    };
+
     return (
         <div className="bg-card rounded-2xl border border-border overflow-hidden">
             <div className="p-6 border-b border-border bg-muted/30">
@@ -21,8 +49,16 @@ export function GatewayCard() {
                                 <div className="w-8 h-8 rounded-lg bg-[#635BFF] flex items-center justify-center text-white font-black text-xs">S</div>
                                 <span className="font-bold text-foreground">Stripe</span>
                             </div>
-                            <div className="px-2 py-0.5 bg-emerald-500/10 text-emerald-500 rounded-full border border-emerald-500/20 text-[10px] font-bold uppercase tracking-wider">
-                                Ativo
+                            <div className="flex items-center gap-2">
+                                <Switch 
+                                    checked={stripeActive} 
+                                    onChange={(checked) => handleToggle('stripe', checked)}
+                                    disabled={loading}
+                                    className="scale-75"
+                                />
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${stripeActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
+                                    {stripeActive ? 'Ativo' : 'Desativado'}
+                                </span>
                             </div>
                         </div>
                         <p className="text-xs text-muted-foreground mb-6 leading-relaxed">
@@ -33,7 +69,7 @@ export function GatewayCard() {
                             Configurar Conta
                         </button>
                     </div>
-
+ 
                     {/* Checkout LAX Card */}
                     <div className="flex-1 p-6 rounded-2xl border border-border bg-muted/20 flex flex-col justify-between group hover:border-secondary/30 transition-all">
                         <div className="flex items-center justify-between mb-4">
@@ -41,8 +77,16 @@ export function GatewayCard() {
                                 <div className="w-8 h-8 rounded-lg bg-secondary flex items-center justify-center text-secondary-foreground font-black text-[10px]">LAX</div>
                                 <span className="font-bold text-foreground">Checkout LAX</span>
                             </div>
-                            <div className="px-2 py-0.5 bg-muted text-muted-foreground rounded-full border border-border text-[10px] font-bold uppercase tracking-wider">
-                                Disponível
+                            <div className="flex items-center gap-2">
+                                <Switch 
+                                    checked={checkoutActive} 
+                                    onChange={(checked) => handleToggle('checkout_lax', checked)}
+                                    disabled={loading}
+                                    className="scale-75"
+                                />
+                                <span className={`text-[10px] font-bold uppercase tracking-wider ${checkoutActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
+                                    {checkoutActive ? 'Ativo' : 'Desativado'}
+                                </span>
                             </div>
                         </div>
                         <p className="text-xs text-muted-foreground mb-6 leading-relaxed">

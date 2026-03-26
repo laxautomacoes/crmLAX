@@ -57,3 +57,31 @@ export async function saveIntegration(provider: string, credentials: any) {
     revalidatePath('/settings/integrations');
     return { success: true };
 }
+export async function updateIntegrationStatus(provider: string, status: 'active' | 'inactive') {
+    const supabase = await createClient();
+    
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'User not found' };
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile) return { error: 'Profile not found' };
+
+    const { error } = await supabase
+        .from('integrations')
+        .upsert({
+            tenant_id: profile.tenant_id,
+            provider,
+            status,
+            updated_at: new Date().toISOString()
+        }, { onConflict: 'tenant_id,provider' });
+
+    if (error) return { error: error.message };
+
+    revalidatePath('/settings/integrations');
+    return { success: true };
+}

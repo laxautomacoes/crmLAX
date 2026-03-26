@@ -1,8 +1,11 @@
 'use client';
-
-import { useState } from 'react';
+ 
+import { useState, useEffect } from 'react';
 import { TrendingUp, TrendingDown, Minus, Info, MapPin } from 'lucide-react';
-
+import { Switch } from '@/components/ui/Switch';
+import { getIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
+import { toast } from 'sonner';
+ 
 interface MarketData {
     name: string;
     value: string;
@@ -10,9 +13,9 @@ interface MarketData {
     change: string;
     period: string;
 }
-
+ 
 const UFS = ['SP', 'RJ', 'MG', 'RS', 'SC', 'PR', 'BA', 'PE', 'CE', 'DF'];
-
+ 
 const cubByUF: Record<string, string> = {
     'SP': 'R$ 1.954,23',
     'RJ': 'R$ 1.892,10',
@@ -25,10 +28,30 @@ const cubByUF: Record<string, string> = {
     'CE': 'R$ 1.685,40',
     'DF': 'R$ 1.920,05',
 };
-
-export function MarketDataCard() {
+ 
+export function MarketDataCard({ tenantId }: { tenantId?: string }) {
     const [selectedUF, setSelectedUF] = useState('SP');
+    const [isActive, setIsActive] = useState(false);
+    const [loading, setLoading] = useState(false);
 
+    useEffect(() => {
+        if (tenantId) {
+            getIntegration('market_data').then(({ data }) => setIsActive(data?.status === 'active'));
+        }
+    }, [tenantId]);
+
+    const handleToggle = async (checked: boolean) => {
+        setLoading(true);
+        const { error } = await updateIntegrationStatus('market_data', checked ? 'active' : 'inactive');
+        if (error) {
+            toast.error('Erro ao atualizar: ' + error);
+        } else {
+            setIsActive(checked);
+            toast.success('Status atualizado!');
+        }
+        setLoading(false);
+    };
+ 
     const marketData: MarketData[] = [
         { 
             name: `CUB/${selectedUF}`, 
@@ -40,16 +63,29 @@ export function MarketDataCard() {
         { name: 'IGP-M', value: '0,15%', trend: 'down', change: '-0,05%', period: 'Mar/2026' },
         { name: 'INCC-M', value: '0,32%', trend: 'up', change: '+0,12%', period: 'Fev/2026' },
     ];
-
+ 
     return (
         <div className="bg-card rounded-2xl border border-border overflow-hidden">
             <div className="p-6 border-b border-border bg-muted/30">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                    <div>
-                        <h3 className="text-lg font-bold text-foreground tracking-tight">Dados de Mercado</h3>
-                        <p className="text-sm text-muted-foreground">Índices econômicos do setor imobiliário.</p>
+                    <div className="flex items-center gap-4">
+                        <div>
+                            <h3 className="text-lg font-bold text-foreground tracking-tight">Dados de Mercado</h3>
+                            <p className="text-sm text-muted-foreground">Índices econômicos do setor imobiliário.</p>
+                        </div>
+                        <div className="flex items-center gap-2 px-1">
+                            <Switch 
+                                checked={isActive} 
+                                onChange={handleToggle}
+                                disabled={loading}
+                                className="scale-90"
+                            />
+                            <span className={`text-[10px] font-black uppercase tracking-wider hidden sm:block ${isActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
+                                {isActive ? 'Ativo' : 'Desativado'}
+                            </span>
+                        </div>
                     </div>
-
+ 
                     <div className="flex items-center gap-2 bg-background border border-border p-1.5 rounded-xl shadow-sm">
                         <select 
                             value={selectedUF}
@@ -63,7 +99,7 @@ export function MarketDataCard() {
                     </div>
                 </div>
             </div>
-
+ 
             <div className="p-6">
                 <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
                     {marketData.map((item) => (
@@ -90,7 +126,7 @@ export function MarketDataCard() {
                         </div>
                     ))}
                 </div>
-
+ 
                 <div className="mt-6 flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border/50">
                     <Info size={16} className="text-muted-foreground mt-0.5 shrink-0" />
                     <p className="text-[11px] text-muted-foreground leading-relaxed">

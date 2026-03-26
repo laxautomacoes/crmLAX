@@ -13,6 +13,20 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
         }
 
+        // Verificar se a integração está ativa
+        const { createAdminClient } = await import('@/lib/supabase/admin');
+        const supabase = createAdminClient();
+        const { data: integration } = await supabase
+            .from('integrations')
+            .select('status')
+            .eq('tenant_id', body.tenant_id)
+            .eq('provider', 'google ads')
+            .maybeSingle();
+
+        if (integration?.status !== 'active') {
+            return NextResponse.json({ error: 'Integration disabled' }, { status: 403 });
+        }
+
         // Mapeamento de campos do Google Ads
         // O Google envia um array 'user_column_data' com {column_name, string_value}
         const findField = (name: string) => 
