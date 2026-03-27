@@ -25,7 +25,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const [userProfile, setUserProfile] = useState<any>(null);
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
     const [tenantSlug, setTenantSlug] = useState<string | null>(null);
-    const [branding, setBranding] = useState<{ logo_full?: string; logo_icon?: string; logo_height?: number } | null>(null);
+    const [branding, setBranding] = useState<{ logo_full?: string; logo_header?: string; logo_icon?: string; logo_height?: number; logo_header_height?: number } | null>(null);
     const [brandingLoading, setBrandingLoading] = useState(true);
 
     const handleLogout = async () => {
@@ -42,6 +42,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                 const timestamp = Date.now();
                 const updatedBranding = { ...event.detail };
                 if (updatedBranding.logo_full) updatedBranding.logo_full = `${updatedBranding.logo_full}?t=${timestamp}`;
+                if (updatedBranding.logo_header) updatedBranding.logo_header = `${updatedBranding.logo_header}?t=${timestamp}`;
                 if (updatedBranding.logo_icon) updatedBranding.logo_icon = `${updatedBranding.logo_icon}?t=${timestamp}`;
                 setBranding(updatedBranding);
             }
@@ -156,8 +157,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                         ) : (
                             <Logo 
                                 size="md" 
-                                src={branding?.logo_full} 
-                                height={branding?.logo_height}
+                                src={branding?.logo_header || branding?.logo_full} 
+                                height={branding?.logo_header_height || (branding?.logo_header ? 40 : branding?.logo_height || 40)}
                                 loading={brandingLoading}
                             />
                         )}

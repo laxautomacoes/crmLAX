@@ -24,8 +24,10 @@ import { Logo } from '@/components/shared/Logo'
 
 interface BrandingData {
     logo_full?: string
+    logo_header?: string
     logo_icon?: string
     logo_height?: number
+    logo_header_height?: number
     address?: {
         street?: string
         number?: string
@@ -52,7 +54,7 @@ export function SiteSettings() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [verifying, setVerifying] = useState(false)
-    const [isUploading, setIsUploading] = useState<'logo_full' | 'logo_icon' | null>(null)
+    const [isUploading, setIsUploading] = useState<'logo_full' | 'logo_header' | 'logo_icon' | null>(null)
     const [profile, setProfile] = useState<any>(null)
     const [tenant, setTenant] = useState<any>(null)
     const [branding, setBranding] = useState<BrandingData>({})
@@ -86,25 +88,25 @@ export function SiteSettings() {
         loadData()
     }, [])
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo_full' | 'logo_icon') => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo_full' | 'logo_header' | 'logo_icon') => {
         const file = e.target.files?.[0]
         if (!file || !profile?.tenant_id) return
 
-        if (type === 'logo_full') {
+        if (type === 'logo_full' || type === 'logo_header') {
             const isValidRatio = await new Promise<boolean>((resolve) => {
                 const img = new Image()
                 img.onload = () => {
                     const ratio = img.width / img.height
-                    resolve(Math.abs(ratio - 5) < 0.2)
+                    resolve(Math.abs(ratio - 5) < 1.0) // Relaxed ratio check or just ensure it's landscape
                 }
                 img.onerror = () => resolve(false)
                 img.src = URL.createObjectURL(file)
             })
 
             if (!isValidRatio) {
-                toast.error('Proporção não aceita! O logotipo deve estar no padrão 5:1 (ex: 250x50px).')
-                e.target.value = ''
-                return
+                toast.error('Proporção sugerida não detectada! Tente usar uma imagem retangular (ex: 5:1).')
+                // e.target.value = ''
+                // return // Allow continuing but show warning? Better allowed but warned.
             }
         }
 
@@ -136,7 +138,7 @@ export function SiteSettings() {
             await updateTenantBranding(profile.tenant_id, newBranding)
             
             window.dispatchEvent(new CustomEvent('branding-updated', { detail: newBranding }))
-            toast.success(`${type === 'logo_full' ? 'Logo' : 'Ícone'} carregado com sucesso!`)
+            toast.success(`${type === 'logo_full' ? 'Logo do Site' : type === 'logo_header' ? 'Logo do Header' : 'Ícone'} carregado com sucesso!`)
         } catch (error: any) {
             console.error(`Error uploading ${type}:`, error)
             toast.error(`Erro ao carregar imagem: ${error.message}`)
@@ -191,8 +193,13 @@ export function SiteSettings() {
         setVerifying(false)
     }
 
-    const handleRemoveLogo = (type: 'logo_full' | 'logo_icon') => {
-        if (confirm(`Deseja remover o ${type === 'logo_full' ? 'logotipo' : 'ícone'}?`)) {
+    const handleRemoveLogo = (type: 'logo_full' | 'logo_header' | 'logo_icon') => {
+        const labels = {
+            logo_full: 'logotipo principal',
+            logo_header: 'logotipo do header',
+            logo_icon: 'ícone'
+        };
+        if (confirm(`Deseja remover o ${labels[type]}?`)) {
             const newBranding = { ...branding, [type]: undefined };
             setBranding(newBranding);
             updateTenantBranding(profile.tenant_id, newBranding);
@@ -272,12 +279,12 @@ export function SiteSettings() {
                                 <p className="text-sm text-muted-foreground">Logotipo e favicon exibidos no site e no dashboard.</p>
                             </div>
 
-                            <div className="flex flex-col md:flex-row gap-8">
-                                {/* Logo Full */}
-                                <div className="flex-1 space-y-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                                {/* Logo Full (Site) */}
+                                <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <label className="text-sm font-bold text-foreground">Logotipo Principal</label>
-                                        <p className="text-xs text-muted-foreground">Ideal: 250x50px (5:1)</p>
+                                        <label className="text-sm font-bold text-foreground">Logotipo Principal (Site)</label>
+                                        <p className="text-xs text-muted-foreground">Exibido na vitrine. Recomendado: 5:1</p>
                                     </div>
                                     <div className="relative group min-h-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
                                         {branding.logo_full ? (
@@ -285,14 +292,14 @@ export function SiteSettings() {
                                                 <div className="p-4">
                                                     <Logo size="lg" src={branding.logo_full} height={branding.logo_height || 50} />
                                                 </div>
-                                                <button onClick={() => handleRemoveLogo('logo_full')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => handleRemoveLogo('logo_full')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
                                                     <Trash2 size={14} />
                                                 </button>
                                             </>
                                         ) : (
                                             <div className="text-center p-4">
                                                 <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                                                <span className="text-xs text-muted-foreground">Clique para fazer upload</span>
+                                                <span className="text-xs text-muted-foreground">Upload Site Logo</span>
                                             </div>
                                         )}
                                         <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 hover:bg-black/20 hover:opacity-100 transition-all">
@@ -302,7 +309,10 @@ export function SiteSettings() {
                                     </div>
                                     {branding.logo_full && (
                                         <div className="space-y-2">
-                                            <label className="text-[10px] font-bold text-foreground/60 dark:text-muted-foreground uppercase">Ajustar Tamanho</label>
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-bold text-foreground/60 dark:text-muted-foreground uppercase">Ajustar Tamanho (Site)</label>
+                                                <span className="text-[10px] font-bold text-foreground/60">{branding.logo_height || 50}px</span>
+                                            </div>
                                             <input
                                                 type="range"
                                                 min="20"
@@ -310,23 +320,83 @@ export function SiteSettings() {
                                                 value={branding.logo_height || 50}
                                                 onChange={(e) => setBranding(prev => ({ ...prev, logo_height: parseInt(e.target.value) }))}
                                                 onMouseUp={handleSaveMain}
-                                                className="w-full h-1.5 bg-gray-200 dark:bg-muted rounded-lg appearance-none cursor-pointer accent-secondary transition-colors"
+                                                className="w-full h-1.5 bg-gray-200 dark:bg-muted rounded-lg appearance-none cursor-pointer accent-muted-foreground transition-colors"
                                             />
+                                            <div className="flex justify-between items-center px-1">
+                                                <span className="text-[9px] font-bold text-muted-foreground">20px</span>
+                                                <span className="text-[9px] font-bold text-muted-foreground">60px</span>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Logo Header (System) */}
+                                <div className="space-y-4">
+                                    <div className="space-y-1">
+                                        <label className="text-sm font-bold text-foreground">Logotipo do Header (Dashboard)</label>
+                                        <p className="text-xs text-muted-foreground">Exibido no sistema interno.</p>
+                                    </div>
+                                    <div className="relative group min-h-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
+                                        {(branding.logo_header || branding.logo_full) ? (
+                                            <>
+                                                <div className="p-4">
+                                                    <Logo 
+                                                        size="lg" 
+                                                        src={branding.logo_header || branding.logo_full} 
+                                                        height={branding.logo_header_height || (branding.logo_header ? 40 : branding.logo_height || 40)} 
+                                                    />
+                                                </div>
+                                                {(branding.logo_header || branding.logo_full) && (
+                                                    <button onClick={() => handleRemoveLogo('logo_header')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
+                                                        <Trash2 size={14} />
+                                                    </button>
+                                                )}
+                                            </>
+                                        ) : (
+                                            <div className="text-center p-4">
+                                                <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
+                                                <span className="text-xs text-muted-foreground">Upload Header Logo</span>
+                                            </div>
+                                        )}
+                                        <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 hover:bg-black/20 hover:opacity-100 transition-all">
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo_header')} disabled={!!isUploading} />
+                                            {isUploading === 'logo_header' && <Loader2 className="animate-spin text-white" />}
+                                        </label>
+                                    </div>
+                                    {(branding.logo_header || branding.logo_full) && (
+                                        <div className="space-y-2">
+                                            <div className="flex items-center justify-between">
+                                                <label className="text-[10px] font-bold text-foreground/60 dark:text-muted-foreground uppercase">Ajustar Tamanho (Header)</label>
+                                                <span className="text-[10px] font-bold text-foreground/60">{branding.logo_header_height || (branding.logo_header ? 40 : branding.logo_height || 40)}px</span>
+                                            </div>
+                                            <input
+                                                type="range"
+                                                min="20"
+                                                max="60"
+                                                value={branding.logo_header_height || (branding.logo_header ? 40 : branding.logo_height || 40)}
+                                                onChange={(e) => setBranding(prev => ({ ...prev, logo_header_height: parseInt(e.target.value) }))}
+                                                onMouseUp={handleSaveMain}
+                                                className="w-full h-1.5 bg-gray-200 dark:bg-muted rounded-lg appearance-none cursor-pointer accent-muted-foreground transition-colors"
+                                            />
+                                            <div className="flex justify-between items-center px-1">
+                                                <span className="text-[9px] font-bold text-muted-foreground">20px</span>
+                                                <span className="text-[9px] font-bold text-muted-foreground">60px</span>
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* Logo Icon */}
-                                <div className="flex-1 space-y-4">
+                                <div className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-sm font-bold text-foreground">Ícone (Favicon)</label>
-                                        <p className="text-xs text-muted-foreground">Ideal: 200x200px (1:1)</p>
+                                        <p className="text-xs text-muted-foreground">Recomendado: 200x200px (1:1)</p>
                                     </div>
                                     <div className="relative group aspect-square max-w-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
                                         {branding.logo_icon ? (
                                             <>
                                                 <img src={branding.logo_icon} className="w-full h-full object-contain p-4" alt="Icon" />
-                                                <button onClick={() => handleRemoveLogo('logo_icon')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <button onClick={() => handleRemoveLogo('logo_icon')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
                                                     <Trash2 size={14} />
                                                 </button>
                                             </>

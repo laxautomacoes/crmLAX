@@ -62,7 +62,7 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
                     <Logo 
                         size="lg" 
                         src={tenant.branding?.logo_full} 
-                        height={100} 
+                        height={tenant.branding?.logo_height || 50} 
                     />
                     {!tenant.branding?.logo_full && (
                         <h1 className="text-4xl font-bold text-foreground mt-2">{tenant.name}</h1>

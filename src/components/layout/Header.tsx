@@ -80,7 +80,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
     const formattedDate = `Hoje é ${dateString}`;
 
     const [profile, setProfile] = useState<any>(null);
-    const [branding, setBranding] = useState<{ logo_full?: string; logo_height?: number } | null>(null);
+    const [branding, setBranding] = useState<{ logo_full?: string; logo_header?: string; logo_icon?: string; logo_height?: number; logo_header_height?: number } | null>(null);
     const [companyName, setCompanyName] = useState<string>('');
     const [brandingLoading, setBrandingLoading] = useState(true);
     const [notifications, setNotifications] = useState<Notification[]>([]);
@@ -244,8 +244,8 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         <div className="md:hidden flex-1 flex justify-center pr-6">
                             <Logo
                                 size="md"
-                                src={branding?.logo_full}
-                                height={branding?.logo_height}
+                                src={branding?.logo_header || branding?.logo_full}
+                                height={branding?.logo_header_height || (branding?.logo_header ? 40 : branding?.logo_height || 40)}
                                 loading={brandingLoading}
                             />
                         </div>

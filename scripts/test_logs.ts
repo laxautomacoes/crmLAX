@@ -1,5 +1,5 @@
-import { createLog } from './src/lib/utils/logging';
-import { createAdminClient } from './src/lib/supabase/admin';
+import { createLog } from '@/lib/utils/logging';
+import { createAdminClient } from '@/lib/supabase/admin';
 
 async function testLogging() {
     console.log('--- Iniciando Teste de Logging ---');
