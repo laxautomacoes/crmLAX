@@ -674,14 +674,14 @@ export function SiteSettings() {
                                             <div className="p-4 space-y-4">
                                                 {/* DNS Records UI (Simplified from DomainTab) */}
                                                 <div className="space-y-2">
-                                                    {/* Tipo: CNAME */}
+                                                    {/* Tipo */}
                                                     <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
                                                         <div className="flex flex-col">
                                                             <span className="text-muted-foreground uppercase font-bold text-[9px]">Tipo</span>
-                                                            <span className="font-mono font-bold">CNAME</span>
+                                                            <span className="font-mono font-bold">{domain.split('.').filter(Boolean).length === 2 ? 'A' : 'CNAME'}</span>
                                                         </div>
                                                         <button 
-                                                            onClick={() => copyToClipboard('CNAME', 'Tipo')} 
+                                                            onClick={() => copyToClipboard(domain.split('.').filter(Boolean).length === 2 ? 'A' : 'CNAME', 'Tipo')} 
                                                             className="text-muted-foreground hover:text-secondary transition-colors"
                                                             title="Copiar Tipo"
                                                         >
@@ -693,10 +693,10 @@ export function SiteSettings() {
                                                     <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
                                                         <div className="flex flex-col">
                                                             <span className="text-muted-foreground uppercase font-bold text-[9px]">Nome / Host</span>
-                                                            <span className="font-mono font-bold">{domain.split('.')[0] || 'www'}</span>
+                                                            <span className="font-mono font-bold">{domain.split('.').filter(Boolean).length === 2 ? '@' : (domain.split('.')[0] || 'www')}</span>
                                                         </div>
                                                         <button 
-                                                            onClick={() => copyToClipboard(domain.split('.')[0] || 'www', 'Host')} 
+                                                            onClick={() => copyToClipboard(domain.split('.').filter(Boolean).length === 2 ? '@' : (domain.split('.')[0] || 'www'), 'Host')} 
                                                             className="text-muted-foreground hover:text-secondary transition-colors"
                                                             title="Copiar Host"
                                                         >
@@ -708,10 +708,10 @@ export function SiteSettings() {
                                                     <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
                                                         <div className="flex flex-col">
                                                             <span className="text-muted-foreground uppercase font-bold text-[9px]">Valor / Destino</span>
-                                                            <span className="font-mono font-bold">cname.vercel-dns.com</span>
+                                                            <span className="font-mono font-bold">{domain.split('.').filter(Boolean).length === 2 ? '76.76.21.21' : 'cname.vercel-dns.com'}</span>
                                                         </div>
                                                         <button 
-                                                            onClick={() => copyToClipboard('cname.vercel-dns.com', 'Valor')} 
+                                                            onClick={() => copyToClipboard(domain.split('.').filter(Boolean).length === 2 ? '76.76.21.21' : 'cname.vercel-dns.com', 'Valor')} 
                                                             className="text-muted-foreground hover:text-secondary transition-colors"
                                                             title="Copiar Valor"
                                                         >
