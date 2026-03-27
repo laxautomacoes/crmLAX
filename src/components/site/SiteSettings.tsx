@@ -735,7 +735,7 @@ export function SiteSettings() {
 
                                                     return (
                                                         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
-                                                            {records.map((record, idx) => (
+                                                            {records.map((record: any, idx: number) => (
                                                                 <div key={idx} className="p-3 border border-border rounded-xl bg-background/50 group relative hover:border-secondary/30 transition-colors">
                                                                     <div className="flex items-center justify-between mb-3 border-b border-border/10 pb-1.5">
                                                                         <span className="text-[8px] font-bold text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded tracking-tighter">
