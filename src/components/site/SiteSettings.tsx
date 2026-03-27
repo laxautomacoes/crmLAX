@@ -706,67 +706,68 @@ export function SiteSettings() {
                                             
                                             <div className="p-4 space-y-4">
                                                 {/* DNS Records UI (Simplified from DomainTab) */}
-                                                <div className="space-y-2">
-                                                    {/* Tipo */}
-                                                    <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Tipo</span>
-                                                            <span className="font-mono font-bold">{domain.split('.').filter(Boolean).length === 2 ? 'A' : 'CNAME'}</span>
-                                                        </div>
-                                                        <button 
-                                                            onClick={() => copyToClipboard(domain.split('.').filter(Boolean).length === 2 ? 'A' : 'CNAME', 'Tipo')} 
-                                                            className="text-muted-foreground hover:text-secondary transition-colors"
-                                                            title="Copiar Tipo"
-                                                        >
-                                                            <Copy size={12} />
-                                                        </button>
-                                                    </div>
+                                                {(() => {
+                                                    const isRoot = domain.split('.').filter(Boolean).length === 2;
+                                                    return (
+                                                        <div className="space-y-4">
+                                                            <div className="p-4 border border-border rounded-lg bg-background group relative">
+                                                                <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Tipo</div>
+                                                                <div className="font-mono text-sm font-bold text-foreground">{isRoot ? 'A' : 'CNAME'}</div>
+                                                                <button 
+                                                                    onClick={() => copyToClipboard(isRoot ? 'A' : 'CNAME', 'Tipo')}
+                                                                    className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                >
+                                                                    <Copy size={14} />
+                                                                </button>
+                                                            </div>
 
-                                                    {/* Nome / Host */}
-                                                    <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Nome / Host</span>
-                                                            <span className="font-mono font-bold">{domain.split('.').filter(Boolean).length === 2 ? '@' : (domain.split('.')[0] || 'www')}</span>
-                                                        </div>
-                                                        <button 
-                                                            onClick={() => copyToClipboard(domain.split('.').filter(Boolean).length === 2 ? '@' : (domain.split('.')[0] || 'www'), 'Host')} 
-                                                            className="text-muted-foreground hover:text-secondary transition-colors"
-                                                            title="Copiar Host"
-                                                        >
-                                                            <Copy size={12} />
-                                                        </button>
-                                                    </div>
+                                                            <div className="p-4 border border-border rounded-lg bg-background group relative">
+                                                                <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Nome / Host</div>
+                                                                <div className="font-mono text-sm font-bold text-foreground">{isRoot ? '@' : domain.split('.')[0]}</div>
+                                                                <button 
+                                                                    onClick={() => copyToClipboard(isRoot ? '@' : domain.split('.')[0], 'Host')}
+                                                                    className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                >
+                                                                    <Copy size={14} />
+                                                                </button>
+                                                            </div>
 
-                                                    {/* Valor / Destino */}
-                                                    <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">Valor / Destino</span>
-                                                            <span className="font-mono font-bold">{domain.split('.').filter(Boolean).length === 2 ? '76.76.21.21' : 'cname.vercel-dns.com'}</span>
-                                                        </div>
-                                                        <button 
-                                                            onClick={() => copyToClipboard(domain.split('.').filter(Boolean).length === 2 ? '76.76.21.21' : 'cname.vercel-dns.com', 'Valor')} 
-                                                            className="text-muted-foreground hover:text-secondary transition-colors"
-                                                            title="Copiar Valor"
-                                                        >
-                                                            <Copy size={12} />
-                                                        </button>
-                                                    </div>
+                                                            <div className="p-4 border border-border rounded-lg bg-background group relative">
+                                                                <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Valor / Destino</div>
+                                                                <div className="font-mono text-sm font-bold text-foreground">
+                                                                    {isRoot ? '76.76.21.21' : 'cname.vercel-dns.com'}
+                                                                </div>
+                                                                <button 
+                                                                    onClick={() => copyToClipboard(isRoot ? '76.76.21.21' : 'cname.vercel-dns.com', 'Valor')}
+                                                                    className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                >
+                                                                    <Copy size={14} />
+                                                                </button>
+                                                            </div>
 
-                                                    {/* TTL */}
-                                                    <div className="bg-background border border-border rounded-lg p-3 flex justify-between items-center text-xs">
-                                                        <div className="flex flex-col">
-                                                            <span className="text-muted-foreground uppercase font-bold text-[9px]">TTL</span>
-                                                            <span className="font-mono font-bold">3600 (Padrão)</span>
+                                                            {isRoot && (
+                                                                <p className="text-[10px] text-muted-foreground px-1">
+                                                                    * Alguns provedores também aceitam os IPs Anycast: <span className="font-mono">76.76.21.21</span> ou <span className="font-mono">76.76.21.123</span>. O IP <span className="font-mono text-foreground font-bold">76.76.21.21</span> é o padrão recomendado.
+                                                                </p>
+                                                            )}
+
+                                                            {/* TTL */}
+                                                            <div className="p-4 border border-border rounded-lg bg-background group relative">
+                                                                <div className="flex flex-col">
+                                                                    <span className="text-muted-foreground uppercase font-bold text-[9px]">TTL</span>
+                                                                    <span className="font-mono font-bold">3600 (Padrão)</span>
+                                                                </div>
+                                                                <button 
+                                                                    onClick={() => copyToClipboard('3600', 'TTL')} 
+                                                                    className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                                                                    title="Copiar TTL"
+                                                                >
+                                                                    <Copy size={14} />
+                                                                </button>
+                                                            </div>
                                                         </div>
-                                                        <button 
-                                                            onClick={() => copyToClipboard('3600', 'TTL')} 
-                                                            className="text-muted-foreground hover:text-secondary transition-colors"
-                                                            title="Copiar TTL"
-                                                        >
-                                                            <Copy size={12} />
-                                                        </button>
-                                                    </div>
-                                                </div>
+                                                    );
+                                                })()}
                                                 <div className="flex items-start gap-2 bg-secondary/5 rounded-lg p-3">
                                                     <Info size={14} className="text-secondary mt-0.5" />
                                                     <p className="text-[10px] text-muted-foreground leading-tight">
