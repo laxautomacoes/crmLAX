@@ -174,3 +174,38 @@ export async function verifyTenantDomain(tenantId: string) {
         return { success: false, error: 'Erro ao conectar com o serviço de verificação DNS.' }
     }
 }
+export async function getVercelDomainConfig(domain: string) {
+    const VERCEL_AUTH_TOKEN = process.env.VERCEL_AUTH_TOKEN;
+    const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
+
+    if (!VERCEL_AUTH_TOKEN || !VERCEL_PROJECT_ID) {
+        return { success: false, error: 'Credenciais Vercel não configuradas.' };
+    }
+
+    try {
+        const response = await fetch(`https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/domains/${domain}`, {
+            headers: {
+                'Authorization': `Bearer ${VERCEL_AUTH_TOKEN}`,
+            },
+        });
+
+        if (!response.ok) {
+            return { success: false, error: 'Domínio não encontrado na Vercel.' };
+        }
+
+        const data = await response.json();
+        return { 
+            success: true, 
+            config: {
+                misconfigured: data.misconfigured,
+                verification: data.verification,
+                status: data.status,
+                // Vercel retorna os registros necessários aqui em alguns casos
+                // ou podemos inferir se estiver buscando especificamente por eles.
+            } 
+        };
+    } catch (error) {
+        console.error('Erro ao buscar config na Vercel:', error);
+        return { success: false, error: 'Erro de conexão com a Vercel.' };
+    }
+}

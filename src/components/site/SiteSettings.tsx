@@ -1,16 +1,16 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { 
-    Image as ImageIcon, 
-    Upload, 
-    Loader2, 
-    Trash2, 
-    Globe, 
-    CheckCircle2, 
-    AlertCircle, 
-    Copy, 
-    Info, 
+import {
+    Image as ImageIcon,
+    Upload,
+    Loader2,
+    Trash2,
+    Globe,
+    CheckCircle2,
+    AlertCircle,
+    Copy,
+    Info,
     ExternalLink,
     MapPin,
     Share2,
@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getProfile } from '@/app/_actions/profile'
-import { updateTenantBranding, updateTenantDomain, verifyTenantDomain } from '@/app/_actions/tenant'
+import { updateTenantBranding, updateTenantDomain, verifyTenantDomain, getVercelDomainConfig } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
 import { Logo } from '@/components/shared/Logo'
 
@@ -59,6 +59,7 @@ export function SiteSettings() {
     const [tenant, setTenant] = useState<any>(null)
     const [branding, setBranding] = useState<BrandingData>({})
     const [domain, setDomain] = useState('')
+    const [vercelConfig, setVercelConfig] = useState<any>(null)
 
     useEffect(() => {
         async function loadData() {
@@ -80,6 +81,10 @@ export function SiteSettings() {
                     }
                     if (tenantData.custom_domain) {
                         setDomain(tenantData.custom_domain)
+                        // Buscar config real da Vercel
+                        getVercelDomainConfig(tenantData.custom_domain).then(res => {
+                            if (res.success) setVercelConfig(res.config)
+                        })
                     }
                 }
             }
@@ -133,10 +138,10 @@ export function SiteSettings() {
 
             const newBranding = { ...branding, [type]: publicUrl };
             setBranding(newBranding)
-            
+
             // Salvar automaticamente após upload do logo
             await updateTenantBranding(profile.tenant_id, newBranding)
-            
+
             window.dispatchEvent(new CustomEvent('branding-updated', { detail: newBranding }))
             toast.success(`${type === 'logo_full' ? 'Logo do Site' : type === 'logo_header' ? 'Logo do Header' : 'Ícone'} carregado com sucesso!`)
         } catch (error: any) {
@@ -198,6 +203,13 @@ export function SiteSettings() {
         setVerifying(true)
 
         const result = await verifyTenantDomain(profile.tenant_id)
+
+        // Recarregar config da Vercel para mostrar o status mais recente/registros necessários
+        if (tenant?.custom_domain) {
+            getVercelDomainConfig(tenant.custom_domain).then(vRes => {
+                if (vRes.success) setVercelConfig(vRes.config)
+            })
+        }
 
         if (result.success) {
             toast.success('Domínio verificado com sucesso!')
@@ -355,10 +367,10 @@ export function SiteSettings() {
                                         {(branding.logo_header || branding.logo_full) ? (
                                             <>
                                                 <div className="p-4">
-                                                    <Logo 
-                                                        size="lg" 
-                                                        src={branding.logo_header || branding.logo_full} 
-                                                        height={branding.logo_header_height || (branding.logo_header ? 40 : branding.logo_height || 40)} 
+                                                    <Logo
+                                                        size="lg"
+                                                        src={branding.logo_header || branding.logo_full}
+                                                        height={branding.logo_header_height || (branding.logo_header ? 40 : branding.logo_height || 40)}
                                                     />
                                                 </div>
                                                 {(branding.logo_header || branding.logo_full) && (
@@ -444,10 +456,10 @@ export function SiteSettings() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1 md:col-span-2">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Logradouro / Rua</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.address?.street || ''} 
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Rua / Avenida</label>
+                                    <input
+                                        type="text"
+                                        value={branding.address?.street || ''}
                                         onChange={(e) => updateAddress('street', e.target.value)}
                                         placeholder="Ex: Av. Atlântica"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -455,9 +467,9 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Número</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.address?.number || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.address?.number || ''}
                                         onChange={(e) => updateAddress('number', e.target.value)}
                                         placeholder="Ex: 500"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -465,9 +477,9 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Complemento</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.address?.complement || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.address?.complement || ''}
                                         onChange={(e) => updateAddress('complement', e.target.value)}
                                         placeholder="Ex: Sala 201"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -475,9 +487,9 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Bairro</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.address?.neighborhood || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.address?.neighborhood || ''}
                                         onChange={(e) => updateAddress('neighborhood', e.target.value)}
                                         placeholder="Ex: Centro"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -485,9 +497,9 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Cidade</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.address?.city || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.address?.city || ''}
                                         onChange={(e) => updateAddress('city', e.target.value)}
                                         placeholder="Ex: Balneário Camboriú"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -495,9 +507,9 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Estado (UF)</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.address?.state || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.address?.state || ''}
                                         onChange={(e) => updateAddress('state', e.target.value)}
                                         placeholder="Ex: SC"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -505,9 +517,9 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">CEP</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.address?.zip_code || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.address?.zip_code || ''}
                                         onChange={(e) => updateAddress('zip_code', e.target.value)}
                                         placeholder="00000-000"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -526,9 +538,9 @@ export function SiteSettings() {
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Instagram</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.social_links?.instagram || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.social_links?.instagram || ''}
                                         onChange={(e) => updateSocial('instagram', e.target.value)}
                                         placeholder="https://instagram.com/sua_empresa"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -536,9 +548,9 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Facebook</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.social_links?.facebook || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.social_links?.facebook || ''}
                                         onChange={(e) => updateSocial('facebook', e.target.value)}
                                         placeholder="https://facebook.com/sua_empresa"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -546,9 +558,9 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">LinkedIn</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.social_links?.linkedin || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.social_links?.linkedin || ''}
                                         onChange={(e) => updateSocial('linkedin', e.target.value)}
                                         placeholder="https://linkedin.com/company/sua_empresa"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -556,9 +568,9 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">YouTube</label>
-                                    <input 
-                                        type="text" 
-                                        value={branding.social_links?.youtube || ''} 
+                                    <input
+                                        type="text"
+                                        value={branding.social_links?.youtube || ''}
                                         onChange={(e) => updateSocial('youtube', e.target.value)}
                                         placeholder="https://youtube.com/@sua_empresa"
                                         className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
@@ -577,8 +589,8 @@ export function SiteSettings() {
                             <div className="grid grid-cols-1 gap-6">
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Política de Privacidade</label>
-                                    <textarea 
-                                        value={branding.privacy_policy || 'Sua privacidade é importante para nós. Coletamos apenas as informações necessárias para prestar nossos serviços imobiliários de forma eficiente e segura. Seus dados (nome, telefone e e-mail) são utilizados exclusivamente para entrar em contato sobre os imóveis de seu interesse e não são compartilhados com terceiros sem sua autorização. Garantimos a segurança das suas informações através de práticas modernas de proteção de dados. Você pode solicitar a exclusão de suas informações a qualquer momento através de nossos canais de atendimento.'} 
+                                    <textarea
+                                        value={branding.privacy_policy || 'Sua privacidade é importante para nós. Coletamos apenas as informações necessárias para prestar nossos serviços imobiliários de forma eficiente e segura. Seus dados (nome, telefone e e-mail) são utilizados exclusivamente para entrar em contato sobre os imóveis de seu interesse e não são compartilhados com terceiros sem sua autorização. Garantimos a segurança das suas informações através de práticas modernas de proteção de dados. Você pode solicitar a exclusão de suas informações a qualquer momento através de nossos canais de atendimento.'}
                                         onChange={(e) => setBranding(prev => ({ ...prev, privacy_policy: e.target.value }))}
                                         placeholder="Insira o texto da sua Política de Privacidade aqui..."
                                         rows={4}
@@ -587,8 +599,8 @@ export function SiteSettings() {
                                 </div>
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Termos de Serviço</label>
-                                    <textarea 
-                                        value={branding.terms_of_service || 'Ao utilizar nosso site vitrine, você concorda com os seguintes termos: 1. As informações dos imóveis (preços, disponibilidade e características) estão sujeitas a alterações sem aviso prévio. 2. O conteúdo deste site é para fins informativos e não constitui uma proposta jurídica vinculante até a assinatura de contrato formal. 3. O uso de robôs ou scripts para extração de dados é proibido. 4. Todas as imagens e logotipos são protegidos por direitos autorais. Nos reservamos o direito de atualizar estes termos periodicamente para melhor atender nossos usuários.'} 
+                                    <textarea
+                                        value={branding.terms_of_service || 'Ao utilizar nosso site vitrine, você concorda com os seguintes termos: 1. As informações dos imóveis (preços, disponibilidade e características) estão sujeitas a alterações sem aviso prévio. 2. O conteúdo deste site é para fins informativos e não constitui uma proposta jurídica vinculante até a assinatura de contrato formal. 3. O uso de robôs ou scripts para extração de dados é proibido. 4. Todas as imagens e logotipos são protegidos por direitos autorais. Nos reservamos o direito de atualizar estes termos periodicamente para melhor atender nossos usuários.'}
                                         onChange={(e) => setBranding(prev => ({ ...prev, terms_of_service: e.target.value }))}
                                         placeholder="Insira o texto dos seus Termos de Serviço aqui..."
                                         rows={4}
@@ -654,11 +666,10 @@ export function SiteSettings() {
                                             <button
                                                 onClick={domain !== tenant?.custom_domain ? handleSaveDomain : handleVerifyDomain}
                                                 disabled={saving || verifying || (tenant?.custom_domain_verified && domain === tenant?.custom_domain)}
-                                                className={`px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center justify-center min-w-[120px] h-10 gap-2 ${
-                                                    tenant?.custom_domain_verified && domain === tenant?.custom_domain
+                                                className={`px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center justify-center min-w-[120px] h-10 gap-2 ${tenant?.custom_domain_verified && domain === tenant?.custom_domain
                                                         ? 'bg-green-500 text-white cursor-default'
                                                         : 'bg-secondary text-secondary-foreground hover:opacity-90'
-                                                }`}
+                                                    }`}
                                             >
                                                 {saving || verifying ? (
                                                     <>
@@ -690,87 +701,97 @@ export function SiteSettings() {
                                             <div className="p-4 bg-muted/20 border-b border-border flex items-center justify-between">
                                                 <div className="flex items-center gap-2">
                                                     <h4 className="font-bold text-sm text-foreground">Configuração de DNS</h4>
-                                                    {tenant.custom_domain_verified ? (
-                                                        <div className="flex items-center gap-1 text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
-                                                            <CheckCircle2 size={12} />
-                                                            <span className="text-[10px] font-bold uppercase">Verificado</span>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="flex items-center gap-1 text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full">
-                                                            <AlertCircle size={12} />
-                                                            <span className="text-[10px] font-bold uppercase">Pendente</span>
-                                                        </div>
-                                                    )}
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="p-4 space-y-4">
-                                                {/* DNS Records UI (Simplified from DomainTab) */}
                                                 {(() => {
-                                                    const isRoot = domain.split('.').filter(Boolean).length === 2;
+                                                    const domain = tenant.custom_domain || '';
+                                                    const isRoot = domain && !domain.startsWith('www.') && domain.split('.').length === 2;
+
+                                                    let records = [];
+
+                                                    if (vercelConfig?.verification && vercelConfig.verification.length > 0) {
+                                                        // Usar registros reais da Vercel
+                                                        records = vercelConfig.verification.map((v: any) => ({
+                                                            type: v.type,
+                                                            host: v.domain.split('.')[0] === domain.split('.')[0] ? '@' : v.domain.split('.')[0],
+                                                            value: v.value,
+                                                            label: v.reason === 'pending' ? 'Verificação Pendente' : 'Registro Necessário'
+                                                        }));
+                                                    } else {
+                                                        // Fallback para padrões universais
+                                                        records = isRoot
+                                                            ? [
+                                                                { type: 'A', host: '@', value: '76.76.21.21', label: 'IP Padrão' },
+                                                                { type: 'A', host: '@', value: '15.197.148.33', label: 'IP Anycast 1' },
+                                                                { type: 'A', host: '@', value: '3.33.130.190', label: 'IP Anycast 2' },
+                                                                { type: 'CNAME', host: 'www', value: 'cname.vercel-dns.com', label: 'Subdomínio WWW' }
+                                                            ]
+                                                            : [
+                                                                { type: 'CNAME', host: domain.split('.')[0], value: 'cname.vercel-dns.com', label: 'Registro Principal' }
+                                                            ];
+                                                    }
+
                                                     return (
-                                                        <div className="space-y-4">
-                                                            <div className="p-4 border border-border rounded-lg bg-background group relative">
-                                                                <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Tipo</div>
-                                                                <div className="font-mono text-sm font-bold text-foreground">{isRoot ? 'A' : 'CNAME'}</div>
-                                                                <button 
-                                                                    onClick={() => copyToClipboard(isRoot ? 'A' : 'CNAME', 'Tipo')}
-                                                                    className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                >
-                                                                    <Copy size={14} />
-                                                                </button>
-                                                            </div>
+                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
+                                                            {records.map((record, idx) => (
+                                                                <div key={idx} className="p-3 border border-border rounded-xl bg-background/50 group relative hover:border-secondary/30 transition-colors">
+                                                                    <div className="flex items-center justify-between mb-3 border-b border-border/10 pb-1.5">
+                                                                        <span className="text-[8px] font-bold text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded tracking-tighter">
+                                                                            {record.label}
+                                                                        </span>
+                                                                    </div>
 
-                                                            <div className="p-4 border border-border rounded-lg bg-background group relative">
-                                                                <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Nome / Host</div>
-                                                                <div className="font-mono text-sm font-bold text-foreground">{isRoot ? '@' : domain.split('.')[0]}</div>
-                                                                <button 
-                                                                    onClick={() => copyToClipboard(isRoot ? '@' : domain.split('.')[0], 'Host')}
-                                                                    className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                >
-                                                                    <Copy size={14} />
-                                                                </button>
-                                                            </div>
+                                                                    <div className="space-y-1.5">
+                                                                        <div className="flex items-center gap-6 group/row">
+                                                                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Tipo</span>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">{record.type}</code>
+                                                                                <button onClick={() => copyToClipboard(record.type, 'Tipo')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                                                                    <Copy size={10} className="text-muted-foreground/60" />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
 
-                                                            <div className="p-4 border border-border rounded-lg bg-background group relative">
-                                                                <div className="text-[10px] font-bold text-muted-foreground uppercase mb-1">Valor / Destino</div>
-                                                                <div className="font-mono text-sm font-bold text-foreground">
-                                                                    {isRoot ? '76.76.21.21' : 'cname.vercel-dns.com'}
+                                                                        <div className="flex items-center gap-6 group/row">
+                                                                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Host</span>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">{record.host}</code>
+                                                                                <button onClick={() => copyToClipboard(record.host, 'Host')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                                                                    <Copy size={10} className="text-muted-foreground/60" />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="flex items-center gap-6 group/row">
+                                                                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Valor</span>
+                                                                            <div className="flex items-center gap-1.5 overflow-hidden max-w-[80%]">
+                                                                                <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground truncate leading-none">{record.value}</code>
+                                                                                <button onClick={() => copyToClipboard(record.value, 'Valor')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded shrink-0">
+                                                                                    <Copy size={10} className="text-muted-foreground/60" />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+
+                                                                        <div className="flex items-center gap-6 group/row">
+                                                                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">TTL</span>
+                                                                            <div className="flex items-center gap-1.5">
+                                                                                <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">3600</code>
+                                                                                <button onClick={() => copyToClipboard('3600', 'TTL')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                                                                    <Copy size={10} className="text-muted-foreground/60" />
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    </div>
                                                                 </div>
-                                                                <button 
-                                                                    onClick={() => copyToClipboard(isRoot ? '76.76.21.21' : 'cname.vercel-dns.com', 'Valor')}
-                                                                    className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                >
-                                                                    <Copy size={14} />
-                                                                </button>
-                                                            </div>
-
-                                                            {isRoot && (
-                                                                <p className="text-[10px] text-muted-foreground px-1">
-                                                                    * Alguns provedores também aceitam os IPs Anycast: <span className="font-mono">76.76.21.21</span> ou <span className="font-mono">76.76.21.123</span>. O IP <span className="font-mono text-foreground font-bold">76.76.21.21</span> é o padrão recomendado.
-                                                                </p>
-                                                            )}
-
-                                                            {/* TTL */}
-                                                            <div className="p-4 border border-border rounded-lg bg-background group relative">
-                                                                <div className="flex flex-col">
-                                                                    <span className="text-muted-foreground uppercase font-bold text-[9px]">TTL</span>
-                                                                    <span className="font-mono font-bold">3600 (Padrão)</span>
-                                                                </div>
-                                                                <button 
-                                                                    onClick={() => copyToClipboard('3600', 'TTL')} 
-                                                                    className="absolute top-4 right-4 p-1 text-muted-foreground hover:text-foreground opacity-0 group-hover:opacity-100 transition-opacity"
-                                                                    title="Copiar TTL"
-                                                                >
-                                                                    <Copy size={14} />
-                                                                </button>
-                                                            </div>
+                                                            ))}
                                                         </div>
                                                     );
                                                 })()}
-                                                <div className="flex items-start gap-2 bg-secondary/5 rounded-lg p-3">
-                                                    <Info size={14} className="text-secondary mt-0.5" />
-                                                    <p className="text-[10px] text-muted-foreground leading-tight">
+                                                <div className="flex items-start gap-2 bg-secondary/10 border border-secondary/20 rounded-lg p-3">
+                                                    <Info size={14} className="text-secondary mt-0.5 shrink-0" />
+                                                    <p className="text-[10px] text-foreground/80 leading-tight">
                                                         A propagação do DNS pode levar até 24h.
                                                     </p>
                                                 </div>
