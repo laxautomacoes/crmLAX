@@ -62,6 +62,7 @@ export function isPublicRoute(pathname: string): boolean {
         '/forgot-password',
         '/reset-password',
         '/site',
+        '/conheca',
     ];
 
     return publicRoutes.some(route => pathname.startsWith(route)) ||

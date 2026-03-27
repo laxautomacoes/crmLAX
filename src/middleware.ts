@@ -18,10 +18,15 @@ export default async function proxy(request: NextRequest) {
         }
     }
 
-    // 3. Se for request de site público (não dashboard/api) e temos tenant
-    if (tenant && !pathname.startsWith('/dashboard') && !pathname.startsWith('/api') && !pathname.startsWith('/_next')) {
+    // 3. Se for request de site público (não dashboard/api e não rotas públicas globais) e temos tenant
+    if (tenant && !pathname.startsWith('/dashboard') && !pathname.startsWith('/api') && !pathname.startsWith('/_next') && !isPublicRoute(pathname)) {
         // Se acessando raiz do site do tenant, redirecionar ou reescrever
         if (pathname === '/') {
+            // ESPECIAL: Se for o domínio do sistema, mostrar a landing page (/conheca)
+            if (hostname.includes('crm.laxperience.online')) {
+                return NextResponse.rewrite(new URL('/conheca', request.url))
+            }
+
             // Se for domínio customizado, fazemos um REWRITE interno para manter a URL limpa
             if (tenant.custom_domain && hostname.includes(tenant.custom_domain)) {
                 return NextResponse.rewrite(new URL(`/site/${tenant.slug}`, request.url))
