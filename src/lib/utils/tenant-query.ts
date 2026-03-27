@@ -18,13 +18,28 @@ async function getTenantByCustomDomain(
     supabase: SupabaseClient,
     hostname: string
 ): Promise<TenantInfo | null> {
+    // 1. Tentar busca direta pelo hostname (ex: leoacosta.online ou www.leoacosta.online)
     const { data } = await supabase
         .from('tenants')
         .select('id, slug, name, custom_domain, custom_domain_verified')
         .eq('custom_domain', hostname)
-        .single();
+        .maybeSingle();
 
-    return data || null;
+    if (data) return data;
+
+    // 2. Se falhar e começar com www., tentar sem o www.
+    if (hostname.startsWith('www.')) {
+        const rootHostname = hostname.substring(4);
+        const { data: rootData } = await supabase
+            .from('tenants')
+            .select('id, slug, name, custom_domain, custom_domain_verified')
+            .eq('custom_domain', rootHostname)
+            .maybeSingle();
+        
+        if (rootData) return rootData;
+    }
+
+    return null;
 }
 
 export async function getTenantBySlug(slug: string): Promise<TenantInfo | null> {

@@ -64,7 +64,7 @@ export async function updateTenantDomain(tenantId: string, domain: string | null
         .update({ 
             custom_domain: domain,
             custom_domain_verified: false, // Resetar verificação ao mudar
-            custom_domain_updated_at: new Date().toISOString()
+            custom_domain_updated_at: new Date()
         })
         .eq('id', tenantId)
 
@@ -87,29 +87,81 @@ export async function verifyTenantDomain(tenantId: string) {
     if (!tenant?.custom_domain) return { success: false, error: 'Nenhum domínio configurado.' }
 
     try {
+        const isRoot = tenant.custom_domain.split('.').filter(Boolean).length === 2;
+        const dnsType = isRoot ? 'A' : 'CNAME';
+
         // Verificação real via Cloudflare DNS-over-HTTPS
-        const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${tenant.custom_domain}&type=CNAME`, {
+        const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${tenant.custom_domain}&type=${dnsType}`, {
             headers: { 'Accept': 'application/dns-json' }
         });
         const dnsData = await response.json();
 
-        // Verificar se existe um registro CNAME e se o valor é o esperado
-        const hasValidCname = dnsData.Answer?.some((ans: any) => 
-            ans.type === 5 && (ans.data === 'cname.vercel-dns.com.' || ans.data === 'cname.vercel-dns.com')
-        );
+        // Verificar o registro correto dependendo do tipo
+        let hasValidRecord = false;
+        
+        if (isRoot) {
+            // Tipo A: 1
+            hasValidRecord = dnsData.Answer?.some((ans: any) => 
+                ans.type === 1 && (ans.data === '76.76.21.21')
+            );
+        } else {
+            // Tipo CNAME: 5
+            hasValidRecord = dnsData.Answer?.some((ans: any) => 
+                ans.type === 5 && (ans.data === 'cname.vercel-dns.com.' || ans.data === 'cname.vercel-dns.com')
+            );
+        }
 
-        if (!hasValidCname) {
+        if (!hasValidRecord) {
+            const errorMsg = isRoot 
+                ? 'Registro tipo A (76.76.21.21) não encontrado ou ainda não propagado.' 
+                : 'Registro CNAME não encontrado ou ainda não propagado.';
+            
             return { 
                 success: false, 
-                error: 'Registro CNAME não encontrado ou ainda não propagado. Verifique as configurações no seu provedor.' 
+                error: `${errorMsg} Verifique as configurações no seu provedor.` 
             }
         }
         
+        // --- Automação Vercel ---
+        const VERCEL_AUTH_TOKEN = process.env.VERCEL_AUTH_TOKEN;
+        const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
+
+        if (VERCEL_AUTH_TOKEN && VERCEL_PROJECT_ID) {
+            try {
+                // Adicionar o domínio ao projeto na Vercel via API
+                await fetch(`https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/domains`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${VERCEL_AUTH_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: tenant.custom_domain }),
+                });
+
+                // Tentar adicionar também a versão com WWW para garantir redirecionamento se necessário
+                if (!tenant.custom_domain.startsWith('www.')) {
+                    await fetch(`https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/domains`, {
+                        method: 'POST',
+                        headers: {
+                            'Authorization': `Bearer ${VERCEL_AUTH_TOKEN}`,
+                            'Content-Type': 'application/json',
+                        },
+                        body: JSON.stringify({ name: `www.${tenant.custom_domain}` }),
+                    });
+                }
+            } catch (vercelError) {
+                console.error('Erro ao registrar na Vercel API:', vercelError);
+                // Não falhamos a verificação total por erro na API da Vercel
+                // o usuário ainda pode adicionar manualmente se falhar aqui.
+            }
+        }
+        // -------------------------
+
         const { error } = await supabase
             .from('tenants')
             .update({ 
                 custom_domain_verified: true,
-                custom_domain_updated_at: new Date().toISOString()
+                custom_domain_updated_at: new Date()
             })
             .eq('id', tenantId)
 

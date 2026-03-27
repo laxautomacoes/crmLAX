@@ -177,6 +177,21 @@ export function SiteSettings() {
         }
         setSaving(false)
     }
+    const handleRemoveDomain = async () => {
+        if (!profile?.tenant_id) return
+        if (confirm('Deseja realmente remover o domínio customizado? Seu site voltará a usar o endereço padrão.')) {
+            setSaving(true)
+            const result = await updateTenantDomain(profile.tenant_id, null)
+            if (result.success) {
+                toast.success('Domínio removido com sucesso!')
+                setDomain('')
+                setTenant({ ...tenant, custom_domain: null, custom_domain_verified: false })
+            } else {
+                toast.error('Erro ao remover: ' + result.error)
+            }
+            setSaving(false)
+        }
+    }
 
     const handleVerifyDomain = async () => {
         if (!profile?.tenant_id) return
@@ -637,12 +652,36 @@ export function SiteSettings() {
                                                 />
                                             </div>
                                             <button
-                                                onClick={handleSaveDomain}
-                                                disabled={saving || domain === tenant?.custom_domain}
-                                                className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50 text-sm"
+                                                onClick={domain !== tenant?.custom_domain ? handleSaveDomain : handleVerifyDomain}
+                                                disabled={saving || verifying || (tenant?.custom_domain_verified && domain === tenant?.custom_domain)}
+                                                className={`px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center justify-center min-w-[120px] h-10 gap-2 ${
+                                                    tenant?.custom_domain_verified && domain === tenant?.custom_domain
+                                                        ? 'bg-green-500 text-white cursor-default'
+                                                        : 'bg-secondary text-secondary-foreground hover:opacity-90'
+                                                }`}
                                             >
-                                                {saving ? <Loader2 size={18} className="animate-spin" /> : 'Salvar'}
+                                                {saving || verifying ? (
+                                                    <>
+                                                        <Loader2 size={18} className="animate-spin" />
+                                                        <span>Processando...</span>
+                                                    </>
+                                                ) : (
+                                                    <>
+                                                        {tenant?.custom_domain_verified && domain === tenant?.custom_domain && <CheckCircle2 size={18} />}
+                                                        {tenant?.custom_domain_verified && domain === tenant?.custom_domain ? 'Verificado' : 'Verificar'}
+                                                    </>
+                                                )}
                                             </button>
+                                            {tenant?.custom_domain && (
+                                                <button
+                                                    onClick={handleRemoveDomain}
+                                                    disabled={saving || verifying}
+                                                    className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                                                    title="Remover Domínio"
+                                                >
+                                                    <Trash2 size={18} />
+                                                </button>
+                                            )}
                                         </div>
                                     </div>
 
@@ -663,12 +702,6 @@ export function SiteSettings() {
                                                         </div>
                                                     )}
                                                 </div>
-                                                {!tenant.custom_domain_verified && (
-                                                    <button onClick={handleVerifyDomain} disabled={verifying} className="text-xs font-bold text-secondary hover:underline flex items-center gap-1">
-                                                        {verifying && <Loader2 size={12} className="animate-spin" />}
-                                                        Verificar
-                                                    </button>
-                                                )}
                                             </div>
                                             
                                             <div className="p-4 space-y-4">
