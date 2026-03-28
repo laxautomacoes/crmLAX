@@ -129,13 +129,17 @@ export default async function proxy(request: NextRequest) {
         tenant = await getTenantByUserId(supabase, user.id)
     }
 
-    // --- LÓGICA DE REDIRECIONAMENTO FINAL (Para Domínio Customizado) ---
+    // --- LÓGICA DE REDIRECIONAMENTO FINAL (White-label Estrito) ---
     if (tenant) {
-        const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online';
-        const isDefaultDomain = hostname.endsWith(baseDomain);
+        const rootGlobalDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online';
+        const cleanHost = hostname.split(':')[0];
+        
+        // Verifica se o acesso está ocorrendo pelo domínio central ou um subdomínio padrão
+        const isOnDefaultDomain = cleanHost === rootGlobalDomain || 
+                                 cleanHost.endsWith(`.${rootGlobalDomain}`);
 
-        if (isDefaultDomain) {
-            // Caso CRM (Isso cobre crm.laxperience.online ou subdominios.laxperience.online na rota de app)
+        if (isOnDefaultDomain) {
+            // REDIRECIONAMENTO CRM (Admin/Dashboard)
             if (isCRMRequest || isAppRoute) {
                 if (tenant.custom_domain && tenant.custom_domain_crm_verified) {
                     const customCRMUrl = new URL(request.url);
@@ -143,9 +147,13 @@ export default async function proxy(request: NextRequest) {
                     return NextResponse.redirect(customCRMUrl);
                 }
             }
-            // Caso Vitrine (Redirecionar para o domínio raiz se verificado)
-            else if (!isCRMRequest && !isAppRoute && tenant.custom_domain && tenant.custom_domain_verified) {
-                if (pathname === '/' || (!pathname.startsWith('/api') && !pathname.startsWith('/_next') && !pathname.startsWith('/site/'))) {
+            // REDIRECIONAMENTO VITRINE (Site Público)
+            else if (tenant.custom_domain && tenant.custom_domain_verified) {
+                // Evitar rotas internas e a própria API
+                const internalRoutes = ['/api', '/_next', '/site/'];
+                const isInternal = internalRoutes.some(route => pathname.startsWith(route));
+                
+                if (pathname === '/' || !isInternal) {
                     const customSiteUrl = new URL(request.url);
                     customSiteUrl.hostname = tenant.custom_domain;
                     return NextResponse.redirect(customSiteUrl);
