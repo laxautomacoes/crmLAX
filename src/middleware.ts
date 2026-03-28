@@ -129,35 +129,30 @@ export default async function proxy(request: NextRequest) {
         tenant = await getTenantByUserId(supabase, user.id)
     }
 
-    // --- LÓGICA DE REDIRECIONAMENTO FINAL (White-label Estrito) ---
+    // --- LÓGICA DE REDIRECIONAMENTO COMPULSÓRIO (White-label Totalitário) ---
     if (tenant) {
         const rootGlobalDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online';
         const cleanHost = hostname.split(':')[0];
-        
-        // Verifica se o acesso está ocorrendo pelo domínio central ou um subdomínio padrão
-        const isOnDefaultDomain = cleanHost === rootGlobalDomain || 
-                                 cleanHost.endsWith(`.${rootGlobalDomain}`);
+        const isMainSystemTenant = tenant.slug === 'lax'; // Slug do SuperAdmin
 
-        if (isOnDefaultDomain) {
-            // REDIRECIONAMENTO CRM (Admin/Dashboard)
-            if (isCRMRequest || isAppRoute) {
-                if (tenant.custom_domain && tenant.custom_domain_crm_verified) {
-                    const customCRMUrl = new URL(request.url);
-                    customCRMUrl.hostname = `crm.${tenant.custom_domain}`;
-                    return NextResponse.redirect(customCRMUrl);
-                }
+        // Se NÃO for o SuperAdmin e tiver domínio próprio verificado
+        if (!isMainSystemTenant && tenant.custom_domain && tenant.custom_domain_crm_verified) {
+            const expectedCRMHost = `crm.${tenant.custom_domain}`;
+            
+            // Se o host atual NÃO for o domínio profissional, forçar o redirecionamento
+            if (cleanHost !== expectedCRMHost && (isCRMRequest || isAppRoute)) {
+                const customCRMUrl = new URL(request.url);
+                customCRMUrl.hostname = expectedCRMHost;
+                return NextResponse.redirect(customCRMUrl);
             }
-            // REDIRECIONAMENTO VITRINE (Site Público)
-            else if (tenant.custom_domain && tenant.custom_domain_verified) {
-                // Evitar rotas internas e a própria API
-                const internalRoutes = ['/api', '/_next', '/site/'];
-                const isInternal = internalRoutes.some(route => pathname.startsWith(route));
-                
-                if (pathname === '/' || !isInternal) {
-                    const customSiteUrl = new URL(request.url);
-                    customSiteUrl.hostname = tenant.custom_domain;
-                    return NextResponse.redirect(customSiteUrl);
-                }
+        }
+        
+        // Redirecionamento de Vitrine (opcional mas recomendado)
+        if (!isMainSystemTenant && tenant.custom_domain && tenant.custom_domain_verified && !isCRMRequest && !isAppRoute) {
+            if (cleanHost.endsWith(rootGlobalDomain) && (pathname === '/' || (!pathname.startsWith('/api') && !pathname.startsWith('/_next') && !pathname.startsWith('/site/')))) {
+                const customSiteUrl = new URL(request.url);
+                customSiteUrl.hostname = tenant.custom_domain;
+                return NextResponse.redirect(customSiteUrl);
             }
         }
     }
