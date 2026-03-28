@@ -35,7 +35,7 @@ async function getTenantByCustomDomain(
             .select('id, slug, name, custom_domain, custom_domain_verified')
             .eq('custom_domain', rootHostname)
             .maybeSingle();
-        
+
         if (rootData) return rootData;
     }
 
