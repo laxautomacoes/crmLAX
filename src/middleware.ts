@@ -42,29 +42,6 @@ export default async function proxy(request: NextRequest) {
 
     const isAppRoute = appRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
 
-    // --- LÓGICA DE REDIRECIONAMENTO PARA DOMÍNIO CUSTOMIZADO ---
-    const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online';
-    const isDefaultDomain = hostname.endsWith(baseDomain);
-
-    if (tenant && isDefaultDomain) {
-        // Redirecionar CRM se verificado
-        if (isCRMRequest && tenant.custom_domain && tenant.custom_domain_crm_verified) {
-            const customCRMUrl = new URL(request.url);
-            customCRMUrl.hostname = `crm.${tenant.custom_domain}`;
-            return NextResponse.redirect(customCRMUrl);
-        }
-
-        // Redirecionar Vitrine se verificado
-        if (!isCRMRequest && !isAppRoute && tenant.custom_domain && tenant.custom_domain_verified) {
-            // Evitar redirecionar rotas internas como /api ou /site/
-            if (pathname === '/' || (!pathname.startsWith('/api') && !pathname.startsWith('/_next') && !pathname.startsWith('/site/'))) {
-                const customSiteUrl = new URL(request.url);
-                customSiteUrl.hostname = tenant.custom_domain;
-                return NextResponse.redirect(customSiteUrl);
-            }
-        }
-    }
-
     // 3. ESPECIAL: Se for o domínio principal do sistema (crm.laxperience.online)
     if (hostname.includes('crm.laxperience.online')) {
         // Se acessando raiz, mostrar landing page
@@ -143,6 +120,38 @@ export default async function proxy(request: NextRequest) {
         const url = request.nextUrl.clone()
         url.pathname = '/login'
         return NextResponse.redirect(url)
+    }
+
+    // 5. Se o tenant não foi identificado pelo hostname mas temos um usuário logado
+    // tentamos identificar o tenant pelo perfil do usuário
+    if (!tenant && user) {
+        const { getTenantByUserId } = await import('@/lib/utils/tenant-query')
+        tenant = await getTenantByUserId(supabase, user.id)
+    }
+
+    // --- LÓGICA DE REDIRECIONAMENTO FINAL (Para Domínio Customizado) ---
+    if (tenant) {
+        const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online';
+        const isDefaultDomain = hostname.endsWith(baseDomain);
+
+        if (isDefaultDomain) {
+            // Caso CRM (Isso cobre crm.laxperience.online ou subdominios.laxperience.online na rota de app)
+            if (isCRMRequest || isAppRoute) {
+                if (tenant.custom_domain && tenant.custom_domain_crm_verified) {
+                    const customCRMUrl = new URL(request.url);
+                    customCRMUrl.hostname = `crm.${tenant.custom_domain}`;
+                    return NextResponse.redirect(customCRMUrl);
+                }
+            }
+            // Caso Vitrine (Redirecionar para o domínio raiz se verificado)
+            else if (!isCRMRequest && !isAppRoute && tenant.custom_domain && tenant.custom_domain_verified) {
+                if (pathname === '/' || (!pathname.startsWith('/api') && !pathname.startsWith('/_next') && !pathname.startsWith('/site/'))) {
+                    const customSiteUrl = new URL(request.url);
+                    customSiteUrl.hostname = tenant.custom_domain;
+                    return NextResponse.redirect(customSiteUrl);
+                }
+            }
+        }
     }
 
     // 5. Adicionar header com tenant_id se identificado

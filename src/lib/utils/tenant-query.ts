@@ -85,3 +85,20 @@ async function getTenantBySubdomain(
     return data || null;
 }
 
+export async function getTenantByUserId(supabase: SupabaseClient, userId: string): Promise<TenantInfo | null> {
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', userId)
+        .maybeSingle();
+
+    if (!profile?.tenant_id) return null;
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('id, slug, name, custom_domain, custom_domain_verified, custom_domain_crm_verified')
+        .eq('id', profile.tenant_id)
+        .single();
+
+    return tenant || null;
+}
