@@ -18,27 +18,52 @@ export default async function proxy(request: NextRequest) {
         }
     }
 
-    // 3. Se for request de site público (não dashboard/api e não rotas públicas globais) e temos tenant
-    if (tenant && !pathname.startsWith('/dashboard') && !pathname.startsWith('/api') && !pathname.startsWith('/_next') && !isPublicRoute(pathname)) {
-        // Se acessando raiz do site do tenant, redirecionar ou reescrever
-        if (pathname === '/') {
-            // ESPECIAL: Se for o domínio do sistema, mostrar a landing page (/conheca)
-            if (hostname.includes('crm.laxperience.online')) {
-                return NextResponse.rewrite(new URL('/conheca', request.url))
-            }
+    // --- LÓGICA DE ROTEAMENTO ESPECIAL ---
 
-            // Se for domínio customizado, fazemos um REWRITE interno para manter a URL limpa
+    // Lista de rotas que pertencem ao APLICATIVO (Dashboard) e não devem ser redirecionadas para a vitrine
+    const appRoutes = [
+        '/dashboard',
+        '/leads',
+        '/clients',
+        '/agenda',
+        '/notes',
+        '/notifications',
+        '/properties',
+        '/reports',
+        '/roadmap',
+        '/settings',
+        '/tools',
+        '/site', // Admin de configurações do site
+    ];
+
+    const isAppRoute = appRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
+
+    // 3. ESPECIAL: Se for o domínio principal do sistema (crm.laxperience.online)
+    if (hostname.includes('crm.laxperience.online')) {
+        // Se acessando raiz, mostrar landing page
+        if (pathname === '/') {
+            return NextResponse.rewrite(new URL('/conheca', request.url))
+        }
+        // Outras rotas (como /conheca, /login, ou rotas do app) seguem fluxo normal abaixo
+    }
+
+    // 4. Se temos um tenant identificado e NÃO é uma rota do app (ou seja, é uma requisição de VITRINE)
+    if (tenant && !isAppRoute && !pathname.startsWith('/api') && !pathname.startsWith('/_next') && !isPublicRoute(pathname)) {
+        
+        // Se acessando raiz do tenant (subdomínio ou custom domain), reescrever para a vitrine
+        if (pathname === '/') {
+            // Se for domínio customizado, mantemos a URL limpa com rewrite
             if (tenant.custom_domain && hostname.includes(tenant.custom_domain)) {
                 return NextResponse.rewrite(new URL(`/site/${tenant.slug}`, request.url))
             }
             
-            // Se for subdomínio padrão, fazemos REDIRECT para a estrutura de slugs (opcional, mas mantendo compatibilidade atual)
+            // Se for subdomínio, redirecionamos para manter compatibilidade (opcional)
             const url = request.nextUrl.clone()
             url.pathname = `/site/${tenant.slug}`
             return NextResponse.redirect(url)
         }
 
-        // Se o domínio for customizado e a URL não começar com /site/
+        // Se o domínio for customizado e a URL não começar com /site/ nem for rota de sistema
         // fazemos o rewrite interno para /site/[slug]/...
         if (tenant.custom_domain && hostname.includes(tenant.custom_domain) && !pathname.startsWith('/site/')) {
             return NextResponse.rewrite(new URL(`/site/${tenant.slug}${pathname}`, request.url))

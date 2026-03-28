@@ -66,7 +66,7 @@ async function getTenantBySubdomain(
     const subdomain = domainParts[0];
     const domain = domainParts.slice(1).join('.');
 
-    if (domain !== baseDomain || !subdomain || subdomain === 'www' || subdomain === 'app') {
+    if (domain !== baseDomain || !subdomain || subdomain === 'www' || subdomain === 'app' || subdomain === 'crm') {
         return null;
     }
 
