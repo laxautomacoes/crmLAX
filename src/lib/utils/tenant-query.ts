@@ -21,7 +21,7 @@ async function getTenantByCustomDomain(
     // 1. Tentar busca direta pelo hostname (ex: leoacosta.online)
     const { data } = await supabase
         .from('tenants')
-        .select('id, slug, name, custom_domain, custom_domain_verified')
+        .select('id, slug, name, custom_domain, custom_domain_verified, custom_domain_crm_verified')
         .eq('custom_domain', hostname)
         .maybeSingle();
 
@@ -38,7 +38,7 @@ async function getTenantByCustomDomain(
     if (rootHostname !== hostname) {
         const { data: rootData } = await supabase
             .from('tenants')
-            .select('id, slug, name, custom_domain, custom_domain_verified')
+            .select('id, slug, name, custom_domain, custom_domain_verified, custom_domain_crm_verified')
             .eq('custom_domain', rootHostname)
             .maybeSingle();
 
@@ -52,7 +52,7 @@ export async function getTenantBySlug(slug: string): Promise<TenantInfo | null> 
     const supabase = await createClient();
     const { data } = await supabase
         .from('tenants')
-        .select('id, slug, name, custom_domain, branding, custom_domain_verified, plan_type')
+        .select('id, slug, name, custom_domain, branding, custom_domain_verified, custom_domain_crm_verified, plan_type')
         .eq('slug', slug)
         .single();
 
@@ -78,7 +78,7 @@ async function getTenantBySubdomain(
 
     const { data } = await supabase
         .from('tenants')
-        .select('id, slug, name, custom_domain, custom_domain_verified')
+        .select('id, slug, name, custom_domain, custom_domain_verified, custom_domain_crm_verified')
         .eq('slug', subdomain)
         .single();
 
