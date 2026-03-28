@@ -124,48 +124,57 @@ export default async function proxy(request: NextRequest) {
 
     // --- VALIDAÇÃO DE SEGURANÇA: DOMÍNIO VS TENANT DO USUÁRIO ---
     // Impede que um usuário (ou Super Admin) acesse o dashboard via domínio de outro cliente
-    if (user && tenant && isAppRoute) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('tenant_id, role')
-            .eq('id', user.id)
-            .maybeSingle();
+    // Ignoramos rotas públicas (como login) para evitar loops e garantir acesso à autenticação
+    if (user && tenant && isAppRoute && !isPublicRoute(pathname)) {
+        try {
+            const { data: profile } = await supabase
+                .from('profiles')
+                .select('tenant_id, role')
+                .eq('id', user.id)
+                .maybeSingle();
 
-        if (profile && profile.tenant_id !== tenant.id) {
-            const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online';
-            const redirectUrl = request.nextUrl.clone();
-            
-            // Caso especial: Super Admin sempre para o domínio de sistema
-            if (profile.role === 'superadmin') {
-                redirectUrl.hostname = `crm.${rootDomain}`;
-            } else {
-                // Usuário comum para seu próprio domínio verificado ou subdomínio
-                const { getTenantByUserId } = await import('@/lib/utils/tenant-query');
-                const userTenant = await getTenantByUserId(supabase, user.id);
+            if (profile && profile.tenant_id !== tenant.id) {
+                const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online';
+                const redirectUrl = request.nextUrl.clone();
                 
-                if (userTenant) {
-                    redirectUrl.hostname = userTenant.custom_domain && userTenant.custom_domain_crm_verified
-                        ? `crm.${userTenant.custom_domain}`
-                        : `${userTenant.slug}.${rootDomain}`;
-                } else {
+                // Caso especial: Super Admin sempre para o domínio de sistema
+                if (profile.role === 'superadmin') {
                     redirectUrl.hostname = `crm.${rootDomain}`;
+                } else {
+                    // Usuário comum para seu próprio domínio verificado ou subdomínio
+                    const { getTenantByUserId } = await import('@/lib/utils/tenant-query');
+                    const userTenant = await getTenantByUserId(supabase, user.id);
+                    
+                    if (userTenant) {
+                        redirectUrl.hostname = userTenant.custom_domain && userTenant.custom_domain_crm_verified
+                            ? `crm.${userTenant.custom_domain}`
+                            : `${userTenant.slug}.${rootDomain}`;
+                    } else {
+                        redirectUrl.hostname = `crm.${rootDomain}`;
+                    }
+                }
+                
+                // Não redirecionar se o hostname destino for o mesmo que o atual (evitar loop)
+                const currentCleanHost = hostname.split(':')[0];
+                if (redirectUrl.hostname !== currentCleanHost) {
+                    return NextResponse.redirect(redirectUrl);
                 }
             }
-            
-            // Não redirecionar se o hostname destino for o mesmo que o atual (evitar loop)
-            if (redirectUrl.hostname === hostname.split(':')[0]) {
-               // Prosseguir se as IDs baterem, senão algo está errado
-            } else {
-                return NextResponse.redirect(redirectUrl);
-            }
+        } catch (error) {
+            console.error('ERRO MIDDLEWARE (Validação de Domínio):', error);
+            // Em caso de erro, permitimos prosseguir para não travar o app
         }
     }
 
     // 5. Se o tenant não foi identificado pelo hostname mas temos um usuário logado
     // tentamos identificar o tenant pelo perfil do usuário
     if (!tenant && user) {
-        const { getTenantByUserId } = await import('@/lib/utils/tenant-query')
-        tenant = await getTenantByUserId(supabase, user.id)
+        try {
+            const { getTenantByUserId } = await import('@/lib/utils/tenant-query')
+            tenant = await getTenantByUserId(supabase, user.id)
+        } catch (error) {
+            console.error('ERRO MIDDLEWARE (Busca Tenant User):', error);
+        }
     }
 
     // --- LÓGICA DE REDIRECIONAMENTO COMPULSÓRIO (White-label Totalitário) ---
