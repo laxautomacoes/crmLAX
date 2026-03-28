@@ -32,6 +32,7 @@ export const menuItems = [
             { name: 'Notificações', href: '/notifications' },
             { name: 'Disparador em Massa', href: '/tools/whatsapp-bulk' },
             { name: 'Integrações', href: '/settings/integrations' },
+            { name: 'Domínio', href: '/settings/domain', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
             { name: 'Logs do Sistema', href: '/settings/logs', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
             { name: 'Assinatura', href: '/settings/subscription', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] }
         ]

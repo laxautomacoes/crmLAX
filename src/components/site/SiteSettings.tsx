@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getProfile } from '@/app/_actions/profile'
-import { updateTenantBranding, updateTenantDomain, verifyTenantDomain, getVercelDomainConfig } from '@/app/_actions/tenant'
+import { updateTenantBranding } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
 import { Logo } from '@/components/shared/Logo'
 
@@ -50,16 +50,13 @@ interface BrandingData {
 }
 
 export function SiteSettings() {
-    const [activeTab, setActiveTab] = useState<'branding' | 'footer' | 'domain'>('branding')
+    const [activeTab, setActiveTab] = useState<'branding' | 'footer'>('branding')
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [verifying, setVerifying] = useState(false)
     const [isUploading, setIsUploading] = useState<'logo_full' | 'logo_header' | 'logo_icon' | null>(null)
     const [profile, setProfile] = useState<any>(null)
     const [tenant, setTenant] = useState<any>(null)
     const [branding, setBranding] = useState<BrandingData>({})
-    const [domain, setDomain] = useState('')
-    const [vercelConfig, setVercelConfig] = useState<any>(null)
 
     useEffect(() => {
         async function loadData() {
@@ -78,13 +75,6 @@ export function SiteSettings() {
                     setTenant(tenantData)
                     if (tenantData.branding) {
                         setBranding(tenantData.branding)
-                    }
-                    if (tenantData.custom_domain) {
-                        setDomain(tenantData.custom_domain)
-                        // Buscar config real da Vercel
-                        getVercelDomainConfig(tenantData.custom_domain).then(res => {
-                            if (res.success) setVercelConfig(res.config)
-                        })
                     }
                 }
             }
@@ -168,58 +158,6 @@ export function SiteSettings() {
         setSaving(false)
     }
 
-    const handleSaveDomain = async () => {
-        if (!profile?.tenant_id) return
-        setSaving(true)
-
-        const result = await updateTenantDomain(profile.tenant_id, domain || null)
-
-        if (result.success) {
-            toast.success('Configurações de domínio salvas!')
-            setTenant({ ...tenant, custom_domain: domain, custom_domain_verified: false })
-        } else {
-            toast.error('Erro ao salvar: ' + result.error)
-        }
-        setSaving(false)
-    }
-    const handleRemoveDomain = async () => {
-        if (!profile?.tenant_id) return
-        if (confirm('Deseja realmente remover o domínio customizado? Seu site voltará a usar o endereço padrão.')) {
-            setSaving(true)
-            const result = await updateTenantDomain(profile.tenant_id, null)
-            if (result.success) {
-                toast.success('Domínio removido com sucesso!')
-                setDomain('')
-                setTenant({ ...tenant, custom_domain: null, custom_domain_verified: false })
-            } else {
-                toast.error('Erro ao remover: ' + result.error)
-            }
-            setSaving(false)
-        }
-    }
-
-    const handleVerifyDomain = async () => {
-        if (!profile?.tenant_id) return
-        setVerifying(true)
-
-        const result = await verifyTenantDomain(profile.tenant_id)
-
-        // Recarregar config da Vercel para mostrar o status mais recente/registros necessários
-        if (tenant?.custom_domain) {
-            getVercelDomainConfig(tenant.custom_domain).then(vRes => {
-                if (vRes.success) setVercelConfig(vRes.config)
-            })
-        }
-
-        if (result.success) {
-            toast.success('Domínio verificado com sucesso!')
-            setTenant({ ...tenant, custom_domain_verified: true })
-        } else {
-            toast.error('Erro ao verificar: ' + result.error)
-        }
-        setVerifying(false)
-    }
-
     const handleRemoveLogo = (type: 'logo_full' | 'logo_header' | 'logo_icon') => {
         const labels = {
             logo_full: 'logotipo principal',
@@ -267,8 +205,6 @@ export function SiteSettings() {
         )
     }
 
-    const isPro = tenant?.plan_type === 'pro'
-
     return (
         <div className="space-y-6">
             {/* Tab Navigation */}
@@ -286,13 +222,6 @@ export function SiteSettings() {
                 >
                     <MapPin size={16} />
                     Rodapé
-                </button>
-                <button
-                    onClick={() => setActiveTab('domain')}
-                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'domain' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
-                >
-                    <Globe size={16} />
-                    Domínio
                 </button>
             </div>
 
@@ -621,194 +550,6 @@ export function SiteSettings() {
                         </div>
                     </div>
                 )}
-
-                {/* DOMAIN TAB */}
-                {activeTab === 'domain' && (
-                    <div className="space-y-6">
-                        {!isPro ? (
-                            <div className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center text-center space-y-6">
-                                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
-                                    <Globe size={32} />
-                                </div>
-                                <div className="max-w-md space-y-2">
-                                    <h3 className="text-xl font-bold text-foreground">Domínio Próprio</h3>
-                                    <p className="text-muted-foreground">
-                                        Use seu próprio domínio (ex: imoveis.suaempresa.com.br). Disponível no plano <strong className="text-secondary">PRO</strong>.
-                                    </p>
-                                </div>
-                                <button className="px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity">
-                                    Fazer Upgrade para PRO
-                                </button>
-                            </div>
-                        ) : (
-                            <div className="bg-card border border-border rounded-2xl p-6">
-                                <div className="mb-6">
-                                    <h3 className="text-lg font-bold text-foreground">Domínio Customizado</h3>
-                                    <p className="text-sm text-muted-foreground">Configure um domínio oficial para seu site vitrine.</p>
-                                </div>
-
-                                <div className="space-y-6">
-                                    <div className="max-w-xl">
-                                        <label className="text-sm font-bold text-gray-800 ml-1 mb-2 block uppercase tracking-wider">Seu Domínio</label>
-                                        <div className="flex gap-2">
-                                            <div className="relative flex-1">
-                                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                                    <Globe className="h-4 w-4 text-muted-foreground" />
-                                                </div>
-                                                <input
-                                                    type="text"
-                                                    value={domain}
-                                                    onChange={(e) => setDomain(e.target.value.toLowerCase())}
-                                                    placeholder="ex: imoveis.suaempresa.com.br"
-                                                    className="w-full pl-10 pr-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                                />
-                                            </div>
-                                            <button
-                                                onClick={domain !== tenant?.custom_domain ? handleSaveDomain : handleVerifyDomain}
-                                                disabled={saving || verifying || (tenant?.custom_domain_verified && domain === tenant?.custom_domain)}
-                                                className={`px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center justify-center min-w-[120px] h-10 gap-2 ${tenant?.custom_domain_verified && domain === tenant?.custom_domain
-                                                        ? 'bg-green-500 text-white cursor-default'
-                                                        : 'bg-secondary text-secondary-foreground hover:opacity-90'
-                                                    }`}
-                                            >
-                                                {saving || verifying ? (
-                                                    <>
-                                                        <Loader2 size={18} className="animate-spin" />
-                                                        <span>Processando...</span>
-                                                    </>
-                                                ) : (
-                                                    <>
-                                                        {tenant?.custom_domain_verified && domain === tenant?.custom_domain && <CheckCircle2 size={18} />}
-                                                        {tenant?.custom_domain_verified && domain === tenant?.custom_domain ? 'Verificado' : 'Verificar'}
-                                                    </>
-                                                )}
-                                            </button>
-                                            {tenant?.custom_domain && (
-                                                <button
-                                                    onClick={handleRemoveDomain}
-                                                    disabled={saving || verifying}
-                                                    className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
-                                                    title="Remover Domínio"
-                                                >
-                                                    <Trash2 size={18} />
-                                                </button>
-                                            )}
-                                        </div>
-                                    </div>
-
-                                    {tenant?.custom_domain && (
-                                        <div className="border border-border rounded-xl overflow-hidden bg-muted/10">
-                                            <div className="p-4 bg-muted/20 border-b border-border flex items-center justify-between">
-                                                <div className="flex items-center gap-2">
-                                                    <h4 className="font-bold text-sm text-foreground">Configuração de DNS</h4>
-                                                </div>
-                                            </div>
-
-                                            <div className="p-4 space-y-4">
-                                                {(() => {
-                                                    const domain = tenant.custom_domain || '';
-                                                    const isRoot = domain && !domain.startsWith('www.') && domain.split('.').length === 2;
-
-                                                    let records = [];
-
-                                                    if (vercelConfig?.verification && vercelConfig.verification.length > 0) {
-                                                        // Usar registros reais da Vercel
-                                                        records = vercelConfig.verification.map((v: any) => ({
-                                                            type: v.type,
-                                                            host: v.domain.split('.')[0] === domain.split('.')[0] ? '@' : v.domain.split('.')[0],
-                                                            value: v.value,
-                                                            label: v.reason === 'pending' ? 'Verificação Pendente' : 'Registro Necessário'
-                                                        }));
-                                                    } else {
-                                                        // Fallback para padrões universais
-                                                        records = isRoot
-                                                            ? [
-                                                                { type: 'A', host: '@', value: '76.76.21.21', label: 'IP Padrão' },
-                                                                { type: 'A', host: '@', value: '15.197.148.33', label: 'IP Anycast 1' },
-                                                                { type: 'A', host: '@', value: '3.33.130.190', label: 'IP Anycast 2' },
-                                                                { type: 'CNAME', host: 'www', value: 'cname.vercel-dns.com', label: 'Subdomínio WWW' }
-                                                            ]
-                                                            : [
-                                                                { type: 'CNAME', host: domain.split('.')[0], value: 'cname.vercel-dns.com', label: 'Registro Principal' }
-                                                            ];
-                                                    }
-
-                                                    return (
-                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 p-4">
-                                                            {records.map((record: any, idx: number) => (
-                                                                <div key={idx} className="p-3 border border-border rounded-xl bg-background/50 group relative hover:border-secondary/30 transition-colors">
-                                                                    <div className="flex items-center justify-between mb-3 border-b border-border/10 pb-1.5">
-                                                                        <span className="text-[8px] font-bold text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded tracking-tighter">
-                                                                            {record.label}
-                                                                        </span>
-                                                                    </div>
-
-                                                                    <div className="space-y-1.5">
-                                                                        <div className="flex items-center gap-6 group/row">
-                                                                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Tipo</span>
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">{record.type}</code>
-                                                                                <button onClick={() => copyToClipboard(record.type, 'Tipo')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
-                                                                                    <Copy size={10} className="text-muted-foreground/60" />
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div className="flex items-center gap-6 group/row">
-                                                                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Host</span>
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">{record.host}</code>
-                                                                                <button onClick={() => copyToClipboard(record.host, 'Host')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
-                                                                                    <Copy size={10} className="text-muted-foreground/60" />
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div className="flex items-center gap-6 group/row">
-                                                                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Valor</span>
-                                                                            <div className="flex items-center gap-1.5 overflow-hidden max-w-[80%]">
-                                                                                <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground truncate leading-none">{record.value}</code>
-                                                                                <button onClick={() => copyToClipboard(record.value, 'Valor')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded shrink-0">
-                                                                                    <Copy size={10} className="text-muted-foreground/60" />
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-
-                                                                        <div className="flex items-center gap-6 group/row">
-                                                                            <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">TTL</span>
-                                                                            <div className="flex items-center gap-1.5">
-                                                                                <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">3600</code>
-                                                                                <button onClick={() => copyToClipboard('3600', 'TTL')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
-                                                                                    <Copy size={10} className="text-muted-foreground/60" />
-                                                                                </button>
-                                                                            </div>
-                                                                        </div>
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    );
-                                                })()}
-                                                <div className="flex items-start gap-2 bg-secondary/10 border border-secondary/20 rounded-lg p-3">
-                                                    <Info size={14} className="text-secondary mt-0.5 shrink-0" />
-                                                    <p className="text-[10px] text-foreground/80 leading-tight">
-                                                        A propagação do DNS pode levar até 24h.
-                                                    </p>
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
-
-            <div className="bg-muted/30 border border-border rounded-xl p-4">
-                <p className="text-xs text-muted-foreground">
-                    <strong className="text-foreground">Lembrete:</strong> Estas configurações afetam apenas o seu Site Vitrine público. O Dashboard interno utiliza as cores padrão do sistema para manter a consistência operacional.
-                </p>
             </div>
         </div>
     )

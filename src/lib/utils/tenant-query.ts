@@ -18,7 +18,7 @@ async function getTenantByCustomDomain(
     supabase: SupabaseClient,
     hostname: string
 ): Promise<TenantInfo | null> {
-    // 1. Tentar busca direta pelo hostname (ex: leoacosta.online ou www.leoacosta.online)
+    // 1. Tentar busca direta pelo hostname (ex: leoacosta.online)
     const { data } = await supabase
         .from('tenants')
         .select('id, slug, name, custom_domain, custom_domain_verified')
@@ -27,9 +27,15 @@ async function getTenantByCustomDomain(
 
     if (data) return data;
 
-    // 2. Se falhar e começar com www., tentar sem o www.
+    // 2. Se falhar, tentar remover prefixos comuns (www. ou crm.)
+    let rootHostname = hostname;
     if (hostname.startsWith('www.')) {
-        const rootHostname = hostname.substring(4);
+        rootHostname = hostname.substring(4);
+    } else if (hostname.startsWith('crm.')) {
+        rootHostname = hostname.substring(4);
+    }
+
+    if (rootHostname !== hostname) {
         const { data: rootData } = await supabase
             .from('tenants')
             .select('id, slug, name, custom_domain, custom_domain_verified')

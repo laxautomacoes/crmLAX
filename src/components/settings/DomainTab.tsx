@@ -1,11 +1,20 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Globe, Loader2, CheckCircle2, AlertCircle, Copy, Info, ExternalLink } from 'lucide-react'
+import {
+    Globe,
+    CheckCircle2,
+    AlertCircle,
+    Copy,
+    Info,
+    Loader2,
+    Trash2,
+    ShieldCheck,
+    LayoutDashboard
+} from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getProfile } from '@/app/_actions/profile'
-import { updateTenantDomain, verifyTenantDomain } from '@/app/_actions/tenant'
-import { checkPlanFeature } from '@/lib/utils/plan-guard' // Assumindo que exporta no cliente se necessário, mas usarei RSC se possível
+import { updateTenantDomain, verifyTenantDomain, getVercelDomainConfig } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
 
 export function DomainTab() {
@@ -15,7 +24,7 @@ export function DomainTab() {
     const [profile, setProfile] = useState<any>(null)
     const [tenant, setTenant] = useState<any>(null)
     const [domain, setDomain] = useState('')
-    const [hasAccess, setHasAccess] = useState(false)
+    const [vercelConfig, setVercelConfig] = useState<any>(null)
 
     useEffect(() => {
         async function loadData() {
@@ -30,14 +39,16 @@ export function DomainTab() {
                     .eq('id', userProfile.tenant_id)
                     .single()
 
-                setTenant(tenantData)
-                if (tenantData?.custom_domain) {
-                    setDomain(tenantData.custom_domain)
+                if (tenantData) {
+                    setTenant(tenantData)
+                    if (tenantData.custom_domain) {
+                        setDomain(tenantData.custom_domain)
+                        // Buscar config real da Vercel
+                        getVercelDomainConfig(tenantData.custom_domain).then(res => {
+                            if (res.success) setVercelConfig(res.config)
+                        })
+                    }
                 }
-
-                // Verificar acesso ao plano (PRO)
-                // Como checkPlanFeature é server side, faremos uma verificação simples baseada no tenantData
-                setHasAccess(tenantData?.plan_type === 'pro')
             }
             setLoading(false)
         }
@@ -53,10 +64,36 @@ export function DomainTab() {
         if (result.success) {
             toast.success('Configurações de domínio salvas!')
             setTenant({ ...tenant, custom_domain: domain, custom_domain_verified: false })
+            
+            // Buscar config da Vercel após salvar novo domínio
+            if (domain) {
+                getVercelDomainConfig(domain).then(res => {
+                    if (res.success) setVercelConfig(res.config)
+                })
+            } else {
+                setVercelConfig(null)
+            }
         } else {
             toast.error('Erro ao salvar: ' + result.error)
         }
         setSaving(false)
+    }
+
+    const handleRemoveDomain = async () => {
+        if (!profile?.tenant_id) return
+        if (confirm('Deseja realmente remover o domínio customizado? Seu site voltará a usar o endereço padrão.')) {
+            setSaving(true)
+            const result = await updateTenantDomain(profile.tenant_id, null)
+            if (result.success) {
+                toast.success('Domínio removido com sucesso!')
+                setDomain('')
+                setTenant({ ...tenant, custom_domain: null, custom_domain_verified: false })
+                setVercelConfig(null)
+            } else {
+                toast.error('Erro ao remover: ' + result.error)
+            }
+            setSaving(false)
+        }
     }
 
     const handleVerifyDomain = async () => {
@@ -64,6 +101,13 @@ export function DomainTab() {
         setVerifying(true)
 
         const result = await verifyTenantDomain(profile.tenant_id)
+
+        // Recarregar config da Vercel para mostrar o status mais recente/registros necessários
+        if (tenant?.custom_domain) {
+            getVercelDomainConfig(tenant.custom_domain).then(vRes => {
+                if (vRes.success) setVercelConfig(vRes.config)
+            })
+        }
 
         if (result.success) {
             toast.success('Domínio verificado com sucesso!')
@@ -87,167 +131,248 @@ export function DomainTab() {
         )
     }
 
-    if (!hasAccess) {
-        return (
-            <div className="bg-card border border-border rounded-xl p-8 flex flex-col items-center text-center space-y-6">
-                <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
-                    <Globe size={32} />
-                </div>
-                <div className="max-w-md space-y-2">
-                    <h3 className="text-xl font-bold text-foreground">Domínio Próprio (Whitelabel)</h3>
-                    <p className="text-muted-foreground">
-                        Remova o "crmlax.com" da sua URL e use seu próprio domínio. Disponível exclusivamente para assinantes do plano <strong className="text-secondary">PRO</strong>.
-                    </p>
-                </div>
-                <button 
-                    onClick={() => { /* Navegar para aba de assinatura ou checkout */ }}
-                    className="px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity"
-                >
-                    Fazer Upgrade para PRO
-                </button>
-            </div>
-        )
-    }
+    const isPro = tenant?.plan_type === 'pro'
 
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <div className="bg-card border border-border rounded-xl p-6">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-8">
-                    <div>
-                        <h3 className="text-lg font-bold text-foreground">Configurações de Domínio</h3>
-                        <p className="text-sm text-muted-foreground">Configure um domínio customizado para seu site vitrine e links.</p>
+            {!isPro ? (
+                <div className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center text-center space-y-6">
+                    <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
+                        <Globe size={32} />
                     </div>
-                </div>
-
-                <div className="space-y-6">
-                    <div className="max-w-xl">
-                        <label className="text-sm font-bold text-gray-800 ml-1 mb-2 block uppercase tracking-wider">
-                            Seu Domínio
-                        </label>
-                        <div className="flex gap-2">
-                            <div className="relative flex-1">
-                                <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                    <Globe className="h-4 h-4 text-muted-foreground" />
-                                </div>
-                                <input
-                                    type="text"
-                                    value={domain}
-                                    onChange={(e) => setDomain(e.target.value.toLowerCase())}
-                                    placeholder="ex: imoveis.suaempresa.com.br"
-                                    className="w-full pl-10 pr-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
-                                />
-                            </div>
-                            <button
-                                onClick={handleSaveDomain}
-                                disabled={saving || domain === tenant?.custom_domain}
-                                className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity disabled:opacity-50 text-sm whitespace-nowrap"
-                            >
-                                {saving ? <Loader2 size={18} className="animate-spin" /> : 'Salvar'}
-                            </button>
-                        </div>
-                        <p className="text-[11px] text-muted-foreground mt-2 italic">
-                            Não use http:// ou https://. Apenas o domínio (ex: imoveis.meusite.com).
+                    <div className="max-w-md space-y-2">
+                        <h3 className="text-xl font-bold text-foreground">Domínio Próprio</h3>
+                        <p className="text-muted-foreground">
+                            Use seu próprio domínio (ex: imoveis.suaempresa.com.br). Disponível no plano <strong className="text-secondary">PRO</strong>.
                         </p>
                     </div>
+                    <button className="px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity">
+                        Fazer Upgrade para PRO
+                    </button>
+                </div>
+            ) : (
+                <div className="bg-card border border-border rounded-2xl p-6">
+                    <div className="mb-6">
+                        <h3 className="text-lg font-bold text-foreground">Domínio Customizado</h3>
+                        <p className="text-sm text-muted-foreground">Configure um domínio oficial para seu site vitrine.</p>
+                    </div>
 
-                    {tenant?.custom_domain && (
-                        <div className="border border-border rounded-xl overflow-hidden bg-muted/10">
-                            <div className="p-4 bg-muted/20 border-b border-border flex items-center justify-between">
-                                <div className="flex items-center gap-2">
-                                    <h4 className="font-bold text-sm text-foreground">Configuração de DNS</h4>
-                                    {tenant.custom_domain_verified ? (
-                                        <div className="flex items-center gap-1 text-green-500 bg-green-500/10 px-2 py-0.5 rounded-full">
-                                            <CheckCircle2 size={12} />
-                                            <span className="text-[10px] font-bold uppercase">Verificado</span>
-                                        </div>
-                                    ) : (
-                                        <div className="flex items-center gap-1 text-yellow-500 bg-yellow-500/10 px-2 py-0.5 rounded-full">
-                                            <AlertCircle size={12} />
-                                            <span className="text-[10px] font-bold uppercase">Pendência</span>
-                                        </div>
-                                    )}
+                    <div className="space-y-6">
+                        <div className="max-w-xl">
+                            <label className="text-sm font-bold text-gray-800 ml-1 mb-2 block uppercase tracking-wider">Seu Domínio</label>
+                            <div className="flex gap-2">
+                                <div className="relative flex-1">
+                                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
+                                        <Globe className="h-4 w-4 text-muted-foreground" />
+                                    </div>
+                                    <input
+                                        type="text"
+                                        value={domain}
+                                        onChange={(e) => setDomain(e.target.value.toLowerCase())}
+                                        placeholder="ex: imoveis.suaempresa.com.br"
+                                        className="w-full pl-10 pr-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                    />
                                 </div>
-                                {!tenant.custom_domain_verified && (
+                                <button
+                                    onClick={domain !== tenant?.custom_domain ? handleSaveDomain : handleVerifyDomain}
+                                    disabled={saving || verifying || (tenant?.custom_domain_verified && domain === tenant?.custom_domain)}
+                                    className={`px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center justify-center min-w-[120px] h-10 gap-2 ${tenant?.custom_domain_verified && domain === tenant?.custom_domain
+                                            ? 'bg-green-500 text-white cursor-default'
+                                            : 'bg-secondary text-secondary-foreground hover:opacity-90'
+                                        }`}
+                                >
+                                    {saving || verifying ? (
+                                        <>
+                                            <Loader2 size={18} className="animate-spin" />
+                                            <span>Processando...</span>
+                                        </>
+                                    ) : (
+                                        <>
+                                            {tenant?.custom_domain_verified && domain === tenant?.custom_domain && <CheckCircle2 size={18} />}
+                                            {tenant?.custom_domain_verified && domain === tenant?.custom_domain ? 'Verificado' : 'Verificar'}
+                                        </>
+                                    )}
+                                </button>
+                                {tenant?.custom_domain && (
                                     <button
-                                        onClick={handleVerifyDomain}
-                                        disabled={verifying}
-                                        className="text-xs font-bold text-secondary hover:underline disabled:opacity-50 flex items-center gap-1"
+                                        onClick={handleRemoveDomain}
+                                        disabled={saving || verifying}
+                                        className="p-2 bg-red-500 text-white rounded-lg hover:bg-red-600 transition-colors disabled:opacity-50"
+                                        title="Remover Domínio"
                                     >
-                                        {verifying && <Loader2 size={12} className="animate-spin" />}
-                                        Verificar agora
+                                        <Trash2 size={18} />
                                     </button>
                                 )}
                             </div>
-                            
-                            <div className="p-4 space-y-4">
-                                <p className="text-xs text-muted-foreground">
-                                    Para que seu domínio funcione, adicione os seguintes registros no seu provedor de DNS (GoDaddy, HostGator, Registro.br, etc):
-                                </p>
+                        </div>
 
-                                <div className="space-y-3">
-                                    {/* Registro A (para domínios raiz) ou CNAME */}
-                                    <div className="bg-background border border-border rounded-lg p-3 space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Tipo</span>
-                                            <span className="text-[10px] font-bold text-foreground">A</span>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Nome/Host</span>
-                                            <div className="flex items-center gap-2">
-                                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">@</code>
-                                                <button onClick={() => copyToClipboard('@', 'Host')} className="text-muted-foreground hover:text-foreground">
-                                                    <Copy size={12} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Valor</span>
-                                            <div className="flex items-center gap-2">
-                                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">76.76.21.21</code>
-                                                <button onClick={() => copyToClipboard('76.76.21.21', 'IP')} className="text-muted-foreground hover:text-foreground">
-                                                    <Copy size={12} />
-                                                </button>
-                                            </div>
+                        {tenant?.custom_domain && (
+                            <div className="space-y-6">
+                                <div className="border border-border rounded-xl overflow-hidden bg-muted/10">
+                                    <div className="p-4 bg-muted/20 border-b border-border flex items-center justify-between">
+                                        <div className="flex items-center gap-2">
+                                            <h4 className="font-bold text-sm text-foreground">Configuração de DNS</h4>
                                         </div>
                                     </div>
 
-                                    <div className="bg-background border border-border rounded-lg p-3 space-y-2">
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Tipo</span>
-                                            <span className="text-[10px] font-bold text-foreground">CNAME</span>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Nome/Host</span>
-                                            <div className="flex items-center gap-2">
-                                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">www</code>
-                                                <button onClick={() => copyToClipboard('www', 'Host')} className="text-muted-foreground hover:text-foreground">
-                                                    <Copy size={12} />
-                                                </button>
-                                            </div>
-                                        </div>
-                                        <div className="flex items-center justify-between">
-                                            <span className="text-[10px] font-bold text-muted-foreground uppercase">Valor</span>
-                                            <div className="flex items-center gap-2">
-                                                <code className="text-xs font-mono bg-muted px-1.5 py-0.5 rounded text-foreground">cname.vercel-dns.com</code>
-                                                <button onClick={() => copyToClipboard('cname.vercel-dns.com', 'Valor')} className="text-muted-foreground hover:text-foreground">
-                                                    <Copy size={12} />
-                                                </button>
-                                            </div>
-                                        </div>
+                                    <div className="p-4 space-y-4">
+                                        {(() => {
+                                            const domain = tenant.custom_domain || '';
+                                            const isRoot = domain && !domain.startsWith('www.') && domain.split('.').length === 2;
+
+                                            let records = [];
+
+                                            if (vercelConfig?.verification && vercelConfig.verification.length > 0) {
+                                                records = vercelConfig.verification.map((v: any) => ({
+                                                    type: v.type,
+                                                    host: v.domain.split('.')[0] === domain.split('.')[0] ? '@' : v.domain.split('.')[0],
+                                                    value: v.value,
+                                                    label: v.reason === 'pending' ? 'Verificação Pendente' : 'Registro Necessário'
+                                                }));
+                                            } else {
+                                                records = isRoot
+                                                    ? [
+                                                        { type: 'A', host: '@', value: '76.76.21.21', label: 'IP Padrão' },
+                                                        { type: 'A', host: '@', value: '15.197.148.33', label: 'IP Anycast 1' },
+                                                        { type: 'A', host: '@', value: '3.33.130.190', label: 'IP Anycast 2' },
+                                                        { type: 'CNAME', host: 'www', value: 'cname.vercel-dns.com', label: 'Subdomínio WWW' }
+                                                    ]
+                                                    : [
+                                                        { type: 'CNAME', host: domain.split('.')[0], value: 'cname.vercel-dns.com', label: 'Registro Principal' }
+                                                    ];
+                                            }
+
+                                            return (
+                                                <>
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3 pb-4">
+                                                        {records.map((record: any, idx: number) => (
+                                                            <div key={idx} className="p-3 border border-border rounded-xl bg-background/50 group relative hover:border-secondary/30 transition-colors">
+                                                                <div className="flex items-center justify-between mb-3 border-b border-border/10 pb-1.5">
+                                                                    <span className="text-[8px] font-bold text-muted-foreground uppercase bg-muted px-1.5 py-0.5 rounded tracking-tighter">
+                                                                        {record.label}
+                                                                    </span>
+                                                                </div>
+
+                                                                <div className="space-y-1.5">
+                                                                    <div className="flex items-center gap-6 group/row">
+                                                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Tipo</span>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">{record.type}</code>
+                                                                            <button onClick={() => copyToClipboard(record.type, 'Tipo')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                                                                <Copy size={10} className="text-muted-foreground/60" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-6 group/row">
+                                                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Host</span>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">{record.host}</code>
+                                                                            <button onClick={() => copyToClipboard(record.host, 'Host')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                                                                <Copy size={10} className="text-muted-foreground/60" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-6 group/row">
+                                                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Valor</span>
+                                                                        <div className="flex items-center gap-1.5 overflow-hidden max-w-[80%]">
+                                                                            <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground truncate leading-none">{record.value}</code>
+                                                                            <button onClick={() => copyToClipboard(record.value, 'Valor')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded shrink-0">
+                                                                                <Copy size={10} className="text-muted-foreground/60" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+
+                                                                    <div className="flex items-center gap-6 group/row">
+                                                                        <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">TTL</span>
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">3600</code>
+                                                                            <button onClick={() => copyToClipboard('3600', 'TTL')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                                                                <Copy size={10} className="text-muted-foreground/60" />
+                                                                            </button>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                    <div className="flex items-start gap-2 bg-secondary/10 border border-secondary/20 rounded-lg p-3">
+                                                        <Info size={14} className="text-secondary mt-0.5 shrink-0" />
+                                                        <p className="text-[10px] text-foreground/80 leading-tight">
+                                                            A propagação do DNS pode levar até 24h.
+                                                        </p>
+                                                    </div>
+                                                </>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
 
-                                <div className="flex items-start gap-3 bg-secondary/5 rounded-lg p-3">
-                                    <Info size={16} className="text-secondary mt-0.5" />
-                                    <p className="text-[11px] text-foreground leading-relaxed">
-                                        As alterações de DNS podem levar de alguns minutos a até 24 horas para propagar. Recomendamos usar o <a href="https://dnschecker.org" target="_blank" className="text-secondary hover:underline inline-flex items-center gap-0.5">DNS Checker <ExternalLink size={10} /></a> para acompanhar.
-                                    </p>
+                                {/* CRM WHITE-LABEL SECTION */}
+                                <div className="bg-gradient-to-br from-[#404F4F]/5 to-transparent border border-[#404F4F]/10 rounded-2xl p-6 relative overflow-hidden group">
+                                    <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
+                                        <LayoutDashboard size={80} className="text-[#404F4F]" />
+                                    </div>
+                                    
+                                    <div className="relative z-10">
+                                        <div className="flex items-center gap-2 mb-4">
+                                            <div className="p-2 bg-[#404F4F]/10 rounded-lg text-[#404F4F]">
+                                                <ShieldCheck size={20} />
+                                            </div>
+                                            <h3 className="text-lg font-bold text-[#404F4F]">CRM White-label</h3>
+                                        </div>
+                                        
+                                        <p className="text-sm text-muted-foreground mb-6 max-w-lg">
+                                            Sua equipe também pode acessar o painel administrativo através do seu próprio domínio. 
+                                            Isso melhora a autoridade da sua marca e profissionaliza o acesso.
+                                        </p>
+
+                                        <div className="space-y-4">
+                                            <div className="p-4 border border-[#404F4F]/10 bg-white/50 rounded-xl">
+                                                <div className="flex items-center justify-between mb-2">
+                                                    <span className="text-[10px] font-bold text-muted-foreground uppercase">Endereço de Acesso</span>
+                                                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Disponível</span>
+                                                </div>
+                                                <div className="flex items-center justify-between">
+                                                    <code className="text-sm font-bold text-[#404F4F]">crm.{tenant.custom_domain}</code>
+                                                    <button 
+                                                        onClick={() => copyToClipboard(`crm.${tenant.custom_domain}`, 'URL do CRM')}
+                                                        className="text-[#404F4F] hover:text-[#404F4F]/70 transition-colors"
+                                                    >
+                                                        <Copy size={14} />
+                                                    </button>
+                                                </div>
+                                            </div>
+
+                                            <div className="p-4 border border-amber-100 bg-amber-50/30 rounded-xl">
+                                                <div className="flex items-center gap-2 mb-2 text-amber-700">
+                                                    <AlertCircle size={14} />
+                                                    <span className="text-[10px] font-bold uppercase">Configuração Necessária</span>
+                                                </div>
+                                                <div className="grid grid-cols-3 gap-2 text-[10px]">
+                                                    <div>
+                                                        <p className="text-muted-foreground mb-1">TIPO</p>
+                                                        <p className="font-bold text-amber-900">CNAME</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-muted-foreground mb-1">HOST</p>
+                                                        <p className="font-bold text-amber-900">crm</p>
+                                                    </div>
+                                                    <div>
+                                                        <p className="text-muted-foreground mb-1">VALOR</p>
+                                                        <p className="font-bold text-amber-900">cname.vercel-dns.com</p>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
 
             <div className="bg-muted/30 border border-border rounded-xl p-4 flex items-center gap-3">
                 <Globe size={18} className="text-muted-foreground" />

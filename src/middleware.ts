@@ -19,6 +19,7 @@ export default async function proxy(request: NextRequest) {
     }
 
     // --- LÓGICA DE ROTEAMENTO ESPECIAL ---
+    const isCRMRequest = hostname.startsWith('crm.') || hostname.includes('crm.laxperience.online');
 
     // Lista de rotas que pertencem ao APLICATIVO (Dashboard) e não devem ser redirecionadas para a vitrine
     const appRoutes = [
@@ -34,6 +35,9 @@ export default async function proxy(request: NextRequest) {
         '/settings',
         '/tools',
         '/site', // Admin de configurações do site
+        '/login',
+        '/register',
+        '/auth',
     ];
 
     const isAppRoute = appRoutes.some(route => pathname === route || pathname.startsWith(route + '/'));
@@ -47,8 +51,8 @@ export default async function proxy(request: NextRequest) {
         // Outras rotas (como /conheca, /login, ou rotas do app) seguem fluxo normal abaixo
     }
 
-    // 4. Se temos um tenant identificado e NÃO é uma rota do app (ou seja, é uma requisição de VITRINE)
-    if (tenant && !isAppRoute && !pathname.startsWith('/api') && !pathname.startsWith('/_next') && !isPublicRoute(pathname)) {
+    // 4. Se temos um tenant identificado e NÃO é uma requisição de CRM (ou seja, é uma requisição de VITRINE)
+    if (tenant && !isCRMRequest && !isAppRoute && !pathname.startsWith('/api') && !pathname.startsWith('/_next') && !isPublicRoute(pathname)) {
         
         // Se acessando raiz do tenant (subdomínio ou custom domain), reescrever para a vitrine
         if (pathname === '/') {
