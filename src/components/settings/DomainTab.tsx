@@ -14,13 +14,19 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getProfile } from '@/app/_actions/profile'
-import { updateTenantDomain, verifyTenantDomain, getVercelDomainConfig } from '@/app/_actions/tenant'
+import { 
+    updateTenantDomain, 
+    verifyTenantDomain, 
+    verifyTenantCRMSubdomain, 
+    getVercelDomainConfig 
+} from '@/app/_actions/tenant'
 import { toast } from 'sonner'
 
 export function DomainTab() {
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [verifying, setVerifying] = useState(false)
+    const [verifyingCRM, setVerifyingCRM] = useState(false)
     const [profile, setProfile] = useState<any>(null)
     const [tenant, setTenant] = useState<any>(null)
     const [domain, setDomain] = useState('')
@@ -116,6 +122,21 @@ export function DomainTab() {
             toast.error('Erro ao verificar: ' + result.error)
         }
         setVerifying(false)
+    }
+
+    const handleVerifyCRM = async () => {
+        if (!profile?.tenant_id) return
+        setVerifyingCRM(true)
+
+        const result = await verifyTenantCRMSubdomain(profile.tenant_id)
+
+        if (result.success) {
+            toast.success('Subdomínio CRM verificado com sucesso!')
+            setTenant({ ...tenant, custom_domain_crm_verified: true })
+        } else {
+            toast.error('Erro ao verificar CRM: ' + result.error)
+        }
+        setVerifyingCRM(false)
     }
 
     const copyToClipboard = (text: string, label: string) => {
@@ -320,7 +341,24 @@ export function DomainTab() {
                                             <div className="p-2 bg-[#404F4F]/10 rounded-lg text-[#404F4F]">
                                                 <ShieldCheck size={20} />
                                             </div>
-                                            <h3 className="text-lg font-bold text-[#404F4F]">CRM White-label</h3>
+                                            <div className="flex-1 flex items-center justify-between">
+                                                <h3 className="text-lg font-bold text-[#404F4F]">CRM White-label</h3>
+                                                {tenant?.custom_domain_crm_verified ? (
+                                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold border border-green-200">
+                                                        <CheckCircle2 size={12} />
+                                                        VERIFICADO
+                                                    </div>
+                                                ) : (
+                                                    <button 
+                                                        onClick={handleVerifyCRM}
+                                                        disabled={verifyingCRM}
+                                                        className="px-4 py-1.5 bg-[#404F4F] text-white rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
+                                                    >
+                                                        {verifyingCRM ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
+                                                        Verificar Subdomínio
+                                                    </button>
+                                                )}
+                                            </div>
                                         </div>
                                         
                                         <p className="text-sm text-muted-foreground mb-6 max-w-lg">
@@ -332,7 +370,6 @@ export function DomainTab() {
                                             <div className="p-4 border border-[#404F4F]/10 bg-white/50 rounded-xl">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <span className="text-[10px] font-bold text-muted-foreground uppercase">Endereço de Acesso</span>
-                                                    <span className="px-2 py-0.5 bg-green-100 text-green-700 text-[10px] font-bold rounded-full">Disponível</span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
                                                     <code className="text-sm font-bold text-[#404F4F]">crm.{tenant.custom_domain}</code>

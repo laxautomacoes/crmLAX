@@ -200,12 +200,79 @@ export async function getVercelDomainConfig(domain: string) {
                 misconfigured: data.misconfigured,
                 verification: data.verification,
                 status: data.status,
-                // Vercel retorna os registros necessários aqui em alguns casos
-                // ou podemos inferir se estiver buscando especificamente por eles.
             } 
         };
     } catch (error) {
         console.error('Erro ao buscar config na Vercel:', error);
         return { success: false, error: 'Erro de conexão com a Vercel.' };
+    }
+}
+
+export async function verifyTenantCRMSubdomain(tenantId: string) {
+    const supabase = await createClient()
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('*')
+        .eq('id', tenantId)
+        .single()
+
+    if (!tenant?.custom_domain) return { success: false, error: 'Nenhum domínio configurado.' }
+
+    const crmDomain = `crm.${tenant.custom_domain}`
+
+    try {
+        // Verificação real via Cloudflare DNS-over-HTTPS (Sempre CNAME para subdomínio)
+        const response = await fetch(`https://cloudflare-dns.com/dns-query?name=${crmDomain}&type=CNAME`, {
+            headers: { 'Accept': 'application/dns-json' }
+        });
+        const dnsData = await response.json();
+
+        // Verificar se valor é cname.vercel-dns.com
+        const hasValidRecord = dnsData.Answer?.some((ans: any) => 
+            ans.type === 5 && (ans.data === 'cname.vercel-dns.com.' || ans.data === 'cname.vercel-dns.com')
+        );
+
+        if (!hasValidRecord) {
+            return { 
+                success: false, 
+                error: 'Registro CNAME para subdomínio crm não encontrado ou incorreto.' 
+            }
+        }
+        
+        // --- Registro na Vercel ---
+        const VERCEL_AUTH_TOKEN = process.env.VERCEL_AUTH_TOKEN;
+        const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID;
+
+        if (VERCEL_AUTH_TOKEN && VERCEL_PROJECT_ID) {
+            try {
+                await fetch(`https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/domains`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${VERCEL_AUTH_TOKEN}`,
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ name: crmDomain }),
+                });
+            } catch (vErr) {
+                console.error('Erro Vercel API (CRM):', vErr);
+            }
+        }
+
+        const { error } = await supabase
+            .from('tenants')
+            .update({ 
+                custom_domain_crm_verified: true,
+                custom_domain_updated_at: new Date()
+            })
+            .eq('id', tenantId)
+
+        if (error) return { success: false, error: error.message }
+
+        revalidatePath('/settings')
+        return { success: true }
+    } catch (err: any) {
+        console.error('CRM Verification Error:', err);
+        return { success: false, error: 'Erro técnico durante a verificação do subdomínio CRM.' }
     }
 }
