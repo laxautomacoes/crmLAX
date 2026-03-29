@@ -83,18 +83,24 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
         return [rua, numero, bairro, cidade, estado].filter(Boolean).join(', ')
     }, [formData.details.endereco])
 
-    const handleLocationSelect = (latitude: number, longitude: number) => {
-        setFormData({
-            ...formData,
+    const handleLocationSelect = (latitude: number, longitude: number, addressData?: any) => {
+        setFormData((prev: any) => ({
+            ...prev,
             details: {
-                ...formData.details,
+                ...prev.details,
                 endereco: {
-                    ...formData.details.endereco,
+                    ...prev.details.endereco,
                     latitude,
-                    longitude
+                    longitude,
+                    // Sincronização Reversa: Atualiza os campos se o mapa retornar dados novos
+                    rua: addressData?.rua || prev.details.endereco.rua,
+                    bairro: addressData?.bairro || prev.details.endereco.bairro,
+                    cidade: addressData?.cidade || prev.details.endereco.cidade,
+                    estado: addressData?.estado || prev.details.endereco.estado,
+                    cep: addressData?.cep || prev.details.endereco.cep
                 }
             }
-        })
+        }))
     }
 
     const handleCepChange = async (cep: string) => {
@@ -255,7 +261,7 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
                     <MapPin size={14} className="text-foreground" />
                     Localização
                 </h4>
-                <div className="rounded-xl overflow-hidden bg-muted/30 p-1">
+                <div className="rounded-2xl overflow-hidden bg-muted/30 p-1">
                     <PropertyMap 
                         address={fullAddress}
                         lat={formData.details.endereco.latitude}
