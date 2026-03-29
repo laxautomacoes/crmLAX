@@ -1,4 +1,4 @@
-import { LayoutDashboard, Filter, Users, Home, Calendar, FileText, Rocket, Settings, StickyNote, Globe, ShieldAlert } from 'lucide-react';
+import { LayoutDashboard, Filter, Users, Home, Calendar, FileText, Rocket, Settings, StickyNote, Globe, ShieldAlert, Megaphone } from 'lucide-react';
 
 export const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
@@ -21,6 +21,7 @@ export const menuItems = [
     { name: 'Agenda', icon: Calendar, href: '/agenda' },
     { name: 'Notas', icon: StickyNote, href: '/notes' },
     { name: 'Relatórios', icon: FileText, href: '/reports' },
+    { name: 'Marketing', icon: Megaphone, href: '/marketing' },
     { name: 'Roadmap', icon: Rocket, href: '/roadmap', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
     {
         name: 'Configurações',

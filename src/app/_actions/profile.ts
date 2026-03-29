@@ -20,7 +20,7 @@ export async function getProfile() {
 
         const { data: profile } = await supabase
             .from('profiles')
-            .select('*, tenants(id, slug, name, custom_domain)')
+            .select('*, tenants(id, slug, name, custom_domain, plan_type)')
             .eq('id', user.id)
             .maybeSingle()
 

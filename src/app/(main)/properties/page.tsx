@@ -30,6 +30,7 @@ export default function PropertiesPage() {
     const [isImportPDFOpen, setIsImportPDFOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(true)
     const [hasAIAccess, setHasAIAccess] = useState(false)
+    const [hasMarketingAccess, setHasMarketingAccess] = useState(false)
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery')
     const [tenantId, setTenantId] = useState<string | null>(null)
     const [tenantSlug, setTenantSlug] = useState<string>('')
@@ -85,14 +86,16 @@ export default function PropertiesPage() {
                     setTenantSlug(tenant.slug)
                 }
 
-                const [result, aiAccessResult] = await Promise.all([
+                const [result, aiAccessResult, marketingAccessResult] = await Promise.all([
                     getAssets(profile.tenant_id, filters.status === 'all' ? undefined : filters.status),
-                    checkPlanFeatureAction(profile.tenant_id, 'ai')
+                    checkPlanFeatureAction(profile.tenant_id, 'ai'),
+                    checkPlanFeatureAction(profile.tenant_id, 'marketing')
                 ])
                 if (result.success) {
                     setProperties(result.data || [])
                 }
                 setHasAIAccess(aiAccessResult)
+                setHasMarketingAccess(marketingAccessResult)
             }
         } catch (error) {
             console.error('Erro ao carregar imóveis:', error)
@@ -416,6 +419,7 @@ export default function PropertiesPage() {
                 onSend={handleSend}
                 userRole={userRole}
                 hasAIAccess={hasAIAccess}
+                hasMarketingAccess={hasMarketingAccess}
                 tenantId={tenantId || ''}
             />
 

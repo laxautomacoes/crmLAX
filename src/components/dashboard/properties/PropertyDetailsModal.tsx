@@ -11,7 +11,8 @@ import {
     Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, 
     PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, 
     Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info, Send,
-    ChevronLeft, ChevronRight, Maximize2, Map as MapIcon, DollarSign, Trees
+    ChevronLeft, ChevronRight, Maximize2, Map as MapIcon, DollarSign, Trees,
+    Instagram
 } from 'lucide-react';
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
@@ -19,6 +20,8 @@ import { Switch } from '@/components/ui/Switch';
 import { updateAsset } from '@/app/_actions/assets';
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
+import { InstagramPostModal } from '@/components/marketing/InstagramPostModal';
+import PlanGate from '@/components/ui/PlanGate';
 
 interface PropertyDetailsModalProps {
     isOpen: boolean;
@@ -27,16 +30,18 @@ interface PropertyDetailsModalProps {
     onSend?: (prop: any) => void;
     userRole?: string;
     hasAIAccess: boolean;
+    hasMarketingAccess: boolean;
     tenantId: string;
 }
 
-export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, hasAIAccess, tenantId }: PropertyDetailsModalProps) {
+export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, hasAIAccess, hasMarketingAccess, tenantId }: PropertyDetailsModalProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin';
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
     const [isPublished, setIsPublished] = useState(prop?.is_published || false);
     const [isUpdating, setIsUpdating] = useState(false);
     const [activeTab, setActiveTab] = useState<'details' | 'ai_copy'>('details');
+    const [isInstagramModalOpen, setIsInstagramModalOpen] = useState(false);
     const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
 
     useEffect(() => {
@@ -194,13 +199,26 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                                         </div>
                                     </div>
                                     {onSend && (
-                                        <button
-                                            onClick={() => onSend(prop)}
-                                            className="hidden md:flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 whitespace-nowrap"
-                                        >
-                                            <Send size={18} />
-                                            Enviar para Lead
-                                        </button>
+                                        <div className="hidden md:flex items-center gap-3">
+                                            {isAdmin && (
+                                                <PlanGate hasAccess={hasMarketingAccess} feature="Módulo de Marketing (Instagram)">
+                                                    <button
+                                                        onClick={() => setIsInstagramModalOpen(true)}
+                                                        className="flex items-center gap-2 px-5 py-2 bg-[#404F4F] text-white rounded-xl font-bold hover:bg-[#2d3939] transition-all shadow-sm border border-border/10 whitespace-nowrap"
+                                                    >
+                                                        <Instagram size={18} className="text-[#FFE600]" />
+                                                        Postar no Instagram
+                                                    </button>
+                                                </PlanGate>
+                                            )}
+                                            <button
+                                                onClick={() => onSend(prop)}
+                                                className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 whitespace-nowrap"
+                                            >
+                                                <Send size={18} />
+                                                Enviar para Lead
+                                            </button>
+                                        </div>
                                     )}
                                 </div>
                             </div>
@@ -621,38 +639,44 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                             <PropertyCopyCard 
                                 assetId={prop.id} 
                                 tenantId={tenantId}
-                                profileId={prop.profile_id || ''}
-                                hasAIAccess={hasAIAccess} 
                             />
                         </div>
                     </div>
                 )}
-            </div>
 
-            <FullscreenMediaViewer 
-                isOpen={isFullscreenOpen}
-                onClose={() => setIsFullscreenOpen(false)}
-                media={allMedia}
-                initialIndex={selectedImageIndex}
-            />
+                <FullscreenMediaViewer 
+                    isOpen={isFullscreenOpen}
+                    onClose={() => setIsFullscreenOpen(false)}
+                    media={allMedia}
+                    initialIndex={selectedImageIndex}
+                />
 
-            <div className="flex gap-3 pt-6 border-t mt-6">
-                <button
-                    onClick={onClose}
-                    className="flex-1 py-3 bg-muted text-foreground border border-border rounded-xl font-bold hover:bg-muted/80 transition-all active:scale-[0.98]"
-                >
-                    Fechar
-                </button>
-                {onSend && (
+                <div className="flex gap-3 pt-6 border-t mt-6">
                     <button
-                        onClick={() => onSend(prop)}
-                        className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        onClick={onClose}
+                        className="flex-1 py-3 bg-muted text-foreground border border-border rounded-xl font-bold hover:bg-muted/80 transition-all active:scale-[0.98]"
                     >
-                        <Send size={18} />
-                        Enviar para Lead
+                        Fechar
                     </button>
-                )}
+                    {onSend && (
+                        <button
+                            onClick={() => onSend(prop)}
+                            className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        >
+                            <Send size={18} />
+                            Enviar para Lead
+                        </button>
+                    )}
+                </div>
             </div>
+
+            <InstagramPostModal 
+                isOpen={isInstagramModalOpen}
+                onClose={() => setIsInstagramModalOpen(false)}
+                prop={prop}
+                tenantId={tenantId}
+                profileId={prop.profile_id || ''}
+            />
         </Modal>
     );
 }

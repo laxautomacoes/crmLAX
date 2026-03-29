@@ -6,7 +6,7 @@ import { createClient } from '@/lib/supabase/server'
  * Verifica se o tenant tem acesso a uma feature do plano.
  * Versão Server Action para ser chamada do Cliente.
  */
-export async function checkPlanFeatureAction(tenantId: string, feature: 'ai' | 'whatsapp' | 'custom_domain'): Promise<boolean> {
+export async function checkPlanFeatureAction(tenantId: string, feature: 'ai' | 'whatsapp' | 'custom_domain' | 'marketing'): Promise<boolean> {
     try {
         const supabase = await createClient()
         const { data } = await supabase
