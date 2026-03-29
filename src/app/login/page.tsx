@@ -11,8 +11,7 @@ function LoginContent() {
     const tenantId = searchParams.get('tenant');
     
     const { branding, loading } = useTenantBranding({ 
-        tenantId: tenantId || undefined,
-        systemOnly: !tenantId
+        tenantId: tenantId || undefined
     });
 
     return (
@@ -27,7 +26,7 @@ function LoginContent() {
                 />
                 {!loading && (
                     <p className="text-muted-foreground text-xs md:text-sm font-medium text-center">
-                        {tenantId && branding?.logo_full ? "Portal do Colaborador" : "A melhor experiência imobiliária"}
+                        {branding?.logo_full ? "Portal do Colaborador" : "A melhor experiência imobiliária"}
                     </p>
                 )}
             </div>

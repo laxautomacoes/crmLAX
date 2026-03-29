@@ -51,14 +51,18 @@ export function useTenantBranding(options?: UseTenantBrandingOptions) {
 
                 const hostname = window.location.hostname;
                 const domainParts = hostname.split('.');
-                const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
-                const baseDomain = rootDomain.split(':')[0];
+                let rootHostname = hostname;
+                if (hostname.startsWith('www.')) {
+                    rootHostname = hostname.substring(4);
+                } else if (hostname.startsWith('crm.')) {
+                    rootHostname = hostname.substring(4);
+                }
 
                 // 1. Tentar por custom domain
                 const { data: tenantByDomain } = await supabase
                     .from('tenants')
                     .select('branding')
-                    .eq('custom_domain', hostname)
+                    .eq('custom_domain', rootHostname)
                     .maybeSingle();
 
                 if (tenantByDomain?.branding) {
