@@ -178,8 +178,12 @@ export default async function proxy(request: NextRequest) {
     }
 
     // --- LÓGICA DE REDIRECIONAMENTO COMPULSÓRIO (White-label Totalitário) ---
-    if (tenant) {
-        const rootGlobalDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online';
+    // Em desenvolvimento, NÃO forçamos o redirecionamento para o domínio customizado
+    // para permitir testes via localhost:3000 sem configurar o arquivo hosts.
+    const isDevelopment = process.env.NODE_ENV === 'development';
+
+    if (tenant && !isDevelopment) {
+        const rootGlobalDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online').split(':')[0];
         const cleanHost = hostname.split(':')[0];
         const isMainSystemTenant = tenant.slug === 'lax'; // Slug do SuperAdmin
 

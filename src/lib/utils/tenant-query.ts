@@ -64,13 +64,12 @@ async function getTenantBySubdomain(
     hostname: string
 ): Promise<TenantInfo | null> {
     const domainParts = hostname.split('.');
-    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
-    const baseDomain = rootDomain.split(':')[0];
+    const baseDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost').split(':')[0];
 
     if (domainParts.length < 2) return null;
 
     const subdomain = domainParts[0];
-    const domain = domainParts.slice(1).join('.');
+    const domain = domainParts.slice(1).join('.').split(':')[0];
 
     if (domain !== baseDomain || !subdomain || subdomain === 'www' || subdomain === 'app' || subdomain === 'crm') {
         return null;
