@@ -1,7 +1,13 @@
+import { Metadata } from 'next';
 import { getProfile } from '@/app/_actions/profile';
 import MarketingDashboard from '@/components/marketing/MarketingDashboard';
 import PlanGate from '@/components/ui/PlanGate';
 import { Megaphone, Sparkles } from 'lucide-react';
+
+export const metadata: Metadata = {
+    title: 'Marketing & IA | CRM LAX',
+    description: 'Automatize suas redes sociais e potencialize suas vendas com inteligência artificial.',
+};
 
 export const dynamic = 'force-dynamic';
 
@@ -24,9 +30,8 @@ export default async function MarketingPage() {
             {/* Header da Página */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 animate-in slide-in-from-top-4 duration-500">
                 <div>
-                    <h1 className="text-3xl font-bold text-[#404F4F] flex items-center gap-3">
-                        <Megaphone className="h-8 w-8 text-[#FFE600]" />
-                        Módulo de Marketing
+                    <h1 className="text-3xl font-bold text-[#404F4F]">
+                        Marketing
                     </h1>
                     <p className="text-muted-foreground mt-1 text-sm font-medium">
                         Automatize suas redes sociais e conecte-se com mais clientes.
@@ -49,20 +54,12 @@ export default async function MarketingPage() {
                 >
                     <MarketingDashboard 
                         tenantId={profile.tenant_id} 
+                        profileId={profile.id}
                         hasProPlan={hasProPlan} 
                     />
                 </PlanGate>
             </div>
 
-            {/* Rodapé Informativo */}
-            <div className="pt-8 border-t border-border/10 flex flex-col md:flex-row items-center justify-between gap-4 text-xs text-muted-foreground">
-                <p>© 2026 CRM LAX - Todos os direitos reservados.</p>
-                <div className="flex items-center gap-6">
-                    <a href="#" className="hover:text-[#404F4F] transition-colors">Termos de Uso do Meta</a>
-                    <a href="#" className="hover:text-[#404F4F] transition-colors">Política de Privacidade</a>
-                    <a href="#" className="hover:text-[#404F4F] transition-colors">Gerenciar Permissões</a>
-                </div>
-            </div>
         </div>
     );
 }
