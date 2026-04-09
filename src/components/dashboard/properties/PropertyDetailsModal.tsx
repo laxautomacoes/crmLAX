@@ -639,6 +639,8 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, userRole, 
                             <PropertyCopyCard 
                                 assetId={prop.id} 
                                 tenantId={tenantId}
+                                profileId={prop.profile_id || ''}
+                                hasAIAccess={hasAIAccess}
                             />
                         </div>
                     </div>
