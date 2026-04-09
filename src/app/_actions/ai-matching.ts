@@ -1,6 +1,6 @@
 'use server'
 
-import { getAIModel } from '@/lib/ai/gemini';
+import { runAI } from '@/lib/ai/factory';
 import { createClient } from '@/lib/supabase/server';
 import { requirePlanFeature } from '@/lib/utils/plan-guard';
 
@@ -17,7 +17,8 @@ interface MatchingResult {
 
 /**
  * Motor de Matchmaking: analisa o perfil do lead e ranqueia os
- * imóveis do tenant por compatibilidade. Requer plano Pro.
+ * imóveis do tenant por compatibilidade usando o provedor de IA configurado.
+ * Requer plano Pro.
  */
 export async function matchLeadToProperties(leadId: string, tenantId: string, profileId: string) {
     await requirePlanFeature(tenantId, 'ai');
@@ -85,11 +86,10 @@ TAREFA:
 Inclua no máximo 5 imóveis com score acima de 50. Se nenhum tiver score > 50, retorne os 3 mais próximos.`;
 
     try {
-        const model = getAIModel();
-        const result = await model.generateContent(prompt);
-        const rawText = result.response.text().trim();
+        const result = await runAI(tenantId, prompt);
+        const rawText = result.text.trim();
 
-        // Parse do JSON retornado pelo Gemini
+        // Parse do JSON retornado pela IA
         const jsonStart = rawText.indexOf('{');
         const jsonEnd = rawText.lastIndexOf('}');
         const jsonStr = rawText.substring(jsonStart, jsonEnd + 1);
@@ -99,14 +99,14 @@ Inclua no máximo 5 imóveis com score acima de 50. Se nenhum tiver score > 50, 
         await supabase.from('ai_usage').insert({
             tenant_id: tenantId,
             profile_id: profileId,
-            model: 'gemini-2.0-flash',
-            total_tokens: result.response.usageMetadata?.totalTokenCount || 0,
+            model: result.model,
+            total_tokens: result.usage.total_tokens,
             feature_context: 'lead_matching'
         });
 
         return { success: true, data: parsed };
     } catch (error: any) {
-        console.error('AI Matching Error (Gemini):', error.message);
+        console.error('AI Matching Error:', error.message);
         throw new Error('Falha no matchmaking de IA.');
     }
 }

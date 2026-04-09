@@ -10,6 +10,7 @@ export const menuItems = [
         href: '/properties',
         subItems: [
             { name: 'Listagem', href: '/properties' },
+            { name: 'Análise de m²', href: '/properties/analysis' },
         ]
     },
     {
@@ -35,6 +36,7 @@ export const menuItems = [
             { name: 'Integrações', href: '/settings/integrations' },
             { name: 'Domínio', href: '/settings/domain', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
             { name: 'Logs do Sistema', href: '/settings/logs', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
+            { name: 'IAs', href: '/settings/ias', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
             { name: 'Assinatura', href: '/settings/subscription', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] }
         ]
     },

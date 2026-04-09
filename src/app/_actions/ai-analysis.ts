@@ -1,6 +1,6 @@
 'use server'
 
-import { getAIModel } from "@/lib/ai/gemini";
+import { runAI } from "@/lib/ai/factory";
 import { createClient } from "@/lib/supabase/server";
 import { requirePlanFeature } from "@/lib/utils/plan-guard";
 
@@ -14,7 +14,7 @@ interface LeadDetails {
 }
 
 /**
- * Analisa a probabilidade de fechamento de um lead via Gemini.
+ * Analisa a probabilidade de fechamento de um lead usando o provedor de IA configurado.
  * Requer plano Pro. Registra consumo em ai_usage.
  */
 export async function analyzeLeadProbability(details: LeadDetails) {
@@ -32,22 +32,20 @@ Retorne:
 2. Resumo conciso (2-3 frases) sobre o perfil e principais sinais de interesse ou desinteresse.`;
 
     try {
-        const model = getAIModel();
-        const result = await model.generateContent(prompt);
-        const text = result.response.text();
+        const result = await runAI(details.tenant_id, prompt);
         const supabase = await createClient();
 
         await supabase.from('ai_usage').insert({
             tenant_id: details.tenant_id,
             profile_id: details.profile_id,
-            model: 'gemini-2.0-flash',
-            total_tokens: result.response.usageMetadata?.totalTokenCount || 0,
+            model: result.model,
+            total_tokens: result.usage.total_tokens,
             feature_context: 'lead_analysis'
         });
 
-        return { success: true, analysis: text };
+        return { success: true, analysis: result.text };
     } catch (error: any) {
-        console.error('AI Lead Analysis Error (Gemini):', error.message);
+        console.error('AI Lead Analysis Error:', error.message);
         throw new Error('Falha na análise de IA do lead.');
     }
 }

@@ -1,6 +1,6 @@
 'use server'
 
-import { getAIModel } from '@/lib/ai/gemini';
+import { runAI } from '@/lib/ai/factory';
 import { createClient } from '@/lib/supabase/server';
 import { requirePlanFeature } from '@/lib/utils/plan-guard';
 
@@ -11,7 +11,7 @@ interface CopyVariants {
 }
 
 /**
- * Gera 3 variações de copy de anúncio para um imóvel via Gemini.
+ * Gera 3 variações de copy de anúncio para um imóvel usando o provedor de IA configurado.
  * Requer plano Pro.
  */
 export async function generatePropertyCopy(
@@ -78,9 +78,8 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
 }`;
 
     try {
-        const model = getAIModel();
-        const result = await model.generateContent(prompt);
-        const rawText = result.response.text().trim();
+        const result = await runAI(tenantId, prompt);
+        const rawText = result.text.trim();
 
         const jsonStart = rawText.indexOf('{');
         const jsonEnd = rawText.lastIndexOf('}');
@@ -90,14 +89,14 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
         await supabase.from('ai_usage').insert({
             tenant_id: tenantId,
             profile_id: profileId,
-            model: 'gemini-2.0-flash',
-            total_tokens: result.response.usageMetadata?.totalTokenCount || 0,
+            model: result.model,
+            total_tokens: result.usage.total_tokens,
             feature_context: 'property_copy'
         });
 
         return { success: true, data: parsed };
     } catch (error: any) {
-        console.error('AI Copy Error (Gemini):', error.message);
+        console.error('AI Copy Error:', error.message);
         throw new Error('Falha ao gerar copy do anúncio.');
     }
 }
