@@ -12,7 +12,7 @@ interface AIResult {
     model: string;
 }
 
-export async function getAIProvider(tenantId: string): Promise<AIProviderName> {
+export async function getAIConfig(tenantId: string): Promise<{ provider: AIProviderName, model: string }> {
     const supabase = await createClient();
     
     const { data: tenant } = await supabase
@@ -21,22 +21,24 @@ export async function getAIProvider(tenantId: string): Promise<AIProviderName> {
         .eq('id', tenantId)
         .single();
         
-    if (!tenant) return 'gemini'; // Default
+    if (!tenant) return { provider: 'gemini', model: 'gemini-1.5-flash' };
 
     const { data: limit } = await supabase
         .from('plan_limits')
-        .select('ai_provider')
+        .select('ai_provider, ai_model')
         .eq('plan_type', tenant.plan_type)
         .single();
         
-    return (limit?.ai_provider as AIProviderName) || 'gemini';
+    return {
+        provider: (limit?.ai_provider as AIProviderName) || 'gemini',
+        model: limit?.ai_model || (limit?.ai_provider === 'openai' ? 'gpt-4o-mini' : 'gemini-1.5-flash')
+    };
 }
 
 export async function runAI(tenantId: string, prompt: string): Promise<AIResult> {
-    const provider = await getAIProvider(tenantId);
+    const { provider, model: modelName } = await getAIConfig(tenantId);
 
     if (provider === 'openai') {
-        const modelName = 'gpt-4o-mini'; // Or configurable
         const response = await openai.chat.completions.create({
             model: modelName,
             messages: [{ role: 'user', content: prompt }],
@@ -51,7 +53,7 @@ export async function runAI(tenantId: string, prompt: string): Promise<AIResult>
             model: modelName
         };
     } else {
-        const model = getAIModel(); // Gemini 2.0 Flash
+        const model = getAIModel(modelName);
         const result = await model.generateContent(prompt);
         const response = await result.response;
         
@@ -60,7 +62,7 @@ export async function runAI(tenantId: string, prompt: string): Promise<AIResult>
             usage: {
                 total_tokens: response.usageMetadata?.totalTokenCount || 0,
             },
-            model: 'gemini-2.0-flash'
+            model: modelName
         };
     }
 }

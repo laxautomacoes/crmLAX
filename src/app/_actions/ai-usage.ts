@@ -71,7 +71,7 @@ export async function getAIPlanConfigs() {
 
     const { data: configs, error } = await supabase
         .from('plan_limits')
-        .select('plan_type, ai_provider, display_name')
+        .select('plan_type, ai_provider, ai_model, display_name')
         .order('display_order', { ascending: true } as any);
 
     if (error) throw error;
@@ -79,9 +79,9 @@ export async function getAIPlanConfigs() {
 }
 
 /**
- * Atualiza o provedor de IA de um plano. (Apenas Superadmin)
+ * Atualiza o provedor e modelo de IA de um plano. (Apenas Superadmin)
  */
-export async function updatePlanAIProvider(planType: string, provider: 'gemini' | 'openai') {
+export async function updatePlanAIProvider(planType: string, provider: 'gemini' | 'openai', model?: string) {
     const supabase = await createClient();
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) return { error: "Não autenticado" };
@@ -94,9 +94,12 @@ export async function updatePlanAIProvider(planType: string, provider: 'gemini' 
 
     if (profile?.role !== 'superadmin') return { error: "Sem permissão" };
 
+    const updateData: any = { ai_provider: provider };
+    if (model) updateData.ai_model = model;
+
     const { error } = await supabase
         .from('plan_limits')
-        .update({ ai_provider: provider } as any)
+        .update(updateData)
         .eq('plan_type', planType);
 
     if (error) return { error: error.message };

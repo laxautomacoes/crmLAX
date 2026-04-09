@@ -31,41 +31,42 @@ export default async function AIConfigurationPage() {
     ]);
 
     return (
-        <div className="flex-1 space-y-10 p-8 pt-10 bg-[#fafafa]">
-            <div className="flex items-center justify-between">
+        <div className="flex-1 min-h-screen bg-[#fafafa] p-8 pt-12">
+            <div className="max-w-7xl mx-auto space-y-12">
+                {/* Header Section */}
                 <div className="space-y-1">
-                    <h2 className="text-2xl font-semibold tracking-tight text-slate-900 font-outfit">Inteligência Artificial</h2>
-                    <p className="text-sm text-slate-500">
-                        Gerencie a infraestrutura neural e o consumo de IA do sistema.
+                    <h2 className="text-3xl font-bold tracking-tight text-slate-900 font-outfit">Inteligência Artificial</h2>
+                    <p className="text-sm text-slate-500 font-medium">
+                        Gestão centralizada de infraestrutura neural e monitoramento de consumo.
                     </p>
                 </div>
-            </div>
 
-            <AIUsageStats stats={stats} />
+                {/* Stats Grid */}
+                <AIUsageStats stats={stats} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-                <div className="lg:col-span-3">
-                    <AIUsageChart data={stats.usage_by_day} />
-                </div>
-                <div className="lg:col-span-1">
-                    {isSuperadmin && planConfigs.length > 0 ? (
-                        <AIPlanConfig configs={planConfigs as any} />
-                    ) : (
-                        <div className="bg-white p-6 rounded-3xl border border-slate-100 shadow-sm flex flex-col justify-center h-full">
-                            <div className="h-10 w-10 bg-indigo-50 rounded-xl flex items-center justify-center mb-4">
-                                <div className="h-2 w-2 bg-indigo-500 rounded-full animate-pulse" />
-                            </div>
-                            <h3 className="text-lg font-semibold text-slate-900 mb-2">Monitoramento Ativo</h3>
-                            <p className="text-slate-500 text-sm leading-relaxed">
-                                Seu acesso à IA está configurado globalmente. O consumo é monitorado por requisição.
-                            </p>
+                {/* Configuration Section (Superadmin Only) */}
+                {isSuperadmin && planConfigs.length > 0 && (
+                    <div className="space-y-6">
+                        <div className="flex items-center gap-2">
+                            <span className="h-6 w-1 bg-indigo-500 rounded-full" />
+                            <h3 className="text-xl font-bold text-slate-900">Configuração Estratégica</h3>
                         </div>
-                    )}
-                </div>
-            </div>
+                        <AIPlanConfig configs={planConfigs as any} />
+                    </div>
+                )}
 
-            <div className="pt-4">
-                <AIUsageTable records={detailedUsage as any[]} isSuperadmin={isSuperadmin} />
+                {/* Activity & Performance Section */}
+                <div className="space-y-8">
+                    <div className="flex items-center gap-2">
+                        <span className="h-6 w-1 bg-indigo-500 rounded-full" />
+                        <h3 className="text-xl font-bold text-slate-900">Análise de Performance</h3>
+                    </div>
+                    
+                    <div className="grid grid-cols-1 gap-12">
+                        <AIUsageChart data={stats.usage_by_day} />
+                        <AIUsageTable records={detailedUsage as any[]} isSuperadmin={isSuperadmin} />
+                    </div>
+                </div>
             </div>
         </div>
     );
