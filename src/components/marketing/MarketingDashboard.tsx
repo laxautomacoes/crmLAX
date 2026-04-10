@@ -120,7 +120,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
     const integrations = [
         {
             id: 'meta',
-            name: 'Meta - Facebook + Instagram',
+            name: 'Facebook + Instagram',
             icon: MetaIcon,
             connected: isConnected('instagram'),
             description: 'Sincronização de anúncios, postagem automática e IA para Facebook e Instagram.',
@@ -220,8 +220,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
                                                 <RefreshCw className="h-5 w-5 animate-spin" />
                                             ) : (
                                                 <>
-                                                    Conectar Agora
-                                                    <ArrowRight className="h-5 w-5" />
+                                                    Conectar
                                                 </>
                                             )}
                                         </button>
@@ -290,7 +289,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
                             </div>
                         ))
                     ) : (
-                        <div className="col-span-full py-12 text-center bg-gray-50 rounded-2xl border-2 border-dashed border-border/50">
+                        <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-border/50 shadow-sm border-solid">
                             <p className="text-muted-foreground text-sm font-medium">Nenhum imóvel disponível para postagem rápida.</p>
                         </div>
                     )}
