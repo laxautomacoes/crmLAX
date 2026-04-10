@@ -179,7 +179,7 @@ export async function updatePlansOrderAction(orders: { plan_type: string, displa
     }
 
     // Executa atualizações individuais (Supabase não tem bulk update via .update() que varie o valor por ID facilmente sem RPC)
-    const promises = orders.map(item => 
+    const promises = orders.map((item: { plan_type: string, display_order: number }) => 
         supabase
             .from('plan_limits')
             .update({ display_order: item.display_order })
@@ -187,7 +187,7 @@ export async function updatePlansOrderAction(orders: { plan_type: string, displa
     )
 
     const results = await Promise.all(promises)
-    const error = results.find(r => r.error)?.error
+    const error = results.find((r: any) => r.error)?.error
 
     if (error) return { error: error.message }
     return { success: true }

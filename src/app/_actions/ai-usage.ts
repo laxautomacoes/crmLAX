@@ -78,7 +78,7 @@ export async function getAIPlanConfigs() {
         .order('display_order', { ascending: true } as any);
 
     if (error) throw error;
-    return (configs || []) as Tables<'plan_limits'>[];
+    return (configs || []) as { plan_type: string; ai_provider: string | null; ai_model: string | null; display_name: string | null }[];
 }
 
 /**

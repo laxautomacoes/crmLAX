@@ -65,7 +65,7 @@ export async function getClients(tenantId: string) {
     }
 
     // Mapear para o formato esperado pelo front
-    const clients = (contacts || []).map((contact) => {
+    const clients = (contacts || []).map((contact: Record<string, any>) => {
         // Pegar o lead mais recente ou ativo
         const activeLead = (contact.leads as any[])?.sort((a, b) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()

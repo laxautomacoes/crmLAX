@@ -10,6 +10,7 @@ interface PlanConfig {
     plan_type: string;
     display_name: string;
     ai_provider: string;
+    ai_model?: string;
 }
 
 interface Props {
@@ -126,7 +127,7 @@ export function AIPlanConfig({ configs }: Props) {
                                     className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all appearance-none cursor-pointer group-hover:bg-white"
                                     style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7' /%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '14px' }}
                                 >
-                                    {models[plan.ai_provider as AIProviderName]?.map(m => (
+                                    {models[plan.ai_provider as 'openai' | 'gemini']?.map(m => (
                                         <option key={m.id} value={m.id}>{m.name}</option>
                                     ))}
                                 </select>

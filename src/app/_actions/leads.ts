@@ -23,7 +23,7 @@ export async function getPipelineData(tenantId: string) {
 
     // Deduplicar estágios por order_index (camada extra de proteção)
     const uniqueStagesMap = new Map();
-    (stagesResult.data || []).forEach((stage) => {
+    (stagesResult.data || []).forEach((stage: Record<string, any>) => {
         if (!uniqueStagesMap.has(stage.order_index)) {
             uniqueStagesMap.set(stage.order_index, stage);
         }
@@ -322,7 +322,7 @@ export async function deleteLead(leadId: string) {
                 .neq('id', currentProfile.id); // Não notificar a si mesmo
 
             if (admins && admins.length > 0) {
-                await Promise.all(admins.map((admin) => 
+                await Promise.all(admins.map((admin: { id: string }) => 
                     notificationService.create({
                         user_id: admin.id,
                         tenant_id: currentProfile.tenant_id as string,

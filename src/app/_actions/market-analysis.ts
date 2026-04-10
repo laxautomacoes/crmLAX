@@ -74,7 +74,7 @@ Não adicione textos explicativos antes ou depois do JSON.`;
         }
 
         // Cálculos estatísticos
-        const valuesPerM2 = properties.map(p => p.price / p.area);
+        const valuesPerM2 = properties.map((p: MarketProperty) => p.price / p.area);
         const averageValue = valuesPerM2.reduce((a, b) => a + b, 0) / valuesPerM2.length;
         
         const sortedValues = [...valuesPerM2].sort((a, b) => a - b);
@@ -85,7 +85,7 @@ Não adicione textos explicativos antes ou depois do JSON.`;
 
         // Agrupamento para o gráfico por número de quartos
         const bedroomGroups: Record<number, number[]> = {};
-        properties.forEach(p => {
+        properties.forEach((p: MarketProperty) => {
             if (!bedroomGroups[p.bedrooms]) bedroomGroups[p.bedrooms] = [];
             bedroomGroups[p.bedrooms].push(p.price / p.area);
         });

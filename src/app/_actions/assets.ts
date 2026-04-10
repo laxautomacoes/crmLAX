@@ -50,7 +50,7 @@ export async function getAssets(tenantId: string, status?: string) {
                 if (fallbackError) throw fallbackError
 
                 // Mapear description do details se existir
-                const mappedData = (fallbackData || []).map((item) => ({
+                const mappedData = (fallbackData || []).map((item: Record<string, any>) => ({
                     ...item,
                     description: (item as any).description || (item.details as any)?.description,
                     status: (item as any).status || 'Disponível',
@@ -62,7 +62,7 @@ export async function getAssets(tenantId: string, status?: string) {
         }
 
         // Garantir que a description seja lida do details se a coluna raiz estiver vazia
-        const mappedData = (data || []).map((item) => ({
+        const mappedData = (data || []).map((item: Record<string, any>) => ({
             ...item,
             description: (item as any).description || (item.details as any)?.description
         }))
@@ -342,7 +342,7 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
     try {
         const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
         
-        const insertData = assetsData.map(asset => ({
+        const insertData = assetsData.map((asset: Record<string, any>) => ({
             ...asset,
             tenant_id: tenantId,
             created_by: profile?.id,
@@ -364,7 +364,7 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
                 error.message.includes('description');
 
             if (isMissingColumnError) {
-                const fallbackData = assetsData.map(asset => {
+                const fallbackData = assetsData.map((asset: Record<string, any>) => {
                     const { created_by, ...rest } = asset as any
                     const item = {
                         ...rest,
@@ -399,7 +399,7 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
                     return { success: true }
                 }
 
-                const resultData = retryData?.map((item) => ({
+                const resultData = retryData?.map((item: Record<string, any>) => ({
                     ...item,
                     description: (item as any).description || (item.details as any)?.description
                 }))

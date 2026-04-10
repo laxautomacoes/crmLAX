@@ -55,14 +55,14 @@ MÉTRICAS DO PERÍODO (${period.replace('_', ' ')}):
 - Total de clientes/contatos: ${totalClients || 0}
 
 CANAL DE ORIGEM DOS LEADS:
-${m.leadsBySource.map(s => `- ${s.name}: ${s.value} leads`).join('\n')}
+${m.leadsBySource.map((s: any) => `- ${s.name}: ${s.value} leads`).join('\n')}
 
 TOP CORRETOR: ${topBroker ? `${topBroker.name} — ${topBroker.leadsCount} leads, ${topBroker.conversionCount} fechamentos` : 'Nenhum'}
 TOP IMÓVEL: ${topProperty ? `${topProperty.title} — ${topProperty.leadsCount} leads, ${topProperty.conversionCount} conversões` : 'Nenhum'}
 CANAL PRINCIPAL: ${topSource ? `${topSource.name} com ${topSource.value} leads` : 'Nenhum'}
 
 EVOLUÇÃO DIÁRIA DE LEADS (últimos pontos):
-${m.leadsEvolution.slice(-7).map(e => `${e.date}: ${e.count}`).join(' | ')}`;
+${m.leadsEvolution.slice(-7).map((e: any) => `${e.date}: ${e.count}`).join(' | ')}`;
 
     const prompt = `Você é um analista de negócios especialista em mercado imobiliário brasileiro.
 Analise os dados abaixo de uma imobiliária e gere insights executivos em português.

@@ -78,7 +78,7 @@ export async function getDashboardMetrics(tenantId: string) {
             .select('id, name')
             .eq('tenant_id', tenantId)
 
-        const winStage = (allStages || []).find((s) =>
+        const winStage = (allStages || []).find((s: Record<string, any>) =>
             s.name.toLowerCase().includes('ganho') ||
             s.name.toLowerCase().includes('fechado') ||
             s.name.toLowerCase().includes('concluído')
@@ -131,7 +131,7 @@ export async function getDashboardMetrics(tenantId: string) {
 
         // Deduplicar estágios por nome (camada extra de proteção)
         const uniqueStagesMap = new Map<string, Tables<'lead_stages'>>();
-        (stages || []).forEach(stage => {
+        (stages || []).forEach((stage: Tables<'lead_stages'>) => {
             if (!uniqueStagesMap.has(stage.name)) {
                 uniqueStagesMap.set(stage.name, stage);
             }
@@ -190,7 +190,7 @@ export async function getDashboardMetrics(tenantId: string) {
             id: lead.id,
             name: lead.contacts?.name || 'Sem nome',
             interest: lead.source || 'N/A',
-            status: (stages || []).find((s) => s.id === lead.stage_id)?.name || 'Novo',
+            status: (stages || []).find((s: Record<string, any>) => s.id === lead.stage_id)?.name || 'Novo',
             created_at: lead.created_at
         }))
 

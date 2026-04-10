@@ -118,7 +118,7 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                                         color: 'hsl(var(--foreground))'
                                     }}
                                     itemStyle={{ color: 'hsl(var(--secondary))' }}
-                                    formatter={(value: number) => [formatCurrency(value), 'Valor Médio/m²']}
+                                    formatter={(value: any) => [formatCurrency(Number(value) || 0), 'Valor Médio/m²']}
                                     labelFormatter={(label) => `${label} Quarto(s)`}
                                 />
                                 <Bar dataKey="averageValue" radius={[6, 6, 0, 0]} barSize={40}>

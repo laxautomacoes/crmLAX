@@ -131,17 +131,17 @@ export async function getReportMetrics(
             .eq('tenant_id', tenantId)
 
         const winStageIds = (allStages || [])
-            .filter(s =>
+            .filter((s: Record<string, any>) =>
                 s.name.toLowerCase().includes('ganho') ||
                 s.name.toLowerCase().includes('fechado') ||
                 s.name.toLowerCase().includes('vendido') ||
                 s.name.toLowerCase().includes('alugado')
             )
-            .map(s => s.id) || []
+            .map((s: Record<string, any>) => s.id) || []
 
         // 3. Processar KPIs
         const totalLeads = leads?.length || 0
-        const conversions = leads?.filter((l) => winStageIds.includes(l.stage_id || ''))?.length || 0
+        const conversions = leads?.filter((l: Record<string, any>) => winStageIds.includes(l.stage_id || ''))?.length || 0
         // Active leads are those not in win stage (simplificação, idealmente excluiria perdas também)
         // Para simplificar: active = total - won
         // Melhor: active = leads que não estão em "Perdido" ou "Ganho" se tivéssemos essa distinção clara.
@@ -154,7 +154,7 @@ export async function getReportMetrics(
 
         // 4. Processar Leads por Origem (Source)
         const sourceMap = new Map<string, number>()
-        leads?.forEach((lead) => {
+        leads?.forEach((lead: Record<string, any>) => {
             const source = lead.source || 'Desconhecido'
             sourceMap.set(source, (sourceMap.get(source) || 0) + 1)
         })
@@ -188,7 +188,7 @@ export async function getReportMetrics(
             dateIterator.setDate(dateIterator.getDate() + 1)
         }
 
-        leads?.forEach((lead) => {
+        leads?.forEach((lead: Record<string, any>) => {
             const date = new Date(lead.created_at || '').toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit' })
             if (evolutionMap.has(date)) {
                 evolutionMap.set(date, (evolutionMap.get(date) || 0) + 1)
@@ -203,7 +203,7 @@ export async function getReportMetrics(
         // 6. Processar Performance da Equipe
         const teamMap = new Map<string, { name: string, leads: number, conversions: number }>()
 
-        leads?.forEach((lead) => {
+        leads?.forEach((lead: Record<string, any>) => {
             const profileName = (lead.profiles as any)?.full_name || 'Sem Responsável'
             const profileId = (lead as any).profile_id || 'unassigned'
 
@@ -228,7 +228,7 @@ export async function getReportMetrics(
         // 7. Processar Top Properties
         const propertiesMap = new Map<string, { title: string, leads: number, conversions: number }>()
 
-        leads?.forEach((lead) => {
+        leads?.forEach((lead: Record<string, any>) => {
             if (lead.asset_id) {
                 const assetTitle = (lead.assets as any)?.title || 'Imóvel sem título'
                 const assetId = lead.asset_id

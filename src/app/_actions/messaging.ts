@@ -10,7 +10,7 @@ import { headers } from 'next/headers'
 
 import { Tables } from '@/lib/supabase/database.types'
 
-export async function sendPropertyEmail(leadId: string, leadEmail: string, propertyData: Tables<'assets'>, config?: any) {
+export async function sendPropertyEmail(leadId: string, leadEmail: string, propertyData: Record<string, any>, config?: any) {
     const tenant = await getTenantFromHeaders()
     if (!tenant) return { success: false, error: 'Tenant not found' }
 
