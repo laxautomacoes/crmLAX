@@ -248,11 +248,10 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
 
             {/* Seção de Postagem Rápida */}
             <div className="space-y-6">
-                <div className="flex items-center justify-between">
+                <div className="flex items-center">
                     <h2 className="text-xl font-black text-[#404F4F]">
                         Imóveis cadastrados
                     </h2>
-                    <p className="text-xs text-muted-foreground font-medium">Seus últimos imóveis cadastrados</p>
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">

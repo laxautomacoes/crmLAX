@@ -22,6 +22,7 @@ Este documento é a fonte única de verdade para a interface do CRM LAX. Deve se
 - **Font Sans**: `Geist Sans` (Next.js default).
 - **Font Mono**: `Geist Mono`.
 - **Títulos de Página**: `text-2xl font-bold text-[#404F4F]`.
+- **Legendas de Página**: `text-sm text-gray-500 mt-0.5`.
 - **Títulos de Card**: `font-semibold text-gray-900` ou `font-bold text-[#404F4F]`.
 - **Labels de Input**: `text-sm font-bold text-gray-800 ml-1`.
 - **Textos de Corpo**: `text-sm font-medium` ou `text-base`.
@@ -56,6 +57,18 @@ Seguir rigorosamente para evitar inconsistências visuais:
 - **Botões Petrol (Neutros)**: `text-[#404F4F] border-[#404F4F]/20 hover:bg-[#404F4F]/5 transition-all`. Para botões preenchidos: `bg-[#404F4F] text-white hover:bg-[#2d3939]`.
 - **Inputs**: `focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] outline-none`.
 - **Animações de Entrada**: `animate-in fade-in slide-in-from-bottom-4 duration-300`.
+
+---
+
+## 6. Page Headers (Padrão de Título)
+
+Todas as telas principais devem utilizar o componente `<PageHeader />` para garantir o alinhamento:
+
+- **Title**: `text-2xl font-bold text-foreground` (`#404F4F`).
+- **Subtitle**: `text-sm text-muted-foreground mt-0.5`.
+- **Layout (Desktop)**: `flex justify-between items-center gap-4`. Alinhamento `md:text-left`.
+- **Layout (Mobile)**: `text-center`, seguido de um separador `h-px bg-foreground/25 w-full mt-2 mb-6`.
+- **Botões de Ação**: Alinhados à direita no desktop e centralizados no mobile, com `gap-3`.
 
 ---
 
