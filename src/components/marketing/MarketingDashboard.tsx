@@ -1,14 +1,14 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-    Instagram, 
-    Youtube, 
-    Facebook, 
-    ArrowRight, 
-    CheckCircle2, 
-    AlertCircle, 
-    RefreshCw, 
+import {
+    Instagram,
+    Youtube,
+    Facebook,
+    ArrowRight,
+    CheckCircle2,
+    AlertCircle,
+    RefreshCw,
     LogOut,
     TrendingUp,
     Users,
@@ -21,6 +21,7 @@ import { getAssets } from '@/app/_actions/assets';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { InstagramPostModal } from './InstagramPostModal';
+import { PageHeader } from '../shared/PageHeader';
 
 const MetaIcon = (props: any) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -43,7 +44,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
     const [properties, setProperties] = useState<any[]>([]);
     const [selectedProp, setSelectedProp] = useState<any>(null);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
-    
+
     useEffect(() => {
         const init = async () => {
             await Promise.all([
@@ -142,6 +143,18 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
 
     return (
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
+            <PageHeader 
+                title="Marketing"
+                subtitle="Automatize suas redes sociais e conecte-se com mais clientes."
+            >
+                {!hasProPlan && (
+                    <div className="flex items-center gap-2 bg-gradient-to-r from-[#404F4F] to-[#2d3939] px-4 py-2 rounded-xl border-l-4 border-[#FFE600] shadow-lg">
+                        <Sparkles className="h-4 w-4 text-[#FFE600]" />
+                        <span className="text-white text-xs font-bold uppercase tracking-wider">Upgrade Disponível</span>
+                    </div>
+                )}
+            </PageHeader>
+
             {isLoading ? (
                 <div className="flex items-center justify-center h-64 bg-card rounded-3xl border border-border/50 shadow-sm">
                     <RefreshCw className="h-10 w-10 text-[#FFE600] animate-spin" />
@@ -149,8 +162,8 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                     {integrations.map((item) => (
-                        <div 
-                            key={item.id} 
+                        <div
+                            key={item.id}
                             className={`group relative overflow-hidden bg-white rounded-3xl border border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${item.upcoming ? 'opacity-75' : ''}`}
                         >
                             <div className="p-8 space-y-6">
@@ -245,12 +258,12 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                     {isLoadingProps ? (
-                        [1,2,3,4].map(n => (
+                        [1, 2, 3, 4].map(n => (
                             <div key={n} className="h-[200px] rounded-2xl bg-[#404F4F]/5 animate-pulse" />
                         ))
                     ) : properties.length > 0 ? (
                         properties.map((prop) => (
-                            <div 
+                            <div
                                 key={prop.id}
                                 className="group relative aspect-[4/5] overflow-hidden bg-white rounded-2xl border border-border/50 shadow-sm transition-all hover:shadow-lg"
                             >
@@ -261,12 +274,12 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
                                         <ImageIcon className="h-10 w-10" />
                                     </div>
                                 )}
-                                
+
                                 <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
                                     <h4 className="text-white font-bold text-sm line-clamp-1">{prop.title}</h4>
                                     <div className="flex items-center justify-between mt-2">
                                         <span className="text-white/80 text-[10px] font-medium">{prop.type}</span>
-                                        <button 
+                                        <button
                                             onClick={() => handleQuickPost(prop)}
                                             className="bg-[#FFE600] text-[#404F4F] p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform hover:scale-110"
                                         >
@@ -285,7 +298,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
             </div>
             {/* Modal de Postagem */}
             {selectedProp && (
-                <InstagramPostModal 
+                <InstagramPostModal
                     isOpen={isPostModalOpen}
                     onClose={() => {
                         setIsPostModalOpen(false);

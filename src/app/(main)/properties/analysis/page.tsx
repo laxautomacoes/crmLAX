@@ -7,6 +7,7 @@ import { analyzeMarketValue, MarketAnalysisResult } from '@/app/_actions/market-
 import { toast } from 'sonner';
 import { Info, BarChart3, Search, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { PageHeader } from '@/components/shared/PageHeader';
 
 export default function AnalysisPage() {
     const [loading, setLoading] = useState(false);
@@ -38,22 +39,10 @@ export default function AnalysisPage() {
     return (
         <div className="max-w-6xl mx-auto space-y-8">
             {/* Header Section */}
-            <div className="flex flex-col md:flex-row md:items-end justify-between gap-4">
-                <div>
-                    <div className="flex items-center gap-2 mb-2">
-                        <div className="p-2 rounded-lg bg-secondary/10 text-secondary">
-                            <BarChart3 size={20} />
-                        </div>
-                        <span className="text-xs font-black text-secondary uppercase tracking-widest">Inteligência de Mercado</span>
-                    </div>
-                    <h1 className="text-3xl font-black text-foreground tracking-tight">
-                        Análise de Valor de m²
-                    </h1>
-                    <p className="text-muted-foreground mt-1 max-w-xl">
-                        Consulte o valor médio do metro quadrado baseado em ofertas reais da internet para uma região específica.
-                    </p>
-                </div>
-            </div>
+            <PageHeader 
+                title="Análise de Valor de m²"
+                subtitle="Consulte o valor médio do metro quadrado baseado em ofertas reais da internet para uma região específica."
+            />
 
             {/* Filters Section */}
             <LocationFilters onSearch={handleSearch} loading={loading} />

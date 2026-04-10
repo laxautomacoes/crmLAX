@@ -14,6 +14,7 @@ import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
 import { createStage, deleteStage, duplicateStage, updateStageName } from '@/app/_actions/stages'
 import { checkPlanFeatureAction } from '@/app/_actions/plan'
 import { toast } from 'sonner'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 export const dynamic = 'force-dynamic'
 
@@ -206,9 +207,7 @@ export default function LeadsPage() {
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-foreground text-center md:text-left">Leads</h1>
-                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
+            <PageHeader title="Leads">
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
                     <button
                         onClick={() => handleOpenLeadModal()}
@@ -233,7 +232,7 @@ export default function LeadsPage() {
                         />
                     </div>
                 </div>
-            </div>
+            </PageHeader>
 
             <PipelineBoard
                 initialStages={stages}

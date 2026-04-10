@@ -8,6 +8,7 @@ import { useSearchParams } from 'next/navigation';
 import PlanCardAdmin from './PlanCardAdmin';
 import PlanCardSuperadmin from './PlanCardSuperadmin';
 import { updatePlansOrderAction } from '@/app/_actions/plan';
+import { PageHeader } from '@/components/shared/PageHeader';
 
 import {
     DndContext,
@@ -156,40 +157,34 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
     return (
         <div className="bg-card -m-4 md:-m-8 p-4 md:p-8 min-h-screen">
             <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="text-center md:text-left">
-                    <div className="flex items-center gap-2">
-                        <h1 className="text-2xl font-bold text-foreground">Assinatura</h1>
-                        {isSuperadmin && (
-                            <span className="inline-flex items-center gap-1 rounded-full bg-[#404F4F] px-2.5 py-0.5 text-xs font-bold text-white">
-                                <Settings2 className="h-3 w-3" /> Modo Editor
-                            </span>
-                        )}
-                    </div>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        {isSuperadmin
-                            ? 'Edite os planos exibidos para seus clientes.'
-                            : 'Gerencie seu plano e acompanhe o uso de IA.'}
-                    </p>
+            <PageHeader 
+                title="Assinatura"
+                subtitle={isSuperadmin ? 'Edite os planos exibidos para seus clientes.' : 'Gerencie seu plano e acompanhe o uso de IA.'}
+            >
+                <div className="flex items-center gap-3">
+                    {isSuperadmin && (
+                        <span className="inline-flex items-center gap-1 rounded-full bg-[#404F4F] px-2.5 py-0.5 text-xs font-bold text-white">
+                            <Settings2 className="h-3 w-3" /> Modo Editor
+                        </span>
+                    )}
+                    {!isSuperadmin && currentPlan !== 'freemium' && (
+                        <button
+                            onClick={handlePortal}
+                            disabled={isPortaling}
+                            className="flex items-center justify-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted transition-all active:scale-[0.98] disabled:opacity-50"
+                        >
+                            {isPortaling ? (
+                                <Loader2 className="h-4 w-4 animate-spin" />
+                            ) : (
+                                <>
+                                    <CreditCard size={16} />
+                                    Gerenciar Faturamento
+                                </>
+                            )}
+                        </button>
+                    )}
                 </div>
-                {!isSuperadmin && currentPlan !== 'freemium' && (
-                    <button
-                        onClick={handlePortal}
-                        disabled={isPortaling}
-                        className="flex items-center justify-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted transition-all active:scale-[0.98] disabled:opacity-50"
-                    >
-                        {isPortaling ? (
-                            <Loader2 className="h-4 w-4 animate-spin" />
-                        ) : (
-                            <>
-                                <CreditCard size={16} />
-                                Gerenciar Faturamento
-                            </>
-                        )}
-                    </button>
-                )}
-                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
-            </div>
+            </PageHeader>
 
 
             {/* Cards de Planos */}

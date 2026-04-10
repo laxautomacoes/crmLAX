@@ -16,7 +16,8 @@ import {
     Download
 } from 'lucide-react';
 import { getSystemLogs } from '@/app/_actions/logs';
-import { getBrokers } from '@/app/_actions/profile';
+import { getBrokers, getProfile } from '@/app/_actions/profile';
+import { PageHeader } from '@/components/shared/PageHeader';
 
 interface LogsTableProps {
     tenantId: string;
@@ -128,19 +129,14 @@ export function LogsTable({ tenantId }: LogsTableProps) {
 
     return (
         <div className="space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-4">
-                    <h1 className="text-2xl font-bold text-foreground">
-                        Logs do Sistema
-                    </h1>
-                    <div className="hidden md:flex items-center h-8 px-3 bg-muted/20 border border-border rounded-full shadow-sm">
+            <PageHeader title="Logs do Sistema">
+                <div className="flex flex-wrap items-center gap-3 lg:justify-end">
+                    <div className="hidden md:flex items-center h-9 px-3 bg-muted/20 border border-border rounded-lg shadow-sm">
                         <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
                             Total: <span className="text-secondary dark:text-[#FFE600] font-bold mx-0.5">{totalCount}</span> eventos
                         </span>
                     </div>
-                </div>
 
-                <div className="flex flex-wrap items-center gap-3 lg:justify-end">
                     {/* Botão Exportar (Dashboard Style) */}
                     <button 
                         onClick={exportToCSV}
@@ -278,7 +274,7 @@ export function LogsTable({ tenantId }: LogsTableProps) {
                         )}
                     </div>
                 </div>
-            </div>
+            </PageHeader>
 
             {/* Tabela */}
             <div className="bg-white dark:bg-card rounded-2xl border border-gray-100 dark:border-white/10 shadow-sm overflow-hidden">

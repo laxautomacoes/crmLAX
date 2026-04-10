@@ -8,6 +8,7 @@ import { useRouter } from 'next/navigation';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { FormTextarea } from '@/components/shared/forms/FormTextarea';
+import { PageHeader } from '@/components/shared/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -120,12 +121,10 @@ export default function RoadmapPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Roadmap do Produto</h1>
-                    <p className="text-muted-foreground text-sm">Acompanhe as próximas funcionalidades e melhorias do CRM LAX</p>
-                </div>
-                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
+            <PageHeader 
+                title="Roadmap do Produto"
+                subtitle="Acompanhe as próximas funcionalidades e melhorias do CRM LAX"
+            >
                 {isSuperAdmin && (
                     <button
                         onClick={() => handleOpenModal()}
@@ -135,7 +134,7 @@ export default function RoadmapPage() {
                         Novo Item
                     </button>
                 )}
-            </div>
+            </PageHeader>
 
             {/* Content Grid */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">

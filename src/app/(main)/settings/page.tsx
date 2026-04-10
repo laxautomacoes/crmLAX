@@ -7,6 +7,7 @@ import { BrandingTab } from '@/components/settings/BrandingTab';
 import { DomainTab } from '@/components/settings/DomainTab';
 import { getProfile } from '@/app/_actions/profile';
 import { Save, Loader2 } from 'lucide-react';
+import { PageHeader } from '@/components/shared/PageHeader';
 
 export const dynamic = 'force-dynamic';
 
@@ -42,12 +43,7 @@ export default function SettingsPage() {
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-foreground text-center md:text-left">
-                    Meu Perfil
-                </h1>
-                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
-            </div>
+            <PageHeader title="Meu Perfil" />
 
             {/* Tab Navigation removemos se houver só uma aba, mas vou manter o padrão visual */}
             {tabs.length > 1 && (

@@ -9,6 +9,7 @@ import LeadsEvolutionChart from './LeadsEvolutionChart';
 import TeamPerformanceTable from './TeamPerformanceTable';
 import TopPropertiesTable from './TopPropertiesTable';
 import AIInsightsCard from '@/components/ai/AIInsightsCard';
+import { PageHeader } from '@/components/shared/PageHeader';
 
 interface ReportsClientProps {
     initialMetrics: ReportMetrics;
@@ -65,15 +66,10 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in duration-500 pb-10">
             {/* Header */}
-            <div className="flex flex-col xl:flex-row xl:items-center justify-between gap-4">
-                <div>
-                    <h1 className="text-2xl font-bold text-foreground">Relatórios Gerenciais</h1>
-                    <p className="text-muted-foreground text-sm mt-1">
-                        Acompanhe o desempenho do seu negócio e da sua equipe.
-                    </p>
-                </div>
-                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
-
+            <PageHeader 
+                title="Relatórios Gerenciais"
+                subtitle="Acompanhe o desempenho do seu negócio e da sua equipe."
+            >
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Broker Filter - Only visible for admins */}
                     {isAdmin && (
@@ -139,7 +135,7 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                         </div>
                     </div>
                 </div>
-            </div>
+            </PageHeader>
 
             {/* IA Insights */}
             <AIInsightsCard 

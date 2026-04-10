@@ -15,6 +15,7 @@ import { createNewClient, updateClient, deleteClient, archiveClient } from '@/ap
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
 import { ClientListItem } from './ClientListItem'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface ClientListProps {
     initialClients: any[]
@@ -359,13 +360,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
 
     return (
         <div className="space-y-4 md:space-y-6">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex flex-col md:flex-row md:items-center gap-4">
-                    <h1 className="text-2xl font-bold text-foreground text-center md:text-left">Clientes</h1>
-                </div>
-
-                <div className="h-px bg-foreground/25 w-full md:hidden mt-1 mb-4" />
+            <PageHeader title="Clientes">
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
                     <button
                         onClick={handleOpenCreate}
@@ -437,7 +432,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         </div>
                     )}
                 </div>
-            </div>
+            </PageHeader>
 
             {/* Content Area */}
             {viewMode === 'list' ? (

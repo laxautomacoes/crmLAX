@@ -18,6 +18,7 @@ import { PropertyFiltersModal } from '@/components/dashboard/properties/Property
 import { PropertyImportPDFModal } from '@/components/dashboard/properties/PropertyImportPDFModal'
 import { useOfflineSync } from '@/hooks/use-offline-sync'
 import { getOfflineProperties } from '@/services/db'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 export const dynamic = 'force-dynamic'
 
@@ -314,12 +315,10 @@ export default function PropertiesPage() {
                     <p className="text-sm">Você está vendo uma versão salva dos imóveis. Algumas funções como editar ou adicionar podem estar indisponíveis.</p>
                 </div>
             )}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="text-center md:text-left">
-                    <h1 className="text-2xl font-bold text-foreground">Imóveis</h1>
-                    <p className="text-sm text-muted-foreground">{filteredProperties.length} imóveis encontrados</p>
-                </div>
-                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
+            <PageHeader 
+                title="Imóveis"
+                subtitle={`${filteredProperties.length} imóveis encontrados`}
+            >
                 <div className="flex items-center justify-center md:justify-end gap-3">
                     <div className="flex items-center bg-card border border-border rounded-lg p-0.5 shadow-sm">
                         <button
@@ -374,7 +373,7 @@ export default function PropertiesPage() {
                         Importar PDF
                     </button>
                 </div>
-            </div>
+            </PageHeader>
 
             {viewMode === 'gallery' ? (
                 <PropertyGallery
