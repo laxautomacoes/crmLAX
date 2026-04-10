@@ -50,11 +50,11 @@ export async function getAssets(tenantId: string, status?: string) {
                 if (fallbackError) throw fallbackError
 
                 // Mapear description do details se existir
-                const mappedData = (fallbackData || []).map((item: any) => ({
+                const mappedData = (fallbackData || []).map((item) => ({
                     ...item,
-                    description: item.description || (item.details as any)?.description,
-                    status: item.status || 'Disponível',
-                    is_archived: item.is_archived || false
+                    description: (item as any).description || (item.details as any)?.description,
+                    status: (item as any).status || 'Disponível',
+                    is_archived: (item as any).is_archived || false
                 }))
                 return { success: true, data: mappedData }
             }
@@ -62,9 +62,9 @@ export async function getAssets(tenantId: string, status?: string) {
         }
 
         // Garantir que a description seja lida do details se a coluna raiz estiver vazia
-        const mappedData = (data || []).map((item: any) => ({
+        const mappedData = (data || []).map((item) => ({
             ...item,
-            description: item.description || (item.details as any)?.description
+            description: (item as any).description || (item.details as any)?.description
         }))
 
         return { success: true, data: mappedData }
@@ -399,9 +399,9 @@ export async function bulkCreateAssets(tenantId: string, assetsData: any[]) {
                     return { success: true }
                 }
 
-                const resultData = retryData?.map((item: any) => ({
+                const resultData = retryData?.map((item) => ({
                     ...item,
-                    description: item.description || item.details?.description
+                    description: (item as any).description || (item.details as any)?.description
                 }))
 
                 return { success: true, data: resultData }

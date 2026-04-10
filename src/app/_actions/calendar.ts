@@ -54,10 +54,10 @@ export async function createEvent(data: Partial<CalendarEvent>) {
         'event_type', 'lead_id', 'asset_id', 'metadata', 'reminder_sent'
     ];
 
-    const insertData: any = {};
+    const insertData: Record<string, any> = {};
     allowedFields.forEach(field => {
         if (field in data) {
-            insertData[field] = (data as any)[field];
+            insertData[field] = (data as Record<string, any>)[field];
         }
     });
 
@@ -100,10 +100,10 @@ export async function updateEvent(eventId: string, data: Partial<CalendarEvent>)
         'event_type', 'lead_id', 'asset_id', 'metadata', 'reminder_sent'
     ];
 
-    const updateData: any = {};
+    const updateData: Record<string, any> = {};
     allowedFields.forEach(field => {
         if (field in data) {
-            updateData[field] = (data as any)[field];
+            updateData[field] = (data as Record<string, any>)[field];
         }
     });
 

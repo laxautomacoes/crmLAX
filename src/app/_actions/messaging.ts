@@ -8,7 +8,9 @@ import { headers } from 'next/headers'
 
 
 
-export async function sendPropertyEmail(leadId: string, leadEmail: string, propertyData: any, config?: any) {
+import { Tables } from '@/lib/supabase/database.types'
+
+export async function sendPropertyEmail(leadId: string, leadEmail: string, propertyData: Tables<'assets'>, config?: any) {
     const tenant = await getTenantFromHeaders()
     if (!tenant) return { success: false, error: 'Tenant not found' }
 
@@ -30,29 +32,29 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
         if (config.showType === false) queryParams.set('cty', '0')
         
         // Add media selections as indices
-        if (config.images && propertyData.images) {
+        if (config.images && (propertyData as any).images) {
             const imageIndices = config.images
-                .map((url: string) => (propertyData.images || []).indexOf(url))
+                .map((url: string) => ((propertyData as any).images || []).indexOf(url))
                 .filter((idx: number) => idx !== -1)
-            if (imageIndices.length < propertyData.images.length) {
+            if (imageIndices.length < (propertyData as any).images.length) {
                 queryParams.set('ci', imageIndices.join(','))
             }
         }
 
-        if (config.videos && propertyData.videos) {
+        if (config.videos && (propertyData as any).videos) {
             const videoIndices = config.videos
-                .map((url: string) => (propertyData.videos || []).indexOf(url))
+                .map((url: string) => ((propertyData as any).videos || []).indexOf(url))
                 .filter((idx: number) => idx !== -1)
-            if (videoIndices.length < propertyData.videos.length) {
+            if (videoIndices.length < (propertyData as any).videos.length) {
                 queryParams.set('cv', videoIndices.join(','))
             }
         }
 
-        if (config.documents && propertyData.documents) {
+        if (config.documents && (propertyData as any).documents) {
             const docIndices = config.documents
-                .map((doc: any) => (propertyData.documents || []).findIndex((d: any) => d.url === doc.url))
+                .map((doc: any) => ((propertyData as any).documents || []).findIndex((d: any) => d.url === doc.url))
                 .filter((idx: number) => idx !== -1)
-            if (docIndices.length < propertyData.documents.length) {
+            if (docIndices.length < (propertyData as any).documents.length) {
                 queryParams.set('cdoc', docIndices.join(','))
             }
         }
@@ -63,11 +65,11 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
 
     // Apply configuration if provided
     const displayTitle = config?.title !== false ? propertyData.title : 'Imóvel disponível'
-    const displayPrice = config?.price !== false ? `R$ ${new Intl.NumberFormat('pt-BR').format(propertyData.price)}` : 'Preço sob consulta'
-    const displayImages = config?.images?.length > 0 ? config.images : propertyData.images || []
+    const displayPrice = config?.price !== false ? `R$ ${new Intl.NumberFormat('pt-BR').format(propertyData.price || 0)}` : 'Preço sob consulta'
+    const displayImages = config?.images?.length > 0 ? config.images : (propertyData as any).images || []
     
     const showDetails = config?.details !== 'none'
-    const details = propertyData.details || {}
+    const details = (propertyData.details as any) || {}
     
     try {
         if (!process.env.RESEND_API_KEY) {

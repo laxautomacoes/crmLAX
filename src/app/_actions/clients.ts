@@ -65,7 +65,7 @@ export async function getClients(tenantId: string) {
     }
 
     // Mapear para o formato esperado pelo front
-    const clients = (contacts as any[])?.map((contact) => {
+    const clients = (contacts || []).map((contact) => {
         // Pegar o lead mais recente ou ativo
         const activeLead = (contact.leads as any[])?.sort((a, b) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -101,9 +101,9 @@ export async function getClients(tenantId: string) {
             images: contact.images || [],
             videos: contact.videos || [],
             documents: contact.documents || [],
-            broker_name: activeLead?.profiles?.full_name || 'Não atribuído',
+            broker_name: (activeLead as any)?.profiles?.full_name || 'Não atribuído',
             assigned_to: activeLead?.assigned_to,
-            leads: (contact.leads as any[])?.map((l) => ({
+            leads: ((contact.leads as any[]) || []).map((l) => ({
                 ...l,
                 status_name: l.lead_stages?.name || l.status
             }))

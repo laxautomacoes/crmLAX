@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from './profile'
+import { Tables } from '@/lib/supabase/database.types'
 
 export interface DashboardMetrics {
     kpis: {
@@ -77,7 +78,7 @@ export async function getDashboardMetrics(tenantId: string) {
             .select('id, name')
             .eq('tenant_id', tenantId)
 
-        const winStage = (allStages as any[])?.find((s) =>
+        const winStage = (allStages || []).find((s) =>
             s.name.toLowerCase().includes('ganho') ||
             s.name.toLowerCase().includes('fechado') ||
             s.name.toLowerCase().includes('concluído')
@@ -129,8 +130,8 @@ export async function getDashboardMetrics(tenantId: string) {
         }
 
         // Deduplicar estágios por nome (camada extra de proteção)
-        const uniqueStagesMap = new Map();
-        (stages as any[]).forEach(stage => {
+        const uniqueStagesMap = new Map<string, Tables<'lead_stages'>>();
+        (stages || []).forEach(stage => {
             if (!uniqueStagesMap.has(stage.name)) {
                 uniqueStagesMap.set(stage.name, stage);
             }
@@ -185,11 +186,11 @@ export async function getDashboardMetrics(tenantId: string) {
 
         if (recentError) throw recentError
 
-        const recentLeads = (recentLeadsData as any[] || []).map((lead) => ({
+        const recentLeads = (recentLeadsData || []).map((lead: any) => ({
             id: lead.id,
             name: lead.contacts?.name || 'Sem nome',
             interest: lead.source || 'N/A',
-            status: (stages as any[])?.find((s) => s.id === lead.stage_id)?.name || 'Novo',
+            status: (stages || []).find((s) => s.id === lead.stage_id)?.name || 'Novo',
             created_at: lead.created_at
         }))
 

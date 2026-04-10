@@ -189,7 +189,7 @@ export async function requestEmailChange(newEmail: string) {
 
         // Criar notificações para os admins (se houver)
         if (admins && admins.length > 0) {
-            const notificationPromises = admins.map((admin: any) => 
+            const notificationPromises = admins.map((admin) => 
                 notificationService.create({
                     user_id: admin.id,
                     tenant_id: profile.tenant_id,

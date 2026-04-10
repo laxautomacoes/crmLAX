@@ -23,7 +23,7 @@ export async function getPipelineData(tenantId: string) {
 
     // Deduplicar estágios por order_index (camada extra de proteção)
     const uniqueStagesMap = new Map();
-    (stagesResult.data || []).forEach((stage: any) => {
+    (stagesResult.data || []).forEach((stage) => {
         if (!uniqueStagesMap.has(stage.order_index)) {
             uniqueStagesMap.set(stage.order_index, stage);
         }
@@ -59,7 +59,7 @@ export async function getPipelineData(tenantId: string) {
     }
 
     // Mapear leads para o formato do front
-    const formattedLeads = leads.map((lead: any) => ({
+    const formattedLeads = (leads || []).map((lead: any) => ({
         id: lead.id,
         name: lead.contacts?.name || 'Sem nome',
         phone: lead.contacts?.phone || '',
@@ -72,13 +72,13 @@ export async function getPipelineData(tenantId: string) {
         lead_source: lead.lead_source || 'Direto',
         campaign: lead.campaign,
         asset_id: lead.asset_id,
-        date: lead.date || (lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : null),
+        date: (lead as any).date || (lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : null),
         assigned_to: lead.assigned_to,
-        broker_name: lead.profiles?.full_name || 'Não atribuído',
-        images: lead.images || [],
-        videos: lead.videos || [],
-        documents: lead.documents || [],
-        whatsapp_chat: lead.whatsapp_chat || []
+        broker_name: (lead as any).profiles?.full_name || 'Não atribuído',
+        images: (lead as any).images || [],
+        videos: (lead as any).videos || [],
+        documents: (lead as any).documents || [],
+        whatsapp_chat: (lead as any).whatsapp_chat || []
     }));
 
     return {
@@ -322,7 +322,7 @@ export async function deleteLead(leadId: string) {
                 .neq('id', currentProfile.id); // Não notificar a si mesmo
 
             if (admins && admins.length > 0) {
-                await Promise.all(admins.map((admin: any) => 
+                await Promise.all(admins.map((admin) => 
                     notificationService.create({
                         user_id: admin.id,
                         tenant_id: currentProfile.tenant_id as string,

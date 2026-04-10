@@ -51,13 +51,13 @@ export async function matchLeadToProperties(leadId: string, tenantId: string, pr
     }
 
     // 3. Montar prompt rico
-    const interactionsSummary = (lead.interactions as any[])
-        ?.slice(-10)
+    const interactionsSummary = (lead.interactions || [])
+        .slice(-10)
         .map((i: any) => `[${i.type}] ${i.content}`)
         .join('\n') || 'Sem interações registradas.';
 
-    const assetsCatalog = assets.map((a: any) => {
-        const d = a.details || {};
+    const assetsCatalog = (assets || []).map((a) => {
+        const d = (a.details as any) || {};
         return `ID:${a.id} | ${a.title} | Tipo:${a.type} | Preço:R$${a.price} | ${d.dormitorios || d.quartos || 0} dormitórios | ${d.area_privativa || 0}m² | Bairro:${d.endereco?.bairro || 'N/A'}`;
     }).join('\n');
 

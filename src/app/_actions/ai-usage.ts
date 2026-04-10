@@ -2,7 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
-import { Tables } from "@/lib/supabase/database.types";
+import { Tables } from "../../lib/supabase/database.types";
 
 /**
  * Busca estatísticas agregadas de uso de IA.
@@ -28,18 +28,18 @@ export async function getAIUsageStats() {
     const { data, error } = await query;
     if (error) throw error;
 
-    const usage = (data || []) as Tables<'ai_usage'>[];
+    const usageData = (data || []) as Tables<'ai_usage'>[];
 
     // Agregação simples
     const stats = {
         total_tokens: 0,
         gpt_count: 0,
         gemini_count: 0,
-        total_requests: usage.length,
+        total_requests: usageData.length,
         usage_by_day: {} as Record<string, { gpt: number, gemini: number }>,
     };
 
-    usage.forEach(item => {
+    usageData.forEach((item: Tables<'ai_usage'>) => {
         stats.total_tokens += (item.total_tokens || 0);
         const isGPT = item.model?.toLowerCase().includes('gpt');
         if (isGPT) stats.gpt_count++;
