@@ -44,6 +44,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
     const [properties, setProperties] = useState<any[]>([]);
     const [selectedProp, setSelectedProp] = useState<any>(null);
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
+    const [showGuide, setShowGuide] = useState(false);
 
     useEffect(() => {
         const init = async () => {
@@ -147,13 +148,90 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
                 title="Marketing"
                 subtitle="Automatize suas redes sociais e conecte-se com mais clientes."
             >
-                {!hasProPlan && (
-                    <div className="flex items-center gap-2 bg-gradient-to-r from-[#404F4F] to-[#2d3939] px-4 py-2 rounded-xl border-l-4 border-[#FFE600] shadow-lg">
-                        <Sparkles className="h-4 w-4 text-[#FFE600]" />
-                        <span className="text-white text-xs font-bold uppercase tracking-wider">Upgrade Disponível</span>
-                    </div>
-                )}
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setShowGuide(!showGuide)}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-border/50 text-[#404F4F] text-xs font-bold hover:bg-gray-50 transition-all shadow-sm"
+                    >
+                        <AlertCircle className="h-4 w-4 text-[#FFE600]" />
+                        Como conectar?
+                    </button>
+                    {!hasProPlan && (
+                        <div className="flex items-center gap-2 bg-gradient-to-r from-[#404F4F] to-[#2d3939] px-4 py-2 rounded-xl border-l-4 border-[#FFE600] shadow-lg">
+                            <Sparkles className="h-4 w-4 text-[#FFE600]" />
+                            <span className="text-white text-xs font-bold uppercase tracking-wider">Upgrade Disponível</span>
+                        </div>
+                    )}
+                </div>
             </PageHeader>
+
+            {/* Manual de Conexão */}
+            {showGuide && (
+                <div className="bg-white rounded-3xl border border-[#FFE600]/30 shadow-xl overflow-hidden animate-in slide-in-from-top-4 duration-500">
+                    <div className="p-8 space-y-8">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <div className="p-3 rounded-2xl bg-[#FFE600]/10">
+                                    <MetaIcon className="h-6 w-6 text-[#404F4F]" />
+                                </div>
+                                <div>
+                                    <h3 className="font-black text-[#404F4F] text-xl">Guia de Conexão: Facebook & Instagram</h3>
+                                    <p className="text-sm text-muted-foreground">Siga estes passos para configurar sua conta de anúncios corretamente.</p>
+                                </div>
+                            </div>
+                            <button 
+                                onClick={() => setShowGuide(false)}
+                                className="text-muted-foreground hover:text-[#404F4F] transition-colors"
+                            >
+                                <RefreshCw className="h-5 w-5 rotate-45" />
+                            </button>
+                        </div>
+
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {[
+                                {
+                                    step: "01",
+                                    title: "Requisitos Meta",
+                                    desc: "Você precisa de uma Página no Facebook e uma conta de anúncios no Meta Business Suite."
+                                },
+                                {
+                                    step: "02",
+                                    title: "Vínculo Instagram",
+                                    desc: "Seu Instagram deve ser Profissional e estar vinculado à sua Página do Facebook no Business Suite."
+                                },
+                                {
+                                    step: "03",
+                                    title: "Permissões",
+                                    desc: "Ao clicar em Conectar, autorize todas as permissões solicitadas na janela da Meta (Checkboxes)."
+                                },
+                                {
+                                    step: "04",
+                                    title: "Pronto para Uso",
+                                    desc: "Após a autorização, você retornará ao CRM e poderá criar anúncios e postagens instantaneamente."
+                                }
+                            ].map((s, i) => (
+                                <div key={i} className="relative p-6 rounded-2xl bg-gray-50 border border-gray-100 hover:border-[#FFE600]/50 transition-colors group">
+                                    <span className="absolute top-4 right-4 text-4xl font-black text-[#404F4F]/5 group-hover:text-[#FFE600]/10 transition-colors tracking-tighter">
+                                        {s.step}
+                                    </span>
+                                    <h4 className="font-bold text-[#404F4F] mb-2">{s.title}</h4>
+                                    <p className="text-xs text-muted-foreground leading-relaxed">{s.desc}</p>
+                                </div>
+                            ))}
+                        </div>
+
+                        <div className="flex items-start gap-4 p-4 rounded-2xl bg-blue-50 border border-blue-100">
+                            <Zap className="h-5 w-5 text-blue-500 mt-0.5 shrink-0" />
+                            <div className="space-y-1">
+                                <p className="text-[11px] font-bold text-blue-900 uppercase tracking-wider">Dica Importante</p>
+                                <p className="text-sm text-blue-800 leading-relaxed">
+                                    Se você já tentou conectar antes e as permissões não apareceram, acesse as "Configurações de Negócio" no seu Facebook pessoal, vá em "Integrações" e remova o aplicativo do CRM LAX para iniciar novamente com todas as permissões limpas.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {isLoading ? (
                 <div className="flex items-center justify-center h-64 bg-card rounded-3xl border border-border/50 shadow-sm">
