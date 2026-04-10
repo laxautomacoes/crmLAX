@@ -2,6 +2,7 @@
 
 import { createClient } from "@/lib/supabase/server";
 import { revalidatePath } from "next/cache";
+import { Tables } from "@/lib/supabase/database.types";
 
 /**
  * Busca estatísticas agregadas de uso de IA.
@@ -24,8 +25,10 @@ export async function getAIUsageStats() {
         query = query.eq('tenant_id', profile?.tenant_id);
     }
 
-    const { data: usage, error } = await query;
+    const { data, error } = await query;
     if (error) throw error;
+
+    const usage = (data || []) as Tables<'ai_usage'>[];
 
     // Agregação simples
     const stats = {
@@ -75,7 +78,7 @@ export async function getAIPlanConfigs() {
         .order('display_order', { ascending: true } as any);
 
     if (error) throw error;
-    return configs;
+    return (configs || []) as Tables<'plan_limits'>[];
 }
 
 /**
@@ -140,5 +143,5 @@ export async function getDetailedAIUsage(limit = 50) {
 
     const { data, error } = await query.limit(limit);
     if (error) throw error;
-    return data;
+    return (data || []) as (Tables<'ai_usage'> & { tenants: { name: string } | null })[];
 }
