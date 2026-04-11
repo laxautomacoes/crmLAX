@@ -151,7 +151,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
                 <div className="flex items-center gap-3">
                     <button
                         onClick={() => setShowGuide(!showGuide)}
-                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white border border-border/50 text-[#404F4F] text-xs font-bold hover:bg-gray-50 transition-all shadow-sm"
+                        className="flex items-center gap-2 px-4 py-3 md:py-2 rounded-xl bg-white border border-border/50 text-[#404F4F] text-sm font-bold hover:bg-gray-50 transition-all shadow-sm"
                     >
                         <AlertCircle className="h-4 w-4 text-[#FFE600]" />
                         Como conectar?

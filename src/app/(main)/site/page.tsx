@@ -3,6 +3,7 @@ import { Metadata } from 'next'
 import { getProfile } from '@/app/_actions/profile'
 import { createClient } from '@/lib/supabase/server'
 import { ExternalLink } from 'lucide-react'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 export const metadata: Metadata = {
     title: 'Configurações do Site | CRM LAX',
@@ -27,25 +28,20 @@ export default async function SitePage() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
-            <div className="flex flex-row items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-foreground">
-                    Configurações do Site
-                </h1>
-                
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <PageHeader title="Configurações do Site">
                 {siteUrl !== '#' && (
                     <a 
                         href={siteUrl} 
                         target="_blank" 
                         rel="noopener noreferrer"
-                        className="inline-flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground hover:opacity-90 text-sm font-bold rounded-lg transition-all active:scale-95 shadow-sm"
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
                     >
                         <ExternalLink size={16} />
                         Ver site
                     </a>
                 )}
-            </div>
-            <div className="h-px bg-foreground/10 w-full" />
+            </PageHeader>
 
             <SiteSettings />
         </div>

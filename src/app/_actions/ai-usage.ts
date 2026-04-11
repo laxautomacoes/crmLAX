@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from "@/lib/supabase/server";
+import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { Tables } from "../../lib/supabase/database.types";
 
@@ -100,12 +101,14 @@ export async function updatePlanAIProvider(planType: string, provider: 'gemini' 
     const updateData: any = { ai_provider: provider };
     if (model) updateData.ai_model = model;
 
-    const { error } = await supabase
+    const adminClient = createAdminClient();
+    const { error, count } = await adminClient
         .from('plan_limits')
-        .update(updateData)
+        .update(updateData, { count: 'exact' })
         .eq('plan_type', planType);
 
     if (error) return { error: error.message };
+    if (count === 0) return { error: `Plano '${planType}' não encontrado para atualização.` };
 
     revalidatePath('/settings/ias');
     return { success: true };

@@ -206,7 +206,7 @@ export default function LeadsPage() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader title="Leads">
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
                     <button

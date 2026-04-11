@@ -347,7 +347,7 @@ export default function PropertiesPage() {
 
                     <button
                         onClick={() => setIsFiltersOpen(true)}
-                        className={`flex items-center gap-2 px-4 py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest')
+                        className={`flex items-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest')
                             ? 'bg-primary text-primary-foreground border-primary'
                             : 'bg-card border-border text-foreground hover:bg-muted'
                             }`}
@@ -358,7 +358,7 @@ export default function PropertiesPage() {
 
                     <button
                         onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
                     >
                         <Plus size={18} />
                         Novo Imóvel
@@ -366,7 +366,7 @@ export default function PropertiesPage() {
 
                     <button
                         onClick={() => setIsImportPDFOpen(true)}
-                        className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-2 rounded-lg hover:bg-primary/20 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                        className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-3 md:py-2 rounded-lg hover:bg-primary/20 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
                         title="Importar Tabela de Preços via IA"
                     >
                         <FileText size={18} />

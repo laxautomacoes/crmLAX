@@ -167,7 +167,7 @@ export default function AgendaPage() {
             <PageHeader title="Agenda">
                 <button
                     onClick={() => handleAddEvent(new Date())}
-                    className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold px-4 py-2 rounded-lg flex items-center gap-2 transition-all transform active:scale-[0.99] shadow-sm w-fit"
+                    className="bg-secondary hover:opacity-90 text-secondary-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg flex items-center gap-2 transition-all transform active:scale-[0.99] shadow-sm w-fit whitespace-nowrap"
                 >
                     <Plus size={18} />
                     Agendar

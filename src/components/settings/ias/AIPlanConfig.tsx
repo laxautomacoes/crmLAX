@@ -23,8 +23,11 @@ export function AIPlanConfig({ configs }: Props) {
     const [localConfigs, setLocalConfigs] = useState(configs);
 
     useEffect(() => {
-        setLocalConfigs(configs);
-    }, [configs]);
+        // Só atualiza se não estivermos no meio de uma transição
+        if (!isPending) {
+            setLocalConfigs(configs);
+        }
+    }, [configs, isPending]);
 
     const models = {
         openai: [
@@ -41,20 +44,24 @@ export function AIPlanConfig({ configs }: Props) {
         ]
     };
 
-    const handleUpdate = async (planType: string, provider: 'gemini' | 'openai', model?: string) => {
-        const currentModel = model || (provider === 'openai' ? 'gpt-4o-mini' : 'gemini-3-flash');
+    const handleUpdate = async (originalPlanType: string, provider: 'gemini' | 'openai', model?: string) => {
+        const currentModel = model || (provider === 'openai' ? 'gpt-4o' : 'gemini-3-flash');
         
+        // Atualização otimista
         const updated = localConfigs.map(p => 
-            p.plan_type === planType ? { ...p, ai_provider: provider, ai_model: currentModel } : p
+            p.plan_type === originalPlanType ? { ...p, ai_provider: provider, ai_model: currentModel } : p
         );
         setLocalConfigs(updated);
 
         startTransition(async () => {
             try {
-                const result = await updatePlanAIProvider(planType, provider, currentModel);
+                const result = await updatePlanAIProvider(originalPlanType, provider, currentModel);
                 if (result.success) {
                     toast.success('Configuração atualizada.');
-                    router.refresh();
+                    // Pequeno delay para garantir que o Supabase tenha propagado a alteração
+                    setTimeout(() => {
+                        router.refresh();
+                    }, 100);
                 } else {
                     toast.error('Erro: ' + result.error);
                     setLocalConfigs(configs);
@@ -90,7 +97,7 @@ export function AIPlanConfig({ configs }: Props) {
                             {/* Provider Selection (Segmented) */}
                             <div className="relative flex p-1 bg-slate-50 rounded-2xl border border-slate-100 h-12">
                                 <div 
-                                    className={`absolute inset-y-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm border border-slate-200/50 transition-all duration-300 ease-out ${
+                                    className={`absolute inset-y-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm border border-slate-200/50 transition-all duration-300 ease-out pointer-events-none ${
                                         plan.ai_provider === 'openai' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'
                                     }`}
                                 />
@@ -98,7 +105,7 @@ export function AIPlanConfig({ configs }: Props) {
                                 <button
                                     onClick={() => handleUpdate(plan.plan_type, 'gemini')}
                                     disabled={isPending}
-                                    className={`relative flex-1 flex items-center justify-center gap-2 text-[10px] font-black transition-colors ${
+                                    className={`relative z-10 flex-1 flex items-center justify-center gap-2 text-[10px] font-black transition-colors ${
                                         plan.ai_provider === 'gemini' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-500'
                                     }`}
                                 >
@@ -109,12 +116,12 @@ export function AIPlanConfig({ configs }: Props) {
                                 <button
                                     onClick={() => handleUpdate(plan.plan_type, 'openai')}
                                     disabled={isPending}
-                                    className={`relative flex-1 flex items-center justify-center gap-2 text-[10px] font-black transition-colors ${
+                                    className={`relative z-10 flex-1 flex items-center justify-center gap-2 text-[10px] font-black transition-colors ${
                                         plan.ai_provider === 'openai' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-500'
                                     }`}
                                 >
                                     <Globe className="w-3.5 h-3.5" />
-                                    GPT-4O
+                                    GPT
                                 </button>
                             </div>
 

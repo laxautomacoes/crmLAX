@@ -128,7 +128,7 @@ export default function RoadmapPage() {
                 {isSuperAdmin && (
                     <button
                         onClick={() => handleOpenModal()}
-                        className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2.5 px-6 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
+                        className="bg-secondary hover:opacity-90 text-secondary-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
                     >
                         <Plus size={20} />
                         Novo Item

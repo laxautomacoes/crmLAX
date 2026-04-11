@@ -36,6 +36,7 @@ Seguir rigorosamente para evitar inconsistências visuais:
 - **Cards Principais**: `rounded-2xl` (16px).
 - **Inputs (Campos)**: `rounded-lg` (8px).
 - **Botões (Padrão)**: `rounded-lg` (8px).
+- **Botões de Header**: `px-4 py-3 md:py-2` (Padrão de altura: 48px mobile / 40px desktop).
 - **Modais e Overlays**: `rounded-2xl` (16px).
 - **Badges e Avatares**: `rounded-full`.
 - **Bordas**: `border border-gray-100` ou `border-gray-200` para separação sutil.
@@ -69,6 +70,7 @@ Todas as telas principais devem utilizar o componente `<PageHeader />` para gara
 - **Layout (Desktop)**: `flex justify-between items-center gap-4`. Alinhamento `md:text-left`.
 - **Layout (Mobile)**: `text-center`, seguido de um separador `h-px bg-foreground/25 w-full mt-2 mb-6`.
 - **Botões de Ação**: Alinhados à direita no desktop e centralizados no mobile, com `gap-3`.
+- **Botões de Ação (Padding)**: Sempre utilizar `px-4 py-3 md:py-2` para garantir consistência de altura e usabilidade em telas touch.
 
 ---
 

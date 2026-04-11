@@ -8,6 +8,7 @@ import { NoteModal } from '@/components/dashboard/notes/NoteModal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 // Componente local para o Dropdown de Anexos
 function AttachmentsDropdown({ attachments }: { attachments: any[] }) {
@@ -117,10 +118,7 @@ export default function NotesPage() {
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            {/* Header */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-foreground text-center md:text-left">Notas</h1>
-                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
+            <PageHeader title="Notas">
                 <div className="flex items-center justify-center md:justify-end gap-3">
                     <FormInput
                         placeholder="Buscar notas..."
@@ -131,7 +129,7 @@ export default function NotesPage() {
                     />
                     
                     {/* View Toggle */}
-                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm">
+                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm h-10 md:h-[40px]">
                         <button
                             onClick={() => setViewMode('grid')}
                             className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
@@ -153,13 +151,13 @@ export default function NotesPage() {
                             setEditingNote(null)
                             setIsModalOpen(true)
                         }}
-                        className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                        className="flex items-center gap-2 px-4 py-3 md:py-2 bg-secondary text-secondary-foreground rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
                     >
                         <Plus size={18} />
                         Nova Nota
                     </button>
                 </div>
-            </div>
+            </PageHeader>
 
             {/* Listagem */}
             {isLoading ? (
