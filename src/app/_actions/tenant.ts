@@ -276,3 +276,15 @@ export async function verifyTenantCRMSubdomain(tenantId: string) {
         return { success: false, error: 'Erro técnico durante a verificação do subdomínio CRM.' }
     }
 }
+
+export async function getPlatformBranding() {
+    const supabase = await createClient()
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('branding')
+        .eq('slug', 'lax')
+        .maybeSingle()
+
+    return tenant?.branding || null
+}

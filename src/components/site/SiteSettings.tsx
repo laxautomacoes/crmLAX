@@ -391,7 +391,7 @@ export function SiteSettings() {
                                         value={branding.address?.street || ''}
                                         onChange={(e) => updateAddress('street', e.target.value)}
                                         placeholder="Ex: Av. Atlântica"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -401,7 +401,7 @@ export function SiteSettings() {
                                         value={branding.address?.number || ''}
                                         onChange={(e) => updateAddress('number', e.target.value)}
                                         placeholder="Ex: 500"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -411,7 +411,7 @@ export function SiteSettings() {
                                         value={branding.address?.complement || ''}
                                         onChange={(e) => updateAddress('complement', e.target.value)}
                                         placeholder="Ex: Sala 201"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -421,7 +421,7 @@ export function SiteSettings() {
                                         value={branding.address?.neighborhood || ''}
                                         onChange={(e) => updateAddress('neighborhood', e.target.value)}
                                         placeholder="Ex: Centro"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -431,7 +431,7 @@ export function SiteSettings() {
                                         value={branding.address?.city || ''}
                                         onChange={(e) => updateAddress('city', e.target.value)}
                                         placeholder="Ex: Balneário Camboriú"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -441,7 +441,7 @@ export function SiteSettings() {
                                         value={branding.address?.state || ''}
                                         onChange={(e) => updateAddress('state', e.target.value)}
                                         placeholder="Ex: SC"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -451,7 +451,7 @@ export function SiteSettings() {
                                         value={branding.address?.zip_code || ''}
                                         onChange={(e) => updateAddress('zip_code', e.target.value)}
                                         placeholder="00000-000"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -472,7 +472,7 @@ export function SiteSettings() {
                                         value={branding.social_links?.instagram || ''}
                                         onChange={(e) => updateSocial('instagram', e.target.value)}
                                         placeholder="https://instagram.com/sua_empresa"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -482,7 +482,7 @@ export function SiteSettings() {
                                         value={branding.social_links?.facebook || ''}
                                         onChange={(e) => updateSocial('facebook', e.target.value)}
                                         placeholder="https://facebook.com/sua_empresa"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -492,7 +492,7 @@ export function SiteSettings() {
                                         value={branding.social_links?.linkedin || ''}
                                         onChange={(e) => updateSocial('linkedin', e.target.value)}
                                         placeholder="https://linkedin.com/company/sua_empresa"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -502,7 +502,7 @@ export function SiteSettings() {
                                         value={branding.social_links?.youtube || ''}
                                         onChange={(e) => updateSocial('youtube', e.target.value)}
                                         placeholder="https://youtube.com/@sua_empresa"
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -523,7 +523,7 @@ export function SiteSettings() {
                                         onChange={(e) => setBranding(prev => ({ ...prev, privacy_policy: e.target.value }))}
                                         placeholder="Insira o texto da sua Política de Privacidade aqui..."
                                         rows={4}
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
                                     />
                                 </div>
                                 <div className="space-y-1">
@@ -533,7 +533,7 @@ export function SiteSettings() {
                                         onChange={(e) => setBranding(prev => ({ ...prev, terms_of_service: e.target.value }))}
                                         placeholder="Insira o texto dos seus Termos de Serviço aqui..."
                                         rows={4}
-                                        className="w-full px-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
+                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
                                     />
                                 </div>
                             </div>

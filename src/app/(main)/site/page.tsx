@@ -23,7 +23,8 @@ export default async function SitePage() {
             .single()
 
         if (tenant) {
-            siteUrl = `/site/${tenant.slug}`
+            const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(profile?.role?.toLowerCase() || '');
+            siteUrl = isSuperAdmin ? '/conheca' : `/site/${tenant.slug}`
         }
     }
 

@@ -31,12 +31,25 @@ const planIcons: Record<string, React.ReactNode> = {
 
 import { useRouter } from 'next/navigation';
 import { Crown } from 'lucide-react';
+import LandingFooter from '@/components/layout/LandingFooter';
+import { getPlatformBranding } from '@/app/_actions/tenant';
+
 
 export default function LandingPage() {
   const [selectedPlan, setSelectedPlan] = React.useState<string>('Starter');
   const [loadingPlan, setLoadingPlan] = React.useState<string | null>(null);
   const [plans, setPlans] = React.useState<any[]>([]);
   const [isLoadingPlans, setIsLoadingPlans] = React.useState(true);
+  const [branding, setBranding] = React.useState<any>(null);
+
+  React.useEffect(() => {
+    async function loadBranding() {
+      const data = await getPlatformBranding();
+      setBranding(data);
+    }
+    loadBranding();
+  }, []);
+
 
   React.useEffect(() => {
     async function fetchPlans() {
@@ -292,23 +305,8 @@ export default function LandingPage() {
         </div>
       </section>
 
-      {/* Footer */}
-      <footer className="py-12 border-t border-white/5 bg-[#0A0D0D]">
-        <div className="container mx-auto px-6 max-w-[1200px] text-center">
-          <div className="flex items-center justify-center mb-6">
-            <Image 
-              src="/logo-full.png" 
-              alt="CRM LAX" 
-              width={220} 
-              height={60} 
-              className="h-14 w-auto object-contain"
-            />
-          </div>
-          <p className="text-gray-500 text-sm font-medium">
-            &copy; {new Date().getFullYear()} CRM LAX. crm.laxperience.online
-          </p>
-        </div>
-      </footer>
+      <LandingFooter branding={branding} />
+
     </div>
   );
 }

@@ -130,9 +130,10 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                     .map(sub => {
                         // Se for o link do site, injetar o slug real
                         if (sub.name === 'Site') {
+                            const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(userRole?.toLowerCase() || '');
                             return {
                                 ...sub,
-                                href: tenantSlug ? `/site/${tenantSlug}` : '#',
+                                href: isSuperAdmin ? '/conheca' : (tenantSlug ? `/site/${tenantSlug}` : '#'),
                                 isExternal: true
                             };
                         }
