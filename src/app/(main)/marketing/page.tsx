@@ -38,6 +38,7 @@ export default async function MarketingPage() {
                         tenantId={profile.tenant_id} 
                         profileId={profile.id}
                         hasProPlan={hasProPlan} 
+                        userRole={profile.role}
                     />
                 </PlanGate>
             </div>

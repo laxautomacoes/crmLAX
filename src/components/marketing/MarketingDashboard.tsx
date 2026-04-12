@@ -33,9 +33,10 @@ interface MarketingDashboardProps {
     tenantId: string;
     profileId: string;
     hasProPlan: boolean;
+    userRole: string;
 }
 
-export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: MarketingDashboardProps) {
+export default function MarketingDashboard({ tenantId, profileId, hasProPlan, userRole }: MarketingDashboardProps) {
     const searchParams = useSearchParams();
     const [isConnecting, setIsConnecting] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
@@ -146,7 +147,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
         <div className="space-y-10 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader 
                 title="Marketing"
-                subtitle="Automatize suas redes sociais e conecte-se com mais clientes."
+                subtitle={userRole === 'superadmin' ? "Divulgue o CRM LAX e gerencie os criativos do sistema." : "Automatize suas redes sociais e conecte-se com mais clientes."}
             >
                 <div className="flex items-center gap-3">
                     <button
@@ -324,54 +325,56 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan }: 
                 </div>
             )}
 
-            {/* Seção de Postagem Rápida */}
-            <div className="space-y-6">
-                <div className="flex items-center">
-                    <h2 className="text-xl font-black text-[#404F4F]">
-                        Imóveis cadastrados
-                    </h2>
-                </div>
+            {/* Seção de Postagem Rápida - Escondida para Superadmin */}
+            {userRole !== 'superadmin' && (
+                <div className="space-y-6">
+                    <div className="flex items-center">
+                        <h2 className="text-xl font-black text-[#404F4F]">
+                            Imóveis cadastrados
+                        </h2>
+                    </div>
 
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-                    {isLoadingProps ? (
-                        [1, 2, 3, 4].map(n => (
-                            <div key={n} className="h-[200px] rounded-2xl bg-[#404F4F]/5 animate-pulse" />
-                        ))
-                    ) : properties.length > 0 ? (
-                        properties.map((prop) => (
-                            <div
-                                key={prop.id}
-                                className="group relative aspect-[4/5] overflow-hidden bg-white rounded-2xl border border-border/50 shadow-sm transition-all hover:shadow-lg"
-                            >
-                                {prop.images?.[0] ? (
-                                    <img src={prop.images[0]} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" alt={prop.title} />
-                                ) : (
-                                    <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
-                                        <ImageIcon className="h-10 w-10" />
-                                    </div>
-                                )}
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        {isLoadingProps ? (
+                            [1, 2, 3, 4].map(n => (
+                                <div key={n} className="h-[200px] rounded-2xl bg-[#404F4F]/5 animate-pulse" />
+                            ))
+                        ) : properties.length > 0 ? (
+                            properties.map((prop) => (
+                                <div
+                                    key={prop.id}
+                                    className="group relative aspect-[4/5] overflow-hidden bg-white rounded-2xl border border-border/50 shadow-sm transition-all hover:shadow-lg"
+                                >
+                                    {prop.images?.[0] ? (
+                                        <img src={prop.images[0]} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" alt={prop.title} />
+                                    ) : (
+                                        <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
+                                            <ImageIcon className="h-10 w-10" />
+                                        </div>
+                                    )}
 
-                                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
-                                    <h4 className="text-white font-bold text-sm line-clamp-1">{prop.title}</h4>
-                                    <div className="flex items-center justify-between mt-2">
-                                        <span className="text-white/80 text-[10px] font-medium">{prop.type}</span>
-                                        <button
-                                            onClick={() => handleQuickPost(prop)}
-                                            className="bg-[#FFE600] text-[#404F4F] p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform hover:scale-110"
-                                        >
-                                            <Instagram className="h-4 w-4" />
-                                        </button>
+                                    <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent flex flex-col justify-end p-4">
+                                        <h4 className="text-white font-bold text-sm line-clamp-1">{prop.title}</h4>
+                                        <div className="flex items-center justify-between mt-2">
+                                            <span className="text-white/80 text-[10px] font-medium">{prop.type}</span>
+                                            <button
+                                                onClick={() => handleQuickPost(prop)}
+                                                className="bg-[#FFE600] text-[#404F4F] p-2 rounded-lg opacity-0 group-hover:opacity-100 transition-opacity transform hover:scale-110"
+                                            >
+                                                <Instagram className="h-4 w-4" />
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
+                            ))
+                        ) : (
+                            <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-border/50 shadow-sm border-solid">
+                                <p className="text-muted-foreground text-sm font-medium">Nenhum imóvel disponível para postagem rápida.</p>
                             </div>
-                        ))
-                    ) : (
-                        <div className="col-span-full py-16 text-center bg-white rounded-3xl border border-border/50 shadow-sm border-solid">
-                            <p className="text-muted-foreground text-sm font-medium">Nenhum imóvel disponível para postagem rápida.</p>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
-            </div>
+            )}
             {/* Modal de Postagem */}
             {selectedProp && (
                 <InstagramPostModal

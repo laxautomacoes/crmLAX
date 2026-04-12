@@ -8,6 +8,7 @@ export const menuItems = [
         name: 'Imóveis',
         icon: Home,
         href: '/properties',
+        roles: ['admin', 'user', 'corretor'],
         subItems: [
             { name: 'Listagem', href: '/properties' },
             { name: 'Análise de m²', href: '/properties/analysis' },
