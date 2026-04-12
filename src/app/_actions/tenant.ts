@@ -150,7 +150,6 @@ export async function verifyTenantDomain(tenantId: string) {
                     });
                 }
             } catch (vercelError) {
-                console.error('Erro ao registrar na Vercel API:', vercelError);
                 // Não falhamos a verificação total por erro na API da Vercel
                 // o usuário ainda pode adicionar manualmente se falhar aqui.
             }
@@ -287,4 +286,20 @@ export async function getPlatformBranding() {
         .maybeSingle()
 
     return tenant?.branding || null
+}
+
+export async function getAllTenants() {
+    const supabase = await createClient()
+
+    const { data: tenants, error } = await supabase
+        .from('tenants')
+        .select(`
+            *,
+            profiles:profiles(count)
+        `)
+        .order('created_at', { ascending: false })
+
+    if (error) return { success: false, error: error.message }
+    
+    return { success: true, data: tenants }
 }

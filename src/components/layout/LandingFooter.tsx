@@ -23,45 +23,32 @@ export default function LandingFooter({ branding }: LandingFooterProps) {
 
   const address = branding?.address;
   const social = branding?.social_links;
+  
+    const socialItems = [
+        { id: 'instagram', name: 'Instagram', icon: <Instagram size={18} />, href: social?.instagram },
+        { id: 'facebook', name: 'Facebook', icon: <Facebook size={18} />, href: social?.facebook },
+        { id: 'linkedin', name: 'LinkedIn', icon: <Linkedin size={18} />, href: social?.linkedin },
+        { id: 'youtube', name: 'YouTube', icon: <Youtube size={18} />, href: social?.youtube },
+        { id: 'whatsapp', name: 'WhatsApp', icon: <MessageCircle size={18} />, href: social?.whatsapp },
+    ].filter(s => s.href);
 
-  const socialIcons = [
-    { id: 'instagram', icon: <Instagram size={20} />, href: social?.instagram },
-    { id: 'facebook', icon: <Facebook size={20} />, href: social?.facebook },
-    { id: 'linkedin', icon: <Linkedin size={20} />, href: social?.linkedin },
-    { id: 'youtube', icon: <Youtube size={20} />, href: social?.youtube },
-    { id: 'whatsapp', icon: <MessageCircle size={20} />, href: social?.whatsapp },
-  ].filter(s => s.href);
-
-  return (
-    <footer className="pt-20 pb-12 bg-[#0A0D0D] border-t border-white/5 relative overflow-hidden">
-      <div className="container mx-auto px-6 max-w-[1200px] relative z-10">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
-          {/* Brand & About */}
-          <div className="md:col-span-1 space-y-6">
-            <Image 
-              src="/logo-full.png" 
-              alt="CRM LAX" 
-              width={180} 
-              height={50} 
-              className="h-12 w-auto object-contain opacity-90"
-            />
-            <p className="text-gray-400 text-sm leading-relaxed font-medium">
-              O CRM LAX é a solução líder em automação e inteligência artificial para o mercado imobiliário brasileiro.
-            </p>
-            <div className="flex items-center gap-4">
-              {socialIcons.map((s) => (
-                <a
-                  key={s.id}
-                  href={s.href}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="p-2 text-gray-400 hover:text-[#FFE600] border border-white/5 hover:border-[#FFE600]/30 rounded-xl bg-white/5 transition-all"
-                >
-                  {s.icon}
-                </a>
-              ))}
-            </div>
-          </div>
+    return (
+        <footer className="pt-20 pb-12 bg-[#0A0D0D] border-t border-white/5 relative overflow-hidden">
+            <div className="container mx-auto px-6 max-w-[1200px] relative z-10">
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-12 mb-16">
+                    {/* Brand & About */}
+                    <div className="md:col-span-1 space-y-6">
+                        <Image 
+                            src="/logo-full.png" 
+                            alt="CRM LAX" 
+                            width={180} 
+                            height={50} 
+                            className="h-12 w-auto object-contain opacity-90"
+                        />
+                        <p className="text-gray-400 text-sm leading-relaxed font-medium">
+                            O CRM LAX é a solução líder em automação e inteligência artificial para o mercado imobiliário brasileiro.
+                        </p>
+                    </div>
 
           {/* Quick Links */}
           <div className="space-y-6">
@@ -104,33 +91,29 @@ export default function LandingFooter({ branding }: LandingFooterProps) {
             </ul>
           </div>
 
-          {/* Address */}
+          {/* Social Networks */}
           <div className="space-y-6">
-            <h4 className="text-white font-bold text-lg">Localização</h4>
-            {address ? (
-              <div className="space-y-4">
-                <div className="flex items-start gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl">
-                  <MapPin className="text-[#FFE600] w-5 h-5 shrink-0 mt-1" />
-                  <div className="text-gray-400 text-sm font-medium leading-relaxed">
-                    {address.street}, {address.number}
-                    {address.complement && <><br />{address.complement}</>}
-                    <br />
-                    {address.neighborhood} - {address.city}, {address.state}
-                    <br />
-                    CEP: {address.zip_code}
-                  </div>
-                </div>
-                <a 
-                  href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(`${address.street}, ${address.number}, ${address.city}`)}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="inline-flex items-center gap-2 text-xs font-bold text-[#FFE600] hover:underline"
-                >
-                  Ver no Google Maps <ExternalLink size={12} />
-                </a>
-              </div>
+            <h4 className="text-white font-bold text-lg">Redes Sociais</h4>
+            {socialItems.length > 0 ? (
+              <ul className="space-y-4">
+                {socialItems.map((s) => (
+                  <li key={s.id}>
+                    <a 
+                      href={s.href} 
+                      target="_blank" 
+                      rel="noopener noreferrer"
+                      className="text-gray-400 hover:text-white transition-colors flex items-center gap-3 group"
+                    >
+                      <div className="p-2 rounded-lg bg-white/5 border border-white/5 group-hover:bg-[#FFE600]/10 group-hover:border-[#FFE600]/30 group-hover:text-[#FFE600] transition-all">
+                        {s.icon}
+                      </div>
+                      <span className="font-medium">{s.name}</span>
+                    </a>
+                  </li>
+                ))}
+              </ul>
             ) : (
-              <p className="text-gray-500 text-sm italic">Informações de localização indisponíveis.</p>
+              <p className="text-gray-500 text-sm italic">Nenhuma rede social configurada.</p>
             )}
           </div>
         </div>

@@ -139,8 +139,21 @@ export default async function proxy(request: NextRequest) {
                 
                 // Caso especial: Super Admin sempre para o domínio de sistema
                 if (profile.role === 'superadmin') {
+                    // Se estiver tentando acessar o dashboard comum, redirecionar para o de superadmin
+                    if (pathname === '/dashboard') {
+                        const url = request.nextUrl.clone();
+                        url.pathname = '/superadmin/dashboard';
+                        return NextResponse.redirect(url);
+                    }
                     redirectUrl.hostname = `crm.${rootDomain}`;
                 } else {
+                    // Proteção: Admin comum tentando acessar rotas de superadmin
+                    if (pathname.startsWith('/superadmin')) {
+                        const url = request.nextUrl.clone();
+                        url.pathname = '/dashboard';
+                        return NextResponse.redirect(url);
+                    }
+
                     // Usuário comum para seu próprio domínio verificado ou subdomínio
                     const { getTenantByUserId } = await import('@/lib/utils/tenant-query');
                     const userTenant = await getTenantByUserId(supabase, user.id);

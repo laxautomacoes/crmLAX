@@ -65,11 +65,20 @@ export function SiteSettings() {
 
             if (userProfile?.tenant_id) {
                 const supabase = createClient()
-                const { data: tenantData } = await supabase
-                    .from('tenants')
-                    .select('*')
-                    .eq('id', userProfile.tenant_id)
-                    .single()
+                const userRole = userProfile?.role?.toLowerCase() || '';
+                const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(userRole);
+
+                let query = supabase.from('tenants').select('*');
+                
+                if (isSuperAdmin) {
+                    // Superadmin edita o branding da plataforma
+                    query = query.eq('slug', 'lax');
+                } else {
+                    // Usuário comum edita seu próprio tenant
+                    query = query.eq('id', userProfile.tenant_id);
+                }
+
+                const { data: tenantData } = await query.maybeSingle();
 
                 if (tenantData) {
                     setTenant(tenantData)
@@ -144,10 +153,11 @@ export function SiteSettings() {
     }
 
     const handleSaveMain = async () => {
-        if (!profile?.tenant_id) return
+        const targetTenantId = tenant?.id || profile?.tenant_id;
+        if (!targetTenantId) return;
         setSaving(true)
 
-        const result = await updateTenantBranding(profile.tenant_id, branding)
+        const result = await updateTenantBranding(targetTenantId, branding)
 
         if (result.success) {
             toast.success('Configurações salvas com sucesso!')

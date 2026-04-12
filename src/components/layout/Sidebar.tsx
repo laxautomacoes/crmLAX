@@ -119,6 +119,15 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
         })
         .map(item => {
             const newItem = { ...item };
+            
+            // Redireciona o dashboard para superadmin
+            if (newItem.name === 'Dashboard') {
+                const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(userRole?.toLowerCase() || '');
+                if (isSuperAdmin) {
+                    newItem.href = '/superadmin/dashboard';
+                }
+            }
+
             if (newItem.subItems) {
                 newItem.subItems = newItem.subItems
                     .filter(sub => {
