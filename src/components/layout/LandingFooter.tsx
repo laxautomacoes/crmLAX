@@ -2,6 +2,7 @@
 
 import React from 'react';
 import Image from 'next/image';
+import Link from 'next/link';
 import { 
   Instagram, 
   Linkedin, 
@@ -11,7 +12,6 @@ import {
   MapPin,
   ExternalLink
 } from 'lucide-react';
-import LegalModal from '@/components/shared/LegalModal';
 import { laxPrivacyPolicy } from '@/docs/lax-automacoes/privacy';
 import { laxTermsOfService } from '@/docs/lax-automacoes/terms';
 
@@ -20,7 +20,6 @@ interface LandingFooterProps {
 }
 
 export default function LandingFooter({ branding }: LandingFooterProps) {
-  const [modalOpen, setModalOpen] = React.useState<'privacy' | 'terms' | null>(null);
 
   const address = branding?.address;
   const social = branding?.social_links;
@@ -79,22 +78,22 @@ export default function LandingFooter({ branding }: LandingFooterProps) {
             <h4 className="text-white font-bold text-lg">Suporte & Legal</h4>
             <ul className="space-y-4">
               <li>
-                <button 
-                  onClick={() => setModalOpen('privacy')} 
+                <Link 
+                  href="/privacidade" 
                   className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 group"
                 >
                   <div className="w-1.5 h-1.5 rounded-full bg-white/10 group-hover:bg-[#FFE600] transition-all" /> 
                   Privacidade
-                </button>
+                </Link>
               </li>
               <li>
-                <button 
-                  onClick={() => setModalOpen('terms')} 
+                <Link 
+                  href="/termos" 
                   className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 group"
                 >
                   <div className="w-1.5 h-1.5 rounded-full bg-white/10 group-hover:bg-[#FFE600] transition-all" /> 
                   Termos de Uso
-                </button>
+                </Link>
               </li>
               <li>
                 <a href="mailto:contato@laxperience.online" className="text-gray-400 hover:text-white transition-colors flex items-center gap-2 group">
@@ -154,20 +153,6 @@ export default function LandingFooter({ branding }: LandingFooterProps) {
 
       {/* Decorative Blur */}
       <div className="absolute bottom-0 right-0 w-96 h-96 bg-[#FFE600]/5 rounded-full blur-[100px] translate-y-1/2 translate-x-1/2 pointer-events-none" />
-
-      {/* Modals */}
-      <LegalModal 
-        isOpen={modalOpen === 'privacy'} 
-        onClose={() => setModalOpen(null)} 
-        title="Política de Privacidade" 
-        content={laxPrivacyPolicy} 
-      />
-      <LegalModal 
-        isOpen={modalOpen === 'terms'} 
-        onClose={() => setModalOpen(null)} 
-        title="Termos de Uso" 
-        content={laxTermsOfService} 
-      />
     </footer>
   );
 }
