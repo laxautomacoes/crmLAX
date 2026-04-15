@@ -1,19 +1,34 @@
-import { LayoutDashboard, Filter, Users, Home, Calendar, FileText, Rocket, Settings, StickyNote, Globe, ShieldAlert, Megaphone } from 'lucide-react';
+import { 
+    LayoutDashboard, Filter, Users, Home, Calendar, FileText, 
+    Rocket, Settings, StickyNote, Globe, ShieldAlert, Megaphone,
+    Building2, ShieldCheck, BrainCircuit, History 
+} from 'lucide-react';
 
 export const menuItems = [
     { name: 'Dashboard', icon: LayoutDashboard, href: '/dashboard' },
     { 
-        name: 'Gestão SaaS', 
-        icon: ShieldAlert, 
-        href: '/superadmin',
-        roles: ['superadmin', 'super_admin', 'super administrador'],
-        subItems: [
-            { name: 'Dashboard', href: '/superadmin/dashboard' },
-            { name: 'Empresas/Tenants', href: '/superadmin/tenants' },
-            { name: 'Planos e Limites', href: '/settings/subscription' },
-            { name: 'Uso de IA', href: '/settings/ias' },
-            { name: 'Logs Globais', href: '/settings/logs' },
-        ]
+        name: 'Empresas', 
+        icon: Building2, 
+        href: '/superadmin/tenants',
+        roles: ['superadmin', 'super_admin', 'super administrador']
+    },
+    { 
+        name: 'Planos e Limites', 
+        icon: ShieldCheck, 
+        href: '/superadmin/plans',
+        roles: ['superadmin', 'super_admin', 'super administrador']
+    },
+    { 
+        name: 'Uso de IA', 
+        icon: BrainCircuit, 
+        href: '/superadmin/ai',
+        roles: ['superadmin', 'super_admin', 'super administrador']
+    },
+    { 
+        name: 'Logs Globais', 
+        icon: History, 
+        href: '/superadmin/logs',
+        roles: ['superadmin', 'super_admin', 'super administrador']
     },
     { name: 'Leads', icon: Filter, href: '/leads', roles: ['admin', 'user', 'corretor'] },
     { name: 'Clientes', icon: Users, href: '/clients', roles: ['admin', 'user', 'corretor'] },

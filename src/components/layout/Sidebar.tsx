@@ -119,7 +119,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
         })
         .map(item => {
             const newItem = { ...item };
-            
+
             // Redireciona o dashboard para superadmin
             if (newItem.name === 'Dashboard') {
                 const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(userRole?.toLowerCase() || '');
@@ -165,9 +165,9 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                                 <div className="w-8 h-8 bg-secondary rounded flex items-center justify-center text-secondary-foreground font-bold">L</div>
                             )
                         ) : (
-                            <Logo 
-                                size="md" 
-                                src={branding?.logo_header || branding?.logo_full} 
+                            <Logo
+                                size="md"
+                                src={branding?.logo_header || branding?.logo_full}
                                 height={branding?.logo_header_height || (branding?.logo_header ? 40 : branding?.logo_height || 40)}
                                 loading={brandingLoading}
                             />
@@ -187,18 +187,18 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                     ))}
                 </nav>
 
-                <Footer 
-                    isCollapsed={isCollapsed} 
-                    onLogout={handleLogout} 
+                <Footer
+                    isCollapsed={isCollapsed}
+                    onLogout={handleLogout}
                     onClose={onClose}
                     profile={userProfile}
                     onSupportClick={() => setIsSupportModalOpen(true)}
                 />
             </div>
 
-            <SupportModal 
-                isOpen={isSupportModalOpen} 
-                onClose={() => setIsSupportModalOpen(false)} 
+            <SupportModal
+                isOpen={isSupportModalOpen}
+                onClose={() => setIsSupportModalOpen(false)}
             />
         </>
     );

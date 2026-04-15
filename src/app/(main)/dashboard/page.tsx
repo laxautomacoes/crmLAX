@@ -2,6 +2,7 @@ import { getDashboardMetrics, getROIMetrics } from '@/app/_actions/dashboard';
 import { getProfile } from '@/app/_actions/profile';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { ROIMetrics } from '@/app/_actions/dashboard';
+import { redirect } from 'next/navigation';
 
 export const dynamic = 'force-dynamic';
 
@@ -14,6 +15,12 @@ export default async function DashboardPage() {
                 Erro ao carregar perfil. Por favor, faça login novamente.
             </div>
         );
+    }
+
+    // Redirecionar superadmin para o dashboard específico
+    const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(profile.role?.toLowerCase() || '');
+    if (isSuperAdmin) {
+        redirect('/superadmin/dashboard');
     }
 
     const [metricsResult, roiResult] = await Promise.all([
