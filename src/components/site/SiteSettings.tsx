@@ -72,7 +72,7 @@ export function SiteSettings() {
                 
                 if (isSuperAdmin) {
                     // Superadmin edita o branding da plataforma
-                    query = query.eq('slug', 'lax');
+                    query = query.eq('is_system', true);
                 } else {
                     // Usuário comum edita seu próprio tenant
                     query = query.eq('id', userProfile.tenant_id);

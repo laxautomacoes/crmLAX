@@ -282,7 +282,7 @@ export async function getPlatformBranding() {
     const { data: tenant } = await supabase
         .from('tenants')
         .select('branding')
-        .eq('slug', 'lax')
+        .eq('is_system', true)
         .maybeSingle()
 
     return tenant?.branding || null
@@ -297,6 +297,7 @@ export async function getAllTenants() {
             *,
             profiles:profiles(count)
         `)
+        .eq('is_system', false)
         .order('created_at', { ascending: false })
 
     if (error) return { success: false, error: error.message }

@@ -198,7 +198,7 @@ export default async function proxy(request: NextRequest) {
     if (tenant && !isDevelopment) {
         const rootGlobalDomain = (process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online').split(':')[0];
         const cleanHost = hostname.split(':')[0];
-        const isMainSystemTenant = tenant.slug === 'lax'; // Slug do SuperAdmin
+        const isMainSystemTenant = (tenant as any).is_system; // Flag de Sistema (Dono)
 
         // Se NÃO for o SuperAdmin e tiver domínio próprio verificado
         if (!isMainSystemTenant && tenant.custom_domain && tenant.custom_domain_crm_verified) {

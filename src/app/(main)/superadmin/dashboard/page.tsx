@@ -7,15 +7,21 @@ import { Users, Building2, BrainCircuit, CreditCard } from 'lucide-react'
 export default async function SuperadminDashboardPage() {
     const supabase = await createClient()
 
-    // 1. Total Tenants
+    // 1. Total Tenants (Excluindo o dono do sistema)
     const { count: tenantCount } = await supabase
         .from('tenants')
         .select('*', { count: 'exact', head: true })
+        .eq('is_system', false)
 
-    // 2. Total Users
+    // 2. Total Usuários (Excluindo usuários do sistema)
+    // Para simplificar, buscamos os IDs dos tenants de sistema primeiro
+    const { data: systemTenants } = await supabase.from('tenants').select('id').eq('is_system', true)
+    const systemTenantIds = systemTenants?.map(t => t.id) || []
+
     const { count: userCount } = await supabase
         .from('profiles')
         .select('*', { count: 'exact', head: true })
+        .not('tenant_id', 'in', `(${systemTenantIds.join(',')})`)
 
     // 3. AI Usage (Total tokens)
     const { data: aiUsage } = await supabase
