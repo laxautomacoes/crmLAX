@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 export async function getTenantByUserId(userId: string) {
@@ -303,4 +304,124 @@ export async function getAllTenants() {
     if (error) return { success: false, error: error.message }
     
     return { success: true, data: tenants }
+}
+
+export async function createTenant(data: { name: string; slug: string; plan_type: string }) {
+    const supabase = await createClient()
+
+    // 0. Validar se o usuário é superadmin
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas superadmins podem criar empresas.' }
+    }
+
+    // Usar cliente admin para ignorar RLS na tabela tenants
+    const supabaseAdmin = createAdminClient()
+
+    // 1. Validar slug único
+    const { data: existing } = await supabaseAdmin
+        .from('tenants')
+        .select('id')
+        .eq('slug', data.slug)
+        .maybeSingle()
+
+    if (existing) {
+        return { success: false, error: 'Este slug já está em uso.' }
+    }
+
+    // 2. Gerar API Key e Branding padrão
+    const apiKey = `lax_${Math.random().toString(36).substring(2, 11)}_${Math.random().toString(36).substring(2, 11)}`
+    const defaultBranding = {
+        primary_color: '#404F4F',
+        secondary_color: '#FFE600',
+        logo_url: null,
+        favicon_url: null,
+        whatsapp: null
+    }
+
+    // 3. Inserir tenant usando o admin client
+    const { data: newTenant, error } = await supabaseAdmin
+        .from('tenants')
+        .insert({
+            name: data.name,
+            slug: data.slug,
+            plan_type: data.plan_type,
+            api_key: apiKey,
+            branding: defaultBranding,
+            is_system: false
+        })
+        .select()
+        .single()
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/superadmin/tenants')
+    return { success: true, data: newTenant }
+}
+
+export async function updateTenant(tenantId: string, data: { name?: string; slug?: string; plan_type?: string; custom_domain?: string; status?: 'active' | 'suspended' }) {
+    const supabase = await createClient()
+
+    // 1. Validar se o usuário é superadmin
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas superadmins podem editar empresas.' }
+    }
+
+    const { error } = await supabase
+        .from('tenants')
+        .update(data)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/superadmin/tenants')
+    return { success: true }
+}
+
+export async function deleteTenant(tenantId: string) {
+    const supabase = await createClient()
+
+    // 1. Validar se o usuário é superadmin
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas superadmins podem excluir empresas.' }
+    }
+
+    // Usar cliente admin para excluir (importante devido ao cascading e RLS restrito)
+    const supabaseAdmin = createAdminClient()
+
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .delete()
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/superadmin/tenants')
+    return { success: true }
 }

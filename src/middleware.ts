@@ -224,6 +224,13 @@ export default async function proxy(request: NextRequest) {
 
     // 5. Adicionar header com tenant_id se identificado
     if (tenant) {
+        // Bloqueio por suspensão de assinatura (Não bloqueia o Superadmin no domínio de sistema se necessário, mas bloqueia o domínio do tenant)
+        if (tenant.status === 'suspended' && !isPublicRoute(pathname) && pathname !== '/suspended') {
+            const suspendedUrl = request.nextUrl.clone()
+            suspendedUrl.pathname = '/suspended'
+            return NextResponse.redirect(suspendedUrl)
+        }
+
         const requestHeaders = new Headers(request.headers)
         requestHeaders.set('x-tenant-id', tenant.id)
         requestHeaders.set('x-tenant-slug', tenant.slug)
