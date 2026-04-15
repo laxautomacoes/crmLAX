@@ -62,10 +62,14 @@ export type Database = {
       assets: {
         Row: {
           created_at: string | null
+          created_by: string | null
+          description: string | null
           details: Json | null
           documents: Json | null
           id: string
           images: Json | null
+          is_archived: boolean | null
+          is_published: boolean | null
           price: number | null
           status: string | null
           tenant_id: string | null
@@ -75,10 +79,14 @@ export type Database = {
         }
         Insert: {
           created_at?: string | null
+          created_by?: string | null
+          description?: string | null
           details?: Json | null
           documents?: Json | null
           id?: string
           images?: Json | null
+          is_archived?: boolean | null
+          is_published?: boolean | null
           price?: number | null
           status?: string | null
           tenant_id?: string | null
@@ -88,10 +96,14 @@ export type Database = {
         }
         Update: {
           created_at?: string | null
+          created_by?: string | null
+          description?: string | null
           details?: Json | null
           documents?: Json | null
           id?: string
           images?: Json | null
+          is_archived?: boolean | null
+          is_published?: boolean | null
           price?: number | null
           status?: string | null
           tenant_id?: string | null
@@ -201,14 +213,19 @@ export type Database = {
           birth_date: string | null
           cpf: string | null
           created_at: string | null
+          documents: Json | null
           email: string | null
           id: string
+          images: Json | null
+          is_archived: boolean | null
           marital_status: string | null
           name: string
+          notes: string | null
           phone: string | null
           primary_interest: string | null
           tags: Json | null
           tenant_id: string | null
+          videos: Json | null
         }
         Insert: {
           address_city?: string | null
@@ -221,14 +238,19 @@ export type Database = {
           birth_date?: string | null
           cpf?: string | null
           created_at?: string | null
+          documents?: Json | null
           email?: string | null
           id?: string
+          images?: Json | null
+          is_archived?: boolean | null
           marital_status?: string | null
           name: string
+          notes?: string | null
           phone?: string | null
           primary_interest?: string | null
           tags?: Json | null
           tenant_id?: string | null
+          videos?: Json | null
         }
         Update: {
           address_city?: string | null
@@ -241,18 +263,64 @@ export type Database = {
           birth_date?: string | null
           cpf?: string | null
           created_at?: string | null
+          documents?: Json | null
           email?: string | null
           id?: string
+          images?: Json | null
+          is_archived?: boolean | null
           marital_status?: string | null
           name?: string
+          notes?: string | null
           phone?: string | null
           primary_interest?: string | null
           tags?: Json | null
           tenant_id?: string | null
+          videos?: Json | null
         }
         Relationships: [
           {
             foreignKeyName: "contacts_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      integrations: {
+        Row: {
+          created_at: string | null
+          credentials: Json | null
+          id: string
+          provider: string
+          settings: Json | null
+          status: string | null
+          tenant_id: string
+          updated_at: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          credentials?: Json | null
+          id?: string
+          provider: string
+          settings?: Json | null
+          status?: string | null
+          tenant_id: string
+          updated_at?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          credentials?: Json | null
+          id?: string
+          provider?: string
+          settings?: Json | null
+          status?: string | null
+          tenant_id?: string
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "integrations_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -342,6 +410,67 @@ export type Database = {
           },
         ]
       }
+      lead_campaigns: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          source_name: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          source_name: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          source_name?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_campaigns_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      lead_sources: {
+        Row: {
+          created_at: string | null
+          id: string
+          name: string
+          tenant_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          name: string
+          tenant_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          name?: string
+          tenant_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "lead_sources_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       lead_stages: {
         Row: {
           created_at: string | null
@@ -378,44 +507,80 @@ export type Database = {
         Row: {
           asset_id: string | null
           assigned_to: string | null
+          campaign: string | null
           contact_id: string | null
           created_at: string | null
+          date: string | null
+          documents: Json | null
           id: string
+          images: Json | null
+          is_archived: boolean | null
+          lead_source: string | null
           notes: string | null
           source: string | null
           stage_id: string | null
           status: string | null
           tenant_id: string | null
+          utm_campaign: string | null
           utm_data: Json | null
+          utm_medium: string | null
+          utm_source: string | null
+          valor_estimado: number | null
           value: number | null
+          videos: Json | null
+          whatsapp_chat: Json | null
         }
         Insert: {
           asset_id?: string | null
           assigned_to?: string | null
+          campaign?: string | null
           contact_id?: string | null
           created_at?: string | null
+          date?: string | null
+          documents?: Json | null
           id?: string
+          images?: Json | null
+          is_archived?: boolean | null
+          lead_source?: string | null
           notes?: string | null
           source?: string | null
           stage_id?: string | null
           status?: string | null
           tenant_id?: string | null
+          utm_campaign?: string | null
           utm_data?: Json | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          valor_estimado?: number | null
           value?: number | null
+          videos?: Json | null
+          whatsapp_chat?: Json | null
         }
         Update: {
           asset_id?: string | null
           assigned_to?: string | null
+          campaign?: string | null
           contact_id?: string | null
           created_at?: string | null
+          date?: string | null
+          documents?: Json | null
           id?: string
+          images?: Json | null
+          is_archived?: boolean | null
+          lead_source?: string | null
           notes?: string | null
           source?: string | null
           stage_id?: string | null
           status?: string | null
           tenant_id?: string | null
+          utm_campaign?: string | null
           utm_data?: Json | null
+          utm_medium?: string | null
+          utm_source?: string | null
+          valor_estimado?: number | null
           value?: number | null
+          videos?: Json | null
+          whatsapp_chat?: Json | null
         }
         Relationships: [
           {
@@ -448,6 +613,74 @@ export type Database = {
           },
           {
             foreignKeyName: "leads_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      notes: {
+        Row: {
+          asset_id: string | null
+          attachments: Json | null
+          content: string
+          created_at: string
+          date: string
+          id: string
+          lead_id: string | null
+          profile_id: string
+          tenant_id: string
+          updated_at: string
+        }
+        Insert: {
+          asset_id?: string | null
+          attachments?: Json | null
+          content: string
+          created_at?: string
+          date?: string
+          id?: string
+          lead_id?: string | null
+          profile_id: string
+          tenant_id: string
+          updated_at?: string
+        }
+        Update: {
+          asset_id?: string | null
+          attachments?: Json | null
+          content?: string
+          created_at?: string
+          date?: string
+          id?: string
+          lead_id?: string | null
+          profile_id?: string
+          tenant_id?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "notes_asset_id_fkey"
+            columns: ["asset_id"]
+            isOneToOne: false
+            referencedRelation: "assets"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_lead_id_fkey"
+            columns: ["lead_id"]
+            isOneToOne: false
+            referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -496,40 +729,228 @@ export type Database = {
           },
         ]
       }
+      origens_trafego: {
+        Row: {
+          campanha_id: string | null
+          campanha_nome: string | null
+          created_at: string | null
+          custo: number | null
+          data_fim: string | null
+          data_inicio: string
+          id: string
+          metadata: Json | null
+          moeda: string | null
+          plataforma: string
+          tenant_id: string
+        }
+        Insert: {
+          campanha_id?: string | null
+          campanha_nome?: string | null
+          created_at?: string | null
+          custo?: number | null
+          data_fim?: string | null
+          data_inicio: string
+          id?: string
+          metadata?: Json | null
+          moeda?: string | null
+          plataforma: string
+          tenant_id: string
+        }
+        Update: {
+          campanha_id?: string | null
+          campanha_nome?: string | null
+          created_at?: string | null
+          custo?: number | null
+          data_fim?: string | null
+          data_inicio?: string
+          id?: string
+          metadata?: Json | null
+          moeda?: string | null
+          plataforma?: string
+          tenant_id?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "origens_trafego_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      plan_limits: {
+        Row: {
+          ai_features_list: string[] | null
+          ai_model: string | null
+          ai_provider: string | null
+          ai_requests_per_month: number | null
+          description_text: string | null
+          display_name: string | null
+          display_order: number | null
+          features_list: string[] | null
+          has_ai: boolean | null
+          has_custom_domain: boolean | null
+          has_marketing: boolean | null
+          has_whatsapp: boolean | null
+          is_highlighted: boolean | null
+          max_assets: number | null
+          max_leads_per_month: number | null
+          max_users: number | null
+          period_text: string | null
+          plan_type: string
+          price_text: string | null
+        }
+        Insert: {
+          ai_features_list?: string[] | null
+          ai_model?: string | null
+          ai_provider?: string | null
+          ai_requests_per_month?: number | null
+          description_text?: string | null
+          display_name?: string | null
+          display_order?: number | null
+          features_list?: string[] | null
+          has_ai?: boolean | null
+          has_custom_domain?: boolean | null
+          has_marketing?: boolean | null
+          has_whatsapp?: boolean | null
+          is_highlighted?: boolean | null
+          max_assets?: number | null
+          max_leads_per_month?: number | null
+          max_users?: number | null
+          period_text?: string | null
+          plan_type: string
+          price_text?: string | null
+        }
+        Update: {
+          ai_features_list?: string[] | null
+          ai_model?: string | null
+          ai_provider?: string | null
+          ai_requests_per_month?: number | null
+          description_text?: string | null
+          display_name?: string | null
+          display_order?: number | null
+          features_list?: string[] | null
+          has_ai?: boolean | null
+          has_custom_domain?: boolean | null
+          has_marketing?: boolean | null
+          has_whatsapp?: boolean | null
+          is_highlighted?: boolean | null
+          max_assets?: number | null
+          max_leads_per_month?: number | null
+          max_users?: number | null
+          period_text?: string | null
+          plan_type?: string
+          price_text?: string | null
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
           created_at: string | null
           full_name: string | null
           id: string
+          is_active_for_service: boolean | null
+          last_lead_assigned_at: string | null
           permissions: Json | null
           role: Database["public"]["Enums"]["profile_role"] | null
           tenant_id: string | null
+          updated_at: string | null
+          whatsapp_api_key: string | null
+          whatsapp_instance_name: string | null
           whatsapp_number: string | null
+          whatsapp_status: string | null
         }
         Insert: {
           avatar_url?: string | null
           created_at?: string | null
           full_name?: string | null
           id: string
+          is_active_for_service?: boolean | null
+          last_lead_assigned_at?: string | null
           permissions?: Json | null
           role?: Database["public"]["Enums"]["profile_role"] | null
           tenant_id?: string | null
+          updated_at?: string | null
+          whatsapp_api_key?: string | null
+          whatsapp_instance_name?: string | null
           whatsapp_number?: string | null
+          whatsapp_status?: string | null
         }
         Update: {
           avatar_url?: string | null
           created_at?: string | null
           full_name?: string | null
           id?: string
+          is_active_for_service?: boolean | null
+          last_lead_assigned_at?: string | null
           permissions?: Json | null
           role?: Database["public"]["Enums"]["profile_role"] | null
           tenant_id?: string | null
+          updated_at?: string | null
+          whatsapp_api_key?: string | null
+          whatsapp_instance_name?: string | null
           whatsapp_number?: string | null
+          whatsapp_status?: string | null
         }
         Relationships: [
           {
             foreignKeyName: "profiles_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      system_logs: {
+        Row: {
+          action: string
+          created_at: string | null
+          details: Json | null
+          entity_id: string | null
+          entity_type: string
+          id: string
+          ip_address: string | null
+          profile_id: string | null
+          tenant_id: string | null
+          user_agent: string | null
+        }
+        Insert: {
+          action: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type: string
+          id?: string
+          ip_address?: string | null
+          profile_id?: string | null
+          tenant_id?: string | null
+          user_agent?: string | null
+        }
+        Update: {
+          action?: string
+          created_at?: string | null
+          details?: Json | null
+          entity_id?: string | null
+          entity_type?: string
+          id?: string
+          ip_address?: string | null
+          profile_id?: string | null
+          tenant_id?: string | null
+          user_agent?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "system_logs_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "system_logs_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -543,32 +964,113 @@ export type Database = {
           branding: Json | null
           created_at: string | null
           custom_domain: string | null
+          custom_domain_crm_verified: boolean | null
+          custom_domain_updated_at: string | null
+          custom_domain_verified: boolean | null
           id: string
           name: string
           plan_type: Database["public"]["Enums"]["plan_type"] | null
           slug: string
+          stripe_customer_id: string | null
+          stripe_subscription_id: string | null
+          subscription_status: string | null
         }
         Insert: {
           api_key?: string | null
           branding?: Json | null
           created_at?: string | null
           custom_domain?: string | null
+          custom_domain_crm_verified?: boolean | null
+          custom_domain_updated_at?: string | null
+          custom_domain_verified?: boolean | null
           id?: string
           name: string
           plan_type?: Database["public"]["Enums"]["plan_type"] | null
           slug: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
         }
         Update: {
           api_key?: string | null
           branding?: Json | null
           created_at?: string | null
           custom_domain?: string | null
+          custom_domain_crm_verified?: boolean | null
+          custom_domain_updated_at?: string | null
+          custom_domain_verified?: boolean | null
           id?: string
           name?: string
           plan_type?: Database["public"]["Enums"]["plan_type"] | null
           slug?: string
+          stripe_customer_id?: string | null
+          stripe_subscription_id?: string | null
+          subscription_status?: string | null
         }
         Relationships: []
+      }
+      transacoes_financeiras: {
+        Row: {
+          categoria: string | null
+          created_at: string | null
+          data_transacao: string
+          descricao: string | null
+          external_id: string | null
+          fonte: string | null
+          id: string
+          metadata: Json | null
+          profile_id: string | null
+          status: string | null
+          tenant_id: string
+          tipo: string
+          valor: number
+        }
+        Insert: {
+          categoria?: string | null
+          created_at?: string | null
+          data_transacao?: string
+          descricao?: string | null
+          external_id?: string | null
+          fonte?: string | null
+          id?: string
+          metadata?: Json | null
+          profile_id?: string | null
+          status?: string | null
+          tenant_id: string
+          tipo: string
+          valor: number
+        }
+        Update: {
+          categoria?: string | null
+          created_at?: string | null
+          data_transacao?: string
+          descricao?: string | null
+          external_id?: string | null
+          fonte?: string | null
+          id?: string
+          metadata?: Json | null
+          profile_id?: string | null
+          status?: string | null
+          tenant_id?: string
+          tipo?: string
+          valor?: number
+        }
+        Relationships: [
+          {
+            foreignKeyName: "transacoes_financeiras_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "transacoes_financeiras_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
       }
       updates: {
         Row: {
@@ -600,11 +1102,64 @@ export type Database = {
         }
         Relationships: []
       }
+      whatsapp_instances: {
+        Row: {
+          created_at: string | null
+          id: string
+          instance_name: string
+          qrcode: string | null
+          status: string | null
+          tenant_id: string | null
+          user_id: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          id?: string
+          instance_name: string
+          qrcode?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          id?: string
+          instance_name?: string
+          qrcode?: string | null
+          status?: string | null
+          tenant_id?: string | null
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "whatsapp_instances_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "whatsapp_instances_user_id_fkey"
+            columns: ["user_id"]
+            isOneToOne: true
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
     }
     Views: {
       [_ in never]: never
     }
     Functions: {
+      check_plan_feature: {
+        Args: { p_feature: string; p_tenant_id: string }
+        Returns: boolean
+      }
+      get_ai_usage_this_month: {
+        Args: { p_tenant_id: string }
+        Returns: number
+      }
       get_user_tenant_id: { Args: never; Returns: string }
       slugify: { Args: { "": string }; Returns: string }
     }

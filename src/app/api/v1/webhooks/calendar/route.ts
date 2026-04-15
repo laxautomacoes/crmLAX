@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
+import { verifyWebhookApiKey, checkRateLimit, getRequestIp } from '@/lib/api/auth-guards';
 
 interface CalendarWebhookPayload {
     tenant_id: string;
@@ -15,6 +16,12 @@ interface CalendarWebhookPayload {
 
 export async function POST(req: NextRequest) {
     try {
+        const authError = verifyWebhookApiKey(req);
+        if (authError) return authError;
+
+        const rateLimitError = checkRateLimit(getRequestIp(req), 20, 60_000);
+        if (rateLimitError) return rateLimitError;
+
         const payload: CalendarWebhookPayload = await req.json();
         const {
             tenant_id,

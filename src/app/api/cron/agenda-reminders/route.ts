@@ -1,17 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { processAgendaReminders } from '@/app/_actions/calendar';
+import { verifyCronSecret } from '@/lib/api/auth-guards';
 
 export const dynamic = 'force-dynamic';
 
 export async function GET(req: NextRequest) {
     try {
-        // Verificação de segurança simples para evitar chamadas não autorizadas
-        const authHeader = req.headers.get('authorization');
-        const cronSecret = process.env.CRON_SECRET;
-
-        if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
-            return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-        }
+        const authError = verifyCronSecret(req);
+        if (authError) return authError;
 
         const result = await processAgendaReminders();
 

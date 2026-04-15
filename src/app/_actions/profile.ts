@@ -24,12 +24,6 @@ export async function getProfile() {
             .eq('id', user.id)
             .maybeSingle()
 
-        console.log('SERVER SIDE PROFILE FETCH:', {
-            id: user.id,
-            role: profile?.role,
-            raw_profile: profile
-        });
-
         return {
             profile: {
                 ...profile,

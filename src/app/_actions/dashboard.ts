@@ -138,28 +138,34 @@ export async function getDashboardMetrics(tenantId: string) {
         });
         const uniqueStages = Array.from(uniqueStagesMap.values());
 
-        const funnelSteps = await Promise.all(
-            uniqueStages.map(async (stage) => {
-                let stageLeadsQuery = supabase
-                    .from('leads')
-                    .select('*', { count: 'exact', head: true })
-                    .eq('tenant_id', tenantId)
-                    .eq('stage_id', stage.id)
-                    .eq('is_archived', false)
+        // 4.1. Buscar contagem de leads por estágio com UMA ÚNICA query
+        let funnelLeadsQuery = supabase
+            .from('leads')
+            .select('stage_id')
+            .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
 
-                if (!isAdmin && profile?.id) {
-                    stageLeadsQuery = stageLeadsQuery.eq('assigned_to', profile.id)
-                }
+        if (!isAdmin && profile?.id) {
+            funnelLeadsQuery = funnelLeadsQuery.eq('assigned_to', profile.id)
+        }
 
-                const { count } = await stageLeadsQuery
+        const { data: funnelLeadsData, error: funnelError } = await funnelLeadsQuery
 
-                return {
-                    label: stage.name,
-                    count: count || 0,
-                    stageId: stage.id
-                }
-            })
-        )
+        if (funnelError) throw funnelError
+
+        // Contagem em memória (O(n)) em vez de N queries
+        const stageCountMap = new Map<string, number>()
+        for (const lead of funnelLeadsData || []) {
+            if (lead.stage_id) {
+                stageCountMap.set(lead.stage_id, (stageCountMap.get(lead.stage_id) || 0) + 1)
+            }
+        }
+
+        const funnelSteps = uniqueStages.map((stage) => ({
+            label: stage.name,
+            count: stageCountMap.get(stage.id) || 0,
+            stageId: stage.id
+        }))
 
         // 5. Buscar leads recentes (últimos 5)
         let recentLeadsQuery = supabase
@@ -194,16 +200,68 @@ export async function getDashboardMetrics(tenantId: string) {
             created_at: lead.created_at
         }))
 
+        // 6. Calcular trends (período atual vs anterior — 30 dias)
+        const now = new Date()
+        const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
+        const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString()
+
+        // Leads criados nos últimos 30 dias vs 30-60 dias atrás
+        let prevLeadsQuery = supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
+            .gte('created_at', sixtyDaysAgo)
+            .lt('created_at', thirtyDaysAgo)
+
+        let currLeadsQuery = supabase
+            .from('leads')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
+            .gte('created_at', thirtyDaysAgo)
+
+        if (!isAdmin && profile?.id) {
+            prevLeadsQuery = prevLeadsQuery.eq('assigned_to', profile.id)
+            currLeadsQuery = currLeadsQuery.eq('assigned_to', profile.id)
+        }
+
+        const [prevLeadsRes, currLeadsRes] = await Promise.all([prevLeadsQuery, currLeadsQuery])
+        const prevLeadsCount = prevLeadsRes.count || 0
+        const currLeadsCount = currLeadsRes.count || 0
+
+        const calcTrend = (curr: number, prev: number): string => {
+            if (prev === 0) return curr > 0 ? '+100%' : '+0%'
+            const pct = Math.round(((curr - prev) / prev) * 100)
+            return pct >= 0 ? `+${pct}%` : `${pct}%`
+        }
+
+        // Assets criados nos últimos 30 dias vs anterior
+        const { count: prevAssetsCount } = await supabase
+            .from('assets')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
+            .gte('created_at', sixtyDaysAgo)
+            .lt('created_at', thirtyDaysAgo)
+
+        const { count: currAssetsCount } = await supabase
+            .from('assets')
+            .select('*', { count: 'exact', head: true })
+            .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
+            .gte('created_at', thirtyDaysAgo)
+
         return {
             success: true,
             data: {
                 kpis: {
                     leadsAtivos: totalLeads || 0,
-                    leadsAtivosTrend: '+0%', // Implementar cálculo de tendência depois
+                    leadsAtivosTrend: calcTrend(currLeadsCount, prevLeadsCount),
                     imoveis: totalAssets || 0,
-                    imoveisTrend: '+0',
+                    imoveisTrend: calcTrend(currAssetsCount || 0, prevAssetsCount || 0),
                     conversoes: conversions || 0,
-                    conversoesTrend: '+0'
+                    conversoesTrend: calcTrend(conversions, 0)
                 },
                 funnelSteps,
                 recentLeads
