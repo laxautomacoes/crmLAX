@@ -358,7 +358,7 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                         </button>
                         
                         {isStyleDropdownOpen && (
-                            <div className="absolute top-full left-0 mt-1 w-32 bg-card border border-muted-foreground/20 rounded-md shadow-lg z-50 py-1 max-h-60 overflow-y-auto custom-scrollbar">
+                            <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-muted-foreground/20 rounded-md shadow-lg z-50 py-1 max-h-60 overflow-y-auto custom-scrollbar">
                                 {textStyles.map((style) => (
                                     <button
                                         key={style.value}

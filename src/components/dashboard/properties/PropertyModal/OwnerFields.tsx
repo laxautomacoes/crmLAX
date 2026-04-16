@@ -240,7 +240,7 @@ export function OwnerFields({ formData, setFormData }: OwnerFieldsProps) {
                     />
 
                     {showResults && (
-                        <div className="absolute z-50 w-full mt-1 bg-card border border-muted-foreground/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                        <div className="absolute z-50 w-full mt-1 bg-white border border-muted-foreground/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
                             {searchResults.length > 0 ? (
                                 searchResults.map((result, index) => (
                                     <button

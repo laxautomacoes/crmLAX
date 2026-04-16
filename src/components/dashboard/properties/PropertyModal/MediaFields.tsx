@@ -101,9 +101,9 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Documentos</span>
                     </div>
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex flex-col gap-2">
                         {formData.documents.map((doc: any, index: number) => (
-                            <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/50 group">
+                            <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-white border border-border/40 group">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <FileText size={14} className="text-foreground shrink-0" />
                                     <span className="text-xs font-medium truncate">{doc.name}</span>
@@ -117,7 +117,7 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
                                 </button>
                             </div>
                         ))}
-                        <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-foreground/5 hover:bg-foreground/10 cursor-pointer transition-all">
+                        <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-white border border-border/40 hover:bg-foreground/5 cursor-pointer transition-all">
                             {isUploading === 'documents' ? (
                                 <Loader2 className="w-5 h-5 text-foreground animate-spin" />
                             ) : (
