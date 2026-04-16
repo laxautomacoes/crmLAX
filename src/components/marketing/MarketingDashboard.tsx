@@ -29,6 +29,14 @@ const MetaIcon = (props: any) => (
     </svg>
 );
 
+const GoogleAdsIcon = (props: any) => (
+    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
+        <path d="M15.5 3.5L4.5 20.5H11.5L22.5 3.5H15.5Z" fill="#FBBC05"/>
+        <path d="M7 11.5L1.5 20.5H8.5L14 11.5H7Z" fill="#4285F4"/>
+        <path d="M11.5 20.5C13.433 20.5 15 18.933 15 17C15 15.067 13.433 13.5 11.5 13.5C9.567 13.5 8 15.067 8 17C8 18.933 9.567 20.5 11.5 20.5Z" fill="#34A853"/>
+    </svg>
+);
+
 interface MarketingDashboardProps {
     tenantId: string;
     profileId: string;
@@ -119,18 +127,33 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
         setIsPostModalOpen(true);
     };
 
+    const getIntegrationData = (provider: string) => {
+        return activeIntegrations.find(i => i.provider === provider && i.status === 'active');
+    };
+
     const integrations = [
         {
             id: 'meta',
             name: 'Facebook + Instagram',
             icon: MetaIcon,
-            connected: isConnected('instagram'),
+            connected: !!getIntegrationData('instagram'),
+            connectedAccount: getIntegrationData('instagram')?.credentials?.page_name,
             description: 'Sincronização de anúncios, postagem automática e IA para Facebook e Instagram.',
             color: 'from-[#0668E1] via-[#833AB4] to-[#FD1D1D]',
-            metrics: isConnected('instagram') ? [
+            isTestMode: true,
+            metrics: !!getIntegrationData('instagram') ? [
                 { label: 'Seguidores', value: '1.2k', icon: Users },
                 { label: 'Alcance', value: '+15%', icon: TrendingUp }
             ] : null
+        },
+        {
+            id: 'google-ads',
+            name: 'Google Ads',
+            icon: GoogleAdsIcon,
+            connected: false,
+            description: 'Gerencie suas campanhas de busca e display diretamente pelo CRM.',
+            color: 'from-[#4285F4] via-[#EA4335] to-[#FBBC05]',
+            upcoming: true
         },
         {
             id: 'youtube',
@@ -243,9 +266,9 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
                     {integrations.map((item) => (
                         <div
                             key={item.id}
-                            className={`group relative overflow-hidden bg-white rounded-3xl border border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${item.upcoming ? 'opacity-75' : ''}`}
+                            className={`group relative overflow-hidden bg-white rounded-3xl border border-border/50 shadow-sm transition-all duration-300 hover:shadow-xl hover:-translate-y-1 ${item.upcoming ? 'opacity-75' : ''} flex flex-col h-full`}
                         >
-                            <div className="p-8 space-y-6">
+                            <div className="p-8 space-y-6 flex flex-col h-full">
                                 <div className="flex items-center justify-between">
                                     <div className={`p-3 rounded-2xl bg-[#404F4F]/5 text-[#404F4F] transition-transform group-hover:scale-110 duration-300`}>
                                         <item.icon className="h-7 w-7" />
@@ -269,6 +292,20 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
 
                                 <div>
                                     <h3 className="font-black text-[#404F4F] text-xl tracking-tight">{item.name}</h3>
+                                    {item.connected && item.connectedAccount && (
+                                        <div className="flex items-center gap-2 mt-1 px-3 py-1 rounded-lg bg-gray-50 border border-gray-100 w-fit">
+                                            <CheckCircle2 className="h-3 w-3 text-green-500" />
+                                            <span className="text-[11px] font-bold text-[#404F4F]/70 uppercase tracking-tight">
+                                                {item.connectedAccount}
+                                            </span>
+                                        </div>
+                                    )}
+                                    {item.isTestMode && (
+                                        <div className="flex items-center gap-1.5 mt-2 text-[10px] font-bold text-orange-600 bg-orange-50 px-2 py-0.5 rounded-md border border-orange-100 w-fit">
+                                            <AlertCircle className="h-3 w-3" />
+                                            MODO TESTE
+                                        </div>
+                                    )}
                                     <p className="text-sm text-muted-foreground leading-relaxed mt-2 line-clamp-2">
                                         {item.description}
                                     </p>
@@ -288,7 +325,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
                                     </div>
                                 )}
 
-                                <div>
+                                <div className="mt-auto pt-2">
                                     {!item.connected && !item.upcoming ? (
                                         <button
                                             onClick={() => handleConnect(item.id)}
