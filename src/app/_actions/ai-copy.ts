@@ -100,3 +100,55 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
         throw new Error('Falha ao gerar copy do anúncio.');
     }
 }
+/**
+ * Gera posts de marketing para um tópico livre (não atrelado a um imóvel específico).
+ */
+export async function generateGeneralCopy(
+    topic: string,
+    tenantId: string,
+    profileId: string
+): Promise<{ success: boolean; data?: CopyVariants; error?: string }> {
+    await requirePlanFeature(tenantId, 'ai');
+
+    const supabase = await createClient();
+
+    const prompt = `Você é um copywriter especialista em marketing brasileiro. Crie copies persuasivos, com linguagem natural e emojis estratégicos.
+    
+TÓPICO DO POST: ${topic}
+
+TAREFA:
+Crie 3 versões de copy para o tópico acima:
+1. CURTA (max 300 caracteres): Para WhatsApp e Stories. Direta e impactante.
+2. MÉDIA (max 600 caracteres): Para Facebook e Instagram. Tom envolvente, com storytelling se apropriado, e CTA claro.
+3. COMPLETA (sem limite): Post detalhado para Blog ou LinkedIn.
+
+Retorne APENAS um JSON válido com este formato exato, sem markdown:
+{
+  "short": "Texto curto aqui",
+  "medium": "Texto médio aqui",
+  "full": "Texto completo aqui"
+}`;
+
+    try {
+        const result = await runAI(tenantId, prompt);
+        const rawText = result.text.trim();
+
+        const jsonStart = rawText.indexOf('{');
+        const jsonEnd = rawText.lastIndexOf('}');
+        const jsonStr = rawText.substring(jsonStart, jsonEnd + 1);
+        const parsed: CopyVariants = JSON.parse(jsonStr);
+
+        await supabase.from('ai_usage').insert({
+            tenant_id: tenantId,
+            profile_id: profileId,
+            model: result.model,
+            total_tokens: result.usage.total_tokens,
+            feature_context: 'general_marketing_copy'
+        });
+
+        return { success: true, data: parsed };
+    } catch (error: any) {
+        console.error('AI General Copy Error:', error.message);
+        throw new Error('Falha ao gerar copy do post.');
+    }
+}
