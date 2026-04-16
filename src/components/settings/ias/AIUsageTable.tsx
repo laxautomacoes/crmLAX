@@ -75,11 +75,7 @@ export function AIUsageTable({ records, isSuperadmin }: Props) {
                                     </td>
                                 )}
                                 <td className="px-8 py-5">
-                                    <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-tight uppercase ${
-                                        record.model.toLowerCase().includes('gpt') 
-                                        ? 'bg-emerald-50 text-emerald-600 border border-emerald-100' 
-                                        : 'bg-indigo-50 text-indigo-600 border border-indigo-100'
-                                    }`}>
+                                    <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-tight uppercase bg-slate-50 text-slate-600 border border-slate-100">
                                         {record.model}
                                     </span>
                                 </td>

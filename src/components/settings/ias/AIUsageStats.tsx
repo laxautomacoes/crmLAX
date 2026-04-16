@@ -17,29 +17,21 @@ export function AIUsageStats({ stats }: StatsProps) {
             title: 'Requisições',
             value: stats.total_requests,
             icon: Activity,
-            color: 'text-indigo-600',
-            bg: 'bg-indigo-50/50',
         },
         {
-            title: 'GPT-4o (OpenAI)',
+            title: 'GPT (OpenAI)',
             value: stats.gpt_count,
             icon: Zap,
-            color: 'text-emerald-600',
-            bg: 'bg-emerald-50/50',
         },
         {
             title: 'Gemini (Google)',
             value: stats.gemini_count,
             icon: Brain,
-            color: 'text-purple-600',
-            bg: 'bg-purple-50/50',
         },
         {
             title: 'Total de Tokens',
             value: stats.total_tokens.toLocaleString(),
             icon: Coins,
-            color: 'text-amber-600',
-            bg: 'bg-amber-50/50',
         }
     ];
 
@@ -51,8 +43,8 @@ export function AIUsageStats({ stats }: StatsProps) {
                     className="p-8 rounded-3xl bg-white border border-slate-100 shadow-sm transition-all hover:shadow-md hover:-translate-y-1 duration-300 group"
                 >
                     <div className="flex items-center justify-between mb-6">
-                        <div className={`p-3.5 rounded-2xl ${card.bg} transition-transform group-hover:scale-110 duration-300`}>
-                            <card.icon className={`w-5 h-5 ${card.color}`} />
+                        <div className="p-3.5 rounded-2xl bg-slate-50 transition-transform group-hover:scale-110 duration-300">
+                            <card.icon className="w-5 h-5 text-slate-400 group-hover:text-slate-600 transition-colors" />
                         </div>
                     </div>
                     <div className="space-y-1">

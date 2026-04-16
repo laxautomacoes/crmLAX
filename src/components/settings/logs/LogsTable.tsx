@@ -11,9 +11,10 @@ import { LogsList } from './components/LogsList';
 
 interface LogsTableProps {
     tenantId: string;
+    isGlobal?: boolean;
 }
 
-export function LogsTable({ tenantId }: LogsTableProps) {
+export function LogsTable({ tenantId, isGlobal = false }: LogsTableProps) {
     const [loading, setLoading] = useState(true);
     const [logs, setLogs] = useState<any[]>([]);
     const [page, setPage] = useState(1);
@@ -55,7 +56,8 @@ export function LogsTable({ tenantId }: LogsTableProps) {
             actionType: actionType === 'all' ? undefined : actionType,
             profileId: profileId === 'all' ? undefined : profileId,
             startDate: startDate || undefined,
-            endDate: endDate || undefined
+            endDate: endDate || undefined,
+            isGlobal
         });
 
         if (result.success) {
@@ -120,13 +122,16 @@ export function LogsTable({ tenantId }: LogsTableProps) {
                         <thead>
                             <tr className="bg-gray-50 dark:bg-white/5 border-b border-gray-100 dark:border-white/10">
                                 <th className="px-6 py-4 text-xs font-bold text-[#404F4F] dark:text-gray-300 uppercase tracking-wider">Usuário</th>
+                                {isGlobal && (
+                                    <th className="px-6 py-4 text-xs font-bold text-[#404F4F] dark:text-gray-300 uppercase tracking-wider">Empresa</th>
+                                )}
                                 <th className="px-6 py-4 text-xs font-bold text-[#404F4F] dark:text-gray-300 uppercase tracking-wider">Ação</th>
                                 <th className="px-6 py-4 text-xs font-bold text-[#404F4F] dark:text-gray-300 uppercase tracking-wider">Entidade</th>
                                 <th className="px-6 py-4 text-xs font-bold text-[#404F4F] dark:text-gray-300 uppercase tracking-wider">Data/Hora</th>
                                 <th className="px-6 py-4 text-xs font-bold text-[#404F4F] dark:text-gray-300 uppercase tracking-wider text-right">Detalhes</th>
                             </tr>
                         </thead>
-                        <LogsList logs={logs} loading={loading} getActionBadge={getActionBadge} getActionLabel={getActionLabel} />
+                        <LogsList logs={logs} loading={loading} getActionBadge={getActionBadge} getActionLabel={getActionLabel} isGlobal={isGlobal} />
                     </table>
                 </div>
 

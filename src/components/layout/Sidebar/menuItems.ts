@@ -1,7 +1,7 @@
 import { 
     LayoutDashboard, Filter, Users, Home, Calendar, FileText, 
     Rocket, Settings, StickyNote, Globe, ShieldAlert, Megaphone,
-    Building2, ShieldCheck, BrainCircuit, History 
+    Building2, ShieldCheck, BrainCircuit, History, Coins 
 } from 'lucide-react';
 
 export const menuItems = [
@@ -20,7 +20,7 @@ export const menuItems = [
     },
     { 
         name: 'Uso de IA', 
-        icon: BrainCircuit, 
+        icon: Coins, 
         href: '/superadmin/ai',
         roles: ['superadmin', 'super_admin', 'super administrador']
     },

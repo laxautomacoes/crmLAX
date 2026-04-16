@@ -33,8 +33,8 @@ export function AIPlanConfig({ configs }: Props) {
         openai: [
             { id: 'gpt-5.4', name: 'GPT-5.4 (High Performance)' },
             { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini (Fast)' },
-            { id: 'gpt-4o', name: 'GPT-4o (Standard)' },
-            { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
+            { id: 'gpt-4o', name: 'GPT (Standard)' },
+            { id: 'gpt-4o-mini', name: 'GPT Mini' },
         ],
         gemini: [
             { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro' },
@@ -76,8 +76,8 @@ export function AIPlanConfig({ configs }: Props) {
     return (
         <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm space-y-12">
             <div className="space-y-2">
-                <div className="flex items-center gap-3 text-indigo-600">
-                    <div className="p-2 bg-indigo-50 rounded-xl">
+                <div className="flex items-center gap-3 text-slate-600">
+                    <div className="p-2 bg-slate-50 rounded-xl">
                         <Settings2 className="w-5 h-5" />
                     </div>
                     <h3 className="text-xl font-bold text-slate-900 font-outfit tracking-tight">Motores de Inteligência</h3>
@@ -106,7 +106,7 @@ export function AIPlanConfig({ configs }: Props) {
                                     onClick={() => handleUpdate(plan.plan_type, 'gemini')}
                                     disabled={isPending}
                                     className={`relative z-10 flex-1 flex items-center justify-center gap-2 text-[10px] font-black transition-colors ${
-                                        plan.ai_provider === 'gemini' ? 'text-indigo-600' : 'text-slate-400 hover:text-slate-500'
+                                        plan.ai_provider === 'gemini' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-500'
                                     }`}
                                 >
                                     <Cpu className="w-3.5 h-3.5" />
@@ -117,7 +117,7 @@ export function AIPlanConfig({ configs }: Props) {
                                     onClick={() => handleUpdate(plan.plan_type, 'openai')}
                                     disabled={isPending}
                                     className={`relative z-10 flex-1 flex items-center justify-center gap-2 text-[10px] font-black transition-colors ${
-                                        plan.ai_provider === 'openai' ? 'text-emerald-600' : 'text-slate-400 hover:text-slate-500'
+                                        plan.ai_provider === 'openai' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-500'
                                     }`}
                                 >
                                     <Globe className="w-3.5 h-3.5" />
