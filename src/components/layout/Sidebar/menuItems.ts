@@ -10,25 +10,29 @@ export const menuItems = [
         name: 'Empresas', 
         icon: Building2, 
         href: '/superadmin/tenants',
-        roles: ['superadmin', 'super_admin', 'super administrador']
+        roles: ['superadmin', 'super_admin', 'super administrador'],
+        permission: 'tenants'
     },
     { 
         name: 'Planos e Limites', 
         icon: ShieldCheck, 
         href: '/superadmin/plans',
-        roles: ['superadmin', 'super_admin', 'super administrador']
+        roles: ['superadmin', 'super_admin', 'super administrador'],
+        permission: 'plans'
     },
     { 
         name: 'Uso de IA', 
         icon: Coins, 
         href: '/superadmin/ai',
-        roles: ['superadmin', 'super_admin', 'super administrador']
+        roles: ['superadmin', 'super_admin', 'super administrador'],
+        permission: 'ai_usage'
     },
     { 
         name: 'Logs Globais', 
         icon: History, 
         href: '/superadmin/logs',
-        roles: ['superadmin', 'super_admin', 'super administrador']
+        roles: ['superadmin', 'super_admin', 'super administrador'],
+        permission: 'global_logs'
     },
     { name: 'Leads', icon: Filter, href: '/leads', roles: ['admin', 'user', 'corretor'] },
     { name: 'Clientes', icon: Users, href: '/clients', roles: ['admin', 'user', 'corretor'] },
@@ -51,15 +55,15 @@ export const menuItems = [
     { name: 'Agenda', icon: Calendar, href: '/agenda', roles: ['admin', 'user', 'corretor'] },
     { name: 'Notas', icon: StickyNote, href: '/notes', roles: ['admin', 'user', 'corretor'] },
     { name: 'Relatórios', icon: FileText, href: '/reports' },
-    { name: 'Marketing', icon: Megaphone, href: '/marketing' },
-    { name: 'Roadmap', icon: Rocket, href: '/roadmap', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
+    { name: 'Marketing', icon: Megaphone, href: '/marketing', permission: 'marketing_global' },
+    { name: 'Roadmap', icon: Rocket, href: '/roadmap', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'], permission: 'roadmap' },
     {
         name: 'Configurações',
         icon: Settings,
         href: '/settings',
         subItems: [
             { name: 'Meu Perfil', href: '/settings' },
-            { name: 'Equipe', href: '/settings/team', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
+            { name: 'Equipe', href: '/settings/team', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'], permission: 'team_management' },
             { name: 'Notificações', href: '/notifications' },
             { name: 'Disparador em Massa', href: '/tools/whatsapp-bulk', roles: ['admin', 'user', 'corretor'] },
             { name: 'Integrações', href: '/settings/integrations' },

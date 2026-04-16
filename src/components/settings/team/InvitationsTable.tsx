@@ -9,12 +9,12 @@ interface InvitationsTableProps {
     invitations: any[];
     fetching: boolean;
     onRefresh: () => void;
+    searchTerm: string;
 }
 
-export function InvitationsTable({ invitations, fetching, onRefresh }: InvitationsTableProps) {
+export function InvitationsTable({ invitations, fetching, onRefresh, searchTerm }: InvitationsTableProps) {
     const [editingInvitation, setEditingInvitation] = useState<any>(null);
     const [isEditOpen, setIsEditOpen] = useState(false);
-    const [searchTerm, setSearchTerm] = useState('');
 
     const filteredInvitations = useMemo(() => {
         if (!searchTerm.trim()) return invitations;
@@ -40,22 +40,6 @@ export function InvitationsTable({ invitations, fetching, onRefresh }: Invitatio
     return (
         <>
             <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-                <div className="p-6 flex items-center justify-between h-[89px]">
-                    <div className="flex items-center gap-3 text-foreground">
-                        <h3 className="font-bold">Colaboradores Ativos</h3>
-                    </div>
-                    <div className="relative w-64">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-                        <input
-                            type="text"
-                            placeholder="Buscar colaborador..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-4 py-2 bg-input border border-border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-secondary/50 transition-all"
-                        />
-                    </div>
-                </div>
-
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>

@@ -109,12 +109,22 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             setExpandedItems(prev => [...prev, activeItem.name]);
     }, [pathname, searchParams]);
 
-    // Filtragem de itens do menu baseada em roles e injeção de slug
+    // Filtragem de itens do menu baseada em roles, permissões e injeção de slug
     const filteredMenuItems = menuItems
         .filter(item => {
+            // Se o item tem roles definidos, verificar se o usuário tem a role necessária
             if ((item as any).roles) {
-                return (item as any).roles.includes(userRole?.toLowerCase());
+                const hasRole = (item as any).roles.includes(userRole?.toLowerCase());
+                if (!hasRole) return false;
             }
+
+            // Se o item tem uma permissão específica e o usuário é superadmin no sistema
+            if ((item as any).permission && userRole?.toLowerCase() === 'superadmin') {
+                const permissions = userProfile?.permissions || {};
+                // Se a permissão não estiver explicitamente como true, esconder o item
+                if (permissions[(item as any).permission] === false) return false;
+            }
+
             return true;
         })
         .map(item => {
@@ -140,8 +150,16 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                 newItem.subItems = newItem.subItems
                     .filter(sub => {
                         if ((sub as any).roles) {
-                            return (sub as any).roles.includes(userRole?.toLowerCase());
+                            const hasRole = (sub as any).roles.includes(userRole?.toLowerCase());
+                            if (!hasRole) return false;
                         }
+
+                        // Verificação de permissão para sub-itens
+                        if ((sub as any).permission && userRole?.toLowerCase() === 'superadmin') {
+                            const permissions = userProfile?.permissions || {};
+                            if (permissions[(sub as any).permission] === false) return false;
+                        }
+
                         return true;
                     })
                     .map(sub => {

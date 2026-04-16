@@ -1,25 +1,28 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { UserPlus, Mail, Loader2, Phone } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox';
 import { createInvitation } from '@/app/_actions/invitations';
+import { getProfile } from '@/app/_actions/profile';
 import { toast } from 'sonner';
 
 interface InviteFormProps {
     onInviteCreated: () => void;
+    isModalMode?: boolean;
 }
 
-export function InviteForm({ onInviteCreated }: InviteFormProps) {
+export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormProps) {
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
     const [role, setRole] = useState<'admin' | 'user'>('user');
     const [loading, setLoading] = useState(false);
+    const [isSystemContext, setIsSystemContext] = useState(false);
 
     // Initial permissions state
-    const [permissions, setPermissions] = useState({
+    const [permissions, setPermissions] = useState<Record<string, boolean>>({
         dashboard: true,
         leads: true,
         clients: true,
@@ -28,6 +31,26 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
         reports: true,
         settings: true
     });
+
+    useEffect(() => {
+        async function checkContext() {
+            const { profile } = await getProfile();
+            if (profile?.tenants?.is_system && profile?.role === 'superadmin') {
+                setIsSystemContext(true);
+                // Default superadmin permissions
+                setPermissions({
+                    tenants: true,
+                    plans: true,
+                    ai_usage: true,
+                    global_logs: true,
+                    marketing_global: true,
+                    roadmap: true,
+                    team_management: true
+                });
+            }
+        }
+        checkContext();
+    }, []);
 
     const formatPhone = (value: string) => {
         if (!value) return '';
@@ -78,36 +101,37 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
     const handleRoleChange = (newRole: 'admin' | 'user') => {
         setRole(newRole);
         if (newRole === 'admin') {
-            // Admin has all permissions by default
-            setPermissions({
-                dashboard: true,
-                leads: true,
-                clients: true,
-                properties: true,
-                calendar: true,
-                reports: true,
-                settings: true
-            });
-        } else {
-            // Reset to default user permissions
-            setPermissions({
-                dashboard: true,
-                leads: true,
-                clients: true,
-                properties: true,
-                calendar: true,
-                reports: true,
-                settings: true
-            });
+            // Full access by default for these roles
+            if (isSystemContext) {
+                setPermissions({
+                    tenants: true,
+                    plans: true,
+                    ai_usage: true,
+                    global_logs: true,
+                    marketing_global: true,
+                    roadmap: true,
+                    team_management: true
+                });
+            } else {
+                setPermissions({
+                    dashboard: true,
+                    leads: true,
+                    clients: true,
+                    properties: true,
+                    calendar: true,
+                    reports: true,
+                    settings: true
+                });
+            }
         }
     };
 
-    const togglePermission = (key: keyof typeof permissions) => {
-        if (role === 'admin') return; // Admins cannot have permissions removed in this UI
+    const togglePermission = (key: string) => {
+        if (role === 'admin') return; 
         setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
-    const permissionLabels: Record<keyof typeof permissions, string> = {
+    const standardLabels: Record<string, string> = {
         dashboard: 'Dashboard',
         leads: 'Leads',
         clients: 'Clientes',
@@ -117,13 +141,27 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
         settings: 'Configurações'
     };
 
-    return (
-        <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden h-full flex flex-col">
-            <div className="p-6 flex items-center h-[89px]">
-                <h3 className="font-bold text-foreground">Dados Colaborador</h3>
-            </div>
+    const superAdminLabels: Record<string, string> = {
+        tenants: 'Empresas',
+        plans: 'Planos e Limites',
+        ai_usage: 'Uso de IA',
+        global_logs: 'Logs Globais',
+        marketing_global: 'Marketing Global',
+        roadmap: 'Roadmap',
+        team_management: 'Gestão da Equipe'
+    };
 
-            <form onSubmit={handleInvite} className="p-6 pt-0 space-y-4 flex-1 flex flex-col">
+    const labels = isSystemContext ? superAdminLabels : standardLabels;
+
+    return (
+        <div className={isModalMode ? "w-full" : "bg-card rounded-2xl shadow-sm border border-border overflow-hidden h-full flex flex-col"}>
+            {!isModalMode && (
+                <div className="p-6 flex items-center h-[89px]">
+                    <h3 className="font-bold text-foreground">Dados Colaborador</h3>
+                </div>
+            )}
+
+            <form onSubmit={handleInvite} className={`p-6 ${!isModalMode ? 'pt-0' : ''} space-y-4 flex-1 flex flex-col`}>
 
                 <div className="space-y-1.5">
                     <label className="text-sm font-bold text-foreground ml-1">Nome</label>
@@ -178,25 +216,25 @@ export function InviteForm({ onInviteCreated }: InviteFormProps) {
                             onClick={() => handleRoleChange('user')}
                             className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'user' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card text-foreground border-border hover:bg-muted'}`}
                         >
-                            Colaborador
+                            {isSystemContext ? 'Suporte' : 'Colaborador'}
                         </button>
                     </div>
                     <p className="text-[10px] text-muted-foreground mt-1 ml-1">
-                        {role === 'admin' ? 'Acesso total ao sistema.' : 'Acesso restrito conforme permissões abaixo.'}
+                        {role === 'admin' ? 'Acesso total ao painel administrativo.' : 'Acesso restrito conforme permissões abaixo.'}
                     </p>
                 </div>
 
                 <div className="w-full border-t border-border/50 my-2" />
 
                 <div className="space-y-2">
-                    <label className="text-sm font-bold text-foreground ml-1">Permissões</label>
+                    <label className="text-sm font-bold text-foreground ml-1">Permissões {isSystemContext ? 'Funcionais' : ''}</label>
                     <div className="grid grid-cols-2 gap-2 bg-input/50 p-3 rounded-xl border border-border/50">
-                        {Object.entries(permissionLabels).map(([key, label]) => (
+                        {Object.entries(labels).map(([key, label]) => (
                             <FormCheckbox
                                 key={key}
                                 label={label}
-                                checked={permissions[key as keyof typeof permissions]}
-                                onChange={() => togglePermission(key as keyof typeof permissions)}
+                                checked={permissions[key] || false}
+                                onChange={() => togglePermission(key)}
                                 disabled={role === 'admin'}
                                 className={role === 'admin' ? 'opacity-50 cursor-not-allowed' : ''}
                             />
