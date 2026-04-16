@@ -128,6 +128,14 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                 }
             }
 
+            // Redireciona os relatórios para superadmin
+            if (newItem.name === 'Relatórios') {
+                const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(userRole?.toLowerCase() || '');
+                if (isSuperAdmin) {
+                    newItem.href = '/superadmin/reports';
+                }
+            }
+
             if (newItem.subItems) {
                 newItem.subItems = newItem.subItems
                     .filter(sub => {
