@@ -20,7 +20,7 @@ export default async function SuperadminLogsPage() {
 
     return (
         <div className="max-w-[1600px] mx-auto animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <LogsTable tenantId={profile.tenant_id} />
+            <LogsTable tenantId={profile.tenant_id} isGlobal={true} />
         </div>
     );
 }

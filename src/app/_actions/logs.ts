@@ -10,6 +10,7 @@ export async function getSystemLogs(params: {
     profileId?: string;
     startDate?: string;
     endDate?: string;
+    isGlobal?: boolean;
 }) {
     const supabase = await createClient();
     const { profile } = await getProfile();
@@ -24,8 +25,11 @@ export async function getSystemLogs(params: {
         actionType,
         profileId,
         startDate,
-        endDate
+        endDate,
+        isGlobal = false
     } = params;
+
+    const isSuperadmin = ['superadmin', 'super_admin', 'super administrador'].includes(profile.role?.toLowerCase() || '');
 
     try {
         let query = supabase
@@ -36,10 +40,17 @@ export async function getSystemLogs(params: {
                     full_name,
                     avatar_url,
                     role
+                ),
+                tenants (
+                    name
                 )
-            `, { count: 'exact' })
-            .eq('tenant_id', profile.tenant_id)
-            .order('created_at', { ascending: false });
+            `, { count: 'exact' });
+
+        if (!isGlobal || !isSuperadmin) {
+            query = query.eq('tenant_id', profile.tenant_id);
+        }
+
+        query = query.order('created_at', { ascending: false });
 
         // Lógica de Visibilidade Baseada em Papel
         const requestingRole = profile.role?.toLowerCase();

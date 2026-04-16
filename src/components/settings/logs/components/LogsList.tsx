@@ -9,15 +9,16 @@ interface LogsListProps {
     loading: boolean;
     getActionBadge: (action: string) => string;
     getActionLabel: (action: string) => string;
+    isGlobal?: boolean;
 }
 
-export function LogsList({ logs, loading, getActionBadge, getActionLabel }: LogsListProps) {
+export function LogsList({ logs, loading, getActionBadge, getActionLabel, isGlobal = false }: LogsListProps) {
     if (loading) {
         return (
             <tbody className="divide-y divide-gray-50 dark:divide-white/5">
                 {Array.from({ length: 5 }).map((_, i) => (
                     <tr key={i} className="animate-pulse">
-                        <td colSpan={5} className="px-6 py-4">
+                        <td colSpan={isGlobal ? 6 : 5} className="px-6 py-4">
                             <div className="h-10 bg-gray-100 rounded-lg w-full"></div>
                         </td>
                     </tr>
@@ -30,7 +31,7 @@ export function LogsList({ logs, loading, getActionBadge, getActionLabel }: Logs
         return (
             <tbody>
                 <tr>
-                    <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground font-medium">
+                    <td colSpan={isGlobal ? 6 : 5} className="px-6 py-12 text-center text-muted-foreground font-medium">
                         Nenhum log encontrado com os filtros selecionados.
                     </td>
                 </tr>
@@ -61,6 +62,13 @@ export function LogsList({ logs, loading, getActionBadge, getActionLabel }: Logs
                             </div>
                         </div>
                     </td>
+                    {isGlobal && (
+                        <td className="px-6 py-4">
+                            <span className="text-xs font-bold text-[#404F4F]/80 uppercase tracking-tight bg-slate-100 dark:bg-white/10 px-2.5 py-1 rounded-md">
+                                {log.tenants?.name || 'Sistema'}
+                            </span>
+                        </td>
+                    )}
                     <td className="px-6 py-4">
                         <div className="flex flex-col gap-1">
                             <span className={getActionBadge(log.action)}>
