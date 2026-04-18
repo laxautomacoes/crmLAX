@@ -65,7 +65,7 @@ export default async function SuperadminDashboardPage() {
         return acc
     }, {})
 
-    const distribution = Object.entries(counts).map(([name, value]) => ({
+    const distribution = Object.entries(counts).map(([name, value]: [string, number]) => ({
         name: name.charAt(0).toUpperCase() + name.slice(1),
         value
     }))
