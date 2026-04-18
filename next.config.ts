@@ -25,7 +25,13 @@ const withPWA = require("@ducanh2912/next-pwa").default({
 });
 
 const nextConfig: NextConfig = {
-  /* config options here */
+  /* Força o uso do Webpack e silencia o aviso informativo do Turbopack */
+  webpack: (config) => {
+    return config;
+  },
+  experimental: {
+    turbopack: {},
+  },
 };
 
 export default withPWA(nextConfig);
