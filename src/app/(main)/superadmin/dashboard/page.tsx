@@ -18,7 +18,7 @@ export default async function SuperadminDashboardPage() {
 
     // 2. Total Usuários (Excluindo usuários do sistema)
     const { data: systemTenants } = await supabase.from('tenants').select('id').eq('is_system', true)
-    const systemTenantIds = systemTenants?.map(t => t.id) || []
+    const systemTenantIds = (systemTenants as any[])?.map((t: any) => t.id) || []
 
     const { count: userCount } = await supabase
         .from('profiles')
@@ -30,7 +30,7 @@ export default async function SuperadminDashboardPage() {
         .from('ai_usage')
         .select('total_tokens')
     
-    const totalTokens = aiUsage?.reduce((acc, curr) => acc + (curr.total_tokens || 0), 0) || 0
+    const totalTokens = (aiUsage as any[])?.reduce((acc: number, curr: any) => acc + (curr.total_tokens || 0), 0) || 0
 
     const stats = [
         { label: 'Total de Empresas', value: tenantCount || 0, icon: Building },
@@ -59,7 +59,7 @@ export default async function SuperadminDashboardPage() {
         .select('plan_type')
         .eq('is_system', false)
 
-    const counts = (plansData || []).reduce((acc: Record<string, number>, curr) => {
+    const counts = (plansData || []).reduce((acc: Record<string, number>, curr: any) => {
         const type = curr.plan_type || 'freemium'
         acc[type] = (acc[type] || 0) + 1
         return acc
