@@ -23,6 +23,7 @@ interface Tenant {
 export default function TenantsList({ initialTenants, search, onRefresh }: { initialTenants: Tenant[], search: string, onRefresh: () => void }) {
     const [expandedTenantId, setExpandedTenantId] = useState<string | null>(null)
     const [isDeletingId, setIsDeletingId] = useState<string | null>(null)
+    const [isStatusModalTenant, setIsStatusModalTenant] = useState<Tenant | null>(null)
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Estados para o formulário de edição
@@ -72,16 +73,19 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
         }
     }
 
-    const handleToggleStatus = async (tenant: Tenant) => {
+    const handleExecuteToggleStatus = async () => {
+        if (!isStatusModalTenant) return
+        
         setIsSubmitting(true)
         try {
-            const newStatus = tenant.status === 'active' ? 'suspended' : 'active'
-            const result = await updateTenant(tenant.id, { status: newStatus })
+            const newStatus = isStatusModalTenant.status === 'active' ? 'suspended' : 'active'
+            const result = await updateTenant(isStatusModalTenant.id, { status: newStatus })
 
             if (result.success) {
-                toast.success(`Empresa ${newStatus === 'active' ? 'ativada' : 'bloqueada'} com sucesso!`)
+                toast.success(`Acesso ${newStatus === 'active' ? 'reativado' : 'suspenso'} com sucesso!`)
                 onRefresh()
                 setExpandedTenantId(null)
+                setIsStatusModalTenant(null)
             } else {
                 toast.error(result.error || 'Erro ao alterar status')
             }
@@ -89,6 +93,7 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
             toast.error('Erro ao conectar com o servidor')
         } finally {
             setIsSubmitting(false)
+            setIsStatusModalTenant(null)
         }
     }
 
@@ -138,7 +143,7 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
                                         <td className="px-6 py-4">
                                             <div className="flex items-center gap-3">
                                                 <div className={`w-10 h-10 rounded-lg flex items-center justify-center font-bold ${
-                                                    tenant.status === 'suspended' ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'
+                                                    tenant.status === 'suspended' ? 'bg-amber-100 text-amber-600 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-primary/10 text-primary'
                                                 }`}>
                                                     {tenant.name.charAt(0)}
                                                 </div>
@@ -164,9 +169,9 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
                                         </td>
                                         <td className="px-6 py-4 align-middle">
                                             <span className={`inline-flex items-center px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
-                                                tenant.status === 'suspended' ? 'bg-destructive/10 text-destructive' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+                                                tenant.status === 'suspended' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' : 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
                                             }`}>
-                                                {tenant.status === 'suspended' ? 'Bloqueada' : 'Ativa'}
+                                                {tenant.status === 'suspended' ? 'SUSPENSA' : 'ATIVA'}
                                             </span>
                                         </td>
                                         <td className="px-6 py-4 text-xs text-muted-foreground align-middle">
@@ -256,18 +261,18 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
                                                                 disabled={isSubmitting}
                                                                 className="px-4 py-2 bg-primary text-primary-foreground rounded-lg text-xs font-bold hover:opacity-90 transition-all disabled:opacity-50"
                                                             >
-                                                                Salvar Alterações
+                                                                {isSubmitting ? 'Salvando...' : 'Salvar Alterações'}
                                                             </button>
                                                             <button
-                                                                onClick={() => handleToggleStatus(tenant)}
+                                                                onClick={() => setIsStatusModalTenant(tenant)}
                                                                 disabled={isSubmitting}
-                                                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50 ${
+                                                                className={`px-4 py-2 rounded-lg text-xs font-bold transition-all disabled:opacity-50 shadow-sm ${
                                                                     tenant.status === 'suspended' 
                                                                     ? 'bg-emerald-500 text-white hover:bg-emerald-600' 
                                                                     : 'bg-amber-500 text-white hover:bg-amber-600'
                                                                 }`}
                                                             >
-                                                                {tenant.status === 'suspended' ? 'Ativar Empresa' : 'Bloquear Empresa'}
+                                                                {tenant.status === 'suspended' ? 'Reativar (Empresa Suspensa)' : 'Suspensão Temporária'}
                                                             </button>
                                                         </div>
                                                     </div>
@@ -316,6 +321,54 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
                 </div>
             </div>
 
+            {/* Modal de Confirmação de Status (Suave) */}
+            <Modal
+                isOpen={!!isStatusModalTenant}
+                onClose={() => setIsStatusModalTenant(null)}
+                title={isStatusModalTenant?.status === 'active' ? 'Suspender Acesso' : 'Reativar Acesso'}
+            >
+                <div className="space-y-6">
+                    <div className={`p-4 rounded-lg border ${
+                        isStatusModalTenant?.status === 'active' 
+                        ? 'bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-900/20 dark:border-amber-900/30 dark:text-amber-400' 
+                        : 'bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-900/20 dark:border-emerald-900/30 dark:text-emerald-400'
+                    }`}>
+                        <p className="text-sm font-bold flex items-center gap-2">
+                             {isStatusModalTenant?.status === 'active' ? '⏸️ Suspensão de Serviço' : '✅ Reativação de Acesso'}
+                        </p>
+                                <p className="text-xs mt-1 leading-relaxed">
+                                    {isStatusModalTenant?.status === 'active' 
+                                        ? 'Deseja suspender temporariamente o acesso desta empresa? Todos os usuários serão redirecionados para uma página informativa até que o acesso seja reestabelecido.' 
+                                        : 'Deseja normalizar o acesso para esta empresa? Todos os usuários poderão voltar a utilizar todas as ferramentas do CRM LAX imediatamente.'}
+                                </p>
+                            </div>
+                            
+                            <p className="text-sm text-foreground/80">
+                                {isStatusModalTenant?.status === 'active' 
+                                    ? `Os administradores da empresa ${isStatusModalTenant?.name} serão notificados sobre a suspensão.`
+                                    : `A empresa ${isStatusModalTenant?.name} voltará ao status ATIVA.`}
+                            </p>
+
+                    <div className="flex justify-end gap-3 pt-2">
+                        <button
+                            onClick={() => setIsStatusModalTenant(null)}
+                            className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleExecuteToggleStatus}
+                            disabled={isSubmitting}
+                            className={`px-6 py-2 rounded-lg text-sm font-bold transition-all shadow-sm active:scale-[0.95] disabled:opacity-50 text-white ${
+                                isStatusModalTenant?.status === 'active' ? 'bg-amber-500 hover:bg-amber-600' : 'bg-emerald-500 hover:bg-emerald-600'
+                            }`}
+                        >
+                            {isSubmitting ? 'Processando...' : (isStatusModalTenant?.status === 'active' ? 'Confirmar Suspensão' : 'Confirmar Reativação')}
+                        </button>
+                    </div>
+                </div>
+            </Modal>
+
             {/* Modal de Confirmação de Exclusão */}
             <Modal
                 isOpen={!!isDeletingId}
@@ -336,7 +389,7 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
                         Para confirmar, clique no botão abaixo. Esta ação não pode ser desfeita.
                     </p>
 
-                    <div className="flex justify-end gap-3">
+                    <div className="flex justify-end gap-3 pt-2">
                         <button
                             onClick={() => setIsDeletingId(null)}
                             className="px-4 py-2 text-sm font-medium text-muted-foreground hover:bg-muted rounded-lg transition-colors"

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
+import { sendSuspensionEmail } from '@/lib/resend'
 
 export async function getTenantByUserId(userId: string) {
     const supabase = await createClient()
@@ -384,7 +385,39 @@ export async function updateTenant(tenantId: string, data: { name?: string; slug
         return { success: false, error: 'Apenas superadmins podem editar empresas.' }
     }
 
-    const { error } = await supabase
+    // Se estiver suspendendo, disparar e-mails para os administradores
+    if (data.status === 'suspended') {
+        try {
+            // Buscar nome do tenant e administradores
+            const { data: tenant } = await supabase.from('tenants').select('name').eq('id', tenantId).single()
+            const { data: admins } = await supabase
+                .from('profiles')
+                .select('id')
+                .eq('tenant_id', tenantId)
+                .in('role', ['admin', 'superadmin'])
+
+            if (tenant && admins && admins.length > 0) {
+                const supabaseAdmin = createAdminClient()
+                
+                // Buscar e-mails no Auth e enviar notificações
+                const emailPromises = admins.map(async (admin) => {
+                    const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(admin.id)
+                    if (authUser?.user?.email) {
+                        return sendSuspensionEmail(authUser.user.email, tenant.name)
+                    }
+                })
+                
+                await Promise.all(emailPromises)
+                console.log(`Notificações de suspensão enviadas para ${admins.length} administradores do tenant ${tenant.name}`)
+            }
+        } catch (emailErr) {
+            console.error('Erro ao processar notificações de suspensão:', emailErr)
+            // Não bloqueamos o update do tenant se o e-mail falhar, mas logamos o erro
+        }
+    }
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
         .from('tenants')
         .update(data)
         .eq('id', tenantId)
