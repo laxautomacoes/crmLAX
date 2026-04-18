@@ -234,22 +234,24 @@ export default function PlanCardSuperadmin({ plan, onSaved }: PlanCardSuperadmin
             {/* Limites numéricos */}
             <div className="mb-4 rounded-xl border border-border p-3 space-y-2">
                 <p className="text-xs font-bold text-foreground mb-2">Limites do Plano</p>
-                {[
-                    { label: 'Leads/mês', key: 'max_leads_per_month' as const },
-                    { label: 'Imóveis', key: 'max_assets' as const },
-                    { label: 'Usuários', key: 'max_users' as const },
-                    { label: 'Req. IA/mês', key: 'ai_requests_per_month' as const },
-                ].map(({ label, key }) => (
-                    <div key={key} className="flex items-center justify-between gap-2">
-                        <span className="text-xs text-muted-foreground shrink-0">{label}</span>
-                        <input
-                            type="number"
-                            value={(data as any)[key] ?? 0}
-                            onChange={(e) => updateField(key, Number(e.target.value))}
-                            className={`${inputCls} w-24 text-right`}
-                        />
-                    </div>
-                ))}
+                <div className="grid grid-cols-[1fr_96px] items-center gap-y-2">
+                    {[
+                        { label: 'Leads/mês', key: 'max_leads_per_month' as const },
+                        { label: 'Imóveis', key: 'max_assets' as const },
+                        { label: 'Usuários', key: 'max_users' as const },
+                        { label: 'Req. IA/mês', key: 'ai_requests_per_month' as const },
+                    ].map(({ label, key }) => (
+                        <>
+                            <span className="text-xs text-muted-foreground shrink-0">{label}</span>
+                            <input
+                                type="number"
+                                value={(data as any)[key] ?? 0}
+                                onChange={(e) => updateField(key, Number(e.target.value))}
+                                className={`${inputCls} w-full text-right`}
+                            />
+                        </>
+                    ))}
+                </div>
                 {[
                     { label: 'WhatsApp', key: 'has_whatsapp' as const },
                     { label: 'IA', key: 'has_ai' as const },
