@@ -30,11 +30,11 @@ export async function getAIConfig(tenantId: string): Promise<{ provider: AIProvi
         .single();
         
     // Forçar uso do modelo mais avançado se o banco de dados retornar modelos antigos ou com typo
-    let resolvedModel = limit?.ai_model || (limit?.ai_provider === 'openai' ? 'gpt-4o' : 'gemini-1.5-pro');
+    let resolvedModel = limit?.ai_model || (limit?.ai_provider === 'openai' ? 'gpt-4o' : 'gemini-3.1-pro-preview');
     
     // Atualiza automaticamente typos ou modelos antigos para o topo de linha
-    if (resolvedModel.includes('gemini-3') || resolvedModel === 'gemini-1.5-flash' || resolvedModel === 'gemini-pro') {
-        resolvedModel = 'gemini-1.5-pro'; // Modelo mais capaz, ou alternativamente 'gemini-2.0-flash'
+    if (resolvedModel === 'gemini-3-flash' || resolvedModel === 'gemini-1.5-flash' || resolvedModel === 'gemini-pro') {
+        resolvedModel = 'gemini-3.1-pro-preview'; // Modelo de altíssima performance no momento
     }
 
     return {
