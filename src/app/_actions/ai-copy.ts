@@ -148,7 +148,7 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
 
         return { success: true, data: parsed };
     } catch (error: any) {
-        console.error('AI General Copy Error:', error.message);
-        throw new Error('Falha ao gerar copy do post.');
+        console.error('AI General Copy Error:', error);
+        throw new Error('Falha ao gerar copy do post: ' + (error.message || 'Erro desconhecido.'));
     }
 }

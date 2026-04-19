@@ -8,14 +8,17 @@ import { toast } from 'sonner';
 interface MarketingStudioProps {
     tenantId: string;
     profileId: string;
+    variant?: 'default' | 'minimal';
 }
 
-export function MarketingStudio({ tenantId, profileId }: MarketingStudioProps) {
+export function MarketingStudio({ tenantId, profileId, variant = 'default' }: MarketingStudioProps) {
     const [topic, setTopic] = useState('');
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'medium' | 'short' | 'full'>('medium');
     const [copied, setCopied] = useState(false);
+
+    const isMinimal = variant === 'minimal';
 
     const handleGenerate = async () => {
         if (!topic.trim()) {
@@ -43,6 +46,98 @@ export function MarketingStudio({ tenantId, profileId }: MarketingStudioProps) {
         toast.success('Copiado para a área de transferência!');
         setTimeout(() => setCopied(false), 2000);
     };
+
+    if (isMinimal) {
+        return (
+            <div className="max-w-4xl mx-auto space-y-10 py-10 animate-in fade-in duration-700">
+                {/* Cabeçalho Minimalista */}
+                <div className="text-center space-y-2">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFE600]/10 text-[#404F4F] text-[10px] font-black uppercase tracking-widest border border-[#FFE600]/20">
+                        <Sparkles size={12} className="text-[#FFE600]" />
+                        IA Creative Assistant
+                    </div>
+                    <h2 className="text-3xl font-black text-[#404F4F] tracking-tight">O que vamos criar hoje?</h2>
+                </div>
+
+                {/* Área de Input Centralizada */}
+                <div className="relative group">
+                    <textarea
+                        value={topic}
+                        onChange={(e) => setTopic(e.target.value)}
+                        placeholder="Descreva o assunto do post..."
+                        className="w-full min-h-[140px] p-8 rounded-[2rem] bg-white border border-border/50 text-xl font-medium focus:ring-2 focus:ring-[#FFE600]/30 outline-none resize-none transition-all shadow-sm hover:shadow-md placeholder:text-gray-300"
+                    />
+                    
+                    <div className="absolute right-4 bottom-4 flex gap-2">
+                         {topic && (
+                            <button 
+                                onClick={() => setTopic('')}
+                                className="px-4 py-2 text-[10px] font-black text-red-500/70 hover:text-red-600 transition-colors uppercase tracking-widest"
+                            >
+                                Limpar
+                            </button>
+                        )}
+                        <button
+                            onClick={handleGenerate}
+                            disabled={loading || !topic.trim()}
+                            className="h-12 px-8 bg-[#404F4F] hover:bg-[#2d3939] text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg active:scale-95 disabled:opacity-30"
+                        >
+                            {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} className="text-[#FFE600]" />}
+                            Gerar
+                        </button>
+                    </div>
+                </div>
+
+                {/* Resultados Minimalistas */}
+                {results && (
+                    <div className="space-y-6 animate-in slide-in-from-top-4 duration-500">
+                        <div className="flex justify-center gap-2">
+                            {[
+                                { id: 'medium', label: 'Social Feed' },
+                                { id: 'short', label: 'Direct/WhatsApp' },
+                                { id: 'full', label: 'Long Copy' }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    onClick={() => setActiveTab(tab.id as any)}
+                                    className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${
+                                        activeTab === tab.id
+                                            ? 'bg-[#404F4F] text-white border-[#404F4F]'
+                                            : 'bg-white text-[#404F4F]/40 border-border/50 hover:bg-gray-50'
+                                    }`}
+                                >
+                                    {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-border/50 relative group">
+                            <p className="text-lg text-[#404F4F] leading-loose whitespace-pre-wrap font-medium text-center italic">
+                                "{results[activeTab]}"
+                            </p>
+                            
+                            <div className="mt-8 flex justify-center gap-4 pt-8 border-t border-border/20">
+                                <button
+                                    onClick={() => handleCopy(results[activeTab])}
+                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-[#404F4F] font-black text-[10px] uppercase tracking-widest transition-all"
+                                >
+                                    {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                                    Copiar
+                                </button>
+                                <button
+                                    onClick={() => toast.info('Funcionalidade de postagem direta em breve.')}
+                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-black text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-95"
+                                >
+                                    <Send size={14} />
+                                    Postar Agora
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                )}
+            </div>
+        );
+    }
 
     return (
         <section className="space-y-6">

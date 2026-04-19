@@ -19,6 +19,7 @@ import { InstagramPostModal } from './InstagramPostModal';
 import { YouTubeShortsModal } from './YouTubeShortsModal';
 import { PageHeader } from '../shared/PageHeader';
 import { MarketingStudio } from './MarketingStudio';
+import { MarketingSuperadmin } from './MarketingSuperadmin';
 
 const MetaIcon = (props: any) => (
     <svg viewBox="0 0 24 24" fill="currentColor" {...props}>
@@ -52,6 +53,8 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
     const [isPostModalOpen, setIsPostModalOpen] = useState(false);
     const [isYouTubeModalOpen, setIsYouTubeModalOpen] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
+
+    const isSuperadmin = userRole === 'superadmin';
 
     useEffect(() => {
         const init = async () => {
@@ -160,7 +163,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
             connected: !!getIntegrationData('youtube'),
             connectedAccount: getIntegrationData('youtube')?.credentials?.account_name,
             description: 'Transforme vídeos em Shorts automaticamente.',
-            upcoming: false // Agora disponível para conexão
+            upcoming: false
         }
     ];
 
@@ -168,7 +171,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
         <div className="space-y-16 animate-in fade-in slide-in-from-bottom-4 duration-700">
             <PageHeader 
                 title="Marketing"
-                subtitle={userRole === 'superadmin' ? "Divulgue o CRM LAX e gerencie os criativos do sistema." : "Inteligência para criar, postar e crescer suas redes sociais."}
+                subtitle={isSuperadmin ? "Central de Criativos e Gestão de Presença Digital." : "Inteligência para criar, postar e crescer suas redes sociais."}
             >
                 <div className="flex items-center gap-3">
                     <button
@@ -187,134 +190,138 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
                 </div>
             </PageHeader>
 
-            {/* SEÇÃO 1: ESTÚDIO DE CRIAÇÃO */}
-            <MarketingStudio tenantId={tenantId} profileId={profileId} />
+            {isSuperadmin ? (
+                <MarketingSuperadmin tenantId={tenantId} profileId={profileId} />
+            ) : (
+                <>
+                    {/* SEÇÃO 1: ESTÚDIO DE CRIAÇÃO (Visão Padrão) */}
+                    <MarketingStudio tenantId={tenantId} profileId={profileId} />
 
-            {/* SEÇÃO 2: IMÓVEIS PARA DIVULGAR */}
-            {userRole !== 'superadmin' && (
-                <section className="space-y-6">
-                    <div className="flex items-center justify-between">
-                        <div className="flex items-center gap-3">
-                            <ImageIcon className="h-5 w-5 text-[#404F4F]/40" />
-                            <h2 className="text-xl font-black text-[#404F4F]">Prontos para Divulgação</h2>
+                    {/* SEÇÃO 2: IMÓVEIS PARA DIVULGAR */}
+                    <section className="space-y-6">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <ImageIcon className="h-5 w-5 text-[#404F4F]/40" />
+                                <h2 className="text-xl font-black text-[#404F4F]">Prontos para Divulgação</h2>
+                            </div>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Rápido e Simples</p>
                         </div>
-                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Rápido e Simples</p>
-                    </div>
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                        {isLoadingProps ? (
-                            [1, 2, 3, 4].map(n => (
-                                <div key={n} className="h-[220px] rounded-[2rem] bg-[#404F4F]/5 animate-pulse" />
-                            ))
-                        ) : properties.length > 0 ? (
-                            properties.map((prop) => (
-                                <div
-                                    key={prop.id}
-                                    className="group relative aspect-[4/5] overflow-hidden bg-white rounded-[2rem] border border-border/50 shadow-sm transition-all hover:shadow-xl"
-                                >
-                                    {prop.images?.[0] ? (
-                                        <img src={prop.images[0]} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" alt={prop.title} />
-                                    ) : (
-                                        <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
-                                            <ImageIcon className="h-10 w-10" />
-                                        </div>
-                                    )}
+                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
+                            {isLoadingProps ? (
+                                [1, 2, 3, 4].map(n => (
+                                    <div key={n} className="h-[220px] rounded-[2rem] bg-[#404F4F]/5 animate-pulse" />
+                                ))
+                            ) : properties.length > 0 ? (
+                                properties.map((prop) => (
+                                    <div
+                                        key={prop.id}
+                                        className="group relative aspect-[4/5] overflow-hidden bg-white rounded-[2rem] border border-border/50 shadow-sm transition-all hover:shadow-xl"
+                                    >
+                                        {prop.images?.[0] ? (
+                                            <img src={prop.images[0]} className="w-full h-full object-cover transition-transform group-hover:scale-110 duration-500" alt={prop.title} />
+                                        ) : (
+                                            <div className="w-full h-full bg-slate-100 flex items-center justify-center text-slate-300">
+                                                <ImageIcon className="h-10 w-10" />
+                                            </div>
+                                        )}
 
-                                    <div className="absolute inset-0 bg-gradient-to-t from-[#404F4F] via-transparent to-transparent flex flex-col justify-end p-6 translate-y-2 group-hover:translate-y-0 transition-transform">
-                                        <h4 className="text-white font-black text-sm line-clamp-1">{prop.title}</h4>
-                                        <div className="flex items-center justify-between mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
-                                            <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{prop.type}</span>
-                                            <div className="flex gap-2">
-                                                <button
-                                                    onClick={() => handleYouTubeShorts(prop)}
-                                                    title="Postar YouTube Shorts"
-                                                    className="bg-red-600 text-white p-2.5 rounded-xl transition-all transform hover:scale-110 shadow-lg"
-                                                >
-                                                    <Youtube className="h-4 w-4" />
-                                                </button>
-                                                <button
-                                                    onClick={() => handleQuickPost(prop)}
-                                                    title="Postar Instagram Feed"
-                                                    className="bg-[#FFE600] text-[#404F4F] p-2.5 rounded-xl transition-all transform hover:scale-110 shadow-lg"
-                                                >
-                                                    <Instagram className="h-4 w-4" />
-                                                </button>
+                                        <div className="absolute inset-0 bg-gradient-to-t from-[#404F4F] via-transparent to-transparent flex flex-col justify-end p-6 translate-y-2 group-hover:translate-y-0 transition-transform">
+                                            <h4 className="text-white font-black text-sm line-clamp-1">{prop.title}</h4>
+                                            <div className="flex items-center justify-between mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <span className="text-white/80 text-[10px] font-bold uppercase tracking-wider">{prop.type}</span>
+                                                <div className="flex gap-2">
+                                                    <button
+                                                        onClick={() => handleYouTubeShorts(prop)}
+                                                        title="Postar YouTube Shorts"
+                                                        className="bg-red-600 text-white p-2.5 rounded-xl transition-all transform hover:scale-110 shadow-lg"
+                                                    >
+                                                        <Youtube className="h-4 w-4" />
+                                                    </button>
+                                                    <button
+                                                        onClick={() => handleQuickPost(prop)}
+                                                        title="Postar Instagram Feed"
+                                                        className="bg-[#FFE600] text-[#404F4F] p-2.5 rounded-xl transition-all transform hover:scale-110 shadow-lg"
+                                                    >
+                                                        <Instagram className="h-4 w-4" />
+                                                    </button>
+                                                </div>
                                             </div>
                                         </div>
                                     </div>
+                                ))
+                            ) : (
+                                <div className="col-span-full py-16 text-center bg-white rounded-[2rem] border border-border/10">
+                                    <p className="text-muted-foreground text-sm font-medium">Nenhum imóvel disponível para ação rápida.</p>
                                 </div>
-                            ))
-                        ) : (
-                            <div className="col-span-full py-16 text-center bg-white rounded-[2rem] border border-border/10">
-                                <p className="text-muted-foreground text-sm font-medium">Nenhum imóvel disponível para ação rápida.</p>
+                            )}
+                        </div>
+                    </section>
+                    
+                    {/* SEÇÃO 3: STATUS DAS CONEXÕES */}
+                    <section className="space-y-6 pb-20">
+                        <div className="flex items-center justify-between">
+                            <div className="flex items-center gap-3">
+                                <RefreshCw className="h-5 w-5 text-[#404F4F]/40" />
+                                <h2 className="text-xl font-black text-[#404F4F]">Status das Conexões</h2>
                             </div>
-                        )}
-                    </div>
-                </section>
-            )}
+                        </div>
 
-            {/* SEÇÃO 3: SUAS REDES SOCIAIS */}
-            <section className="space-y-6 pb-20">
-                <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                        <RefreshCw className="h-5 w-5 text-[#404F4F]/40" />
-                        <h2 className="text-xl font-black text-[#404F4F]">Status das Conexões</h2>
-                    </div>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {integrations.map((item) => (
-                        <div
-                            key={item.id}
-                            className={`group relative bg-white rounded-2xl border border-border/50 shadow-sm p-6 transition-all hover:border-[#FFE600]/30 ${item.upcoming ? 'opacity-60' : ''}`}
-                        >
-                            <div className="flex items-center justify-between mb-4">
-                                <div className="flex items-center gap-3">
-                                    <div className="p-2.5 rounded-xl bg-gray-50 group-hover:bg-[#FFE600]/10 transition-colors">
-                                        <item.icon className="h-5 w-5 text-[#404F4F]" />
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {integrations.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className={`group relative bg-white rounded-2xl border border-border/50 shadow-sm p-6 transition-all hover:border-[#FFE600]/30 ${item.upcoming ? 'opacity-60' : ''}`}
+                                >
+                                    <div className="flex items-center justify-between mb-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="p-2.5 rounded-xl bg-gray-50 group-hover:bg-[#FFE600]/10 transition-colors">
+                                                <item.icon className="h-5 w-5 text-[#404F4F]" />
+                                            </div>
+                                            <div>
+                                                <h3 className="font-black text-[#404F4F] text-sm">{item.name}</h3>
+                                                {item.connected && item.connectedAccount && (
+                                                    <p className="text-[10px] font-bold text-green-600 uppercase tracking-tight">{item.connectedAccount}</p>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {item.connected ? (
+                                            <div className="w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-green-100" />
+                                        ) : (
+                                            <div className="w-2.5 h-2.5 bg-gray-300 rounded-full" />
+                                        )}
                                     </div>
-                                    <div>
-                                        <h3 className="font-black text-[#404F4F] text-sm">{item.name}</h3>
-                                        {item.connected && item.connectedAccount && (
-                                            <p className="text-[10px] font-bold text-green-600 uppercase tracking-tight">{item.connectedAccount}</p>
+
+                                    <p className="text-[11px] text-muted-foreground line-clamp-2 min-h-[32px] mb-6">
+                                        {item.description}
+                                    </p>
+
+                                    <div className="flex gap-2">
+                                        {!item.connected && !item.upcoming ? (
+                                            <button
+                                                onClick={() => handleConnect(item.id)}
+                                                className="flex-1 h-10 bg-[#404F4F] text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#2d3939] transition-all"
+                                            >
+                                                Conectar
+                                            </button>
+                                        ) : item.connected ? (
+                                            <button
+                                                className="flex-1 h-10 bg-gray-50 text-[#404F4F]/60 border border-border rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all"
+                                            >
+                                                Desconectar
+                                            </button>
+                                        ) : (
+                                            <div className="flex-1 h-10 bg-gray-50 border border-dashed border-border rounded-xl flex items-center justify-center">
+                                                <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Em breve</span>
+                                            </div>
                                         )}
                                     </div>
                                 </div>
-                                {item.connected ? (
-                                    <div className="w-2.5 h-2.5 bg-green-500 rounded-full border-2 border-green-100" />
-                                ) : (
-                                    <div className="w-2.5 h-2.5 bg-gray-300 rounded-full" />
-                                )}
-                            </div>
-
-                            <p className="text-[11px] text-muted-foreground line-clamp-2 min-h-[32px] mb-6">
-                                {item.description}
-                            </p>
-
-                            <div className="flex gap-2">
-                                {!item.connected && !item.upcoming ? (
-                                    <button
-                                        onClick={() => handleConnect(item.id)}
-                                        className="flex-1 h-10 bg-[#404F4F] text-white rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-[#2d3939] transition-all"
-                                    >
-                                        Conectar
-                                    </button>
-                                ) : item.connected ? (
-                                    <button
-                                        className="flex-1 h-10 bg-gray-50 text-[#404F4F]/60 border border-border rounded-xl font-black text-[10px] uppercase tracking-widest hover:bg-red-50 hover:text-red-600 hover:border-red-100 transition-all"
-                                    >
-                                        Desconectar
-                                    </button>
-                                ) : (
-                                    <div className="flex-1 h-10 bg-gray-50 border border-dashed border-border rounded-xl flex items-center justify-center">
-                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Em breve</span>
-                                    </div>
-                                )}
-                            </div>
+                            ))}
                         </div>
-                    ))}
-                </div>
-            </section>
+                    </section>
+                </>
+            )}
 
             {/* Modais de Postagem */}
             {selectedProp && (

@@ -32,7 +32,8 @@ export async function handleSecurityValidation(
             const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'laxperience.online';
             const redirectUrl = request.nextUrl.clone();
             
-            if (profile.role === 'superadmin') {
+            const superRoles = ['superadmin', 'super_admin', 'super administrador'];
+            if (profile.role && superRoles.includes(profile.role)) {
                 if (pathname === '/dashboard') {
                     redirectUrl.pathname = '/superadmin/dashboard';
                     return NextResponse.redirect(redirectUrl);
