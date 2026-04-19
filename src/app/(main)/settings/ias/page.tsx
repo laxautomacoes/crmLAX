@@ -4,6 +4,8 @@ import { AIUsageStats } from "@/components/settings/ias/AIUsageStats";
 import { AIUsageChart } from "@/components/settings/ias/AIUsageChart";
 import { AIPlanConfig } from "@/components/settings/ias/AIPlanConfig";
 import { AIUsageTable } from "@/components/settings/ias/AIUsageTable";
+import { AISystemPromptManager } from "@/components/settings/ias/AISystemPromptManager";
+import { getAIPrompts } from "@/app/_actions/ai-prompts";
 import { redirect } from "next/navigation";
 
 export default async function AIConfigurationPage() {
@@ -24,10 +26,11 @@ export default async function AIConfigurationPage() {
 
     const isSuperadmin = profile?.role === 'superadmin';
     
-    const [stats, detailedUsage, planConfigs] = await Promise.all([
+    const [stats, detailedUsage, planConfigs, tenantPrompts] = await Promise.all([
         getAIUsageStats(),
         getDetailedAIUsage(50),
-        isSuperadmin ? getAIPlanConfigs() : Promise.resolve([])
+        isSuperadmin ? getAIPlanConfigs() : Promise.resolve([]),
+        getAIPrompts(profile.tenant_id) // Add tenant prompts  
     ]);
 
     return (
@@ -61,6 +64,8 @@ export default async function AIConfigurationPage() {
                         <span className="h-6 w-1 bg-indigo-500 rounded-full" />
                         <h3 className="text-xl font-bold text-slate-900">Análise de Performance</h3>
                     </div>
+
+                    <AISystemPromptManager prompts={tenantPrompts} tenantId={profile.tenant_id} isSuperadmin={false} />
                     
                     <div className="grid grid-cols-1 gap-12">
                         <AIUsageChart data={stats.usage_by_day} />

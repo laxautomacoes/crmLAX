@@ -4,6 +4,8 @@ import { AIUsageStats } from "@/components/settings/ias/AIUsageStats";
 import { AIUsageChart } from "@/components/settings/ias/AIUsageChart";
 import { AIPlanConfig } from "@/components/settings/ias/AIPlanConfig";
 import { AIUsageTable } from "@/components/settings/ias/AIUsageTable";
+import { AISystemPromptManager } from "@/components/settings/ias/AISystemPromptManager";
+import { getAIPrompts } from "@/app/_actions/ai-prompts";
 import { PageHeader } from "@/components/shared/PageHeader";
 import { redirect } from "next/navigation";
 
@@ -21,7 +23,7 @@ export default async function SuperadminAIPage() {
         .eq('id', user.id)
         .single();
 
-    const isSuperadmin = ['superadmin', 'super_admin', 'super administrador'].includes(profile?.role?.toLowerCase() || '');
+    const isSuperadmin = profile?.role === 'superadmin';
 
     if (!isSuperadmin) {
         redirect('/dashboard');
@@ -29,9 +31,17 @@ export default async function SuperadminAIPage() {
     
     const [stats, detailedUsage, planConfigs] = await Promise.all([
         getAIUsageStats(),
-        getDetailedAIUsage(100), // Mais logs para superadmin
-        getAIPlanConfigs()
+        getDetailedAIUsage(100),
+        getAIPlanConfigs(),
     ]);
+
+    // Proteção defensiva: tabela ai_prompts pode não estar acessível via RLS
+    let globalPrompts: any[] = [];
+    try {
+        globalPrompts = await getAIPrompts(null);
+    } catch (e) {
+        console.warn('[SuperadminAI] Não foi possível carregar ai_prompts:', e);
+    }
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-12">
@@ -60,6 +70,8 @@ export default async function SuperadminAIPage() {
                     <span className="h-6 w-1 bg-[#FFE600] rounded-full" />
                     <h3 className="text-xl font-bold text-[#404F4F]">Análise de Performance Global</h3>
                 </div>
+                
+                <AISystemPromptManager prompts={globalPrompts} isSuperadmin={true} />
                 
                 <div className="grid grid-cols-1 gap-12">
                     <AIUsageChart data={stats.usage_by_day} />
