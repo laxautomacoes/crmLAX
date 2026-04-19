@@ -9,11 +9,12 @@ interface PropertyCardProps {
     onDelete: (id: string) => void
     onView: (prop: any) => void
     onSend: (prop: any) => void
+    onApprove?: (id: string) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole, userId }: PropertyCardProps) {
+export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove, userRole, userId }: PropertyCardProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId && prop.created_by && (
         userId === prop.created_by || 
@@ -36,10 +37,22 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, userRole,
                 )}
                 
                 {prop.status === 'Pendente' && (
-                    <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
+                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3">
                         <div className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">
                             Pendente de Aprovação
                         </div>
+                        {isAdmin && onApprove && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onApprove(prop.id)
+                                }}
+                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-all shadow-lg active:scale-95"
+                            >
+                                <FileText size={14} />
+                                Autorizar agora
+                            </button>
+                        )}
                     </div>
                 )}
 

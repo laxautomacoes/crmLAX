@@ -63,9 +63,8 @@ export async function getDashboardMetrics(tenantId: string) {
             .eq('tenant_id', tenantId)
             .eq('is_archived', false)
 
-        if (!isAdmin && profile?.id) {
-            assetsQuery = assetsQuery.eq('created_by', profile.id)
-        }
+        // Nota: KP de imóveis mostra o total disponível no tenant para todos os membros.
+
 
         const { count: totalAssets, error: assetsError } = await assetsQuery
 

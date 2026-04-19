@@ -9,11 +9,12 @@ interface PropertyListItemProps {
     onDelete: (id: string) => void
     onView: (prop: any) => void
     onSend: (prop: any) => void
+    onApprove?: (id: string) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userRole, userId }: PropertyListItemProps) {
+export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApprove, userRole, userId }: PropertyListItemProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId && prop.created_by && (
         userId === prop.created_by || 
@@ -169,6 +170,18 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, userR
             </td>
             <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2">
+                    {isAdmin && prop.status === 'Pendente' && onApprove && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onApprove(prop.id)
+                            }}
+                            className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                            title="Autorizar Imóvel"
+                        >
+                            <FileText size={16} />
+                        </button>
+                    )}
                     <button
                         onClick={(e) => {
                             e.stopPropagation()

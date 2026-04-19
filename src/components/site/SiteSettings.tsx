@@ -69,7 +69,7 @@ export function SiteSettings() {
                 const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(userRole);
 
                 let query = supabase.from('tenants').select('*');
-                
+
                 if (isSuperAdmin) {
                     // Superadmin edita o branding da plataforma
                     query = query.eq('is_system', true);
@@ -242,15 +242,15 @@ export function SiteSettings() {
                         <div className="bg-card border border-border rounded-2xl p-6">
                             <div className="mb-6">
                                 <h3 className="text-lg font-bold text-foreground">Identidade Visual</h3>
-                                <p className="text-sm text-muted-foreground">Logotipo e favicon exibidos no site e no dashboard.</p>
+                                <p className="text-sm text-muted-foreground">Logotipos e ícone | favicon exibidos no site e no sistema.</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
                                 {/* Logo Full (Site) */}
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <label className="text-sm font-bold text-foreground">Logotipo Principal (Site)</label>
-                                        <p className="text-xs text-muted-foreground">Exibido na vitrine. Recomendado: 5:1</p>
+                                        <label className="text-sm font-bold text-foreground">Logotipo Site</label>
+                                        <p className="text-xs text-muted-foreground">Exibido no site | Recomendado: 5:1</p>
                                     </div>
                                     <div className="relative group min-h-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
                                         {branding.logo_full ? (
@@ -299,8 +299,8 @@ export function SiteSettings() {
                                 {/* Logo Header (System) */}
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <label className="text-sm font-bold text-foreground">Logotipo do Header (Dashboard)</label>
-                                        <p className="text-xs text-muted-foreground">Exibido no sistema interno.</p>
+                                        <label className="text-sm font-bold text-foreground">Logotipo Header</label>
+                                        <p className="text-xs text-muted-foreground">Exibido no sistema | Recomendado: 5:1</p>
                                     </div>
                                     <div className="relative group min-h-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
                                         {(branding.logo_header || branding.logo_full) ? (
@@ -355,8 +355,8 @@ export function SiteSettings() {
                                 {/* Logo Icon */}
                                 <div className="space-y-4">
                                     <div className="space-y-1">
-                                        <label className="text-sm font-bold text-foreground">Ícone (Favicon)</label>
-                                        <p className="text-xs text-muted-foreground">Recomendado: 200x200px (1:1)</p>
+                                        <label className="text-sm font-bold text-foreground">Ícone | Favicon</label>
+                                        <p className="text-xs text-muted-foreground">Exibido no sistema | Recomendado: 1:1 (200x200px)</p>
                                     </div>
                                     <div className="relative group aspect-square max-w-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
                                         {branding.logo_icon ? (
@@ -389,13 +389,13 @@ export function SiteSettings() {
                         {/* Address Section */}
                         <div className="bg-card border border-border rounded-2xl p-6">
                             <div className="mb-6">
-                                <h3 className="text-lg font-bold text-foreground">Localização da Imobiliária</h3>
-                                <p className="text-sm text-muted-foreground">Informações de endereço exibidas no rodapé do seu site.</p>
+                                <h3 className="text-lg font-bold text-foreground">Localização</h3>
+                                <p className="text-sm text-muted-foreground">Informações exibidas no rodapé do seu site.</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1 md:col-span-2">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Rua / Avenida</label>
+                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Rua | Avenida</label>
                                     <input
                                         type="text"
                                         value={branding.address?.street || ''}

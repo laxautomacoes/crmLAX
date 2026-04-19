@@ -95,6 +95,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     })
 
     const [isUploading, setIsUploading] = useState<string | null>(null)
+    const [isSaving, setIsSaving] = useState(false)
 
     useEffect(() => {
         async function loadData() {
@@ -317,17 +318,32 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     }
 
     const handleSaveLocal = async () => {
-        const propertyData = {
-            ...formData,
-            price: formData.price ? parseFloat(formData.price.toString()) : 0,
-            // Garantir que a descrição vá no objeto raiz e também dentro de details como redundância
-            description: formData.description,
-            details: {
-                ...formData.details,
-                description: formData.description
+        if (isSaving) return
+        
+        try {
+            setIsSaving(true)
+            const cleanPriceStr = (formData.price || '0').toString().replace(/[^\d.,]/g, '').replace(',', '.')
+            const parsedPrice = parseFloat(cleanPriceStr)
+            
+            // Filtrar campos para evitar enviar dados sujos
+            const { created_by, ...restData } = formData
+
+            const propertyData = {
+                ...restData,
+                price: isNaN(parsedPrice) ? 0 : parsedPrice,
+                description: formData.description || '',
+                details: {
+                    ...formData.details,
+                    description: formData.description || ''
+                }
             }
+            await onSave(propertyData)
+        } catch (error: any) {
+            console.error('Error in handleSaveLocal:', error)
+            alert('Erro ao processar dados: ' + (error.message || 'Erro desconhecido'))
+        } finally {
+            setIsSaving(false)
         }
-        await onSave(propertyData)
     }
 
     return (
@@ -385,9 +401,11 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     </button>
                     <button
                         onClick={handleSaveLocal}
-                        className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 shadow-sm active:scale-[0.99] transition-all"
+                        disabled={isSaving || !!isUploading}
+                        className={`flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold shadow-sm active:scale-[0.99] transition-all
+                            ${(isSaving || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
                     >
-                        {editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel"}
+                        {isSaving ? "Salvando..." : (editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel")}
                     </button>
                 </div>
             </div>

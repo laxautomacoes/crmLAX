@@ -31,22 +31,15 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
             .from('assets')
             .select('*')
             .eq('tenant_id', tenant.id)
-            .neq('status', 'Pendente')
+            .eq('is_published', true)
             .order('created_at', { ascending: false });
 
         if (supabaseError) {
-            console.error('Supabase error fetching assets:', {
-                message: supabaseError.message,
-                details: supabaseError.details,
-                hint: supabaseError.hint,
-                code: supabaseError.code
-            });
+            console.error('Supabase error fetching assets:', supabaseError);
         } else {
-            console.log(`Found ${data?.length || 0} assets`);
             assets = data?.filter((a: any) => 
                 a.status?.toLowerCase() === 'disponível' || 
-                a.status?.toLowerCase() === 'disponivel' ||
-                a.status?.toLowerCase() === 'available'
+                a.status?.toLowerCase() === 'disponivel'
             ) || [];
         }
 
