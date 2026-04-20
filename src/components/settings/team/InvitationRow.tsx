@@ -40,12 +40,12 @@ export function InvitationRow({ invitation, onCopyLink, onEdit }: InvitationRowP
             <td className="px-6 py-4 text-center">
                 <div className="flex justify-center">
                     {isUsed ? (
-                        <div className="flex items-center gap-1.5 text-green-600 font-bold text-xs">
-                            <CheckCircle className="w-3.5 h-3.5" /> Aceito
+                        <div className="text-green-600 font-bold text-xs">
+                            Aceito
                         </div>
                     ) : (
-                        <div className="flex items-center gap-1.5 px-2 py-1 bg-yellow-400/20 text-yellow-700 rounded-lg font-bold text-xs">
-                            <Clock className="w-3.5 h-3.5" /> Pendente
+                        <div className="px-2 py-1 bg-yellow-400/20 text-yellow-700 rounded-lg font-bold text-xs">
+                            Pendente
                         </div>
                     )}
                 </div>

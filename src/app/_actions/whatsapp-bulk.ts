@@ -14,53 +14,57 @@ interface BulkMessagePayload {
     fileName?: string;
 }
 
-export async function sendBulkWhatsAppMessages(payload: BulkMessagePayload) {
-    const { recipients, message, mediaUrl, mediaType, fileName } = payload;
-    
-    const { data: instance, error: instanceError } = await getWhatsAppInstance();
-    if (instanceError || !instance || instance.status !== 'connected') {
-        return { success: false, error: 'WhatsApp não conectado. Verifique suas integrações.' };
-    }
-
-    const results = [];
-    const supabase = await createClient();
-
-    for (const recipient of recipients) {
-        const normalizedNumber = normalizeWhatsAppNumber(recipient.phone);
-        const personalizedMessage = message.replace(/{nome}/g, recipient.name);
-        
-        try {
-            let sendResult;
-            
-            // Envia texto se houver mensagem
-            if (personalizedMessage) {
-                sendResult = await evolutionService.sendMessage(instance.instance_name, normalizedNumber, personalizedMessage);
-            }
-
-            // Envia mídia se houver
-            if (mediaUrl && mediaType) {
-                if (mediaType === 'document') {
-                    await evolutionService.sendDocument(instance.instance_name, normalizedNumber, mediaUrl, fileName || 'documento', personalizedMessage);
-                } else {
-                    await evolutionService.sendMedia(instance.instance_name, normalizedNumber, mediaUrl, mediaType, personalizedMessage);
-                }
-            }
-
-            // RegistrarLogs
-            if (recipient.lead_id) {
-                await logInteraction(recipient.lead_id, 'whatsapp', `Mensagem em massa disparada: ${personalizedMessage.substring(0, 50)}...`);
-            }
-
-            results.push({ phone: recipient.phone, status: 'sent', data: sendResult });
-            
-            // Delay preventivo entre mensagens (mínimo 1.2s + random até 2s)
-            await new Promise(resolve => setTimeout(resolve, 1200 + Math.random() * 2000));
-            
-        } catch (err: any) {
-            console.error(`Erro ao enviar para ${recipient.phone}:`, err);
-            results.push({ phone: recipient.phone, status: 'error', error: err.message });
-        }
-    }
-
-    return { success: true, results };
+interface SingleBulkMessagePayload {
+    recipient: { name: string; phone: string; lead_id?: string };
+    message: string;
+    mediaUrl?: string;
+    mediaType?: 'image' | 'video' | 'document';
+    fileName?: string;
+    instanceName: string;
 }
+
+export async function checkWhatsAppStatus() {
+    const { data: instance, error } = await getWhatsAppInstance();
+    if (error || !instance || instance.status !== 'connected') {
+        return { connected: false, error: 'WhatsApp não conectado. Verifique suas integrações.' };
+    }
+    return { connected: true, instanceName: instance.instance_name };
+}
+
+export async function sendSingleBulkMessage(payload: SingleBulkMessagePayload) {
+    const { recipient, message, mediaUrl, mediaType, fileName, instanceName } = payload;
+    
+    const normalizedNumber = normalizeWhatsAppNumber(recipient.phone);
+    const personalizedMessage = message
+        .replace(/{nome}/g, recipient.name)
+        .replace(/{primeiro_nome}/g, recipient.name.split(' ')[0]);
+    
+    try {
+        let sendResult;
+        
+        // Envia texto se houver mensagem
+        if (personalizedMessage) {
+            sendResult = await evolutionService.sendMessage(instanceName, normalizedNumber, personalizedMessage);
+        }
+
+        // Envia mídia se houver
+        if (mediaUrl && mediaType) {
+            if (mediaType === 'document') {
+                await evolutionService.sendDocument(instanceName, normalizedNumber, mediaUrl, fileName || 'documento', personalizedMessage);
+            } else {
+                await evolutionService.sendMedia(instanceName, normalizedNumber, mediaUrl, mediaType, personalizedMessage);
+            }
+        }
+
+        // Registrar Logs
+        if (recipient.lead_id) {
+            await logInteraction(recipient.lead_id, 'whatsapp', `Mensagem automatizada (Disparador): ${personalizedMessage.substring(0, 80)}...`);
+        }
+
+        return { success: true, phone: recipient.phone, data: sendResult };
+    } catch (err: any) {
+        console.error(`Erro ao enviar para ${recipient.phone}:`, err);
+        return { success: false, phone: recipient.phone, error: err.message };
+    }
+}
+

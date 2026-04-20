@@ -317,7 +317,7 @@ export default function NotesPage() {
                     )}
                     <button
                         onClick={() => setIsModalOpen(true)}
-                        className="mt-6 text-secondary font-bold text-sm hover:underline"
+                        className="mt-6 text-primary hover:text-primary/80 dark:text-secondary dark:hover:text-secondary/80 font-bold text-sm hover:underline"
                     >
                         Criar minha primeira nota
                     </button>

@@ -18,7 +18,7 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
-import { sendBulkWhatsAppMessages } from '@/app/_actions/whatsapp-bulk'
+import { checkWhatsAppStatus, sendSingleBulkMessage } from '@/app/_actions/whatsapp-bulk'
 import { getPipelineData } from '@/app/_actions/leads'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone } from '@/lib/utils/phone'
@@ -36,6 +36,9 @@ export function BulkSenderForm() {
     const [isMediaUploading, setIsMediaUploading] = useState(false)
     const [media, setMedia] = useState<{ url: string; type: 'image' | 'video' | 'document'; name: string } | null>(null)
     const [isSending, setIsSending] = useState(false)
+    const [stopRequested, setStopRequested] = useState(false)
+    const [results, setResults] = useState({ success: 0, error: 0 })
+    const [isFinished, setIsFinished] = useState(false)
     const [progress, setProgress] = useState({ current: 0, total: 0 })
     const [isSelectingLeads, setIsSelectingLeads] = useState(false)
     
@@ -128,37 +131,73 @@ export function BulkSenderForm() {
         }
     }
 
+    const stopRef = useRef(false)
+    const handleStop = () => {
+        stopRef.current = true
+        setStopRequested(true)
+    }
+
     const handleSend = async () => {
         if (recipients.length === 0) return toast.error('Selecione os destinatários.')
         if (!message && !media) return toast.error('Escreva uma mensagem ou anexe um arquivo.')
 
+        const status = await checkWhatsAppStatus()
+        if (!status.connected || !status.instanceName) {
+            return toast.error(status.error)
+        }
+
         setIsSending(true)
+        stopRef.current = false
+        setStopRequested(false)
+        setIsFinished(false)
+        setResults({ success: 0, error: 0 })
         setProgress({ current: 0, total: recipients.length })
 
-        try {
-            const result = await sendBulkWhatsAppMessages({
-                recipients,
-                message,
-                mediaUrl: media?.url,
-                mediaType: media?.type,
-                fileName: media?.name
-            })
+        const total = recipients.length
+        let currentSuccess = 0
+        let currentError = 0
 
-            if (result.success) {
-                toast.success('Processo de disparo concluído!')
-                setRecipients([])
-                setSourceType(null)
-                setMessage('')
-                setMedia(null)
-            } else {
-                toast.error(result.error)
+        for (let i = 0; i < total; i++) {
+            if (stopRef.current) break
+
+            const recipient = recipients[i]
+            
+            try {
+                const res = await sendSingleBulkMessage({
+                    recipient,
+                    message,
+                    mediaUrl: media?.url,
+                    mediaType: media?.type,
+                    fileName: media?.name,
+                    instanceName: status.instanceName
+                })
+
+                if (res.success) currentSuccess++
+                else currentError++
+            } catch (err) {
+                currentError++
             }
-        } catch (error: any) {
-            toast.error('Erro no disparo: ' + error.message)
-        } finally {
-            setIsSending(false)
+
+            const current = i + 1
+            setResults({ success: currentSuccess, error: currentError })
+            setProgress({ current, total })
+
+            if (current < total && !stopRef.current) {
+                await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500))
+            }
+        }
+
+        setIsSending(false)
+        setIsFinished(true)
+        
+        if (stopRef.current) {
+            toast.warning('Disparo interrompido pelo usuário.')
+        } else {
+            toast.success('Processo de disparo concluído!')
         }
     }
+
+
 
     return (
         <div className="bg-card p-6 rounded-2xl border border-muted-foreground/30 shadow-sm space-y-6">
@@ -174,7 +213,7 @@ export function BulkSenderForm() {
                             rows={8}
                         />
                         <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-1 italic">
-                            <Info size={12} /> Use {"{nome}"} para personalizar com o nome do cliente.
+                            <Info size={12} /> Use {"{nome}"} ou {"{primeiro_nome}"} para personalizar.
                         </p>
                     </div>
 
@@ -337,9 +376,12 @@ export function BulkSenderForm() {
             {/* Ações e Progresso */}
             <div className="pt-6 border-t border-gray-100 flex flex-col gap-4">
                 {isSending && (
-                    <div className="space-y-2">
+                    <div className="space-y-3">
                         <div className="flex items-center justify-between text-xs font-bold text-[#404F4F]">
-                            <span>Enviando mensagens ({progress.current}/{progress.total})</span>
+                            <div className="flex items-center gap-2">
+                                <Loader2 className="animate-spin text-[#FFE600]" size={14} />
+                                <span>Enviando mensagens ({progress.current}/{progress.total})</span>
+                            </div>
                             <span>{Math.round((progress.current / progress.total) * 100)}%</span>
                         </div>
                         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
@@ -348,26 +390,54 @@ export function BulkSenderForm() {
                                 style={{ width: `${(progress.current / progress.total) * 100}%` }}
                             />
                         </div>
+                        <div className="flex justify-between text-[10px] font-bold">
+                            <span className="text-green-600">{results.success} Sucessos</span>
+                            <span className="text-red-500">{results.error} Falhas</span>
+                        </div>
                     </div>
                 )}
 
-                <button 
-                    onClick={handleSend}
-                    disabled={isSending || recipients.length === 0 || (!message && !media)}
-                    className={`w-full h-12 text-sm font-bold bg-[#FFE600] border-none text-black hover:bg-[#F2DB00] transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2 ${isSending ? 'opacity-70 cursor-not-allowed' : ''}`}
-                >
+                {isFinished && !isSending && (
+                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                <CheckCircle2 size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-[#404F4F]">Disparo Finalizado</p>
+                                <p className="text-[10px] text-gray-500">{results.success} enviados, {results.error} falhas.</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setIsFinished(false)}
+                            className="text-[10px] font-bold text-[#404F4F] hover:underline"
+                        >
+                            Fechar Resumo
+                        </button>
+                    </div>
+                )}
+
+                <div className="flex gap-3">
                     {isSending ? (
-                        <>
-                            <Loader2 className="animate-spin" size={20} />
-                            Processando Envio em Massa...
-                        </>
+                        <button 
+                            onClick={handleStop}
+                            className="w-full h-12 text-sm font-bold bg-white border border-red-200 text-red-500 hover:bg-red-50 transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2"
+                        >
+                            <X size={20} />
+                            Interromper Disparo
+                        </button>
                     ) : (
-                        <>
+                        <button 
+                            onClick={handleSend}
+                            disabled={isSending || recipients.length === 0 || (!message && !media)}
+                            className={`w-full h-12 text-sm font-bold bg-[#FFE600] border-none text-black hover:bg-[#F2DB00] transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2 ${(recipients.length === 0 || (!message && !media)) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                        >
                             <Send size={20} />
                             Iniciar Disparo para {recipients.length} Contatos
-                        </>
+                        </button>
                     )}
-                </button>
+                </div>
+
             </div>
         </div>
     )

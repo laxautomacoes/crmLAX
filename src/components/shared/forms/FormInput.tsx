@@ -34,7 +34,7 @@ export function FormInput({ label, error, icon: Icon, rightElement, className = 
                 )}
                 <input
                     className={`
-                        w-full rounded-lg border border-muted-foreground/30 bg-white text-foreground text-sm outline-none transition-all
+                        w-full rounded-lg border border-muted-foreground/30 bg-input text-foreground text-sm outline-none transition-all
                         focus:ring-2 focus:ring-secondary/50 focus:border-secondary
                         disabled:opacity-50 disabled:cursor-not-allowed
                         placeholder:text-muted-foreground/50

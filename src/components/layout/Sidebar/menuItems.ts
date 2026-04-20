@@ -46,6 +46,16 @@ export const menuItems = [
             { name: 'Análise de m²', href: '/properties/analysis' },
         ]
     },
+    { 
+        name: 'Marketing', 
+        icon: Megaphone, 
+        href: '/marketing', 
+        permission: 'marketing_global',
+        subItems: [
+            { name: 'Estúdio de Criação', href: '/marketing/studio' },
+            { name: 'Disparador em Massa', href: '/marketing/bulk-sender' },
+        ]
+    },
     {
         name: 'Site',
         icon: Globe,
@@ -55,8 +65,6 @@ export const menuItems = [
     { name: 'Agenda', icon: Calendar, href: '/agenda', roles: ['admin', 'user', 'corretor'] },
     { name: 'Notas', icon: StickyNote, href: '/notes', roles: ['admin', 'user', 'corretor'] },
     { name: 'Relatórios', icon: FileText, href: '/reports' },
-    { name: 'Marketing', icon: Megaphone, href: '/marketing', permission: 'marketing_global' },
-    { name: 'Roadmap', icon: Rocket, href: '/roadmap', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'], permission: 'roadmap' },
     {
         name: 'Configurações',
         icon: Settings,
@@ -65,12 +73,12 @@ export const menuItems = [
             { name: 'Meu Perfil', href: '/settings' },
             { name: 'Equipe', href: '/settings/team', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'], permission: 'team_management' },
             { name: 'Notificações', href: '/notifications' },
-            { name: 'Disparador em Massa', href: '/tools/whatsapp-bulk', roles: ['admin', 'user', 'corretor'] },
             { name: 'Integrações', href: '/settings/integrations' },
             { name: 'Domínio', href: '/settings/domain', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
-            { name: 'Logs do Sistema', href: '/settings/logs', roles: ['admin'] },
             { name: 'IAs', href: '/settings/ias', roles: ['admin'] },
-            { name: 'Assinatura', href: '/settings/subscription', roles: ['admin'] }
+            { name: 'Assinatura', href: '/settings/subscription', roles: ['admin'] },
+            { name: 'Roadmap', href: '/roadmap', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'], permission: 'roadmap' },
+            { name: 'Logs do Sistema', href: '/settings/logs', roles: ['admin'] }
         ]
     },
 ];

@@ -25,7 +25,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
             <div>
                 <button
                     onClick={() => !isCollapsed && onToggleExpand(item.name)}
-                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-base font-medium ${isActive ? 'text-secondary' : 'text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground'} ${isCollapsed ? 'justify-center' : ''}`}
+                    className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-base font-medium ${isActive ? 'bg-white/10 text-secondary' : 'text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground'} ${isCollapsed ? 'justify-center' : ''}`}
                     title={isCollapsed ? item.name : ''}
                 >
                     <item.icon size={20} className="shrink-0" />
@@ -55,7 +55,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
                                     target={sub.isExternal ? "_blank" : undefined}
                                     rel={sub.isExternal ? "noopener noreferrer" : undefined}
                                     onClick={onClose}
-                                    className={`block px-3 py-2 text-base rounded-lg transition-colors ${subActive ? 'text-secondary font-medium' : 'text-sidebar-foreground/50 hover:text-sidebar-foreground'}`}
+                                    className={`block px-3 py-2 text-base rounded-lg transition-colors ${subActive ? 'bg-white/10 text-secondary font-medium' : 'text-sidebar-foreground/50 hover:text-sidebar-foreground'}`}
                                 >
                                     {sub.name}
                                 </Link>
@@ -71,7 +71,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
         <Link
             href={item.href}
             onClick={onClose}
-            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-base font-medium ${isActive ? 'bg-white/10 text-sidebar-foreground' : 'text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground'} ${isCollapsed ? 'justify-center' : ''}`}
+            className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-base font-medium ${isActive ? 'bg-white/10 text-secondary' : 'text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground'} ${isCollapsed ? 'justify-center' : ''}`}
             title={isCollapsed ? item.name : ''}
         >
             <item.icon size={20} className="shrink-0" />
