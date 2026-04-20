@@ -4,36 +4,36 @@ import { Autocomplete } from '@/components/shared/forms/Autocomplete'
 import { Building2 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 
-interface AssetAutocompleteProps {
+interface PropertyAutocompleteProps {
     tenantId: string
     selectedItem: any
-    onSelect: (asset: any) => void
+    onSelect: (property: any) => void
     onClear: () => void
     label?: string
     placeholder?: string
     icon?: any
 }
 
-export function AssetAutocomplete({ 
+export function PropertyAutocomplete({ 
     tenantId, 
     selectedItem, 
     onSelect, 
     onClear,
-    label = "Imóvel Relacionado",
-    placeholder = "Buscar imóvel",
+    label = "Property Relacionado",
+    placeholder = "Buscar property",
     icon = Building2
-}: AssetAutocompleteProps) {
-    const fetchAssets = async (search: string) => {
+}: PropertyAutocompleteProps) {
+    const fetchProperties = async (search: string) => {
         const supabase = createClient()
         const { data, error } = await supabase
-            .from('assets')
+            .from('properties')
             .select('id, title')
             .eq('tenant_id', tenantId)
             .ilike('title', `%${search}%`)
             .limit(5)
             
         if (error) {
-            console.error('Error fetching assets:', error)
+            console.error('Error fetching properties:', error)
             return []
         }
 
@@ -48,7 +48,7 @@ export function AssetAutocomplete({
             selectedItem={selectedItem}
             onSelect={onSelect}
             onClear={onClear}
-            fetchItems={fetchAssets}
+            fetchItems={fetchProperties}
             itemToString={(item) => item.title}
             itemToId={(item) => item.id}
         />

@@ -6,9 +6,9 @@ export async function checkApprovalStatusColumn() {
     const supabase = createAdminClient()
     
     try {
-        // Tentar buscar uma linha da tabela assets para ver as colunas
+        // Tentar buscar uma linha da tabela properties para ver as colunas
         const { data, error } = await supabase
-            .from('assets')
+            .from('properties')
             .select('*')
             .limit(1)
 

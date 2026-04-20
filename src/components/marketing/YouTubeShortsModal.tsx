@@ -36,7 +36,7 @@ export function YouTubeShortsModal({ isOpen, onClose, prop, tenantId }: YouTubeS
         try {
             const result = await uploadShortToYouTube({
                 tenantId,
-                assetId: prop.id,
+                propertyId: prop.id,
                 videoUrl: selectedVideo,
                 title,
                 description,
@@ -132,7 +132,7 @@ export function YouTubeShortsModal({ isOpen, onClose, prop, tenantId }: YouTubeS
                                     <AlertCircle className="text-amber-500 shrink-0" size={24} />
                                     <div className="space-y-1">
                                         <p className="text-sm font-bold text-amber-900">Nenhum vídeo cadastrado</p>
-                                        <p className="text-xs text-amber-800 leading-relaxed">Este imóvel não possui vídeos. Faça o upload de um vídeo vertical no cadastro do imóvel para postar no YouTube.</p>
+                                        <p className="text-xs text-amber-800 leading-relaxed">Este property não possui vídeos. Faça o upload de um vídeo vertical no cadastro do property para postar no YouTube.</p>
                                     </div>
                                 </div>
                             )}
@@ -158,7 +158,7 @@ export function YouTubeShortsModal({ isOpen, onClose, prop, tenantId }: YouTubeS
                                     <textarea
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
-                                        placeholder="Conte um pouco mais sobre esse imóvel..."
+                                        placeholder="Conte um pouco mais sobre esse property..."
                                         className="w-full h-40 p-4 rounded-2xl border border-border bg-gray-50/50 text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none resize-none transition-all font-medium leading-relaxed"
                                     />
                                 </div>

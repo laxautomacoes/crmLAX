@@ -64,7 +64,7 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
     const propertyUrl = getPropertyUrl(tenant, propertyData.id) + (queryString ? `?${queryString}` : '')
 
     // Apply configuration if provided
-    const displayTitle = config?.title !== false ? propertyData.title : 'Imóvel disponível'
+    const displayTitle = config?.title !== false ? propertyData.title : 'Property disponível'
     const displayPrice = config?.price !== false ? `R$ ${new Intl.NumberFormat('pt-BR').format(propertyData.price || 0)}` : 'Preço sob consulta'
     const displayImages = config?.images?.length > 0 ? config.images : (propertyData as any).images || []
     
@@ -81,7 +81,7 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
         const { data, error } = await resend.emails.send({
             from: `${tenant.name} <noreply@laxperience.online>`,
             to: [leadEmail],
-            subject: `Confira este imóvel: ${displayTitle}`,
+            subject: `Confira este property: ${displayTitle}`,
             html: `
         <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
           ${displayImages[0] ? `<img src="${displayImages[0]}" style="width: 100%; height: 300px; object-fit: cover;" />` : ''}
@@ -100,7 +100,7 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
 
             ${showDetails ? `
               <div style="margin-bottom: 24px;">
-                <h2 style="font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0;">Detalhes do Imóvel</h2>
+                <h2 style="font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0;">Detalhes do Property</h2>
                 <ul style="margin: 0; padding: 0; list-style: none;">
                   ${(config?.showBedrooms !== false && (details.dormitorios || details.quartos)) ? `<li style="margin-bottom: 8px; color: #444;">• ${details.dormitorios || details.quartos} Dormitórios</li>` : ''}
                   ${(config?.showSuites !== false && details.suites) ? `<li style="margin-bottom: 8px; color: #444;">• ${details.suites} Suítes</li>` : ''}
@@ -137,7 +137,7 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
 
         if (error) throw error
 
-        await logInteraction(leadId, 'system', `E-mail enviado com o imóvel: ${propertyData.title}`)
+        await logInteraction(leadId, 'system', `E-mail enviado com o property: ${propertyData.title}`)
 
         return { success: true, data }
     } catch (error: any) {

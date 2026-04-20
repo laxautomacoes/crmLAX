@@ -12,7 +12,7 @@ import {
     CheckCircle2
 } from 'lucide-react';
 import { getMarketingIntegrations } from '@/app/_actions/marketing';
-import { getAssets } from '@/app/_actions/assets';
+import { getProperties } from '@/app/_actions/properties';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { InstagramPostModal } from './InstagramPostModal';
@@ -90,7 +90,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
     const fetchProperties = async () => {
         setIsLoadingProps(true);
         try {
-            const result = await getAssets(tenantId);
+            const result = await getProperties(tenantId);
             if (result.success) {
                 setProperties(result.data?.slice(0, 4) || []);
             }
@@ -252,7 +252,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
                                 ))
                             ) : (
                                 <div className="col-span-full py-16 text-center bg-white rounded-[2rem] border border-border/10">
-                                    <p className="text-muted-foreground text-sm font-medium">Nenhum imóvel disponível para ação rápida.</p>
+                                    <p className="text-muted-foreground text-sm font-medium">Nenhum property disponível para ação rápida.</p>
                                 </div>
                             )}
                         </div>

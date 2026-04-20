@@ -4,10 +4,10 @@ CREATE POLICY "Tenants are publicly readable"
 ON public.tenants FOR SELECT 
 USING (true);
 
--- Enable public access for assets (needed for the site listings)
-DROP POLICY IF EXISTS "Assets are publicly readable" ON public.assets;
+-- Enable public access for properties (needed for the site listings)
+DROP POLICY IF EXISTS "Assets are publicly readable" ON public.properties;
 CREATE POLICY "Assets are publicly readable" 
-ON public.assets FOR SELECT 
+ON public.properties FOR SELECT 
 USING (true);
 
 -- Enable public access for profiles (needed to get WhatsApp number of admins)

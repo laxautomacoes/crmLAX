@@ -47,7 +47,7 @@ export function PlanItem({
         icon: planIcons[planLimit.plan_type as keyof typeof planIcons] || <Zap />,
         cta: isCurrent ? 'Plano atual' : `Assinar ${planLimit.display_name || planLimit.plan_type}`,
         max_leads_per_month: planLimit.max_leads_per_month ?? 0,
-        max_assets: planLimit.max_assets ?? 0,
+        max_properties: planLimit.max_properties ?? 0,
         max_users: planLimit.max_users ?? 0,
         has_whatsapp: planLimit.has_whatsapp ?? false,
         has_ai: planLimit.has_ai ?? false,

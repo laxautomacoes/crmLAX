@@ -5,7 +5,7 @@ import { getValidGoogleToken } from '@/lib/auth/google-auth';
 
 interface YouTubeUploadParams {
     tenantId: string;
-    assetId: string;
+    propertyId: string;
     videoUrl: string;
     title: string;
     description: string;
@@ -17,7 +17,7 @@ interface YouTubeUploadParams {
  */
 export async function uploadShortToYouTube({
     tenantId,
-    assetId,
+    propertyId,
     videoUrl,
     title,
     description,
@@ -32,7 +32,7 @@ export async function uploadShortToYouTube({
         const metadata = {
             snippet: {
                 title: title.includes('#Shorts') ? title : `${title} #Shorts`,
-                description: `${description}\n\n#Shorts #Imoveis #CRM`,
+                description: `${description}\n\n#Shorts #Properties #CRM`,
                 categoryId: '22' // People & Blogs
             },
             status: {
@@ -79,13 +79,13 @@ export async function uploadShortToYouTube({
 
         const result = await uploadResponse.json();
 
-        // 5. Opcional: Registrar nos logs ou atualizar o asset
+        // 5. Opcional: Registrar nos logs ou atualizar o property
         const supabase = await createClient();
         await supabase.from('system_logs').insert({
             tenant_id: tenantId,
             action: 'youtube_upload_success',
-            entity_type: 'asset',
-            entity_id: assetId,
+            entity_type: 'property',
+            entity_id: propertyId,
             details: { video_id: result.id, title }
         });
 

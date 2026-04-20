@@ -28,7 +28,7 @@ export function getTenantBaseUrl(tenant: {
 }
 
 /**
- * Gera o link completo para um imóvel no site vitrine.
+ * Gera o link completo para um property no site vitrine.
  */
 export function getPropertyUrl(tenant: { 
     slug: string; 

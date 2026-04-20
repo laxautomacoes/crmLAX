@@ -1,21 +1,22 @@
 'use client';
 
 import { useState } from 'react';
-import { AssetFilters } from './AssetFilters';
-import { AssetsGrid } from './AssetsGrid';
-import { AssetsList } from './AssetsList';
+import { PropertyFilters } from './PropertyFilters';
+import { PropertiesGrid } from './PropertiesGrid';
+import { PropertiesList } from './PropertiesList';
 import { WhatsAppButton } from './WhatsAppButton';
 import { Instagram, Facebook, Linkedin, Youtube, MapPin } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
 
 interface SiteClientProps {
-    assets: any[];
+    properties: any[];
     tenantName: string;
+    tenantSlug: string;
     whatsappNumber?: string | null;
     branding?: any;
 }
 
-export function SiteClient({ assets, tenantName, whatsappNumber, branding }: SiteClientProps) {
+export function SiteClient({ properties, tenantName, tenantSlug, whatsappNumber, branding }: SiteClientProps) {
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery');
     const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
     const [isTermsOpen, setIsTermsOpen] = useState(false);
@@ -27,13 +28,13 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
         search: ''
     });
 
-    const filteredAssets = assets.filter(asset => {
+    const filteredProperties = properties.filter(property => {
         // Filtro de busca
         if (filters.search) {
             const searchLower = filters.search.toLowerCase();
-            const titleLower = asset.title.toLowerCase();
-            const tipo = (asset.details?.tipo_imovel || asset.details?.type || '').toLowerCase();
-            const bairro = (asset.details?.endereco?.bairro || '').toLowerCase();
+            const titleLower = property.title.toLowerCase();
+            const tipo = (property.details?.tipo_property || property.details?.type || '').toLowerCase();
+            const bairro = (property.details?.endereco?.bairro || '').toLowerCase();
             if (!titleLower.includes(searchLower) && !tipo.includes(searchLower) && !bairro.includes(searchLower)) {
                 return false;
             }
@@ -41,7 +42,7 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
 
         // Filtro de tipo
         if (filters.tipo) {
-            const tipo = (asset.details?.tipo_imovel || asset.details?.type || '').toLowerCase();
+            const tipo = (property.details?.tipo_property || property.details?.type || '').toLowerCase();
             if (!tipo.includes(filters.tipo.toLowerCase())) {
                 return false;
             }
@@ -49,16 +50,16 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
 
         // Filtro de dormitórios
         if (filters.quartos) {
-            const dormitorios = String(asset.details?.dormitorios || asset.details?.quartos || asset.details?.rooms || '');
+            const dormitorios = String(property.details?.dormitorios || property.details?.quartos || property.details?.rooms || '');
             if (!dormitorios.includes(filters.quartos)) {
                 return false;
             }
         }
 
         // Filtro de preço máximo
-        if (filters.precoMax && asset.price) {
+        if (filters.precoMax && property.price) {
             const precoMax = parseFloat(filters.precoMax.replace(/[^\d,.-]/g, '').replace(',', '.'));
-            if (!isNaN(precoMax) && Number(asset.price) > precoMax) {
+            if (!isNaN(precoMax) && Number(property.price) > precoMax) {
                 return false;
             }
         }
@@ -67,27 +68,27 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
     });
     return (
         <>
-            <AssetFilters
+            <PropertyFilters
                 filters={filters}
                 onFilterChange={setFilters}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
             />
 
-            {assets.length === 0 || filteredAssets.length === 0 ? (
+            {properties.length === 0 || filteredProperties.length === 0 ? (
                 <div className="text-center py-20 bg-card rounded-2xl border border-border animate-in fade-in zoom-in duration-500">
                     <p className="text-xl font-bold text-foreground mb-2">
-                        Nenhum imóvel disponível no momento
+                        Nenhum property disponível no momento
                     </p>
                     <p className="text-sm text-muted-foreground">
-                        Volte em breve para ver nossos imóveis!
+                        Volte em breve para ver nossos properties!
                     </p>
                 </div>
             ) : (
                 viewMode === 'gallery' ? (
-                    <AssetsGrid assets={filteredAssets} />
+                    <PropertiesGrid properties={filteredProperties} tenantSlug={tenantSlug} />
                 ) : (
-                    <AssetsList assets={filteredAssets} />
+                    <PropertiesList properties={filteredProperties} tenantSlug={tenantSlug} />
                 )
             )}
             {whatsappNumber && <WhatsAppButton phone={whatsappNumber} />}
@@ -98,7 +99,7 @@ export function SiteClient({ assets, tenantName, whatsappNumber, branding }: Sit
                     <div>
                         <h4 className="font-bold text-lg mb-4 text-[#404F4F]">{tenantName}</h4>
                         <p className="text-sm text-muted-foreground max-w-xs transition-all">
-                            Sua melhor escolha em imóveis com a tecnologia do CRM LAX.
+                            Sua melhor escolha em properties com a tecnologia do CRM LAX.
                         </p>
                     </div>
 

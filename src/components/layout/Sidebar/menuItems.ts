@@ -37,7 +37,7 @@ export const menuItems = [
     { name: 'Leads', icon: Filter, href: '/leads', roles: ['admin', 'user', 'corretor'] },
     { name: 'Clientes', icon: Users, href: '/clients', roles: ['admin', 'user', 'corretor'] },
     {
-        name: 'Imóveis',
+        name: 'Properties',
         icon: Home,
         href: '/properties',
         roles: ['admin', 'user', 'corretor'],

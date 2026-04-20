@@ -7,8 +7,8 @@ interface KPICardsProps {
     kpis: {
         leadsAtivos: number
         leadsAtivosTrend: string
-        imoveis: number
-        imoveisTrend: string
+        properties: number
+        propertiesTrend: string
         conversoes: number
         conversoesTrend: string
     }
@@ -27,9 +27,9 @@ export default function KPICards({ kpis }: KPICardsProps) {
             href: '/leads',
         },
         {
-            title: 'Imóveis',
-            value: kpis.imoveis.toString(),
-            trend: kpis.imoveisTrend,
+            title: 'Properties',
+            value: kpis.properties.toString(),
+            trend: kpis.propertiesTrend,
             trendUp: true,
             icon: Home,
             href: '/properties',

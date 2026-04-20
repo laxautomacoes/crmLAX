@@ -164,7 +164,7 @@ export function DomainTab() {
                     <div className="max-w-md space-y-2">
                         <h3 className="text-xl font-bold text-foreground">Domínio Próprio</h3>
                         <p className="text-muted-foreground">
-                            Use seu próprio domínio (ex: imoveis.suaempresa.com.br). Disponível no plano <strong className="text-secondary">PRO</strong>.
+                            Use seu próprio domínio (ex: properties.suaempresa.com.br). Disponível no plano <strong className="text-secondary">PRO</strong>.
                         </p>
                     </div>
                     <button className="px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity">
@@ -190,7 +190,7 @@ export function DomainTab() {
                                         type="text"
                                         value={domain}
                                         onChange={(e) => setDomain(e.target.value.toLowerCase())}
-                                        placeholder="ex: imoveis.suaempresa.com.br"
+                                        placeholder="ex: properties.suaempresa.com.br"
                                         className="w-full pl-10 pr-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>

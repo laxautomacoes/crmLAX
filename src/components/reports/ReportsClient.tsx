@@ -103,7 +103,7 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                             disabled={isPending}
                             className="pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[220px]"
                         >
-                            <option value="all">Todos Imóveis</option>
+                            <option value="all">Todos Properties</option>
                             {properties.map((property) => (
                                 <option key={property.id} value={property.id}>
                                     {property.title.length > 25 ? property.title.substring(0, 25) + '...' : property.title}

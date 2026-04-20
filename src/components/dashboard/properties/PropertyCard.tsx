@@ -36,7 +36,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                     </div>
                 )}
                 
-                {prop.status === 'Pendente' && (
+                {prop.status === 'Pending' && (
                     <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3">
                         <div className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">
                             Pendente de Aprovação
@@ -150,7 +150,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                     <span className="text-lg font-bold text-foreground">
                         {prop.price ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}` : 'Sob consulta'}
                     </span>
-                    {(isAdmin || prop.status === 'Pendente') && (
+                    {(isAdmin || prop.status === 'Pending') && (
                         <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
                             {prop.status}
                         </span>

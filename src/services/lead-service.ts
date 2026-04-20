@@ -7,7 +7,7 @@ export interface LeadCreateData {
     name: string;
     phone: string;
     email?: string;
-    asset_id?: string;
+    property_id?: string;
     source?: string;
     tags?: string[];
     utm_data?: Record<string, any>;
@@ -15,7 +15,7 @@ export interface LeadCreateData {
 }
 
 export async function processLeadInbound(data: LeadCreateData) {
-    const { tenant_id, name, phone, email, asset_id, source, tags, utm_data, status = 'new' } = data;
+    const { tenant_id, name, phone, email, property_id, source, tags, utm_data, status = 'new' } = data;
 
     if (!tenant_id || !phone) {
         throw new Error('Missing tenant_id or phone');
@@ -49,7 +49,7 @@ export async function processLeadInbound(data: LeadCreateData) {
         .insert({
             contact_id: contact.id,
             tenant_id,
-            asset_id: asset_id || null,
+            property_id: property_id || null,
             source: source || 'Direct',
             utm_data: utm_data || {},
             status

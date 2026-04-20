@@ -69,7 +69,7 @@ export async function createLead(tenantId: string, data: unknown) {
             source: input.interest || 'Direto',
             lead_source: input.lead_source || 'Direto',
             campaign: input.campaign || null,
-            asset_id: input.asset_id || null,
+            property_id: input.property_id || null,
             date: input.date || new Date().toISOString().split('T')[0],
             assigned_to: assignedTo,
             images: input.images || [],

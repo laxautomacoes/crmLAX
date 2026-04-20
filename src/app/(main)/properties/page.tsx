@@ -1,5 +1,5 @@
 import { getProfile } from '@/app/_actions/profile'
-import { getAssets } from '@/app/_actions/assets'
+import { getProperties } from '@/app/_actions/properties'
 import { getTenantByUserId } from '@/app/_actions/tenant'
 import { checkPlanFeatureAction } from '@/app/_actions/plan'
 import { initStorageBuckets } from '@/app/_actions/storage'
@@ -18,14 +18,14 @@ export default async function PropertiesPage() {
     // Inicializar buckets (best-effort, não bloqueia)
     try { await initStorageBuckets() } catch (_) {}
 
-    const [assetsResult, tenant, aiAccess, marketingAccess] = await Promise.all([
-        getAssets(profile.tenant_id, undefined, profile.id, profile.role || 'user'),
+    const [propertiesResult, tenant, aiAccess, marketingAccess] = await Promise.all([
+        getProperties(profile.tenant_id, undefined, profile.id, profile.role || 'user'),
         getTenantByUserId(profile.id),
         checkPlanFeatureAction(profile.tenant_id, 'ai'),
         checkPlanFeatureAction(profile.tenant_id, 'marketing'),
     ])
 
-    const initialProperties = assetsResult.success ? (assetsResult.data || []) : []
+    const initialProperties = propertiesResult.success ? (propertiesResult.data || []) : []
 
     return (
         <PropertiesClient

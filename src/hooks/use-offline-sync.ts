@@ -41,12 +41,12 @@ export function useOfflineSync() {
             const supabase = createClient();
 
             // 1. Fetch Properties (Limit fields for performance if needed)
-            // Ajuste: A tabela correta é 'assets', não 'properties'.
+            // Ajuste: A tabela correta é 'properties', não 'properties'.
             // E as imagens estão na coluna 'images' (array de strings ou json), não em uma tabela relacionada.
             const { data: properties, error } = await supabase
-                .from('assets')
+                .from('properties')
                 .select('*')
-                .eq('status', 'Disponível'); // Filtrar apenas disponíveis
+                .eq('status', 'Available'); // Filtrar apenas disponíveis
 
             if (error) throw error;
 
@@ -60,7 +60,7 @@ export function useOfflineSync() {
                 const cache = await caches.open('offline-images');
                 let processed = 0;
 
-                const assetsToCache = properties.flatMap((p: any) => {
+                const propertiesToCache = properties.flatMap((p: any) => {
                     const items = [];
 
                     // 1. Imagens (Todas)
@@ -69,7 +69,7 @@ export function useOfflineSync() {
                             const url = typeof img === 'string' ? img : img?.url;
                             if (!url || typeof url !== 'string') return null;
                             if (url.startsWith('http')) return url;
-                            return supabase.storage.from('property-assets').getPublicUrl(url).data.publicUrl;
+                            return supabase.storage.from('property-properties').getPublicUrl(url).data.publicUrl;
                         }).filter(Boolean);
                         items.push(...imageUrls);
                     }
@@ -80,7 +80,7 @@ export function useOfflineSync() {
                             const url = typeof vid === 'string' ? vid : vid?.url;
                             if (!url || typeof url !== 'string') return null;
                             if (url.startsWith('http')) return url;
-                            return supabase.storage.from('property-assets').getPublicUrl(url).data.publicUrl;
+                            return supabase.storage.from('property-properties').getPublicUrl(url).data.publicUrl;
                         }).filter(Boolean);
                         items.push(...videoUrls);
                     }
@@ -91,7 +91,7 @@ export function useOfflineSync() {
                             const url = typeof doc === 'string' ? doc : doc?.url;
                             if (!url || typeof url !== 'string') return null;
                             if (url.startsWith('http')) return url;
-                            return supabase.storage.from('property-assets').getPublicUrl(url).data.publicUrl;
+                            return supabase.storage.from('property-properties').getPublicUrl(url).data.publicUrl;
                         }).filter(Boolean);
                         items.push(...docUrls);
                     }
@@ -99,7 +99,7 @@ export function useOfflineSync() {
                     return items;
                 });
 
-                const uniqueUrls = [...new Set(assetsToCache)].filter((url): url is string => typeof url === 'string' && url.length > 0);
+                const uniqueUrls = [...new Set(propertiesToCache)].filter((url): url is string => typeof url === 'string' && url.length > 0);
                 const totalImages = uniqueUrls.length;
 
                 if (totalImages > 0) {

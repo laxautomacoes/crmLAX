@@ -77,7 +77,7 @@ export async function updateLead(tenantId: string, leadId: string, data: unknown
             source: input.interest,
             lead_source: input.lead_source,
             campaign: input.campaign || null,
-            asset_id: input.asset_id || null,
+            property_id: input.property_id || null,
             date: input.date || null,
             assigned_to: input.assigned_to,
             images: input.images,

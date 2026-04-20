@@ -10,7 +10,7 @@ import { MediaUpload } from '@/components/shared/MediaUpload'
 import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
-import { AssetAutocomplete } from '@/components/dashboard/assets/AssetAutocomplete'
+import { PropertyAutocomplete } from '@/components/dashboard/assets/PropertyAutocomplete'
 import { Calendar, MessageSquare, X, Sparkles, User, Info } from 'lucide-react'
 import LeadAICard from '@/components/ai/LeadAICard'
 
@@ -49,8 +49,8 @@ export function LeadModal({
         interest: '',
         lead_source: '',
         campaign: '',
-        asset_id: '',
-        selectedAsset: null as any,
+        property_id: '',
+        selectedProperty: null as any,
         date: new Date().toISOString().split('T')[0],
         value: '',
         notes: '',
@@ -117,8 +117,8 @@ export function LeadModal({
                 interest: editingLead.interest || '',
                 lead_source: editingLead.lead_source || '',
                 campaign: editingLead.campaign || '',
-                asset_id: editingLead.asset_id || '',
-                selectedAsset: editingLead.asset_id ? { id: editingLead.asset_id, title: editingLead.interest } : null,
+                property_id: editingLead.property_id || '',
+                selectedProperty: editingLead.property_id ? { id: editingLead.property_id, title: editingLead.interest } : null,
                 date: editingLead.date || new Date().toISOString().split('T')[0],
                 value: editingLead.value?.toString() || '',
                 notes: editingLead.notes || '',
@@ -136,8 +136,8 @@ export function LeadModal({
                 interest: '',
                 lead_source: '',
                 campaign: '',
-                asset_id: '',
-                selectedAsset: null,
+                property_id: '',
+                selectedProperty: null,
                 date: new Date().toISOString().split('T')[0],
                 value: '',
                 notes: '',
@@ -344,14 +344,14 @@ export function LeadModal({
                             )}
                         </div>
                         <div className="md:col-span-2">
-                            <AssetAutocomplete
+                            <PropertyAutocomplete
                                 tenantId={tenantId}
                                 label="Interesse"
                                 placeholder="Ex: Apto 3 dormitórios"
                                 icon={() => null}
-                                selectedItem={leadData.selectedAsset}
-                                onSelect={(asset) => setLeadData({ ...leadData, interest: asset.title, asset_id: asset.id, selectedAsset: asset })}
-                                onClear={() => setLeadData({ ...leadData, interest: '', asset_id: '', selectedAsset: null })}
+                                selectedItem={leadData.selectedProperty}
+                                onSelect={(property) => setLeadData({ ...leadData, interest: property.title, property_id: property.id, selectedProperty: property })}
+                                onClear={() => setLeadData({ ...leadData, interest: '', property_id: '', selectedProperty: null })}
                             />
                         </div>
                     </div>

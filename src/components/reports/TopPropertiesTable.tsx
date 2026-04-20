@@ -14,13 +14,13 @@ interface TopPropertiesTableProps {
 export default function TopPropertiesTable({ data }: TopPropertiesTableProps) {
     return (
         <div className="bg-card rounded-2xl p-6 shadow-sm border border-border/50">
-            <h3 className="text-lg font-bold text-foreground mb-6">Top Imóveis (Leads)</h3>
+            <h3 className="text-lg font-bold text-foreground mb-6">Top Properties (Leads)</h3>
 
             <div className="overflow-x-auto">
                 <table className="w-full text-sm text-left">
                     <thead className="text-xs text-muted-foreground uppercase bg-muted/50 rounded-lg">
                         <tr>
-                            <th scope="col" className="px-6 py-3 rounded-l-lg">Imóvel</th>
+                            <th scope="col" className="px-6 py-3 rounded-l-lg">Property</th>
                             <th scope="col" className="px-6 py-3 text-center">Leads</th>
                             <th scope="col" className="px-6 py-3 text-center rounded-r-lg">Ganhos</th>
                         </tr>

@@ -46,7 +46,7 @@ export async function getBrokers(tenantId: string) {
 export async function getProperties(tenantId: string) {
     const supabase = await createClient()
     const { data } = await supabase
-        .from('assets')
+        .from('properties')
         .select('id, title')
         .eq('tenant_id', tenantId)
         .order('title')
@@ -95,7 +95,7 @@ export async function getReportMetrics(
                 status,
                 stage_id,
                 profile_id,
-                asset_id,
+                property_id,
                 lead_stages (
                     id,
                     name
@@ -104,7 +104,7 @@ export async function getReportMetrics(
                     id,
                     full_name
                 ),
-                assets (
+                properties (
                     id,
                     title
                 )
@@ -117,7 +117,7 @@ export async function getReportMetrics(
         }
 
         if (propertyId && propertyId !== 'all') {
-            query = query.eq('asset_id', propertyId)
+            query = query.eq('property_id', propertyId)
         }
 
         const { data: leads, error: leadsError } = await query
@@ -229,15 +229,15 @@ export async function getReportMetrics(
         const propertiesMap = new Map<string, { title: string, leads: number, conversions: number }>()
 
         leads?.forEach((lead: Record<string, any>) => {
-            if (lead.asset_id) {
-                const assetTitle = (lead.assets as any)?.title || 'Imóvel sem título'
-                const assetId = lead.asset_id
+            if (lead.property_id) {
+                const propertyTitle = (lead.properties as any)?.title || 'Property sem título'
+                const propertyId = lead.property_id
 
-                if (!propertiesMap.has(assetId)) {
-                    propertiesMap.set(assetId, { title: assetTitle, leads: 0, conversions: 0 })
+                if (!propertiesMap.has(propertyId)) {
+                    propertiesMap.set(propertyId, { title: propertyTitle, leads: 0, conversions: 0 })
                 }
 
-                const stats = propertiesMap.get(assetId)!
+                const stats = propertiesMap.get(propertyId)!
                 stats.leads += 1
                 if (winStageIds.includes(lead.stage_id || '')) {
                     stats.conversions += 1

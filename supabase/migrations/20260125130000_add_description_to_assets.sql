@@ -1,2 +1,2 @@
--- Migration to add description column to assets
-ALTER TABLE public.assets ADD COLUMN IF NOT EXISTS description TEXT;
+-- Migration to add description column to properties
+ALTER TABLE public.properties ADD COLUMN IF NOT EXISTS description TEXT;

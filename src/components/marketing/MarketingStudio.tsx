@@ -164,7 +164,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                         <textarea
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
-                            placeholder="Ex: Frase motivacional sobre conquista do primeiro imóvel, ou um post sobre as vantagens de morar perto da praia..."
+                            placeholder="Ex: Frase motivacional sobre conquista do primeiro property, ou um post sobre as vantagens de morar perto da praia..."
                             className="w-full h-80 p-6 rounded-2xl bg-gray-50/50 border border-border/50 text-base focus:ring-2 focus:ring-[#FFE600]/30 outline-none resize-none transition-all placeholder:text-gray-400 font-medium leading-relaxed"
                         />
                     </div>

@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
     // 2. Gerar Legenda com Gemini se não foi fornecida
     if (!caption) {
       const { data: asset, error: assetError } = await supabaseClient
-        .from('assets')
+        .from('properties')
         .select('*')
         .eq('id', asset_id)
         .single();
@@ -63,7 +63,7 @@ Deno.serve(async (req: Request) => {
       const genAI = new GoogleGenerativeAI(Deno.env.get('GOOGLE_GEMINI_API_KEY') ?? '');
       const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
 
-      const prompt = `Você é um Social Media Manager vendedor. Crie uma legenda IRRESISTÍVEL para o Instagram sobre este imóvel imobiliário.
+      const prompt = `Você é um Social Media Manager vendedor. Crie uma legenda IRRESISTÍVEL para o Instagram sobre este property imobiliário.
       Imóvel: ${asset.title}
       Preço: R$ ${asset.price?.toLocaleString('pt-BR')}
       Tipo: ${asset.type}

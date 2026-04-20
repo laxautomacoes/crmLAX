@@ -1,7 +1,7 @@
 -- Migração para Expansão CRM LAX: Marketing & Financeiro
 
 -- 1. Tabela de Origens de Tráfego (Custos)
-CREATE TABLE IF NOT EXISTS public.origens_trafego (
+CREATE TABLE IF NOT EXISTS public.traffic_sources (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     plataforma TEXT NOT NULL, -- 'meta', 'google', 'tiktok', etc
@@ -16,7 +16,7 @@ CREATE TABLE IF NOT EXISTS public.origens_trafego (
 );
 
 -- 2. Tabela de Transações Financeiras (Open Finance / Fluxo de Caixa)
-CREATE TABLE IF NOT EXISTS public.transacoes_financeiras (
+CREATE TABLE IF NOT EXISTS public.financial_transactions (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     valor DECIMAL(10,2) NOT NULL,
@@ -39,15 +39,15 @@ ADD COLUMN IF NOT EXISTS utm_medium TEXT,
 ADD COLUMN IF NOT EXISTS utm_campaign TEXT;
 
 -- 4. Habilitar RLS para as novas tabelas
-ALTER TABLE public.origens_trafego ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.transacoes_financeiras ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.traffic_sources ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.financial_transactions ENABLE ROW LEVEL SECURITY;
 
 -- Políticas de exemplo (Assumindo que tenant_id está no token de autenticação)
 -- Nota: Adaptar conforme a lógica de Auth do sistema.
 CREATE POLICY "Tenants can view own traffic data" 
-ON public.origens_trafego FOR ALL 
+ON public.traffic_sources FOR ALL 
 USING (tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()));
 
 CREATE POLICY "Tenants can view own transactions" 
-ON public.transacoes_financeiras FOR ALL 
+ON public.financial_transactions FOR ALL 
 USING (tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()));

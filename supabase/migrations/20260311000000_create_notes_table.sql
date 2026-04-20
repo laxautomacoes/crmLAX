@@ -6,7 +6,7 @@ CREATE TABLE public.notes (
     content TEXT NOT NULL,
     date DATE NOT NULL DEFAULT CURRENT_DATE,
     lead_id UUID REFERENCES public.leads(id) ON DELETE SET NULL,
-    asset_id UUID REFERENCES public.assets(id) ON DELETE SET NULL,
+    asset_id UUID REFERENCES public.properties(id) ON DELETE SET NULL,
     attachments JSONB DEFAULT '[]',
     created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW()

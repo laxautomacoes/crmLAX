@@ -3,7 +3,7 @@ import { openDB, DBSchema } from 'idb';
 interface OfflineDB extends DBSchema {
     properties: {
         key: string;
-        value: any; // Armazenaremos o objeto inteiro do imóvel
+        value: any; // Armazenaremos o objeto inteiro do property
     };
     sync_metadata: {
         key: string;

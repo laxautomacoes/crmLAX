@@ -12,7 +12,7 @@ import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer
 import { SafeMarkdownRenderer } from '@/components/shared/SafeMarkdownRenderer';
 
 interface PropertyPublicViewProps {
-    asset: any;
+    property: any;
     broker: any;
     tenant: any;
     config?: {
@@ -30,7 +30,7 @@ interface PropertyPublicViewProps {
     };
 }
 
-export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPublicViewProps) {
+export function PropertyPublicView({ property, broker, tenant, config }: PropertyPublicViewProps) {
     const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
     const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
     const [fullscreenIndex, setFullscreenIndex] = useState(0);
@@ -58,16 +58,16 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
         }
     }, [selectedMediaIndex]);
 
-    if (!asset) return null;
+    if (!property) return null;
     
     // Filter media based on config
     const filteredImages = config?.imageIndices 
-        ? (asset.images || []).filter((_: string, i: number) => config.imageIndices?.includes(i))
-        : (asset.images || []);
+        ? (property.images || []).filter((_: string, i: number) => config.imageIndices?.includes(i))
+        : (property.images || []);
 
     const filteredVideos = config?.videoIndices
-        ? (asset.videos || []).filter((_: string, i: number) => config.videoIndices?.includes(i))
-        : (asset.videos || []);
+        ? (property.videos || []).filter((_: string, i: number) => config.videoIndices?.includes(i))
+        : (property.videos || []);
 
     // Separating media types
     const imageMedia = filteredImages.map((url: string) => ({ type: 'image' as const, url }));
@@ -77,8 +77,8 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
     const allMedia = [...imageMedia, ...videoMedia];
 
     const filteredDocs = config?.docIndices
-        ? (asset.documents || []).filter((_: any, i: number) => config.docIndices?.includes(i))
-        : (asset.documents || []);
+        ? (property.documents || []).filter((_: any, i: number) => config.docIndices?.includes(i))
+        : (property.documents || []);
 
     const handleNext = () => {
         if (allMedia.length === 0) return;
@@ -90,7 +90,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
         setSelectedMediaIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
     };
     
-    const details = asset.details || {};
+    const details = property.details || {};
     const amenities = [
         { id: 'piscina', icon: <Waves size={16} />, label: 'Piscina' },
         { id: 'academia', icon: <Dumbbell size={16} />, label: 'Academia' },
@@ -100,11 +100,11 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
 
     const brokerPhone = broker?.whatsapp_number || tenant?.branding?.whatsapp || '';
     const cleanBrokerPhone = brokerPhone.replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/${cleanBrokerPhone.startsWith('55') ? '' : '55'}${cleanBrokerPhone}?text=${encodeURIComponent(`Olá! Vi o imóvel "${asset.title}" no site e gostaria de mais informações.`)}`;
+    const whatsappUrl = `https://wa.me/${cleanBrokerPhone.startsWith('55') ? '' : '55'}${cleanBrokerPhone}?text=${encodeURIComponent(`Olá! Vi o property "${property.title}" no site e gostaria de mais informações.`)}`;
 
     // Handle title and price visibility
-    const displayTitle = config?.title === false ? 'Imóvel disponível' : asset.title;
-    const displayPrice = config?.price === false ? 'Sob consulta' : (asset.price ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` : 'Sob consulta');
+    const displayTitle = config?.title === false ? 'Property disponível' : property.title;
+    const displayPrice = config?.price === false ? 'Sob consulta' : (property.price ? `R$ ${Number(property.price).toLocaleString('pt-BR')}` : 'Sob consulta');
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -114,20 +114,20 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                         <div className="flex items-center gap-2 mb-2">
                             {config?.showType !== false && (
                                 <span className="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded uppercase tracking-wider">
-                                    {translatePropertyType(asset.type || asset.details?.type)}
+                                    {translatePropertyType(property.type || property.details?.type)}
                                 </span>
                             )}
                             <span className="px-2 py-1 bg-muted text-muted-foreground text-[10px] font-bold rounded uppercase tracking-wider">
-                                {asset.status}
+                                {property.status}
                             </span>
                         </div>
                         <h1 className="text-3xl font-bold text-foreground mb-2">{displayTitle}</h1>
                         
                         {config?.location !== 'none' && (
                             <p className="text-lg text-muted-foreground">
-                                {config?.location === 'exact' && asset.details?.endereco?.rua && `${asset.details.endereco.rua}, ${asset.details.endereco.numero || ''} - `}
-                                {(asset.details?.endereco?.bairro || details.endereco?.bairro) && `${asset.details?.endereco?.bairro || details.endereco.bairro}, `}
-                                {(asset.details?.endereco?.cidade || details.endereco?.cidade) && `${asset.details?.endereco?.cidade || details.endereco.cidade}`}
+                                {config?.location === 'exact' && property.details?.endereco?.rua && `${property.details.endereco.rua}, ${property.details.endereco.numero || ''} - `}
+                                {(property.details?.endereco?.bairro || details.endereco?.bairro) && `${property.details?.endereco?.bairro || details.endereco.bairro}, `}
+                                {(property.details?.endereco?.cidade || details.endereco?.cidade) && `${property.details?.endereco?.cidade || details.endereco.cidade}`}
                             </p>
                         )}
                     </div>
@@ -228,7 +228,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                             <div className="space-y-4 pt-4">
                                 <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                                     <Video className="text-primary" size={20} />
-                                    Vídeos do Imóvel
+                                    Vídeos do Property
                                 </h3>
                                 <div className="flex gap-4 overflow-x-auto pb-4 pt-1 px-1 custom-scrollbar snap-x">
                                     {videoMedia.map((video: any, i: number) => (
@@ -314,8 +314,8 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                         <div className="space-y-4">
                             <h2 className="text-2xl font-bold text-foreground">Descrição</h2>
                             <div className="text-muted-foreground leading-relaxed">
-                                {asset.description ? (
-                                    <SafeMarkdownRenderer content={asset.description} />
+                                {property.description ? (
+                                    <SafeMarkdownRenderer content={property.description} />
                                 ) : (
                                     <p className="italic">Sem descrição disponível.</p>
                                 )}
@@ -371,7 +371,7 @@ export function PropertyPublicView({ asset, broker, tenant, config }: PropertyPu
                 <div className="space-y-6">
                     <div className="p-6 bg-card rounded-2xl border border-border shadow-sm sticky top-24">
                         <div className="mb-6">
-                            <span className="text-sm font-bold text-muted-foreground dark:text-white uppercase tracking-widest">Valor do Imóvel</span>
+                            <span className="text-sm font-bold text-muted-foreground dark:text-white uppercase tracking-widest">Valor do Property</span>
                             <div className="flex items-baseline gap-2 mt-1">
                                 <span className="text-3xl font-black text-foreground">
                                     {displayPrice}

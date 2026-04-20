@@ -1,5 +1,5 @@
 import { getTenantBySlug } from '@/lib/utils/tenant';
-import { getAssetById } from '@/app/_actions/assets';
+import { getPropertyById } from '@/app/_actions/properties';
 import { getBrokerProfile } from '@/app/_actions/profile';
 import { PropertyPublicView } from '@/components/site/PropertyPublicView';
 import { notFound } from 'next/navigation';
@@ -13,16 +13,16 @@ export default async function PropertyPage({ params, searchParams }: any) {
     const tenant = await getTenantBySlug(slug);
     if (!tenant) notFound();
 
-    const { data: asset, success } = await getAssetById(id);
-    if (!success || !asset) notFound();
+    const { data: property, success } = await getPropertyById(id);
+    if (!success || !property) notFound();
     
     let broker = null;
     if (brokerId) {
         const { data } = await getBrokerProfile(brokerId);
         broker = data;
-    } else if (asset.created_by) {
-        // Fallback to the broker who created the asset
-        const { data } = await getBrokerProfile(asset.created_by);
+    } else if (property.created_by) {
+        // Fallback to the broker who created the property
+        const { data } = await getBrokerProfile(property.created_by);
         broker = data;
     }
 
@@ -58,7 +58,7 @@ export default async function PropertyPage({ params, searchParams }: any) {
                     </a>
                 </div>
             </div>
-            <PropertyPublicView asset={asset} broker={broker} tenant={tenant} config={config} />
+            <PropertyPublicView property={property} broker={broker} tenant={tenant} config={config} />
         </div>
     );
 }

@@ -4,20 +4,20 @@ import { runAI } from '@/lib/ai/factory';
 import { createClient } from '@/lib/supabase/server';
 import { requirePlanFeature } from '@/lib/utils/plan-guard';
 
-interface AssetMatch {
-    asset_id: string;
+interface PropertyMatch {
+    property_id: string;
     score: number;
     reason: string;
 }
 
 interface MatchingResult {
-    matches: AssetMatch[];
+    matches: PropertyMatch[];
     lead_profile_summary: string;
 }
 
 /**
  * Motor de Matchmaking: analisa o perfil do lead e ranqueia os
- * imóveis do tenant por compatibilidade usando o provedor de IA configurado.
+ * properties do tenant por compatibilidade usando o provedor de IA configurado.
  * Requer plano Pro.
  */
 export async function matchLeadToProperties(leadId: string, tenantId: string, profileId: string) {
@@ -38,16 +38,16 @@ export async function matchLeadToProperties(leadId: string, tenantId: string, pr
 
     if (!lead) throw new Error('Lead não encontrado.');
 
-    // 2. Buscar imóveis ativos do tenant
-    const { data: assets } = await supabase
-        .from('assets')
+    // 2. Buscar properties ativos do tenant
+    const { data: properties } = await supabase
+        .from('properties')
         .select('id, title, type, price, status, details')
         .eq('tenant_id', tenantId)
         .eq('status', 'available')
         .limit(30);
 
-    if (!assets || assets.length === 0) {
-        return { success: false, error: 'Nenhum imóvel disponível para comparar.' };
+    if (!properties || properties.length === 0) {
+        return { success: false, error: 'Nenhum property disponível para comparar.' };
     }
 
     // 3. Montar prompt rico
@@ -56,12 +56,12 @@ export async function matchLeadToProperties(leadId: string, tenantId: string, pr
         .map((i: Record<string, any>) => `[${i.type}] ${i.content}`)
         .join('\n') || 'Sem interações registradas.';
 
-    const assetsCatalog = (assets || []).map((a: { id: string; title: string | null; type: string | null; price: number | null; status: string | null; details: Record<string, any> | null }) => {
+    const propertiesCatalog = (properties || []).map((a: { id: string; title: string | null; type: string | null; price: number | null; status: string | null; details: Record<string, any> | null }) => {
         const d = (a.details as any) || {};
         return `ID:${a.id} | ${a.title} | Tipo:${a.type} | Preço:R$${a.price} | ${d.dormitorios || d.quartos || 0} dormitórios | ${d.area_privativa || 0}m² | Bairro:${d.endereco?.bairro || 'N/A'}`;
     }).join('\n');
 
-    const prompt = `Você é um consultor imobiliário especialista em matchmaking entre compradores e imóveis.
+    const prompt = `Você é um consultor imobiliário especialista em matchmaking entre compradores e properties.
 
 PERFIL DO LEAD:
 - Nome: ${(lead.contacts as any)?.name}
@@ -70,20 +70,20 @@ PERFIL DO LEAD:
 ${interactionsSummary}
 
 CATÁLOGO DE IMÓVEIS DISPONÍVEIS:
-${assetsCatalog}
+${propertiesCatalog}
 
 TAREFA:
-1. Analise o perfil e comportamento do lead para inferir suas preferências (tipo de imóvel, faixa de preço, localização, tamanho).
-2. Ranqueie os imóveis do catálogo do mais ao menos compatível.
+1. Analise o perfil e comportamento do lead para inferir suas preferências (tipo de property, faixa de preço, localização, tamanho).
+2. Ranqueie os properties do catálogo do mais ao menos compatível.
 3. Retorne APENAS um JSON válido com este formato exato, sem markdown:
 {
   "lead_profile_summary": "Resumo do perfil em 2-3 frases",
   "matches": [
-    {"asset_id": "uuid-aqui", "score": 95, "reason": "Justificativa de 1 frase"},
-    {"asset_id": "uuid-aqui", "score": 82, "reason": "Justificativa de 1 frase"}
+    {"property_id": "uuid-aqui", "score": 95, "reason": "Justificativa de 1 frase"},
+    {"property_id": "uuid-aqui", "score": 82, "reason": "Justificativa de 1 frase"}
   ]
 }
-Inclua no máximo 5 imóveis com score acima de 50. Se nenhum tiver score > 50, retorne os 3 mais próximos.`;
+Inclua no máximo 5 properties com score acima de 50. Se nenhum tiver score > 50, retorne os 3 mais próximos.`;
 
     try {
         const result = await runAI(tenantId, prompt);

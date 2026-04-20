@@ -9,17 +9,17 @@ import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSitua
 import { PropertyMap } from '@/components/shared/PropertyMap';
 import { SafeMarkdownRenderer } from '@/components/shared/SafeMarkdownRenderer';
 
-export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boolean, onClose: () => void, asset: any }) {
+export function PropertyDetailsModal({ isOpen, onClose, property }: { isOpen: boolean, onClose: () => void, property: any }) {
     const [selectedMediaIndex, setSelectedMediaIndex] = useState(0);
     const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
     const [showLeadForm, setShowLeadForm] = useState(false);
 
-    if (!asset) return null;
-    const details = asset.details || {};
+    if (!property) return null;
+    const details = property.details || {};
     
     const allMedia = [
-        ...(asset.images || []).map((url: string) => ({ type: 'image' as const, url })),
-        ...(asset.videos || []).map((url: string) => ({ type: 'video' as const, url }))
+        ...(property.images || []).map((url: string) => ({ type: 'image' as const, url })),
+        ...(property.videos || []).map((url: string) => ({ type: 'video' as const, url }))
     ];
 
     const amenities = [
@@ -49,7 +49,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             <div className="p-1.5 bg-white/10 rounded-lg text-white">
                                 <Home size={16} />
                             </div>
-                            <span className="truncate">{asset.title}</span>
+                            <span className="truncate">{property.title}</span>
                         </h2>
                     </div>
                     <div className="flex items-center gap-1.5 flex-nowrap whitespace-nowrap overflow-x-auto no-scrollbar">
@@ -58,11 +58,11 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 {details.situacao}
                             </span>
                         )}
-                        <span className={`px-2.5 py-1 text-[10px] font-black rounded-full uppercase tracking-tight md:tracking-widest shadow-sm ${getPropertyTypeStyles(asset.type || asset.details?.type)}`}>
-                            {translatePropertyType(asset.type || asset.details?.type)}
+                        <span className={`px-2.5 py-1 text-[10px] font-black rounded-full uppercase tracking-tight md:tracking-widest shadow-sm ${getPropertyTypeStyles(property.type || property.details?.type)}`}>
+                            {translatePropertyType(property.type || property.details?.type)}
                         </span>
-                        <span className={`px-2.5 py-1 text-[10px] font-black rounded-full uppercase tracking-tight md:tracking-widest shadow-sm ${getStatusStyles(asset.status)}`}>
-                            {asset.status}
+                        <span className={`px-2.5 py-1 text-[10px] font-black rounded-full uppercase tracking-tight md:tracking-widest shadow-sm ${getStatusStyles(property.status)}`}>
+                            {property.status}
                         </span>
                     </div>
                 </div>
@@ -76,7 +76,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             onClick={() => setIsFullscreenOpen(true)}
                             className="relative group aspect-video rounded-xl overflow-hidden bg-black flex items-center justify-center cursor-zoom-in"
                         >
-                            <img src={asset.images?.[selectedMediaIndex]} className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105" alt="" />
+                            <img src={property.images?.[selectedMediaIndex]} className="max-w-full max-h-full object-contain transition-transform group-hover:scale-105" alt="" />
                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                 <div className="p-2 rounded-full bg-white/10 backdrop-blur-md border border-white/20 text-white">
                                     <Maximize2 size={20} />
@@ -86,7 +86,7 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         
                         {/* Images Carousel */}
                         <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar snap-x">
-                            {asset.images?.map((url: string, i: number) => (
+                            {property.images?.map((url: string, i: number) => (
                                 <div 
                                     key={i} 
                                     onClick={() => setSelectedMediaIndex(i)}
@@ -107,13 +107,13 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                                 </div>
                                 Vídeos
                             </h4>
-                            {asset.videos?.length > 0 ? (
+                            {property.videos?.length > 0 ? (
                                 <div className="flex gap-2 overflow-x-auto pb-2 custom-scrollbar snap-x">
-                                    {asset.videos.map((url: string, i: number) => (
+                                    {property.videos.map((url: string, i: number) => (
                                         <div 
                                             key={i} 
                                             onClick={() => {
-                                                const videoIndex = (asset.images?.length || 0) + i;
+                                                const videoIndex = (property.images?.length || 0) + i;
                                                 setSelectedMediaIndex(videoIndex);
                                                 setIsFullscreenOpen(true);
                                             }}
@@ -139,13 +139,13 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                             <div className="p-1.5 bg-white/10 rounded-lg text-white">
                                 <DollarSign size={16} />
                             </div>
-                            Valor do Imóvel
+                            Valor do Property
                         </h4>
                         <div className="text-base text-muted-foreground dark:text-white flex items-center gap-2">
                             <span className="flex-shrink-0">•</span>
                             <span>
-                                {Number(asset.price) > 0 
-                                    ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` 
+                                {Number(property.price) > 0 
+                                    ? `R$ ${Number(property.price).toLocaleString('pt-BR')}` 
                                     : 'Sob consulta'}
                             </span>
                         </div>
@@ -243,8 +243,8 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
                         <div className="text-base text-muted-foreground dark:text-white leading-relaxed flex items-start gap-2">
                             <span className="flex-shrink-0">•</span>
                             <div className="flex-1">
-                                {asset.description ? (
-                                    <SafeMarkdownRenderer content={asset.description} />
+                                {property.description ? (
+                                    <SafeMarkdownRenderer content={property.description} />
                                 ) : (
                                     <p className="italic text-base text-muted-foreground dark:text-white">Sem descrição disponível.</p>
                                 )}
@@ -325,9 +325,9 @@ export function PropertyDetailsModal({ isOpen, onClose, asset }: { isOpen: boole
             <LeadFormModal 
                 isOpen={showLeadForm}
                 onClose={() => setShowLeadForm(false)}
-                assetId={asset.id}
-                assetTitle={asset.title}
-                tenantId={asset.tenant_id}
+                propertyId={property.id}
+                propertyTitle={property.title}
+                tenantId={property.tenant_id}
             />
         </Modal>
     );

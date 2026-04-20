@@ -59,7 +59,7 @@ export type Database = {
           },
         ]
       }
-      assets: {
+      properties: {
         Row: {
           created_at: string | null
           created_by: string | null
@@ -74,7 +74,7 @@ export type Database = {
           status: string | null
           tenant_id: string | null
           title: string
-          type: Database["public"]["Enums"]["asset_type"] | null
+          type: Database["public"]["Enums"]["property_type"] | null
           videos: Json | null
         }
         Insert: {
@@ -91,7 +91,7 @@ export type Database = {
           status?: string | null
           tenant_id?: string | null
           title: string
-          type?: Database["public"]["Enums"]["asset_type"] | null
+          type?: Database["public"]["Enums"]["property_type"] | null
           videos?: Json | null
         }
         Update: {
@@ -108,12 +108,12 @@ export type Database = {
           status?: string | null
           tenant_id?: string | null
           title?: string
-          type?: Database["public"]["Enums"]["asset_type"] | null
+          type?: Database["public"]["Enums"]["property_type"] | null
           videos?: Json | null
         }
         Relationships: [
           {
-            foreignKeyName: "assets_tenant_id_fkey"
+            foreignKeyName: "properties_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -123,7 +123,7 @@ export type Database = {
       }
       calendar_events: {
         Row: {
-          asset_id: string | null
+          property_id: string | null
           created_at: string | null
           description: string | null
           end_time: string
@@ -139,7 +139,7 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
-          asset_id?: string | null
+          property_id?: string | null
           created_at?: string | null
           description?: string | null
           end_time: string
@@ -155,7 +155,7 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
-          asset_id?: string | null
+          property_id?: string | null
           created_at?: string | null
           description?: string | null
           end_time?: string
@@ -172,10 +172,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "calendar_events_asset_id_fkey"
-            columns: ["asset_id"]
+            foreignKeyName: "calendar_events_property_id_fkey"
+            columns: ["property_id"]
             isOneToOne: false
-            referencedRelation: "assets"
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
           {
@@ -505,7 +505,7 @@ export type Database = {
       }
       leads: {
         Row: {
-          asset_id: string | null
+          property_id: string | null
           assigned_to: string | null
           campaign: string | null
           contact_id: string | null
@@ -531,7 +531,7 @@ export type Database = {
           whatsapp_chat: Json | null
         }
         Insert: {
-          asset_id?: string | null
+          property_id?: string | null
           assigned_to?: string | null
           campaign?: string | null
           contact_id?: string | null
@@ -557,7 +557,7 @@ export type Database = {
           whatsapp_chat?: Json | null
         }
         Update: {
-          asset_id?: string | null
+          property_id?: string | null
           assigned_to?: string | null
           campaign?: string | null
           contact_id?: string | null
@@ -584,10 +584,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "leads_asset_id_fkey"
-            columns: ["asset_id"]
+            foreignKeyName: "leads_property_id_fkey"
+            columns: ["property_id"]
             isOneToOne: false
-            referencedRelation: "assets"
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
           {
@@ -622,7 +622,7 @@ export type Database = {
       }
       notes: {
         Row: {
-          asset_id: string | null
+          property_id: string | null
           attachments: Json | null
           content: string
           created_at: string
@@ -634,7 +634,7 @@ export type Database = {
           updated_at: string
         }
         Insert: {
-          asset_id?: string | null
+          property_id?: string | null
           attachments?: Json | null
           content: string
           created_at?: string
@@ -646,7 +646,7 @@ export type Database = {
           updated_at?: string
         }
         Update: {
-          asset_id?: string | null
+          property_id?: string | null
           attachments?: Json | null
           content?: string
           created_at?: string
@@ -659,10 +659,10 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "notes_asset_id_fkey"
-            columns: ["asset_id"]
+            foreignKeyName: "notes_property_id_fkey"
+            columns: ["property_id"]
             isOneToOne: false
-            referencedRelation: "assets"
+            referencedRelation: "properties"
             referencedColumns: ["id"]
           },
           {
@@ -729,7 +729,7 @@ export type Database = {
           },
         ]
       }
-      origens_trafego: {
+      traffic_sources: {
         Row: {
           campanha_id: string | null
           campanha_nome: string | null
@@ -771,7 +771,7 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "origens_trafego_tenant_id_fkey"
+            foreignKeyName: "traffic_sources_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -794,7 +794,7 @@ export type Database = {
           has_marketing: boolean | null
           has_whatsapp: boolean | null
           is_highlighted: boolean | null
-          max_assets: number | null
+          max_properties: number | null
           max_leads_per_month: number | null
           max_users: number | null
           period_text: string | null
@@ -815,7 +815,7 @@ export type Database = {
           has_marketing?: boolean | null
           has_whatsapp?: boolean | null
           is_highlighted?: boolean | null
-          max_assets?: number | null
+          max_properties?: number | null
           max_leads_per_month?: number | null
           max_users?: number | null
           period_text?: string | null
@@ -836,7 +836,7 @@ export type Database = {
           has_marketing?: boolean | null
           has_whatsapp?: boolean | null
           is_highlighted?: boolean | null
-          max_assets?: number | null
+          max_properties?: number | null
           max_leads_per_month?: number | null
           max_users?: number | null
           period_text?: string | null
@@ -1009,7 +1009,7 @@ export type Database = {
         }
         Relationships: []
       }
-      transacoes_financeiras: {
+      financial_transactions: {
         Row: {
           categoria: string | null
           created_at: string | null
@@ -1057,14 +1057,14 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "transacoes_financeiras_profile_id_fkey"
+            foreignKeyName: "financial_transactions_profile_id_fkey"
             columns: ["profile_id"]
             isOneToOne: false
             referencedRelation: "profiles"
             referencedColumns: ["id"]
           },
           {
-            foreignKeyName: "transacoes_financeiras_tenant_id_fkey"
+            foreignKeyName: "financial_transactions_tenant_id_fkey"
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
@@ -1164,7 +1164,7 @@ export type Database = {
       slugify: { Args: { "": string }; Returns: string }
     }
     Enums: {
-      asset_type:
+      property_type:
         | "car"
         | "house"
         | "apartment"
@@ -1304,7 +1304,7 @@ export type CompositeTypes<
 export const Constants = {
   public: {
     Enums: {
-      asset_type: [
+      property_type: [
         "car",
         "house",
         "apartment",

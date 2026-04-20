@@ -15,13 +15,13 @@ export function DescriptionField({ formData, setFormData }: DescriptionFieldProp
                 <Info size={14} className="text-foreground" />
                 DESCRIÇÃO
                 <span className="ml-1 text-[10px] font-normal italic normal-case text-muted-foreground">
-                    (detalhes do imóvel)
+                    (detalhes do property)
                 </span>
             </h4>
             <FormRichTextarea
                 value={formData.description || ''}
                 onChange={(val) => setFormData({ ...formData, description: val })}
-                placeholder="Descreva os principais detalhes do imóvel..."
+                placeholder="Descreva os principais detalhes do property..."
             />
         </div>
     )

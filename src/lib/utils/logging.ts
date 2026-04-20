@@ -10,10 +10,10 @@ export type LogAction =
   | 'archive_lead' 
   | 'critical_deletion'
   | 'update_lead_stage'
-  | 'create_asset' 
-  | 'update_asset' 
-  | 'delete_asset' 
-  | 'archive_asset'
+  | 'create_property' 
+  | 'update_property' 
+  | 'delete_property' 
+  | 'archive_property'
   | 'send_invitation' 
   | 'delete_invitation' 
   | 'accept_invitation'
@@ -23,7 +23,7 @@ export type LogAction =
   | 'delete_note'
   | 'update_note';
 
-export type EntityType = 'auth' | 'lead' | 'asset' | 'invitation' | 'profile' | 'tenant' | 'note';
+export type EntityType = 'auth' | 'lead' | 'property' | 'invitation' | 'profile' | 'tenant' | 'note';
 
 interface CreateLogParams {
     action: LogAction;

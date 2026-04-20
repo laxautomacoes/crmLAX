@@ -15,8 +15,8 @@ ALTER TYPE public.asset_type ADD VALUE IF NOT EXISTS 'warehouse';
 ALTER TYPE public.asset_type ADD VALUE IF NOT EXISTS 'office';
 ALTER TYPE public.asset_type ADD VALUE IF NOT EXISTS 'store';
 
--- 2. Update the default value for the assets table
-ALTER TABLE public.assets ALTER COLUMN type SET DEFAULT 'house';
+-- 2. Update the default value for the properties table
+ALTER TABLE public.properties ALTER COLUMN type SET DEFAULT 'house';
 
 -- 3. Migrate any existing data that might still be using 'car'
-UPDATE public.assets SET type = 'house' WHERE type = 'car';
+UPDATE public.properties SET type = 'house' WHERE type = 'car';

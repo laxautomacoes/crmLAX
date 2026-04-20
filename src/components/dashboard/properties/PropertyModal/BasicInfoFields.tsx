@@ -20,9 +20,9 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
             <div className="space-y-4">
                 <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
                     <Home size={14} className="text-foreground" />
-                    Imóvel | Empreendimento
+                    Property | Empreendimento
                     <span className="ml-1 text-[10px] font-normal italic normal-case text-muted-foreground">
-                        (título do imóvel)
+                        (título do property)
                     </span>
                 </h4>
                 <div className="grid grid-cols-1 gap-x-3 gap-y-6">
@@ -105,8 +105,8 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                         value={formData.status}
                         onChange={(e) => setFormData({ ...formData, status: e.target.value })}
                         options={[
-                            { value: 'Pendente', label: 'Pendente' },
-                            { value: 'Disponível', label: 'Disponível' },
+                            { value: 'Pending', label: 'Pending' },
+                            { value: 'Available', label: 'Available' },
                             { value: 'Vendido', label: 'Vendido' },
                             { value: 'Reservado', label: 'Reservado' },
                             { value: 'Suspenso', label: 'Suspenso' }

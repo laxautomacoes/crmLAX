@@ -12,7 +12,7 @@ export const propertyTypes: Record<string, string> = {
 };
 
 export function translatePropertyType(type: string): string {
-    if (!type) return 'Imóvel';
+    if (!type) return 'Property';
     const normalizedType = type.toLowerCase();
     return propertyTypes[normalizedType] || type;
 }
@@ -31,7 +31,9 @@ export function getPropertyTypeStyles(type: string): string {
 export function getStatusStyles(status: string): string {
     const normalizedStatus = status?.toLowerCase();
     switch (normalizedStatus) {
+        case 'available':
         case 'ativo': return 'bg-emerald-500/10 text-emerald-600';
+        case 'pending':
         case 'pendente': return 'bg-secondary text-secondary-foreground';
         case 'inativo': return 'bg-red-500/10 text-red-600';
         default: return 'bg-foreground/10 text-foreground';

@@ -5,7 +5,7 @@ import { Modal } from '@/components/shared/Modal'
 import { FormRichTextarea } from '@/components/shared/forms/FormRichTextarea'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { LeadAutocomplete } from '@/components/dashboard/leads/LeadAutocomplete'
-import { AssetAutocomplete } from '@/components/dashboard/assets/AssetAutocomplete'
+import { PropertyAutocomplete } from '@/components/dashboard/assets/PropertyAutocomplete'
 import { MediaUpload } from '@/components/shared/MediaUpload'
 import { Calendar } from 'lucide-react'
 import { createNote, updateNote } from '@/app/_actions/notes'
@@ -25,10 +25,10 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
         content: '',
         date: new Date().toISOString().split('T')[0],
         lead_id: null as string | null,
-        asset_id: null as string | null,
+        property_id: null as string | null,
         attachments: [] as any[],
         selectedLead: null as any,
-        selectedAsset: null as any
+        selectedProperty: null as any
     })
 
     useEffect(() => {
@@ -37,20 +37,20 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
                 content: editingNote.content || '',
                 date: editingNote.date || new Date().toISOString().split('T')[0],
                 lead_id: editingNote.lead_id || null,
-                asset_id: editingNote.asset_id || null,
+                property_id: editingNote.property_id || null,
                 attachments: editingNote.attachments || [],
                 selectedLead: editingNote.leads || null,
-                selectedAsset: editingNote.assets || null
+                selectedProperty: editingNote.properties || null
             })
         } else {
             setFormData({
                 content: '',
                 date: new Date().toISOString().split('T')[0],
                 lead_id: null,
-                asset_id: null,
+                property_id: null,
                 attachments: [],
                 selectedLead: null,
-                selectedAsset: null
+                selectedProperty: null
             })
         }
     }, [editingNote, isOpen])
@@ -64,7 +64,7 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
                 content: formData.content,
                 date: formData.date,
                 lead_id: formData.lead_id,
-                asset_id: formData.asset_id,
+                property_id: formData.property_id,
                 attachments: formData.attachments
             }
 
@@ -105,11 +105,11 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
                         onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
                     />
                     
-                    <AssetAutocomplete
+                    <PropertyAutocomplete
                         tenantId={tenantId}
-                        selectedItem={formData.selectedAsset}
-                        onSelect={(asset) => setFormData(prev => ({ ...prev, selectedAsset: asset, asset_id: asset.id }))}
-                        onClear={() => setFormData(prev => ({ ...prev, selectedAsset: null, asset_id: null }))}
+                        selectedItem={formData.selectedProperty}
+                        onSelect={(property) => setFormData(prev => ({ ...prev, selectedProperty: property, property_id: property.id }))}
+                        onClear={() => setFormData(prev => ({ ...prev, selectedProperty: null, property_id: null }))}
                     />
 
                     <LeadAutocomplete

@@ -70,7 +70,7 @@ Deno.serve(async (req: Request) => {
     // Nota: Em produção, ideal ter um external_id ou vinculação por empreendimento.
     for (const prop of extractedData.properties) {
       await supabaseClient
-        .from('assets')
+        .from('properties')
         .upsert({
           tenant_id: tenant_id,
           title: prop.unit,

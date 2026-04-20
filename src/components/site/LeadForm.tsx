@@ -6,13 +6,13 @@ import { createLeadFromSite } from '@/app/_actions/leads-site';
 import { LeadFormFields } from './LeadFormFields';
 
 interface LeadFormProps {
-    assetId?: string;
-    assetTitle?: string;
+    propertyId?: string;
+    propertyTitle?: string;
     tenantId?: string;
     onSubmit: (result: { success?: boolean; error?: string }) => void;
 }
 
-export function LeadForm({ assetId, assetTitle, tenantId, onSubmit }: LeadFormProps) {
+export function LeadForm({ propertyId, propertyTitle, tenantId, onSubmit }: LeadFormProps) {
     const [name, setName] = useState('');
     const [phone, setPhone] = useState('');
     const [email, setEmail] = useState('');
@@ -28,7 +28,7 @@ export function LeadForm({ assetId, assetTitle, tenantId, onSubmit }: LeadFormPr
             name,
             phone,
             email: email || undefined,
-            asset_id: assetId,
+            property_id: propertyId,
             tenant_id: tenantId
         });
 
@@ -45,9 +45,9 @@ export function LeadForm({ assetId, assetTitle, tenantId, onSubmit }: LeadFormPr
 
     return (
         <>
-            {assetTitle && (
+            {propertyTitle && (
                 <p className="text-sm text-muted-foreground mb-6">
-                    Interesse em: <strong>{assetTitle}</strong>
+                    Interesse em: <strong>{propertyTitle}</strong>
                 </p>
             )}
 

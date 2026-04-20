@@ -22,14 +22,14 @@ const jsonArray = z.array(z.any()).optional().default([])
 const jsonObject = z.record(z.any()).optional().default({})
 
 // ============================================================
-// Assets (Imóveis)
+// Properties (Properties)
 // ============================================================
 
-export const createAssetSchema = z.object({
+export const createPropertySchema = z.object({
     title: nonEmpty,
     type: z.string().min(1).max(50),
     price: price,
-    status: z.string().max(50).optional().default('Disponível'),
+    status: z.string().max(50).optional().default('Available'),
     description: optionalText,
     details: jsonObject,
     images: jsonArray,
@@ -39,7 +39,7 @@ export const createAssetSchema = z.object({
     is_archived: z.boolean().optional().default(false),
 })
 
-export const updateAssetSchema = createAssetSchema.partial()
+export const updatePropertySchema = createPropertySchema.partial()
 
 // ============================================================
 // Leads
@@ -67,7 +67,7 @@ export const createLeadSchema = z.object({
     interest: z.string().max(100).optional().nullable(),
     lead_source: z.string().max(100).optional().default('Direto'),
     campaign: z.string().max(200).optional().nullable(),
-    asset_id: optionalUuid,
+    property_id: optionalUuid,
     date: z.string().max(20).optional().nullable(),
     assigned_to: optionalUuid,
     images: jsonArray,
@@ -126,7 +126,7 @@ export const createCalendarEventSchema = z.object({
     end_time: z.string().min(1),
     type: z.string().max(50).optional().default('meeting'),
     lead_id: optionalUuid,
-    asset_id: optionalUuid,
+    property_id: optionalUuid,
     reminder_minutes: z.number().int().nonnegative().optional().nullable(),
     color: z.string().max(20).optional().nullable(),
 })
@@ -140,7 +140,7 @@ export const updateCalendarEventSchema = createCalendarEventSchema.partial()
 export const createNoteSchema = z.object({
     content: z.string().min(1).max(10000),
     lead_id: optionalUuid,
-    asset_id: optionalUuid,
+    property_id: optionalUuid,
 })
 
 export const updateNoteSchema = z.object({

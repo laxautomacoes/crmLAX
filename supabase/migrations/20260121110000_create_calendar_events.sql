@@ -10,7 +10,7 @@ CREATE TABLE IF NOT EXISTS public.calendar_events (
     tenant_id UUID NOT NULL REFERENCES public.tenants(id) ON DELETE CASCADE,
     profile_id UUID NOT NULL REFERENCES public.profiles(id) ON DELETE CASCADE,
     lead_id UUID REFERENCES public.leads(id) ON DELETE SET NULL,
-    asset_id UUID REFERENCES public.assets(id) ON DELETE SET NULL,
+    asset_id UUID REFERENCES public.properties(id) ON DELETE SET NULL,
     title TEXT NOT NULL,
     description TEXT,
     start_time TIMESTAMPTZ NOT NULL,

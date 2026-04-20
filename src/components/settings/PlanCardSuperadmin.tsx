@@ -237,7 +237,7 @@ export default function PlanCardSuperadmin({ plan, onSaved }: PlanCardSuperadmin
                 <div className="grid grid-cols-[1fr_96px] items-center gap-y-2">
                     {[
                         { label: 'Leads/mês', key: 'max_leads_per_month' as const },
-                        { label: 'Imóveis', key: 'max_assets' as const },
+                        { label: 'Properties', key: 'max_properties' as const },
                         { label: 'Usuários', key: 'max_users' as const },
                         { label: 'Req. IA/mês', key: 'ai_requests_per_month' as const },
                     ].map(({ label, key }) => (

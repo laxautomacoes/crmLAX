@@ -113,7 +113,7 @@ export default function NotesPage() {
     const filteredNotes = notes.filter(note => 
         note.content.toLowerCase().includes(searchTerm.toLowerCase()) ||
         note.leads?.contacts?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        note.assets?.title?.toLowerCase().includes(searchTerm.toLowerCase())
+        note.properties?.title?.toLowerCase().includes(searchTerm.toLowerCase())
     )
 
     return (
@@ -212,10 +212,10 @@ export default function NotesPage() {
                                 />
 
                                 <div className="space-y-2 pt-2 border-t border-border">
-                                    {note.assets && (
+                                    {note.properties && (
                                         <div className="flex items-center gap-2 text-[11px] font-semibold text-secondary bg-secondary/10 dark:bg-secondary/20 px-3 py-1.5 rounded-lg border border-secondary/20 w-fit max-w-full transition-colors">
                                             <Building2 size={12} className="shrink-0" />
-                                            <span className="truncate">{note.assets.title}</span>
+                                            <span className="truncate">{note.properties.title}</span>
                                         </div>
                                     )}
                                     {note.leads && (
@@ -261,10 +261,10 @@ export default function NotesPage() {
                                             </td>
                                             <td className="px-6 py-4">
                                                 <div className="flex flex-wrap gap-2">
-                                                    {note.assets && (
+                                                    {note.properties && (
                                                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-secondary bg-secondary/10 dark:bg-secondary/20 px-2 py-1 rounded-md border border-secondary/20 transition-colors">
                                                             <Building2 size={10} className="shrink-0" />
-                                                            <span className="truncate">{note.assets.title}</span>
+                                                            <span className="truncate">{note.properties.title}</span>
                                                         </div>
                                                     )}
                                                     {note.leads && (

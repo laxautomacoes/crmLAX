@@ -11,7 +11,7 @@ interface CalendarWebhookPayload {
     end_time: string;
     event_type?: 'duty' | 'visit' | 'note' | 'other';
     lead_id?: string;
-    asset_id?: string;
+    property_id?: string;
 }
 
 export async function POST(req: NextRequest) {
@@ -32,7 +32,7 @@ export async function POST(req: NextRequest) {
             end_time,
             event_type,
             lead_id,
-            asset_id
+            property_id
         } = payload;
 
         if (!tenant_id || !title || !start_time || !end_time) {
@@ -52,7 +52,7 @@ export async function POST(req: NextRequest) {
                 end_time,
                 event_type: event_type || 'note',
                 lead_id,
-                asset_id
+                property_id
             })
             .select()
             .single();

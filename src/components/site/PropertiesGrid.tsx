@@ -1,8 +1,8 @@
 'use client';
 
-import { AssetCard } from './AssetCard';
+import { PropertyCard } from './PropertyCard';
 
-interface Asset {
+interface Property {
     id: string;
     title: string;
     price?: number | null;
@@ -12,18 +12,19 @@ interface Asset {
     details?: Record<string, any> | null;
 }
 
-interface AssetsGridProps {
-    assets: Asset[];
+interface PropertiesGridProps {
+    properties: Property[];
+    tenantSlug: string;
 }
 
-export function AssetsGrid({ assets }: AssetsGridProps) {
-    const filteredAssets = assets;
+export function PropertiesGrid({ properties, tenantSlug }: PropertiesGridProps) {
+    const filteredProperties = properties;
 
-    if (filteredAssets.length === 0) {
+    if (filteredProperties.length === 0) {
         return (
             <div className="text-center py-12">
                 <p className="text-lg font-semibold text-foreground mb-2">
-                    Nenhum imóvel encontrado
+                    Nenhum property encontrado
                 </p>
                 <p className="text-sm text-muted-foreground">
                     Tente ajustar os filtros de busca.
@@ -34,8 +35,8 @@ export function AssetsGrid({ assets }: AssetsGridProps) {
 
     return (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredAssets.map((asset) => (
-                <AssetCard key={asset.id} asset={asset} />
+            {filteredProperties.map((property) => (
+                <PropertyCard key={property.id} property={property} tenantSlug={tenantSlug} />
             ))}
         </div>
     );

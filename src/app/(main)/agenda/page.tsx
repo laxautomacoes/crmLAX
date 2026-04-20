@@ -16,7 +16,7 @@ import EventModal from '@/components/Agenda/EventModal';
 import { getEvents, createEvent, updateEvent, deleteEvent } from '@/app/_actions/calendar';
 import { getProfile } from '@/app/_actions/profile';
 import { getClients } from '@/app/_actions/clients';
-import { getAssets } from '@/app/_actions/assets';
+import { getProperties } from '@/app/_actions/properties';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/PageHeader';
 
@@ -25,7 +25,7 @@ export const dynamic = 'force-dynamic';
 export default function AgendaPage() {
     const [events, setEvents] = useState<any[]>([]);
     const [leads, setLeads] = useState<any[]>([]);
-    const [assets, setAssets] = useState<any[]>([]); // TODO: Fetch assets
+    const [properties, setProperties] = useState<any[]>([]); // TODO: Fetch properties
     const [isLoading, setIsLoading] = useState(true);
     const [tenantId, setTenantId] = useState<string | null>(null);
     const [profileId, setProfileId] = useState<string | null>(null);
@@ -42,10 +42,10 @@ export default function AgendaPage() {
                 setTenantId(profile.tenant_id);
                 setProfileId(profile.id);
 
-                const [eventsRes, clientsRes, assetsRes] = await Promise.all([
+                const [eventsRes, clientsRes, propertiesRes] = await Promise.all([
                     getEvents(profile.tenant_id),
                     getClients(profile.tenant_id),
-                    getAssets(profile.tenant_id)
+                    getProperties(profile.tenant_id)
                 ]);
 
                 if (eventsRes.success) {
@@ -53,7 +53,7 @@ export default function AgendaPage() {
                     setEvents([...(eventsRes.data || [])]);
                 }
                 if (clientsRes.success) setLeads(clientsRes.data || []);
-                if (assetsRes.success) setAssets(assetsRes.data || []);
+                if (propertiesRes.success) setProperties(propertiesRes.data || []);
             }
         } catch (error) {
             console.error('Erro ao carregar dados da agenda:', error);
@@ -118,7 +118,7 @@ export default function AgendaPage() {
         const sanitizedData = {
             ...formData,
             lead_id: formData.lead_id || null,
-            asset_id: formData.asset_id || null,
+            property_id: formData.property_id || null,
             tenant_id: tenantId,
             profile_id: profileId,
         };
@@ -189,7 +189,7 @@ export default function AgendaPage() {
                 editingEvent={editingEvent}
                 initialDate={selectedDate}
                 leads={leads}
-                assets={assets}
+                properties={properties}
             />
         </div>
     );

@@ -64,7 +64,7 @@ export function ClientFilterModal({
                 <div className="space-y-3">
                     <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Interesses</h4>
                     <FormInput
-                        label="Imóvel ou Interesse"
+                        label="Property ou Interesse"
                         placeholder="Ex: Apartamento, Centro..."
                         value={filters.interest}
                         onChange={(e) => setFilters({ ...filters, interest: e.target.value })}

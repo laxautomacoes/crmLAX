@@ -1,9 +1,10 @@
 'use client'
 
 import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 import { Plus, Search, LayoutGrid, List, Filter, WifiOff, FileText } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { getAssets, createAsset, updateAsset, deleteAsset, approveAsset } from '@/app/_actions/assets'
+import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty } from '@/app/_actions/properties'
 import { toast } from 'sonner'
 import { PropertyGallery } from '@/components/dashboard/properties/PropertyGallery'
 import { PropertyList } from '@/components/dashboard/properties/PropertyList'
@@ -35,6 +36,7 @@ export default function PropertiesClient({
     hasAIAccess,
     hasMarketingAccess,
 }: PropertiesClientProps) {
+    const router = useRouter()
     const { isOnline } = useOfflineSync()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDetailsOpen, setIsDetailsOpen] = useState(false)
@@ -77,7 +79,7 @@ export default function PropertiesClient({
                 return
             }
 
-            const result = await getAssets(
+            const result = await getProperties(
                 tenantId,
                 statusFilter === 'all' ? undefined : statusFilter,
                 userId,
@@ -86,20 +88,20 @@ export default function PropertiesClient({
             if (result.success) {
                 setProperties(result.data || [])
             } else {
-                toast.error('Erro ao carregar imóveis')
+                toast.error('Erro ao carregar properties')
             }
         } catch (error) {
-            console.error('Erro ao recarregar imóveis:', error)
+            console.error('Erro ao recarregar properties:', error)
             try {
                 const offlineProps = await getOfflineProperties()
                 if (offlineProps && offlineProps.length > 0) {
                     setProperties(offlineProps)
                     toast.info('Modo Offline (Erro de conexão)')
                 } else {
-                    toast.error('Erro ao carregar lista de imóveis')
+                    toast.error('Erro ao carregar lista de properties')
                 }
             } catch {
-                toast.error('Erro ao carregar lista de imóveis')
+                toast.error('Erro ao carregar lista de properties')
             }
         } finally {
             setIsRefreshing(false)
@@ -109,30 +111,30 @@ export default function PropertiesClient({
     const handleSave = async (propertyData: any) => {
         let result
         if (editingProperty) {
-            result = await updateAsset(tenantId, editingProperty.id, propertyData)
+            result = await updateProperty(tenantId, editingProperty.id, propertyData)
         } else {
-            result = await createAsset(tenantId, propertyData)
+            result = await createProperty(tenantId, propertyData)
         }
 
         if (result.success) {
-            toast.success(editingProperty ? 'Imóvel atualizado!' : 'Imóvel cadastrado!')
+            toast.success(editingProperty ? 'Property atualizado!' : 'Property cadastrado!')
             setIsModalOpen(false)
             setEditingProperty(null)
             refreshProperties(filters.status)
         } else {
-            toast.error('Erro ao salvar imóvel: ' + result.error)
+            toast.error('Erro ao salvar property: ' + result.error)
         }
     }
 
     const handleApprove = async (id: string) => {
-        if (!confirm('Deseja realmente autorizar este imóvel?')) return
+        if (!confirm('Deseja realmente autorizar este property?')) return
 
-        const result = await approveAsset(tenantId, id)
+        const result = await approveProperty(tenantId, id)
         if (result.success) {
-            toast.success('Imóvel autorizado com sucesso!')
+            toast.success('Property autorizado com sucesso!')
             refreshProperties()
         } else {
-            toast.error('Erro ao autorizar imóvel: ' + result.error)
+            toast.error('Erro ao autorizar property: ' + result.error)
         }
     }
 
@@ -142,8 +144,13 @@ export default function PropertiesClient({
     }
 
     const handleView = (prop: any) => {
-        setViewingProperty(prop)
-        setIsDetailsOpen(true)
+        if (prop.slug && prop.type) {
+            router.push(`/properties/${prop.type}/${prop.slug}`)
+        } else {
+            // Fallback para properties sem slug (legado)
+            setViewingProperty(prop)
+            setIsDetailsOpen(true)
+        }
     }
 
     const handleSend = (prop: any) => {
@@ -152,10 +159,10 @@ export default function PropertiesClient({
     }
 
     const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este imóvel permanentemente?')) return
-        const result = await deleteAsset(tenantId, id)
+        if (!confirm('Tem certeza que deseja excluir este property permanentemente?')) return
+        const result = await deleteProperty(tenantId, id)
         if (result.success) {
-            toast.success('Imóvel excluído!')
+            toast.success('Property excluído!')
             refreshProperties(filters.status)
         } else {
             toast.error('Erro ao excluir')
@@ -164,7 +171,7 @@ export default function PropertiesClient({
 
     const handleExportCSV = () => {
         if (filteredProperties.length === 0) {
-            toast.error('Nenhum imóvel para exportar')
+            toast.error('Nenhum property para exportar')
             return
         }
 
@@ -187,7 +194,7 @@ export default function PropertiesClient({
                 `"${(prop.title || '').replace(/"/g, '""')}"`,
                 prop.type,
                 prop.price || 0,
-                prop.status || 'Disponível',
+                prop.status || 'Available',
                 `"${(e.bairro || '').replace(/"/g, '""')}"`,
                 `"${(e.cidade || '').replace(/"/g, '""')}"`,
                 `"${(e.rua || '').replace(/"/g, '""')}"`,
@@ -229,7 +236,7 @@ export default function PropertiesClient({
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.setAttribute('href', url)
-        link.setAttribute('download', `imoveis-crm-lax-${new Date().toISOString().split('T')[0]}.csv`)
+        link.setAttribute('download', `properties-crm-lax-${new Date().toISOString().split('T')[0]}.csv`)
         link.style.visibility = 'hidden'
         document.body.appendChild(link)
         link.click()
@@ -295,12 +302,12 @@ export default function PropertiesClient({
                         <WifiOff size={18} />
                         Modo Offline
                     </p>
-                    <p className="text-sm">Você está vendo uma versão salva dos imóveis. Algumas funções como editar ou adicionar podem estar indisponíveis.</p>
+                    <p className="text-sm">Você está vendo uma versão salva dos properties. Algumas funções como editar ou adicionar podem estar indisponíveis.</p>
                 </div>
             )}
             <PageHeader
-                title="Imóveis"
-                subtitle={`${filteredProperties.length} imóveis encontrados`}
+                title="Properties"
+                subtitle={`${filteredProperties.length} properties encontrados`}
             >
                 <div className="flex items-center justify-center md:justify-end gap-3">
                     <div className="flex items-center bg-card border border-border rounded-lg p-0.5 shadow-sm">
@@ -321,7 +328,7 @@ export default function PropertiesClient({
                     </div>
 
                     <FormInput
-                        placeholder="Buscar imóveis..."
+                        placeholder="Buscar properties..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon={Search}
@@ -344,7 +351,7 @@ export default function PropertiesClient({
                         className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
                     >
                         <Plus size={18} />
-                        Novo Imóvel
+                        Novo Property
                     </button>
 
                     <button

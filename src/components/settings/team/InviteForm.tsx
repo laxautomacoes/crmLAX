@@ -135,7 +135,7 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
         dashboard: 'Dashboard',
         leads: 'Leads',
         clients: 'Clientes',
-        properties: 'Imóveis',
+        properties: 'Properties',
         calendar: 'Agenda',
         reports: 'Relatórios',
         settings: 'Configurações'

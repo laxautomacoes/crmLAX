@@ -39,7 +39,7 @@ CREATE TABLE public.contacts (
 );
 
 -- Assets (Estoque)
-CREATE TABLE public.assets (
+CREATE TABLE public.properties (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   tenant_id UUID REFERENCES public.tenants(id),
   type public.asset_type DEFAULT 'car',
@@ -56,7 +56,7 @@ CREATE TABLE public.leads (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   contact_id UUID REFERENCES public.contacts(id),
   tenant_id UUID REFERENCES public.tenants(id),
-  asset_id UUID REFERENCES public.assets(id),
+  asset_id UUID REFERENCES public.properties(id),
   status TEXT DEFAULT 'new',
   source TEXT,
   utm_data JSONB DEFAULT '{}',
@@ -99,7 +99,7 @@ CREATE TABLE public.updates (
 ALTER TABLE public.tenants ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.profiles ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.contacts ENABLE ROW LEVEL SECURITY;
-ALTER TABLE public.assets ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.properties ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.leads ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.interactions ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.ai_usage ENABLE ROW LEVEL SECURITY;
@@ -123,7 +123,7 @@ CREATE POLICY "Contacts are tenant isolated" ON public.contacts
   FOR ALL USING (tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()));
 
 -- Assets: Tenant isolation
-CREATE POLICY "Assets are tenant isolated" ON public.assets
+CREATE POLICY "Assets are tenant isolated" ON public.properties
   FOR ALL USING (tenant_id = (SELECT tenant_id FROM public.profiles WHERE id = auth.uid()));
 
 -- Leads: Tenant isolation

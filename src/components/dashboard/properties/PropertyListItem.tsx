@@ -64,7 +64,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                             </div>
                         )}
                         
-                        {prop.status === 'Pendente' && (
+                        {prop.status === 'Pending' && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
                                 <span className="px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded-full text-[8px] font-black uppercase tracking-tighter shadow-lg">Pendente</span>
                             </div>
@@ -161,7 +161,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-6 py-4">
                 <div className="flex flex-col gap-1.5 items-center">
-                    {(isAdmin || prop.status === 'Pendente') && (
+                    {(isAdmin || prop.status === 'Pending') && (
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
                             {prop.status}
                         </span>
@@ -170,14 +170,14 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-6 py-4 text-right">
                 <div className="flex items-center justify-end gap-2">
-                    {isAdmin && prop.status === 'Pendente' && onApprove && (
+                    {isAdmin && prop.status === 'Pending' && onApprove && (
                         <button
                             onClick={(e) => {
                                 e.stopPropagation()
                                 onApprove(prop.id)
                             }}
                             className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-                            title="Autorizar Imóvel"
+                            title="Autorizar Property"
                         >
                             <FileText size={16} />
                         </button>

@@ -42,7 +42,7 @@ export async function getClients(tenantId: string) {
         profiles:assigned_to (
             full_name
         ),
-        assets (
+        properties (
             title
         ),
         lead_stages (
@@ -74,8 +74,8 @@ export async function getClients(tenantId: string) {
         // Pegar a última nota/mensagem
         const lastInteraction = activeLead?.interactions?.[0]?.content
 
-        // Interesse prioritário: Asset linkado, depois source
-        const interest = activeLead?.assets?.title || activeLead?.source || 'N/A'
+        // Interesse prioritário: Property linkado, depois source
+        const interest = activeLead?.properties?.title || activeLead?.source || 'N/A'
 
         return {
             id: contact.id,
@@ -95,7 +95,7 @@ export async function getClients(tenantId: string) {
             primary_interest: contact.primary_interest,
             created_at: contact.created_at,
             interest,
-            value: 0, // Implementar lógica de valor baseada em assets depois
+            value: 0, // Implementar lógica de valor baseada em properties depois
             notes: contact.notes || lastInteraction || '',
             tags: contact.tags || [],
             images: contact.images || [],

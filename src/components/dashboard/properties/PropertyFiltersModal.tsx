@@ -7,7 +7,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 import { Download, Upload, Filter, Trash2, ArrowUpDown } from 'lucide-react'
 import { propertyTypes } from '@/utils/property-translations'
 import { toast } from 'sonner'
-import { bulkCreateAssets } from '@/app/_actions/assets'
+import { bulkCreateProperties } from '@/app/_actions/properties'
 
 interface PropertyFiltersModalProps {
     isOpen: boolean
@@ -62,7 +62,7 @@ export function PropertyFiltersModal({
                 const lines = text.split('\n')
                 
                 // Pular cabeçalho e linhas vazias
-                const assetsToCreate = lines.slice(1)
+                const propertiesToCreate = lines.slice(1)
                     .filter(line => line.trim() !== '')
                     .map(line => {
                         // Função simples para parsear linha de CSV
@@ -112,10 +112,10 @@ export function PropertyFiltersModal({
                         }
 
                         return {
-                            title: clean(values[1]) || 'Imóvel Importado',
+                            title: clean(values[1]) || 'Property Importado',
                             type: clean(values[2]) || 'apartment',
                             price: parseFloat(clean(values[3])) || 0,
-                            status: clean(values[4]) || 'Disponível',
+                            status: clean(values[4]) || 'Available',
                             details: details,
                             images: [],
                             videos: [],
@@ -123,14 +123,14 @@ export function PropertyFiltersModal({
                         }
                     })
 
-                if (assetsToCreate.length === 0) {
+                if (propertiesToCreate.length === 0) {
                     toast.error('Nenhum dado encontrado no CSV')
                     return
                 }
 
-                const result = await bulkCreateAssets(tenantId, assetsToCreate)
+                const result = await bulkCreateProperties(tenantId, propertiesToCreate)
                 if (result.success) {
-                    toast.success(`${assetsToCreate.length} imóveis importados com sucesso!`)
+                    toast.success(`${propertiesToCreate.length} properties importados com sucesso!`)
                     onImportSuccess()
                     onClose()
                 } else {
@@ -206,8 +206,8 @@ export function PropertyFiltersModal({
                                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                                 options={[
                                     { value: 'all', label: 'Todos os Status' },
-                                    { value: 'Pendente', label: 'Pendente' },
-                                    { value: 'Disponível', label: 'Disponível' },
+                                    { value: 'Pending', label: 'Pending' },
+                                    { value: 'Available', label: 'Available' },
                                     { value: 'Vendido', label: 'Vendido' },
                                     { value: 'Reservado', label: 'Reservado' },
                                     { value: 'Suspenso', label: 'Suspenso' }
@@ -216,7 +216,7 @@ export function PropertyFiltersModal({
                         )}
 
                         <FormSelect
-                            label="Tipo de Imóvel"
+                            label="Tipo de Property"
                             value={filters.type}
                             onChange={(e) => setFilters({ ...filters, type: e.target.value })}
                             options={[
@@ -320,7 +320,7 @@ export function PropertyFiltersModal({
                                 <p className="text-sm font-bold text-foreground">
                                     {isImporting ? 'Importando...' : 'Importar CSV'}
                                 </p>
-                                <p className="text-xs text-foreground">Adicionar imóveis em lote</p>
+                                <p className="text-xs text-foreground">Adicionar properties em lote</p>
                             </div>
                         </button>
                         <input

@@ -6,7 +6,7 @@ export async function initStorageBuckets() {
     try {
         const supabase = createAdminClient()
         
-        const buckets = ['property-assets', 'avatars']
+        const buckets = ['property-properties', 'avatars']
         const results = []
 
         for (const bucketName of buckets) {
@@ -15,7 +15,7 @@ export async function initStorageBuckets() {
             if (getError && getError.message.includes('not found')) {
                 const { error: createError } = await supabase.storage.createBucket(bucketName, {
                     public: true,
-                    allowedMimeTypes: bucketName === 'property-assets' 
+                    allowedMimeTypes: bucketName === 'property-properties' 
                         ? ['image/*', 'video/*', 'application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document']
                         : ['image/*'],
                     fileSizeLimit: 52428800 // 50MB

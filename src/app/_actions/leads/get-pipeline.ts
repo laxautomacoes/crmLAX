@@ -59,7 +59,7 @@ export async function getPipelineData(tenantId: string) {
         interest: lead.source,
         lead_source: lead.lead_source || 'Direto',
         campaign: lead.campaign,
-        asset_id: lead.asset_id,
+        property_id: lead.property_id,
         date: (lead as any).date || (lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : null),
         assigned_to: lead.assigned_to,
         broker_name: (lead as any).profiles?.full_name || 'Não atribuído',

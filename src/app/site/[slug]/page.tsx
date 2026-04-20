@@ -19,27 +19,28 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
         );
     }
 
-    let assets: any[] = [];
+    let properties: any[] = [];
     let whatsappNumber: string | null = null;
 
     try {
         const supabase = await createClient();
 
-        console.log('Fetching assets for tenant:', { id: tenant.id, slug: tenant.slug, name: tenant.name });
+        console.log('Fetching properties for tenant:', { id: tenant.id, slug: tenant.slug, name: tenant.name });
 
         const { data, error: supabaseError } = await supabase
-            .from('assets')
+            .from('properties')
             .select('*')
             .eq('tenant_id', tenant.id)
             .eq('is_published', true)
             .order('created_at', { ascending: false });
 
         if (supabaseError) {
-            console.error('Supabase error fetching assets:', supabaseError);
+            console.error('Supabase error fetching properties:', supabaseError);
         } else {
-            assets = data?.filter((a: any) => 
+            properties = data?.filter((a: any) => 
                 a.status?.toLowerCase() === 'disponível' || 
-                a.status?.toLowerCase() === 'disponivel'
+                a.status?.toLowerCase() === 'disponivel' ||
+                a.status?.toLowerCase() === 'available'
             ) || [];
         }
 
@@ -63,8 +64,9 @@ export default async function SitePage({ params }: { params: Promise<{ slug: str
                 </div>
 
                 <SiteClient
-                    assets={assets}
+                    properties={properties}
                     tenantName={tenant.name}
+                    tenantSlug={tenant.slug}
                     whatsappNumber={whatsappNumber}
                     branding={tenant.branding}
                 />

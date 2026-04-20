@@ -8,7 +8,7 @@ export async function createLeadFromSite(data: {
     name: string;
     phone: string;
     email?: string;
-    asset_id?: string;
+    property_id?: string;
     tenant_id?: string;
 }) {
     let tenantId = data.tenant_id;
@@ -35,6 +35,6 @@ export async function createLeadFromSite(data: {
     return await createLead(tenantId, {
         ...data,
         stage_id: stage?.id,
-        interest: data.asset_id ? 'Interesse em Imóvel' : 'Contato Site'
+        interest: data.property_id ? 'Interesse em Property' : 'Contato Site'
     });
 }

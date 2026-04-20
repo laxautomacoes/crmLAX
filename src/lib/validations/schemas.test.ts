@@ -2,7 +2,7 @@ import { describe, it, expect } from 'vitest'
 import {
     createLeadSchema,
     updateLeadSchema,
-    createAssetSchema,
+    createPropertySchema,
     updateProfileSchema,
     createInvitationSchema,
     createStageSchema,
@@ -109,28 +109,28 @@ describe('updateLeadSchema', () => {
     })
 })
 
-describe('createAssetSchema', () => {
-    it('aceita imóvel com campos obrigatórios', () => {
-        const result = createAssetSchema.safeParse({
+describe('createPropertySchema', () => {
+    it('aceita property com campos obrigatórios', () => {
+        const result = createPropertySchema.safeParse({
             title: 'Apartamento 3 quartos',
             type: 'apartment'
         })
         expect(result.success).toBe(true)
     })
 
-    it('rejeita imóvel sem título', () => {
-        const result = createAssetSchema.safeParse({ type: 'house' })
+    it('rejeita property sem título', () => {
+        const result = createPropertySchema.safeParse({ type: 'house' })
         expect(result.success).toBe(false)
     })
 
     it('aplica default de status e is_published', () => {
-        const result = createAssetSchema.safeParse({
+        const result = createPropertySchema.safeParse({
             title: 'Casa',
             type: 'house'
         })
         expect(result.success).toBe(true)
         if (result.success) {
-            expect(result.data.status).toBe('Disponível')
+            expect(result.data.status).toBe('Available')
             expect(result.data.is_published).toBe(false)
         }
     })

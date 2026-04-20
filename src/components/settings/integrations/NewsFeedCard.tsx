@@ -22,7 +22,7 @@ const mockNews: NewsItem[] = [
     { 
         id: '1', 
         title: 'Mercado imobiliário prevê crescimento de 5% no primeiro semestre de 2026', 
-        source: 'Exame Imóveis', 
+        source: 'Exame Properties', 
         date: 'Há 2 horas',
         url: '#' 
     },

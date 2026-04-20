@@ -38,9 +38,9 @@ export async function analyzeMarketValue(uf: string, city: string, neighborhood:
         await requirePlanFeature(profile.tenant_id, 'ai');
 
         // Prompt otimizado para extração de dados reais
-        const prompt = `Você é um analista sênior do mercado imobiliário brasileiro, com acesso em tempo real a dados de portais como ZapImóveis, VivaReal, Imovelweb e OLX.
+        const prompt = `Você é um analista sênior do mercado imobiliário brasileiro, com acesso em tempo real a dados de portais como ZapProperties, VivaReal, Propertyweb e OLX.
         
-Seu objetivo é extrair uma lista de pelo menos 10 exemplos de imóveis residenciais à venda no bairro ${neighborhood}, em ${city} - ${uf}.
+Seu objetivo é extrair uma lista de pelo menos 10 exemplos de properties residenciais à venda no bairro ${neighborhood}, em ${city} - ${uf}.
 
 Tente ser o mais fiel possível aos preços praticados HOJE nesse bairro específico. 
 Se for um bairro nobre (ex: Itaim Bibi, Savassi, Leblon), os preços devem refletir o alto padrão.
@@ -50,11 +50,11 @@ Retorne EXATAMENTE um objeto JSON (e nada mais) com a seguinte estrutura:
 {
   "properties": [
     {
-      "price": number, // Preço total do imóvel
+      "price": number, // Preço total do property
       "area": number,  // Área em m²
       "bedrooms": number, // Número de quartos
       "title": "string", // Título resumido (ex: 'Apto 3 qtos Próximo ao Metro')
-      "url": "string"    // Link simulado ou real para a fonte (ex: zapimoveis.com.br/...)
+      "url": "string"    // Link simulado ou real para a fonte (ex: zapproperties.com.br/...)
     }
   ]
 }

@@ -9,8 +9,10 @@ import { User } from '@supabase/supabase-js';
 
 export default function DashboardLayout({
     children,
+    modal,
 }: {
     children: React.ReactNode;
+    modal: React.ReactNode;
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -52,6 +54,7 @@ export default function DashboardLayout({
                     </Suspense>
                 </main>
             </div>
+            {modal}
         </div>
     );
 }

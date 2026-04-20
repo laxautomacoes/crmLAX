@@ -288,13 +288,13 @@ function ClientLeadsSection({ client }: any) {
                             <div key={lead.id} className="bg-card p-4 rounded-xl border border-border shadow-sm">
                                 <div className="flex justify-between items-start mb-2">
                                     <span className="text-xs font-bold text-foreground">
-                                        {lead.assets?.title || lead.source || 'Interesse não especificado'}
+                                        {lead.properties?.title || lead.source || 'Interesse não especificado'}
                                     </span>
                                     <span className="px-2 py-0.5 bg-secondary/20 text-foreground text-[9px] font-bold rounded uppercase">
                                         {lead.status_name || lead.status}
                                     </span>
                                 </div>
-                                {lead.assets?.title && lead.source && (
+                                {lead.properties?.title && lead.source && (
                                     <p className="text-[10px] text-muted-foreground italic">Origem: {lead.source}</p>
                                 )}
                                 <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1.5 text-[10px] text-primary font-bold">

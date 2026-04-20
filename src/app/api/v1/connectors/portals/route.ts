@@ -31,7 +31,7 @@ export async function POST(req: NextRequest) {
             name: body.lead_name || body.name || body.clientName || 'Lead Portal',
             phone: body.lead_phone || body.phone || body.clientPhone || '',
             email: body.lead_email || body.email || body.clientEmail || '',
-            asset_id: body.external_id || body.asset_id || body.listingId,
+            property_id: body.external_id || body.property_id || body.listingId,
             source: `Portal: ${portal}`,
             utm_data: {
                 portal_url: body.portal_url,

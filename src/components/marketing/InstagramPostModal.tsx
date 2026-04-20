@@ -42,7 +42,7 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
 
     const handlePublish = async () => {
         if (!prop.images?.[0]) {
-            toast.error('O imóvel precisa de pelo menos uma imagem para postar.');
+            toast.error('O property precisa de pelo menos uma imagem para postar.');
             return;
         }
 
@@ -56,7 +56,7 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
                 },
                 body: JSON.stringify({
                     tenant_id: tenantId,
-                    asset_id: prop.id,
+                    property_id: prop.id,
                     profile_id: profileId,
                     image_url: prop.images[0], // Foto principal
                     custom_caption: caption || undefined
@@ -92,7 +92,7 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
                             <CheckCircle2 size={48} />
                         </div>
                         <h3 className="text-xl font-bold text-[#404F4F]">Publicado com Sucesso!</h3>
-                        <p className="text-muted-foreground text-sm">Seu imóvel já está brilhando no Feed.</p>
+                        <p className="text-muted-foreground text-sm">Seu property já está brilhando no Feed.</p>
                     </div>
                 ) : (
                     <>
@@ -129,7 +129,7 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
                             <textarea
                                 value={caption}
                                 onChange={(e) => setCaption(e.target.value)}
-                                placeholder="Escreva algo sobre este imóvel ou use a IA para gerar uma legenda profissional..."
+                                placeholder="Escreva algo sobre este property ou use a IA para gerar uma legenda profissional..."
                                 className="w-full h-40 p-4 rounded-xl border border-border bg-gray-50/50 text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none resize-none transition-all leading-relaxed"
                             />
                         </div>

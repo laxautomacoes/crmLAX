@@ -11,7 +11,7 @@ export type CalendarEvent = {
     tenant_id: string;
     profile_id: string;
     lead_id?: string;
-    asset_id?: string;
+    property_id?: string;
     title: string;
     description?: string;
     start_time: string;
@@ -33,7 +33,7 @@ export async function getEvents(tenantId: string) {
                     name
                 )
             ),
-            assets (
+            properties (
                 title
             )
         `)
@@ -51,7 +51,7 @@ export async function createEvent(data: Partial<CalendarEvent>) {
     // Define allowed fields
     const allowedFields = [
         'tenant_id', 'profile_id', 'title', 'description', 'start_time', 'end_time',
-        'event_type', 'lead_id', 'asset_id', 'metadata', 'reminder_sent'
+        'event_type', 'lead_id', 'property_id', 'metadata', 'reminder_sent'
     ];
 
     const insertData: Record<string, any> = {};
@@ -63,7 +63,7 @@ export async function createEvent(data: Partial<CalendarEvent>) {
 
     // Sanitize UUID fields
     if ('lead_id' in insertData) insertData.lead_id = insertData.lead_id || null;
-    if ('asset_id' in insertData) insertData.asset_id = insertData.asset_id || null;
+    if ('property_id' in insertData) insertData.property_id = insertData.property_id || null;
 
     // Inicializa o status do lembrete como falso
     insertData.reminder_sent = false;
@@ -97,7 +97,7 @@ export async function updateEvent(eventId: string, data: Partial<CalendarEvent>)
     // Define allowed fields to prevent extra data from causing errors
     const allowedFields = [
         'title', 'description', 'start_time', 'end_time',
-        'event_type', 'lead_id', 'asset_id', 'metadata', 'reminder_sent'
+        'event_type', 'lead_id', 'property_id', 'metadata', 'reminder_sent'
     ];
 
     const updateData: Record<string, any> = {};
@@ -109,7 +109,7 @@ export async function updateEvent(eventId: string, data: Partial<CalendarEvent>)
 
     // Sanitize UUID fields
     if ('lead_id' in updateData) updateData.lead_id = updateData.lead_id || null;
-    if ('asset_id' in updateData) updateData.asset_id = updateData.asset_id || null;
+    if ('property_id' in updateData) updateData.property_id = updateData.property_id || null;
 
     // Se o horário de início for alterado, resetamos o status do lembrete para que o usuário receba a notificação novamente
     if (updateData.start_time) {

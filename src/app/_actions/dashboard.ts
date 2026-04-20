@@ -8,8 +8,8 @@ export interface DashboardMetrics {
     kpis: {
         leadsAtivos: number
         leadsAtivosTrend: string
-        imoveis: number
-        imoveisTrend: string
+        properties: number
+        propertiesTrend: string
         conversoes: number
         conversoesTrend: string
     }
@@ -56,19 +56,19 @@ export async function getDashboardMetrics(tenantId: string) {
 
         if (leadsError) throw leadsError
 
-        // 2. Buscar total de assets (imóveis)
-        let assetsQuery = supabase
-            .from('assets')
+        // 2. Buscar total de properties (properties)
+        let propertiesQuery = supabase
+            .from('properties')
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', tenantId)
             .eq('is_archived', false)
 
-        // Nota: KP de imóveis mostra o total disponível no tenant para todos os membros.
+        // Nota: KP de properties mostra o total disponível no tenant para todos os membros.
 
 
-        const { count: totalAssets, error: assetsError } = await assetsQuery
+        const { count: totalProperties, error: propertiesError } = await propertiesQuery
 
-        if (assetsError) throw assetsError
+        if (propertiesError) throw propertiesError
 
         // 3. Buscar conversões (leads em estágios que representam ganho)
         // Primeiro buscamos os estágios para identificar qual é o "Ganho"
@@ -117,8 +117,8 @@ export async function getDashboardMetrics(tenantId: string) {
                     kpis: {
                         leadsAtivos: totalLeads || 0,
                         leadsAtivosTrend: '+0%',
-                        imoveis: totalAssets || 0,
-                        imoveisTrend: '+0',
+                        properties: totalProperties || 0,
+                        propertiesTrend: '+0',
                         conversoes: conversions || 0,
                         conversoesTrend: '+0'
                     },
@@ -235,17 +235,17 @@ export async function getDashboardMetrics(tenantId: string) {
             return pct >= 0 ? `+${pct}%` : `${pct}%`
         }
 
-        // Assets criados nos últimos 30 dias vs anterior
-        const { count: prevAssetsCount } = await supabase
-            .from('assets')
+        // Properties criados nos últimos 30 dias vs anterior
+        const { count: prevPropertiesCount } = await supabase
+            .from('properties')
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', tenantId)
             .eq('is_archived', false)
             .gte('created_at', sixtyDaysAgo)
             .lt('created_at', thirtyDaysAgo)
 
-        const { count: currAssetsCount } = await supabase
-            .from('assets')
+        const { count: currPropertiesCount } = await supabase
+            .from('properties')
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', tenantId)
             .eq('is_archived', false)
@@ -257,8 +257,8 @@ export async function getDashboardMetrics(tenantId: string) {
                 kpis: {
                     leadsAtivos: totalLeads || 0,
                     leadsAtivosTrend: calcTrend(currLeadsCount, prevLeadsCount),
-                    imoveis: totalAssets || 0,
-                    imoveisTrend: calcTrend(currAssetsCount || 0, prevAssetsCount || 0),
+                    properties: totalProperties || 0,
+                    propertiesTrend: calcTrend(currPropertiesCount || 0, prevPropertiesCount || 0),
                     conversoes: conversions || 0,
                     conversoesTrend: calcTrend(conversions, 0)
                 },
@@ -280,7 +280,7 @@ export async function getROIMetrics(tenantId: string): Promise<{ success: boolea
     try {
         // 1. Total de Custos (Marketing)
         const { data: trafficData, error: trafficError } = await supabase
-            .from('origens_trafego')
+            .from('traffic_sources')
             .select('custo')
             .eq('tenant_id', tenantId)
 

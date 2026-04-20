@@ -17,7 +17,7 @@ interface EventModalProps {
     editingEvent?: any;
     initialDate?: Date;
     leads: any[];
-    assets: any[];
+    properties: any[];
 }
 
 export default function EventModal({
@@ -28,7 +28,7 @@ export default function EventModal({
     editingEvent,
     initialDate,
     leads,
-    assets
+    properties
 }: EventModalProps) {
     const [formData, setFormData] = useState({
         title: '',
@@ -37,7 +37,7 @@ export default function EventModal({
         end_time: '',
         event_type: 'note',
         lead_id: '',
-        asset_id: '',
+        property_id: '',
         metadata: {}
     });
 
@@ -54,7 +54,7 @@ export default function EventModal({
                 end_time: format(endDate, "yyyy-MM-dd'T'HH:mm"),
                 event_type: editingEvent.event_type,
                 lead_id: editingEvent.lead_id || '',
-                asset_id: editingEvent.asset_id || '',
+                property_id: editingEvent.property_id || '',
                 metadata: editingEvent.metadata || {}
             });
         } else if (isOpen) {
@@ -78,7 +78,7 @@ export default function EventModal({
                 end_time: format(end, "yyyy-MM-dd'T'HH:mm"),
                 event_type: 'note',
                 lead_id: '',
-                asset_id: '',
+                property_id: '',
                 metadata: {}
             });
         }
@@ -214,12 +214,12 @@ export default function EventModal({
                 )}
 
                 <FormSelect
-                    label="Vincular Imóvel (Produto)"
-                    value={formData.asset_id}
-                    onChange={(e) => setFormData({ ...formData, asset_id: e.target.value })}
+                    label="Vincular Property (Produto)"
+                    value={formData.property_id}
+                    onChange={(e) => setFormData({ ...formData, property_id: e.target.value })}
                     options={[
-                        { value: '', label: 'Nenhum imóvel selecionado' },
-                        ...assets.map(asset => ({ value: asset.id, label: asset.title }))
+                        { value: '', label: 'Nenhum property selecionado' },
+                        ...properties.map(property => ({ value: property.id, label: property.title }))
                     ]}
                 />
 

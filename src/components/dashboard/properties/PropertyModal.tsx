@@ -31,7 +31,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         description: '',
         price: '',
         type: 'apartment',
-        status: 'Pendente',
+        status: 'Pending',
         created_by: null as string | null,
         images: [] as string[],
         videos: [] as string[],
@@ -108,7 +108,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         setBrokers(res.data || [])
                     }
                 } else if (!editingProperty) {
-                    // Se for corretor criando novo imóvel, já define o created_by
+                    // Se for corretor criando novo property, já define o created_by
                     setFormData(prev => ({ ...prev, created_by: profile.id }))
                 }
             }
@@ -126,7 +126,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 description: editingProperty.description || editingProperty.details?.description || '',
                 price: editingProperty.price?.toString() || '',
                 type: editingProperty.type || 'apartment',
-                status: editingProperty.status || 'Pendente',
+                status: editingProperty.status || 'Pending',
                 created_by: editingProperty.created_by || null,
                 images: editingProperty.images || [],
                 videos: editingProperty.videos || [],
@@ -194,7 +194,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 description: '',
                 price: '',
                 type: 'apartment',
-                status: 'Pendente',
+                status: 'Pending',
                 created_by: null,
                 images: [],
                 videos: [],
@@ -282,13 +282,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 const filePath = `${type}/${fileName}`
 
                 const { error: uploadError } = await supabase.storage
-                    .from('property-assets')
+                    .from('property-properties')
                     .upload(filePath, file, { cacheControl: '3600' })
 
                 if (uploadError) throw uploadError
 
                 const { data: { publicUrl } } = supabase.storage
-                    .from('property-assets')
+                    .from('property-properties')
                     .getPublicUrl(filePath)
 
                 if (type === 'documents') {
@@ -350,7 +350,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={editingProperty ? "Editar Imóvel" : "Novo Imóvel"}
+            title={editingProperty ? "Editar Property" : "Novo Property"}
             extraHeaderContent={
                 isAdmin ? (
                     <Switch 
@@ -405,7 +405,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         className={`flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold shadow-sm active:scale-[0.99] transition-all
                             ${(isSaving || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
                     >
-                        {isSaving ? "Salvando..." : (editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel")}
+                        {isSaving ? "Salvando..." : (editingProperty ? "Salvar Alterações" : "Cadastrar Property")}
                     </button>
                 </div>
             </div>

@@ -5,7 +5,7 @@ import { Sparkles, Loader2, Copy, Check, MessageSquare, Instagram, Globe } from 
 import { generatePropertyCopy } from '@/app/_actions/ai-copy';
 
 interface PropertyCopyCardProps {
-    assetId: string;
+    propertyId: string;
     tenantId: string;
     profileId: string;
     hasAIAccess: boolean;
@@ -23,7 +23,7 @@ const tabs = [
     { key: 'full', label: 'Portal', icon: Globe },
 ] as const;
 
-export default function PropertyCopyCard({ assetId, tenantId, profileId, hasAIAccess }: PropertyCopyCardProps) {
+export default function PropertyCopyCard({ propertyId, tenantId, profileId, hasAIAccess }: PropertyCopyCardProps) {
     const [copy, setCopy] = useState<CopyVariants | null>(null);
     const [loading, setLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -51,7 +51,7 @@ export default function PropertyCopyCard({ assetId, tenantId, profileId, hasAIAc
         setLoading(true);
         setError(null);
         try {
-            const res = await generatePropertyCopy(assetId, tenantId, profileId);
+            const res = await generatePropertyCopy(propertyId, tenantId, profileId);
             if (res.success && res.data) setCopy(res.data);
             else setError(res.error || 'Erro ao gerar copy.');
         } catch (e: any) {

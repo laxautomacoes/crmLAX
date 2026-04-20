@@ -4,7 +4,7 @@ import { Search, Filter, LayoutGrid, List } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormSelect } from '@/components/shared/forms/FormSelect';
 
-interface AssetFiltersProps {
+interface PropertyFiltersProps {
     filters: {
         tipo: string;
         quartos: string;
@@ -12,12 +12,12 @@ interface AssetFiltersProps {
         precoMax: string;
         search: string;
     };
-    onFilterChange: (filters: AssetFiltersProps['filters']) => void;
+    onFilterChange: (filters: PropertyFiltersProps['filters']) => void;
     viewMode: 'gallery' | 'list';
     onViewModeChange: (mode: 'gallery' | 'list') => void;
 }
 
-export function AssetFilters({ filters, onFilterChange, viewMode, onViewModeChange }: AssetFiltersProps) {
+export function PropertyFilters({ filters, onFilterChange, viewMode, onViewModeChange }: PropertyFiltersProps) {
     const handleChange = (key: keyof typeof filters, value: string) => {
         onFilterChange({ ...filters, [key]: value });
     };
@@ -53,7 +53,7 @@ export function AssetFilters({ filters, onFilterChange, viewMode, onViewModeChan
                         label="Buscar"
                         value={filters.search}
                         onChange={(e) => handleChange('search', e.target.value)}
-                        placeholder="Bairro, condomínio ou tipo de imóvel..."
+                        placeholder="Bairro, condomínio ou tipo de property..."
                         icon={Search}
                     />
                 </div>

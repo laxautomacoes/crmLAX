@@ -34,9 +34,9 @@ export async function generateAIReportInsights(
     const m = metricsResult.data;
     const supabase = await createClient();
 
-    // 2. Buscar dados adicionais: total de imóveis e clientes convertidos
-    const [{ count: totalAssets }, { count: totalClients }] = await Promise.all([
-        supabase.from('assets').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
+    // 2. Buscar dados adicionais: total de properties e clientes convertidos
+    const [{ count: totalProperties }, { count: totalClients }] = await Promise.all([
+        supabase.from('properties').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId),
         supabase.from('contacts').select('*', { count: 'exact', head: true }).eq('tenant_id', tenantId)
     ]);
 
@@ -51,7 +51,7 @@ MÉTRICAS DO PERÍODO (${period.replace('_', ' ')}):
 - Leads ativos: ${m.kpis.activeLeads}
 - Conversões (vendas/aluguéis): ${m.kpis.conversions}
 - Taxa de conversão: ${m.kpis.conversionRate}
-- Total de imóveis cadastrados: ${totalAssets || 0}
+- Total de properties cadastrados: ${totalProperties || 0}
 - Total de clientes/contatos: ${totalClients || 0}
 
 CANAL DE ORIGEM DOS LEADS:

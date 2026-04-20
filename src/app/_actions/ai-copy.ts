@@ -11,11 +11,11 @@ interface CopyVariants {
 }
 
 /**
- * Gera 3 variações de copy de anúncio para um imóvel usando o provedor de IA configurado.
+ * Gera 3 variações de copy de anúncio para um property usando o provedor de IA configurado.
  * Requer plano Pro.
  */
 export async function generatePropertyCopy(
-    assetId: string,
+    propertyId: string,
     tenantId: string,
     profileId: string
 ): Promise<{ success: boolean; data?: CopyVariants; error?: string }> {
@@ -23,33 +23,33 @@ export async function generatePropertyCopy(
 
     const supabase = await createClient();
 
-    // 1. Buscar dados completos do imóvel
-    const { data: asset } = await supabase
-        .from('assets')
+    // 1. Buscar dados completos do property
+    const { data: property } = await supabase
+        .from('properties')
         .select('*')
-        .eq('id', assetId)
+        .eq('id', propertyId)
         .eq('tenant_id', tenantId)
         .single();
 
-    if (!asset) throw new Error('Imóvel não encontrado.');
+    if (!property) throw new Error('Property não encontrado.');
 
-    const d = asset.details || {};
-    const price = asset.price
-        ? `R$ ${new Intl.NumberFormat('pt-BR').format(asset.price)}`
+    const d = property.details || {};
+    const price = property.price
+        ? `R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}`
         : 'Preço sob consulta';
 
     const typeLabels: Record<string, string> = {
         house: 'Casa',
         apartment: 'Apartamento',
         land: 'Terreno',
-        commercial: 'Imóvel Comercial'
+        commercial: 'Property Comercial'
     };
 
     const propertyProfile = `
-Título: ${asset.title}
-Tipo: ${typeLabels[asset.type] || asset.type}
+Título: ${property.title}
+Tipo: ${typeLabels[property.type] || property.type}
 Preço: ${price}
-Modalidade: ${asset.transaction_type === 'rent' ? 'Aluguel' : 'Venda'}
+Modalidade: ${property.transaction_type === 'rent' ? 'Aluguel' : 'Venda'}
 Dormitórios: ${d.dormitorios || d.quartos || 'N/A'}
 Suítes: ${d.suites || 'N/A'}
 Área privativa: ${d.area_privativa ? `${d.area_privativa}m²` : 'N/A'}
@@ -57,7 +57,7 @@ Vagas de garagem: ${d.vagas_garagem || d.garagem || 'N/A'}
 Bairro: ${d.endereco?.bairro || 'N/A'}
 Cidade: ${d.endereco?.cidade || 'N/A'}
 Diferenciais: ${d.diferenciais?.join(', ') || 'N/A'}
-Descrição do corretor: ${asset.description || 'Não informada'}`;
+Descrição do corretor: ${property.description || 'Não informada'}`;
 
     const prompt = `Você é um copywriter especialista em marketing imobiliário brasileiro. Crie copies persuasivos, com linguagem natural e emojis estratégicos.
 
@@ -65,7 +65,7 @@ DADOS DO IMÓVEL:
 ${propertyProfile}
 
 TAREFA:
-Crie 3 versões de copy para anúncio deste imóvel:
+Crie 3 versões de copy para anúncio deste property:
 1. CURTA (max 300 caracteres): Para WhatsApp e Stories. Direta, com destaque no maior diferencial.
 2. MÉDIA (max 600 caracteres): Para Facebook e Instagram. Tom envolvente, CTA claro.  
 3. COMPLETA (sem limite): Para portais imobiliários. Descritiva, detalhada, com todos os benefícios.
@@ -101,7 +101,7 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
     }
 }
 /**
- * Gera posts de marketing para um tópico livre (não atrelado a um imóvel específico).
+ * Gera posts de marketing para um tópico livre (não atrelado a um property específico).
  */
 export async function generateGeneralCopy(
     topic: string,

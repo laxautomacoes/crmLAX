@@ -66,7 +66,7 @@ export default function AnalysisPage() {
                             </div>
                             <h3 className="text-lg font-bold text-foreground">Escaneando o Mercado...</h3>
                             <p className="text-sm text-muted-foreground mt-1 text-center max-w-xs px-4">
-                                Buscando imóveis em {lastQuery?.neighborhood}, {lastQuery?.city} e extraindo padrões de preços com IA.
+                                Buscando properties em {lastQuery?.neighborhood}, {lastQuery?.city} e extraindo padrões de preços com IA.
                             </p>
                             <div className="mt-8 flex gap-1">
                                 {[0, 1, 2].map((i) => (
@@ -105,7 +105,7 @@ export default function AnalysisPage() {
                     <p className="text-xs text-foreground font-bold leading-relaxed">Sobre esta análise</p>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
                         Os dados são obtidos via pesquisa web aberta em tempo real e processador por inteligência artificial (Gemini 2.0 Flash). 
-                        Os valores apresentados são estimativas baseadas em ofertas atuais e podem variar conforme o estado de conservação e acabamento de cada imóvel.
+                        Os valores apresentados são estimativas baseadas em ofertas atuais e podem variar conforme o estado de conservação e acabamento de cada property.
                     </p>
                 </div>
             </div>

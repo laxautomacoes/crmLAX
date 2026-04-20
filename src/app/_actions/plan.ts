@@ -106,7 +106,7 @@ export interface PlanConfigInput {
     ai_features: string[];
     highlighted: boolean;
     max_leads_per_month: number;
-    max_assets: number;
+    max_properties: number;
     max_users: number;
     has_whatsapp: boolean;
     has_ai: boolean;
@@ -145,7 +145,7 @@ export async function updatePlanConfig(input: PlanConfigInput) {
             ai_features_list: input.ai_features,
             is_highlighted: input.highlighted,
             max_leads_per_month: input.max_leads_per_month,
-            max_assets: input.max_assets,
+            max_properties: input.max_properties,
             max_users: input.max_users,
             has_whatsapp: input.has_whatsapp,
             has_ai: input.has_ai,

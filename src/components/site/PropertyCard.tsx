@@ -2,15 +2,18 @@
 
 import { Home, MessageCircle, Info } from 'lucide-react';
 import { useState } from 'react';
+import Link from 'next/link';
 import { LeadFormModal } from './LeadFormModal';
 import { PropertyDetailsModal } from './PropertyDetailsModal';
 import { translatePropertyType } from '@/utils/property-translations';
 import { stripMarkdown } from '@/utils/text-utils';
 
-interface AssetCardProps {
-    asset: {
+interface PropertyCardProps {
+    property: {
         id: string;
         title: string;
+        slug?: string;
+        type?: string;
         price?: number | null;
         images?: string[] | null;
         videos?: string[] | null;
@@ -18,50 +21,53 @@ interface AssetCardProps {
         details?: Record<string, any> | null;
         tenant_id?: string;
     };
+    tenantSlug: string;
 }
 
-export function AssetCard({ asset }: AssetCardProps) {
+export function PropertyCard({ property, tenantSlug }: PropertyCardProps) {
     const [showLeadForm, setShowLeadForm] = useState(false);
-    const [showDetails, setShowDetails] = useState(false);
 
-    const imageUrl = asset.images && Array.isArray(asset.images) && asset.images.length > 0
-        ? asset.images[0]
+    const imageUrl = property.images && Array.isArray(property.images) && property.images.length > 0
+        ? property.images[0]
         : null;
 
-    const tipo = translatePropertyType(asset.details?.tipo_imovel || asset.details?.type || (asset as any).type);
-    const areaPrivativa = asset.details?.area_privativa || asset.details?.area_util || asset.details?.area || 0;
-    const quartos = asset.details?.dormitorios || asset.details?.quartos || asset.details?.rooms || 0;
-    const vagas = asset.details?.vagas || 0;
+    const tipo = translatePropertyType(property.details?.tipo_property || property.details?.type || (property as any).type);
+    const areaPrivativa = property.details?.area_privativa || property.details?.area_util || property.details?.area || 0;
+    const quartos = property.details?.dormitorios || property.details?.quartos || property.details?.rooms || 0;
+    const vagas = property.details?.vagas || 0;
+
+    const propertyType = property.type || property.details?.tipo_property || 'imovel';
+    const propertyHref = `/site/${tenantSlug}/imovel/${propertyType}/${property.slug || property.id}`;
 
     return (
         <>
             <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden hover:shadow-md transition-shadow">
                 {imageUrl ? (
-                    <div 
-                        onClick={() => setShowDetails(true)}
-                        className="relative h-64 overflow-hidden cursor-pointer group"
+                    <Link 
+                        href={propertyHref}
+                        className="relative h-64 overflow-hidden block group"
                     >
                         <img
                             src={imageUrl}
-                            alt={asset.title}
+                            alt={property.title}
                             className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
                         />
-                    </div>
+                    </Link>
                 ) : (
-                    <div 
-                        onClick={() => setShowDetails(true)}
-                        className="h-64 bg-muted flex items-center justify-center cursor-pointer"
+                    <Link 
+                        href={propertyHref}
+                        className="h-64 bg-muted flex items-center justify-center"
                     >
                         <Home className="w-16 h-16 text-muted-foreground/50" />
-                    </div>
+                    </Link>
                 )}
 
                 <div className="p-6">
                     <div className="flex items-center justify-between gap-4 mb-1">
-                        <h3 className="text-xl font-bold text-foreground truncate">{asset.title}</h3>
+                        <h3 className="text-xl font-bold text-foreground truncate">{property.title}</h3>
                         <span className="text-lg text-white font-bold whitespace-nowrap">
-                            {Number(asset.price) > 0 
-                                ? `R$ ${Number(asset.price).toLocaleString('pt-BR')}` 
+                            {Number(property.price) > 0 
+                                ? `R$ ${Number(property.price).toLocaleString('pt-BR')}` 
                                 : 'Sob consulta'}
                         </span>
                     </div>
@@ -74,13 +80,13 @@ export function AssetCard({ asset }: AssetCardProps) {
                     </div>
 
                     <div className="flex gap-2">
-                        <button
-                            onClick={() => setShowDetails(true)}
+                        <Link
+                            href={propertyHref}
                             className="flex-1 bg-muted hover:bg-muted/80 text-foreground font-bold py-3 px-2 md:px-4 rounded-lg transition-all flex items-center justify-center gap-1.5 md:gap-2 text-[11px] xs:text-xs md:text-sm whitespace-nowrap"
                         >
                             <Info size={16} className="flex-shrink-0" />
                             Ver detalhes
-                        </button>
+                        </Link>
                         <button
                             onClick={() => setShowLeadForm(true)}
                             className="flex-1 bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-3 px-2 md:px-4 rounded-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-1.5 md:gap-2 text-[11px] xs:text-xs md:text-sm whitespace-nowrap"
@@ -92,18 +98,12 @@ export function AssetCard({ asset }: AssetCardProps) {
                 </div>
             </div>
 
-            <PropertyDetailsModal
-                isOpen={showDetails}
-                onClose={() => setShowDetails(false)}
-                asset={asset}
-            />
-
             <LeadFormModal
                 isOpen={showLeadForm}
                 onClose={() => setShowLeadForm(false)}
-                assetId={asset.id}
-                assetTitle={asset.title}
-                tenantId={asset.tenant_id}
+                propertyId={property.id}
+                propertyTitle={property.title}
+                tenantId={property.tenant_id}
             />
         </>
     );

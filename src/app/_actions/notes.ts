@@ -11,7 +11,7 @@ export async function getNotes(tenantId: string) {
     try {
         const { data, error } = await supabase
             .from('notes')
-            .select('*, profiles:profile_id(full_name), leads:lead_id(contacts!inner(name)), assets:asset_id(title)')
+            .select('*, profiles:profile_id(full_name), leads:lead_id(contacts!inner(name)), properties:property_id(title)')
             .eq('tenant_id', tenantId)
             .eq('profile_id', profile?.id)
             .order('date', { ascending: false })
