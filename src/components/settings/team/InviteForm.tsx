@@ -23,13 +23,13 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
 
     // Initial permissions state
     const [permissions, setPermissions] = useState<Record<string, boolean>>({
-        dashboard: true,
-        leads: true,
-        clients: true,
-        properties: true,
-        calendar: true,
-        reports: true,
-        settings: true
+        dashboard: false,
+        leads: false,
+        clients: false,
+        properties: false,
+        calendar: false,
+        reports: false,
+        settings: false
     });
 
     useEffect(() => {
@@ -39,13 +39,13 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
                 setIsSystemContext(true);
                 // Default superadmin permissions
                 setPermissions({
-                    tenants: true,
-                    plans: true,
-                    ai_usage: true,
-                    global_logs: true,
-                    marketing_global: true,
-                    roadmap: true,
-                    team_management: true
+                    tenants: false,
+                    plans: false,
+                    ai_usage: false,
+                    global_logs: false,
+                    marketing_global: false,
+                    roadmap: false,
+                    team_management: false
                 });
             }
         }
@@ -85,13 +85,13 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
             setName('');
             setPhone('');
             setPermissions({
-                dashboard: true,
-                leads: true,
-                clients: true,
-                properties: true,
-                calendar: true,
-                reports: true,
-                settings: true
+                dashboard: false,
+                leads: false,
+                clients: false,
+                properties: false,
+                calendar: false,
+                reports: false,
+                settings: false
             });
             onInviteCreated();
         }

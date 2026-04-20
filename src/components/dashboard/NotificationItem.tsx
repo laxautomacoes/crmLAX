@@ -102,11 +102,16 @@ export function NotificationItem({
                 </div>
 
                 <div className="flex-1 min-w-0 py-1">
-                    <h4 className={`text-sm tracking-tight leading-snug truncate transition-colors ${
-                        !notification.read ? 'font-bold text-foreground' : 'font-semibold text-foreground/85'
-                    }`}>
-                        {notification.title}
-                    </h4>
+                    <div className="flex items-center justify-between gap-2">
+                        <h4 className={`text-sm tracking-tight leading-snug truncate transition-colors ${
+                            !notification.read ? 'font-bold text-foreground' : 'font-semibold text-foreground/85'
+                        }`}>
+                            {notification.title}
+                        </h4>
+                        <span className="text-[10px] text-muted-foreground/50 font-medium whitespace-nowrap">
+                            {formatRelativeDate(notification.created_at)}
+                        </span>
+                    </div>
                     {!isExpanded && (
                         <p className="text-xs text-foreground/75 truncate mt-0.5">
                             {notification.message}
