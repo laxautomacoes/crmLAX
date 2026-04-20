@@ -10,7 +10,7 @@ import { MediaUpload } from '@/components/shared/MediaUpload'
 import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
-import { PropertyAutocomplete } from '@/components/dashboard/assets/PropertyAutocomplete'
+import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
 import { Calendar, MessageSquare, X, Sparkles, User, Info } from 'lucide-react'
 import LeadAICard from '@/components/ai/LeadAICard'
 

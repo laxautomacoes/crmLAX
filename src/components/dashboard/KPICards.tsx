@@ -27,7 +27,7 @@ export default function KPICards({ kpis }: KPICardsProps) {
             href: '/leads',
         },
         {
-            title: 'Properties',
+            title: 'Imóveis',
             value: kpis.properties.toString(),
             trend: kpis.propertiesTrend,
             trendUp: true,

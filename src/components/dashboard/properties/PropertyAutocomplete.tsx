@@ -19,8 +19,8 @@ export function PropertyAutocomplete({
     selectedItem, 
     onSelect, 
     onClear,
-    label = "Property Relacionado",
-    placeholder = "Buscar property",
+    label = "Imóvel Relacionado",
+    placeholder = "Buscar imóvel",
     icon = Building2
 }: PropertyAutocompleteProps) {
     const fetchProperties = async (search: string) => {
