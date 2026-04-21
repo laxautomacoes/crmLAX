@@ -9,14 +9,14 @@ import { ChevronLeft } from 'lucide-react'
 export const dynamic = 'force-dynamic'
 
 interface PropertyPageProps {
-    params: {
+    params: Promise<{
         type: string
         slug: string
-    }
+    }>
 }
 
 export default async function PropertyDetailPage({ params }: PropertyPageProps) {
-    const { type, slug } = params
+    const { type, slug } = await params
     const { profile, error: profileError } = await getProfile()
 
     if (profileError || !profile || !profile.tenant_id) {
