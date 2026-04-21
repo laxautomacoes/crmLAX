@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { getProfile } from '@/app/_actions/profile';
+import { getProfile, listTeamMembers } from '@/app/_actions/profile';
 import { listInvitations } from '@/app/_actions/invitations';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { InvitationsTable } from '@/components/settings/team/InvitationsTable';
@@ -14,15 +14,33 @@ export const dynamic = 'force-dynamic';
 export default function TeamSettingsPage() {
     const router = useRouter();
     const [fetching, setFetching] = useState(true);
-    const [invitations, setInvitations] = useState<any[]>([]);
+    const [teamItems, setTeamItems] = useState<any[]>([]);
     const [isAuthorized, setIsAuthorized] = useState<boolean | null>(null);
     const [isInviteModalOpen, setIsInviteModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const loadInvitations = async () => {
+    const loadTeamData = async () => {
         setFetching(true);
-        const { invitations: data, error } = await listInvitations();
-        if (!error) setInvitations(data || []);
+        
+        const [invRes, membersRes] = await Promise.all([
+            listInvitations(),
+            listTeamMembers()
+        ]);
+
+        const invitations = (invRes as any).invitations || [];
+        const members = (membersRes as any).members || [];
+
+        // Combinar e filtrar
+        // Ocultar o admin adm@leoacosta.online conforme pedido do usuário
+        const combined = [
+            ...members.map(m => ({ ...m, type: 'member', name: m.full_name })),
+            ...invitations.map(i => ({ ...i, type: 'invitation' }))
+        ].filter(item => 
+            item.email !== 'adm@leoacosta.online' && 
+            item.role?.toLowerCase() !== 'admin'
+        );
+
+        setTeamItems(combined);
         setFetching(false);
     };
 
@@ -37,7 +55,7 @@ export default function TeamSettingsPage() {
                 }
 
                 setIsAuthorized(true);
-                await loadInvitations();
+                await loadTeamData();
             } catch (err) {
                 router.push('/dashboard');
             }
@@ -83,9 +101,9 @@ export default function TeamSettingsPage() {
 
             <div className="w-full">
                 <InvitationsTable
-                    invitations={invitations}
+                    invitations={teamItems}
                     fetching={fetching}
-                    onRefresh={loadInvitations}
+                    onRefresh={loadTeamData}
                     searchTerm={searchTerm}
                 />
             </div>
@@ -93,7 +111,7 @@ export default function TeamSettingsPage() {
             <InviteUserModal
                 isOpen={isInviteModalOpen}
                 onClose={() => setIsInviteModalOpen(false)}
-                onSuccess={loadInvitations}
+                onSuccess={loadTeamData}
             />
         </div>
     );

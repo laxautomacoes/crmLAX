@@ -403,3 +403,53 @@ export async function updateLastSeen() {
         return { success: false, error: error.message }
     }
 }
+export async function listTeamMembers() {
+    try {
+        const supabase = await createClient()
+        const { data: { user: currentUser } } = await supabase.auth.getUser()
+        if (!currentUser) return { error: 'Not authenticated' }
+
+        // 1. Pegar tenant do usuário logado
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', currentUser.id)
+            .single()
+
+        if (!profile) return { error: 'Profile not found' }
+
+        // 2. Buscar todos os perfis do tenant
+        const { data: profiles, error: profilesError } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('tenant_id', profile.tenant_id)
+            .order('created_at', { ascending: true })
+
+        if (profilesError) throw profilesError
+
+        // 3. Buscar e-mails no Auth (requer admin client)
+        const supabaseAdmin = createAdminClient()
+        const { data: { users }, error: authError } = await supabaseAdmin.auth.admin.listUsers()
+        
+        if (authError) {
+            console.error('Error listing auth users:', authError)
+            // Fallback: retornar perfis sem e-mail
+            return { members: profiles.map(p => ({ ...p, status: 'active' })) }
+        }
+
+        // 4. Cruzar dados
+        const members = profiles.map(p => {
+            const authUser = users.find(u => u.id === p.id)
+            return {
+                ...p,
+                email: authUser?.email || '',
+                status: 'active'
+            }
+        })
+
+        return { members }
+    } catch (error: any) {
+        console.error('Error in listTeamMembers:', error)
+        return { error: error.message || 'Falha ao listar membros' }
+    }
+}

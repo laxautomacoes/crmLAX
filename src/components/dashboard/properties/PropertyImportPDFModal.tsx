@@ -53,7 +53,7 @@ export function PropertyImportPDFModal({
             const result = await response.json()
 
             if (response.ok && result.success) {
-                toast.success(`${result.count} properties processados e atualizados pela IA!`)
+                toast.success(`${result.count} imóveis processados e atualizados pela IA!`)
                 onImportSuccess()
                 handleClose()
             } else {
@@ -80,7 +80,7 @@ export function PropertyImportPDFModal({
                     <AlertCircle className="text-primary shrink-0" size={20} />
                     <p className="text-xs text-foreground/80 leading-relaxed">
                         A nossa IA (Gemini 2.0 Flash) irá ler o seu PDF e extrair automaticamente os nomes das unidades, preços, áreas e status. 
-                        Properties com o mesmo título serão **atualizados** com os novos valores.
+                        Imóveis com o mesmo título serão **atualizados** com os novos valores.
                     </p>
                 </div>
 

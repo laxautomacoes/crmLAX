@@ -100,10 +100,10 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
 
     const brokerPhone = broker?.whatsapp_number || tenant?.branding?.whatsapp || '';
     const cleanBrokerPhone = brokerPhone.replace(/\D/g, '');
-    const whatsappUrl = `https://wa.me/${cleanBrokerPhone.startsWith('55') ? '' : '55'}${cleanBrokerPhone}?text=${encodeURIComponent(`Olá! Vi o property "${property.title}" no site e gostaria de mais informações.`)}`;
+    const whatsappUrl = `https://wa.me/${cleanBrokerPhone.startsWith('55') ? '' : '55'}${cleanBrokerPhone}?text=${encodeURIComponent(`Olá! Vi o imóvel "${property.title}" no site e gostaria de mais informações.`)}`;
 
     // Handle title and price visibility
-    const displayTitle = config?.title === false ? 'Property disponível' : property.title;
+    const displayTitle = config?.title === false ? 'Imóvel disponível' : property.title;
     const displayPrice = config?.price === false ? 'Sob consulta' : (property.price ? `R$ ${Number(property.price).toLocaleString('pt-BR')}` : 'Sob consulta');
 
     return (
@@ -228,7 +228,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                             <div className="space-y-4 pt-4">
                                 <h3 className="text-xl font-bold text-foreground flex items-center gap-2">
                                     <Video className="text-primary" size={20} />
-                                    Vídeos do Property
+                                    Vídeos do Imóvel
                                 </h3>
                                 <div className="flex gap-4 overflow-x-auto pb-4 pt-1 px-1 custom-scrollbar snap-x">
                                     {videoMedia.map((video: any, i: number) => (
@@ -371,7 +371,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                 <div className="space-y-6">
                     <div className="p-6 bg-card rounded-2xl border border-border shadow-sm sticky top-24">
                         <div className="mb-6">
-                            <span className="text-sm font-bold text-muted-foreground dark:text-white uppercase tracking-widest">Valor do Property</span>
+                            <span className="text-sm font-bold text-muted-foreground dark:text-white uppercase tracking-widest">Valor do Imóvel</span>
                             <div className="flex items-baseline gap-2 mt-1">
                                 <span className="text-3xl font-black text-foreground">
                                     {displayPrice}

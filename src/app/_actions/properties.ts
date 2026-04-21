@@ -263,8 +263,8 @@ export async function deleteProperty(tenantId: string, propertyId: string) {
                         notificationService.create({
                             user_id: admin.id,
                             tenant_id: profile.tenant_id as string,
-                            title: 'Property Excluído',
-                            message: `O property #${propertyId.slice(0, 8)} foi excluído por ${profile.full_name}.`,
+                            title: 'Imóvel Excluído',
+                            message: `O imóvel #${propertyId.slice(0, 8)} foi excluído por ${profile.full_name}.`,
                             type: 'error',
                             metadata: { property_id: propertyId, action_by: profile.id }
                         })
@@ -325,8 +325,8 @@ export async function archiveProperty(tenantId: string, propertyId: string) {
                         notificationService.create({
                             user_id: admin.id,
                             tenant_id: profile.tenant_id as string,
-                            title: 'Property Arquivado',
-                            message: `O property #${propertyId.slice(0, 8)} foi arquivado por ${profile.full_name}.`,
+                            title: 'Imóvel Arquivado',
+                            message: `O imóvel #${propertyId.slice(0, 8)} foi arquivado por ${profile.full_name}.`,
                             type: 'info',
                             metadata: { property_id: propertyId }
                         })
@@ -378,7 +378,7 @@ export async function approveProperty(tenantId: string, propertyId: string) {
     const userRole = profile?.role?.toLowerCase()
 
     if (userRole !== 'admin' && userRole !== 'superadmin') {
-        return { success: false, error: 'Apenas administradores podem aprovar properties.' }
+        return { success: false, error: 'Apenas administradores podem aprovar imóveis.' }
     }
 
     try {
@@ -405,7 +405,7 @@ export async function approveProperty(tenantId: string, propertyId: string) {
         return { success: true, data }
     } catch (error: any) {
         console.error('Error approving property:', error)
-        return { success: false, error: error.message || 'Erro ao aprovar property' }
+        return { success: false, error: error.message || 'Erro ao aprovar imóvel' }
     }
 }
 
@@ -427,6 +427,6 @@ export async function getPropertyBySlug(type: string, slug: string) {
         return { success: true, data }
     } catch (error: any) {
         console.error('Error fetching property by slug:', error)
-        return { success: false, error: 'Property não encontrado' }
+        return { success: false, error: 'Imóvel não encontrado' }
     }
 }

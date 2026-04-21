@@ -112,7 +112,7 @@ export function PropertyFiltersModal({
                         }
 
                         return {
-                            title: clean(values[1]) || 'Property Importado',
+                            title: clean(values[1]) || 'Imóvel Importado',
                             type: clean(values[2]) || 'apartment',
                             price: parseFloat(clean(values[3])) || 0,
                             status: clean(values[4]) || 'Available',
@@ -130,7 +130,7 @@ export function PropertyFiltersModal({
 
                 const result = await bulkCreateProperties(tenantId, propertiesToCreate)
                 if (result.success) {
-                    toast.success(`${propertiesToCreate.length} properties importados com sucesso!`)
+                    toast.success(`${propertiesToCreate.length} imóveis importados com sucesso!`)
                     onImportSuccess()
                     onClose()
                 } else {
@@ -206,8 +206,8 @@ export function PropertyFiltersModal({
                                 onChange={(e) => setFilters({ ...filters, status: e.target.value })}
                                 options={[
                                     { value: 'all', label: 'Todos os Status' },
-                                    { value: 'Pending', label: 'Pending' },
-                                    { value: 'Available', label: 'Available' },
+                                    { value: 'Pending', label: 'Pendente' },
+                                    { value: 'Available', label: 'Disponível' },
                                     { value: 'Vendido', label: 'Vendido' },
                                     { value: 'Reservado', label: 'Reservado' },
                                     { value: 'Suspenso', label: 'Suspenso' }
@@ -216,7 +216,7 @@ export function PropertyFiltersModal({
                         )}
 
                         <FormSelect
-                            label="Tipo de Property"
+                            label="Tipo de Imóvel"
                             value={filters.type}
                             onChange={(e) => setFilters({ ...filters, type: e.target.value })}
                             options={[
@@ -320,7 +320,7 @@ export function PropertyFiltersModal({
                                 <p className="text-sm font-bold text-foreground">
                                     {isImporting ? 'Importando...' : 'Importar CSV'}
                                 </p>
-                                <p className="text-xs text-foreground">Adicionar properties em lote</p>
+                                <p className="text-xs text-foreground">Adicionar imóveis em lote</p>
                             </div>
                         </button>
                         <input

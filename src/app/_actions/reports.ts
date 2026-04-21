@@ -230,7 +230,7 @@ export async function getReportMetrics(
 
         leads?.forEach((lead: Record<string, any>) => {
             if (lead.property_id) {
-                const propertyTitle = (lead.properties as any)?.title || 'Property sem título'
+                const propertyTitle = (lead.properties as any)?.title || 'Imóvel sem título'
                 const propertyId = lead.property_id
 
                 if (!propertiesMap.has(propertyId)) {

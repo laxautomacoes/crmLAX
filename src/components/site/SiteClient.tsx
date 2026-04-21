@@ -78,10 +78,10 @@ export function SiteClient({ properties, tenantName, tenantSlug, whatsappNumber,
             {properties.length === 0 || filteredProperties.length === 0 ? (
                 <div className="text-center py-20 bg-card rounded-2xl border border-border animate-in fade-in zoom-in duration-500">
                     <p className="text-xl font-bold text-foreground mb-2">
-                        Nenhum property disponível no momento
+                        Nenhum imóvel disponível no momento
                     </p>
                     <p className="text-sm text-muted-foreground">
-                        Volte em breve para ver nossos properties!
+                        Volte em breve para ver nossos imóveis!
                     </p>
                 </div>
             ) : (
@@ -99,7 +99,7 @@ export function SiteClient({ properties, tenantName, tenantSlug, whatsappNumber,
                     <div>
                         <h4 className="font-bold text-lg mb-4 text-[#404F4F]">{tenantName}</h4>
                         <p className="text-sm text-muted-foreground max-w-xs transition-all">
-                            Sua melhor escolha em properties com a tecnologia do CRM LAX.
+                            Sua melhor escolha em imóveis com a tecnologia do CRM LAX.
                         </p>
                     </div>
 

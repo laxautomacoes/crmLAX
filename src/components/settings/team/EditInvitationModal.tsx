@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { updateInvitation, deleteInvitation, resendInvitation } from '@/app/_actions/invitations';
+import { deleteTeamMember } from '@/app/_actions/team';
 import { Loader2, Trash2, Calendar, ShieldCheck, User, Mail, Phone, Send } from 'lucide-react';
 import { InvitationPermissions } from './InvitationPermissions';
 
@@ -74,11 +75,27 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
     };
 
     const handleDelete = async () => {
-        if (!confirm('Excluir convite?')) return;
+        const isMember = invitation.type === 'member';
+        const message = isMember 
+            ? 'Excluir colaborador? Isso removerá permanentemente o acesso e o perfil do usuário.' 
+            : 'Excluir convite?';
+            
+        if (!confirm(message)) return;
+        
         setIsDeleting(true);
-        const { error } = await deleteInvitation(invitation.id);
-        if (error) { alert('Erro: ' + error); setIsDeleting(false); }
-        else { onUpdate(); onClose(); }
+        const { error } = await deleteTeamMember({
+            id: invitation.id,
+            email: invitation.email,
+            type: invitation.type
+        });
+        
+        if (error) { 
+            alert('Erro: ' + error); 
+            setIsDeleting(false); 
+        } else { 
+            onUpdate(); 
+            onClose(); 
+        }
     };
 
     const handleResend = async () => {

@@ -40,7 +40,7 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
                 </div>
                 <div>
                     <p className="font-bold text-[#404F4F]">Análise de IA — Plano Pro</p>
-                    <p className="mt-1 text-sm text-gray-500">Análise de probabilidade e matchmaking com properties disponíveis.</p>
+                    <p className="mt-1 text-sm text-gray-500">Análise de probabilidade e matchmaking com imóveis disponíveis.</p>
                 </div>
                 <a href="/settings/subscription" className="rounded-lg bg-[#FFE600] px-5 py-2 text-sm font-bold text-[#404F4F] hover:bg-[#F2DB00] transition-all">
                     Conhecer Plano Pro →
@@ -127,7 +127,7 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
                     className="flex w-full items-center justify-center gap-2 rounded-lg bg-[#FFE600] px-4 py-2.5 text-sm font-bold text-[#404F4F] transition-all hover:bg-[#F2DB00] active:scale-[0.99] disabled:opacity-50"
                 >
                     {loadingMatching ? <Loader2 className="h-4 w-4 animate-spin" /> : <Target className="h-4 w-4" />}
-                    {loadingMatching ? 'Buscando properties compatíveis...' : 'Encontrar Properties Compatíveis'}
+                    {loadingMatching ? 'Buscando imóveis compatíveis...' : 'Encontrar Imóveis Compatíveis'}
                 </button>
 
                 {leadSummary && (
@@ -144,7 +144,7 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
                             className="flex items-center gap-1 text-xs font-semibold text-gray-500 hover:text-[#404F4F]"
                         >
                             {showMatches ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
-                            {matches.length} properties compatíveis
+                            {matches.length} imóveis compatíveis
                         </button>
 
                         {showMatches && matches.map((match, i) => (

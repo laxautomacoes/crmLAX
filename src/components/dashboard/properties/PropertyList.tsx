@@ -17,7 +17,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onA
     if (properties.length === 0) {
         return (
             <div className="text-center py-20 bg-card rounded-2xl">
-                <p className="text-foreground font-medium">Nenhum property cadastrado.</p>
+                <p className="text-foreground font-medium">Nenhum imóvel cadastrado.</p>
             </div>
         )
     }
@@ -28,7 +28,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onA
                 <table className="w-full text-left">
                     <thead className="bg-muted/50">
                         <tr>
-                            <th className="px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center">Property</th>
+                            <th className="px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center">Imóvel</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center">Tipo</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center">Detalhes</th>
                             <th className="px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center">Áreas</th>

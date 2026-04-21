@@ -43,8 +43,8 @@ export function LogsTable({ tenantId, isGlobal = false }: LogsTableProps) {
         { value: 'update_lead', label: 'Lead Atualizado' },
         { value: 'delete_lead', label: 'Lead Excluído' },
         { value: 'archive_lead', label: 'Lead Arquivado' },
-        { value: 'create_property', label: 'Novo Property' },
-        { value: 'update_property', label: 'Property Atualizado' },
+        { value: 'create_property', label: 'Novo Imóvel' },
+        { value: 'update_property', label: 'Imóvel Atualizado' },
         { value: 'send_invitation', label: 'Convite Enviado' },
         { value: 'accept_invitation', label: 'Convite Aceito' },
     ];

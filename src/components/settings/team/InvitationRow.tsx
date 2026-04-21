@@ -12,10 +12,12 @@ interface InvitationRowProps {
 
 export function InvitationRow({ invitation, onCopyLink, onEdit }: InvitationRowProps) {
     const [isResending, setIsResending] = useState(false);
-    const isUsed = !!invitation.used_at;
-    const canCopy = !isUsed;
+    const isMember = invitation.type === 'member';
+    const isUsed = isMember || !!invitation.used_at;
+    const canCopy = !isUsed && !isMember;
 
     const handleResend = async () => {
+        if (isMember) return;
         setIsResending(true);
         const { error } = await resendInvitation(invitation.id);
         if (error) alert('Erro: ' + error);

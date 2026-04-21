@@ -1,7 +1,7 @@
 'use client'
 
 import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2 } from 'lucide-react'
-import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations'
+import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyCardProps {
     prop: any
@@ -152,7 +152,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                     </span>
                     {(isAdmin || prop.status === 'Pending') && (
                         <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
-                            {prop.status}
+                            {translateStatus(prop.status)}
                         </span>
                     )}
                 </div>

@@ -196,7 +196,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const propertyUrl = getPropertyUrl(tenant || { slug: tenantSlug }, property.id) + (queryString ? `?${queryString}` : '')
         
         // Build dynamic message
-        let message = `Olá ${lead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste property que pode te interessar:\n\n`
+        let message = `Olá ${lead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste imóvel que pode te interessar:\n\n`
         
         if (config.title) message += `*${property.title}*\n`
         if (config.price) message += `💰 Valor: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}\n`
@@ -326,7 +326,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     {expandedSections.basic && (
                                         <div className="p-4 pt-0 space-y-3">
                                             <FormCheckbox 
-                                                label="Título do Property" 
+                                                label="Título do Imóvel" 
                                                 checked={config.title} 
                                                 onChange={(e) => setConfig({...config, title: e.target.checked})} 
                                             />
@@ -387,7 +387,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     onChange={(e) => setConfig({...config, showArea: e.target.checked})} 
                                                 />
                                                 <FormCheckbox 
-                                                    label="Tipo do Property" 
+                                                    label="Tipo do Imóvel" 
                                                     checked={config.showType} 
                                                     onChange={(e) => setConfig({...config, showType: e.target.checked})} 
                                                 />

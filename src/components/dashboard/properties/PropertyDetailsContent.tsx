@@ -8,7 +8,7 @@ import { Sparkles, Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Ut
     ChevronLeft, ChevronRight, Maximize2, Map as MapIcon, DollarSign, Trees,
     Instagram
 } from 'lucide-react';
-import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations';
+import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
 import { Switch } from '@/components/ui/Switch';
 import { updateProperty } from '@/app/_actions/properties';
@@ -83,7 +83,7 @@ export function PropertyDetailsContent({
                 setIsPublished(!checked);
                 toast.error('Erro ao atualizar status de publicação');
             } else {
-                toast.success(checked ? 'Property publicado no site' : 'Property removido do site');
+                toast.success(checked ? 'Imóvel publicado no site' : 'Imóvel removido do site');
             }
         } catch (error) {
             console.error('Error toggling published:', error);
@@ -169,7 +169,7 @@ export function PropertyDetailsContent({
                                     <div className="flex items-center justify-between">
                                         <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
                                             <Home size={14} className="text-foreground" />
-                                            Property | Empreendimento
+                                            Imóvel | Empreendimento
                                         </h4>
                                     </div>
                                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
@@ -187,7 +187,7 @@ export function PropertyDetailsContent({
                                                     </span>
                                                     {(isAdmin || prop.status === 'Pending') && (
                                                         <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getStatusStyles(prop.status)}`}>
-                                                            {prop.status}
+                                                            {translateStatus(prop.status)}
                                                         </span>
                                                     )}
                                                 </div>
@@ -345,7 +345,7 @@ export function PropertyDetailsContent({
                                             Informações Gerais
                                         </h4>
                                         <div className="flex flex-col gap-0 divide-y divide-border/30">
-                                            <InfoRow icon={<DollarSign size={14} />} label="Valor do Property" value={formattedPrice} />
+                                            <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
                                             <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
                                             <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
                                             <InfoRow icon={<User size={14} />} label="Corretor" value={prop.corretor_nome || details.corretor_nome || 'Não informado'} />
@@ -397,7 +397,7 @@ export function PropertyDetailsContent({
                                             {prop.description ? (
                                                 <SafeMarkdownRenderer content={prop.description} />
                                             ) : (
-                                                <p className="italic text-muted-foreground">Nenhuma descrição informada para este property.</p>
+                                                <p className="italic text-muted-foreground">Nenhuma descrição informada para este imóvel.</p>
                                             )}
                                         </div>
                                     </div>
@@ -481,7 +481,7 @@ export function PropertyDetailsContent({
                                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 <ChevronLeft size={16} />
-                                Voltar para o Property
+                                Voltar para o Imóvel
                             </button>
                         </div>
                         <div className="bg-white rounded-3xl border border-border shadow-sm p-6">

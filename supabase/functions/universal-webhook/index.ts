@@ -191,7 +191,35 @@ async function saveLeadToCRM(leadData: any, supabase: any, rawPayload: any) {
 
   if (contactError) throw contactError;
 
-  // 2. Criar Lead (com vinculação ao estágio correto)
+  // 2. Rodízio Automático (Distribuição de Leads)
+  let brokerId = null;
+  try {
+    const { data: broker } = await supabase
+      .from('profiles')
+      .select('id')
+      .eq('tenant_id', leadData.tenant_id)
+      .eq('is_active_for_service', true)
+      .order('last_lead_assigned_at', { ascending: true, nullsFirst: true })
+      .limit(1)
+      .maybeSingle();
+
+    if (broker) {
+      brokerId = broker.id;
+      console.log(`[Rodízio] Lead atribuído ao corretor ID: ${brokerId}`);
+      
+      // Atualizar timestamp de distribuição do corretor
+      await supabase
+        .from('profiles')
+        .update({ last_lead_assigned_at: new Date().toISOString() })
+        .eq('id', brokerId);
+    } else {
+      console.warn('[Rodízio] Nenhum corretor ativo encontrado para distribuição.');
+    }
+  } catch (distError) {
+    console.error('[ERRO] Falha no rodízio:', distError);
+  }
+
+  // 3. Buscar o estágio inicial (Funil)
   let stageId = null;
   try {
     const { data: stages } = await supabase
@@ -208,12 +236,14 @@ async function saveLeadToCRM(leadData: any, supabase: any, rawPayload: any) {
     console.error('[ERRO] Falha ao buscar estágio padrão:', err);
   }
 
+  // 4. Criar Lead
   const { data: lead, error: leadError } = await supabase
     .from('leads')
     .insert({
       contact_id: contact.id,
       tenant_id: leadData.tenant_id,
-      stage_id: stageId, // Vincula o lead à primeira coluna (ex: NOVO)
+      stage_id: stageId,
+      assigned_to: brokerId, // Atribuição automática
       status: 'novo',
       source: leadData.source,
       utm_source: leadData.utm_source,

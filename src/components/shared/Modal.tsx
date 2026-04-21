@@ -68,7 +68,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
                         </button>
                     </div>
                 )}
-                <div className="p-6 overflow-y-auto custom-scrollbar flex-1">
+                <div className="p-6 overflow-y-auto no-scrollbar flex-1">
                     {children}
                 </div>
             </div>

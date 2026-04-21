@@ -1,7 +1,7 @@
 'use client'
 
 import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2 } from 'lucide-react'
-import { translatePropertyType, getStatusStyles, getSituacaoStyles } from '@/utils/property-translations'
+import { translatePropertyType, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
     prop: any
@@ -66,7 +66,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                         
                         {prop.status === 'Pending' && (
                             <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <span className="px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded-full text-[8px] font-black uppercase tracking-tighter shadow-lg">Pendente</span>
+                                <span className="px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded-full text-[8px] font-black uppercase tracking-tighter shadow-lg">{translateStatus(prop.status)}</span>
                             </div>
                         )}
 
@@ -163,7 +163,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                 <div className="flex flex-col gap-1.5 items-center">
                     {(isAdmin || prop.status === 'Pending') && (
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
-                            {prop.status}
+                            {translateStatus(prop.status)}
                         </span>
                     )}
                 </div>
@@ -177,7 +177,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                                 onApprove(prop.id)
                             }}
                             className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-                            title="Autorizar Property"
+                            title="Autorizar Imóvel"
                         >
                             <FileText size={16} />
                         </button>

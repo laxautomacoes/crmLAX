@@ -108,7 +108,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         setBrokers(res.data || [])
                     }
                 } else if (!editingProperty) {
-                    // Se for corretor criando novo property, já define o created_by
+                    // Se for corretor criando novo imóvel, já define o created_by
                     setFormData(prev => ({ ...prev, created_by: profile.id }))
                 }
             }
@@ -350,7 +350,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={editingProperty ? "Editar Property" : "Novo Property"}
+            title={editingProperty ? "Editar Imóvel" : "Novo Imóvel"}
             extraHeaderContent={
                 isAdmin ? (
                     <Switch 
@@ -405,7 +405,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         className={`flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold shadow-sm active:scale-[0.99] transition-all
                             ${(isSaving || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
                     >
-                        {isSaving ? "Salvando..." : (editingProperty ? "Salvar Alterações" : "Cadastrar Property")}
+                        {isSaving ? "Salvando..." : (editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel")}
                     </button>
                 </div>
             </div>

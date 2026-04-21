@@ -21,7 +21,7 @@ export function PropertiesList({ properties, tenantSlug }: PropertiesListProps) 
     if (properties.length === 0) {
         return (
             <div className="text-center py-12">
-                <p className="text-lg font-semibold text-foreground mb-2">Nenhum property encontrado</p>
+                <p className="text-lg font-semibold text-foreground mb-2">Nenhum imóvel encontrado</p>
                 <p className="text-sm text-muted-foreground">Tente ajustar os filtros de busca.</p>
             </div>
         );

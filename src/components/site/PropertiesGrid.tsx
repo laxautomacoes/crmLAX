@@ -24,7 +24,7 @@ export function PropertiesGrid({ properties, tenantSlug }: PropertiesGridProps) 
         return (
             <div className="text-center py-12">
                 <p className="text-lg font-semibold text-foreground mb-2">
-                    Nenhum property encontrado
+                    Nenhum imóvel encontrado
                 </p>
                 <p className="text-sm text-muted-foreground">
                     Tente ajustar os filtros de busca.

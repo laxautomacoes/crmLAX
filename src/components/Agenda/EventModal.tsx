@@ -214,11 +214,11 @@ export default function EventModal({
                 )}
 
                 <FormSelect
-                    label="Vincular Property (Produto)"
+                    label="Vincular Imóvel (Produto)"
                     value={formData.property_id}
                     onChange={(e) => setFormData({ ...formData, property_id: e.target.value })}
                     options={[
-                        { value: '', label: 'Nenhum property selecionado' },
+                        { value: '', label: 'Nenhum imóvel selecionado' },
                         ...properties.map(property => ({ value: property.id, label: property.title }))
                     ]}
                 />

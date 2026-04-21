@@ -91,7 +91,7 @@ export default function PropertiesClient({
                 toast.error('Erro ao carregar imóveis')
             }
         } catch (error) {
-            console.error('Erro ao recarregar properties:', error)
+            console.error('Erro ao recarregar imóveis:', error)
             try {
                 const offlineProps = await getOfflineProperties()
                 if (offlineProps && offlineProps.length > 0) {
@@ -127,7 +127,7 @@ export default function PropertiesClient({
     }
 
     const handleApprove = async (id: string) => {
-        if (!confirm('Deseja realmente autorizar este property?')) return
+        if (!confirm('Deseja realmente autorizar este imóvel?')) return
 
         const result = await approveProperty(tenantId, id)
         if (result.success) {
@@ -147,7 +147,7 @@ export default function PropertiesClient({
         if (prop.slug && prop.type) {
             router.push(`/properties/${prop.type}/${prop.slug}`)
         } else {
-            // Fallback para properties sem slug (legado)
+            // Fallback para imóveis sem slug (legado)
             setViewingProperty(prop)
             setIsDetailsOpen(true)
         }
@@ -236,7 +236,7 @@ export default function PropertiesClient({
         const url = URL.createObjectURL(blob)
         const link = document.createElement('a')
         link.setAttribute('href', url)
-        link.setAttribute('download', `properties-crm-lax-${new Date().toISOString().split('T')[0]}.csv`)
+        link.setAttribute('download', `imoveis-crm-lax-${new Date().toISOString().split('T')[0]}.csv`)
         link.style.visibility = 'hidden'
         document.body.appendChild(link)
         link.click()

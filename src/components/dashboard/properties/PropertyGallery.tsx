@@ -17,7 +17,7 @@ export function PropertyGallery({ properties, onEdit, onDelete, onView, onSend, 
     if (properties.length === 0) {
         return (
             <div className="text-center py-20 bg-card rounded-2xl">
-                <p className="text-foreground font-medium">Nenhum property cadastrado.</p>
+                <p className="text-foreground font-medium">Nenhum imóvel cadastrado.</p>
             </div>
         )
     }

@@ -45,8 +45,8 @@ export default async function PropertyDetailPage({ params }: PropertyPageProps) 
                     <ChevronLeft size={20} />
                 </Link>
                 <div className="space-y-0.5">
-                    <h1 className="text-xl font-black tracking-tight">Detalhes do Property</h1>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Dashboard / Properties / Visualizar</p>
+                    <h1 className="text-xl font-black tracking-tight">Detalhes do Imóvel</h1>
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-widest">Dashboard / Imóveis / Visualizar</p>
                 </div>
             </div>
 

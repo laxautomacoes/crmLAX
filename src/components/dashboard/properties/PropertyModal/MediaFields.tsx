@@ -26,7 +26,7 @@ export function MediaFields({ formData, isUploading, handleFileUpload, removeFil
                     <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-3">
                         {formData.images.map((url: string, index: number) => (
                             <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-                                <img src={url} alt={`Property ${index}`} className="w-full h-full object-cover" />
+                                <img src={url} alt={`Imóvel ${index}`} className="w-full h-full object-cover" />
                                 <button
                                     type="button"
                                     onClick={() => removeFile(index, 'images')}
