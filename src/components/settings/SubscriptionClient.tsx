@@ -30,6 +30,7 @@ import {
 
 interface SubscriptionClientProps {
     currentPlan: string;
+    limits: any;
     aiUsageCount: number;
     aiRequestsLimit: number;
     userRole: string;
