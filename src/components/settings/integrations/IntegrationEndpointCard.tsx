@@ -49,15 +49,36 @@ export function IntegrationEndpointCard({
     const [isActive, setIsActive] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isLoading, setIsLoading] = useState(true);
     
     useEffect(() => {
         if (tenantId) {
-            getIntegration(title.toLowerCase()).then(({ data }) => {
+            setIsLoading(true);
+            const providerName = title.toLowerCase();
+            console.log(`IntegrationCard: Iniciando busca para ${providerName}...`);
+            
+            getIntegration(providerName).then(({ data, error }) => {
+                if (error) {
+                    console.error(`IntegrationCard: Erro ao buscar ${providerName}:`, error);
+                }
+                
                 if (data?.credentials?.access_token) {
+                    console.log(`IntegrationCard: Token encontrado para ${providerName}`);
                     setHasToken(true);
                     setAccessToken(data.credentials.access_token);
+                } else {
+                    console.log(`IntegrationCard: Nenhum token para ${providerName}`);
+                    setHasToken(false);
+                    setAccessToken('');
                 }
-                setIsActive(data?.status === 'active');
+                
+                const active = data?.status === 'active';
+                console.log(`IntegrationCard: ${providerName} status: ${active ? 'ATIVO' : 'INATIVO'}`);
+                setIsActive(active);
+                setIsLoading(false);
+            }).catch(err => {
+                console.error(`IntegrationCard: Falha fatal ao buscar ${providerName}:`, err);
+                setIsLoading(false);
             });
         }
     }, [tenantId, title]);
@@ -77,14 +98,60 @@ export function IntegrationEndpointCard({
 
     const handleSaveToken = async () => {
         setIsSaving(true);
-        const { error } = await saveIntegration(title.toLowerCase(), { access_token: accessToken });
+        let credentials: any = { access_token: accessToken };
+        const providerName = title.toLowerCase();
+
+        // Se for Facebook, tenta buscar o ID da Página para facilitar o webhook
+        if (providerName.includes('facebook')) {
+            try {
+                // 1. Tenta pegar o ID direto (funciona se for Token de Página)
+                const meResponse = await fetch(`https://graph.facebook.com/me?fields=id,name&access_token=${accessToken}`);
+                const meData = await meResponse.json();
+                
+                if (meData.id && !meData.error) {
+                    // Verificamos se é uma página ou usuário (simplificado)
+                    // Se o token for de página, o ID retornado aqui é o da página.
+                    credentials.page_id = meData.id;
+                    credentials.page_name = meData.name;
+                    console.log(`IntegrationCard: Detectado ID direto (Página?): ${meData.name} (${meData.id})`);
+                }
+
+                // 2. Tenta listar as páginas (necessário se for Token de Usuário)
+                const accountsResponse = await fetch(`https://graph.facebook.com/me/accounts?access_token=${accessToken}`);
+                const accountsData = await accountsResponse.json();
+                
+                if (accountsData.data && Array.isArray(accountsData.data)) {
+                    // Se houver páginas, pegamos a que o usuário provavelmente quer 
+                    // (ou a primeira da lista se o token for restrito a ela)
+                    const page = accountsData.data[0]; 
+                    if (page) {
+                        credentials.page_id = page.id;
+                        credentials.page_name = page.name;
+                        console.log(`IntegrationCard: Detectado via accounts: ${page.name} (${page.id})`);
+                    }
+                }
+
+                if (!credentials.page_id) {
+                    toast.error('Não foi possível identificar o ID da página. Verifique o token.');
+                    setIsSaving(false);
+                    return;
+                }
+            } catch (err) {
+                console.error('IntegrationCard: Erro na chamada à Meta:', err);
+            }
+        }
+
+        const { error } = await saveIntegration(providerName, credentials);
         setIsSaving(false);
         
         if (error) {
             toast.error('Erro ao salvar token: ' + error);
         } else {
-            toast.success('Token salvo com sucesso!');
+            toast.success(credentials.page_id 
+                ? `Token de '${credentials.page_name}' salvo com sucesso!` 
+                : 'Token salvo com sucesso!');
             setHasToken(true);
+            setIsActive(true);
         }
     };
     
@@ -109,6 +176,18 @@ export function IntegrationEndpointCard({
         toast.success('URL copiada para a área de transferência!');
         setTimeout(() => setCopied(false), 2000);
     };
+
+    if (isLoading) {
+        return (
+            <div className="bg-card rounded-2xl border border-border p-6 flex items-center gap-4 animate-pulse">
+                <div className="p-2.5 rounded-xl bg-muted/50 h-10 w-10" />
+                <div className="flex-1 space-y-2">
+                    <div className="h-4 bg-muted/50 rounded w-1/4" />
+                    <div className="h-3 bg-muted/50 rounded w-1/2" />
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="group bg-card hover:bg-muted/5 rounded-2xl border border-border overflow-hidden transition-all duration-300">
