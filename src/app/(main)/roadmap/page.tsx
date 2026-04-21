@@ -1,31 +1,73 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Rocket, Plus, Edit2, Trash2, CheckCircle2, Circle, Clock, AlertCircle, Loader2 } from 'lucide-react';
-import { getRoadmap, createRoadmapItem, updateRoadmapItem, deleteRoadmapItem } from '@/app/_actions/roadmap';
+import { useState, useEffect, useRef } from 'react';
+import { Rocket, Plus, Edit2, Trash2, Loader2, MoreHorizontal, Copy } from 'lucide-react';
+import {
+    getRoadmap,
+    createRoadmapItem,
+    updateRoadmapItem,
+    deleteRoadmapItem,
+    updateRoadmapItemStage,
+    createRoadmapStage,
+    renameRoadmapStage,
+    deleteRoadmapStage
+} from '@/app/_actions/roadmap';
 import { getProfile } from '@/app/_actions/profile';
 import { useRouter } from 'next/navigation';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { FormTextarea } from '@/components/shared/forms/FormTextarea';
 import { PageHeader } from '@/components/shared/PageHeader';
+import {
+    DndContext,
+    DragOverlay,
+    closestCorners,
+    PointerSensor,
+    KeyboardSensor,
+    useSensor,
+    useSensors,
+    DragStartEvent,
+    DragEndEvent,
+    defaultDropAnimationSideEffects,
+} from '@dnd-kit/core';
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { RoadmapColumn } from '@/components/roadmap/RoadmapColumn';
+import { RoadmapCard } from '@/components/roadmap/RoadmapCard';
+import { toast } from 'sonner';
 
 export const dynamic = 'force-dynamic';
 
+interface RoadmapItem {
+    id: string;
+    title: string;
+    description?: string;
+    type: 'feature' | 'fix' | 'roadmap';
+    stage_id: string;
+    published_at: string;
+}
+
+interface RoadmapStage {
+    id: string;
+    name: string;
+    order_index: number;
+}
+
 export default function RoadmapPage() {
-    const [items, setItems] = useState<any[]>([]);
+    const [items, setItems] = useState<RoadmapItem[]>([]);
+    const [stages, setStages] = useState<RoadmapStage[]>([]);
     const [profile, setProfile] = useState<any>(null);
     const [loading, setLoading] = useState(true);
     const [actionLoading, setActionLoading] = useState(false);
     const [showModal, setShowModal] = useState(false);
-    const [editingItem, setEditingItem] = useState<any>(null);
+    const [editingItem, setEditingItem] = useState<RoadmapItem | null>(null);
+    const [activeItem, setActiveItem] = useState<RoadmapItem | null>(null);
     const router = useRouter();
 
     const [formData, setFormData] = useState({
         title: '',
         description: '',
         type: 'roadmap' as 'feature' | 'fix' | 'roadmap',
-        status: 'planned'
+        stage_id: ''
     });
 
     const loadData = async () => {
@@ -36,12 +78,15 @@ export default function RoadmapPage() {
         ]);
 
         if (profileRes.profile) {
-            // Regra: Rodmap não visível para 'user'
             if (profileRes.profile.role === 'user') {
                 router.push('/dashboard');
                 return;
             }
             setProfile(profileRes.profile);
+        }
+
+        if (roadmapRes.stages) {
+            setStages(roadmapRes.stages);
         }
 
         if (roadmapRes.items) {
@@ -56,15 +101,57 @@ export default function RoadmapPage() {
 
     const isSuperAdmin = profile?.role === 'superadmin';
 
-    const handleOpenModal = (item: any = null) => {
+    // ─── DnD ──────────────────────────────────────────────────────
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, { activationConstraint: { distance: 8 } }),
+        useSensor(KeyboardSensor, { coordinateGetter: sortableKeyboardCoordinates })
+    );
+
+    function handleDragStart(event: DragStartEvent) {
+        const item = items.find((i) => i.id === event.active.id);
+        if (item) setActiveItem(item);
+    }
+
+    async function handleDragEnd(event: DragEndEvent) {
+        const { active, over } = event;
+        setActiveItem(null);
+        if (!over) return;
+
+        const draggedItem = items.find(i => i.id === active.id);
+        if (!draggedItem) return;
+
+        let newStageId = over.id.toString();
+        const isOverStage = stages.some(s => s.id === over.id);
+
+        if (!isOverStage) {
+            const overItem = items.find(i => i.id === over.id);
+            if (overItem) newStageId = overItem.stage_id;
+        }
+
+        if (draggedItem.stage_id !== newStageId) {
+            const oldItems = [...items];
+            setItems(items.map(i => i.id === active.id ? { ...i, stage_id: newStageId } : i));
+
+            const result = await updateRoadmapItemStage(active.id.toString(), newStageId);
+            if (!result.success) {
+                toast.error(result.error || 'Erro ao mover item');
+                setItems(oldItems);
+            }
+        }
+    }
+
+    // ─── Item CRUD ────────────────────────────────────────────────
+
+    const handleOpenModal = (item: RoadmapItem | null = null, stageId?: string) => {
         if (!isSuperAdmin) return;
         if (item) {
             setEditingItem(item);
             setFormData({
                 title: item.title,
                 description: item.description || '',
-                type: item.type as any,
-                status: item.status
+                type: item.type,
+                stage_id: item.stage_id
             });
         } else {
             setEditingItem(null);
@@ -72,7 +159,7 @@ export default function RoadmapPage() {
                 title: '',
                 description: '',
                 type: 'roadmap',
-                status: 'planned'
+                stage_id: stageId || stages[0]?.id || ''
             });
         }
         setShowModal(true);
@@ -93,7 +180,7 @@ export default function RoadmapPage() {
             setShowModal(false);
             loadData();
         } else {
-            alert(res.error || 'Erro ao salvar item');
+            toast.error(res.error || 'Erro ao salvar item');
         }
         setActionLoading(false);
     };
@@ -105,10 +192,49 @@ export default function RoadmapPage() {
         if (res.success) {
             loadData();
         } else {
-            alert(res.error || 'Erro ao excluir');
+            toast.error(res.error || 'Erro ao excluir');
         }
         setActionLoading(false);
     };
+
+    // ─── Stage CRUD ───────────────────────────────────────────────
+
+    const handleCreateStage = async () => {
+        if (!isSuperAdmin) return;
+        const name = prompt('Nome da nova coluna:');
+        if (!name?.trim()) return;
+
+        const res = await createRoadmapStage(name.trim());
+        if (res.success) {
+            loadData();
+        } else {
+            toast.error(res.error || 'Erro ao criar coluna');
+        }
+    };
+
+    const handleRenameStage = async (stageId: string, currentName: string) => {
+        if (!isSuperAdmin) return;
+        const result = await renameRoadmapStage(stageId, currentName);
+        if (result.success) {
+            loadData();
+        } else {
+            toast.error(result.error || 'Erro ao renomear coluna');
+        }
+    };
+
+    const handleDeleteStage = async (stageId: string) => {
+        if (!isSuperAdmin) return;
+        if (!confirm('Tem certeza que deseja excluir esta coluna?')) return;
+
+        const res = await deleteRoadmapStage(stageId);
+        if (res.success) {
+            loadData();
+        } else {
+            toast.error(res.error || 'Erro ao excluir coluna');
+        }
+    };
+
+    // ─── Render ───────────────────────────────────────────────────
 
     if (loading) {
         return (
@@ -120,86 +246,78 @@ export default function RoadmapPage() {
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            {/* Header */}
-            <PageHeader 
+            <PageHeader
                 title="Roadmap do Produto"
                 subtitle="Acompanhe as próximas funcionalidades e melhorias do CRM LAX"
             >
                 {isSuperAdmin && (
-                    <button
-                        onClick={() => handleOpenModal()}
-                        className="bg-secondary hover:opacity-90 text-secondary-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
-                    >
-                        <Plus size={20} />
-                        Novo Item
-                    </button>
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={handleCreateStage}
+                            className="border border-border hover:bg-muted text-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                        >
+                            <Plus size={18} />
+                            Nova Coluna
+                        </button>
+                        <button
+                            onClick={() => handleOpenModal()}
+                            className="bg-secondary hover:opacity-90 text-secondary-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
+                        >
+                            <Plus size={20} />
+                            Novo Item
+                        </button>
+                    </div>
                 )}
             </PageHeader>
 
-            {/* Content Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {items.length === 0 ? (
-                    <div className="col-span-full bg-card p-12 rounded-2xl border border-dashed border-border flex flex-col items-center justify-center text-center">
-                        <Rocket className="w-12 h-12 text-muted-foreground mb-4 opacity-20" />
-                        <h3 className="text-lg font-bold text-foreground">Nenhum item no Roadmap</h3>
-                        <p className="text-muted-foreground max-w-sm text-sm">
-                            {isSuperAdmin
-                                ? 'Comece adicionando o primeiro item para compartilhar os planos com sua equipe.'
-                                : 'Aguarde as novidades que o time está preparando.'}
-                        </p>
+            {stages.length === 0 ? (
+                <div className="bg-card p-12 rounded-2xl border border-dashed border-border flex flex-col items-center justify-center text-center">
+                    <Rocket className="w-12 h-12 text-muted-foreground mb-4 opacity-20" />
+                    <h3 className="text-lg font-bold text-foreground">Nenhuma coluna no Roadmap</h3>
+                    <p className="text-muted-foreground max-w-sm text-sm">
+                        {isSuperAdmin
+                            ? 'Comece criando a primeira coluna para organizar seu roadmap.'
+                            : 'Aguarde as novidades que o time está preparando.'}
+                    </p>
+                </div>
+            ) : (
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCorners}
+                    onDragStart={handleDragStart}
+                    onDragEnd={handleDragEnd}
+                >
+                    <div className="flex gap-6 overflow-x-auto pb-6 -mx-4 md:-mx-8 px-4 md:px-8 custom-scrollbar h-[calc(100vh-220px)]">
+                        {stages.map((stage) => (
+                            <RoadmapColumn
+                                key={stage.id}
+                                id={stage.id}
+                                title={stage.name}
+                                items={items.filter((i) => i.stage_id === stage.id)}
+                                count={items.filter((i) => i.stage_id === stage.id).length}
+                                isSuperAdmin={isSuperAdmin}
+                                onAddItem={(stageId) => handleOpenModal(null, stageId)}
+                                onEditItem={(item) => handleOpenModal(item)}
+                                onDeleteItem={handleDelete}
+                                onRenameStage={handleRenameStage}
+                                onDeleteStage={handleDeleteStage}
+                            />
+                        ))}
                     </div>
-                ) : (
-                    items.map((item) => (
-                        <div key={item.id} className="bg-card rounded-2xl border border-border p-6 shadow-sm hover:shadow-md transition-shadow group flex flex-col h-full">
-                            <div className="flex items-start justify-between mb-4">
-                                <span className={`px-2.5 py-1 rounded-lg text-[10px] font-bold uppercase transition-all ${item.type === 'feature' ? 'bg-blue-100 text-blue-600' :
-                                        item.type === 'fix' ? 'bg-orange-100 text-orange-600' :
-                                            'bg-secondary/10 text-secondary'
-                                    }`}>
-                                    {item.type}
-                                </span>
-                                {isSuperAdmin && (
-                                    <div className="flex items-center gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                        <button
-                                            onClick={() => handleOpenModal(item)}
-                                            className="p-1.5 hover:bg-muted rounded-lg text-muted-foreground hover:text-foreground transition-colors"
-                                        >
-                                            <Edit2 size={16} />
-                                        </button>
-                                        <button
-                                            onClick={() => handleDelete(item.id)}
-                                            className="p-1.5 hover:bg-red-50 rounded-lg text-muted-foreground hover:text-red-500 transition-colors"
-                                        >
-                                            <Trash2 size={16} />
-                                        </button>
-                                    </div>
-                                )}
-                            </div>
 
-                            <h3 className="font-bold text-lg text-foreground mb-1.5">{item.title}</h3>
-                            <p className="text-sm text-muted-foreground line-clamp-3 mb-6 flex-1 font-medium">
-                                {item.description}
-                            </p>
-
-                            <div className="flex items-center justify-between pt-4 border-t border-border mt-auto">
-                                <div className="flex items-center gap-2">
-                                    {item.status === 'completed' ? (
-                                        <CheckCircle2 className="w-4 h-4 text-green-500" />
-                                    ) : item.status === 'in_progress' ? (
-                                        <Clock className="w-4 h-4 text-yellow-500" />
-                                    ) : (
-                                        <Circle className="w-4 h-4 text-muted-foreground" />
-                                    )}
-                                    <span className="text-xs font-bold text-muted-foreground uppercase">
-                                        {item.status === 'completed' ? 'Concluído' :
-                                            item.status === 'in_progress' ? 'Em Progresso' : 'Planejado'}
-                                    </span>
-                                </div>
+                    <DragOverlay dropAnimation={{
+                        sideEffects: defaultDropAnimationSideEffects({
+                            styles: { active: { opacity: '0.5' } },
+                        }),
+                    }}>
+                        {activeItem ? (
+                            <div className="w-[310px] px-4">
+                                <RoadmapCard item={activeItem} isSuperAdmin={false} isOverlay />
                             </div>
-                        </div>
-                    ))
-                )}
-            </div>
+                        ) : null}
+                    </DragOverlay>
+                </DndContext>
+            )}
 
             {/* Modal */}
             {showModal && (
@@ -239,14 +357,10 @@ export default function RoadmapPage() {
                                     ]}
                                 />
                                 <FormSelect
-                                    label="Status"
-                                    value={formData.status}
-                                    onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                                    options={[
-                                        { value: 'planned', label: 'Planejado' },
-                                        { value: 'in_progress', label: 'Em Progresso' },
-                                        { value: 'completed', label: 'Concluído' }
-                                    ]}
+                                    label="Coluna"
+                                    value={formData.stage_id}
+                                    onChange={(e) => setFormData({ ...formData, stage_id: e.target.value })}
+                                    options={stages.map(s => ({ value: s.id, label: s.name }))}
                                 />
                             </div>
 

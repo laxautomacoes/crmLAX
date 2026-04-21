@@ -96,7 +96,7 @@ export function Autocomplete({
                         </div>
                         <input
                             type="text"
-                            className="w-full pl-10 pr-4 py-3 bg-white border border-muted-foreground/30 rounded-lg text-sm text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all placeholder:text-muted-foreground/50"
+                            className="w-full pl-10 pr-4 py-3 bg-input border border-muted-foreground/30 rounded-lg text-sm text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all placeholder:text-muted-foreground/50"
                             placeholder={placeholder}
                             value={searchTerm}
                             onChange={(e) => {
@@ -109,7 +109,7 @@ export function Autocomplete({
                 )}
 
                 {isOpen && !selectedItem && searchTerm.length >= 2 && (
-                    <div className="absolute top-full left-0 w-full mt-1 bg-white border border-border rounded-xl shadow-xl z-50 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute top-full left-0 w-full mt-1 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                         {isLoading ? (
                             <div className="px-4 py-3 text-xs text-muted-foreground flex items-center gap-2 font-medium italic">
                                 <Loader2 size={12} className="animate-spin" />

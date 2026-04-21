@@ -287,16 +287,16 @@ export async function getROIMetrics(tenantId: string): Promise<{ success: boolea
         if (trafficError) throw trafficError
         const totalCustos = (trafficData || []).reduce((acc: number, curr: any) => acc + (Number(curr.custo) || 0), 0)
 
-        // 2. Total de Receita (Vendas Ganhas - usando valor_estimado como proxy inicial)
+        // 2. Total de Receita (Vendas Ganhas - usando value como proxy inicial)
         // Buscando estágio 'Ganho'
         const { data: allStages } = await supabase
             .from('lead_stages')
             .select('id, name')
             .eq('tenant_id', tenantId)
-
-        const winStage = (allStages as any[])?.find((s) =>
-            s.name.toLowerCase().includes('ganho') ||
-            s.name.toLowerCase().includes('fechado') ||
+        
+        const winStage = (allStages as any[])?.find((s) => 
+            s.name.toLowerCase().includes('ganho') || 
+            s.name.toLowerCase().includes('fechado') || 
             s.name.toLowerCase().includes('concluído')
         )
 
@@ -304,12 +304,12 @@ export async function getROIMetrics(tenantId: string): Promise<{ success: boolea
         if (winStage) {
             const { data: leadsData, error: leadsError } = await supabase
                 .from('leads')
-                .select('valor_estimado')
+                .select('value')
                 .eq('tenant_id', tenantId)
                 .eq('stage_id', winStage.id)
 
             if (leadsError) throw leadsError
-            totalReceita = (leadsData || []).reduce((acc: number, curr: any) => acc + (Number(curr.valor_estimado) || 0), 0)
+            totalReceita = (leadsData || []).reduce((acc: number, curr: any) => acc + (Number(curr.value) || 0), 0)
         }
 
         // 3. Contagem de Leads para CPL

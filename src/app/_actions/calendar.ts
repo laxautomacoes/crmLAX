@@ -33,7 +33,7 @@ export async function getEvents(tenantId: string) {
                     name
                 )
             ),
-            properties (
+            properties:property_id (
                 title
             )
         `)
@@ -63,7 +63,9 @@ export async function createEvent(data: Partial<CalendarEvent>) {
 
     // Sanitize UUID fields
     if ('lead_id' in insertData) insertData.lead_id = insertData.lead_id || null;
-    if ('property_id' in insertData) insertData.property_id = insertData.property_id || null;
+    if ('property_id' in insertData) {
+        insertData.property_id = insertData.property_id || null;
+    }
 
     // Inicializa o status do lembrete como falso
     insertData.reminder_sent = false;
@@ -109,7 +111,9 @@ export async function updateEvent(eventId: string, data: Partial<CalendarEvent>)
 
     // Sanitize UUID fields
     if ('lead_id' in updateData) updateData.lead_id = updateData.lead_id || null;
-    if ('property_id' in updateData) updateData.property_id = updateData.property_id || null;
+    if ('property_id' in updateData) {
+        updateData.property_id = updateData.property_id || null;
+    }
 
     // Se o horário de início for alterado, resetamos o status do lembrete para que o usuário receba a notificação novamente
     if (updateData.start_time) {

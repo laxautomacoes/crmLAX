@@ -5,13 +5,14 @@ import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
 import { Search, Mail, MessageCircle, Send, Loader2, User, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Video, FileText, MapPin, Info, Home } from 'lucide-react'
-import { getPipelineData } from '@/app/_actions/leads'
+import { getPipelineData, createLead } from '@/app/_actions/leads'
 import { sendPropertyEmail, logInteraction } from '@/app/_actions/messaging'
 import { getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
 import { formatPhone } from '@/lib/utils/phone'
 import { getPropertyUrl } from '@/lib/utils/url'
 import { createClient } from '@/lib/supabase/client'
+import { UserPlus, ArrowLeft } from 'lucide-react'
 
 interface SendToLeadModalProps {
     isOpen: boolean
@@ -29,6 +30,8 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     const [sending, setSending] = useState(false)
     const [currentBroker, setCurrentBroker] = useState<any>(null)
     const [tenant, setTenant] = useState<any>(null)
+    const [isManualMode, setIsManualMode] = useState(false)
+    const [manualLead, setManualLead] = useState({ name: '', email: '', phone: '' })
     
     // Configuration State
     const [config, setConfig] = useState<{
@@ -124,14 +127,34 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     )
 
     const handleSendEmail = async (lead: any) => {
-        if (!lead || !lead.email) {
+        let currentLead = lead
+
+        if (isManualMode && !selectedLead) {
+            if (!manualLead.name || !manualLead.phone) {
+                toast.error('Nome e Telefone são obrigatórios para novos leads')
+                return
+            }
+            setSending(true)
+            const result = await createLead(tenantId, { ...manualLead, property_id: property.id })
+            if (result.success && result.data) {
+                currentLead = result.data
+                setSelectedLead(result.data)
+                setIsManualMode(false)
+            } else {
+                toast.error('Erro ao criar lead: ' + result.error)
+                setSending(false)
+                return
+            }
+        }
+
+        if (!currentLead || !currentLead.email) {
             toast.error('Este lead não possui um e-mail válido')
+            setSending(false)
             return
         }
 
         setSending(true)
-        setSelectedLead(lead)
-        const result = await sendPropertyEmail(lead.id, lead.email, property, {
+        const result = await sendPropertyEmail(currentLead.id, currentLead.email, property, {
             ...config,
             images: config.selectedImages,
             videos: config.selectedVideos,
@@ -148,13 +171,34 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     }
 
     const handleSendWhatsApp = async (lead: any) => {
-        if (!lead || !lead.phone) {
+        let currentLead = lead
+
+        if (isManualMode && !selectedLead) {
+            if (!manualLead.name || !manualLead.phone) {
+                toast.error('Nome e Telefone são obrigatórios para novos leads')
+                return
+            }
+            setSending(true)
+            const result = await createLead(tenantId, manualLead)
+            if (result.success && result.data) {
+                currentLead = result.data
+                setSelectedLead(result.data)
+                setIsManualMode(false)
+            } else {
+                toast.error('Erro ao criar lead: ' + result.error)
+                setSending(false)
+                return
+            }
+        }
+
+        if (!currentLead || !currentLead.phone) {
             toast.error('Este lead não possui um WhatsApp válido')
+            setSending(false)
             return
         }
 
         setSending(true)
-        const cleanPhone = lead.phone.replace(/\D/g, '')
+        const cleanPhone = currentLead.phone.replace(/\D/g, '')
         
         // Build config query params
         const queryParams = new URLSearchParams()
@@ -196,7 +240,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const propertyUrl = getPropertyUrl(tenant || { slug: tenantSlug }, property.id) + (queryString ? `?${queryString}` : '')
         
         // Build dynamic message
-        let message = `Olá ${lead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste imóvel que pode te interessar:\n\n`
+        let message = `Olá ${currentLead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste imóvel que pode te interessar:\n\n`
         
         if (config.title) message += `*${property.title}*\n`
         if (config.price) message += `💰 Valor: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}\n`
@@ -234,7 +278,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         
         window.open(whatsappUrl, '_blank')
         
-        await logInteraction(lead.id, 'whatsapp', `Enviado link do property via WhatsApp: ${property.title}`)
+        await logInteraction(currentLead.id, 'whatsapp', `Enviado link do property via WhatsApp: ${property.title}`)
         
         toast.success('WhatsApp aberto!')
         setSending(false)
@@ -256,39 +300,127 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-6 min-h-0">
                     {!selectedLead ? (
                         <div className="space-y-4">
-                            <FormInput
-                                placeholder="Buscar lead por nome, email ou telefone..."
-                                value={searchTerm}
-                                onChange={(e) => setSearchTerm(e.target.value)}
-                                icon={Search}
-                            />
-
-                            <div className="space-y-2">
-                                {isLoading ? (
-                                    <div className="flex items-center justify-center py-8">
-                                        <Loader2 className="animate-spin text-foreground" size={24} />
-                                    </div>
-                                ) : filteredLeads.length > 0 ? (
-                                    filteredLeads.map(lead => (
-                                        <div
-                                            key={lead.id}
-                                            onClick={() => setSelectedLead(lead)}
-                                            className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-foreground/5 transition-all text-left group cursor-pointer"
+                            {isManualMode ? (
+                                <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300">
+                                    <div className="flex items-center gap-2 mb-2">
+                                        <button 
+                                            onClick={() => setIsManualMode(false)}
+                                            className="p-2 hover:bg-foreground/5 rounded-full transition-colors"
                                         >
-                                            <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground group-hover:bg-foreground/10 transition-colors">
-                                                <User size={20} />
-                                            </div>
-                                            <div className="flex-1 min-w-0">
-                                                <p className="font-bold text-foreground truncate">{lead.name}</p>
-                                                <p className="text-xs text-foreground truncate">{lead.email || 'Sem e-mail'}</p>
-                                                <p className="text-[10px] font-medium text-foreground">{formatPhone(lead.phone)}</p>
-                                            </div>
+                                            <ArrowLeft size={20} />
+                                        </button>
+                                        <h3 className="font-bold text-foreground">Novo Lead</h3>
+                                    </div>
+                                    <FormInput
+                                        label="Nome Completo"
+                                        placeholder="Ex: João Silva"
+                                        value={manualLead.name}
+                                        onChange={(e) => setManualLead({...manualLead, name: e.target.value})}
+                                    />
+                                    <FormInput
+                                        label="Telefone (WhatsApp)"
+                                        placeholder="(00) 00000-0000"
+                                        value={manualLead.phone}
+                                        onChange={(e) => setManualLead({...manualLead, phone: e.target.value})}
+                                    />
+                                    <FormInput
+                                        label="E-mail (Opcional)"
+                                        placeholder="joao@exemplo.com"
+                                        value={manualLead.email}
+                                        onChange={(e) => setManualLead({...manualLead, email: e.target.value})}
+                                    />
+                                    
+                                    <div className="pt-4 border-t">
+                                        <p className="text-xs text-muted-foreground mb-4">O lead será cadastrado automaticamente ao enviar o imóvel.</p>
+                                        <div className="grid grid-cols-2 gap-4">
+                                            <button
+                                                onClick={() => handleSendEmail(null)}
+                                                disabled={sending}
+                                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-foreground/5 transition-all group"
+                                            >
+                                                <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center text-foreground group-hover:scale-110 transition-transform">
+                                                    <Mail size={20} />
+                                                </div>
+                                                <p className="font-bold text-foreground text-sm">Enviar E-mail</p>
+                                            </button>
+                                            <button
+                                                onClick={() => handleSendWhatsApp(null)}
+                                                disabled={sending}
+                                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-foreground/5 transition-all group"
+                                            >
+                                                <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center text-foreground group-hover:scale-110 transition-transform">
+                                                    <MessageCircle size={20} />
+                                                </div>
+                                                <p className="font-bold text-foreground text-sm">Enviar WhatsApp</p>
+                                            </button>
                                         </div>
-                                    ))
-                                ) : (
-                                    <p className="text-center py-8 text-foreground">Nenhum lead encontrado.</p>
-                                )}
-                            </div>
+                                    </div>
+                                </div>
+                            ) : (
+                                <>
+                                    <div className="flex gap-2">
+                                        <div className="flex-1">
+                                            <FormInput
+                                                placeholder="Buscar lead por nome, email ou telefone..."
+                                                value={searchTerm}
+                                                onChange={(e) => setSearchTerm(e.target.value)}
+                                                icon={Search}
+                                            />
+                                        </div>
+                                        <button 
+                                            onClick={() => {
+                                                setIsManualMode(true)
+                                                setManualLead({ name: searchTerm, email: '', phone: '' })
+                                            }}
+                                            className="p-3 bg-foreground/5 hover:bg-foreground/10 rounded-xl transition-all text-foreground"
+                                            title="Novo Lead"
+                                        >
+                                            <UserPlus size={20} />
+                                        </button>
+                                    </div>
+
+                                    <div className="space-y-2">
+                                        {isLoading ? (
+                                            <div className="flex items-center justify-center py-8">
+                                                <Loader2 className="animate-spin text-foreground" size={24} />
+                                            </div>
+                                        ) : filteredLeads.length > 0 ? (
+                                            filteredLeads.map(lead => (
+                                                <div
+                                                    key={lead.id}
+                                                    onClick={() => setSelectedLead(lead)}
+                                                    className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-foreground/5 transition-all text-left group cursor-pointer"
+                                                >
+                                                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground group-hover:bg-foreground/10 transition-colors">
+                                                        <User size={20} />
+                                                    </div>
+                                                    <div className="flex-1 min-w-0">
+                                                        <p className="font-bold text-foreground truncate">{lead.name}</p>
+                                                        <p className="text-xs text-foreground truncate">{lead.email || 'Sem e-mail'}</p>
+                                                        <p className="text-[10px] font-medium text-foreground">{formatPhone(lead.phone)}</p>
+                                                    </div>
+                                                </div>
+                                            ))
+                                        ) : (
+                                            <div className="text-center py-8 space-y-4">
+                                                <p className="text-foreground">Nenhum lead encontrado.</p>
+                                                {searchTerm && (
+                                                    <button 
+                                                        onClick={() => {
+                                                            setIsManualMode(true)
+                                                            setManualLead({ name: searchTerm, email: '', phone: '' })
+                                                        }}
+                                                        className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-xl font-bold hover:opacity-90 transition-all text-sm"
+                                                    >
+                                                        <UserPlus size={16} />
+                                                        Criar "{searchTerm}" como novo lead
+                                                    </button>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                </>
+                            )}
                         </div>
                     ) : (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">

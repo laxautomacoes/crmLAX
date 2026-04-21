@@ -395,73 +395,73 @@ export function SiteSettings() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1 md:col-span-2">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Rua | Avenida</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Rua | Avenida</label>
                                     <input
                                         type="text"
                                         value={branding.address?.street || ''}
                                         onChange={(e) => updateAddress('street', e.target.value)}
                                         placeholder="Ex: Av. Atlântica"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Número</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Número</label>
                                     <input
                                         type="text"
                                         value={branding.address?.number || ''}
                                         onChange={(e) => updateAddress('number', e.target.value)}
                                         placeholder="Ex: 500"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Complemento</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Complemento</label>
                                     <input
                                         type="text"
                                         value={branding.address?.complement || ''}
                                         onChange={(e) => updateAddress('complement', e.target.value)}
                                         placeholder="Ex: Sala 201"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Bairro</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Bairro</label>
                                     <input
                                         type="text"
                                         value={branding.address?.neighborhood || ''}
                                         onChange={(e) => updateAddress('neighborhood', e.target.value)}
                                         placeholder="Ex: Centro"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Cidade</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Cidade</label>
                                     <input
                                         type="text"
                                         value={branding.address?.city || ''}
                                         onChange={(e) => updateAddress('city', e.target.value)}
                                         placeholder="Ex: Balneário Camboriú"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Estado (UF)</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Estado (UF)</label>
                                     <input
                                         type="text"
                                         value={branding.address?.state || ''}
                                         onChange={(e) => updateAddress('state', e.target.value)}
                                         placeholder="Ex: SC"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">CEP</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">CEP</label>
                                     <input
                                         type="text"
                                         value={branding.address?.zip_code || ''}
                                         onChange={(e) => updateAddress('zip_code', e.target.value)}
                                         placeholder="00000-000"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -476,43 +476,43 @@ export function SiteSettings() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Instagram</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Instagram</label>
                                     <input
                                         type="text"
                                         value={branding.social_links?.instagram || ''}
                                         onChange={(e) => updateSocial('instagram', e.target.value)}
                                         placeholder="https://instagram.com/sua_empresa"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Facebook</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Facebook</label>
                                     <input
                                         type="text"
                                         value={branding.social_links?.facebook || ''}
                                         onChange={(e) => updateSocial('facebook', e.target.value)}
                                         placeholder="https://facebook.com/sua_empresa"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">LinkedIn</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">LinkedIn</label>
                                     <input
                                         type="text"
                                         value={branding.social_links?.linkedin || ''}
                                         onChange={(e) => updateSocial('linkedin', e.target.value)}
                                         placeholder="https://linkedin.com/company/sua_empresa"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">YouTube</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">YouTube</label>
                                     <input
                                         type="text"
                                         value={branding.social_links?.youtube || ''}
                                         onChange={(e) => updateSocial('youtube', e.target.value)}
                                         placeholder="https://youtube.com/@sua_empresa"
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     />
                                 </div>
                             </div>
@@ -527,23 +527,23 @@ export function SiteSettings() {
 
                             <div className="grid grid-cols-1 gap-6">
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Política de Privacidade</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Política de Privacidade</label>
                                     <textarea
                                         value={branding.privacy_policy || 'Sua privacidade é importante para nós. Coletamos apenas as informações necessárias para prestar nossos serviços imobiliários de forma eficiente e segura. Seus dados (nome, telefone e e-mail) são utilizados exclusivamente para entrar em contato sobre os properties de seu interesse e não são compartilhados com terceiros sem sua autorização. Garantimos a segurança das suas informações através de práticas modernas de proteção de dados. Você pode solicitar a exclusão de suas informações a qualquer momento através de nossos canais de atendimento.'}
                                         onChange={(e) => setBranding(prev => ({ ...prev, privacy_policy: e.target.value }))}
                                         placeholder="Insira o texto da sua Política de Privacidade aqui..."
                                         rows={4}
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
                                     />
                                 </div>
                                 <div className="space-y-1">
-                                    <label className="text-sm font-bold text-gray-800 ml-1 block uppercase tracking-wider">Termos de Serviço</label>
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Termos de Serviço</label>
                                     <textarea
                                         value={branding.terms_of_service || 'Ao utilizar nosso site vitrine, você concorda com os seguintes termos: 1. As informações dos properties (preços, disponibilidade e características) estão sujeitas a alterações sem aviso prévio. 2. O conteúdo deste site é para fins informativos e não constitui uma proposta jurídica vinculante até a assinatura de contrato formal. 3. O uso de robôs ou scripts para extração de dados é proibido. 4. Todas as imagens e logotipos são protegidos por direitos autorais. Nos reservamos o direito de atualizar estes termos periodicamente para melhor atender nossos usuários.'}
                                         onChange={(e) => setBranding(prev => ({ ...prev, terms_of_service: e.target.value }))}
                                         placeholder="Insira o texto dos seus Termos de Serviço aqui..."
                                         rows={4}
-                                        className="w-full px-4 py-2 bg-white border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
+                                        className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all resize-none min-h-[120px]"
                                     />
                                 </div>
                             </div>

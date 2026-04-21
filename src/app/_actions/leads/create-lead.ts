@@ -10,9 +10,8 @@ import { createLeadSchema, validateInput } from '@/lib/validations/schemas'
 import { getNextBrokerForDistribution } from './distribution'
 
 export async function createLead(tenantId: string, data: unknown) {
-    const validated = validateInput(createLeadSchema, data)
-    if (validated.error) return { success: false, error: validated.error }
-    const input = validated.data
+    const { data: input, error } = validateInput(createLeadSchema, data)
+    if (error || !input) return { success: false, error: error || 'Dados inválidos' }
 
     const supabase = await createClient()
 
@@ -40,7 +39,7 @@ export async function createLead(tenantId: string, data: unknown) {
             },
             { onConflict: 'tenant_id,phone' }
         )
-        .select('id')
+        .select('id, name, phone, email')
         .single()
 
     if (contactError) return { success: false, error: contactError.message }
@@ -58,7 +57,7 @@ export async function createLead(tenantId: string, data: unknown) {
     }
 
     // 3. Inserir lead
-    const { error: leadError } = await supabase
+    const { data: leadData, error: leadError } = await supabase
         .from('leads')
         .insert({
             tenant_id: tenantId,
@@ -76,8 +75,22 @@ export async function createLead(tenantId: string, data: unknown) {
             videos: input.videos || [],
             documents: input.documents || []
         })
+        .select(`
+            id,
+            tenant_id,
+            contact_id,
+            assigned_to,
+            contact:contacts(id, name, phone, email)
+        `)
+        .single()
 
     if (leadError) return { success: false, error: leadError.message }
+    const newLead = {
+        ...leadData,
+        name: (leadData.contact as any).name,
+        phone: (leadData.contact as any).phone,
+        email: (leadData.contact as any).email
+    }
 
     // 4. Notificar corretor
     if (assignedTo) {
@@ -111,5 +124,5 @@ export async function createLead(tenantId: string, data: unknown) {
     }
 
     revalidatePath('/leads')
-    return { success: true }
+    return { success: true, data: newLead }
 }

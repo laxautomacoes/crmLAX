@@ -26,7 +26,7 @@ export function FormSelect({ label, error, icon: Icon, options, className = '', 
                 )}
                 <select
                     className={`
-                        w-full rounded-lg border border-muted-foreground/30 bg-white text-foreground text-sm outline-none transition-all
+                        w-full rounded-lg border border-muted-foreground/30 bg-input text-foreground text-sm outline-none transition-all
                         focus:ring-2 focus:ring-secondary/50 focus:border-secondary
                         disabled:opacity-50 disabled:cursor-not-allowed
                         appearance-none pr-10

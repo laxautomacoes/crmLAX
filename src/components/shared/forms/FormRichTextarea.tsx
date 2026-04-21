@@ -401,7 +401,7 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                         </button>
                         
                         {isStyleDropdownOpen && (
-                            <div className="absolute top-full left-0 mt-1 w-32 bg-white border border-muted-foreground/20 rounded-md shadow-lg z-50 py-1 max-h-60 overflow-y-auto custom-scrollbar">
+                            <div className="absolute top-full left-0 mt-1 w-32 bg-popover border border-muted-foreground/20 rounded-md shadow-lg z-50 py-1 max-h-60 overflow-y-auto custom-scrollbar">
                                 {textStyles.map((style) => (
                                     <button
                                         key={style.value}
@@ -511,7 +511,7 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
 
                                 {isMediaDropdownOpen && (
                                     <div 
-                                        className="absolute top-full right-0 mt-1 w-64 bg-white border border-muted-foreground/20 rounded-xl shadow-2xl z-50 p-4 transition-all animate-in fade-in zoom-in-95 duration-200"
+                                        className="absolute top-full right-0 mt-1 w-64 bg-popover border border-muted-foreground/20 rounded-xl shadow-2xl z-50 p-4 transition-all animate-in fade-in zoom-in-95 duration-200"
                                         onMouseDown={(e) => e.stopPropagation()}
                                     >
                                         <div className="flex flex-col gap-4">

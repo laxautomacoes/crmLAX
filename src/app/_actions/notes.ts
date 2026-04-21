@@ -29,6 +29,10 @@ export async function createNote(tenantId: string, noteData: any) {
     const supabase = await createClient()
     const { profile } = await getProfile()
 
+    if ('property_id' in noteData) {
+        noteData.property_id = noteData.property_id || null;
+    }
+
     try {
         const { data, error } = await supabase
             .from('notes')
@@ -52,6 +56,10 @@ export async function createNote(tenantId: string, noteData: any) {
 
 export async function updateNote(noteId: string, noteData: any) {
     const supabase = await createClient()
+
+    if ('property_id' in noteData) {
+        noteData.property_id = noteData.property_id || null;
+    }
     
     try {
         const { data, error } = await supabase

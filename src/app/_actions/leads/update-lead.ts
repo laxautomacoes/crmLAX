@@ -28,9 +28,8 @@ export async function updateLeadStage(leadId: string, stageId: string) {
 }
 
 export async function updateLead(tenantId: string, leadId: string, data: unknown) {
-    const validated = validateInput(updateLeadSchema, data)
-    if (validated.error) return { success: false, error: validated.error }
-    const input = validated.data
+    const { data: input, error } = validateInput(updateLeadSchema, data)
+    if (error || !input) return { success: false, error: error || 'Dados inválidos' }
 
     const supabase = await createClient()
 
