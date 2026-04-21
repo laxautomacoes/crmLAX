@@ -12,14 +12,16 @@ import {
  * @param inviteLink Link de registro
  * @param tenantName Nome da imobiliária
  * @param settings Configurações personalizadas (opcional)
+ * @param data Dados adicionais para variáveis (ex: {{nome}})
  */
 export async function sendInvitationEmail(
     email: string, 
     inviteLink: string, 
     tenantName: string, 
-    settings?: EmailSettings
+    settings?: EmailSettings,
+    data: Record<string, string> = {}
 ) {
-    const { subject, html } = getInvitationEmailTemplate(inviteLink, tenantName, settings);
+    const { subject, html } = getInvitationEmailTemplate(inviteLink, tenantName, settings, { email, ...data });
     return sendBaseEmail({
         to: email,
         subject,
@@ -35,9 +37,10 @@ export async function sendConfirmationEmail(
     email: string, 
     confirmLink: string, 
     tenantName: string,
-    settings?: EmailSettings
+    settings?: EmailSettings,
+    data: Record<string, string> = {}
 ) {
-    const { subject, html } = getConfirmationEmailTemplate(confirmLink, tenantName, settings);
+    const { subject, html } = getConfirmationEmailTemplate(confirmLink, tenantName, settings, { email, ...data });
     return sendBaseEmail({
         to: email,
         subject,
@@ -52,9 +55,10 @@ export async function sendConfirmationEmail(
 export async function sendSuspensionEmail(
     email: string, 
     tenantName: string,
-    settings?: EmailSettings
+    settings?: EmailSettings,
+    data: Record<string, string> = {}
 ) {
-    const { subject, html } = getSuspensionEmailTemplate(tenantName, settings);
+    const { subject, html } = getSuspensionEmailTemplate(tenantName, settings, data);
     return sendBaseEmail({
         to: email,
         subject,

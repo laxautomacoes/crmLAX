@@ -70,7 +70,7 @@ export async function createInvitation(
     console.log(`Tentando enviar convite para ${email}. Link: ${inviteLink}`)
 
     const results = await Promise.allSettled([
-        sendInvitationEmail(email, inviteLink, tenantName, emailSettings),
+        sendInvitationEmail(email, inviteLink, tenantName, emailSettings, { nome: name || '', whatsapp: phone || '' }),
         phone ? sendInvitationWhatsApp(phone, inviteLink, tenantName) : Promise.resolve()
     ])
 
@@ -311,7 +311,7 @@ export async function resendInvitation(id: string) {
 
     // Reenviar notificações
     const results = await Promise.allSettled([
-        sendInvitationEmail(invitation.email, inviteLink, tenantName, emailSettings),
+        sendInvitationEmail(invitation.email, inviteLink, tenantName, emailSettings, { nome: invitation.name || '', whatsapp: invitation.phone || '' }),
         invitation.phone ? sendInvitationWhatsApp(invitation.phone, inviteLink, tenantName) : Promise.resolve()
     ])
 

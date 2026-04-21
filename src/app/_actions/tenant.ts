@@ -64,14 +64,24 @@ export async function updateTenantEmailSettings(tenantId: string, emailSettingsD
         .eq('id', tenantId)
         .single()
 
-    const newSettings = {
-        ...(currentTenant?.email_settings as any || {}),
-        ...emailSettingsData
-    }
+    const currentSettings = (currentTenant?.email_settings as any) || {}
+    
+    // Filtramos apenas as chaves que pertencem ao JSON email_settings
+    // evitando salvar colunas da tabela tenants (como custom_domain) dentro do JSON
+    const cleanUpdate: any = {}
+    const validKeys = ['logo_url', 'primary_color', 'signature_html', 'footer_text', 'templates', 'attachments']
+    
+    validKeys.forEach(key => {
+        if (key in emailSettingsData) {
+            cleanUpdate[key] = emailSettingsData[key]
+        } else if (key in currentSettings) {
+            cleanUpdate[key] = currentSettings[key]
+        }
+    })
 
     const { error } = await supabase
         .from('tenants')
-        .update({ email_settings: newSettings })
+        .update({ email_settings: cleanUpdate })
         .eq('id', tenantId)
 
     if (error) return { success: false, error: error.message }
@@ -551,4 +561,210 @@ export async function deleteEmailTemplate(id: string, tenantId: string) {
 
     revalidatePath('/settings')
     return { success: true }
+}
+
+export async function sendTestEmailAction(params: {
+    to: string;
+    type: 'invitation' | 'confirmation' | 'suspension';
+    tenantName: string;
+    settings: any;
+}) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { success: false, error: 'Não autorizado.' };
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single();
+
+    if (!profile?.tenant_id) return { success: false, error: 'Tenant não encontrado.' };
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_domain, custom_domain_verified')
+        .eq('id', profile.tenant_id)
+        .single();
+
+    const { sendBaseEmail } = await import('@/lib/emails/client');
+    const { 
+        getInvitationEmailTemplate, 
+        getConfirmationEmailTemplate, 
+        getSuspensionEmailTemplate 
+    } = await import('@/lib/emails/templates');
+
+    let template;
+    const mockLink = 'https://crmlax.com/preview-test';
+
+    const mockData = {
+        nome: "Usuário Teste",
+        email: params.to,
+        empresa: params.tenantName,
+        whatsapp: "(11) 99999-9999"
+    };
+
+    switch (params.type) {
+        case 'confirmation':
+            template = getConfirmationEmailTemplate(mockLink, params.tenantName, params.settings, mockData);
+            break;
+        case 'suspension':
+            template = getSuspensionEmailTemplate(params.tenantName, params.settings, mockData);
+            break;
+        default:
+            template = getInvitationEmailTemplate(mockLink, params.tenantName, params.settings, mockData);
+    }
+
+    // Se tiver domínio customizado verificado, tenta usar noreply@dominio.com
+    let fromEmail = undefined;
+    if (tenant?.custom_domain && tenant?.custom_domain_verified) {
+        fromEmail = `noreply@${tenant.custom_domain}`;
+    }
+
+    let result = await sendBaseEmail({
+        to: params.to,
+        subject: `[TESTE] ${template.subject}`,
+        html: template.html,
+        fromName: params.tenantName,
+        fromEmail
+    });
+
+    // Se falhou e estávamos tentando usar um domínio customizado, 
+    // tentamos novamente com o domínio padrão (Fallback)
+    if (result.error && fromEmail) {
+        result = await sendBaseEmail({
+            to: params.to,
+            subject: `[TESTE] ${template.subject}`,
+            html: template.html,
+            fromName: params.tenantName,
+            fromEmail: undefined // Usa o padrão
+        });
+    }
+
+    if (result.error) {
+        const errorMsg = typeof result.error === 'object' 
+            ? result.error.message || JSON.stringify(result.error) 
+            : result.error;
+        return { success: false, error: errorMsg };
+    }
+
+    return { success: true };
+}
+
+/**
+ * Registra um domínio no Resend para envio de e-mail
+ */
+export async function setupEmailDomain(tenantId: string, domain: string) {
+    const cleanDomain = domain.trim().replace(/^@/, '');
+    const { getResendClient } = await import('@/lib/emails/client');
+    const resend = getResendClient();
+    if (!resend) return { success: false, error: 'Resend API Key não configurada.' };
+
+    try {
+        // 1. Criar domínio no Resend
+        const { data, error } = await resend.domains.create({
+            name: cleanDomain,
+        });
+
+        if (error) {
+            // Se o domínio já existir no Resend, tentamos apenas pegá-lo
+            if (error.message.includes('already exists')) {
+                 const { data: existingDomains } = await resend.domains.list();
+                 const existing = existingDomains?.data?.find(d => d.name === cleanDomain);
+                 if (existing) {
+                    const { data: fullDomain } = await resend.domains.get(existing.id);
+                    
+                    const supabase = createAdminClient();
+                    await supabase
+                        .from('tenants')
+                        .update({ 
+                            email_domain_resend_id: existing.id,
+                            email_domain_status: existing.status
+                        })
+                        .eq('id', tenantId);
+                    
+                    return { success: true, data: fullDomain || existing };
+                 }
+            }
+            return { success: false, error: error.message };
+        }
+
+        // 2. Salvar o ID do Resend no nosso banco
+        const supabase = createAdminClient();
+        await supabase
+            .from('tenants')
+            .update({ 
+                email_domain_resend_id: data?.id,
+                email_domain_status: 'pending'
+            })
+            .eq('id', tenantId);
+
+        revalidatePath('/settings');
+        return { success: true, data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+/**
+ * Verifica o status do domínio no Resend e atualiza o banco local
+ */
+export async function checkEmailDomainStatus(tenantId: string, resendDomainId: string) {
+    const { getResendClient } = await import('@/lib/emails/client');
+    const resend = getResendClient();
+    if (!resend) return { success: false, error: 'Resend API Key não configurada.' };
+
+    try {
+        // 1. Buscar status atual no Resend
+        const { data, error } = await resend.domains.get(resendDomainId);
+        
+        if (error) return { success: false, error: error.message };
+
+        // 2. Atualizar nosso banco
+        const isVerified = data?.status === 'verified';
+        
+        const supabase = createAdminClient();
+        await supabase
+            .from('tenants')
+            .update({ 
+                email_domain_status: data?.status,
+                email_domain_verified: isVerified
+            })
+            .eq('id', tenantId);
+
+        revalidatePath('/settings');
+        return { success: true, data };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
+}
+
+/**
+ * Remove o domínio do Resend e limpa os campos no banco local
+ */
+export async function deleteEmailDomain(tenantId: string, resendDomainId: string) {
+    const { getResendClient } = await import('@/lib/emails/client');
+    const resend = getResendClient();
+    if (!resend) return { success: false, error: 'Resend API Key não configurada.' };
+
+    try {
+        // 1. Remover no Resend
+        await resend.domains.remove(resendDomainId);
+        
+        // 2. Limpar no nosso banco
+        const supabase = createAdminClient();
+        await supabase
+            .from('tenants')
+            .update({ 
+                email_domain_resend_id: null,
+                email_domain_status: 'not_started',
+                email_domain_verified: false
+            })
+            .eq('id', tenantId);
+
+        revalidatePath('/settings');
+        return { success: true };
+    } catch (err: any) {
+        return { success: false, error: err.message };
+    }
 }

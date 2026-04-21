@@ -74,7 +74,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                     <ImageIcon size={14} />
                     Imagens
                 </h4>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-2">
+                <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
                     {images.map((url, index) => (
                         <div key={index} className="relative aspect-square rounded-lg overflow-hidden group border border-border">
                             <img src={url} alt={`Upload ${index}`} className="w-full h-full object-cover" />
@@ -92,8 +92,8 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                             <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
                         ) : (
                             <>
-                                <Upload size={16} className="text-muted-foreground mb-1" />
-                                <span className="text-[9px] font-bold text-muted-foreground">Upload</span>
+                                <Upload size={14} className="text-muted-foreground mb-1" />
+                                <span className="text-[8px] font-bold text-muted-foreground">Upload</span>
                             </>
                         )}
                         <input
@@ -114,7 +114,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                     <Film size={14} />
                     Vídeos
                 </h4>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
                     {videos.map((url, index) => (
                         <div key={index} className="relative aspect-video rounded-lg overflow-hidden group bg-black flex items-center justify-center border border-border/60 shadow-sm">
                             <video 

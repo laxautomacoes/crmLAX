@@ -4,11 +4,7 @@ import { Resend } from 'resend'
 import { createClient } from '@/lib/supabase/server'
 import { getTenantFromHeaders } from '@/lib/utils/tenant'
 import { getPropertyUrl } from '@/lib/utils/url'
-import { headers } from 'next/headers'
-
-
-
-import { Tables } from '@/lib/supabase/database.types'
+import { getPropertyEmail } from '@/lib/emails/templates'
 
 export async function sendPropertyEmail(leadId: string, leadEmail: string, propertyData: Record<string, any>, config?: any) {
     const tenant = await getTenantFromHeaders()
@@ -17,6 +13,7 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     const brokerId = user?.id
+    
     // Build config query params for the URL
     const queryParams = new URLSearchParams()
     if (brokerId) queryParams.set('b', brokerId)
@@ -63,14 +60,15 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
     const queryString = queryParams.toString()
     const propertyUrl = getPropertyUrl(tenant, propertyData.id) + (queryString ? `?${queryString}` : '')
 
-    // Apply configuration if provided
-    const displayTitle = config?.title !== false ? propertyData.title : 'Property disponível'
-    const displayPrice = config?.price !== false ? `R$ ${new Intl.NumberFormat('pt-BR').format(propertyData.price || 0)}` : 'Preço sob consulta'
-    const displayImages = config?.images?.length > 0 ? config.images : (propertyData as any).images || []
-    
-    const showDetails = config?.details !== 'none'
-    const details = (propertyData.details as any) || {}
-    
+    // Fetch branding settings
+    const { data: settings } = await supabase
+        .from('email_settings')
+        .select('*')
+        .eq('tenant_id', tenant.id)
+        .single()
+
+    const { subject, html } = getPropertyEmail(propertyData, propertyUrl, config, settings || {})
+
     try {
         if (!process.env.RESEND_API_KEY) {
             console.error('ERRO: RESEND_API_KEY não encontrada.')
@@ -81,63 +79,13 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
         const { data, error } = await resend.emails.send({
             from: `${tenant.name} <noreply@laxperience.online>`,
             to: [leadEmail],
-            subject: `Confira este property: ${displayTitle}`,
-            html: `
-        <div style="font-family: sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 12px; overflow: hidden;">
-          ${displayImages[0] ? `<img src="${displayImages[0]}" style="width: 100%; height: 300px; object-fit: cover;" />` : ''}
-          <div style="padding: 24px;">
-            <h1 style="color: #1a1a1a; margin: 0 0 12px 0; font-size: 24px;">${displayTitle}</h1>
-            <p style="font-size: 20px; font-weight: bold; color: #000; margin: 0 0 24px 0;">
-              ${displayPrice}
-            </p>
-            
-            ${config?.description === 'full' && propertyData.description ? `
-              <div style="margin-bottom: 24px;">
-                <h2 style="font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0;">Descrição</h2>
-                <p style="color: #444; line-height: 1.6; white-space: pre-wrap;">${propertyData.description}</p>
-              </div>
-            ` : ''}
-
-            ${showDetails ? `
-              <div style="margin-bottom: 24px;">
-                <h2 style="font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0;">Detalhes do Property</h2>
-                <ul style="margin: 0; padding: 0; list-style: none;">
-                  ${(config?.showBedrooms !== false && (details.dormitorios || details.quartos)) ? `<li style="margin-bottom: 8px; color: #444;">• ${details.dormitorios || details.quartos} Dormitórios</li>` : ''}
-                  ${(config?.showSuites !== false && details.suites) ? `<li style="margin-bottom: 8px; color: #444;">• ${details.suites} Suítes</li>` : ''}
-                  ${(config?.showArea !== false && details.area_privativa) ? `<li style="margin-bottom: 8px; color: #444;">• ${details.area_privativa}m² privativos</li>` : ''}
-                  ${config?.showType !== false ? `<li style="margin-bottom: 8px; color: #444;">• Tipo: ${propertyData.type}</li>` : ''}
-                </ul>
-              </div>
-            ` : ''}
-
-            ${config?.location !== 'none' ? `
-              <div style="margin-bottom: 24px;">
-                <h2 style="font-size: 16px; color: #666; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0;">Localização</h2>
-                <p style="color: #444;">
-                  ${config?.location === 'exact' 
-                    ? `${details.endereco?.rua || ''}, ${details.endereco?.numero || ''} - ${details.endereco?.bairro || ''}, ${details.endereco?.cidade || ''}`
-                    : `${details.endereco?.bairro || ''}, ${details.endereco?.cidade || ''}`
-                  }
-                </p>
-              </div>
-            ` : ''}
-
-            <a href="${propertyUrl}" style="background-color: #000; color: white; padding: 14px 28px; text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold; text-align: center;">
-              Ver todos os detalhes no site
-            </a>
-          </div>
-          
-          <div style="background-color: #f9f9f9; padding: 24px; text-align: center; border-top: 1px solid #eee;">
-            <p style="color: #666; font-size: 14px; margin: 0;">Enviado por <strong>${tenant.name}</strong></p>
-            <p style="color: #999; font-size: 12px; margin: 8px 0 0 0;">Gerenciado pelo CRM LAX</p>
-          </div>
-        </div>
-      `
+            subject,
+            html
         })
 
         if (error) throw error
 
-        await logInteraction(leadId, 'system', `E-mail enviado com o property: ${propertyData.title}`)
+        await logInteraction(leadId, 'system', `E-mail enviado com o imóvel: ${propertyData.title}`)
 
         return { success: true, data }
     } catch (error: any) {

@@ -42,6 +42,7 @@ export async function sendBaseEmail(params: {
     subject: string;
     html: string;
     fromName?: string;
+    fromEmail?: string;
 }): Promise<EmailResponse> {
     const resend = getResendClient();
     if (!resend) {
@@ -49,15 +50,17 @@ export async function sendBaseEmail(params: {
     }
 
     try {
-        const emailAddress = getCleanEmailAddress(process.env.RESEND_FROM_EMAIL);
-        const fromEmail = params.fromName 
+        const defaultFrom = getCleanEmailAddress(process.env.RESEND_FROM_EMAIL);
+        const emailAddress = params.fromEmail || defaultFrom;
+        
+        const from = params.fromName 
             ? `"${params.fromName}" <${emailAddress}>`
             : `CRM LAX <${emailAddress}>`;
         
-        console.log(`Enviando e-mail para ${params.to} (Assunto: ${params.subject})...`);
+        console.log(`Enviando e-mail para ${params.to} (Assunto: ${params.subject}) via ${emailAddress}...`);
         
         const { data, error } = await resend.emails.send({
-            from: fromEmail,
+            from: from,
             to: [params.to],
             subject: params.subject,
             html: params.html,
