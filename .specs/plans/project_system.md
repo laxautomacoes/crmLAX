@@ -25,7 +25,7 @@ Este documento é a fonte única de verdade para a interface do CRM LAX. Deve se
 - **Font Sans**: `Geist Sans` (Next.js default).
 - **Font Mono**: `Geist Mono`.
 - **Títulos de Página**: `text-2xl font-bold text-[#404F4F]`.
-- **Legendas de Página**: `text-sm text-gray-500 mt-0.5`.
+- **Legendas de Página**: `text-sm text-gray-500 mt-4 md:mt-1`.
 - **Títulos de Card**: `font-semibold text-gray-900` ou `font-bold text-[#404F4F]`.
 - **Labels de Input**: `text-sm font-bold text-gray-800 ml-1`.
 - **Textos de Corpo**: `text-sm font-medium` ou `text-base`.
@@ -69,7 +69,7 @@ Seguir rigorosamente para evitar inconsistências visuais:
 Todas as telas principais devem utilizar o componente `<PageHeader />` para garantir o alinhamento:
 
 - **Title**: `text-2xl font-bold text-foreground` (`#404F4F`).
-- **Subtitle**: `text-sm text-muted-foreground mt-0.5`.
+- **Subtitle**: `text-sm text-muted-foreground mt-4 md:mt-1`.
 - **Layout (Desktop)**: `flex justify-between items-center gap-4`. Alinhamento `md:text-left`.
 - **Layout (Mobile)**: `text-center`, seguido de um separador `h-px bg-foreground/25 w-full mt-2 mb-6`.
 - **Botões de Ação**: Alinhados à direita no desktop e centralizados no mobile, com `gap-3`.

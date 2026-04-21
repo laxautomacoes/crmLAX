@@ -174,7 +174,7 @@ export function AISystemPromptManager({ prompts, tenantId, isSuperadmin }: AISys
                                 <h2 className="text-lg font-bold text-foreground">
                                     {editingPrompt?.id ? 'Editar Prompt' : 'Criar Novo Prompt'}
                                 </h2>
-                                <p className="text-sm text-muted-foreground mt-0.5">
+                                <p className="text-sm text-muted-foreground mt-1.5 md:mt-0.5">
                                     Defina as instruções. Use o botão com ✦ para transformar rascunhos em super-prompts.
                                 </p>
                             </div>

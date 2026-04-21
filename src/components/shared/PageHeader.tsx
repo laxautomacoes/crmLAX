@@ -12,7 +12,7 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
                     {title}
                 </h1>
                 {subtitle && (
-                    <p className="text-sm text-muted-foreground mt-0.5">
+                    <p className="text-sm text-muted-foreground mt-4 md:mt-1">
                         {subtitle}
                     </p>
                 )}

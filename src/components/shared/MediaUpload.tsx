@@ -93,7 +93,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                         ) : (
                             <>
                                 <Upload size={14} className="text-muted-foreground mb-1" />
-                                <span className="text-[8px] font-bold text-muted-foreground">Upload</span>
+                                <span className="text-[8px] font-bold text-muted-foreground text-center px-1">Carregar imagem</span>
                             </>
                         )}
                         <input
@@ -142,7 +142,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                         ) : (
                             <>
                                 <Upload size={16} className="text-muted-foreground mb-1" />
-                                <span className="text-[9px] font-bold text-muted-foreground">Upload Vídeo</span>
+                                <span className="text-[9px] font-bold text-muted-foreground">Carregar vídeo</span>
                             </>
                         )}
                         <input
@@ -185,7 +185,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                         ) : (
                             <>
                                 <Upload size={16} className="text-muted-foreground" />
-                                <span className="text-xs font-medium text-muted-foreground">Adicionar Documento</span>
+                                <span className="text-xs font-medium text-muted-foreground">Carregar documento</span>
                             </>
                         )}
                         <input

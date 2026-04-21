@@ -65,6 +65,9 @@ Cores:
 - Primária: #404F4F (Cinza Petrol).
 - Secundária: #FFE600 (Amarelo).
 
+Padrões Mobile:
+- Espaçamento entre Título e Subtítulo: Sempre utilizar `mt-4` no mobile para garantir legibilidade e respiro visual (Padrão de Sistema).
+
 Interface CRM: Sidebar colapsável, Kanban com Drag & Drop (Touch-friendly).
 
 Interface Site: Galeria de fotos otimizada, busca com filtros (Tipo, Quartos, Preço).
