@@ -31,7 +31,7 @@ export default async function PropertyInterceptedModal({ params }: PropertyModal
     const prop = propertyResult.data
 
     return (
-        <Modal isOpen={true} onClose={null} title={null} size="xl">
+        <Modal isOpen={true} onClose={() => {}} title={null} size="xl">
             <div className="relative">
                 <InterceptedModalClose />
                 <PropertyDetailsContent 
