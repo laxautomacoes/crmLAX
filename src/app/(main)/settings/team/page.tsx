@@ -33,8 +33,8 @@ export default function TeamSettingsPage() {
         // Combinar e filtrar
         // Ocultar o admin adm@leoacosta.online conforme pedido do usuário
         const combined = [
-            ...members.map(m => ({ ...m, type: 'member', name: m.full_name })),
-            ...invitations.map(i => ({ ...i, type: 'invitation' }))
+            ...members.map((m: any) => ({ ...m, type: 'member', name: m.full_name })),
+            ...invitations.map((i: any) => ({ ...i, type: 'invitation' }))
         ].filter(item => 
             item.email !== 'adm@leoacosta.online' && 
             item.role?.toLowerCase() !== 'admin'
