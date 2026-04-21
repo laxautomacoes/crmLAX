@@ -1,12 +1,12 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Image as ImageIcon, Upload, Loader2, Save, Trash2, Mail, Type, Palette, Eye, FileText, PenTool, Copy, Plus } from 'lucide-react'
+import { Image as ImageIcon, Upload, Loader2, Save, Trash2, Mail, Type, Palette, Eye, FileText, PenTool, Copy, Plus, Check, ChevronDown } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getProfile } from '@/app/_actions/profile'
 import { updateTenantEmailSettings, getEmailTemplates, saveEmailTemplate, deleteEmailTemplate } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
-import { replacePlaceholders, markdownToEmailHtml, getInvitationEmailTemplate } from '@/lib/emails/templates'
+import { replacePlaceholders, markdownToEmailHtml, getInvitationEmailTemplate, getConfirmationEmailTemplate, getSuspensionEmailTemplate } from '@/lib/emails/templates'
 import { MediaUpload } from '@/components/shared/MediaUpload'
 import { FormRichTextarea } from '@/components/shared/forms/FormRichTextarea'
 import { useRef } from 'react'
@@ -31,6 +31,8 @@ export function EmailSettingsForm() {
     const [profile, setProfile] = useState<any>(null)
     const [settings, setSettings] = useState<EmailSettings>({})
     const [activeTemplate, setActiveTemplate] = useState('invitation')
+    const [showTypeDropdown, setShowTypeDropdown] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
     const [savedTemplates, setSavedTemplates] = useState<any[]>([])
     const [isLoadingTemplates, setIsLoadingTemplates] = useState(false)
     const [showSaveTemplateModal, setShowSaveTemplateModal] = useState(false)
@@ -39,6 +41,16 @@ export function EmailSettingsForm() {
     // Refs para os textareas
     const bodyRef = useRef<HTMLTextAreaElement>(null)
     const signatureRef = useRef<HTMLTextAreaElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setShowTypeDropdown(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
 
     useEffect(() => {
         async function loadData() {
@@ -270,7 +282,7 @@ export function EmailSettingsForm() {
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
-                <Loader2 className="w-8 h-8 animate-spin text-secondary" />
+                <Loader2 className="w-8 h-8 animate-spin text-foreground/20" />
             </div>
         )
     }
@@ -285,23 +297,31 @@ export function EmailSettingsForm() {
     const currentTemplate = settings.templates?.[activeTemplate] || {}
     const bodyMarkdown = currentTemplate.body || getDefaultBody(activeTemplate)
     
-    // Gera o HTML final para o preview usando o layout base
-    const previewEmail = getInvitationEmailTemplate(
-        previewData.link, 
-        previewData.tenantName, 
-        {
+    // Determina qual função de template usar para o preview
+    const getPreviewTemplateHtml = () => {
+        const config = {
             ...settings,
             signature_html: settings.signature_html || getDefaultSignature(),
             templates: {
                 [activeTemplate]: { ...currentTemplate, body: bodyMarkdown }
             }
         }
-    )
-    const previewHtml = previewEmail.html
+
+        switch(activeTemplate) {
+            case 'confirmation':
+                return getConfirmationEmailTemplate(previewData.link, previewData.tenantName, config).html
+            case 'suspension':
+                return getSuspensionEmailTemplate(previewData.tenantName, config).html
+            default:
+                return getInvitationEmailTemplate(previewData.link, previewData.tenantName, config).html
+        }
+    }
+
+    const previewHtml = getPreviewTemplateHtml()
 
     return (
-        <div className="grid grid-cols-1 xl:grid-cols-2 gap-8">
-            <div className="space-y-6">
+        <div className="flex flex-col md:flex-row gap-8 items-start">
+            <div className="flex-1 min-w-0 space-y-6">
                 <h4 className="text-sm font-black text-foreground uppercase tracking-widest ml-1 mb-3">
                     Identidade Visual
                 </h4>
@@ -310,8 +330,8 @@ export function EmailSettingsForm() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         {/* Logo Upload */}
                         <div className="space-y-3">
-                            <label className="text-sm font-bold text-gray-800 ml-1">Logo Empresa</label>
-                            <div className="relative aspect-[5/2] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors group">
+                            <label className="text-sm font-bold text-foreground ml-1">Logo Empresa</label>
+                            <div className="relative aspect-[5/2] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-background hover:bg-muted/10 transition-colors group shadow-sm">
                                 {settings.logo_url ? (
                                     <img src={settings.logo_url} alt="Email Logo" className="max-h-full object-contain p-2" />
                                 ) : (
@@ -331,7 +351,7 @@ export function EmailSettingsForm() {
 
                         {/* Cor Primária */}
                         <div className="space-y-3 md:ml-24">
-                            <label className="text-sm font-bold text-gray-800 ml-1 block">Cor Destaque</label>
+                            <label className="text-sm font-bold text-foreground ml-1 block">Cor Destaque</label>
                             <div className="flex items-center gap-3">
                                 <div className="relative group overflow-hidden rounded-xl h-12 w-12 border border-border shadow-sm">
                                     <input 
@@ -346,7 +366,7 @@ export function EmailSettingsForm() {
                                     type="text" 
                                     value={settings.primary_color || '#FFE600'} 
                                     onChange={(e) => setSettings(prev => ({ ...prev, primary_color: e.target.value }))}
-                                    className="w-32 h-12 bg-white border border-border rounded-xl px-4 text-sm font-mono focus:ring-2 focus:ring-secondary/50 outline-none shadow-sm transition-all text-center"
+                                    className="w-32 h-12 bg-background border border-border rounded-xl px-4 text-sm font-mono focus:ring-2 focus:ring-secondary/50 outline-none shadow-sm transition-all text-center"
                                 />
                             </div>
                         </div>
@@ -358,15 +378,45 @@ export function EmailSettingsForm() {
                         <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
                             Conteúdo
                         </h4>
-                        <select 
-                            className="bg-muted border border-border rounded-lg px-3 py-1.5 text-xs font-bold outline-none focus:ring-2 focus:ring-secondary/50 cursor-pointer shadow-sm"
-                            value={activeTemplate}
-                            onChange={(e) => setActiveTemplate(e.target.value)}
-                        >
-                            <option value="invitation">Convite Colaborador</option>
-                            <option value="confirmation">Confirmação de E-mail</option>
-                            <option value="suspension">Aviso de Suspensão</option>
-                        </select>
+                        
+                        <div className="relative" ref={dropdownRef}>
+                            <button 
+                                onClick={() => setShowTypeDropdown(!showTypeDropdown)}
+                                className="bg-background border border-border rounded-xl px-4 py-2 text-xs font-bold outline-none hover:bg-muted/30 transition-all shadow-sm flex items-center gap-2 min-w-[180px] justify-between"
+                            >
+                                <span className="flex items-center gap-2">
+                                    <Mail size={14} className="text-muted-foreground" />
+                                    {activeTemplate === 'invitation' ? 'Convite Colaborador' : activeTemplate === 'confirmation' ? 'Confirmação de E-mail' : 'Aviso de Suspensão'}
+                                </span>
+                                <ChevronDown size={14} className={`text-muted-foreground transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`} />
+                            </button>
+
+                            {showTypeDropdown && (
+                                <div className="absolute right-0 mt-2 w-full min-w-[200px] bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                    {[
+                                        { id: 'invitation', label: 'Convite Colaborador' },
+                                        { id: 'confirmation', label: 'Confirmação de E-mail' },
+                                        { id: 'suspension', label: 'Aviso de Suspensão' }
+                                    ].map((type) => (
+                                        <button
+                                            key={type.id}
+                                            onClick={() => {
+                                                setActiveTemplate(type.id as any)
+                                                setShowTypeDropdown(false)
+                                            }}
+                                            className="w-full px-4 py-3 text-left text-xs font-bold hover:bg-muted/50 transition-colors flex items-center gap-3 group"
+                                        >
+                                            <div className="w-4 flex-shrink-0">
+                                                {activeTemplate === type.id && <Check size={14} className="text-foreground" />}
+                                            </div>
+                                            <span className={activeTemplate === type.id ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground'}>
+                                                {type.label}
+                                            </span>
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                     </div>
                     <div className="bg-card border border-border rounded-2xl p-6 space-y-6">
 
@@ -383,14 +433,14 @@ export function EmailSettingsForm() {
                                     Salvar Novo
                                 </button>
                             </div>
-                            <div className="bg-white border border-border rounded-xl p-4 space-y-3 shadow-inner">
+                            <div className="bg-background border border-border rounded-xl p-4 space-y-3 shadow-inner">
                                 {savedTemplates.filter(t => t.type === activeTemplate).length > 0 ? (
                                     <div className="flex flex-wrap gap-2">
                                         {savedTemplates.filter(t => t.type === activeTemplate).map((t) => (
                                             <div key={t.id} className="group relative">
                                                 <button 
                                                     onClick={() => handleLoadTemplate(t)}
-                                                    className="px-3 py-1.5 bg-white border border-border rounded-lg text-xs font-bold hover:border-foreground hover:text-foreground transition-all shadow-sm active:scale-95"
+                                                    className="px-3 py-1.5 bg-background border border-border rounded-lg text-xs font-bold hover:border-foreground hover:text-foreground transition-all shadow-sm active:scale-95"
                                                 >
                                                     {t.name}
                                                 </button>
@@ -417,7 +467,7 @@ export function EmailSettingsForm() {
                                 value={currentTemplate.subject || getDefaultSubject(activeTemplate)}
                                 onChange={(e) => updateTemplate('subject', e.target.value)}
                                 placeholder="Assunto do e-mail"
-                                className="w-full bg-white border border-border rounded-lg px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-secondary/50 outline-none transition-all text-foreground"
+                                className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-secondary/50 outline-none transition-all text-foreground"
                             />
                         </div>
 
@@ -506,33 +556,32 @@ export function EmailSettingsForm() {
             </div>
 
             {/* Live Preview */}
-            <div className="xl:sticky xl:top-8 h-fit space-y-4">
-                <div className="bg-muted/30 rounded-[32px] p-6 md:p-10 border border-border overflow-hidden shadow-inner min-h-[650px] flex items-center justify-center">
-                    <div className="w-full max-w-[450px] bg-white rounded-3xl shadow-2xl border border-border overflow-hidden transform hover:scale-[1.01] transition-transform duration-500">
+            <div className="md:w-[450px] md:sticky md:top-8 h-fit flex items-start py-8">
+                <div className="w-full bg-card rounded-3xl shadow-2xl border border-border overflow-hidden transform hover:scale-[1.01] transition-transform duration-500">
                         {/* Fake Header/Envelope */}
-                        <div className="bg-gray-50 border-b border-gray-100 p-6">
-                            <h4 className="text-sm font-bold text-[#404F4F]">
+                        <div className="bg-muted/50 border-b border-border p-6">
+                            <h4 className="text-sm font-bold text-foreground">
                                 {currentTemplate.subject || getDefaultSubject(activeTemplate)}
                             </h4>
                         </div>
 
-                        <div 
-                            className="w-full"
-                            dangerouslySetInnerHTML={{ __html: previewHtml }}
-                        />
-                        <div className="p-6 bg-gray-50/50 border-t border-gray-100 text-center">
-                            <p className="text-[10px] text-gray-400 font-medium uppercase tracking-widest">
+                        <div className="w-full h-[600px] bg-white">
+                            <iframe 
+                                srcDoc={previewHtml}
+                                className="w-full h-full border-none"
+                                title="Email Preview"
+                            />
+                        </div>
+                        <div className="p-6 bg-muted/30 border-t border-border text-center">
+                            <p className="text-[10px] text-muted-foreground font-medium uppercase tracking-widest">
                                 {settings.footer_text || 'Enviado via CRM LAX — A inteligência de dados para sua imobiliária.'}
                             </p>
                         </div>
                     </div>
                 </div>
-            </div>
-
-            {/* Modal para nomear novo template */}
             {showSaveTemplateModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
-                    <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
+                    <div className="bg-card rounded-2xl p-6 w-full max-w-md shadow-2xl animate-in zoom-in-95 duration-200">
                         <h3 className="text-lg font-bold mb-4">Salvar como Template</h3>
                         <p className="text-sm text-muted-foreground mb-4">Dê um nome para este template para encontrá-lo depois.</p>
                         <input 

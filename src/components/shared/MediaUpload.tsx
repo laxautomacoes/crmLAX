@@ -87,7 +87,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                             </button>
                         </div>
                     ))}
-                    <label className="aspect-square rounded-lg bg-muted/50 hover:bg-muted flex flex-col items-center justify-center cursor-pointer transition-all border border-dashed border-border">
+                    <label className="aspect-square rounded-lg bg-background hover:bg-muted/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-dashed border-border shadow-sm">
                         {isUploading === 'images' ? (
                             <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
                         ) : (
@@ -136,7 +136,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                             </button>
                         </div>
                     ))}
-                    <label className="aspect-video rounded-lg bg-muted/50 hover:bg-muted flex flex-col items-center justify-center cursor-pointer transition-all border border-dashed border-border">
+                    <label className="aspect-video rounded-lg bg-background hover:bg-muted/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-dashed border-border shadow-sm">
                         {isUploading === 'videos' ? (
                             <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
                         ) : (
@@ -165,7 +165,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                 </h4>
                 <div className="space-y-2">
                     {documents.map((doc, index) => (
-                        <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-muted/30 border border-border group">
+                        <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-background border border-border group shadow-sm">
                             <div className="flex items-center gap-2 min-w-0">
                                 <FileText size={14} className="text-muted-foreground shrink-0" />
                                 <span className="text-xs font-medium truncate">{doc.name}</span>
@@ -179,7 +179,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                             </button>
                         </div>
                     ))}
-                    <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-muted/50 hover:bg-muted cursor-pointer transition-all border border-dashed border-border">
+                    <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-background hover:bg-muted/10 cursor-pointer transition-all border border-dashed border-border shadow-sm">
                         {isUploading === 'documents' ? (
                             <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
                         ) : (

@@ -40,7 +40,7 @@ export function markdownToEmailHtml(md: string): string {
         .replace(/^# (.*$)/gm, '<h1>$1</h1>')
         // Links & Images
         .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: block;">')
-        .replace(/\[(.*?)\]\((.*?)#button\)/g, '<div style="text-align: center; margin: 24px 0;"><a href="$2" class="button">$1</a></div>')
+        .replace(/\[(.*?)\]\((.*?)\)#button/g, '<div style="text-align: center; margin: 24px 0;"><a href="$2" class="button">$1</a></div>')
         .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: #3b82f6; text-decoration: underline;">$1</a>')
         // Color
         .replace(/<color:\s*([^>]+?)\s*>(.*?)<\/color>/g, '<span style="color: $1">$2</span>')
