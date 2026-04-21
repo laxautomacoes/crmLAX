@@ -7,6 +7,11 @@ export interface EmailSettings {
     signature_html?: string;
     footer_text?: string;
     templates?: Record<string, { subject?: string; body?: string }>;
+    attachments?: {
+        images: string[];
+        videos: string[];
+        documents: { name: string; url: string }[];
+    };
 }
 
 /**
@@ -51,7 +56,7 @@ export function markdownToEmailHtml(md: string): string {
         .replace(/\n/g, '<br>');
 
     // Envolver listas
-    html = html.replace(/(<li>.*<\/li>)/gms, '<ul>$1</ul>');
+    html = html.replace(/(<li>[\s\S]*<\/li>)/gm, '<ul>$1</ul>');
 
     return html;
 }

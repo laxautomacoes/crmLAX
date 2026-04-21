@@ -220,14 +220,17 @@ export function EmailSettingsForm() {
 
     const handleMediaRemove = (type: 'images' | 'videos' | 'documents', index: number) => {
         setSettings(prev => {
-            const current = prev.attachments?.[type] || []
-            const updated = [...current]
+            const attachments = prev.attachments || { images: [], videos: [], documents: [] }
+            const current = attachments[type] || []
+            const updated = [...current] as any[]
             updated.splice(index, 1)
             
             return {
                 ...prev,
                 attachments: {
-                    ...prev.attachments,
+                    images: attachments.images || [],
+                    videos: attachments.videos || [],
+                    documents: attachments.documents || [],
                     [type]: updated
                 }
             }
@@ -260,16 +263,21 @@ export function EmailSettingsForm() {
                 .getPublicUrl(filePath)
 
             // Atualiza o estado de attachments para que a galeria reflita o novo arquivo
-            const type = file.type.startsWith('image/') ? 'images' : 'documents'
+            const type: 'images' | 'documents' = file.type.startsWith('image/') ? 'images' : 'documents'
             const newAttachment = type === 'images' ? publicUrl : { name: file.name, url: publicUrl }
             
-            setSettings(prev => ({
-                ...prev,
-                attachments: {
-                    ...prev.attachments,
-                    [type]: [...(prev.attachments?.[type] || []), newAttachment]
+            setSettings(prev => {
+                const attachments = prev.attachments || { images: [], videos: [], documents: [] }
+                return {
+                    ...prev,
+                    attachments: {
+                        images: attachments.images || [],
+                        videos: attachments.videos || [],
+                        documents: attachments.documents || [],
+                        [type]: [...(attachments[type] || []), newAttachment]
+                    }
                 }
-            }))
+            })
 
             toast.success('Arquivo carregado com sucesso!')
             return publicUrl
