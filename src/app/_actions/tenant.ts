@@ -53,6 +53,34 @@ export async function updateTenantBranding(tenantId: string, brandingData: any) 
     
     return { success: true }
 }
+
+export async function updateTenantEmailSettings(tenantId: string, emailSettingsData: any) {
+    const supabase = await createClient()
+
+    // Buscar configurações atuais para fazer merge
+    const { data: currentTenant } = await supabase
+        .from('tenants')
+        .select('email_settings')
+        .eq('id', tenantId)
+        .single()
+
+    const newSettings = {
+        ...(currentTenant?.email_settings as any || {}),
+        ...emailSettingsData
+    }
+
+    const { error } = await supabase
+        .from('tenants')
+        .update({ email_settings: newSettings })
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/settings')
+    
+    return { success: true }
+}
+
 export async function updateTenantDomain(tenantId: string, domain: string | null) {
     const supabase = await createClient()
 
@@ -389,7 +417,7 @@ export async function updateTenant(tenantId: string, data: { name?: string; slug
     if (data.status === 'suspended') {
         try {
             // Buscar nome do tenant e administradores
-            const { data: tenant } = await supabase.from('tenants').select('name').eq('id', tenantId).single()
+            const { data: tenant } = await supabase.from('tenants').select('name, email_settings').eq('id', tenantId).single()
             const { data: admins } = await supabase
                 .from('profiles')
                 .select('id')
@@ -403,7 +431,7 @@ export async function updateTenant(tenantId: string, data: { name?: string; slug
                 const emailPromises = admins.map(async (admin) => {
                     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(admin.id)
                     if (authUser?.user?.email) {
-                        return sendSuspensionEmail(authUser.user.email, tenant.name)
+                        return sendSuspensionEmail(authUser.user.email, tenant.name, tenant.email_settings as any)
                     }
                 })
                 
@@ -456,5 +484,71 @@ export async function deleteTenant(tenantId: string) {
     if (error) return { success: false, error: error.message }
 
     revalidatePath('/superadmin/tenants')
+    return { success: true }
+}
+
+export async function getEmailTemplates(tenantId: string, type?: string) {
+    const supabase = await createClient()
+
+    let query = supabase
+        .from('email_templates')
+        .select('*')
+        .eq('tenant_id', tenantId)
+    
+    if (type) {
+        query = query.eq('type', type)
+    }
+
+    const { data, error } = await query.order('created_at', { ascending: false })
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data }
+}
+
+export async function saveEmailTemplate(data: { 
+    id?: string;
+    tenant_id: string;
+    name: string;
+    type: string;
+    subject: string;
+    body_html: string;
+    is_active?: boolean;
+}) {
+    const supabase = await createClient()
+
+    const { data: result, error } = await supabase
+        .from('email_templates')
+        .upsert(data)
+        .select()
+        .single()
+
+    if (error) return { success: false, error: error.message }
+
+    // Se marcado como ativo, desativar os outros do mesmo tipo
+    if (data.is_active) {
+        await supabase
+            .from('email_templates')
+            .update({ is_active: false })
+            .eq('tenant_id', data.tenant_id)
+            .eq('type', data.type)
+            .neq('id', result.id)
+    }
+
+    revalidatePath('/settings')
+    return { success: true, data: result }
+}
+
+export async function deleteEmailTemplate(id: string, tenantId: string) {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+        .from('email_templates')
+        .delete()
+        .eq('id', id)
+        .eq('tenant_id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+
+    revalidatePath('/settings')
     return { success: true }
 }

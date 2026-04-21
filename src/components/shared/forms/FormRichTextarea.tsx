@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Bold, Italic, List, ListOrdered, Type, Quote, Underline, Strikethrough, ChevronDown, Undo, Redo, Palette } from 'lucide-react'
+import { Bold, Italic, List, ListOrdered, Type, Quote, Underline, Strikethrough, ChevronDown, Undo, Redo, Palette, Image as ImageIcon, Paperclip, Upload, Loader2, Link } from 'lucide-react'
 
 interface FormRichTextareaProps {
     label?: string
@@ -10,15 +10,24 @@ interface FormRichTextareaProps {
     placeholder?: string
     error?: string
     className?: string
+    attachments?: {
+        images?: string[]
+        documents?: { name: string, url: string }[]
+        videos?: string[]
+    }
+    onUpload?: (file: File) => Promise<string | void>
 }
 
-export function FormRichTextarea({ label, value, onChange, placeholder, error, className = '' }: FormRichTextareaProps) {
+export function FormRichTextarea({ label, value, onChange, placeholder, error, className = '', attachments, onUpload }: FormRichTextareaProps) {
     const editorRef = useRef<HTMLDivElement>(null)
     const [isMounted, setIsMounted] = useState(false)
     const [isStyleDropdownOpen, setIsStyleDropdownOpen] = useState(false)
     const [isColorDropdownOpen, setIsColorDropdownOpen] = useState(false)
+    const [isMediaDropdownOpen, setIsMediaDropdownOpen] = useState(false)
+    const [isUploading, setIsUploading] = useState(false)
 
     const [selectedStyle, setSelectedStyle] = useState('p')
+    const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Função para converter Markdown básico para HTML (para o editor)
     const markdownToHtml = (md: string) => {
@@ -35,6 +44,8 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
             .replace(/^- (.*$)/gm, '<ul><li>$1</li></ul>')
             .replace(/^1\. (.*$)/gm, '<ol><li>$1</li></ol>')
             .replace(/<color:\s*([^>]+?)\s*>(.*?)<\/color>/g, '<span style="color: $1">$2</span>')
+            .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 8px;" />')
+            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
             .replace(/\n/g, '<br>')
         
         // Corrigir listas consecutivas
@@ -146,11 +157,13 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                         return `<color:${fontColor}>${content}</color>`
                     }
                     return content
-                case 'div':
-                case 'p':
-                    return `${content}\n`
                 case 'br':
                     return '\n'
+                case 'a':
+                    return `[${content}](${element.getAttribute('href')})`
+                case 'img':
+                    return `![${element.getAttribute('alt') || ''}](${element.getAttribute('src')})`
+                case 'div':
                 default:
                     return content
             }
@@ -234,6 +247,36 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
             onChange(htmlToMarkdown(editorRef.current.innerHTML))
         } catch (err) {
             console.error('Erro ao executar comando:', err)
+        }
+    }
+
+    const insertHtmlAtCursor = (html: string) => {
+        if (!editorRef.current) return
+        editorRef.current.focus()
+        document.execCommand('insertHTML', false, html)
+        onChange(htmlToMarkdown(editorRef.current.innerHTML))
+        setIsMediaDropdownOpen(false)
+    }
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file || !onUpload) return
+
+        setIsUploading(true)
+        try {
+            const result = await onUpload(file)
+            if (result && typeof result === 'string') {
+                if (file.type.startsWith('image/')) {
+                    insertHtmlAtCursor(`<img src="${result}" style="max-width: 100%; border-radius: 8px; margin: 10px 0;" />`)
+                } else {
+                    insertHtmlAtCursor(`<a href="${result}" target="_blank" style="color: #3b82f6; text-decoration: underline;">📎 ${file.name}</a>`)
+                }
+            }
+        } catch (err) {
+            console.error('Erro no upload via toolbar:', err)
+        } finally {
+            setIsUploading(false)
+            if (fileInputRef.current) fileInputRef.current.value = ''
         }
     }
 
@@ -445,6 +488,101 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                     >
                         <Quote size={16} />
                     </button>
+
+                    {(attachments || onUpload) && (
+                        <>
+                            <div className="w-px h-4 bg-muted-foreground/20 mx-0.5" />
+                            <div className="relative">
+                                <button
+                                    type="button"
+                                    onMouseDown={(e) => { 
+                                        e.preventDefault(); 
+                                        setIsMediaDropdownOpen(!isMediaDropdownOpen);
+                                        if (!isMediaDropdownOpen) {
+                                            setIsStyleDropdownOpen(false);
+                                            setIsColorDropdownOpen(false);
+                                        }
+                                    }}
+                                    className={`p-1.5 hover:bg-muted rounded transition-colors ${isMediaDropdownOpen ? 'bg-secondary/10 text-secondary' : 'text-muted-foreground hover:text-foreground'}`}
+                                    title="Mídias e Arquivos"
+                                >
+                                    {isUploading ? <Loader2 size={16} className="animate-spin" /> : <ImageIcon size={16} />}
+                                </button>
+
+                                {isMediaDropdownOpen && (
+                                    <div 
+                                        className="absolute top-full right-0 mt-1 w-64 bg-white border border-muted-foreground/20 rounded-xl shadow-2xl z-50 p-4 transition-all animate-in fade-in zoom-in-95 duration-200"
+                                        onMouseDown={(e) => e.stopPropagation()}
+                                    >
+                                        <div className="flex flex-col gap-4">
+                                            {onUpload && (
+                                                <div className="space-y-2">
+                                                    <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">Upload</p>
+                                                    <button
+                                                        onClick={() => fileInputRef.current?.click()}
+                                                        disabled={isUploading}
+                                                        className="w-full flex items-center justify-center gap-2 py-2 bg-foreground/5 border border-dashed border-foreground/30 rounded-lg text-xs font-bold text-foreground hover:bg-foreground/10 transition-all active:scale-[0.98]"
+                                                    >
+                                                        {isUploading ? <Loader2 size={14} className="animate-spin" /> : <Upload size={14} />}
+                                                        Enviar Novo Arquivo
+                                                    </button>
+                                                    <input 
+                                                        ref={fileInputRef}
+                                                        type="file"
+                                                        className="hidden"
+                                                        onChange={handleFileUpload}
+                                                    />
+                                                </div>
+                                            )}
+
+                                            {attachments && (
+                                                <div className="max-h-60 overflow-y-auto custom-scrollbar pr-1 space-y-4">
+                                                    {attachments.images && attachments.images.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">Galeria de Imagens</p>
+                                                            <div className="grid grid-cols-4 gap-2">
+                                                                {attachments.images.slice(-8).map((url, i) => (
+                                                                    <button
+                                                                        key={i}
+                                                                        onClick={() => insertHtmlAtCursor(`<img src="${url}" style="max-width: 100%; border-radius: 8px; margin: 10px 0;" />`)}
+                                                                        className="aspect-square bg-muted rounded-md overflow-hidden border border-border hover:border-secondary transition-all"
+                                                                    >
+                                                                        <img src={url} alt="" className="w-full h-full object-cover" />
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+
+                                                    {attachments.documents && attachments.documents.length > 0 && (
+                                                        <div className="space-y-2">
+                                                            <p className="text-[10px] font-black text-muted-foreground uppercase tracking-widest px-1">Documentos</p>
+                                                            <div className="flex flex-col gap-1">
+                                                                {attachments.documents.slice(-4).map((doc, i) => (
+                                                                    <button
+                                                                        key={i}
+                                                                        onClick={() => insertHtmlAtCursor(`<a href="${doc.url}" target="_blank" style="color: #3b82f6; text-decoration: underline;">📎 ${doc.name}</a>`)}
+                                                                        className="w-full text-left px-2 py-1.5 bg-muted/50 hover:bg-secondary/10 rounded-lg text-[10px] font-medium border border-border hover:border-secondary transition-all truncate flex items-center gap-2"
+                                                                    >
+                                                                        <Paperclip size={12} className="shrink-0" />
+                                                                        <span className="truncate">{doc.name}</span>
+                                                                    </button>
+                                                                ))}
+                                                            </div>
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {(!attachments?.images?.length && !attachments?.documents?.length && !onUpload) && (
+                                                <p className="text-[10px] text-muted-foreground italic text-center py-2">Nenhuma mídia encontrada.</p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div

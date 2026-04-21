@@ -15,6 +15,9 @@ Este documento é a fonte única de verdade para a interface do CRM LAX. Deve se
 | **Success** | `#00B087` / `#10B981` | Badges de status 'Ganho', confirmações. |
 | **Danger** | `#EF4444` | Botões de exclusão, erros, alertas críticos. |
 
+> [!NOTE]
+> **Regra de Contraste**: Para textos ou ícones pequenos sobre fundos claros (#FFFFFF ou #F0F2F5), **nunca** use Amarelo (#FFE600) puro. Utilize a cor Petrol (#404F4F) para garantir a legibilidade. O Amarelo deve ser restrito a fundos escuros, botões preenchidos ou elementos puramente decorativos.
+
 ---
 
 ## 2. Tipografia

@@ -71,6 +71,7 @@ export const menuItems = [
         href: '/settings',
         subItems: [
             { name: 'Meu Perfil', href: '/settings' },
+            { name: 'E-mail', href: '/settings/emails', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'] },
             { name: 'Equipe', href: '/settings/team', roles: ['admin', 'superadmin', 'super_admin', 'super administrador'], permission: 'team_management' },
             { name: 'Notificações', href: '/notifications' },
             { name: 'Integrações', href: '/settings/integrations' },

@@ -11,9 +11,10 @@ interface MediaUploadProps {
     onUpload: (type: 'images' | 'videos' | 'documents', urls: any[]) => void
     onRemove: (type: 'images' | 'videos' | 'documents', index: number) => void
     pathPrefix?: string
+    bucket?: string
 }
 
-export function MediaUpload({ images, videos, documents, onUpload, onRemove, pathPrefix }: MediaUploadProps) {
+export function MediaUpload({ images, videos, documents, onUpload, onRemove, pathPrefix, bucket = 'crm-attachments' }: MediaUploadProps) {
     const [isUploading, setIsUploading] = useState<'images' | 'videos' | 'documents' | null>(null)
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'images' | 'videos' | 'documents') => {
@@ -39,13 +40,13 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                 const filePath = pathPrefix ? `${pathPrefix}/${type}/${fileName}` : `${type}/${fileName}`
 
                 const { error: uploadError } = await supabase.storage
-                    .from('crm-attachments')
+                    .from(bucket)
                     .upload(filePath, file, { cacheControl: '3600' })
 
                 if (uploadError) throw uploadError
 
                 const { data: { publicUrl } } = supabase.storage
-                    .from('crm-attachments')
+                    .from(bucket)
                     .getPublicUrl(filePath)
 
                 if (type === 'documents') {

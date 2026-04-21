@@ -26,7 +26,7 @@ export async function createInvitation(
     // Obter tenant_id e nome do admin
     const { data: profile, error: profileError } = await supabase
         .from('profiles')
-        .select('tenant_id, role, tenants(name)')
+        .select('tenant_id, role, tenants(name, email_settings)')
         .eq('id', user.id)
         .maybeSingle()
 
@@ -65,11 +65,12 @@ export async function createInvitation(
     const inviteLink = `${baseUrl}/register?token=${data.token}`
 
     const tenantName = profile.tenants?.name || 'CRM LAX'
+    const emailSettings = profile.tenants?.email_settings as any
 
     console.log(`Tentando enviar convite para ${email}. Link: ${inviteLink}`)
 
     const results = await Promise.allSettled([
-        sendInvitationEmail(email, inviteLink, tenantName),
+        sendInvitationEmail(email, inviteLink, tenantName, emailSettings),
         phone ? sendInvitationWhatsApp(phone, inviteLink, tenantName) : Promise.resolve()
     ])
 
@@ -293,7 +294,7 @@ export async function resendInvitation(id: string) {
     // Buscar convite e detalhes do tenant
     const { data: invitation, error: fetchError } = await supabase
         .from('invitations')
-        .select('*, tenants(name)')
+        .select('*, tenants(name, email_settings)')
         .eq('id', id)
         .single()
 
@@ -306,10 +307,11 @@ export async function resendInvitation(id: string) {
     const baseUrl = rootDomain.startsWith('http') ? rootDomain : `${protocol}${rootDomain}`
     const inviteLink = `${baseUrl}/register?token=${invitation.token}`
     const tenantName = invitation.tenants?.name || 'CRM LAX'
+    const emailSettings = (invitation.tenants as any)?.email_settings
 
     // Reenviar notificações
     const results = await Promise.allSettled([
-        sendInvitationEmail(invitation.email, inviteLink, tenantName),
+        sendInvitationEmail(invitation.email, inviteLink, tenantName, emailSettings),
         invitation.phone ? sendInvitationWhatsApp(invitation.phone, inviteLink, tenantName) : Promise.resolve()
     ])
 

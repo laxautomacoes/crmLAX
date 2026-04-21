@@ -50,6 +50,7 @@ export function IntegrationEndpointCard({
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
+    const [isTokenFocused, setIsTokenFocused] = useState(false);
     
     useEffect(() => {
         if (tenantId) {
@@ -177,6 +178,18 @@ export function IntegrationEndpointCard({
         setTimeout(() => setCopied(false), 2000);
     };
 
+    const maskToken = (token: string) => {
+        if (!token || token.length <= 8) return token;
+        return `${token.substring(0, 4)}${'.'.repeat(120)}${token.substring(token.length - 4)}`;
+    };
+
+    const getDisplayToken = () => {
+        if (!isTokenFocused && hasToken && accessToken) {
+            return maskToken(accessToken);
+        }
+        return accessToken;
+    };
+
     if (isLoading) {
         return (
             <div className="bg-card rounded-2xl border border-border p-6 flex items-center gap-4 animate-pulse">
@@ -293,7 +306,7 @@ export function IntegrationEndpointCard({
                                     <div className="space-y-3 pt-2">
                                         <div className="flex items-center justify-between px-1">
                                             <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                                Token de Acesso (Facebook)
+                                                Token de Acesso
                                             </label>
                                             <div className="flex items-center gap-2">
                                                 {hasToken && (
@@ -307,11 +320,17 @@ export function IntegrationEndpointCard({
 
                                         <div className="flex gap-2">
                                             <input 
-                                                type="password"
+                                                type="text"
                                                 placeholder="Cole o Page Access Token aqui..."
                                                 className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-secondary transition-colors"
-                                                value={accessToken}
-                                                onChange={(e) => setAccessToken(e.target.value)}
+                                                value={getDisplayToken()}
+                                                onFocus={() => setIsTokenFocused(true)}
+                                                onBlur={() => setIsTokenFocused(false)}
+                                                onChange={(e) => {
+                                                    if (isTokenFocused || !hasToken) {
+                                                        setAccessToken(e.target.value);
+                                                    }
+                                                }}
                                             />
                                             <button 
                                                 disabled={isSaving}
@@ -328,12 +347,6 @@ export function IntegrationEndpointCard({
                                     <span className="text-[10px] text-muted-foreground/60 font-medium tracking-wider uppercase">
                                         Webhook v1.0
                                     </span>
-                                    {isActive && (
-                                        <div className="flex items-center gap-1.5 text-[10px] text-emerald-500 font-bold uppercase tracking-wider">
-                                            <div className="h-1.5 w-1.5 bg-emerald-500 rounded-full animate-pulse" />
-                                            Sincronizando
-                                        </div>
-                                    )}
                                 </div>
                             </div>
                         </div>
