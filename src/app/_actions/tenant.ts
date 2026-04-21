@@ -438,7 +438,7 @@ export async function updateTenant(tenantId: string, data: { name?: string; slug
                 const supabaseAdmin = createAdminClient()
                 
                 // Buscar e-mails no Auth e enviar notificações
-                const emailPromises = admins.map(async (admin) => {
+                const emailPromises = admins.map(async (admin: any) => {
                     const { data: authUser } = await supabaseAdmin.auth.admin.getUserById(admin.id)
                     if (authUser?.user?.email) {
                         return sendSuspensionEmail(authUser.user.email, tenant.name, tenant.email_settings as any)

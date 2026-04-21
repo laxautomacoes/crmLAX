@@ -37,7 +37,7 @@ export default async function SuperadminReportsPage() {
     .select('*', { count: 'exact', head: true })
 
   // 4. Calculate Stats
-  const activeTenants = tenants?.filter(t => t.status === 'active')?.length || 0
+  const activeTenants = tenants?.filter((t: any) => t.status === 'active')?.length || 0
   const totalTenants = tenants?.length || 0
   const suspendedTenants = totalTenants - activeTenants
 
@@ -48,7 +48,7 @@ export default async function SuperadminReportsPage() {
     'freemium': 0
   }
 
-  const estimatedMRR = tenants?.reduce((acc, t) => {
+  const estimatedMRR = tenants?.reduce((acc: number, t: any) => {
     if (t.status === 'active') {
       return acc + (pricing[t.plan_type || 'freemium'] || 0)
     }
@@ -66,7 +66,7 @@ export default async function SuperadminReportsPage() {
     }
   }).reverse()
 
-  tenants?.forEach(t => {
+  tenants?.forEach((t: any) => {
     const createdDate = new Date(t.created_at)
     last6Months.forEach(m => {
       if (createdDate >= m.monthStart && createdDate <= m.monthEnd) {
@@ -88,19 +88,19 @@ export default async function SuperadminReportsPage() {
 
   // 6. AI Usage Ranking
   const aiRankingMap = new Map()
-  aiUsage?.forEach(u => {
+  aiUsage?.forEach((u: any) => {
     const tenantName = (u.tenants as any)?.name || 'Desconhecido'
     const current = aiRankingMap.get(tenantName) || 0
     aiRankingMap.set(tenantName, current + (u.total_tokens || 0))
   })
 
   const aiRanking = Array.from(aiRankingMap.entries())
-    .map(([name, tokens]) => ({ name, tokens }))
+    .map(([name, tokens]: [string, number]) => ({ name, tokens }))
     .sort((a, b) => b.tokens - a.tokens)
     .slice(0, 5)
 
   // 7. Plan Distribution for Chart
-  const planCounts = tenants?.reduce((acc: Record<string, number>, curr) => {
+  const planCounts = tenants?.reduce((acc: Record<string, number>, curr: any) => {
     const type = curr.plan_type || 'freemium'
     acc[type] = (acc[type] || 0) + 1
     return acc
@@ -220,7 +220,7 @@ export default async function SuperadminReportsPage() {
                 <div className="flex justify-between items-center p-3 bg-slate-50 rounded-xl border border-slate-100">
                     <span className="text-sm font-bold text-slate-700">Taxa de Conversão Plano Pro</span>
                     <span className="text-lg font-black text-slate-800">
-                        {((tenants?.filter(t => t.plan_type === 'pro').length || 0) / (totalTenants || 1) * 100).toFixed(1)}%
+                        {((tenants?.filter((t: any) => t.plan_type === 'pro').length || 0) / (totalTenants || 1) * 100).toFixed(1)}%
                     </span>
                 </div>
             </div>
@@ -244,7 +244,7 @@ export default async function SuperadminReportsPage() {
               </tr>
             </thead>
             <tbody className="divide-y divide-border">
-              {tenants?.slice(0, 5).map((tenant) => (
+              {tenants?.slice(0, 5).map((tenant: any) => (
                 <tr key={tenant.id} className="group hover:bg-slate-50/50 transition-colors">
                   <td className="py-4">
                     <p className="text-sm font-bold text-[#404F4F]">{tenant.name}</p>

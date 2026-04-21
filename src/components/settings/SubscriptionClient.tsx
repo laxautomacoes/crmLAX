@@ -28,6 +28,14 @@ import {
 
 
 
+interface SubscriptionClientProps {
+    currentPlan: string;
+    aiUsageCount: number;
+    aiRequestsLimit: number;
+    userRole: string;
+    allPlanLimits: any[];
+}
+
 import { useRouter } from 'next/navigation';
 
 export default function SubscriptionClient({ currentPlan, aiUsageCount, aiRequestsLimit, userRole, allPlanLimits: initialPlanLimits }: SubscriptionClientProps) {
@@ -104,14 +112,14 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
         const { active, over } = event;
         if (!over || active.id === over.id) return;
 
-        const oldIndex = allPlanLimits.findIndex((p) => p.plan_type === active.id);
-        const newIndex = allPlanLimits.findIndex((p) => p.plan_type === over.id);
+        const oldIndex = allPlanLimits.findIndex((p: any) => p.plan_type === active.id);
+        const newIndex = allPlanLimits.findIndex((p: any) => p.plan_type === over.id);
 
         const newOrder = arrayMove(allPlanLimits, oldIndex, newIndex);
         setAllPlanLimits(newOrder);
 
         // Salvar nova ordem no banco
-        const orderData = newOrder.map((p, index) => ({
+        const orderData = newOrder.map((p: any, index: number) => ({
             plan_type: p.plan_type,
             display_order: index + 1,
         }));
@@ -166,12 +174,12 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
                     onDragEnd={handleDragEnd}
                 >
                     <SortableContext 
-                        items={allPlanLimits.map(p => p.plan_type)}
+                        items={allPlanLimits.map((p: any) => p.plan_type)}
                         strategy={rectSortingStrategy}
                         disabled={!isSuperadmin}
                     >
                         <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
-                            {allPlanLimits.map((planLimit) => (
+                            {allPlanLimits.map((planLimit: any) => (
                                 <SortableItem 
                                     key={planLimit.plan_type} 
                                     id={planLimit.plan_type}

@@ -434,11 +434,11 @@ export async function listTeamMembers() {
         if (authError) {
             console.error('Error listing auth users:', authError)
             // Fallback: retornar perfis sem e-mail
-            return { members: profiles.map(p => ({ ...p, status: 'active' })) }
+            return { members: profiles.map((p: any) => ({ ...p, status: 'active' })) }
         }
 
         // 4. Cruzar dados
-        const members = profiles.map(p => {
+        const members = profiles.map((p: any) => {
             const authUser = users.find(u => u.id === p.id)
             return {
                 ...p,
