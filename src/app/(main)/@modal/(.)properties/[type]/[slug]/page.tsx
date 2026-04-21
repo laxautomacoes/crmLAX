@@ -8,14 +8,14 @@ import { InterceptedModalClose } from './InterceptedModalClose'
 export const dynamic = 'force-dynamic'
 
 interface PropertyModalProps {
-    params: {
+    params: Promise<{
         type: string
         slug: string
-    }
+    }>
 }
 
 export default async function PropertyInterceptedModal({ params }: PropertyModalProps) {
-    const { type, slug } = params
+    const { type, slug } = await params
     const { profile } = await getProfile()
 
     if (!profile || !profile.tenant_id) return null
