@@ -108,7 +108,7 @@ export default async function SuperadminReportsPage() {
 
   const distribution = Object.entries(planCounts).map(([name, value]) => ({
     name: name.charAt(0).toUpperCase() + name.slice(1),
-    value
+    value: value as number
   }))
 
   return (
