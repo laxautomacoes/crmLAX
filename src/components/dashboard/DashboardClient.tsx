@@ -73,11 +73,7 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
 
             {/* Seção ROI - Apenas para Admins */}
             {(userRole === 'admin' || userRole === 'superadmin' || userRole === 'super_admin' || userRole === 'super administrador') && (
-                <div className="space-y-4 pt-4">
-                    <div className="flex items-center gap-2 text-foreground font-bold">
-                        <BarChart3 size={20} className="text-primary" />
-                        <h2 className="text-lg uppercase tracking-wider">Desempenho Financeiro & ROI</h2>
-                    </div>
+                <div className="pt-4">
                     <ROIDashboard data={roiData} />
                 </div>
             )}

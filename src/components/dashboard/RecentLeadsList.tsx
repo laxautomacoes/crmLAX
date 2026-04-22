@@ -47,7 +47,7 @@ export default function RecentLeadsList({ recentLeads }: RecentLeadsListProps) {
                         <Link 
                             key={lead.id} 
                             href={`/leads?id=${lead.id}`}
-                            className="flex items-center justify-between p-4 border border-muted-foreground/30 rounded-lg hover:bg-muted/50 transition-colors cursor-pointer block"
+                            className="flex items-center justify-between p-4 border border-muted-foreground/30 rounded-lg md:bg-white hover:bg-muted/50 transition-colors cursor-pointer block"
                         >
                             <div className="flex items-center gap-4">
                                 <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 font-bold text-sm">

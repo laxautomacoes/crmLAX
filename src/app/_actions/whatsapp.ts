@@ -32,17 +32,34 @@ export async function setupWhatsAppInstance() {
 
     if (existing) return { error: 'Você já possui uma instância ativa.' };
 
-    // Instance name strictly alphanumeric for better compatibility
-    const instanceName = `user${user.id.split('-')[0]}${Math.random().toString(36).substring(7)}`.replace(/[^a-zA-Z0-9]/g, '');
+    // Buscar tenant para usar o slug como nome da instância
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single();
+
+    let instanceName = 'instance';
+    if (profile?.tenant_id) {
+        const { data: tenant } = await supabase
+            .from('tenants')
+            .select('slug, name')
+            .eq('id', profile.tenant_id)
+            .single();
+
+        if (tenant?.slug) {
+            instanceName = tenant.slug;
+        } else if (tenant?.name) {
+            instanceName = tenant.name;
+        }
+    }
+
+    // Garantir nome alfanumérico compatível com a Evolution API
+    instanceName = instanceName.replace(/[^a-zA-Z0-9]/g, '').toLowerCase();
+    if (!instanceName) instanceName = `tenant${Date.now()}`;
     
     try {
         const evolution = await evolutionService.createInstance(instanceName);
-        
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('tenant_id')
-            .eq('id', user.id)
-            .single();
 
         const { data, error } = await supabase
             .from('whatsapp_instances')
@@ -96,6 +113,26 @@ export async function refreshInstanceStatus() {
 }
 
 export async function disconnectWhatsApp() {
+    const { data, error } = await getWhatsAppInstance();
+    if (error || !data) return { error: 'No instance found' };
+
+    try {
+        await evolutionService.logoutInstance(data.instance_name);
+        
+        const supabase = await createClient();
+        await supabase
+            .from('whatsapp_instances')
+            .update({ status: 'disconnected' })
+            .eq('id', data.id);
+
+        revalidatePath('/settings/integrations');
+        return { success: true };
+    } catch (err: any) {
+        return { error: err.message };
+    }
+}
+
+export async function deleteWhatsAppInstance() {
     const { data, error } = await getWhatsAppInstance();
     if (error || !data) return { error: 'No instance found' };
 

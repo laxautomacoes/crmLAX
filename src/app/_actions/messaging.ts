@@ -58,7 +58,7 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
     }
 
     const queryString = queryParams.toString()
-    const propertyUrl = getPropertyUrl(tenant, propertyData.id) + (queryString ? `?${queryString}` : '')
+    const propertyUrl = getPropertyUrl(tenant, propertyData.id, propertyData.slug, propertyData.type) + (queryString ? `?${queryString}` : '')
 
     // Fetch branding settings
     const { data: settings } = await supabase

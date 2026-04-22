@@ -29,19 +29,25 @@ export function getTenantBaseUrl(tenant: {
 
 /**
  * Gera o link completo para um property no site vitrine.
+ * Prioriza URLs semânticas (com slug) quando disponíveis.
  */
 export function getPropertyUrl(tenant: { 
     slug: string; 
     custom_domain?: string | null; 
     custom_domain_verified?: boolean | null 
-}, propertyId: string): string {
+}, propertyId: string, propertySlug?: string | null, propertyType?: string | null): string {
     const baseUrl = getTenantBaseUrl(tenant);
     const isDev = process.env.NODE_ENV === 'development';
 
-    // No localhost ou subdomínio padrão, mantemos o prefixo /site/[slug] 
-    // de acordo com a estrutura de pastas do Next.js
-    // A MENOS que seja um domínio customizado que usará rewrite do middleware.
-    
+    // Se tiver slug semântico, usar URL SEO-friendly
+    if (propertySlug && propertyType) {
+        if (!isDev && tenant.custom_domain && tenant.custom_domain_verified) {
+            return `${baseUrl}/imovel/${propertyType}/${propertySlug}`;
+        }
+        return `${baseUrl}/site/${tenant.slug}/imovel/${propertyType}/${propertySlug}`;
+    }
+
+    // Fallback para URL com UUID (links antigos)
     if (!isDev && tenant.custom_domain && tenant.custom_domain_verified) {
         return `${baseUrl}/property/${propertyId}`;
     }

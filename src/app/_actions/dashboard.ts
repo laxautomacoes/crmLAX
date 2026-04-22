@@ -278,38 +278,56 @@ export async function getROIMetrics(tenantId: string): Promise<{ success: boolea
     const supabase = await createClient()
     
     try {
-        // 1. Total de Custos (Marketing)
-        const { data: trafficData, error: trafficError } = await supabase
-            .from('traffic_sources')
-            .select('custo')
+        // 1. Tentar buscar dados reais da tabela transacoes_financeiras
+        const { data: txData, error: txError } = await supabase
+            .from('transacoes_financeiras')
+            .select('valor, tipo')
             .eq('tenant_id', tenantId)
+            .eq('status', 'pago')
 
-        if (trafficError) throw trafficError
-        const totalCustos = (trafficData || []).reduce((acc: number, curr: any) => acc + (Number(curr.custo) || 0), 0)
-
-        // 2. Total de Receita (Vendas Ganhas - usando value como proxy inicial)
-        // Buscando estágio 'Ganho'
-        const { data: allStages } = await supabase
-            .from('lead_stages')
-            .select('id, name')
-            .eq('tenant_id', tenantId)
-        
-        const winStage = (allStages as any[])?.find((s) => 
-            s.name.toLowerCase().includes('ganho') || 
-            s.name.toLowerCase().includes('fechado') || 
-            s.name.toLowerCase().includes('concluído')
-        )
+        const hasRealData = !txError && txData && txData.length > 0
 
         let totalReceita = 0
-        if (winStage) {
-            const { data: leadsData, error: leadsError } = await supabase
-                .from('leads')
-                .select('value')
-                .eq('tenant_id', tenantId)
-                .eq('stage_id', winStage.id)
+        let totalCustos = 0
 
-            if (leadsError) throw leadsError
-            totalReceita = (leadsData || []).reduce((acc: number, curr: any) => acc + (Number(curr.value) || 0), 0)
+        if (hasRealData) {
+            // Usar dados reais de transações financeiras
+            totalReceita = (txData || [])
+                .filter((t: any) => t.tipo === 'Receita')
+                .reduce((acc: number, t: any) => acc + (Number(t.valor) || 0), 0)
+
+            totalCustos = (txData || [])
+                .filter((t: any) => t.tipo === 'Despesa')
+                .reduce((acc: number, t: any) => acc + (Number(t.valor) || 0), 0)
+        } else {
+            // Fallback: cálculo antigo com traffic_sources + leads ganhos
+            const { data: trafficData } = await supabase
+                .from('traffic_sources')
+                .select('custo')
+                .eq('tenant_id', tenantId)
+
+            totalCustos = (trafficData || []).reduce((acc: number, curr: any) => acc + (Number(curr.custo) || 0), 0)
+
+            const { data: allStages } = await supabase
+                .from('lead_stages')
+                .select('id, name')
+                .eq('tenant_id', tenantId)
+
+            const winStage = (allStages as any[])?.find((s) =>
+                s.name.toLowerCase().includes('ganho') ||
+                s.name.toLowerCase().includes('fechado') ||
+                s.name.toLowerCase().includes('concluído')
+            )
+
+            if (winStage) {
+                const { data: leadsData } = await supabase
+                    .from('leads')
+                    .select('value')
+                    .eq('tenant_id', tenantId)
+                    .eq('stage_id', winStage.id)
+
+                totalReceita = (leadsData || []).reduce((acc: number, curr: any) => acc + (Number(curr.value) || 0), 0)
+            }
         }
 
         // 3. Contagem de Leads para CPL
@@ -339,3 +357,4 @@ export async function getROIMetrics(tenantId: string): Promise<{ success: boolea
         return { success: false, error: error.message }
     }
 }
+

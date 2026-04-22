@@ -1,7 +1,7 @@
 import { 
     LayoutDashboard, Filter, Users, Home, Calendar, FileText, 
     Rocket, Settings, StickyNote, Globe, ShieldAlert, Megaphone,
-    Building2, ShieldCheck, BrainCircuit, History, Coins 
+    Building2, ShieldCheck, BrainCircuit, History, Coins, CircleDollarSign 
 } from 'lucide-react';
 
 export const menuItems = [
@@ -64,6 +64,7 @@ export const menuItems = [
     },
     { name: 'Agenda', icon: Calendar, href: '/agenda', roles: ['admin', 'user', 'corretor'] },
     { name: 'Notas', icon: StickyNote, href: '/notes', roles: ['admin', 'user', 'corretor'] },
+    { name: 'Financeiro', icon: CircleDollarSign, href: '/financeiro', roles: ['admin'] },
     { name: 'Relatórios', icon: FileText, href: '/reports' },
     {
         name: 'Configurações',

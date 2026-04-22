@@ -237,7 +237,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         }
 
         const queryString = queryParams.toString()
-        const propertyUrl = getPropertyUrl(tenant || { slug: tenantSlug }, property.id) + (queryString ? `?${queryString}` : '')
+        const propertyUrl = getPropertyUrl(tenant || { slug: tenantSlug }, property.id, property.slug, property.type) + (queryString ? `?${queryString}` : '')
         
         // Build dynamic message
         let message = `Olá ${currentLead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste imóvel que pode te interessar:\n\n`

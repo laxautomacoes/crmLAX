@@ -15,7 +15,7 @@ export default function SalesFunnel({ funnelSteps }: SalesFunnelProps) {
             <div className="flex flex-wrap gap-4">
                 {funnelSteps.length > 0 ? (
                     funnelSteps.map((step, index) => (
-                        <div key={step.stageId || index} className="flex-1 min-w-[120px] flex flex-col items-center p-4 border border-muted-foreground/30 rounded-lg bg-muted/30">
+                        <div key={step.stageId || index} className="flex-1 min-w-[120px] flex flex-col items-center p-4 border border-muted-foreground/30 rounded-lg bg-muted/30 md:bg-white">
                             <span className="text-xs text-muted-foreground font-medium capitalize mb-1">{step.label}</span>
                             <span className="text-xl font-bold text-foreground">{step.count}</span>
                         </div>

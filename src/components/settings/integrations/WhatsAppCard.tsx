@@ -9,14 +9,16 @@ import {
     AlertCircle, 
     RefreshCw, 
     Power,
-    ChevronDown
+    ChevronDown,
+    Trash2
 } from 'lucide-react';
 import { 
     setupWhatsAppInstance, 
     getWhatsAppInstance, 
     getQrCode, 
     refreshInstanceStatus, 
-    disconnectWhatsApp 
+    disconnectWhatsApp,
+    deleteWhatsAppInstance 
 } from '@/app/_actions/whatsapp';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/Switch';
@@ -85,15 +87,29 @@ export function WhatsAppCard() {
     };
 
     const handleDisconnect = async () => {
-        if (!confirm('Tem certeza que deseja desconectar o WhatsApp?')) return;
+        if (!confirm('Tem certeza que deseja desconectar o WhatsApp? A instância será mantida para reconexão.')) return;
         setRefreshing(true);
         const { error } = await disconnectWhatsApp();
         if (error) {
             toast.error('Erro ao desconectar: ' + error);
         } else {
+            setInstance((prev: any) => prev ? { ...prev, status: 'disconnected' } : null);
+            setQrCode(null);
+            toast.success('WhatsApp desconectado. Escaneie o QR Code para reconectar.');
+        }
+        setRefreshing(false);
+    };
+
+    const handleDelete = async () => {
+        if (!confirm('Tem certeza que deseja EXCLUIR a instância? Esta ação é irreversível e removerá toda a configuração.')) return;
+        setRefreshing(true);
+        const { error } = await deleteWhatsAppInstance();
+        if (error) {
+            toast.error('Erro ao excluir instância: ' + error);
+        } else {
             setInstance(null);
             setQrCode(null);
-            toast.success('WhatsApp desconectado com sucesso');
+            toast.success('Instância excluída com sucesso');
         }
         setRefreshing(false);
     };
@@ -212,7 +228,7 @@ export function WhatsAppCard() {
                                         <h4 className="text-xl font-bold text-foreground">Conectado com sucesso!</h4>
                                         <p className="text-sm text-muted-foreground mt-1">Seu WhatsApp está pronto para uso e sincronização.</p>
                                     </div>
-                                    <div className="flex gap-3 justify-center">
+                                    <div className="flex flex-wrap gap-3 justify-center">
                                         <button
                                             onClick={handleRefresh}
                                             disabled={refreshing}
@@ -224,10 +240,18 @@ export function WhatsAppCard() {
                                         <button
                                             onClick={handleDisconnect}
                                             disabled={refreshing}
-                                            className="px-6 py-2.5 bg-red-500/10 text-red-500 rounded-lg font-bold hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 active:scale-95"
+                                            className="px-6 py-2.5 bg-orange-500/10 text-orange-500 rounded-lg font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center gap-2 active:scale-95"
                                         >
                                             <Power size={18} />
                                             Desconectar
+                                        </button>
+                                        <button
+                                            onClick={handleDelete}
+                                            disabled={refreshing}
+                                            className="px-6 py-2.5 bg-red-500/10 text-red-500 rounded-lg font-bold hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 active:scale-95"
+                                        >
+                                            <Trash2 size={18} />
+                                            Excluir Instância
                                         </button>
                                     </div>
                                 </div>
