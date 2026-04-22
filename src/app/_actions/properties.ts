@@ -419,7 +419,7 @@ export async function getPropertyBySlug(type: string, slug: string) {
             .eq('type', type)
             .eq('slug', slug)
             .eq('is_archived', false)
-            .is('deleted_at', null)
+            .eq('is_published', true)
             .single()
 
         if (error) throw error

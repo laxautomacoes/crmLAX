@@ -10,10 +10,16 @@ interface SafeMarkdownRendererProps {
 export function SafeMarkdownRenderer({ content, className = '' }: SafeMarkdownRendererProps) {
     if (!content) return null
 
+    // Pré-processamento: remover tags de cor malformadas (<color:...> e </color>)
+    // que podem vir de editores externos e poluem a exibição pública
+    const cleanedContent = content
+        .replace(/<color:[^>]*>/gi, '')
+        .replace(/<\/color>/gi, '')
+
     // Função simples para converter Markdown básico em HTML seguro via React elements
     // Para um sistema real, poderíamos usar react-markdown, mas vamos fazer algo leve
     const renderContent = () => {
-        const lines = content.split('\n')
+        const lines = cleanedContent.split('\n')
         const elements: React.ReactNode[] = []
 
         let currentList: React.ReactNode[] = []
