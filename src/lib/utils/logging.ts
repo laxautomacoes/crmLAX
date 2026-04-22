@@ -21,9 +21,10 @@ export type LogAction =
   | 'update_tenant_branding'
   | 'create_note'
   | 'delete_note'
-  | 'update_note';
+  | 'update_note'
+  | 'delete_team_member';
 
-export type EntityType = 'auth' | 'lead' | 'property' | 'invitation' | 'profile' | 'tenant' | 'note';
+export type EntityType = 'auth' | 'lead' | 'property' | 'invitation' | 'member' | 'profile' | 'tenant' | 'note';
 
 interface CreateLogParams {
     action: LogAction;

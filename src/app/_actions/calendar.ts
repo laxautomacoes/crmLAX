@@ -202,7 +202,7 @@ export async function processAgendaReminders() {
                 });
 
                 // Tenta enviar lembrete via WhatsApp se houver um lead vinculado e a opção estiver ativa
-                if (event.lead_id && event.metadata?.send_whatsapp_reminder) {
+                if (event.lead_id && (event.metadata as any)?.send_whatsapp_reminder) {
                     const { data: lead } = await supabase
                         .from('leads')
                         .select('*, contacts(*)')

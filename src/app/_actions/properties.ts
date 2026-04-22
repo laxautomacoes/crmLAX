@@ -203,7 +203,7 @@ export async function bulkCreateProperties(tenantId: string, propertiesData: unk
             ...property,
             tenant_id: tenantId,
             created_by: profile?.id,
-            status: isAdmin ? (property.status || 'Available') : 'Pending'
+            status: isAdmin ? (property!.status || 'Available') : 'Pending'
         }))
 
         const { data, error } = await supabase

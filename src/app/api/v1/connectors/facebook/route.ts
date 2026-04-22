@@ -54,7 +54,7 @@ export async function POST(req: NextRequest) {
             return NextResponse.json({ error: 'Integration disabled' }, { status: 403 });
         }
 
-        const accessToken = integration?.credentials?.access_token;
+        const accessToken = (integration?.credentials as any)?.access_token;
 
         if (!accessToken) {
             console.error('No Access Token found for tenant:', tenantId);

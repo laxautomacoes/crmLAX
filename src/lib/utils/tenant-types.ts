@@ -2,6 +2,8 @@ export interface TenantInfo {
     id: string;
     slug: string;
     name: string;
+    is_system?: boolean;
+    status?: string | null;
     custom_domain?: string | null;
     custom_domain_verified?: boolean | null;
     custom_domain_crm_verified?: boolean | null;

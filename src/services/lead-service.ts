@@ -92,7 +92,7 @@ export async function processLeadInbound(data: LeadCreateData) {
                 type: 'new_lead',
                 metadata: { lead_id: lead.id },
                 send_whatsapp: !!broker.whatsapp_number,
-                whatsapp_number: broker.whatsapp_number
+                whatsapp_number: broker.whatsapp_number || undefined
             });
         }
     } catch (distError) {

@@ -19,7 +19,7 @@ export async function getValidGoogleToken(tenantId: string) {
         throw new Error('Integração com YouTube não encontrada.');
     }
 
-    const { access_token, refresh_token, expires_at } = integration.credentials;
+    const { access_token, refresh_token, expires_at } = integration.credentials as any;
 
     // 2. Verificar se expirou (margem de 5 minutos)
     const now = new Date();
@@ -59,7 +59,7 @@ export async function getValidGoogleToken(tenantId: string) {
         .from('integrations')
         .update({
             credentials: {
-                ...integration.credentials,
+                ...integration.credentials as any,
                 access_token: newAccessToken,
                 expires_at: newExpiresAt
             },

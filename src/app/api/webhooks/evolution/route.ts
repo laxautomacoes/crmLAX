@@ -38,14 +38,14 @@ export async function POST(req: Request) {
     const { data: leads } = await supabase
         .from('leads')
         .select('id, whatsapp_chat, contact_id')
-        .eq('tenant_id', instance.tenant_id)
-        .filter('contact_id', 'not.is', null);
+        .eq('tenant_id', instance.tenant_id!)
+        .filter('contact_id', 'not.is', null as any);
 
     // Since phone is in contacts, we need to join or filter
     const { data: contact } = await supabase
         .from('contacts')
         .select('id')
-        .eq('tenant_id', instance.tenant_id)
+        .eq('tenant_id', instance.tenant_id!)
         .ilike('phone', `%${phone.slice(-8)}%`) // Match last 8 digits for safety
         .maybeSingle();
 

@@ -396,7 +396,7 @@ export async function createTenant(data: { name: string; slug: string; plan_type
             api_key: apiKey,
             branding: defaultBranding,
             is_system: false
-        })
+        } as any)
         .select()
         .single()
 
@@ -457,7 +457,7 @@ export async function updateTenant(tenantId: string, data: { name?: string; slug
     const supabaseAdmin = createAdminClient()
     const { error } = await supabaseAdmin
         .from('tenants')
-        .update(data)
+        .update(data as any)
         .eq('id', tenantId)
 
     if (error) return { success: false, error: error.message }
@@ -680,7 +680,7 @@ export async function setupEmailDomain(tenantId: string, domain: string) {
                         .update({ 
                             email_domain_resend_id: existing.id,
                             email_domain_status: existing.status
-                        })
+                        } as any)
                         .eq('id', tenantId);
                     
                     return { success: true, data: fullDomain || existing };
@@ -696,7 +696,7 @@ export async function setupEmailDomain(tenantId: string, domain: string) {
             .update({ 
                 email_domain_resend_id: data?.id,
                 email_domain_status: 'pending'
-            })
+            } as any)
             .eq('id', tenantId);
 
         revalidatePath('/settings');
@@ -729,7 +729,7 @@ export async function checkEmailDomainStatus(tenantId: string, resendDomainId: s
             .update({ 
                 email_domain_status: data?.status,
                 email_domain_verified: isVerified
-            })
+            } as any)
             .eq('id', tenantId);
 
         revalidatePath('/settings');
@@ -759,7 +759,7 @@ export async function deleteEmailDomain(tenantId: string, resendDomainId: string
                 email_domain_resend_id: null,
                 email_domain_status: 'not_started',
                 email_domain_verified: false
-            })
+            } as any)
             .eq('id', tenantId);
 
         revalidatePath('/settings');

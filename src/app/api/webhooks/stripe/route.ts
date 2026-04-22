@@ -63,7 +63,7 @@ export async function POST(req: Request) {
                         stripe_customer_id: session.customer as string,
                         stripe_subscription_id: session.subscription as string,
                         subscription_status: 'active'
-                    })
+                    } as any)
                     .eq('id', tenantId);
             } else if (session.metadata?.origin === 'landing_page' && customerEmail) {
                 // CASO NOVO CLIENTE (Landing Page -> Checkout -> Automação)
@@ -82,7 +82,7 @@ export async function POST(req: Request) {
                         stripe_customer_id: session.customer as string,
                         stripe_subscription_id: session.subscription as string,
                         subscription_status: 'active'
-                    })
+                    } as any)
                     .select()
                     .single();
 

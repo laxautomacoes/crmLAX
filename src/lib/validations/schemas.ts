@@ -18,8 +18,8 @@ const nonEmpty = z.string().min(1).max(500)
 const optionalText = z.string().max(2000).optional().nullable()
 const tags = z.array(z.string().max(50)).max(30).optional().default([])
 const price = z.number().nonnegative().optional().nullable()
-const jsonArray = z.array(z.any()).optional().default([])
-const jsonObject = z.record(z.any()).optional().default({})
+const jsonArray = z.array(z.any()).optional()
+const jsonObject = z.record(z.string(), z.any()).optional()
 
 // ============================================================
 // Properties (Properties)

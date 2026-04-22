@@ -45,27 +45,28 @@ export function EmailDomainSettings({
         const result = await setupEmailDomain(tenantId, cleanDomain)
         
         if (result.success) {
+            const data = result.data as any;
             setDomain(cleanDomain) 
-            setResendId(result.data.id)
-            setStatus(result.data.status)
+            setResendId(data.id)
+            setStatus(data.status)
             
             // Combinar dkim e records
             let allRecords: any[] = []
-            if (result.data.dkim && Array.isArray(result.data.dkim)) allRecords = [...result.data.dkim]
+            if (data.dkim && Array.isArray(data.dkim)) allRecords = [...data.dkim]
             
-            if (result.data.spf) {
-                const spf = Array.isArray(result.data.spf) ? result.data.spf : [result.data.spf]
+            if (data.spf) {
+                const spf = Array.isArray(data.spf) ? data.spf : [data.spf]
                 allRecords = [...allRecords, ...spf]
             }
 
-            if (result.data.dmarc) {
-                const dmarc = Array.isArray(result.data.dmarc) ? result.data.dmarc : [result.data.dmarc]
+            if (data.dmarc) {
+                const dmarc = Array.isArray(data.dmarc) ? data.dmarc : [data.dmarc]
                 allRecords = [...allRecords, ...dmarc]
             }
 
-            if (result.data.records && Array.isArray(result.data.records)) {
+            if (data.records && Array.isArray(data.records)) {
                 const existingValues = new Set(allRecords.map(r => r.value))
-                const extra = result.data.records.filter((r: any) => !existingValues.has(r.value))
+                const extra = data.records.filter((r: any) => !existingValues.has(r.value))
                 allRecords = [...allRecords, ...extra]
             }
 
@@ -96,33 +97,34 @@ export function EmailDomainSettings({
         const result = await checkEmailDomainStatus(tenantId, resendId)
         
         if (result.success) {
-            setStatus(result.data.status)
-            setVerified(result.data.status === 'verified')
+            const data = result.data as any;
+            setStatus(data.status)
+            setVerified(data.status === 'verified')
 
             // Combinar todos os registros possíveis que o Resend pode retornar
             let allRecords: any[] = []
             
             // DKIM Records
-            if (result.data.dkim && Array.isArray(result.data.dkim)) {
-                allRecords = [...allRecords, ...result.data.dkim]
+            if (data.dkim && Array.isArray(data.dkim)) {
+                allRecords = [...allRecords, ...data.dkim]
             }
             
             // SPF Record (pode vir como objeto único ou array)
-            if (result.data.spf) {
-                const spf = Array.isArray(result.data.spf) ? result.data.spf : [result.data.spf]
+            if (data.spf) {
+                const spf = Array.isArray(data.spf) ? data.spf : [data.spf]
                 allRecords = [...allRecords, ...spf]
             }
 
             // DMARC Record
-            if (result.data.dmarc) {
-                const dmarc = Array.isArray(result.data.dmarc) ? result.data.dmarc : [result.data.dmarc]
+            if (data.dmarc) {
+                const dmarc = Array.isArray(data.dmarc) ? data.dmarc : [data.dmarc]
                 allRecords = [...allRecords, ...dmarc]
             }
 
             // Records array (Fallback para onde podem vir os registros DKIM/SPF)
-            if (result.data.records && Array.isArray(result.data.records)) {
+            if (data.records && Array.isArray(data.records)) {
                 const existingValues = new Set(allRecords.map(r => r.value))
-                const extra = result.data.records.filter((r: any) => !existingValues.has(r.value))
+                const extra = data.records.filter((r: any) => !existingValues.has(r.value))
                 allRecords = [...allRecords, ...extra]
             }
             
@@ -141,7 +143,7 @@ export function EmailDomainSettings({
             setDnsRecords(allRecords)
             
             if (!silent) {
-                if (result.data.status === 'verified') {
+                if (data.status === 'verified') {
                     toast.success('Domínio verificado com sucesso!')
                 } else {
                     toast.info('O domínio ainda está pendente. A propagação DNS pode levar alguns minutos.')
