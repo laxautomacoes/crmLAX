@@ -306,6 +306,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                 isOpen={isNotificationsOpen}
                 onClose={() => setIsNotificationsOpen(false)}
                 title="Notificações"
+                size="lg"
             >
                 <div className="h-[500px] -m-6">
                     <NotificationsList
