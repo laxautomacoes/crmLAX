@@ -129,8 +129,8 @@ export function NotificationItem({
 
             {/* Area Expansível (Dropdown) */}
             {isExpanded && (
-                <div className="px-4 md:px-6 pb-4 pt-0 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200 ml-0 md:ml-[36px]">
-                    <div className="flex flex-col items-start gap-3">
+                <div className="px-4 md:px-6 pb-4 -mt-2 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200 ml-0 md:ml-[36px]">
+                    <div className="flex flex-col items-start gap-2">
                         <div className="w-full">
                             <div className="bg-muted/30 p-3 py-2.5 rounded-xl border border-border/40">
                                 <p className="text-sm text-foreground/80 leading-relaxed whitespace-pre-wrap">
@@ -147,27 +147,20 @@ export function NotificationItem({
                             )}
                         </div>
                         
-                        <div className="flex flex-col items-start gap-2 w-full">
-                            {notification.type === 'email_change_request' && (
-                                <button
-                                    onClick={handleApprove}
-                                    disabled={isApproving}
-                                    className="bg-secondary text-secondary-foreground font-black uppercase tracking-wider px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] disabled:opacity-50 text-[10px]"
-                                >
-                                    {isApproving ? (
-                                        <div className="w-3.5 h-3.5 border-2 border-secondary-foreground/30 border-t-secondary-foreground rounded-full animate-spin" />
-                                    ) : (
-                                        <Check size={14} />
-                                    )}
-                                    Aprovar
-                                </button>
-                            )}
-                            
-                            <div className="flex items-center gap-1.5 text-[9px] text-foreground/50 uppercase font-bold tracking-widest ml-1">
-                                <Clock size={10} />
-                                {formatDistanceToNow(new Date(notification.created_at), { addSuffix: true, locale: ptBR })}
-                            </div>
-                        </div>
+                        {notification.type === 'email_change_request' && (
+                            <button
+                                onClick={handleApprove}
+                                disabled={isApproving}
+                                className="bg-secondary text-secondary-foreground font-black uppercase tracking-wider px-4 py-2 rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98] disabled:opacity-50 text-[10px]"
+                            >
+                                {isApproving ? (
+                                    <div className="w-3.5 h-3.5 border-2 border-secondary-foreground/30 border-t-secondary-foreground rounded-full animate-spin" />
+                                ) : (
+                                    <Check size={14} />
+                                )}
+                                Aprovar
+                            </button>
+                        )}
                     </div>
                 </div>
             )}
