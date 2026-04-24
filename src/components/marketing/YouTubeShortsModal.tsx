@@ -117,7 +117,7 @@ export function YouTubeShortsModal({ isOpen, onClose, prop, tenantId }: YouTubeS
                                                 key={i}
                                                 onClick={() => setSelectedVideo(v)}
                                                 className={`relative w-20 aspect-[9/16] rounded-xl overflow-hidden shrink-0 border-2 transition-all ${
-                                                    selectedVideo === v ? 'border-[#FFE600] scale-105 shadow-lg' : 'border-transparent opacity-60'
+                                                    selectedVideo === v ? 'border-accent-icon scale-105 shadow-lg' : 'border-transparent opacity-60'
                                                 }`}
                                             >
                                                 <video src={v} className="w-full h-full object-cover" />
@@ -148,7 +148,7 @@ export function YouTubeShortsModal({ isOpen, onClose, prop, tenantId }: YouTubeS
                                         value={title}
                                         onChange={(e) => setTitle(e.target.value)}
                                         placeholder="Ex: Apartamento decorado incrível..."
-                                        className="w-full p-4 rounded-2xl border border-border bg-gray-50/50 text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none transition-all font-medium"
+                                        className="w-full p-4 rounded-2xl border border-border bg-gray-50/50 text-sm focus:ring-2 focus:ring-ring/50 outline-none transition-all font-medium"
                                     />
                                     <p className="text-[9px] text-muted-foreground ml-1 italic">* O YouTube adicionará automaticamente #Shorts ao final se você não colocar.</p>
                                 </div>
@@ -159,7 +159,7 @@ export function YouTubeShortsModal({ isOpen, onClose, prop, tenantId }: YouTubeS
                                         value={description}
                                         onChange={(e) => setDescription(e.target.value)}
                                         placeholder="Conte um pouco mais sobre esse property..."
-                                        className="w-full h-40 p-4 rounded-2xl border border-border bg-gray-50/50 text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none resize-none transition-all font-medium leading-relaxed"
+                                        className="w-full h-40 p-4 rounded-2xl border border-border bg-gray-50/50 text-sm focus:ring-2 focus:ring-ring/50 outline-none resize-none transition-all font-medium leading-relaxed"
                                     />
                                 </div>
 

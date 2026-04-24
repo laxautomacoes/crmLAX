@@ -52,8 +52,8 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
             <div className="max-w-4xl mx-auto space-y-10 py-10 animate-in fade-in duration-700">
                 {/* Cabeçalho Minimalista */}
                 <div className="text-center space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-[#FFE600]/10 text-[#404F4F] text-[10px] font-black uppercase tracking-widest border border-[#FFE600]/20">
-                        <Sparkles size={12} className="text-[#FFE600]" />
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-icon/10 text-[#404F4F] text-[10px] font-black uppercase tracking-widest border border-accent-icon/20">
+                        <Sparkles size={12} className="text-accent-icon" />
                         IA Creative Assistant
                     </div>
                     <h2 className="text-3xl font-black text-[#404F4F] tracking-tight">O que vamos criar hoje?</h2>
@@ -65,7 +65,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                         placeholder="Descreva o assunto do post..."
-                        className="w-full min-h-[140px] p-8 rounded-[2rem] bg-white border border-border/50 text-xl font-medium focus:ring-2 focus:ring-[#FFE600]/30 outline-none resize-none transition-all shadow-sm hover:shadow-md placeholder:text-gray-300"
+                        className="w-full min-h-[140px] p-8 rounded-[2rem] bg-white border border-border/50 text-xl font-medium focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all shadow-sm hover:shadow-md placeholder:text-gray-300"
                     />
                     
                     <div className="absolute right-4 bottom-4 flex gap-2">
@@ -82,7 +82,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                             disabled={loading || !topic.trim()}
                             className="h-12 px-8 bg-[#404F4F] hover:bg-[#2d3939] text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg active:scale-95 disabled:opacity-30"
                         >
-                            {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} className="text-[#FFE600]" />}
+                            {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} className="text-accent-icon" />}
                             Gerar
                         </button>
                     </div>
@@ -142,7 +142,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     return (
         <section className="space-y-6">
             <div className="flex items-center gap-3 ml-1">
-                <Sparkles className="h-5 w-5 text-[#FFE600]" />
+                <Sparkles className="h-5 w-5 text-accent-icon" />
                 <h2 className="text-xl font-black text-[#404F4F]">Estúdio de Criação IA</h2>
             </div>
 
@@ -165,7 +165,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
                             placeholder="Ex: Frase motivacional sobre conquista do primeiro property, ou um post sobre as vantagens de morar perto da praia..."
-                            className="w-full h-80 p-6 rounded-2xl bg-gray-50/50 border border-border/50 text-base focus:ring-2 focus:ring-[#FFE600]/30 outline-none resize-none transition-all placeholder:text-gray-400 font-medium leading-relaxed"
+                            className="w-full h-80 p-6 rounded-2xl bg-gray-50/50 border border-border/50 text-base focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all placeholder:text-gray-400 font-medium leading-relaxed"
                         />
                     </div>
 
@@ -178,7 +178,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                             <Loader2 className="h-5 w-5 animate-spin" />
                         ) : (
                             <>
-                                <Sparkles className="h-5 w-5 text-[#FFE600]" />
+                                <Sparkles className="h-5 w-5 text-accent-icon" />
                                 Gerar com Inteligência Artificial
                             </>
                         )}

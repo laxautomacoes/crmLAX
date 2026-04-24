@@ -100,14 +100,14 @@ export function CreativePostModal({ isOpen, onClose, images, videos, postType, t
                                 value={caption}
                                 onChange={(e) => setCaption(e.target.value)}
                                 placeholder="Escreva sua legenda aqui..."
-                                className="w-full h-40 p-4 rounded-2xl bg-gray-50 border border-border/50 text-sm focus:ring-2 focus:ring-[#FFE600]/30 outline-none resize-none"
+                                className="w-full h-40 p-4 rounded-2xl bg-gray-50 border border-border/50 text-sm focus:ring-2 focus:ring-ring/30 outline-none resize-none"
                             />
                         </div>
 
                         <div className="space-y-4">
                             <label className="text-[10px] font-black text-[#404F4F]/60 uppercase tracking-widest">Destinos</label>
                             <div className="grid grid-cols-2 gap-3">
-                                <div className="p-4 rounded-2xl border-2 border-[#FFE600] bg-[#FFE600]/5 flex items-center gap-3">
+                                <div className="p-4 rounded-2xl border-2 border-accent-icon bg-accent-icon/5 flex items-center gap-3">
                                     <Instagram size={18} className="text-[#404F4F]" />
                                     <span className="text-[10px] font-bold">Instagram</span>
                                 </div>

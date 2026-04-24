@@ -73,7 +73,7 @@ export function PipelineColumn({ id, title, leads, count, onAddLead, onDeleteSta
     return (
         <div
             ref={setNodeRef}
-            className="flex flex-col w-[310px] min-w-[310px] bg-input/50 dark:bg-muted/5 rounded-2xl p-4 border border-muted-foreground/30 shadow-sm"
+            className="flex flex-col w-[310px] min-w-[310px] rounded-2xl p-4 border border-muted-foreground/30 shadow-sm bg-[#F5F6F8] dark:bg-[#1A1F1F]/30"
         >
             <div className="flex items-center justify-between mb-4 px-1">
                 <div className="flex items-center gap-2 flex-1">

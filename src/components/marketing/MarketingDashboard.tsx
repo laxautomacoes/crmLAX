@@ -179,7 +179,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
                         onClick={() => setShowGuide(!showGuide)}
                         className="flex items-center gap-2 px-4 py-3 md:py-2 rounded-xl bg-white border border-border/50 text-[#404F4F] text-sm font-bold hover:bg-gray-50 transition-all shadow-sm"
                     >
-                        <AlertCircle className="h-4 w-4 text-[#FFE600]" />
+                        <AlertCircle className="h-4 w-4 text-accent-icon" />
                         Ajuda
                     </button>
                     {!hasProPlan && (
@@ -220,7 +220,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
                             className="group bg-white p-8 rounded-[2rem] border border-border/50 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl"
                         >
                             <div className="flex items-center justify-between mb-4">
-                                <div className="p-3 rounded-2xl bg-[#404F4F]/5 group-hover:bg-[#FFE600]/10 transition-colors">
+                                <div className="p-3 rounded-2xl bg-[#404F4F]/5 group-hover:bg-accent-icon/10 transition-colors">
                                     <Megaphone className="h-6 w-6 text-[#404F4F]" />
                                 </div>
                             </div>
@@ -305,11 +305,11 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
                             {integrations.map((item) => (
                                 <div
                                     key={item.id}
-                                    className={`group relative bg-white rounded-2xl border border-border/50 shadow-sm p-6 transition-all hover:border-[#FFE600]/30 ${item.upcoming ? 'opacity-60' : ''}`}
+                                    className={`group relative bg-white rounded-2xl border border-border/50 shadow-sm p-6 transition-all hover:border-accent-icon/30 ${item.upcoming ? 'opacity-60' : ''}`}
                                 >
                                     <div className="flex items-center justify-between mb-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="p-2.5 rounded-xl bg-gray-50 group-hover:bg-[#FFE600]/10 transition-colors">
+                                            <div className="p-2.5 rounded-xl bg-gray-50 group-hover:bg-accent-icon/10 transition-colors">
                                                 <item.icon className="h-5 w-5 text-[#404F4F]" />
                                             </div>
                                             <div>

@@ -16,8 +16,8 @@ export default function UpgradeBanner({ feature }: UpgradeBannerProps) {
     const label = feature ? featureLabels[feature] || feature : 'esta funcionalidade';
 
     return (
-        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[#FFE600]/30 bg-gradient-to-br from-[#404F4F]/5 to-[#FFE600]/10 p-8 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-[#FFE600]/20">
+        <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-accent-icon/30 bg-gradient-to-br from-[#404F4F]/5 to-accent-icon/10 p-8 text-center">
+            <div className="flex h-14 w-14 items-center justify-center rounded-full bg-accent-icon/20">
                 <Crown className="h-7 w-7 text-[#404F4F]" />
             </div>
 

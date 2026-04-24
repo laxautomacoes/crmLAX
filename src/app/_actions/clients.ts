@@ -32,6 +32,24 @@ export interface ClientData {
 export async function getClients(tenantId: string) {
     const supabase = await createClient()
 
+    // Verificar role do usuário para filtrar por atribuição
+    const { data: { user } } = await supabase.auth.getUser()
+    let isAdmin = false
+    let userId: string | undefined
+
+    if (user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('id, role')
+            .eq('id', user.id)
+            .single()
+
+        if (profile) {
+            isAdmin = profile.role === 'admin' || profile.role === 'superadmin'
+            userId = profile.id
+        }
+    }
+
     // Buscar contatos
     const { data: contacts, error } = await supabase
         .from('contacts')
@@ -65,7 +83,7 @@ export async function getClients(tenantId: string) {
     }
 
     // Mapear para o formato esperado pelo front
-    const clients = (contacts || []).map((contact: Record<string, any>) => {
+    let clients = (contacts || []).map((contact: Record<string, any>) => {
         // Pegar o lead mais recente ou ativo
         const activeLead = (contact.leads as any[])?.sort((a, b) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
@@ -109,6 +127,13 @@ export async function getClients(tenantId: string) {
             }))
         }
     })
+
+    // Filtrar por colaborador: apenas clientes com leads atribuídos ao usuário
+    if (!isAdmin && userId) {
+        clients = clients.filter((client: any) => 
+            client.leads.some((lead: any) => lead.assigned_to === userId)
+        )
+    }
 
     return { success: true, data: clients }
 }

@@ -1,9 +1,7 @@
 import { getProfile } from '@/app/_actions/profile'
 import { getPropertyBySlug } from '@/app/_actions/properties'
 import { checkPlanFeatureAction } from '@/app/_actions/plan'
-import { PropertyDetailsContent } from '@/components/dashboard/properties/PropertyDetailsContent'
-import { Modal } from '@/components/shared/Modal'
-import { InterceptedModalClose } from './InterceptedModalClose'
+import { PropertyModalClient } from './PropertyModalClient'
 
 export const dynamic = 'force-dynamic'
 
@@ -31,18 +29,12 @@ export default async function PropertyInterceptedModal({ params }: PropertyModal
     const prop = propertyResult.data
 
     return (
-        <Modal isOpen={true} onClose={() => {}} title={null} size="xl">
-            <div className="relative">
-                <InterceptedModalClose />
-                <PropertyDetailsContent 
-                    prop={prop}
-                    userRole={profile.role || 'user'}
-                    hasAIAccess={aiAccess}
-                    hasMarketingAccess={marketingAccess}
-                    tenantId={profile.tenant_id}
-                    isModal={true}
-                />
-            </div>
-        </Modal>
+        <PropertyModalClient
+            prop={prop}
+            userRole={profile.role || 'user'}
+            hasAIAccess={aiAccess}
+            hasMarketingAccess={marketingAccess}
+            tenantId={profile.tenant_id}
+        />
     )
 }

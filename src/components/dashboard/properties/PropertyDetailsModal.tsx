@@ -1,3 +1,5 @@
+'use client';
+
 import { Modal } from '@/components/shared/Modal';
 import { PropertyDetailsContent } from './PropertyDetailsContent';
 import { Send } from 'lucide-react';

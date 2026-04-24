@@ -26,10 +26,10 @@ export default function AIInsightsCard({ tenantId, profileId, period, hasAIAcces
 
     if (!hasAIAccess) {
         return (
-            <div className="flex items-center justify-between gap-4 rounded-2xl border border-[#FFE600]/30 bg-gradient-to-r from-secondary/5 to-[#FFE600]/10 p-5">
+            <div className="flex items-center justify-between gap-4 rounded-2xl border border-accent-icon/30 bg-gradient-to-r from-secondary/5 to-accent-icon/10 p-5">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/15">
-                        <Sparkles className="h-5 w-5 text-secondary" />
+                        <Sparkles className="h-5 w-5 text-accent-icon" />
                     </div>
                     <div>
                         <p className="font-bold text-foreground">Insights de IA disponíveis no Plano Pro</p>
@@ -62,7 +62,7 @@ export default function AIInsightsCard({ tenantId, profileId, period, hasAIAcces
             <div className="flex items-center justify-between gap-4 rounded-2xl border border-border bg-card p-5">
                 <div className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-full bg-secondary/15">
-                        <Sparkles className="h-5 w-5 text-secondary" />
+                        <Sparkles className="h-5 w-5 text-accent-icon" />
                     </div>
                     <div>
                         <p className="font-bold text-foreground">Insights de IA</p>
@@ -87,10 +87,10 @@ export default function AIInsightsCard({ tenantId, profileId, period, hasAIAcces
             <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <div className="flex h-8 w-8 items-center justify-center rounded-full bg-secondary/15">
-                        <Sparkles className="h-4 w-4 text-secondary" />
+                        <Sparkles className="h-4 w-4 text-accent-icon" />
                     </div>
                     <h3 className="font-bold text-foreground">Insights de IA</h3>
-                    <span className="rounded-full bg-[#FFE600]/20 px-2 py-0.5 text-xs font-bold text-[#404F4F]">Pro</span>
+                    <span className="rounded-full bg-accent-icon/20 px-2 py-0.5 text-xs font-bold text-[#404F4F]">Pro</span>
                 </div>
                 <button onClick={handleGenerate} disabled={loading} className="flex items-center gap-1 text-xs text-muted-foreground hover:text-foreground disabled:opacity-50">
                     <RefreshCw className={`h-3 w-3 ${loading ? 'animate-spin' : ''}`} />
@@ -151,7 +151,7 @@ export default function AIInsightsCard({ tenantId, profileId, period, hasAIAcces
             </div>
 
             {/* Recomendação Principal */}
-            <div className="flex items-start gap-3 rounded-xl border border-[#FFE600]/30 bg-[#FFE600]/10 p-4">
+            <div className="flex items-start gap-3 rounded-xl border border-accent-icon/30 bg-accent-icon/10 p-4">
                 <Lightbulb className="mt-0.5 h-5 w-5 shrink-0 text-foreground" />
                 <div>
                     <p className="text-xs font-bold uppercase tracking-wide text-foreground">Recomendação Estratégica</p>

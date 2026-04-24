@@ -37,7 +37,7 @@ export default function AnalysisPage() {
     };
 
     return (
-        <div className="max-w-6xl mx-auto space-y-8">
+        <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             {/* Header Section */}
             <PageHeader 
                 title="Análise de Valor de m²"

@@ -235,7 +235,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         {/* Desktop Welcome & Date */}
                         <div className="hidden md:flex flex-col ml-4">
                             <h2 className="text-lg font-semibold text-foreground">
-                                Bem-vindo, {companyName || profile?.full_name || 'Léo Acosta'}
+                                Bem-vindo, {profile?.full_name || companyName || 'Usuário'}
                             </h2>
                             <span className="text-xs text-foreground/70">{formattedDate}</span>
                         </div>

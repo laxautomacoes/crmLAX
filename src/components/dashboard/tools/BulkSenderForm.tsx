@@ -276,13 +276,13 @@ export function BulkSenderForm() {
                                 <button 
                                     onClick={() => mediaInputRef.current?.click()}
                                     disabled={isMediaUploading}
-                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-200 rounded-2xl hover:border-[#FFE600] hover:bg-[#FFE600]/5 transition-all text-gray-500 hover:text-[#404F4F] group"
+                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-200 rounded-2xl hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-gray-500 hover:text-[#404F4F] group"
                                 >
                                     {isMediaUploading ? (
                                         <Loader2 className="animate-spin text-[#404F4F]" size={24} />
                                     ) : (
                                         <>
-                                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-[#FFE600]/20 transition-colors">
+                                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-accent-icon/20 transition-colors">
                                                 <ImageIcon size={20} />
                                             </div>
                                             <span className="text-xs font-bold">Adicionar Foto, Vídeo ou PDF</span>
@@ -379,14 +379,14 @@ export function BulkSenderForm() {
                     <div className="space-y-3">
                         <div className="flex items-center justify-between text-xs font-bold text-[#404F4F]">
                             <div className="flex items-center gap-2">
-                                <Loader2 className="animate-spin text-[#FFE600]" size={14} />
+                                <Loader2 className="animate-spin text-accent-icon" size={14} />
                                 <span>Enviando mensagens ({progress.current}/{progress.total})</span>
                             </div>
                             <span>{Math.round((progress.current / progress.total) * 100)}%</span>
                         </div>
                         <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
                             <div 
-                                className="h-full bg-[#FFE600] transition-all duration-500"
+                                className="h-full bg-accent-icon transition-all duration-500"
                                 style={{ width: `${(progress.current / progress.total) * 100}%` }}
                             />
                         </div>

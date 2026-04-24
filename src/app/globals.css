@@ -30,8 +30,9 @@ html {
   --destructive-foreground: #F8FAFC;
   --border: #CBD5E1;
   --input: #F9FAFB;
-  --ring: #FFE600;
+  --ring: #404F4F;
   --radius: 0.5rem;
+  --accent-icon: #404F4F;
   --sidebar: #404F4F;
   --sidebar-foreground: #FFFFFF;
 }
@@ -57,6 +58,7 @@ html {
   --border: #2D3939;
   --input: #1A1F1F;
   --ring: #FFE600;
+  --accent-icon: #FFE600;
   --sidebar: #0D0F0F;
   --sidebar-foreground: #F0F2F5;
 }
@@ -83,6 +85,7 @@ html {
   --color-ring: var(--ring);
   --color-sidebar: var(--sidebar);
   --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-accent-icon: var(--accent-icon);
   --radius-lg: var(--radius);
   --radius-md: calc(var(--radius) - 2px);
   --radius-sm: calc(var(--radius) - 4px);

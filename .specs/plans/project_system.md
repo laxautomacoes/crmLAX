@@ -16,7 +16,10 @@ Este documento é a fonte única de verdade para a interface do CRM LAX. Deve se
 | **Danger** | `#EF4444` | Botões de exclusão, erros, alertas críticos. |
 
 > [!NOTE]
-> **Regra de Contraste**: Para textos ou ícones pequenos sobre fundos claros (#FFFFFF ou #F0F2F5), **nunca** use Amarelo (#FFE600) puro. Utilize a cor Petrol (#404F4F) para garantir a legibilidade. O Amarelo deve ser restrito a fundos escuros, botões preenchidos ou elementos puramente decorativos.
+> **Regra de Contraste**: Para textos ou ícones sobre fundos claros (#FFFFFF ou #F0F2F5), **nunca** use Amarelo (#FFE600) puro. Utilize a cor Petrol (#404F4F) via `text-accent-icon` para garantir a legibilidade. O Amarelo é usado automaticamente no dark mode através da mesma variável. O Amarelo direto (`text-[#FFE600]`) só deve ser usado em contextos com fundo explicitamente escuro (landing pages, sidebar, botões preenchidos).
+
+> [!IMPORTANT]
+> **Variável `accent-icon`**: Usar `text-accent-icon` (e `bg-accent-icon`, `border-accent-icon`) para ícones, textos de destaque e bordas decorativas. Light: `#404F4F` (Petrol). Dark: `#FFE600` (Amarelo). Nunca usar `text-[#FFE600]` em componentes do dashboard/CRM.
 
 ---
 
@@ -59,7 +62,7 @@ Seguir rigorosamente para evitar inconsistências visuais:
 
 - **Botões Yellow**: `hover:bg-[#F2DB00] transition-all transform active:scale-[0.99]`.
 - **Botões Petrol (Neutros)**: `text-[#404F4F] border-[#404F4F]/20 hover:bg-[#404F4F]/5 transition-all`. Para botões preenchidos: `bg-[#404F4F] text-white hover:bg-[#2d3939]`.
-- **Inputs**: `focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] outline-none`.
+- **Inputs**: `focus:ring-2 focus:ring-ring/50 focus:border-ring outline-none`.
 - **Animações de Entrada**: `animate-in fade-in slide-in-from-bottom-4 duration-300`.
 
 ---

@@ -88,7 +88,7 @@ export function MarketingSuperadmin({ tenantId, profileId }: MarketingSuperadmin
                     <section className="space-y-6">
                         <div className="flex items-center justify-between">
                             <h3 className="text-xl font-black text-[#404F4F] flex items-center gap-2">
-                                <Upload size={20} className="text-[#FFE600]" />
+                                <Upload size={20} className="text-accent-icon" />
                                 Gestor de Mídias
                             </h3>
                             <div className="flex bg-gray-100 p-1 rounded-xl">

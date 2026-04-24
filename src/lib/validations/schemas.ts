@@ -10,12 +10,18 @@ import { z } from 'zod'
 // ============================================================
 
 const uuid = z.string().uuid()
-const optionalUuid = z.string().uuid().optional().nullable()
+const optionalUuid = z.preprocess(
+    (val) => (val === '' ? null : val),
+    z.string().uuid().optional().nullable()
+)
 const phone = z.string().min(8).max(20)
 const email = z.string().email()
-const optionalEmail = z.string().email().optional().nullable()
+const optionalEmail = z.preprocess(
+    (val) => (val === '' ? null : val),
+    z.string().email().optional().nullable()
+)
 const nonEmpty = z.string().min(1).max(500)
-const optionalText = z.string().max(2000).optional().nullable()
+const optionalText = z.string().max(10000).optional().nullable()
 const tags = z.array(z.string().max(50)).max(30).optional().default([])
 const price = z.number().nonnegative().optional().nullable()
 const jsonArray = z.array(z.any()).optional()

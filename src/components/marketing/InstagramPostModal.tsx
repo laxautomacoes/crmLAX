@@ -106,7 +106,7 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
                                 </div>
                             )}
                             <div className="absolute top-4 left-4 bg-black/60 backdrop-blur-md px-3 py-1.5 rounded-full flex items-center gap-2 text-white text-[10px] font-bold uppercase tracking-[0.1em] shadow-lg">
-                                <Instagram size={14} className="text-[#FFE600]" />
+                                <Instagram size={14} className="text-accent-icon" />
                                 Instagram Feed
                             </div>
                         </div>
@@ -122,7 +122,7 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
                                     disabled={isLoading}
                                     className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 px-3 py-2 bg-[#404F4F] text-white rounded-lg hover:bg-[#2d3939] transition-all disabled:opacity-50 shadow-sm"
                                 >
-                                    {isLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-[#FFE600]" />}
+                                    {isLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-accent-icon" />}
                                     Sugerir com IA
                                 </button>
                             </div>
@@ -130,7 +130,7 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
                                 value={caption}
                                 onChange={(e) => setCaption(e.target.value)}
                                 placeholder="Escreva algo sobre este property ou use a IA para gerar uma legenda profissional..."
-                                className="w-full h-40 p-4 rounded-xl border border-border bg-gray-50/50 text-sm focus:ring-2 focus:ring-[#FFE600]/50 outline-none resize-none transition-all leading-relaxed"
+                                className="w-full h-40 p-4 rounded-xl border border-border bg-gray-50/50 text-sm focus:ring-2 focus:ring-ring/50 outline-none resize-none transition-all leading-relaxed"
                             />
                         </div>
 

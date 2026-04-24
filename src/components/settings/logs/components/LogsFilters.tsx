@@ -36,7 +36,7 @@ export function LogsFilters({
         <div className="flex flex-wrap items-center gap-3 lg:justify-end">
             <div className="hidden md:flex items-center h-9 px-3 bg-muted/20 border border-border rounded-lg shadow-sm">
                 <span className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
-                    Total: <span className="text-secondary dark:text-[#FFE600] font-bold mx-0.5">{totalCount}</span> eventos
+                    Total: <span className="text-accent-icon font-bold mx-0.5">{totalCount}</span> eventos
                 </span>
             </div>
 
@@ -84,11 +84,11 @@ export function LogsFilters({
                         <div className="fixed inset-0 z-10" onClick={() => setIsUserFilterOpen(false)} />
                         <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-xl z-20 py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
                             <button onClick={() => { setProfileId('all'); setPage(1); setIsUserFilterOpen(false); }}
-                                className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${profileId === 'all' ? 'text-secondary dark:text-[#FFE600] font-bold bg-secondary/5' : 'text-foreground font-medium'}`}
+                                className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${profileId === 'all' ? 'text-accent-icon font-bold bg-accent-icon/5' : 'text-foreground font-medium'}`}
                             > Todos (Usuários) </button>
                             {brokers.map(broker => (
                                 <button key={broker.id} onClick={() => { setProfileId(broker.id); setPage(1); setIsUserFilterOpen(false); }}
-                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${profileId === broker.id ? 'text-secondary dark:text-[#FFE600] font-bold bg-secondary/5' : 'text-foreground font-medium'}`}
+                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${profileId === broker.id ? 'text-accent-icon font-bold bg-accent-icon/5' : 'text-foreground font-medium'}`}
                                 > {broker.full_name} </button>
                             ))}
                         </div>
@@ -109,7 +109,7 @@ export function LogsFilters({
                         <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-xl z-20 py-2 animate-in fade-in zoom-in-95 duration-200">
                             {actionTypes.map(type => (
                                 <button key={type.value} onClick={() => { setActionType(type.value); setPage(1); setIsFilterOpen(false); }}
-                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${actionType === type.value ? 'text-secondary dark:text-[#FFE600] font-bold bg-secondary/5' : 'text-foreground font-medium'}`}
+                                    className={`w-full text-left px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${actionType === type.value ? 'text-accent-icon font-bold bg-accent-icon/5' : 'text-foreground font-medium'}`}
                                 > {type.label} </button>
                             ))}
                         </div>

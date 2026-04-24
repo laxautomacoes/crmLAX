@@ -352,17 +352,27 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             onClose={onClose}
             title={editingProperty ? "Editar Imóvel" : "Novo Imóvel"}
             extraHeaderContent={
-                isAdmin ? (
-                    <Switch 
-                        checked={formData.is_published}
-                        onChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
-                        label="Site"
-                    />
-                ) : null
+                <div className="flex items-center gap-4">
+                    {isAdmin && (
+                        <Switch 
+                            checked={formData.is_published}
+                            onChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
+                            label="SITE"
+                        />
+                    )}
+                    <button
+                        onClick={handleSaveLocal}
+                        disabled={isSaving || !!isUploading}
+                        className={`px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold shadow-sm active:scale-[0.99] transition-all text-sm whitespace-nowrap
+                            ${(isSaving || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
+                    >
+                        {isSaving ? "Salvando..." : (editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel")}
+                    </button>
+                </div>
             }
-            size="lg"
+            size="xl"
         >
-            <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
+            <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1 no-scrollbar">
                 <div className="flex flex-col gap-8">
                     <BasicInfoFields 
                         formData={formData} 
@@ -390,23 +400,6 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     />
                     <div className="border-t border-border/60" />
                     <OwnerFields formData={formData} setFormData={setFormData} />
-                </div>
-
-                <div className="flex gap-3 pt-4">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-3 bg-white text-foreground border border-border rounded-lg font-bold hover:bg-muted/10 transition-all active:scale-[0.99]"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSaveLocal}
-                        disabled={isSaving || !!isUploading}
-                        className={`flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold shadow-sm active:scale-[0.99] transition-all
-                            ${(isSaving || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
-                    >
-                        {isSaving ? "Salvando..." : (editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel")}
-                    </button>
                 </div>
             </div>
         </Modal>

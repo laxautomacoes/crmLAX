@@ -6,6 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion'
 import { formatPhone } from '@/lib/utils/phone'
 import { analyzeLeadProbability } from '@/app/_actions/ai-analysis'
 import { toast } from 'sonner'
+import { MediaPreviewModal } from '@/components/shared/MediaPreviewModal'
 
 interface ClientListItemProps {
     client: any
@@ -325,30 +326,68 @@ function ClientLeadsSection({ client }: any) {
 
             {/* Anexos */}
             {(client.images?.length > 0 || client.videos?.length > 0 || client.documents?.length > 0) && (
-                <div className="space-y-4">
-                    <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Anexos</h4>
-                    <div className="grid grid-cols-1 gap-2">
-                        {client.images?.map((img: string, i: number) => (
-                            <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors">
-                                <ImageIcon size={14} className="text-blue-500" />
-                                <span className="truncate">Imagem {i + 1}</span>
-                            </a>
-                        ))}
-                        {client.videos?.map((vid: string, i: number) => (
-                            <a key={i} href={vid} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors">
-                                <Video size={14} className="text-purple-500" />
-                                <span className="truncate">Vídeo {i + 1}</span>
-                            </a>
-                        ))}
-                        {client.documents?.map((doc: any, i: number) => (
-                            <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors">
-                                <FileText size={14} className="text-emerald-500" />
-                                <span className="truncate">{doc.name || `Documento ${i + 1}`}</span>
-                            </a>
-                        ))}
-                    </div>
-                </div>
+                <ClientAttachments client={client} />
             )}
+        </div>
+    )
+}
+
+function ClientAttachments({ client }: { client: any }) {
+    const [previewOpen, setPreviewOpen] = useState(false)
+    const [previewIndex, setPreviewIndex] = useState(0)
+
+    const mediaItems = [
+        ...(client.images || []).map((img: string, i: number) => ({ type: 'image' as const, url: img, label: `Imagem ${i + 1}` })),
+        ...(client.videos || []).map((vid: string, i: number) => ({ type: 'video' as const, url: vid, label: `Vídeo ${i + 1}` }))
+    ]
+
+    return (
+        <div className="space-y-4">
+            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Anexos</h4>
+            <div className="grid grid-cols-1 gap-2">
+                {client.images?.map((img: string, i: number) => (
+                    <button
+                        key={i}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setPreviewIndex(i)
+                            setPreviewOpen(true)
+                        }}
+                        className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors text-left"
+                    >
+                        <ImageIcon size={14} className="text-blue-500" />
+                        <span className="truncate">Imagem {i + 1}</span>
+                    </button>
+                ))}
+                {client.videos?.map((vid: string, i: number) => (
+                    <button
+                        key={i}
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            const videoIndex = (client.images?.length || 0) + i
+                            setPreviewIndex(videoIndex)
+                            setPreviewOpen(true)
+                        }}
+                        className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors text-left"
+                    >
+                        <Video size={14} className="text-purple-500" />
+                        <span className="truncate">Vídeo {i + 1}</span>
+                    </button>
+                ))}
+                {client.documents?.map((doc: any, i: number) => (
+                    <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors" onClick={(e) => e.stopPropagation()}>
+                        <FileText size={14} className="text-emerald-500" />
+                        <span className="truncate">{doc.name || `Documento ${i + 1}`}</span>
+                    </a>
+                ))}
+            </div>
+
+            <MediaPreviewModal
+                isOpen={previewOpen}
+                onClose={() => setPreviewOpen(false)}
+                items={mediaItems}
+                initialIndex={previewIndex}
+            />
         </div>
     )
 }

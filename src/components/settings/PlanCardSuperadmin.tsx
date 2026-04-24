@@ -104,11 +104,11 @@ export default function PlanCardSuperadmin({ plan, onSaved }: PlanCardSuperadmin
     };
 
     const inputCls =
-        'w-full rounded-lg border border-border bg-muted px-2 py-1 text-sm text-foreground outline-none focus:ring-2 focus:ring-[#FFE600]/50 focus:border-[#FFE600] transition-all';
+        'w-full rounded-lg border border-border bg-muted px-2 py-1 text-sm text-foreground outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring transition-all';
 
     return (
         <div className={`relative flex flex-col rounded-2xl border bg-background p-6 transition-all ${
-            data.highlighted ? 'border-[#FFE600] shadow-xl shadow-[#FFE600]/10' : 'border-muted-foreground/50'
+            data.highlighted ? 'border-accent-icon shadow-xl shadow-accent-icon/10' : 'border-muted-foreground/50'
         }`}>
             {/* Badge "Mais Popular" toggle */}
             <button
@@ -124,7 +124,7 @@ export default function PlanCardSuperadmin({ plan, onSaved }: PlanCardSuperadmin
 
             {/* Ícone + Nome + Descrição */}
             <div className="mb-4 flex items-center gap-2 mt-2">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-full shrink-0 ${data.highlighted ? 'bg-[#FFE600]/20' : 'bg-muted'}`}>
+                <div className={`flex h-9 w-9 items-center justify-center rounded-full shrink-0 ${data.highlighted ? 'bg-accent-icon/20' : 'bg-muted'}`}>
                     {plan.icon}
                 </div>
                 <div className="flex-1 space-y-1">
@@ -194,7 +194,7 @@ export default function PlanCardSuperadmin({ plan, onSaved }: PlanCardSuperadmin
             </div>
 
             {/* AI Features */}
-            <div className="mb-4 rounded-xl bg-[#FFE600]/10 p-3">
+            <div className="mb-4 rounded-xl bg-accent-icon/10 p-3">
                 <p className="flex items-center gap-1.5 text-xs font-bold text-foreground mb-2">
                     <Sparkles className="h-3.5 w-3.5" /> Inteligência Artificial
                 </p>
@@ -321,7 +321,7 @@ function SortableFeatureItem({ id, text, onUpdate, onRemove, onToggleIcon, input
                 title={hasNoIcon ? "Ativar ícone de check" : "Desativar ícone de check"}
             >
                 {!hasNoIcon && (
-                    <Check className={`h-3.5 w-3.5 ${isAi ? 'text-[#FFE600]' : 'text-[#00B087]'}`} />
+                    <Check className={`h-3.5 w-3.5 ${isAi ? 'text-accent-icon' : 'text-[#00B087]'}`} />
                 )}
                 {hasNoIcon && (
                     <div className="h-1 w-1 rounded-full bg-muted-foreground/30" />

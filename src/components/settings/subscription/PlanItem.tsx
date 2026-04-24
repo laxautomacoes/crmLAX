@@ -8,7 +8,7 @@ import { SortableItem } from './SortableItem';
 const planIcons: Record<string, React.ReactNode> = {
     freemium: <Zap className="h-5 w-5 text-amber-500" />,
     starter: <Sparkles className="h-5 w-5 text-blue-500" />,
-    pro: <Crown className="h-5 w-5 text-[#FFE600]" />,
+    pro: <Crown className="h-5 w-5 text-accent-icon" />,
 };
 
 interface PlanItemProps {

@@ -254,8 +254,6 @@ export function DomainTab() {
                                                 records = isRoot
                                                     ? [
                                                         { type: 'A', host: '@', value: '76.76.21.21', label: 'IP Padrão' },
-                                                        { type: 'A', host: '@', value: '15.197.148.33', label: 'IP Anycast 1' },
-                                                        { type: 'A', host: '@', value: '3.33.130.190', label: 'IP Anycast 2' },
                                                         { type: 'CNAME', host: 'www', value: 'cname.vercel-dns.com', label: 'Subdomínio WWW' }
                                                     ]
                                                     : [

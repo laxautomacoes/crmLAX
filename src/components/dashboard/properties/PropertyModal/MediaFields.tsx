@@ -12,8 +12,7 @@ interface MediaFieldsProps {
 export function MediaFields({ formData, isUploading, handleFileUpload, removeFile }: MediaFieldsProps) {
     return (
         <div className="col-span-2 space-y-6">
-            <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
-                <ImageIcon size={14} className="text-foreground" />
+            <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-4">
                 Mídia e Documentos
             </h4>
 

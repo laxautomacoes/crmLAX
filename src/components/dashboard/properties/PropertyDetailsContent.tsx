@@ -293,7 +293,7 @@ export function PropertyDetailsContent({
                                                 onClick={() => setSelectedImageIndex(i)}
                                                 className={cn(
                                                     "relative flex-shrink-0 w-32 md:w-40 aspect-video rounded-2xl overflow-hidden transition-all snap-start",
-                                                    selectedImageIndex === i ? 'ring-2 ring-[#FFE600] scale-[0.98] shadow-lg' : 'opacity-70 hover:opacity-100'
+                                                    selectedImageIndex === i ? 'ring-2 ring-accent-icon scale-[0.98] shadow-lg' : 'opacity-70 hover:opacity-100'
                                                 )}
                                             >
                                                 <img src={url} className="w-full h-full object-cover" alt="" />
@@ -318,7 +318,7 @@ export function PropertyDetailsContent({
                                                     }}
                                                     className={cn(
                                                         "relative flex-shrink-0 w-32 md:w-40 aspect-video rounded-2xl overflow-hidden transition-all snap-start group bg-black",
-                                                        selectedImageIndex === (prop.images?.length || 0) + i ? 'ring-2 ring-[#FFE600] scale-[0.98]' : 'opacity-70 hover:opacity-100'
+                                                        selectedImageIndex === (prop.images?.length || 0) + i ? 'ring-2 ring-accent-icon scale-[0.98]' : 'opacity-70 hover:opacity-100'
                                                     )}
                                                 >
                                                     <div className="absolute inset-0 flex items-center justify-center z-10">

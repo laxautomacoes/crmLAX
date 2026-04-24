@@ -6,6 +6,7 @@ import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Lead } from './PipelineBoard'
 import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
+import { MediaPreviewModal } from '@/components/shared/MediaPreviewModal'
 
 interface LeadCardProps {
     lead: Lead
@@ -18,7 +19,15 @@ interface LeadCardProps {
 export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadCardProps) {
     const [showDropdown, setShowDropdown] = useState(false)
     const [isExpanded, setIsExpanded] = useState(false)
+    const [previewOpen, setPreviewOpen] = useState(false)
+    const [previewIndex, setPreviewIndex] = useState(0)
     const dropdownRef = useRef<HTMLDivElement>(null)
+
+    // Build media items for preview modal
+    const mediaItems = [
+        ...(lead.images || []).map((img: string, i: number) => ({ type: 'image' as const, url: img, label: `Imagem ${i + 1}` })),
+        ...(lead.videos || []).map((vid: string, i: number) => ({ type: 'video' as const, url: vid, label: `Vídeo ${i + 1}` }))
+    ]
 
     const {
         attributes,
@@ -52,7 +61,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
             {...attributes}
             {...listeners}
             onClick={() => !isDragging && setIsExpanded(!isExpanded)}
-            className={`bg-card p-4 rounded-2xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''} ${isExpanded ? 'shadow-sm' : ''}`}
+            className={`bg-white dark:bg-card p-4 rounded-2xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''} ${isExpanded ? 'shadow-sm' : ''}`}
         >
             <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -191,19 +200,36 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
                                 <h5 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">Anexos</h5>
                                 <div className="grid grid-cols-1 gap-1">
                                     {lead.images?.map((img: string, i: number) => (
-                                        <a key={i} href={img} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors">
+                                        <button
+                                            key={i}
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                setPreviewIndex(i)
+                                                setPreviewOpen(true)
+                                            }}
+                                            className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors text-left"
+                                        >
                                             <ImageIcon size={10} className="text-blue-500" />
                                             <span className="truncate">Imagem {i + 1}</span>
-                                        </a>
+                                        </button>
                                     ))}
                                     {lead.videos?.map((vid: string, i: number) => (
-                                        <a key={i} href={vid} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors">
+                                        <button
+                                            key={i}
+                                            onClick={(e) => {
+                                                e.stopPropagation()
+                                                const videoIndex = (lead.images?.length || 0) + i
+                                                setPreviewIndex(videoIndex)
+                                                setPreviewOpen(true)
+                                            }}
+                                            className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors text-left"
+                                        >
                                             <Video size={10} className="text-purple-500" />
                                             <span className="truncate">Vídeo {i + 1}</span>
-                                        </a>
+                                        </button>
                                     ))}
                                     {lead.documents?.map((doc: any, i: number) => (
-                                        <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors">
+                                        <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors" onClick={(e) => e.stopPropagation()}>
                                             <FileText size={10} className="text-emerald-500" />
                                             <span className="truncate">{doc.name || `Doc ${i + 1}`}</span>
                                         </a>
@@ -222,6 +248,13 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
                     </motion.div>
                 )}
             </AnimatePresence>
+
+            <MediaPreviewModal
+                isOpen={previewOpen}
+                onClose={() => setPreviewOpen(false)}
+                items={mediaItems}
+                initialIndex={previewIndex}
+            />
         </div>
     )
 }

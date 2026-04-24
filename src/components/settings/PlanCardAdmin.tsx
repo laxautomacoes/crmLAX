@@ -37,7 +37,7 @@ export default function PlanCardAdmin({
             onClick={onSelect}
             className={`relative flex flex-col rounded-2xl border bg-background p-6 transition-all cursor-pointer hover:shadow-xl hover:-translate-y-1 ${
                 isSelected
-                    ? 'border-[#FFE600] shadow-lg shadow-[#FFE600]/10'
+                    ? 'border-accent-icon shadow-lg shadow-accent-icon/10'
                     : 'border-muted-foreground/50'
             } ${isCurrent ? 'ring-2 ring-primary/30 !cursor-default !hover:translate-y-0 !hover:shadow-none' : ''}`}
         >
@@ -53,7 +53,7 @@ export default function PlanCardAdmin({
             )}
 
             <div className="mb-4 flex items-center gap-2">
-                <div className={`flex h-9 w-9 items-center justify-center rounded-full ${plan.highlighted ? 'bg-[#FFE600]/20' : 'bg-muted'}`}>
+                <div className={`flex h-9 w-9 items-center justify-center rounded-full ${plan.highlighted ? 'bg-accent-icon/20' : 'bg-muted'}`}>
                     {plan.icon}
                 </div>
                 <div>
@@ -81,7 +81,7 @@ export default function PlanCardAdmin({
             </ul>
 
             {plan.aiFeatures.length > 0 && (
-                <div className="mb-4 rounded-xl bg-[#FFE600]/10 p-3 space-y-2">
+                <div className="mb-4 rounded-xl bg-accent-icon/10 p-3 space-y-2">
                     <p className="flex items-center gap-1.5 text-xs font-bold text-foreground">
                         <Sparkles className="h-3.5 w-3.5" /> Inteligência Artificial
                     </p>
@@ -90,7 +90,7 @@ export default function PlanCardAdmin({
                         const displayText = hasNoIcon ? f.replace('[no-icon]', '').trim() : f.replace('IA: ', '');
                         return (
                             <p key={f} className={`flex items-start gap-2 text-xs text-foreground/80 ${hasNoIcon ? 'ml-5' : ''}`}>
-                                {!hasNoIcon && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-[#FFE600]" />}
+                                {!hasNoIcon && <Check className="mt-0.5 h-3.5 w-3.5 shrink-0 text-accent-icon" />}
                                 {displayText}
                             </p>
                         );

@@ -34,8 +34,8 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
 
     if (!hasAIAccess) {
         return (
-            <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-[#FFE600]/30 bg-gradient-to-br from-[#404F4F]/5 to-[#FFE600]/10 p-8 text-center">
-                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-[#FFE600]/20">
+            <div className="flex flex-col items-center justify-center gap-4 rounded-2xl border border-accent-icon/30 bg-gradient-to-br from-[#404F4F]/5 to-accent-icon/10 p-8 text-center">
+                <div className="flex h-12 w-12 items-center justify-center rounded-full bg-accent-icon/20">
                     <Sparkles className="h-6 w-6 text-[#404F4F]" />
                 </div>
                 <div>
@@ -87,11 +87,11 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
     return (
         <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6">
             <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-[#FFE600]/20">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-icon/20">
                     <Sparkles className="h-4 w-4 text-[#404F4F]" />
                 </div>
                 <h3 className="font-bold text-[#404F4F]">Análise de IA</h3>
-                <span className="ml-auto rounded-full bg-[#FFE600]/20 px-2 py-0.5 text-xs font-bold text-[#404F4F]">Pro</span>
+                <span className="ml-auto rounded-full bg-accent-icon/20 px-2 py-0.5 text-xs font-bold text-[#404F4F]">Pro</span>
             </div>
 
             {errorMsg && (

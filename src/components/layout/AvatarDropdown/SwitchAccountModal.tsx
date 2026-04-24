@@ -89,7 +89,7 @@ export function SwitchAccountModal({ isOpen, onClose, currentEmail }: SwitchAcco
                                     disabled={switching !== null}
                                     className={`flex items-center justify-between p-3 rounded-xl border transition-all group ${
                                         isCurrent 
-                                        ? 'border-[#FFE600]/50 bg-[#FFE600]/10' 
+                                        ? 'border-accent-icon/50 bg-accent-icon/10' 
                                         : 'border-border hover:border-primary/30 hover:bg-muted/50'
                                     }`}
                                 >

@@ -11,8 +11,7 @@ interface DescriptionFieldProps {
 export function DescriptionField({ formData, setFormData }: DescriptionFieldProps) {
     return (
         <div className="space-y-4">
-            <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2 mb-4">
-                <Info size={14} className="text-foreground" />
+            <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-4">
                 DESCRIÇÃO
                 <span className="ml-1 text-[10px] font-normal italic normal-case text-muted-foreground">
                     (detalhes do imóvel)
