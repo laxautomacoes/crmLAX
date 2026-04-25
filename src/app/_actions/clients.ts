@@ -24,6 +24,12 @@ export interface ClientData {
     marital_status?: string
     birth_date?: string
     primary_interest?: string
+    property_regime?: string
+    spouse_name?: string
+    spouse_email?: string
+    spouse_phone?: string
+    spouse_cpf?: string
+    spouse_birth_date?: string
     images?: string[]
     videos?: string[]
     documents?: { name: string, url: string }[]
@@ -64,7 +70,8 @@ export async function getClients(tenantId: string) {
             title
         ),
         lead_stages (
-            name
+            name,
+            color
         ),
         interactions (
             content,
@@ -92,8 +99,8 @@ export async function getClients(tenantId: string) {
         // Pegar a última nota/mensagem
         const lastInteraction = activeLead?.interactions?.[0]?.content
 
-        // Interesse prioritário: Property linkado, depois source
-        const interest = activeLead?.properties?.title || activeLead?.source || 'N/A'
+        // Interesse prioritário: property_interest (texto livre), depois Property linkado, depois source
+        const interest = activeLead?.property_interest || activeLead?.properties?.title || activeLead?.source || 'N/A'
 
         return {
             id: contact.id,
@@ -111,6 +118,12 @@ export async function getClients(tenantId: string) {
             marital_status: contact.marital_status,
             birth_date: contact.birth_date,
             primary_interest: contact.primary_interest,
+            property_regime: contact.property_regime,
+            spouse_name: contact.spouse_name,
+            spouse_email: contact.spouse_email,
+            spouse_phone: contact.spouse_phone,
+            spouse_cpf: contact.spouse_cpf,
+            spouse_birth_date: contact.spouse_birth_date,
             created_at: contact.created_at,
             interest,
             value: 0, // Implementar lógica de valor baseada em properties depois
@@ -121,9 +134,12 @@ export async function getClients(tenantId: string) {
             documents: contact.documents || [],
             broker_name: (activeLead as any)?.profiles?.full_name || 'Não atribuído',
             assigned_to: activeLead?.assigned_to,
-            leads: ((contact.leads as any[]) || []).map((l) => ({
+            leads: ((contact.leads as any[]) || [])
+                .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                .map((l) => ({
                 ...l,
-                status_name: l.lead_stages?.name || l.status
+                status_name: l.lead_stages?.name || l.status,
+                status_color: l.lead_stages?.color || null
             }))
         }
     })
@@ -161,6 +177,12 @@ export async function createNewClient(tenantId: string, data: ClientData) {
             marital_status: data.marital_status,
             birth_date: data.birth_date || null,
             primary_interest: data.primary_interest,
+            property_regime: data.property_regime,
+            spouse_name: data.spouse_name,
+            spouse_email: data.spouse_email,
+            spouse_phone: data.spouse_phone ? cleanPhone(data.spouse_phone) : null,
+            spouse_cpf: data.spouse_cpf,
+            spouse_birth_date: data.spouse_birth_date || null,
             notes: data.notes,
             images: data.images || [],
             videos: data.videos || [],
@@ -216,6 +238,12 @@ export async function updateClient(clientId: string, data: Partial<ClientData>) 
             marital_status: data.marital_status,
             birth_date: data.birth_date || null,
             primary_interest: data.primary_interest,
+            property_regime: data.property_regime,
+            spouse_name: data.spouse_name,
+            spouse_email: data.spouse_email,
+            spouse_phone: data.spouse_phone ? cleanPhone(data.spouse_phone) : null,
+            spouse_cpf: data.spouse_cpf,
+            spouse_birth_date: data.spouse_birth_date || null,
             notes: data.notes,
             images: data.images,
             videos: data.videos,

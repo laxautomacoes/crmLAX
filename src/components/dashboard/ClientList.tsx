@@ -65,6 +65,12 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         marital_status: '',
         birth_date: '',
         primary_interest: '',
+        property_regime: '',
+        spouse_name: '',
+        spouse_email: '',
+        spouse_phone: '',
+        spouse_cpf: '',
+        spouse_birth_date: '',
         notes: '',
         images: [] as string[],
         videos: [] as string[],
@@ -104,7 +110,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
 
     const handleSearchAddress = async () => {
         const { address_street: rua, address_city: cidade, address_state: estado } = formData
-        
+
         if (!estado || estado.length !== 2) {
             toast.error('Informe o estado (UF) com 2 letras')
             return
@@ -205,15 +211,15 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     const filteredClients = clients.filter(client => {
         const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             client.email.toLowerCase().includes(searchTerm.toLowerCase())
-        
+
         const matchesBroker = filters.brokerId === 'all' || client.assigned_to === filters.brokerId
 
-        const matchesInterest = !filters.interest || 
+        const matchesInterest = !filters.interest ||
             (client.interest && client.interest.toLowerCase().includes(filters.interest.toLowerCase())) ||
             (client.primary_interest && client.primary_interest.toLowerCase().includes(filters.interest.toLowerCase()))
 
         const matchesPrimaryInterest = !filters.primaryInterest || client.primary_interest === filters.primaryInterest
-        
+
         const matchesMaritalStatus = !filters.maritalStatus || client.marital_status === filters.maritalStatus
 
         const clientDate = client.created_at ? new Date(client.created_at) : null
@@ -251,6 +257,12 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             marital_status: client.marital_status || '',
             birth_date: client.birth_date || '',
             primary_interest: client.primary_interest || '',
+            property_regime: client.property_regime || '',
+            spouse_name: client.spouse_name || '',
+            spouse_email: client.spouse_email || '',
+            spouse_phone: client.spouse_phone ? formatPhone(client.spouse_phone) : '',
+            spouse_cpf: client.spouse_cpf || '',
+            spouse_birth_date: client.spouse_birth_date || '',
             notes: client.notes || '',
             images: client.images || [],
             videos: client.videos || [],
@@ -277,6 +289,12 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             marital_status: '',
             birth_date: '',
             primary_interest: '',
+            property_regime: '',
+            spouse_name: '',
+            spouse_email: '',
+            spouse_phone: '',
+            spouse_cpf: '',
+            spouse_birth_date: '',
             notes: '',
             images: [],
             videos: [],
@@ -341,6 +359,12 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     marital_status: '',
                     birth_date: '',
                     primary_interest: '',
+                    property_regime: '',
+                    spouse_name: '',
+                    spouse_email: '',
+                    spouse_phone: '',
+                    spouse_cpf: '',
+                    spouse_birth_date: '',
                     notes: '',
                     images: [],
                     videos: [],
@@ -369,27 +393,25 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         <Plus size={18} />
                         Novo Cliente
                     </button>
-                    
+
                     {/* View Toggle */}
                     <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm w-fit order-2 md:order-2">
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-1.5 rounded-md transition-all ${
-                                viewMode === 'list' 
-                                    ? 'bg-secondary text-secondary-foreground' 
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list'
+                                    ? 'bg-secondary text-secondary-foreground'
                                     : 'text-muted-foreground hover:bg-muted'
-                            }`}
+                                }`}
                             title="Visualização em Lista"
                         >
                             <List size={18} />
                         </button>
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-1.5 rounded-md transition-all ${
-                                viewMode === 'grid' 
-                                    ? 'bg-secondary text-secondary-foreground' 
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid'
+                                    ? 'bg-secondary text-secondary-foreground'
                                     : 'text-muted-foreground hover:bg-muted'
-                            }`}
+                                }`}
                             title="Visualização em Quadro"
                         >
                             <LayoutGrid size={18} />
@@ -441,10 +463,11 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         <table className="w-full text-left">
                             <thead className="bg-muted/50 border-b border-muted-foreground/30">
                                 <tr>
-                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Cliente</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Contato</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell">Leads e Interesses</th>
-                                    <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Detalhes</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Cliente</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Contato</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell">Leads</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell">Status</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center w-16"></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-muted-foreground/30">
@@ -495,11 +518,22 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title={editingClientId ? "Editar Cliente" : "Novo Cliente"}
+                size="lg"
+                extraHeaderContent={
+                    <button
+                        type="submit"
+                        form="client-form"
+                        disabled={loading}
+                        className="bg-secondary text-secondary-foreground font-bold px-4 py-1.5 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 text-sm shadow-sm whitespace-nowrap"
+                    >
+                        {loading ? 'Salvando...' : (editingClientId ? 'Atualizar Dados' : 'Criar Cliente')}
+                    </button>
+                }
             >
-                <form onSubmit={handleSubmit} className="space-y-6 max-h-[70vh] overflow-y-auto px-1">
-                    {/* Informações Pessoais */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Informações Pessoais</h3>
+                <form id="client-form" onSubmit={handleSubmit} className="space-y-6 max-h-[70vh] overflow-y-auto px-1 pb-4">
+                    {/* Dados Pessoais */}
+                    <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-4 shadow-sm">
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2">Dados Pessoais</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
                                 <FormInput
@@ -563,12 +597,65 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                     { value: 'União Estável', label: 'União Estável' }
                                 ]}
                             />
+                            <FormSelect
+                                label="Regime de Comunhão"
+                                value={formData.property_regime}
+                                onChange={e => setFormData({ ...formData, property_regime: e.target.value })}
+                                options={[
+                                    { value: '', label: 'Selecione...' },
+                                    { value: 'Comunhão Parcial', label: 'Comunhão Parcial' },
+                                    { value: 'Comunhão Universal', label: 'Comunhão Universal' },
+                                    { value: 'Separação Total', label: 'Separação Total' },
+                                    { value: 'Separação Obrigatória', label: 'Separação Obrigatória' },
+                                    { value: 'Participação Final nos Aquestos', label: 'Participação Final nos Aquestos' }
+                                ]}
+                            />
+                        </div>
+
+                        {/* Cônjuge | Sócio */}
+                        <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
+                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Cônjuge | Sócio</h4>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <FormInput
+                                        label="Nome Completo"
+                                        value={formData.spouse_name}
+                                        onChange={e => setFormData({ ...formData, spouse_name: e.target.value })}
+                                        placeholder="Nome do cônjuge ou sócio"
+                                    />
+                                </div>
+                                <FormInput
+                                    label="E-mail"
+                                    type="email"
+                                    value={formData.spouse_email}
+                                    onChange={e => setFormData({ ...formData, spouse_email: e.target.value })}
+                                    placeholder="email@exemplo.com"
+                                />
+                                <FormInput
+                                    label="Telefone / WhatsApp"
+                                    value={formData.spouse_phone}
+                                    onChange={e => setFormData({ ...formData, spouse_phone: formatPhone(e.target.value) })}
+                                    placeholder="(48) 99999 9999"
+                                />
+                                <FormInput
+                                    label="CPF"
+                                    value={formData.spouse_cpf}
+                                    onChange={e => setFormData({ ...formData, spouse_cpf: e.target.value })}
+                                    placeholder="000.000.000-00"
+                                />
+                                <FormInput
+                                    label="Data de Nascimento"
+                                    type="date"
+                                    value={formData.spouse_birth_date}
+                                    onChange={e => setFormData({ ...formData, spouse_birth_date: e.target.value })}
+                                />
+                            </div>
                         </div>
                     </div>
 
                     {/* Endereço */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Endereço</h3>
+                    <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-4 shadow-sm">
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2">Endereço</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormInput
                                 label={
@@ -659,73 +746,29 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         </div>
                     </div>
 
-                    {/* Interesse */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Interesse</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <FormSelect
-                                label="Tipo de Interesse"
-                                value={formData.primary_interest}
-                                onChange={e => setFormData({ ...formData, primary_interest: e.target.value })}
-                                options={[
-                                    { value: '', label: 'Selecione...' },
-                                    { value: 'compra', label: 'Compra' },
-                                    { value: 'venda', label: 'Venda' },
-                                    { value: 'aluguel', label: 'Aluguel' }
-                                ]}
-                            />
-                            <div className="md:col-span-2">
-                                <FormTextarea
-                                    label="Detalhes do Interesse"
-                                    value={formData.interest}
-                                    onChange={e => setFormData({ ...formData, interest: e.target.value })}
-                                    placeholder="Ex: Apartamento 3 dormitórios no Centro"
-                                    rows={2}
-                                />
-                            </div>
-                        </div>
+                    {/* Notas */}
+                    <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-4 shadow-sm">
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2">Notas</h3>
+                        <FormTextarea
+                            label="Notas/Observações"
+                            value={formData.notes}
+                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            placeholder="Alguma observação importante sobre o cliente..."
+                            rows={3}
+                        />
                     </div>
 
-                    {/* Notas e Anexos */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-primary uppercase tracking-wider border-b border-border pb-2">Notas e Anexos</h3>
-                        <div className="space-y-4">
-                            <FormTextarea
-                                label="Notas/Observações"
-                                value={formData.notes}
-                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                placeholder="Alguma observação importante sobre o cliente..."
-                                rows={3}
-                            />
-                            
-                            <div className="space-y-3">
-                                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider opacity-70">Anexos</h4>
-                                <MediaUpload
-                                    pathPrefix={`clients/${tenantId}`}
-                                    images={formData.images}
-                                    videos={formData.videos}
-                                    documents={formData.documents}
-                                    onUpload={handleMediaUpload}
-                                    onRemove={handleMediaRemove}
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    <div className="flex gap-3 pt-4 sticky bottom-0 bg-background pb-2">
-                        <button
-                            type="button"
-                            onClick={() => setIsModalOpen(false)}
-                            className="flex-1 px-4 py-2.5 rounded-lg font-bold border border-border bg-muted text-foreground hover:bg-muted/80 transition-all text-sm"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            disabled={loading}
-                            className="flex-1 bg-secondary text-secondary-foreground font-bold py-2.5 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 text-sm shadow-sm"
-                        >
-                            {loading ? 'Salvando...' : (editingClientId ? 'Atualizar Dados' : 'Criar Cliente')}
-                        </button>
+                    {/* Mídias e Docs */}
+                    <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-4 shadow-sm">
+                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2">Mídias e Docs</h3>
+                        <MediaUpload
+                            pathPrefix={`clients/${tenantId}`}
+                            images={formData.images}
+                            videos={formData.videos}
+                            documents={formData.documents}
+                            onUpload={handleMediaUpload}
+                            onRemove={handleMediaRemove}
+                        />
                     </div>
                 </form>
             </Modal>

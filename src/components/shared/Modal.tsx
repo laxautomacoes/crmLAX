@@ -36,8 +36,8 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4">
-            <div className={`bg-card rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative`}>
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+            <div onClick={(e) => e.stopPropagation()} className={`bg-card rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative`}>
                 {title ? (
                     <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0 gap-4">
                         <div className={`flex-1 min-w-0 ${titleClassName || ''}`}>

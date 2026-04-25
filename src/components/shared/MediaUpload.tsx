@@ -74,26 +74,26 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                     <ImageIcon size={14} />
                     Imagens
                 </h4>
-                <div className="grid grid-cols-5 sm:grid-cols-8 md:grid-cols-10 gap-2">
+                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
                     {images.map((url, index) => (
-                        <div key={index} className="relative aspect-square rounded-lg overflow-hidden group border border-border">
+                        <div key={index} className="relative aspect-square rounded-xl overflow-hidden group border border-border shadow-sm">
                             <img src={url} alt={`Upload ${index}`} className="w-full h-full object-cover" />
                             <button
                                 type="button"
                                 onClick={() => onRemove('images', index)}
-                                className="absolute top-1 right-1 p-1 bg-destructive/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
+                                className="absolute top-1.5 right-1.5 p-1.5 bg-destructive/90 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-lg z-10"
                             >
-                                <X size={10} />
+                                <X size={12} />
                             </button>
                         </div>
                     ))}
-                    <label className="aspect-square rounded-lg bg-background hover:bg-muted/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-dashed border-border shadow-sm">
+                    <label className="aspect-square rounded-xl bg-background hover:bg-muted/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-dashed border-border shadow-sm hover:border-primary/30">
                         {isUploading === 'images' ? (
-                            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+                            <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                         ) : (
                             <>
-                                <Upload size={14} className="text-muted-foreground mb-1" />
-                                <span className="text-[8px] font-bold text-muted-foreground text-center px-1">Carregar imagem</span>
+                                <Upload size={20} className="text-muted-foreground mb-1.5" />
+                                <span className="text-[10px] font-bold text-muted-foreground text-center px-1">Carregar imagem</span>
                             </>
                         )}
                         <input
@@ -114,9 +114,9 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                     <Film size={14} />
                     Vídeos
                 </h4>
-                <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-2">
+                <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
                     {videos.map((url, index) => (
-                        <div key={index} className="relative aspect-video rounded-lg overflow-hidden group bg-black flex items-center justify-center border border-border/60 shadow-sm">
+                        <div key={index} className="relative aspect-video rounded-xl overflow-hidden group bg-black flex items-center justify-center border border-border/60 shadow-sm">
                             <video 
                                 src={`${url}#t=0.1`} 
                                 className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
@@ -125,7 +125,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                                 playsInline
                             />
                             <div className="absolute inset-0 flex items-center justify-center pointer-events-none opacity-40 group-hover:opacity-20 transition-opacity">
-                                <Film size={24} className="text-white" />
+                                <Film size={28} className="text-white" />
                             </div>
                             <button
                                 type="button"
@@ -136,13 +136,13 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                             </button>
                         </div>
                     ))}
-                    <label className="aspect-video rounded-lg bg-background hover:bg-muted/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-dashed border-border shadow-sm">
+                    <label className="aspect-video rounded-xl bg-background hover:bg-muted/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-dashed border-border shadow-sm hover:border-primary/30">
                         {isUploading === 'videos' ? (
-                            <Loader2 className="w-5 h-5 text-muted-foreground animate-spin" />
+                            <Loader2 className="w-6 h-6 text-muted-foreground animate-spin" />
                         ) : (
                             <>
-                                <Upload size={16} className="text-muted-foreground mb-1" />
-                                <span className="text-[9px] font-bold text-muted-foreground">Carregar vídeo</span>
+                                <Upload size={20} className="text-muted-foreground mb-1.5" />
+                                <span className="text-[10px] font-bold text-muted-foreground">Carregar vídeo</span>
                             </>
                         )}
                         <input

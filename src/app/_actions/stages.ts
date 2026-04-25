@@ -160,3 +160,17 @@ export async function duplicateStage(tenantId: string, stageId: string) {
     // 4. Criar nova cópia
     return await createStage(tenantId, newName);
 }
+
+export async function updateStageColor(stageId: string, color: string) {
+    const supabase = await createClient();
+
+    const { error } = await supabase
+        .from('lead_stages')
+        .update({ color })
+        .eq('id', stageId);
+
+    if (error) return { success: false, error: error.message };
+
+    revalidatePath('/leads');
+    return { success: true };
+}

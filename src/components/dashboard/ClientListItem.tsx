@@ -60,58 +60,89 @@ export function ClientListItem({
 
     return (
         <>
-            <tr className={`hover:bg-muted/50 transition-colors cursor-pointer group ${isExpanded ? 'bg-muted/50' : ''}`} onClick={onToggle}>
-                <td className="px-6 py-5">
-                    <div className="flex flex-col text-left">
-                            <span className="font-bold text-foreground">{client.name}</span>
-                            {client.broker_name && (
-                                <span className="text-[10px] text-primary flex items-center gap-1 uppercase tracking-wider font-bold mt-0.5">
-                                    {client.broker_name}
-                                </span>
-                            )}
+            <tr className={`hover:bg-muted/50 transition-colors cursor-pointer group ${isExpanded ? 'bg-slate-100 dark:bg-transparent' : ''}`} onClick={onToggle}>
+                <td className="px-4 py-5 text-center">
+                    <span className="font-bold text-foreground">{client.name}</span>
+                </td>
+                <td className="px-4 py-5">
+                    <div className="flex flex-col items-center justify-center gap-1 text-sm whitespace-nowrap">
+                        <div className="flex items-center justify-center gap-1.5">
+                            <span className="text-foreground font-medium">{formatPhone(client.phone)}</span>
+                            <a
+                                href={`https://wa.me/55${client.phone.replace(/\D/g, '')}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="p-1 bg-emerald-500/10 text-emerald-600 rounded-md hover:bg-emerald-500/20 transition-colors"
+                                title="Abrir no WhatsApp"
+                                onClick={(e) => e.stopPropagation()}
+                            >
+                                <MessageSquare size={12} />
+                            </a>
                         </div>
-                </td>
-                <td className="px-6 py-5">
-                    <div className="flex flex-col text-sm items-center">
-                        <span className="text-foreground font-medium flex items-center gap-1.5">
-                            <Phone size={14} className="text-muted-foreground/50" /> {formatPhone(client.phone)}
-                        </span>
-                        <span className="text-muted-foreground text-xs flex items-center gap-1.5 mt-0.5">
-                            <Mail size={14} className="text-muted-foreground/50" /> {client.email}
-                        </span>
+                        {client.email && (
+                            <div className="flex items-center justify-center gap-1.5">
+                                <span className="text-sm font-medium text-foreground max-w-[180px] truncate">{client.email}</span>
+                                <a
+                                    href={`mailto:${client.email}`}
+                                    onClick={(e) => e.stopPropagation()}
+                                    className="p-1 bg-blue-500/10 text-blue-600 rounded-md hover:bg-blue-500/20 transition-colors"
+                                    title="Enviar e-mail"
+                                >
+                                    <Mail size={12} />
+                                </a>
+                            </div>
+                        )}
                     </div>
                 </td>
-                <td className="px-6 py-5 hidden lg:table-cell">
-                    <div className="flex flex-wrap gap-2 justify-center items-center">
-                        <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider font-medium mr-1">
-                            {new Date(client.created_at).toLocaleDateString('pt-BR')}
-                        </span>
+                <td className="px-4 py-5 hidden lg:table-cell text-center">
+                    <div className="flex flex-col gap-0.5 items-center">
                         {client.leads && client.leads.length > 0 ? (
-                            <span className="px-2 py-0.5 bg-green-50 text-green-600 text-[10px] font-bold rounded uppercase border border-green-100">
-                                {client.leads.length} {client.leads.length === 1 ? 'Lead Ativo' : 'Leads Ativos'}
-                            </span>
+                            client.leads.map((lead: any, i: number) => (
+                                <span key={i} className="text-sm font-medium text-foreground truncate max-w-[200px] block">
+                                    {lead.property_interest || lead.properties?.title || lead.source || 'Sem interesse'}
+                                </span>
+                            ))
                         ) : (
-                            <span className="px-2 py-0.5 bg-muted text-muted-foreground text-[10px] font-bold rounded uppercase border border-border">
-                                Sem Leads
-                            </span>
-                        )}
-                        {client.interest && (
-                            <span className="px-2 py-0.5 bg-blue-50 text-blue-600 text-[10px] font-bold rounded uppercase border border-blue-100">
-                                {client.interest}
-                            </span>
+                            <span className="text-sm text-muted-foreground">Sem leads</span>
                         )}
                     </div>
                 </td>
-                <td className="px-6 py-5 text-right">
-                    <div className="flex items-center justify-center gap-2">
-                        <button className={`p-2 rounded-lg bg-card border border-border group-hover:border-border/80 transition-all ${isExpanded ? 'rotate-180 shadow-sm' : ''}`}>
-                            <ChevronDown size={18} className="text-muted-foreground" />
-                        </button>
+                <td className="px-4 py-5 hidden lg:table-cell text-center">
+                    <div className="flex flex-col gap-1 items-center">
+                        {client.leads && client.leads.length > 0 ? (
+                            client.leads.map((lead: any, i: number) => {
+                                const c = lead.status_color
+                                const isLight = c && ['#FFFFFF', '#FACC15', '#FDE047', '#FEF08A', '#FCD34D'].includes(c.toUpperCase())
+                                return (
+                                    <span
+                                        key={i}
+                                        className="px-2.5 py-0.5 text-[10px] font-medium rounded-full uppercase whitespace-nowrap"
+                                        style={c ? {
+                                            backgroundColor: c,
+                                            color: isLight ? '#1a1a1a' : '#ffffff',
+                                        } : {
+                                            backgroundColor: 'var(--secondary)',
+                                            color: 'var(--foreground)',
+                                            opacity: 0.6
+                                        }}
+                                    >
+                                        {lead.status_name || lead.status || '—'}
+                                    </span>
+                                )
+                            })
+                        ) : (
+                            <span className="text-xs text-muted-foreground">—</span>
+                        )}
                     </div>
+                </td>
+                <td className="px-4 py-5 text-center w-16">
+                    <button className={`p-2 rounded-lg bg-card border border-border group-hover:border-border/80 transition-all ${isExpanded ? 'rotate-180 shadow-sm' : ''}`}>
+                        <ChevronDown size={18} className="text-muted-foreground" />
+                    </button>
                 </td>
             </tr>
             <tr>
-                <td colSpan={4} className="p-0 border-none">
+                <td colSpan={5} className="p-0 border-none">
                     <AnimatePresence>
                         {isExpanded && (
                             <motion.div
@@ -119,7 +150,8 @@ export function ClientListItem({
                                 animate={{ height: 'auto', opacity: 1 }}
                                 exit={{ height: 0, opacity: 0 }}
                                 transition={{ duration: 0.25, ease: "easeInOut" }}
-                                className="overflow-hidden bg-card/50"
+                                className="overflow-hidden"
+                                style={{ backgroundColor: 'var(--background)' }}
                             >
                                 <ClientExpandedContent
                                     client={client}
@@ -153,115 +185,228 @@ function ClientExpandedContent({
     setIsAnalyzed
 }: any) {
     return (
-        <div className="px-10 py-8 grid grid-cols-1 lg:grid-cols-12 gap-10 border-t border-border">
-            {/* Sidebar: Infos & Ações */}
-            <div className="lg:col-span-3 space-y-6">
-                <div className="space-y-4">
-                    <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Dados de Contato</h4>
-                    <div className="bg-card p-4 rounded-xl border border-border space-y-3 shadow-sm">
-                        <div className="flex items-center gap-3 text-sm text-foreground">
-                            <Mail size={16} className="text-muted-foreground" />
-                            <span className="truncate">{client.email}</span>
-                        </div>
-                        <div className="flex items-center justify-between gap-3 text-sm text-foreground">
-                            <div className="flex items-center gap-3">
-                                <Phone size={16} className="text-muted-foreground" />
-                                {formatPhone(client.phone)}
-                            </div>
-                            <a
-                                href={`https://wa.me/55${client.phone.replace(/\D/g, '')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="p-1.5 bg-emerald-500/10 text-emerald-600 rounded-lg hover:bg-emerald-500/20 transition-colors"
-                                title="Abrir no WhatsApp"
-                                onClick={(e) => e.stopPropagation()}
-                            >
-                                <MessageSquare size={14} />
-                            </a>
-                        </div>
-                        {client.cpf && (
-                            <div className="flex items-center gap-3 text-sm text-foreground">
-                                <IdCard size={16} className="text-muted-foreground" />
-                                {client.cpf}
-                            </div>
-                        )}
-                        <div className="flex items-center gap-3 text-sm text-foreground pt-2 border-t border-border">
-                            <Calendar size={16} className="text-muted-foreground" />
-                            Cliente desde {new Date(client.created_at).toLocaleDateString('pt-BR')}
-                        </div>
-                    </div>
-                </div>
-
-                {(client.marital_status || client.birth_date || client.primary_interest) && (
-                    <div className="space-y-4">
-                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Informações Adicionais</h4>
-                        <div className="bg-card p-4 rounded-xl border border-border space-y-3 shadow-sm">
-                            {client.birth_date && (
-                                <div className="flex items-center gap-3 text-sm text-foreground">
-                                    <Calendar size={16} className="text-muted-foreground" />
-                                    Nascimento: {new Date(client.birth_date).toLocaleDateString('pt-BR')}
-                                </div>
-                            )}
-                            {client.marital_status && (
-                                <div className="flex items-center gap-3 text-sm text-foreground">
-                                    <Heart size={16} className="text-muted-foreground" />
-                                    {client.marital_status}
-                                </div>
-                            )}
-                            {client.primary_interest && (
-                                <div className="flex items-center gap-3 text-sm text-foreground">
-                                    <Target size={16} className="text-muted-foreground" />
-                                    Interesse em <span className="font-bold capitalize">{client.primary_interest}</span>
-                                </div>
-                            )}
-                        </div>
-                    </div>
-                )}
-
-                {client.address_street && (
-                    <div className="space-y-4">
-                        <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Endereço</h4>
-                        <div className="bg-card p-4 rounded-xl border border-border space-y-2 shadow-sm">
-                            <div className="flex items-start gap-3 text-sm text-foreground">
-                                <MapPin size={16} className="text-muted-foreground mt-0.5" />
-                                <div className="flex flex-col">
-                                    <span>{client.address_street}, {client.address_number}</span>
-                                    {client.address_complement && <span className="text-xs text-muted-foreground">{client.address_complement}</span>}
-                                    <span>{client.address_neighborhood}</span>
-                                    <span>{client.address_city} - {client.address_state}</span>
-                                    {client.address_zip_code && <span className="text-xs text-muted-foreground">{client.address_zip_code}</span>}
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                )}
-
-                <div className="flex flex-col gap-2 pt-4">
+        <div className="px-6 py-8 flex flex-col gap-8 border-t border-border">
+            <div className="w-full flex justify-end">
+                <div className="flex flex-row gap-2 w-full sm:w-auto">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm"
+                        title="Editar Cadastro"
                     >
-                        <Edit size={16} /> Editar Cadastro
+                        <Edit size={13} /> Editar
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onArchive(); }}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm"
+                        title="Arquivar Cliente"
                     >
-                        <Archive size={16} /> Arquivar Cliente
+                        <Archive size={13} /> Arquivar
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-2.5 bg-[#EF4444] text-white rounded-lg text-sm font-bold hover:bg-[#DC2626] transition-colors shadow-sm"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-[#EF4444] text-white rounded-lg text-sm font-bold hover:bg-[#DC2626] transition-colors shadow-sm"
+                        title="Excluir Cliente"
                     >
-                        <Trash2 size={16} /> Excluir Cliente
+                        <Trash2 size={13} /> Excluir
                     </button>
                 </div>
             </div>
 
-            {/* Centro: Leads & Notas */}
-            <ClientLeadsSection client={client} />
+            <div className="space-y-4 w-full">
+                {/* Dados Pessoais & Endereço */}
+                <div className="flex flex-col md:flex-row gap-3 w-full">
+                    <div className="bg-muted/30 p-4 rounded-xl border border-border space-y-3 shadow-sm flex-1">
+                        <h5 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2 mb-3">Dados Pessoais</h5>
+                        <div className="text-base text-foreground space-y-2">
+                            <div>Cliente desde: <span className="font-medium">{new Date(client.created_at).toLocaleDateString('pt-BR')}</span></div>
+                            {client.cpf && <div>CPF: <span className="font-medium">{client.cpf}</span></div>}
+                            <div>Nascimento: <span className="font-medium">{client.birth_date ? new Date(client.birth_date).toLocaleDateString('pt-BR') : 'Não informado'}</span></div>
+                            <div>Estado Civil: <span className="font-medium">{client.marital_status || 'Não informado'}</span></div>
+                            {client.property_regime && <div>Regime: <span className="font-medium">{client.property_regime}</span></div>}
+                        </div>
+                        {client.spouse_name && (
+                            <div className="mt-3 pt-3 border-t border-border/50 space-y-2">
+                                <h6 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Cônjuge | Sócio</h6>
+                                <div className="text-base text-foreground space-y-1">
+                                    <div><span className="font-medium">{client.spouse_name}</span></div>
+                                    {client.spouse_email && <div>E-mail: <span className="font-medium">{client.spouse_email}</span></div>}
+                                    {client.spouse_phone && <div>Telefone: <span className="font-medium">{formatPhone(client.spouse_phone)}</span></div>}
+                                    {client.spouse_cpf && <div>CPF: <span className="font-medium">{client.spouse_cpf}</span></div>}
+                                    {client.spouse_birth_date && <div>Nascimento: <span className="font-medium">{new Date(client.spouse_birth_date).toLocaleDateString('pt-BR')}</span></div>}
+                                </div>
+                            </div>
+                        )}
+                    </div>
 
-            {/* Direita: Análise de IA */}
+                        <div className="bg-muted/30 p-4 rounded-xl border border-border space-y-3 shadow-sm flex-1">
+                            <h5 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2 mb-3">Endereço</h5>
+                            <div className="flex items-start gap-3 text-base text-foreground">
+                                <MapPin size={16} className="text-muted-foreground mt-0.5 shrink-0" />
+                                <div className="flex flex-col">
+                                    {client.address_street ? (
+                                        <>
+                                            <span>{client.address_street}, {client.address_number || 'S/N'}</span>
+                                            {client.address_complement && <span className="text-muted-foreground">{client.address_complement}</span>}
+                                            <span>{client.address_neighborhood || 'Bairro não informado'}</span>
+                                            <span>{client.address_city || 'Cidade'} - {client.address_state || 'UF'}</span>
+                                            {client.address_zip_code && <span className="text-muted-foreground">{client.address_zip_code}</span>}
+                                        </>
+                                    ) : (
+                                        <span className="font-medium text-muted-foreground">Endereço não informado</span>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Notas & Mídias/Docs */}
+                    {(client.notes || client.images?.length > 0 || client.videos?.length > 0 || client.documents?.length > 0) && (
+                        <div className="flex flex-col md:flex-row gap-3 w-full">
+                            {client.notes && (
+                                <div className="bg-muted/30 p-4 rounded-xl border border-border space-y-3 shadow-sm flex-1">
+                                    <h5 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2 mb-3">Notas</h5>
+                                    <div className="text-base text-foreground space-y-2">
+                                        <p className="whitespace-pre-wrap">{client.notes}</p>
+                                    </div>
+                                </div>
+                            )}
+                            
+                            {(client.images?.length > 0 || client.videos?.length > 0 || client.documents?.length > 0) && (
+                                <div className="bg-muted/30 p-4 rounded-xl border border-border space-y-3 shadow-sm flex-1">
+                                    <h5 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2 mb-3">Mídias e Docs</h5>
+                                    <div className="text-base text-foreground">
+                                        <ClientAttachments client={client} />
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+            </div>
+
+            <div className="flex flex-col gap-6 w-full">
+
+
+                {/* Centro: Leads, Notas & IA */}
+                <ClientLeadsSection
+                    client={client}
+                    isAnalyzed={isAnalyzed}
+                    analysisLoading={analysisLoading}
+                    analysisResult={analysisResult}
+                    handleAnalyze={handleAnalyze}
+                    setIsAnalyzed={setIsAnalyzed}
+                />
+            </div>
+        </div>
+    )
+}
+
+function LeadCardDropdown({ lead }: { lead: any }) {
+    const [isOpen, setIsOpen] = useState(false)
+    const hasAttachments = lead.images?.length > 0 || lead.videos?.length > 0 || lead.documents?.length > 0
+
+    return (
+        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="w-full p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors text-left"
+            >
+                <div className="flex-1 min-w-0">
+                    <span className="text-base font-bold text-foreground truncate block">
+                        {lead.property_interest || lead.properties?.title || lead.source || 'Interesse não especificado'}
+                    </span>
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                    {(() => {
+                        const c = lead.status_color
+                        const isLight = c && ['#FFFFFF', '#FACC15', '#FDE047', '#FEF08A', '#FCD34D'].includes(c.toUpperCase())
+                        return (
+                            <span
+                                className="px-2.5 py-0.5 text-xs font-medium rounded-full uppercase whitespace-nowrap"
+                                style={c ? {
+                                    backgroundColor: c,
+                                    color: isLight ? '#1a1a1a' : '#ffffff',
+                                } : {
+                                    backgroundColor: 'var(--secondary)',
+                                    color: 'var(--foreground)',
+                                    opacity: 0.6
+                                }}
+                            >
+                                {lead.status_name || lead.status}
+                            </span>
+                        )
+                    })()}
+                    {lead.created_at && (
+                        <span className="text-xs text-muted-foreground font-medium">
+                            {new Date(lead.created_at).toLocaleDateString('pt-BR')}
+                        </span>
+                    )}
+                    <ChevronDown
+                        size={14}
+                        className={`text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                    />
+                </div>
+            </button>
+
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ height: 0, opacity: 0 }}
+                        animate={{ height: 'auto', opacity: 1 }}
+                        exit={{ height: 0, opacity: 0 }}
+                        transition={{ duration: 0.2 }}
+                        className="overflow-hidden"
+                    >
+                        <div className="px-4 pb-4 space-y-3 border-t border-border/50" style={{ backgroundColor: 'var(--background)' }}>
+                            <div className="pt-3 space-y-1.5">
+                                {lead.source && (
+                                    <p className="text-base text-muted-foreground">
+                                        <span className="font-bold">Origem:</span> {lead.source}
+                                    </p>
+                                )}
+                                {lead.lead_source && lead.lead_source !== lead.source && (
+                                    <p className="text-base text-muted-foreground">
+                                        <span className="font-bold">Canal:</span> {lead.lead_source}
+                                    </p>
+                                )}
+                                {lead.notes && (
+                                    <p className="text-base text-muted-foreground">
+                                        <span className="font-bold">Notas:</span> <span className="italic">"{lead.notes}"</span>
+                                    </p>
+                                )}
+                            </div>
+                            {hasAttachments && (
+                                <ClientAttachments client={lead} />
+                            )}
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+function ClientLeadsSection({ client, isAnalyzed, analysisLoading, analysisResult, handleAnalyze, setIsAnalyzed }: any) {
+    return (
+        <div className="space-y-6 w-full">
+            <div className="space-y-4">
+                <div className="flex items-center justify-between px-1">
+                    <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest">Leads e Interesses</h4>
+                </div>
+                <div className="space-y-3">
+                    {client.leads && client.leads.length > 0 ? (
+                        client.leads.map((lead: any) => (
+                            <LeadCardDropdown key={lead.id} lead={lead} />
+                        ))
+                    ) : (
+                        <div className="bg-muted/50 p-6 rounded-xl border border-dashed border-border text-center">
+                            <p className="text-xs text-muted-foreground">Nenhum lead vinculado a este cliente ainda.</p>
+                        </div>
+                    )}
+                </div>
+            </div>
+
+
+            {/* Análise Preditiva */}
             <ClientAIAnalysis
                 isAnalyzed={isAnalyzed}
                 analysisLoading={analysisLoading}
@@ -273,66 +418,9 @@ function ClientExpandedContent({
     )
 }
 
-function ClientLeadsSection({ client }: any) {
-    return (
-        <div className="lg:col-span-5 space-y-6">
-            <div className="space-y-4">
-                <div className="flex items-center justify-between px-1">
-                    <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest">Leads e Interesses</h4>
-                    <span className="text-[10px] text-muted-foreground flex items-center gap-1 uppercase tracking-wider font-medium">
-                        {new Date(client.created_at).toLocaleDateString('pt-BR')}
-                    </span>
-                </div>
-                <div className="space-y-3">
-                    {client.leads && client.leads.length > 0 ? (
-                        client.leads.map((lead: any) => (
-                            <div key={lead.id} className="bg-card p-4 rounded-xl border border-border shadow-sm">
-                                <div className="flex justify-between items-start mb-2">
-                                    <span className="text-xs font-bold text-foreground">
-                                        {lead.properties?.title || lead.source || 'Interesse não especificado'}
-                                    </span>
-                                    <span className="px-2 py-0.5 bg-secondary/20 text-foreground text-[9px] font-bold rounded uppercase">
-                                        {lead.status_name || lead.status}
-                                    </span>
-                                </div>
-                                {lead.properties?.title && lead.source && (
-                                    <p className="text-[10px] text-muted-foreground italic">Origem: {lead.source}</p>
-                                )}
-                                <div className="mt-2 pt-2 border-t border-border/50 flex items-center gap-1.5 text-[10px] text-primary font-bold">
-                                    <User size={10} />
-                                    <span>Corretor: {lead.profiles?.full_name || 'Não atribuído'}</span>
-                                </div>
-                            </div>
-                        ))
-                    ) : (
-                        <div className="bg-muted/50 p-6 rounded-xl border border-dashed border-border text-center">
-                            <p className="text-xs text-muted-foreground">Nenhum lead vinculado a este cliente ainda.</p>
-                        </div>
-                    )}
-                </div>
-            </div>
 
-            <div className="space-y-4">
-                <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Última Nota</h4>
-                {client.notes ? (
-                    <div className="bg-orange-50/50 p-4 rounded-xl border border-orange-100/50 flex gap-3">
-                        <MessageSquare size={16} className="text-orange-400 shrink-0 mt-0.5" />
-                        <p className="text-sm text-foreground italic leading-relaxed">"{client.notes}"</p>
-                    </div>
-                ) : (
-                    <p className="text-xs text-muted-foreground px-1">Sem notas registradas.</p>
-                )}
-            </div>
 
-            {/* Anexos */}
-            {(client.images?.length > 0 || client.videos?.length > 0 || client.documents?.length > 0) && (
-                <ClientAttachments client={client} />
-            )}
-        </div>
-    )
-}
-
-function ClientAttachments({ client }: { client: any }) {
+function ClientAttachments({ client, title }: { client: any; title?: string }) {
     const [previewOpen, setPreviewOpen] = useState(false)
     const [previewIndex, setPreviewIndex] = useState(0)
 
@@ -343,7 +431,7 @@ function ClientAttachments({ client }: { client: any }) {
 
     return (
         <div className="space-y-4">
-            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Anexos</h4>
+            {title && <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest px-1">{title}</h4>}
             <div className="grid grid-cols-1 gap-2">
                 {client.images?.map((img: string, i: number) => (
                     <button
@@ -353,7 +441,7 @@ function ClientAttachments({ client }: { client: any }) {
                             setPreviewIndex(i)
                             setPreviewOpen(true)
                         }}
-                        className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors text-left"
+                        className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-base hover:bg-muted/50 transition-colors text-left"
                     >
                         <ImageIcon size={14} className="text-blue-500" />
                         <span className="truncate">Imagem {i + 1}</span>
@@ -368,14 +456,14 @@ function ClientAttachments({ client }: { client: any }) {
                             setPreviewIndex(videoIndex)
                             setPreviewOpen(true)
                         }}
-                        className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors text-left"
+                        className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-base hover:bg-muted/50 transition-colors text-left"
                     >
                         <Video size={14} className="text-purple-500" />
                         <span className="truncate">Vídeo {i + 1}</span>
                     </button>
                 ))}
                 {client.documents?.map((doc: any, i: number) => (
-                    <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-xs hover:bg-muted/50 transition-colors" onClick={(e) => e.stopPropagation()}>
+                    <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 p-2 bg-card border border-border rounded-lg text-base hover:bg-muted/50 transition-colors" onClick={(e) => e.stopPropagation()}>
                         <FileText size={14} className="text-emerald-500" />
                         <span className="truncate">{doc.name || `Documento ${i + 1}`}</span>
                     </a>
@@ -394,28 +482,25 @@ function ClientAttachments({ client }: { client: any }) {
 
 function ClientAIAnalysis({ isAnalyzed, analysisLoading, analysisResult, handleAnalyze, setIsAnalyzed }: any) {
     return (
-        <div className="lg:col-span-4 space-y-4">
-            <h4 className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest px-1">Inteligência Artificial</h4>
-            <div className="bg-primary p-6 rounded-2xl text-primary-foreground shadow-xl relative overflow-hidden group">
-                <div className="absolute top-0 right-0 p-4 opacity-10">
-                    <Sparkles size={80} />
-                </div>
+        <div className="space-y-4">
+            <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest px-1">Inteligência Artificial</h4>
+            <div className="bg-primary p-4 rounded-2xl text-primary-foreground shadow-xl relative overflow-hidden group">
 
                 {!isAnalyzed ? (
-                    <div className="relative z-10 text-center space-y-4">
-                        <div className="bg-secondary w-12 h-12 rounded-2xl flex items-center justify-center mx-auto shadow-lg text-secondary-foreground">
-                            <Sparkles size={24} />
+                    <div className="relative z-10 flex items-center gap-4">
+                        <div className="bg-secondary w-10 h-10 rounded-xl flex items-center justify-center shadow-lg text-secondary-foreground shrink-0">
+                            <Sparkles size={20} />
                         </div>
-                        <div>
+                        <div className="flex-1 min-w-0">
                             <h5 className="font-bold text-sm">Análise Preditiva</h5>
-                            <p className="text-[11px] text-primary-foreground/70 mt-1">Gere um insight automático baseado no comportamento deste cliente.</p>
+                            <p className="text-xs text-primary-foreground/70 mt-0.5">Gere um insight automático baseado no comportamento deste cliente.</p>
                         </div>
                         <button
                             onClick={handleAnalyze}
                             disabled={analysisLoading}
-                            className="w-full py-2.5 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg font-bold text-xs transition-all flex items-center justify-center gap-2 group disabled:opacity-50"
+                            className="px-4 py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg font-bold text-sm transition-all flex items-center gap-2 disabled:opacity-50 shrink-0 whitespace-nowrap"
                         >
-                            {analysisLoading ? <span className="animate-pulse">Analisando...</span> : 'Gerar Insight Agora'}
+                            {analysisLoading ? <span className="animate-pulse">Analisando...</span> : 'Gerar Insight'}
                         </button>
                     </div>
                 ) : (
@@ -425,17 +510,17 @@ function ClientAIAnalysis({ isAnalyzed, analysisLoading, analysisResult, handleA
                         className="relative z-10 space-y-4"
                     >
                         <div className="flex items-center justify-between">
-                            <h5 className="font-bold text-sm flex items-center gap-2">
+                            <h5 className="font-bold text-base flex items-center gap-2">
                                 <Sparkles size={14} className="text-secondary" /> Resultado IA
                             </h5>
                             <button
                                 onClick={(e) => { e.stopPropagation(); setIsAnalyzed(false); }}
-                                className="text-[10px] text-primary-foreground/60 hover:text-primary-foreground underline"
+                                className="text-xs text-primary-foreground/60 hover:text-primary-foreground underline"
                             >
                                 Nova Análise
                             </button>
                         </div>
-                        <p className="text-xs text-primary-foreground/90 leading-relaxed italic bg-black/20 p-4 rounded-xl border border-white/5">
+                        <p className="text-sm text-primary-foreground/90 leading-relaxed italic bg-black/20 p-4 rounded-xl border border-white/5">
                             {analysisResult}
                         </p>
                     </motion.div>

@@ -88,8 +88,8 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
             <div className="p-5">
                 <div className="flex justify-between items-start mb-4">
                     <div className="flex flex-col">
-                            <h3 className="font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{client.name}</h3>
-                        </div>
+                        <h3 className="font-bold text-foreground leading-tight group-hover:text-primary transition-colors">{client.name}</h3>
+                    </div>
 
                     <div className="flex items-center gap-1">
                         <div className="relative">

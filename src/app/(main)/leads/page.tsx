@@ -11,7 +11,7 @@ import { Modal } from '@/components/shared/Modal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
 import { getProfile, getBrokers } from '@/app/_actions/profile'
 import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
-import { createStage, deleteStage, duplicateStage, updateStageName } from '@/app/_actions/stages'
+import { createStage, deleteStage, duplicateStage, updateStageName, updateStageColor } from '@/app/_actions/stages'
 import { checkPlanFeatureAction } from '@/app/_actions/plan'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -205,6 +205,16 @@ export default function LeadsPage() {
         }
     }
 
+    const handleUpdateStageColor = async (stageId: string, color: string) => {
+        const result = await updateStageColor(stageId, color)
+        if (result.success) {
+            toast.success('Cor atualizada!')
+            fetchData()
+        } else {
+            toast.error('Erro ao atualizar cor: ' + result.error)
+        }
+    }
+
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader title="Leads">
@@ -242,6 +252,7 @@ export default function LeadsPage() {
                 onDeleteStage={handleDeleteStage}
                 onDuplicateStage={handleDuplicateStage}
                 onRenameStage={handleRenameStage}
+                onUpdateStageColor={handleUpdateStageColor}
                 onEditLead={handleEditLead}
                 onDeleteLead={handleDeleteLead}
                 onArchiveLead={handleArchiveLead}

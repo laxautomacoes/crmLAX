@@ -74,6 +74,7 @@ export const createLeadSchema = z.object({
     lead_source: z.string().max(100).optional().default('Direto'),
     campaign: z.string().max(200).optional().nullable(),
     property_id: optionalUuid,
+    property_interest: z.string().max(200).optional().nullable(),
     date: z.string().max(20).optional().nullable(),
     assigned_to: optionalUuid,
     images: jsonArray,

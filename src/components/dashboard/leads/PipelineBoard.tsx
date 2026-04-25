@@ -42,6 +42,7 @@ interface Stage {
     id: string
     name: string
     order_index: number
+    color?: string
 }
 
 interface PipelineBoardProps {
@@ -52,12 +53,13 @@ interface PipelineBoardProps {
     onDeleteStage: (stageId: string) => void
     onDuplicateStage: (stageId: string) => void
     onRenameStage: (stageId: string, name: string) => void
+    onUpdateStageColor: (stageId: string, color: string) => void
     onEditLead: (lead: Lead) => void
     onDeleteLead: (leadId: string) => void
     onArchiveLead: (leadId: string) => void
 }
 
-export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onEditLead, onDeleteLead, onArchiveLead }: PipelineBoardProps) {
+export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onUpdateStageColor, onEditLead, onDeleteLead, onArchiveLead }: PipelineBoardProps) {
     const [leads, setLeads] = useState<Lead[]>(initialLeads)
     const [activeLead, setActiveLead] = useState<Lead | null>(null)
 
@@ -133,16 +135,18 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
                         key={stage.id}
                         id={stage.id}
                         title={stage.name}
+                        color={stage.color}
                         leads={leads.filter((l) => l.status === stage.id)}
                         count={leads.filter((l) => l.status === stage.id).length}
                         onAddLead={onAddLead}
                         onDeleteStage={onDeleteStage}
                         onDuplicateStage={onDuplicateStage}
                         onRenameStage={onRenameStage}
+                        onUpdateColor={onUpdateStageColor}
                         onEditLead={onEditLead}
-                            onDeleteLead={onDeleteLead}
-                            onArchiveLead={onArchiveLead}
-                        />
+                        onDeleteLead={onDeleteLead}
+                        onArchiveLead={onArchiveLead}
+                    />
                 ))}
             </div>
 

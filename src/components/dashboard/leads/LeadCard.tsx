@@ -57,11 +57,11 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
     return (
         <div
             ref={setNodeRef}
-            style={style}
+            style={{ ...style, backgroundColor: 'var(--background)' }}
             {...attributes}
             {...listeners}
             onClick={() => !isDragging && setIsExpanded(!isExpanded)}
-            className={`bg-white dark:bg-card p-4 rounded-2xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''} ${isExpanded ? 'shadow-sm' : ''}`}
+            className={`p-4 rounded-2xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''} ${isExpanded ? 'shadow-sm' : ''}`}
         >
             <div className="flex justify-between items-start">
                 <div className="flex-1">

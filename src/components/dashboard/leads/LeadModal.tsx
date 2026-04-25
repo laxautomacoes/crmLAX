@@ -50,6 +50,7 @@ export function LeadModal({
         lead_source: '',
         campaign: '',
         property_id: '',
+        property_interest: '',
         selectedProperty: null as any,
         date: new Date().toISOString().split('T')[0],
         value: '',
@@ -118,6 +119,7 @@ export function LeadModal({
                 lead_source: editingLead.lead_source || '',
                 campaign: editingLead.campaign || '',
                 property_id: editingLead.property_id || '',
+                property_interest: editingLead.property_interest || '',
                 selectedProperty: editingLead.property_id ? { id: editingLead.property_id, title: editingLead.interest } : null,
                 date: editingLead.date || new Date().toISOString().split('T')[0],
                 value: editingLead.value?.toString() || '',
@@ -137,6 +139,7 @@ export function LeadModal({
                 lead_source: '',
                 campaign: '',
                 property_id: '',
+                property_interest: '',
                 selectedProperty: null,
                 date: new Date().toISOString().split('T')[0],
                 value: '',
@@ -230,6 +233,15 @@ export function LeadModal({
             onClose={onClose}
             title={editingLead ? "Editar Lead" : "Novo Lead"}
             size="lg"
+            extraHeaderContent={
+                <button
+                    onClick={handleSubmit}
+                    disabled={isLoading}
+                    className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
+                >
+                    {isLoading ? "Processando..." : (editingLead ? "Salvar Alterações" : "Criar Lead")}
+                </button>
+            }
         >
             <div className="space-y-6">
                 {/* Tabs for IA if editing */}
@@ -302,8 +314,8 @@ export function LeadModal({
                             placeholder="joao@email.com"
                         />
                     </div>
-                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-3 gap-4">
-                        <div className="md:col-span-1">
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
                             {!isAddingSource ? (
                                 <FormSelect
                                     label="Origem"
@@ -343,21 +355,7 @@ export function LeadModal({
                                 />
                             )}
                         </div>
-                        <div className="md:col-span-2">
-                            <PropertyAutocomplete
-                                tenantId={tenantId}
-                                label="Interesse"
-                                placeholder="Ex: Apto 3 dormitórios"
-                                icon={() => null}
-                                selectedItem={leadData.selectedProperty}
-                                onSelect={(property) => setLeadData({ ...leadData, interest: property.title, property_id: property.id, selectedProperty: property })}
-                                onClear={() => setLeadData({ ...leadData, interest: '', property_id: '', selectedProperty: null })}
-                            />
-                        </div>
-                    </div>
-
-                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="md:col-span-1">
+                        <div>
                             {!isAddingCampaign ? (
                                 <FormSelect
                                     label="Campanha"
@@ -397,6 +395,28 @@ export function LeadModal({
                                     }
                                 />
                             )}
+                        </div>
+                    </div>
+
+                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div>
+                            <PropertyAutocomplete
+                                tenantId={tenantId}
+                                label="Imóvel Cadastrado"
+                                placeholder="Buscar imóvel no sistema..."
+                                icon={() => null}
+                                selectedItem={leadData.selectedProperty}
+                                onSelect={(property) => setLeadData({ ...leadData, interest: property.title, property_id: property.id, property_interest: property.title, selectedProperty: property })}
+                                onClear={() => setLeadData({ ...leadData, interest: '', property_id: '', property_interest: '', selectedProperty: null })}
+                            />
+                        </div>
+                        <div>
+                            <FormInput
+                                label="Imóvel de Interesse (texto livre)"
+                                value={leadData.property_interest}
+                                onChange={(e) => setLeadData({ ...leadData, property_interest: e.target.value })}
+                                placeholder="Ex: Apto 3 quartos na praia..."
+                            />
                         </div>
                     </div>
 
@@ -474,21 +494,7 @@ export function LeadModal({
                     </div>
                 )}
 
-                <div className="flex gap-3 pt-2">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-3 bg-muted text-foreground border border-border rounded-lg font-bold hover:bg-muted/80 transition-all active:scale-[0.99]"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isLoading}
-                        className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 shadow-sm active:scale-[0.99] transition-all disabled:opacity-50"
-                    >
-                        {isLoading ? "Processando..." : (editingLead ? "Salvar Alterações" : "Criar Lead")}
-                    </button>
-                </div>
+
             </div>
         </Modal>
     )
