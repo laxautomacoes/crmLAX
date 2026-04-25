@@ -292,7 +292,7 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                 </div>
 
                 {/* Segunda Linha (Apenas Mobile) */}
-                <div className="md:hidden flex items-center justify-center gap-4 px-6 pb-5 pt-1 w-full">
+                <div className="md:hidden flex items-center justify-center flex-wrap gap-3 px-4 pb-3 pt-1 w-full">
                     <ServiceQueueToggle 
                         initialStatus={profile?.is_active_for_service} 
                         tenantId={profile?.tenant_id} 

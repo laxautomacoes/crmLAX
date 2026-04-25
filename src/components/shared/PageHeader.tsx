@@ -18,10 +18,10 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
                 )}
             </div>
 
-            <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
+            <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-4" />
 
             {children && (
-                <div className="flex items-center justify-center md:justify-end gap-3 w-full md:w-auto transition-all animate-in fade-in slide-in-from-right-4 duration-500">
+                <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto transition-all animate-in fade-in slide-in-from-right-4 duration-500">
                     {children}
                 </div>
             )}

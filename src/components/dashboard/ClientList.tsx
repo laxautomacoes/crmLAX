@@ -385,10 +385,10 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     return (
         <div className="space-y-4 md:space-y-6">
             <PageHeader title="Clientes">
-                <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+                <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
                         onClick={handleOpenCreate}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] flex-1 md:flex-none order-1 md:order-4"
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-1 md:order-4"
                     >
                         <Plus size={18} />
                         Novo Cliente
@@ -420,7 +420,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
 
                     <button
                         onClick={() => setIsFilterModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] flex-1 md:flex-none order-3 md:order-3"
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-3 md:order-3"
                     >
                         <Filter size={18} />
                         Filtrar

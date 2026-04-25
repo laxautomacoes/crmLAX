@@ -12,15 +12,15 @@ interface LeadsHeaderProps {
 
 export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin }: LeadsHeaderProps) {
     return (
-        <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
             <FormInput
                 placeholder="Pesquisar leads ou imóveis..."
                 onChange={(e) => onSearch(e.target.value)}
                 icon={Search}
-                className="md:w-[310px]"
+                className="w-full md:w-[310px]"
             />
             {isAdmin && brokers && brokers.length > 0 && (
-                <div className="relative group">
+                <div className="relative group hidden md:block">
                     <select
                         onChange={(e) => onBrokerChange?.(e.target.value)}
                         className="appearance-none pl-9 pr-8 py-2 bg-card border border-muted-foreground/30 rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer hover:bg-muted/10 min-w-[160px]"

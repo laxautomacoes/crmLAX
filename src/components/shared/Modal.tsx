@@ -37,9 +37,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
 
     return (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
-            <div onClick={(e) => e.stopPropagation()} className={`bg-card rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative`}>
+            <div onClick={(e) => e.stopPropagation()} className={`bg-card rounded-2xl shadow-xl w-full ${sizeClasses[size]} max-h-[95vh] md:max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative`}>
                 {title ? (
-                    <div className="flex items-center justify-between px-6 py-4 border-b border-border shrink-0 gap-4">
+                    <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border shrink-0 gap-3 md:gap-4">
                         <div className={`flex-1 min-w-0 ${titleClassName || ''}`}>
                             {typeof title === 'string' ? (
                                 <h3 className="text-lg font-semibold text-foreground truncate">{title}</h3>
@@ -47,7 +47,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
                                 title
                             )}
                         </div>
-                        <div className="flex items-center gap-4">
+                        <div className="flex items-center gap-3 md:gap-4">
                             {extraHeaderContent}
                             <button
                                 onClick={onClose}
@@ -68,7 +68,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
                         </button>
                     </div>
                 )}
-                <div className="p-6 overflow-y-auto no-scrollbar flex-1">
+                <div className="p-4 md:p-6 overflow-y-auto no-scrollbar flex-1">
                     {children}
                 </div>
             </div>

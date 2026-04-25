@@ -129,7 +129,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
             onDragStart={handleDragStart}
             onDragEnd={handleDragEnd}
         >
-            <div className="flex gap-6 overflow-x-auto pb-6 -mx-4 md:-mx-8 px-4 md:px-8 custom-scrollbar h-[calc(100vh-220px)]">
+            <div className="flex gap-4 md:gap-6 overflow-x-auto pb-6 -mx-4 md:-mx-8 px-4 md:px-8 custom-scrollbar h-[calc(100vh-280px)] md:h-[calc(100vh-220px)]">
                 {initialStages.map((stage) => (
                     <PipelineColumn
                         key={stage.id}
@@ -160,7 +160,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
                 }),
             }}>
                 {activeLead ? (
-                    <div className="w-[310px] items-center px-4">
+                    <div className="w-[280px] md:w-[310px] items-center px-4">
                         <LeadCard lead={activeLead} isOverlay />
                     </div>
                 ) : null}

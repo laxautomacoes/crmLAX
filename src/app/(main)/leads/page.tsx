@@ -218,7 +218,7 @@ export default function LeadsPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader title="Leads">
-                <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+                <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
                         onClick={() => handleOpenLeadModal()}
                         className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-1 md:order-3"

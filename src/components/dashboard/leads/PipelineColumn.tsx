@@ -104,7 +104,7 @@ export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDe
     return (
         <div
             ref={setNodeRef}
-            className="flex flex-col w-[310px] min-w-[310px] rounded-2xl p-4 border border-muted-foreground/30 shadow-sm bg-card dark:bg-card overflow-hidden"
+            className="flex flex-col w-[280px] min-w-[280px] md:w-[310px] md:min-w-[310px] rounded-2xl p-4 border border-muted-foreground/30 shadow-sm bg-card dark:bg-card overflow-hidden"
             style={{
                 borderTop: hasBorderColor ? `4px solid ${currentColor}` : undefined,
             }}

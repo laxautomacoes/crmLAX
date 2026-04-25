@@ -309,8 +309,8 @@ export default function PropertiesClient({
                 title="Imóveis"
                 subtitle={`${filteredProperties.length} imóveis encontrados`}
             >
-                <div className="flex items-center justify-center md:justify-end gap-3">
-                    <div className="flex items-center bg-card border border-border rounded-lg p-0.5 shadow-sm">
+                <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
+                    <div className="flex items-center bg-card border border-border rounded-lg p-0.5 shadow-sm order-1">
                         <button
                             onClick={() => setViewMode('gallery')}
                             className={`p-1.5 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
@@ -327,17 +327,9 @@ export default function PropertiesClient({
                         </button>
                     </div>
 
-                    <FormInput
-                        placeholder="Buscar imóveis..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        icon={Search}
-                        className="md:w-64"
-                    />
-
                     <button
                         onClick={() => setIsFiltersOpen(true)}
-                        className={`flex items-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest')
+                        className={`flex items-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-2 ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest')
                             ? 'bg-primary text-primary-foreground border-primary'
                             : 'bg-card border-border text-foreground hover:bg-muted'
                             }`}
@@ -348,7 +340,7 @@ export default function PropertiesClient({
 
                     <button
                         onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-3"
                     >
                         <Plus size={18} />
                         Novo Imóvel
@@ -356,12 +348,21 @@ export default function PropertiesClient({
 
                     <button
                         onClick={() => setIsImportPDFOpen(true)}
-                        className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-3 md:py-2 rounded-lg hover:bg-primary/20 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                        className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-3 md:py-2 rounded-lg hover:bg-primary/20 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-4"
                         title="Importar Tabela de Preços via IA"
                     >
                         <FileText size={18} />
                         Importar PDF
                     </button>
+
+                    <div className="w-full md:w-64 order-5 md:order-first">
+                        <FormInput
+                            placeholder="Buscar imóveis..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            icon={Search}
+                        />
+                    </div>
                 </div>
             </PageHeader>
 

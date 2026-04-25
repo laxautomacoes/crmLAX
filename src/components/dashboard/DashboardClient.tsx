@@ -10,6 +10,7 @@ import { FilterModal } from '@/components/dashboard/FilterModal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
 import ROIDashboard from '@/components/dashboard/ROIDashboard'
 import { BarChart3 } from 'lucide-react'
+import { PageHeader } from '@/components/shared/PageHeader'
 import type { DashboardMetrics, ROIMetrics } from '@/app/_actions/dashboard'
 
 interface DashboardClientProps {
@@ -45,29 +46,24 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
             </div>
 
             {/* Header / Actions Section */}
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h1 className="text-2xl font-bold text-foreground text-center md:text-left">
-                    Dashboard
-                </h1>
-                <div className="h-px bg-foreground/25 w-full md:hidden mt-2 mb-6" />
-
-                <div className="flex flex-row items-center justify-center md:justify-end gap-3 w-full md:w-auto">
+            <PageHeader title="Dashboard">
+                <div className="flex flex-row items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
                         onClick={() => setIsLeadModalOpen(true)}
-                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold shadow-sm flex-1 md:flex-none"
+                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none"
                     >
                         <Plus size={18} />
                         Novo Lead
                     </button>
                     <button
                         onClick={() => setIsFilterOpen(true)}
-                        className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium flex-1 md:flex-none"
+                        className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium whitespace-nowrap flex-1 md:flex-none"
                     >
                         <Filter size={18} />
                         Filtrar
                     </button>
                 </div>
-            </div>
+            </PageHeader>
 
             <KPICards kpis={metrics.kpis} />
 

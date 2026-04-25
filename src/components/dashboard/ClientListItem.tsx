@@ -190,21 +190,21 @@ function ClientExpandedContent({
                 <div className="flex flex-row gap-2 w-full sm:w-auto">
                     <button
                         onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm whitespace-nowrap"
                         title="Editar Cadastro"
                     >
                         <Edit size={13} /> Editar
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onArchive(); }}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm whitespace-nowrap"
                         title="Arquivar Cliente"
                     >
                         <Archive size={13} /> Arquivar
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-[#EF4444] text-white rounded-lg text-sm font-bold hover:bg-[#DC2626] transition-colors shadow-sm"
+                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-[#EF4444] text-white rounded-lg text-sm font-bold hover:bg-[#DC2626] transition-colors shadow-sm whitespace-nowrap"
                         title="Excluir Cliente"
                     >
                         <Trash2 size={13} /> Excluir
@@ -487,7 +487,7 @@ function ClientAIAnalysis({ isAnalyzed, analysisLoading, analysisResult, handleA
             <div className="bg-primary p-4 rounded-2xl text-primary-foreground shadow-xl relative overflow-hidden group">
 
                 {!isAnalyzed ? (
-                    <div className="relative z-10 flex items-center gap-4">
+                    <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
                         <div className="bg-secondary w-10 h-10 rounded-xl flex items-center justify-center shadow-lg text-secondary-foreground shrink-0">
                             <Sparkles size={20} />
                         </div>
