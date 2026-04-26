@@ -1,25 +1,17 @@
 'use client'
 
-import { useState, useRef } from 'react'
+import { useState, useRef, useEffect, useCallback } from 'react'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { 
-    Send, 
-    Users, 
-    FileSpreadsheet, 
-    Image as ImageIcon, 
-    Video, 
-    FileText, 
-    X, 
-    Loader2, 
-    CheckCircle2, 
-    AlertCircle,
-    Info,
-    HelpCircle
+    Send, Users, FileSpreadsheet, Image as ImageIcon, Video, FileText, X, Loader2, 
+    CheckCircle2, AlertCircle, Info, HelpCircle, Filter, History, ChevronDown, ChevronUp, Clock, Ban
 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
-import { checkWhatsAppStatus, sendSingleBulkMessage } from '@/app/_actions/whatsapp-bulk'
-import { getPipelineData } from '@/app/_actions/leads'
+import { 
+    checkWhatsAppStatus, sendSingleBulkMessage, validateBulkAccess, 
+    getLeadsForBulk, getBulkFilterOptions, createBulkCampaign, updateBulkCampaign, getBulkCampaigns 
+} from '@/app/_actions/whatsapp-bulk'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone } from '@/lib/utils/phone'
 
@@ -29,7 +21,27 @@ interface Recipient {
     lead_id?: string
 }
 
-export function BulkSenderForm() {
+interface FilterOptions {
+    stages: { id: string; name: string; order_index: number; color: string | null }[]
+    sources: { id: string; name: string }[]
+    campaigns: { id: string; name: string; source_name: string }[]
+    brokers: { id: string; full_name: string }[]
+    isAdmin: boolean
+}
+
+interface CampaignRecord {
+    id: string; message: string; total_recipients: number; total_success: number; total_errors: number;
+    status: string; source_type: string; created_at: string; completed_at: string | null;
+    profiles: { full_name: string } | null;
+}
+
+interface BulkSenderFormProps {
+    tenantId: string
+    profileId: string
+    isAdmin: boolean
+}
+
+export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormProps) {
     const [message, setMessage] = useState('')
     const [recipients, setRecipients] = useState<Recipient[]>([])
     const [sourceType, setSourceType] = useState<'system' | 'file' | null>(null)
@@ -41,9 +53,42 @@ export function BulkSenderForm() {
     const [isFinished, setIsFinished] = useState(false)
     const [progress, setProgress] = useState({ current: 0, total: 0 })
     const [isSelectingLeads, setIsSelectingLeads] = useState(false)
+    // Filtros
+    const [filterOptions, setFilterOptions] = useState<FilterOptions | null>(null)
+    const [selectedStages, setSelectedStages] = useState<string[]>([])
+    const [selectedSource, setSelectedSource] = useState('')
+    const [selectedCampaign, setSelectedCampaign] = useState('')
+    const [selectedBroker, setSelectedBroker] = useState('')
+    const [showFilters, setShowFilters] = useState(false)
+    // Histórico
+    const [campaignHistory, setCampaignHistory] = useState<CampaignRecord[]>([])
+    const [showHistory, setShowHistory] = useState(false)
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+    // Campanha atual
+    const [currentCampaignId, setCurrentCampaignId] = useState<string | null>(null)
+    // Plan
+    const [planRemaining, setPlanRemaining] = useState<number | null>(null)
     
     const fileInputRef = useRef<HTMLInputElement>(null)
     const mediaInputRef = useRef<HTMLInputElement>(null)
+
+    // Carregar opções de filtro ao montar
+    useEffect(() => {
+        const loadFilters = async () => {
+            const result = await getBulkFilterOptions(tenantId)
+            if (result.success && result.data) setFilterOptions(result.data)
+        }
+        loadFilters()
+    }, [tenantId])
+
+    // Proteção contra fechar aba durante envio
+    useEffect(() => {
+        const handler = (e: BeforeUnloadEvent) => {
+            if (isSending) { e.preventDefault(); e.returnValue = '' }
+        }
+        window.addEventListener('beforeunload', handler)
+        return () => window.removeEventListener('beforeunload', handler)
+    }, [isSending])
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -72,23 +117,19 @@ export function BulkSenderForm() {
     const handleFetchSystemLeads = async () => {
         setIsSelectingLeads(true)
         try {
-            const supabase = createClient()
-            const { data: { user } } = await supabase.auth.getUser()
-            if (!user) throw new Error('Não autenticado')
+            const filters: any = {}
+            if (selectedStages.length > 0) filters.stageIds = selectedStages
+            if (selectedSource) filters.leadSource = selectedSource
+            if (selectedCampaign) filters.campaign = selectedCampaign
+            if (selectedBroker) filters.assignedTo = selectedBroker
 
-            const { data: profile } = await supabase.from('profiles').select('tenant_id').eq('id', user.id).single()
-            if (!profile) throw new Error('Perfil não encontrado')
-
-            const result = await getPipelineData(profile.tenant_id)
+            const result = await getLeadsForBulk(tenantId, filters)
             if (result.success && result.data) {
-                const mapped = result.data.leads.map((l: any) => ({
-                    name: l.name,
-                    phone: l.phone,
-                    lead_id: l.id
-                }))
-                setRecipients(mapped)
+                setRecipients(result.data)
                 setSourceType('system')
-                toast.success(`${mapped.length} leads do sistema selecionados.`)
+                toast.success(`${result.data.length} leads selecionados com filtros.`)
+            } else {
+                toast.error(result.error || 'Erro ao buscar leads.')
             }
         } catch (error: any) {
             toast.error('Erro ao buscar leads: ' + error.message)
@@ -141,10 +182,29 @@ export function BulkSenderForm() {
         if (recipients.length === 0) return toast.error('Selecione os destinatários.')
         if (!message && !media) return toast.error('Escreva uma mensagem ou anexe um arquivo.')
 
+        // Validar plano
+        const access = await validateBulkAccess()
+        if (!access.allowed) return toast.error(access.error)
+        if (access.remaining !== null && access.remaining !== undefined && recipients.length > access.remaining) {
+            return toast.error(`Você só pode enviar mais ${access.remaining} mensagens este mês. Reduza a lista ou faça upgrade.`)
+        }
+        setPlanRemaining(access.remaining ?? null)
+
         const status = await checkWhatsAppStatus()
         if (!status.connected || !status.instanceName) {
             return toast.error(status.error)
         }
+
+        // Criar registro da campanha
+        const campaignResult = await createBulkCampaign({
+            tenantId, profileId, message,
+            mediaUrl: media?.url, mediaType: media?.type, mediaName: media?.name,
+            totalRecipients: recipients.length,
+            filtersApplied: { stages: selectedStages, source: selectedSource, campaign: selectedCampaign, broker: selectedBroker },
+            sourceType: sourceType || 'system'
+        })
+        const campId = campaignResult.data?.id || null
+        setCurrentCampaignId(campId)
 
         setIsSending(true)
         stopRef.current = false
@@ -159,41 +219,45 @@ export function BulkSenderForm() {
 
         for (let i = 0; i < total; i++) {
             if (stopRef.current) break
-
             const recipient = recipients[i]
-            
             try {
                 const res = await sendSingleBulkMessage({
-                    recipient,
-                    message,
-                    mediaUrl: media?.url,
-                    mediaType: media?.type,
-                    fileName: media?.name,
+                    recipient, message,
+                    mediaUrl: media?.url, mediaType: media?.type, fileName: media?.name,
                     instanceName: status.instanceName
                 })
-
                 if (res.success) currentSuccess++
                 else currentError++
-            } catch (err) {
-                currentError++
-            }
+            } catch { currentError++ }
 
-            const current = i + 1
             setResults({ success: currentSuccess, error: currentError })
-            setProgress({ current, total })
+            setProgress({ current: i + 1, total })
 
-            if (current < total && !stopRef.current) {
+            if (i + 1 < total && !stopRef.current) {
                 await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500))
             }
         }
 
         setIsSending(false)
         setIsFinished(true)
-        
-        if (stopRef.current) {
-            toast.warning('Disparo interrompido pelo usuário.')
-        } else {
-            toast.success('Processo de disparo concluído!')
+
+        // Atualizar campanha no banco
+        const finalStatus = stopRef.current ? 'cancelled' : 'completed'
+        if (campId) {
+            await updateBulkCampaign(campId, { totalSuccess: currentSuccess, totalErrors: currentError, status: finalStatus as any })
+        }
+
+        if (stopRef.current) toast.warning('Disparo interrompido pelo usuário.')
+        else toast.success('Processo de disparo concluído!')
+    }
+
+    const handleLoadHistory = async () => {
+        setShowHistory(!showHistory)
+        if (!showHistory) {
+            setIsLoadingHistory(true)
+            const result = await getBulkCampaigns(tenantId)
+            if (result.success && result.data) setCampaignHistory(result.data as CampaignRecord[])
+            setIsLoadingHistory(false)
         }
     }
 
@@ -299,7 +363,88 @@ export function BulkSenderForm() {
                     <label className="text-sm font-bold text-gray-800 ml-1">Destinatários ({recipients.length})</label>
                     
                     {recipients.length === 0 ? (
-                        <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-4">
+                            {/* Filtros */}
+                            <button
+                                onClick={() => setShowFilters(!showFilters)}
+                                className="flex items-center gap-2 text-xs font-bold text-[#404F4F] hover:text-accent-icon transition-colors"
+                            >
+                                <Filter size={14} />
+                                <span>Filtros de Segmentação</span>
+                                {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                            </button>
+
+                            {showFilters && filterOptions && (
+                                <div className="space-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    {/* Estágios */}
+                                    <div>
+                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Estágio do Funil</label>
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {filterOptions.stages.map(s => (
+                                                <button
+                                                    key={s.id}
+                                                    onClick={() => setSelectedStages(prev => prev.includes(s.id) ? prev.filter(x => x !== s.id) : [...prev, s.id])}
+                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
+                                                        selectedStages.includes(s.id)
+                                                            ? 'bg-[#404F4F] text-white border-[#404F4F]'
+                                                            : 'bg-white text-gray-600 border-gray-200 hover:border-[#404F4F]/30'
+                                                    }`}
+                                                >{s.name}</button>
+                                            ))}
+                                        </div>
+                                    </div>
+                                    {/* Origem */}
+                                    {filterOptions.sources.length > 0 && (
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Origem</label>
+                                            <select
+                                                value={selectedSource}
+                                                onChange={e => { setSelectedSource(e.target.value); setSelectedCampaign('') }}
+                                                className="w-full h-9 px-3 text-xs font-bold bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40"
+                                            >
+                                                <option value="">Todas as origens</option>
+                                                {filterOptions.sources.map(s => (<option key={s.id} value={s.name}>{s.name}</option>))}
+                                            </select>
+                                        </div>
+                                    )}
+                                    {/* Campanha */}
+                                    {selectedSource && filterOptions.campaigns.filter(c => c.source_name === selectedSource).length > 0 && (
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Campanha</label>
+                                            <select
+                                                value={selectedCampaign}
+                                                onChange={e => setSelectedCampaign(e.target.value)}
+                                                className="w-full h-9 px-3 text-xs font-bold bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40"
+                                            >
+                                                <option value="">Todas</option>
+                                                {filterOptions.campaigns.filter(c => c.source_name === selectedSource).map(c => (<option key={c.id} value={c.name}>{c.name}</option>))}
+                                            </select>
+                                        </div>
+                                    )}
+                                    {/* Corretor (só admin) */}
+                                    {isAdmin && filterOptions.brokers.length > 0 && (
+                                        <div>
+                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Corretor</label>
+                                            <select
+                                                value={selectedBroker}
+                                                onChange={e => setSelectedBroker(e.target.value)}
+                                                className="w-full h-9 px-3 text-xs font-bold bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40"
+                                            >
+                                                <option value="">Todos os corretores</option>
+                                                {filterOptions.brokers.map(b => (<option key={b.id} value={b.id}>{b.full_name}</option>))}
+                                            </select>
+                                        </div>
+                                    )}
+                                    {(selectedStages.length > 0 || selectedSource || selectedBroker) && (
+                                        <button
+                                            onClick={() => { setSelectedStages([]); setSelectedSource(''); setSelectedCampaign(''); setSelectedBroker('') }}
+                                            className="text-[10px] font-bold text-red-500 hover:underline"
+                                        >Limpar Filtros</button>
+                                    )}
+                                </div>
+                            )}
+
+                            <div className="grid grid-cols-2 gap-4">
                             <button 
                                 onClick={handleFetchSystemLeads}
                                 disabled={isSelectingLeads}
@@ -310,7 +455,7 @@ export function BulkSenderForm() {
                                 </div>
                                 <div className="text-center">
                                     <p className="text-sm font-bold text-[#404F4F]">Leads do Sistema</p>
-                                    <p className="text-[10px]">Todos os leads cadastrados</p>
+                                    <p className="text-[10px]">{selectedStages.length > 0 || selectedSource ? 'Filtros aplicados' : 'Todos os leads cadastrados'}</p>
                                 </div>
                             </button>
 
@@ -333,6 +478,7 @@ export function BulkSenderForm() {
                                     accept=".csv,.xlsx,.xls"
                                 />
                             </button>
+                        </div>
                         </div>
                     ) : (
                         <div className="space-y-4">
@@ -438,6 +584,51 @@ export function BulkSenderForm() {
                     )}
                 </div>
 
+            </div>
+
+            {/* Histórico de Campanhas */}
+            <div className="pt-4 border-t border-gray-100">
+                <button
+                    onClick={handleLoadHistory}
+                    className="flex items-center gap-2 text-xs font-bold text-[#404F4F]/70 hover:text-[#404F4F] transition-colors"
+                >
+                    <History size={14} />
+                    <span>Histórico de Disparos</span>
+                    {showHistory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                </button>
+                {showHistory && (
+                    <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                        {isLoadingHistory ? (
+                            <div className="flex items-center justify-center py-8"><Loader2 className="animate-spin text-gray-400" size={20} /></div>
+                        ) : campaignHistory.length === 0 ? (
+                            <p className="text-xs text-gray-400 text-center py-6">Nenhum disparo realizado ainda.</p>
+                        ) : (
+                            campaignHistory.map(c => (
+                                <div key={c.id} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
+                                    <div className="min-w-0 flex-1">
+                                        <div className="flex items-center gap-2 mb-0.5">
+                                            {c.status === 'completed' && <CheckCircle2 size={12} className="text-green-500 shrink-0" />}
+                                            {c.status === 'cancelled' && <Ban size={12} className="text-red-500 shrink-0" />}
+                                            {c.status === 'sending' && <Loader2 size={12} className="animate-spin text-amber-500 shrink-0" />}
+                                            <p className="text-xs font-bold text-[#404F4F] truncate">{c.message ? c.message.substring(0, 50) + (c.message.length > 50 ? '...' : '') : 'Somente mídia'}</p>
+                                        </div>
+                                        <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                                            <span className="flex items-center gap-1"><Clock size={10} />{new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                            <span className="text-green-600 font-bold">{c.total_success} ✓</span>
+                                            <span className="text-red-500 font-bold">{c.total_errors} ✗</span>
+                                            {c.profiles && <span className="text-gray-400">por {c.profiles.full_name}</span>}
+                                        </div>
+                                    </div>
+                                    <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ml-3 ${
+                                        c.status === 'completed' ? 'bg-green-50 text-green-600' : c.status === 'cancelled' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'
+                                    }`}>
+                                        {c.status === 'completed' ? 'Concluído' : c.status === 'cancelled' ? 'Cancelado' : 'Enviando'}
+                                    </span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
             </div>
         </div>
     )

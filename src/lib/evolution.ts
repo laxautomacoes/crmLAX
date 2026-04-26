@@ -94,40 +94,87 @@ export const evolutionService = {
         });
     },
 
+    async checkNumber(instanceName: string, number: string) {
+        return evolutionFetch(`/chat/whatsappNumbers/${instanceName}`, {
+            method: 'POST',
+            body: JSON.stringify({ numbers: [number] }),
+        });
+    },
+
     async sendMessage(instanceName: string, number: string, message: string) {
         return evolutionFetch(`/message/sendText/${instanceName}`, {
             method: 'POST',
             body: JSON.stringify({
                 number,
                 options: { delay: 1200, presence: 'composing' },
-                textMessage: { text: message },
+                text: message, // Evolution V2
+                textMessage: { text: message }, // Fallback V1
             }),
         });
     },
 
     async sendMedia(instanceName: string, number: string, mediaUrl: string, mediaType: 'image' | 'video', caption?: string) {
-        const endpoint = mediaType === 'image' ? `/message/sendImage/${instanceName}` : `/message/sendVideo/${instanceName}`;
-        return evolutionFetch(endpoint, {
+        // Tenta enviar no formato V2 primeiro (sendMedia com mediatype)
+        return evolutionFetch(`/message/sendMedia/${instanceName}`, {
             method: 'POST',
             body: JSON.stringify({
                 number,
                 options: { delay: 1200, presence: 'composing' },
+                mediatype: mediaType, // Evolution V2
                 media: mediaUrl,
-                caption: caption || ''
+                caption: caption || '',
+                // Fallback structure in case it's an older v2
+                mediaMessage: {
+                    mediatype: mediaType,
+                    media: mediaUrl,
+                    caption: caption || ''
+                }
             }),
+        }).catch(() => {
+            // Fallback para V1 se o endpoint V2 não existir
+            const endpoint = mediaType === 'image' ? `/message/sendImage/${instanceName}` : `/message/sendVideo/${instanceName}`;
+            return evolutionFetch(endpoint, {
+                method: 'POST',
+                body: JSON.stringify({
+                    number,
+                    options: { delay: 1200, presence: 'composing' },
+                    media: mediaUrl,
+                    caption: caption || ''
+                }),
+            });
         });
     },
 
     async sendDocument(instanceName: string, number: string, documentUrl: string, fileName: string, caption?: string) {
-        return evolutionFetch(`/message/sendDocument/${instanceName}`, {
+        return evolutionFetch(`/message/sendMedia/${instanceName}`, {
             method: 'POST',
             body: JSON.stringify({
                 number,
                 options: { delay: 1200, presence: 'composing' },
-                document: documentUrl,
+                mediatype: 'document', // Evolution V2
+                media: documentUrl,
                 fileName,
-                caption: caption || ''
+                caption: caption || '',
+                // Fallback structure
+                mediaMessage: {
+                    mediatype: 'document',
+                    media: documentUrl,
+                    fileName,
+                    caption: caption || ''
+                }
             }),
+        }).catch(() => {
+            // Fallback para V1
+            return evolutionFetch(`/message/sendDocument/${instanceName}`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    number,
+                    options: { delay: 1200, presence: 'composing' },
+                    document: documentUrl,
+                    fileName,
+                    caption: caption || ''
+                }),
+            });
         });
     }
 };
