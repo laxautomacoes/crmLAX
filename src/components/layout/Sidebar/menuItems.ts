@@ -54,6 +54,7 @@ export const menuItems = [
         subItems: [
             { name: 'Estúdio de Criação', href: '/marketing/studio' },
             { name: 'Disparador em Massa', href: '/marketing/bulk-sender' },
+            { name: 'Follow-Up', href: '/marketing/follow-up' },
         ]
     },
     {

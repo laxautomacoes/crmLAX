@@ -10,7 +10,8 @@ import {
     Image as ImageIcon,
     Sparkles,
     CheckCircle2,
-    Megaphone
+    Megaphone,
+    Clock
 } from 'lucide-react';
 import { getMarketingIntegrations } from '@/app/_actions/marketing';
 import { getProperties } from '@/app/_actions/properties';
@@ -196,7 +197,7 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
             ) : (
                 <>
                     {/* SEÇÃO 1: LINKS RÁPIDOS (Visão Geral) */}
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
                         <a 
                             href="/marketing/studio"
                             className="group bg-gradient-to-br from-[#404F4F] to-[#2d3939] p-8 rounded-[2rem] border border-white/10 shadow-lg transition-all hover:scale-[1.02] active:scale-[0.98]"
@@ -227,6 +228,24 @@ export default function MarketingDashboard({ tenantId, profileId, hasProPlan, us
                             <h3 className="text-xl font-black text-[#404F4F] mb-2">Disparador em Massa</h3>
                             <p className="text-muted-foreground text-sm leading-relaxed">
                                 Envie mensagens personalizadas e mídias para seus leads via WhatsApp de forma automatizada.
+                            </p>
+                        </a>
+
+                        <a
+                            href="/marketing/follow-up"
+                            className="group bg-white p-8 rounded-[2rem] border border-border/50 shadow-sm transition-all hover:scale-[1.02] active:scale-[0.98] hover:shadow-xl"
+                        >
+                            <div className="flex items-center justify-between mb-4">
+                                <div className="p-3 rounded-2xl bg-[#404F4F]/5 group-hover:bg-accent-icon/10 transition-colors">
+                                    <Clock className="h-6 w-6 text-[#404F4F]" />
+                                </div>
+                                <div className="px-3 py-1 rounded-full bg-[#FFE600] text-[#404F4F] text-[10px] font-black uppercase tracking-widest">
+                                    Novo
+                                </div>
+                            </div>
+                            <h3 className="text-xl font-black text-[#404F4F] mb-2">Follow-Up Programável</h3>
+                            <p className="text-muted-foreground text-sm leading-relaxed">
+                                Crie sequências automatizadas de mensagens para nutrir e acompanhar seus leads.
                             </p>
                         </a>
                     </div>

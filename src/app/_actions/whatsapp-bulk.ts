@@ -453,3 +453,142 @@ export async function getBulkCampaigns(tenantId: string) {
 
     return { success: true, data: campaigns }
 }
+
+// ─── Vinculação Automática com Leads Existentes ────────────────────────────────
+
+export async function matchRecipientsWithLeads(
+    tenantId: string,
+    phones: string[]
+): Promise<{ success: boolean; matches: Record<string, string>; error?: string }> {
+    const supabase = await createClient()
+
+    // Validar autenticação
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, matches: {}, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || profile.tenant_id !== tenantId) {
+        return { success: false, matches: {}, error: 'Acesso negado.' }
+    }
+
+    // Normalizar todos os telefones para busca
+    const normalizedPhones = phones.map(p => normalizeWhatsAppNumber(p))
+    
+    // Buscar contatos cujo telefone (normalizado) esteja na lista
+    // Como o banco pode ter formatos variados, buscamos todos os contacts do tenant com phone
+    const { data: contacts, error } = await supabase
+        .from('contacts')
+        .select('id, phone')
+        .eq('tenant_id', tenantId)
+        .not('phone', 'is', null)
+
+    if (error) return { success: false, matches: {}, error: error.message }
+
+    // Criar mapa de phone normalizado → contact_id
+    const contactMap = new Map<string, string>()
+    for (const contact of (contacts || [])) {
+        if (contact.phone) {
+            const normalized = normalizeWhatsAppNumber(contact.phone)
+            contactMap.set(normalized, contact.id)
+        }
+    }
+
+    // Encontrar contact_ids que fazem match com os telefones importados
+    const matchedContactIds = normalizedPhones
+        .filter(p => contactMap.has(p))
+        .map(p => contactMap.get(p)!)
+    
+    if (matchedContactIds.length === 0) {
+        return { success: true, matches: {} }
+    }
+
+    // Buscar leads mais recentes (não arquivados) para cada contact_id
+    const { data: leads } = await supabase
+        .from('leads')
+        .select('id, contact_id')
+        .eq('tenant_id', tenantId)
+        .eq('is_archived', false)
+        .in('contact_id', [...new Set(matchedContactIds)])
+        .order('created_at', { ascending: false })
+
+    // Criar mapa contact_id → lead_id (pega o mais recente)
+    const contactToLead = new Map<string, string>()
+    for (const lead of (leads || [])) {
+        if (lead.contact_id && !contactToLead.has(lead.contact_id)) {
+            contactToLead.set(lead.contact_id, lead.id)
+        }
+    }
+
+    // Montar mapa final: phone normalizado → lead_id
+    const result: Record<string, string> = {}
+    for (const phone of normalizedPhones) {
+        const contactId = contactMap.get(phone)
+        if (contactId) {
+            const leadId = contactToLead.get(contactId)
+            if (leadId) {
+                result[phone] = leadId
+            }
+        }
+    }
+
+    return { success: true, matches: result }
+}
+
+// ─── Importação via Google Sheets ──────────────────────────────────────────────
+
+export async function fetchGoogleSheetData(sheetUrl: string): Promise<{ success: boolean; csvData?: string; error?: string }> {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    // Extrair ID da planilha do link do Google Sheets
+    // Formatos aceitos:
+    // https://docs.google.com/spreadsheets/d/SHEET_ID/edit...
+    // https://docs.google.com/spreadsheets/d/SHEET_ID/
+    // https://docs.google.com/spreadsheets/d/SHEET_ID
+    const match = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
+    if (!match || !match[1]) {
+        return { success: false, error: 'URL inválida. Cole o link de compartilhamento da planilha do Google Sheets.' }
+    }
+
+    const sheetId = match[1]
+
+    // Extrair gid (ID da aba) se presente na URL
+    const gidMatch = sheetUrl.match(/[#&?]gid=(\d+)/)
+    const gid = gidMatch ? gidMatch[1] : '0'
+
+    const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`
+
+    try {
+        const response = await fetch(exportUrl, {
+            headers: { 'Accept': 'text/csv' },
+            redirect: 'follow'
+        })
+
+        if (!response.ok) {
+            if (response.status === 404) {
+                return { success: false, error: 'Planilha não encontrada. Verifique o link.' }
+            }
+            if (response.status === 403 || response.status === 401) {
+                return { success: false, error: 'Acesso negado. Certifique-se de que a planilha está compartilhada como "Qualquer pessoa com o link".' }
+            }
+            return { success: false, error: `Erro ao acessar a planilha (HTTP ${response.status}).` }
+        }
+
+        const csvData = await response.text()
+
+        if (!csvData || csvData.trim().length === 0) {
+            return { success: false, error: 'A planilha está vazia.' }
+        }
+
+        return { success: true, csvData }
+    } catch (error: any) {
+        console.error('Erro ao buscar Google Sheet:', error)
+        return { success: false, error: 'Falha na conexão com o Google Sheets. Tente novamente.' }
+    }
+}

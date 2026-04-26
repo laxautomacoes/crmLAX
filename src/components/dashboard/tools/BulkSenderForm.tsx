@@ -4,21 +4,48 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { 
     Send, Users, FileSpreadsheet, Image as ImageIcon, Video, FileText, X, Loader2, 
-    CheckCircle2, AlertCircle, Info, HelpCircle, Filter, History, ChevronDown, ChevronUp, Clock, Ban
+    CheckCircle2, AlertCircle, Info, HelpCircle, Filter, History, ChevronDown, ChevronUp, Clock, Ban,
+    Link, Unlink, Trash2, Globe, ExternalLink
 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
 import { 
     checkWhatsAppStatus, sendSingleBulkMessage, validateBulkAccess, 
-    getLeadsForBulk, getBulkFilterOptions, createBulkCampaign, updateBulkCampaign, getBulkCampaigns 
+    getLeadsForBulk, getBulkFilterOptions, createBulkCampaign, updateBulkCampaign, getBulkCampaigns,
+    matchRecipientsWithLeads, fetchGoogleSheetData
 } from '@/app/_actions/whatsapp-bulk'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone } from '@/lib/utils/phone'
+import { normalizeWhatsAppNumber, isValidWhatsAppNumber } from '@/lib/utils/whatsapp-utils'
+
+// ─── Aliases de colunas para detecção flexível ─────────────────────────────────
+
+const NAME_ALIASES = ['nome', 'name', 'cliente', 'contato', 'razao social', 'razao_social', 'empresa']
+const PHONE_ALIASES = ['telefone', 'phone', 'celular', 'whatsapp', 'tel', 'fone', 'mobile', 'numero', 'número', 'contato_telefone']
+
+function findColumnValue(row: Record<string, any>, aliases: string[]): string | undefined {
+    const keys = Object.keys(row)
+    for (const alias of aliases) {
+        const match = keys.find(k => k.toLowerCase().trim() === alias)
+        if (match && row[match] !== undefined && row[match] !== null) return String(row[match])
+    }
+    return undefined
+}
 
 interface Recipient {
     name: string
     phone: string
     lead_id?: string
+    isInvalid?: boolean
+}
+
+interface ImportStats {
+    total: number
+    valid: number
+    invalid: number
+    duplicates: number
+    linked: number
+    duplicateList: { name: string; phone: string }[]
 }
 
 interface FilterOptions {
@@ -68,6 +95,15 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     const [currentCampaignId, setCurrentCampaignId] = useState<string | null>(null)
     // Plan
     const [planRemaining, setPlanRemaining] = useState<number | null>(null)
+    // Import stats
+    const [importStats, setImportStats] = useState<ImportStats | null>(null)
+    const [showDuplicates, setShowDuplicates] = useState(false)
+    const [showInvalids, setShowInvalids] = useState(false)
+    const [isLinking, setIsLinking] = useState(false)
+    // Google Sheets
+    const [showGoogleSheet, setShowGoogleSheet] = useState(false)
+    const [googleSheetUrl, setGoogleSheetUrl] = useState('')
+    const [isLoadingSheet, setIsLoadingSheet] = useState(false)
     
     const fileInputRef = useRef<HTMLInputElement>(null)
     const mediaInputRef = useRef<HTMLInputElement>(null)
@@ -95,23 +131,135 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         if (!file) return
 
         const reader = new FileReader()
-        reader.onload = (evt) => {
+        reader.onload = async (evt) => {
             const bstr = evt.target?.result
             const wb = XLSX.read(bstr, { type: 'binary' })
             const wsname = wb.SheetNames[0]
             const ws = wb.Sheets[wsname]
             const data = XLSX.utils.sheet_to_json(ws) as any[]
-
-            const mapped = data.map(row => ({
-                name: row.Nome || row.name || row.nome || 'Cliente',
-                phone: String(row.Telefone || row.phone || row.telefone || '').replace(/\D/g, '')
-            })).filter(r => r.phone.length >= 10)
-
-            setRecipients(mapped)
-            setSourceType('file')
-            toast.success(`${mapped.length} contatos importados da planilha.`)
+            await processImportedData(data)
         }
         reader.readAsBinaryString(file)
+    }
+
+    const handleRemoveInvalids = () => {
+        const filtered = recipients.filter(r => !r.isInvalid)
+        const removed = recipients.length - filtered.length
+        setRecipients(filtered)
+        if (importStats) {
+            setImportStats({ ...importStats, invalid: 0, valid: filtered.length })
+        }
+        toast.success(`${removed} número(s) inválido(s) removido(s).`)
+        setShowInvalids(false)
+    }
+
+    // Pipeline reutilizável de processamento de dados importados
+    const processImportedData = async (data: Record<string, any>[]) => {
+        // 1. Detecção flexível de colunas
+        const mapped = data.map(row => {
+            const name = findColumnValue(row, NAME_ALIASES) || 'Cliente'
+            const rawPhone = findColumnValue(row, PHONE_ALIASES) || ''
+            const phone = rawPhone.replace(/\D/g, '')
+            return { name, phone }
+        }).filter(r => r.phone.length >= 8)
+
+        if (mapped.length === 0) {
+            toast.error('Nenhum contato válido encontrado. Verifique se a planilha tem colunas de Nome e Telefone.')
+            return
+        }
+
+        // 2. Deduplicação por telefone normalizado
+        const seen = new Map<string, typeof mapped[0]>()
+        const duplicateList: { name: string; phone: string }[] = []
+        for (const r of mapped) {
+            const normalized = r.phone.replace(/\D/g, '')
+            if (seen.has(normalized)) {
+                duplicateList.push(r)
+            } else {
+                seen.set(normalized, r)
+            }
+        }
+        const unique = Array.from(seen.values())
+
+        // 3. Validação prévia de formato
+        const withValidation: Recipient[] = unique.map(r => {
+            const normalized = normalizeWhatsAppNumber(r.phone)
+            const valid = isValidWhatsAppNumber(normalized)
+            return { ...r, phone: r.phone, isInvalid: !valid }
+        })
+
+        const validCount = withValidation.filter(r => !r.isInvalid).length
+        const invalidCount = withValidation.filter(r => r.isInvalid).length
+
+        // 4. Vinculação automática com leads existentes
+        setIsLinking(true)
+        setRecipients(withValidation)
+        setSourceType('file')
+
+        let linkedCount = 0
+        try {
+            const phonesToMatch = withValidation
+                .filter(r => !r.isInvalid)
+                .map(r => r.phone)
+            
+            if (phonesToMatch.length > 0) {
+                const matchResult = await matchRecipientsWithLeads(tenantId, phonesToMatch)
+                if (matchResult.success && Object.keys(matchResult.matches).length > 0) {
+                    const updated = withValidation.map(r => {
+                        const normalized = normalizeWhatsAppNumber(r.phone)
+                        const leadId = matchResult.matches[normalized]
+                        return leadId ? { ...r, lead_id: leadId } : r
+                    })
+                    setRecipients(updated)
+                    linkedCount = Object.keys(matchResult.matches).length
+                }
+            }
+        } catch (err) {
+            console.error('Erro ao vincular leads:', err)
+        } finally {
+            setIsLinking(false)
+        }
+
+        // 5. Montar stats
+        setImportStats({
+            total: mapped.length,
+            valid: validCount,
+            invalid: invalidCount,
+            duplicates: duplicateList.length,
+            linked: linkedCount,
+            duplicateList
+        })
+
+        toast.success(`${unique.length} contatos importados.`)
+    }
+
+    const handleGoogleSheetImport = async () => {
+        if (!googleSheetUrl.trim()) {
+            toast.error('Cole o link da planilha do Google Sheets.')
+            return
+        }
+
+        setIsLoadingSheet(true)
+        try {
+            const result = await fetchGoogleSheetData(googleSheetUrl.trim())
+            if (!result.success || !result.csvData) {
+                toast.error(result.error || 'Erro ao acessar a planilha.')
+                return
+            }
+
+            // Parsear CSV com SheetJS
+            const wb = XLSX.read(result.csvData, { type: 'string' })
+            const ws = wb.Sheets[wb.SheetNames[0]]
+            const data = XLSX.utils.sheet_to_json(ws) as any[]
+
+            await processImportedData(data)
+            setShowGoogleSheet(false)
+            setGoogleSheetUrl('')
+        } catch (error: any) {
+            toast.error('Erro ao processar planilha: ' + error.message)
+        } finally {
+            setIsLoadingSheet(false)
+        }
     }
 
     const handleFetchSystemLeads = async () => {
@@ -444,31 +592,31 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-2 gap-4">
+                            <div className="grid grid-cols-3 gap-3">
                             <button 
                                 onClick={handleFetchSystemLeads}
                                 disabled={isSelectingLeads}
-                                className="flex flex-col items-center gap-3 p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#404F4F]/20 hover:bg-gray-100 transition-all text-gray-600 group"
+                                className="flex flex-col items-center gap-3 p-5 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#404F4F]/20 hover:bg-gray-100 transition-all text-gray-600 group"
                             >
                                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                                     {isSelectingLeads ? <Loader2 className="animate-spin" size={24} /> : <Users className="text-[#404F4F]" size={24} />}
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-sm font-bold text-[#404F4F]">Leads do Sistema</p>
-                                    <p className="text-[10px]">{selectedStages.length > 0 || selectedSource ? 'Filtros aplicados' : 'Todos os leads cadastrados'}</p>
+                                    <p className="text-xs font-bold text-[#404F4F]">Leads do Sistema</p>
+                                    <p className="text-[10px]">{selectedStages.length > 0 || selectedSource ? 'Filtros aplicados' : 'Leads cadastrados'}</p>
                                 </div>
                             </button>
 
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex flex-col items-center gap-3 p-6 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#404F4F]/20 hover:bg-gray-100 transition-all text-gray-600 group"
+                                className="flex flex-col items-center gap-3 p-5 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#404F4F]/20 hover:bg-gray-100 transition-all text-gray-600 group"
                             >
                                 <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                                     <FileSpreadsheet className="text-[#404F4F]" size={24} />
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-sm font-bold text-[#404F4F]">Subir Planilha</p>
-                                    <p className="text-[10px]">Excel ou CSV (Nome e Tel)</p>
+                                    <p className="text-xs font-bold text-[#404F4F]">Subir Planilha</p>
+                                    <p className="text-[10px]">Excel ou CSV</p>
                                 </div>
                                 <input 
                                     type="file" 
@@ -478,27 +626,174 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     accept=".csv,.xlsx,.xls"
                                 />
                             </button>
+
+                            <button 
+                                onClick={() => setShowGoogleSheet(!showGoogleSheet)}
+                                className={`flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all text-gray-600 group ${
+                                    showGoogleSheet 
+                                        ? 'bg-[#404F4F]/5 border-[#404F4F]/20' 
+                                        : 'bg-gray-50 border-gray-100 hover:border-[#404F4F]/20 hover:bg-gray-100'
+                                }`}
+                            >
+                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                    <Globe className="text-[#0F9D58]" size={24} />
+                                </div>
+                                <div className="text-center">
+                                    <p className="text-xs font-bold text-[#404F4F]">Google Sheets</p>
+                                    <p className="text-[10px]">Colar link</p>
+                                </div>
+                            </button>
                         </div>
+
+                        {/* Google Sheets URL Input */}
+                        {showGoogleSheet && (
+                            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="flex items-center gap-2">
+                                    <Globe size={14} className="text-[#0F9D58] shrink-0" />
+                                    <p className="text-[10px] font-bold text-gray-700">Cole o link de compartilhamento da planilha</p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <input
+                                        type="url"
+                                        value={googleSheetUrl}
+                                        onChange={(e) => setGoogleSheetUrl(e.target.value)}
+                                        placeholder="https://docs.google.com/spreadsheets/d/..."
+                                        className="flex-1 h-10 px-3 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40 focus:ring-2 focus:ring-ring/50"
+                                        onKeyDown={(e) => e.key === 'Enter' && handleGoogleSheetImport()}
+                                    />
+                                    <button
+                                        onClick={handleGoogleSheetImport}
+                                        disabled={isLoadingSheet || !googleSheetUrl.trim()}
+                                        className={`h-10 px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-2 shrink-0 ${
+                                            isLoadingSheet || !googleSheetUrl.trim()
+                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                : 'bg-[#0F9D58] text-white hover:bg-[#0D8C4D]'
+                                        }`}
+                                    >
+                                        {isLoadingSheet ? (
+                                            <Loader2 className="animate-spin" size={14} />
+                                        ) : (
+                                            <ExternalLink size={14} />
+                                        )}
+                                        {isLoadingSheet ? 'Importando...' : 'Importar'}
+                                    </button>
+                                </div>
+                                <p className="text-[10px] text-gray-400 italic flex items-center gap-1">
+                                    <Info size={10} />
+                                    A planilha deve estar compartilhada como "Qualquer pessoa com o link"
+                                </p>
+                            </div>
+                        )}
                         </div>
                     ) : (
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
                                 <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Lista de Envio</span>
                                 <button 
-                                    onClick={() => { setRecipients([]); setSourceType(null); }}
+                                    onClick={() => { setRecipients([]); setSourceType(null); setImportStats(null); setShowDuplicates(false); setShowInvalids(false); }}
                                     className="text-[10px] font-bold text-red-500 hover:underline flex items-center gap-1"
                                 >
                                     Limpar Lista
                                 </button>
                             </div>
+
+                            {/* Badge resumo da importação */}
+                            {importStats && sourceType === 'file' && (
+                                <div className="flex flex-wrap gap-2 text-[10px] font-bold">
+                                    <span className="px-2.5 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100">
+                                        ✅ {importStats.valid} válidos
+                                    </span>
+                                    {importStats.linked > 0 && (
+                                        <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
+                                            🔗 {importStats.linked} vinculados ao CRM
+                                        </span>
+                                    )}
+                                    {importStats.invalid > 0 && (
+                                        <button
+                                            onClick={() => setShowInvalids(!showInvalids)}
+                                            className="px-2.5 py-1 rounded-lg bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors"
+                                        >
+                                            ⚠️ {importStats.invalid} inválidos {showInvalids ? '▲' : '▼'}
+                                        </button>
+                                    )}
+                                    {importStats.duplicates > 0 && (
+                                        <button
+                                            onClick={() => setShowDuplicates(!showDuplicates)}
+                                            className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-100 transition-colors"
+                                        >
+                                            🔁 {importStats.duplicates} duplicados removidos {showDuplicates ? '▲' : '▼'}
+                                        </button>
+                                    )}
+                                    {isLinking && (
+                                        <span className="px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 border border-gray-100 flex items-center gap-1">
+                                            <Loader2 className="animate-spin" size={10} /> Vinculando...
+                                        </span>
+                                    )}
+                                </div>
+                            )}
+
+                            {/* Lista de duplicados removidos */}
+                            {showDuplicates && importStats && importStats.duplicateList.length > 0 && (
+                                <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-100 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Duplicados Removidos</p>
+                                    <div className="max-h-[120px] overflow-y-auto space-y-1 custom-scrollbar">
+                                        {importStats.duplicateList.map((d, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-[10px] text-amber-700">
+                                                <span className="font-bold truncate max-w-[120px]">{d.name}</span>
+                                                <span className="text-amber-500">{formatPhone(d.phone)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Lista de inválidos */}
+                            {showInvalids && importStats && importStats.invalid > 0 && (
+                                <div className="p-3 bg-red-50/50 rounded-xl border border-red-100 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <div className="flex items-center justify-between">
+                                        <p className="text-[10px] font-bold text-red-800 uppercase tracking-wider">Números Inválidos</p>
+                                        <button
+                                            onClick={handleRemoveInvalids}
+                                            className="text-[10px] font-bold text-red-600 hover:text-red-800 flex items-center gap-1 transition-colors"
+                                        >
+                                            <Trash2 size={10} />
+                                            Remover Todos
+                                        </button>
+                                    </div>
+                                    <div className="max-h-[120px] overflow-y-auto space-y-1 custom-scrollbar">
+                                        {recipients.filter(r => r.isInvalid).map((r, i) => (
+                                            <div key={i} className="flex items-center gap-2 text-[10px] text-red-600">
+                                                <AlertCircle size={10} className="shrink-0" />
+                                                <span className="font-bold truncate max-w-[120px]">{r.name}</span>
+                                                <span className="text-red-400">{formatPhone(r.phone)}</span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+
+                            {/* Lista principal de destinatários */}
                             <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                                 {recipients.map((r, i) => (
-                                    <div key={i} className="flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100">
-                                        <div className="min-w-0">
-                                            <p className="text-xs font-bold text-[#404F4F] truncate">{r.name}</p>
-                                            <p className="text-[10px] text-gray-500">{formatPhone(r.phone)}</p>
+                                    <div key={i} className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${
+                                        r.isInvalid 
+                                            ? 'bg-red-50/50 border-red-100' 
+                                            : 'bg-gray-50 border-gray-100'
+                                    }`}>
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-1.5">
+                                                <p className={`text-xs font-bold truncate ${r.isInvalid ? 'text-red-500' : 'text-[#404F4F]'}`}>{r.name}</p>
+                                                {r.lead_id && (
+                                                    <span title="Vinculado ao CRM">
+                                                        <Link size={10} className="text-blue-500 shrink-0" />
+                                                    </span>
+                                                )}
+                                            </div>
+                                            <p className={`text-[10px] ${r.isInvalid ? 'text-red-400' : 'text-gray-500'}`}>{formatPhone(r.phone)}</p>
                                         </div>
-                                        <div className="w-2 h-2 rounded-full bg-yellow-400"></div>
+                                        <div className={`w-2 h-2 rounded-full shrink-0 ${
+                                            r.isInvalid ? 'bg-red-400' : r.lead_id ? 'bg-blue-400' : 'bg-yellow-400'
+                                        }`}></div>
                                     </div>
                                 ))}
                             </div>
