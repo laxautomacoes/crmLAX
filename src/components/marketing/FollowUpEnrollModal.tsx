@@ -158,22 +158,20 @@ export default function FollowUpEnrollModal({ isOpen, onClose, sequenceId, onEnr
                             <div
                                 key={lead.id}
                                 onClick={() => !lead.already_enrolled && toggleSelect(lead.id)}
-                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer ${
-                                    lead.already_enrolled
+                                className={`flex items-center gap-3 px-3 py-2.5 rounded-xl transition-all cursor-pointer ${lead.already_enrolled
                                         ? 'opacity-50 cursor-not-allowed bg-gray-100'
                                         : selectedIds.has(lead.id)
-                                        ? 'bg-[#404F4F]/5 border border-[#404F4F]/20'
-                                        : 'bg-white border border-transparent hover:border-border/50 hover:shadow-sm'
-                                }`}
+                                            ? 'bg-[#404F4F]/5 border border-[#404F4F]/20'
+                                            : 'bg-white border border-transparent hover:border-border/50 hover:shadow-sm'
+                                    }`}
                             >
                                 {/* Checkbox */}
-                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${
-                                    lead.already_enrolled
+                                <div className={`w-5 h-5 rounded-md border-2 flex items-center justify-center shrink-0 transition-all ${lead.already_enrolled
                                         ? 'border-gray-300 bg-gray-200'
                                         : selectedIds.has(lead.id)
-                                        ? 'border-[#404F4F] bg-[#404F4F]'
-                                        : 'border-border'
-                                }`}>
+                                            ? 'border-[#404F4F] bg-[#404F4F]'
+                                            : 'border-border'
+                                    }`}>
                                     {(selectedIds.has(lead.id) || lead.already_enrolled) && (
                                         <CheckCircle2 className={`h-3 w-3 ${lead.already_enrolled ? 'text-gray-400' : 'text-white'}`} />
                                     )}
@@ -223,7 +221,7 @@ export default function FollowUpEnrollModal({ isOpen, onClose, sequenceId, onEnr
                     <button
                         onClick={handleEnroll}
                         disabled={isEnrolling || selectedIds.size === 0}
-                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#404F4F] text-white text-sm font-bold hover:bg-[#2d3939] transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FFE600] text-[#404F4F] text-sm font-bold hover:bg-[#FFE600]/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isEnrolling ? (
                             <Loader2 className="h-4 w-4 animate-spin" />

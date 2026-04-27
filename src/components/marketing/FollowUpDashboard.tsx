@@ -218,11 +218,10 @@ export default function FollowUpDashboard({ tenantId, profileId, isAdmin, userRo
                         <button
                             key={f}
                             onClick={() => setFilter(f)}
-                            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${
-                                filter === f
+                            className={`px-3 py-2 rounded-xl text-xs font-bold transition-all ${filter === f
                                     ? 'bg-[#404F4F] text-white shadow-sm'
                                     : 'bg-white border border-border text-muted-foreground hover:bg-gray-50'
-                            }`}
+                                }`}
                         >
                             {f === 'all' ? 'Todas' : f === 'active' ? 'Ativas' : 'Inativas'}
                         </button>
@@ -231,7 +230,7 @@ export default function FollowUpDashboard({ tenantId, profileId, isAdmin, userRo
 
                 <button
                     onClick={handleNewSequence}
-                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#404F4F] text-white rounded-xl text-sm font-bold hover:bg-[#2d3939] transition-all shadow-sm"
+                    className="flex items-center justify-center gap-2 px-4 py-2.5 bg-[#FFE600] text-[#404F4F] rounded-xl text-sm font-bold hover:bg-[#FFE600]/80 transition-all shadow-sm"
                 >
                     <Plus className="h-4 w-4" />
                     Nova Sequência
@@ -258,7 +257,7 @@ export default function FollowUpDashboard({ tenantId, profileId, isAdmin, userRo
                     {!search && (
                         <button
                             onClick={handleNewSequence}
-                            className="flex items-center gap-2 px-5 py-2.5 bg-[#404F4F] text-white rounded-xl text-sm font-bold hover:bg-[#2d3939] transition-all"
+                            className="flex items-center gap-2 px-5 py-2.5 bg-[#FFE600] text-[#404F4F] rounded-xl text-sm font-bold hover:bg-[#FFE600]/80 transition-all"
                         >
                             <Plus className="h-4 w-4" />
                             Criar Primeira Sequência
@@ -270,9 +269,8 @@ export default function FollowUpDashboard({ tenantId, profileId, isAdmin, userRo
                     {filtered.map(seq => (
                         <div
                             key={seq.id}
-                            className={`group bg-white rounded-2xl border shadow-sm p-5 transition-all hover:shadow-md ${
-                                seq.is_active ? 'border-green-200/60' : 'border-border/50'
-                            }`}
+                            className={`group bg-white rounded-2xl border shadow-sm p-5 transition-all hover:shadow-md ${seq.is_active ? 'border-green-200/60' : 'border-border/50'
+                                }`}
                         >
                             {/* Header */}
                             <div className="flex items-start justify-between mb-4">
@@ -290,11 +288,10 @@ export default function FollowUpDashboard({ tenantId, profileId, isAdmin, userRo
                                     <button
                                         onClick={() => handleToggle(seq.id, seq.is_active)}
                                         title={seq.is_active ? 'Pausar' : 'Ativar'}
-                                        className={`p-1.5 rounded-lg transition-all ${
-                                            seq.is_active
+                                        className={`p-1.5 rounded-lg transition-all ${seq.is_active
                                                 ? 'text-green-600 hover:bg-green-50'
                                                 : 'text-muted-foreground hover:bg-gray-100'
-                                        }`}
+                                            }`}
                                     >
                                         {seq.is_active ? <Pause className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
                                     </button>
@@ -349,7 +346,7 @@ export default function FollowUpDashboard({ tenantId, profileId, isAdmin, userRo
                             <div className="flex items-center gap-2 pt-3 border-t border-border/30">
                                 <button
                                     onClick={() => handleEnroll(seq.id)}
-                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#404F4F] text-white text-xs font-bold hover:bg-[#2d3939] transition-all"
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-2 rounded-xl bg-[#FFE600] text-[#404F4F] text-xs font-bold hover:bg-[#FFE600]/80 transition-all"
                                 >
                                     <Users className="h-3.5 w-3.5" />
                                     Inscrever Leads
