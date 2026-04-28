@@ -61,15 +61,42 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
 }
 
 export const evolutionService = {
-    async createInstance(instanceName: string) {
+    async createInstance(instanceName: string, webhookUrl?: string) {
         const cleanName = instanceName.replace(/[^a-zA-Z0-9]/g, '');
+        const payload: any = {
+            instanceName: cleanName,
+            token: Math.random().toString(36).substring(2, 15),
+            qrcode: true,
+            integration: 'WHATSAPP-BAILEYS'
+        };
+
+        // Configurar webhook automaticamente se URL fornecida
+        if (webhookUrl) {
+            payload.webhook = {
+                url: webhookUrl,
+                byEvents: false,
+                base64: false,
+                events: ['MESSAGES_UPSERT']
+            };
+        }
+
         return evolutionFetch('/instance/create', {
             method: 'POST',
+            body: JSON.stringify(payload),
+        });
+    },
+
+    async setWebhook(instanceName: string, webhookUrl: string) {
+        return evolutionFetch(`/webhook/set/${instanceName}`, {
+            method: 'POST',
             body: JSON.stringify({
-                instanceName: cleanName,
-                token: Math.random().toString(36).substring(2, 15),
-                qrcode: true,
-                integration: 'WHATSAPP-BAILEYS'
+                webhook: {
+                    url: webhookUrl,
+                    byEvents: false,
+                    base64: false,
+                    events: ['MESSAGES_UPSERT'],
+                    enabled: true
+                }
             }),
         });
     },

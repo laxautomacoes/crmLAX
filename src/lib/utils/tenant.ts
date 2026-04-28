@@ -67,9 +67,9 @@ export function isPublicRoute(pathname: string): boolean {
     ];
 
     return publicRoutes.some(route => pathname.startsWith(route)) ||
-        pathname.startsWith('/api/v1/webhooks');
+        pathname.startsWith('/api/v1/webhooks') ||
+        pathname.startsWith('/api/webhooks');
 }
-
 export function isSiteRequest(pathname: string): boolean {
     return pathname.startsWith('/site') ||
         pathname.startsWith('/api/v1/webhooks');

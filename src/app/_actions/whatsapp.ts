@@ -40,6 +40,7 @@ export async function setupWhatsAppInstance() {
         .single();
 
     let instanceName = 'instance';
+    let tenantSlug: string | null = null;
     if (profile?.tenant_id) {
         const { data: tenant } = await supabase
             .from('tenants')
@@ -49,6 +50,7 @@ export async function setupWhatsAppInstance() {
 
         if (tenant?.slug) {
             instanceName = tenant.slug;
+            tenantSlug = tenant.slug;
         } else if (tenant?.name) {
             instanceName = tenant.name;
         }
@@ -59,7 +61,17 @@ export async function setupWhatsAppInstance() {
     if (!instanceName) instanceName = `tenant${Date.now()}`;
     
     try {
-        const evolution = await evolutionService.createInstance(instanceName);
+        // Montar URL do webhook para a Evolution API
+        const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+        const protocol = rootDomain.includes('localhost') ? 'http' : 'https';
+        let webhookUrl: string;
+        if (tenantSlug && !rootDomain.includes('localhost')) {
+            webhookUrl = `${protocol}://${tenantSlug}.${rootDomain}/api/webhooks/evolution`;
+        } else {
+            webhookUrl = `${protocol}://${rootDomain}/api/webhooks/evolution`;
+        }
+
+        const evolution = await evolutionService.createInstance(instanceName, webhookUrl);
 
         const { data, error } = await supabase
             .from('whatsapp_instances')
@@ -147,6 +159,47 @@ export async function deleteWhatsAppInstance() {
 
         revalidatePath('/settings/integrations');
         return { success: true };
+    } catch (err: any) {
+        return { error: err.message };
+    }
+}
+
+export async function configureWebhook() {
+    const { data, error } = await getWhatsAppInstance();
+    if (error || !data) return { error: 'Nenhuma instância encontrada' };
+
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Not authenticated' };
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single();
+
+    let tenantSlug: string | null = null;
+    if (profile?.tenant_id) {
+        const { data: tenant } = await supabase
+            .from('tenants')
+            .select('slug')
+            .eq('id', profile.tenant_id)
+            .single();
+        tenantSlug = tenant?.slug || null;
+    }
+
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+    const protocol = rootDomain.includes('localhost') ? 'http' : 'https';
+    let webhookUrl: string;
+    if (tenantSlug && !rootDomain.includes('localhost')) {
+        webhookUrl = `${protocol}://${tenantSlug}.${rootDomain}/api/webhooks/evolution`;
+    } else {
+        webhookUrl = `${protocol}://${rootDomain}/api/webhooks/evolution`;
+    }
+
+    try {
+        await evolutionService.setWebhook(data.instance_name, webhookUrl);
+        return { success: true, webhookUrl };
     } catch (err: any) {
         return { error: err.message };
     }

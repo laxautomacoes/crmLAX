@@ -1,5 +1,8 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
+import { processLeadInbound } from '@/services/lead-service';
+import { parseWhatsAppLeadMessage } from '@/services/whatsapp-lead-parser';
+import { evolutionService } from '@/lib/evolution';
 
 export async function POST(req: Request) {
     const body = await req.json();
@@ -28,6 +31,75 @@ export async function POST(req: Request) {
         .single();
 
     if (!instance) return NextResponse.json({ error: 'Instance not found' }, { status: 404 });
+
+    // ─── CRIAÇÃO DE LEAD VIA WHATSAPP ───────────────────────────────────
+    // Apenas mensagens enviadas pelo próprio corretor (fromMe: true)
+    // com prefixos especiais (#lead, #ia, /lead) ativam a criação de leads
+    if (fromMe) {
+        const parseResult = await parseWhatsAppLeadMessage(text);
+
+        if (parseResult) {
+            const { result, type } = parseResult;
+
+            if (!result.success || !result.data) {
+                // Enviar mensagem de erro para o corretor
+                await sendWhatsAppReply(
+                    instanceName,
+                    remoteJid.split('@')[0],
+                    `❌ *Erro ao criar lead*\n\n${result.error}`
+                );
+                return NextResponse.json({ success: false, error: result.error });
+            }
+
+            try {
+                // Criar o lead via processLeadInbound
+                const leadResult = await processLeadInbound({
+                    tenant_id: instance.tenant_id!,
+                    name: result.data.name,
+                    phone: result.data.phone,
+                    email: result.data.email,
+                    source: 'WhatsApp',
+                    property_interest: result.data.interest,
+                    status: 'new'
+                });
+
+                // Enviar confirmação via WhatsApp
+                const methodLabel = type === 'structured' ? 'Estruturado' : 'IA';
+                const confirmMsg = [
+                    `✅ *Lead criado com sucesso!*`,
+                    ``,
+                    `👤 *Nome:* ${result.data.name}`,
+                    `📱 *Telefone:* ${result.data.phone}`,
+                    result.data.email ? `📧 *Email:* ${result.data.email}` : null,
+                    result.data.interest ? `🏠 *Interesse:* ${result.data.interest}` : null,
+                    `🔗 *Origem:* WhatsApp (${methodLabel})`,
+                    leadResult.assigned_to ? `\n👥 *Distribuído para corretor automaticamente*` : null
+                ].filter(Boolean).join('\n');
+
+                await sendWhatsAppReply(
+                    instanceName,
+                    remoteJid.split('@')[0],
+                    confirmMsg
+                );
+
+                return NextResponse.json({
+                    success: true,
+                    lead_id: leadResult.lead_id,
+                    contact_id: leadResult.contact_id
+                });
+            } catch (error: any) {
+                console.error('[Evolution Webhook] Erro ao criar lead:', error.message);
+                await sendWhatsAppReply(
+                    instanceName,
+                    remoteJid.split('@')[0],
+                    `❌ *Erro ao criar lead*\n\n${error.message}`
+                );
+                return NextResponse.json({ success: false, error: error.message });
+            }
+        }
+    }
+
+    // ─── FLUXO ORIGINAL: SALVAR MENSAGEM NO CHAT ────────────────────────
 
     // 2. Clean the phone number from remoteJid (e.g., 5548999999999@s.whatsapp.net)
     const phone = remoteJid.split('@')[0].replace(/\D/g, '');
@@ -85,4 +157,14 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true });
+}
+
+// ─── Helper: Enviar resposta no WhatsApp ────────────────────────────────────
+
+async function sendWhatsAppReply(instanceName: string, number: string, message: string) {
+    try {
+        await evolutionService.sendMessage(instanceName, number, message);
+    } catch (error: any) {
+        console.error('[Evolution Webhook] Erro ao enviar reply:', error.message);
+    }
 }

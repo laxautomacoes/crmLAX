@@ -12,10 +12,11 @@ export interface LeadCreateData {
     tags?: string[];
     utm_data?: Record<string, any>;
     status?: string;
+    property_interest?: string;
 }
 
 export async function processLeadInbound(data: LeadCreateData) {
-    const { tenant_id, name, phone, email, property_id, source, tags, utm_data, status = 'new' } = data;
+    const { tenant_id, name, phone, email, property_id, source, tags, utm_data, status = 'new', property_interest } = data;
 
     if (!tenant_id || !phone) {
         throw new Error('Missing tenant_id or phone');
@@ -52,7 +53,8 @@ export async function processLeadInbound(data: LeadCreateData) {
             property_id: property_id || null,
             source: source || 'Direct',
             utm_data: utm_data || {},
-            status
+            status,
+            property_interest: property_interest || null
         })
         .select('id')
         .single();
