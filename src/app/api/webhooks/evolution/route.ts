@@ -54,13 +54,25 @@ export async function POST(req: Request) {
                     '🎙️ Processando áudio...'
                 );
 
-                // 2. Buscar base64 do áudio via Evolution API
-                const mediaResult = await evolutionService.getBase64FromMediaMessage(
-                    instanceName,
-                    message.key.id
-                );
+                // 2. Obter base64 do áudio
+                // Prioridade: base64 inline no webhook (webhookBase64: true) → fallback via API
+                let audioBase64 = audioMessage.base64 || null;
+                let audioMimeType = audioMessage.mimetype || 'audio/ogg';
 
-                if (!mediaResult?.base64) {
+                if (!audioBase64) {
+                    try {
+                        const mediaResult = await evolutionService.getBase64FromMediaMessage(
+                            instanceName,
+                            message.key.id
+                        );
+                        audioBase64 = mediaResult?.base64 || null;
+                        audioMimeType = mediaResult?.mimetype || audioMimeType;
+                    } catch (mediaError: any) {
+                        console.error('[Evolution Webhook] Fallback getBase64 falhou:', mediaError.message);
+                    }
+                }
+
+                if (!audioBase64) {
                     await sendWhatsAppReply(
                         instanceName,
                         remoteJid.split('@')[0],
@@ -71,8 +83,8 @@ export async function POST(req: Request) {
 
                 // 3. Enviar para o Gemini transcrever e extrair dados
                 const audioResult = await parseAudioLead(
-                    mediaResult.base64,
-                    mediaResult.mimetype || audioMessage.mimetype || 'audio/ogg'
+                    audioBase64,
+                    audioMimeType.split(';')[0].trim() // Remover codecs (ex: "audio/ogg; codecs=opus" → "audio/ogg")
                 );
 
                 // 4. Se não identificou dados de lead, ignorar silenciosamente

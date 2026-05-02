@@ -75,7 +75,7 @@ export const evolutionService = {
             payload.webhook = {
                 url: webhookUrl,
                 byEvents: false,
-                base64: false,
+                base64: true,
                 events: ['MESSAGES_UPSERT']
             };
         }
@@ -93,7 +93,7 @@ export const evolutionService = {
                 webhook: {
                     url: webhookUrl,
                     byEvents: false,
-                    base64: false,
+                    base64: true,
                     events: ['MESSAGES_UPSERT'],
                     enabled: true
                 }
