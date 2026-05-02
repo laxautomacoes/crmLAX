@@ -5,6 +5,7 @@ import { parseWhatsAppLeadMessage } from '@/services/whatsapp-lead-parser';
 import { evolutionService } from '@/lib/evolution';
 
 export async function POST(req: Request) {
+    try {
     const body = await req.json();
     const supabase = createAdminClient();
 
@@ -15,6 +16,10 @@ export async function POST(req: Request) {
     }
 
     const message = body.data;
+    if (!message?.key) {
+        return NextResponse.json({ received: true, note: 'no message key' });
+    }
+
     const instanceName = body.instance;
     const remoteJid = message.key.remoteJid;
     const fromMe = message.key.fromMe;
@@ -201,6 +206,17 @@ export async function POST(req: Request) {
     });
 
     return NextResponse.json({ success: true });
+
+    } catch (error: any) {
+        console.error('[Evolution Webhook] Unhandled error:', {
+            message: error.message,
+            stack: error.stack?.split('\n').slice(0, 3).join('\n')
+        });
+        return NextResponse.json(
+            { error: 'Internal webhook error', message: error.message },
+            { status: 500 }
+        );
+    }
 }
 
 // ─── Helper: Enviar resposta no WhatsApp ────────────────────────────────────
