@@ -152,6 +152,9 @@ export async function POST(req: Request) {
 
                 await sendWhatsAppReply(instanceName, remoteJid.split('@')[0], confirmMsg);
 
+                // Salvar no WhatsApp Mirror do lead
+                await saveInitialChat(supabase, leadResult.lead_id, '[🎙️ Áudio transcrito]', confirmMsg, 'áudio');
+
                 return NextResponse.json({
                     success: true,
                     lead_id: leadResult.lead_id,
@@ -257,6 +260,9 @@ export async function POST(req: Request) {
                     confirmMsg
                 );
 
+                // Salvar no WhatsApp Mirror do lead
+                await saveInitialChat(supabase, leadResult.lead_id, text, confirmMsg, methodLabel);
+
                 return NextResponse.json({
                     success: true,
                     lead_id: leadResult.lead_id,
@@ -352,5 +358,42 @@ async function sendWhatsAppReply(instanceName: string, number: string, message: 
         await evolutionService.sendMessage(instanceName, number, message);
     } catch (error: any) {
         console.error('[Evolution Webhook] Erro ao enviar reply:', error.message);
+    }
+}
+
+// ─── Helper: Salvar chat inicial no lead (WhatsApp Mirror) ──────────────────
+
+async function saveInitialChat(
+    supabase: ReturnType<typeof createAdminClient>,
+    leadId: string,
+    originalText: string,
+    confirmMsg: string,
+    method: string
+) {
+    try {
+        const now = new Date().toISOString();
+        const initialChat = [
+            {
+                id: `creation-${Date.now()}`,
+                text: originalText || `[Criação via ${method}]`,
+                fromMe: true,
+                timestamp: now,
+                senderName: 'Você'
+            },
+            {
+                id: `confirm-${Date.now()}`,
+                text: confirmMsg,
+                fromMe: true,
+                timestamp: now,
+                senderName: 'CRM LAX'
+            }
+        ];
+
+        await supabase
+            .from('leads')
+            .update({ whatsapp_chat: initialChat })
+            .eq('id', leadId);
+    } catch (error: any) {
+        console.error('[Evolution Webhook] Erro ao salvar chat inicial:', error.message);
     }
 }
