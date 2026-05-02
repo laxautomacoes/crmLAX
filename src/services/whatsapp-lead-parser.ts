@@ -261,100 +261,79 @@ export async function parseWithAI(text: string): Promise<ParseResult> {
     }
 }
 
-// ─── Prompt de Extração de Lead via Áudio ────────────────────────────────────
+// ─── Transcrição de Áudio via OpenAI Whisper ─────────────────────────────────
 
-const AUDIO_EXTRACTION_PROMPT = `Você é um assistente de CRM imobiliário. Sua tarefa é analisar este áudio e:
-
-1. Transcrever o conteúdo do áudio
-2. Determinar se o áudio contém dados para cadastro de um LEAD (cliente potencial)
-3. Se contiver, extrair: nome, telefone, email e interesse imobiliário
-
-Um áudio contém dados de lead quando o corretor menciona informações de um novo cliente/prospect, como:
-- "Cadastrar o lead João Silva..."
-- "Novo cliente: Maria, telefone 48..."
-- "Recebi contato do Pedro sobre apartamento..."
-
-Se o áudio for uma conversa casual, cumprimento, ou NÃO contiver dados de cadastro, retorne:
-{"is_lead": false}
-
-Se contiver dados de lead, retorne:
-{"is_lead": true, "name": "string", "phone": "string ou null", "email": "string ou null", "interest": "string ou null"}
-
-REGRAS:
-- phone: apenas dígitos, com DDD (ex: 48999887766)
-- Se o telefone não for mencionado, retorne phone como null
-- name é obrigatório para considerar como lead
-- Responda SOMENTE com o JSON, sem explicações`;
+import OpenAI from 'openai';
 
 /**
- * Usa o Gemini multimodal para transcrever áudio e extrair dados de lead.
+ * Transcreve áudio usando OpenAI Whisper e extrai dados de lead.
+ * Etapa 1: Whisper transcreve o áudio → texto
+ * Etapa 2: IA extrai dados do lead a partir do texto transcrito
  * Retorna null se o áudio não contiver dados de lead.
  */
 export async function parseAudioLead(audioBase64: string, mimeType: string): Promise<ParseResult | null> {
     try {
-        const model = getAIModel('gemini-2.0-flash');
+        const apiKey = process.env.OPENAI_API_KEY;
+        if (!apiKey) {
+            throw new Error('OPENAI_API_KEY não configurada');
+        }
 
-        // Remover prefixo data:... se existir
+        const openai = new OpenAI({ apiKey });
+
+        // 1. Converter base64 para File/Blob para enviar ao Whisper
         const cleanBase64 = audioBase64.replace(/^data:[^;]+;base64,/, '');
+        const audioBuffer = Buffer.from(cleanBase64, 'base64');
 
-        const result = await model.generateContent([
-            AUDIO_EXTRACTION_PROMPT,
-            {
-                inlineData: {
-                    data: cleanBase64,
-                    mimeType: mimeType || 'audio/ogg',
-                },
-            },
-        ]);
+        // Determinar extensão do arquivo
+        const ext = mimeType.includes('ogg') ? 'ogg'
+            : mimeType.includes('mp4') ? 'mp4'
+            : mimeType.includes('mpeg') ? 'mp3'
+            : mimeType.includes('webm') ? 'webm'
+            : 'ogg';
 
-        const response = await result.response;
-        const responseText = response.text().trim();
+        // Criar File a partir do buffer
+        const audioFile = new File([audioBuffer], `audio.${ext}`, { type: mimeType });
 
-        // Extrair JSON da resposta
-        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
-        if (!jsonMatch) {
-            console.error('[AudioParser] Gemini não retornou JSON válido:', responseText);
-            return null;
+        // 2. Transcrever com Whisper
+        const transcription = await openai.audio.transcriptions.create({
+            model: 'whisper-1',
+            file: audioFile,
+            language: 'pt',
+        });
+
+        const transcribedText = transcription.text?.trim();
+        console.log('[AudioParser] Transcrição Whisper:', transcribedText);
+
+        if (!transcribedText) {
+            return null; // Áudio vazio ou inaudível
         }
 
-        const parsed = JSON.parse(jsonMatch[0]);
+        // 3. Verificar se o texto contém indícios de cadastro de lead
+        const leadKeywords = ['cadastr', 'lead', 'cliente', 'nome', 'telefone', 'contato', 'interessad', 'apartamento', 'casa', 'imóvel', 'imovel'];
+        const lowerText = transcribedText.toLowerCase();
+        const hasLeadIntent = leadKeywords.some(kw => lowerText.includes(kw));
 
-        // Se o Gemini decidiu que não é um lead, ignorar silenciosamente
-        if (!parsed.is_lead) {
-            return null;
+        if (!hasLeadIntent) {
+            return null; // Não é um pedido de cadastro, ignorar silenciosamente
         }
 
-        // Validar campo obrigatório: nome
-        if (!parsed.name) {
-            return {
-                success: false,
-                error: '🎙️ Identifiquei que você quer cadastrar um lead, mas não consegui entender o *nome*.\n\n📝 *Dica:* Grave novamente mencionando claramente o nome e telefone do cliente.'
-            };
+        // 4. Usar o parser de IA existente para extrair os dados estruturados
+        const parseResult = await parseWithAI(transcribedText);
+
+        // Ajustar source para indicar que veio de áudio
+        if (parseResult.success && parseResult.data) {
+            parseResult.data.source = 'whatsapp_audio';
         }
 
-        // Validar telefone
-        if (!parsed.phone) {
-            return {
-                success: false,
-                error: `🎙️ Identifiquei o lead *${parsed.name}*, mas não consegui entender o *telefone*.\n\n📝 *Dica:* Grave novamente incluindo o número com DDD. Ex: "cadastrar João Silva, telefone 48 9 9988 7766"`
-            };
-        }
-
-        return {
-            success: true,
-            data: {
-                name: parsed.name,
-                phone: String(parsed.phone).replace(/\D/g, ''),
-                email: parsed.email || undefined,
-                interest: parsed.interest || undefined,
-                source: 'whatsapp_audio'
-            }
-        };
+        return parseResult;
     } catch (error: any) {
-        console.error('[AudioParser] Erro ao processar áudio:', error.message);
+        console.error('[AudioParser] Erro ao processar áudio:', error.message, error.stack?.split('\n').slice(0, 3));
+        const isConfigError = error.message?.includes('API_KEY') || error.message?.includes('configurada');
         return {
             success: false,
-            error: '❌ Erro ao processar o áudio. Tente novamente ou use o formato de texto:\n\n#lead\nNome: João\nTel: 48999999999'
+            error: isConfigError
+                ? '❌ Configuração de IA não encontrada no servidor. Contate o administrador.'
+                : `❌ Erro ao processar o áudio: ${error.message}\n\nTente novamente ou use o formato de texto:\n\n#lead\nNome: João\nTel: 48999999999`
         };
     }
 }
