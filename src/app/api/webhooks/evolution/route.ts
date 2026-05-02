@@ -52,15 +52,58 @@ export async function POST(req: Request) {
             }
 
             try {
+                // Validar se o número possui WhatsApp ativo
+                let phoneWarning: string | null = null;
+                try {
+                    const numberCheck = await evolutionService.checkNumber(instanceName, result.data.phone);
+                    const checkResult = Array.isArray(numberCheck) ? numberCheck[0] : numberCheck;
+                    if (checkResult && checkResult.exists === false) {
+                        phoneWarning = `⚠️ O número ${result.data.phone} pode não possuir WhatsApp ativo.`;
+                    }
+                } catch {
+                    // Não bloquear a criação se a validação falhar
+                }
+
+                // Diferenciar source por método de parsing
+                const sourceLabel = type === 'ai' ? 'WhatsApp (IA)' : 'WhatsApp';
+
                 // Criar o lead via processLeadInbound
                 const leadResult = await processLeadInbound({
                     tenant_id: instance.tenant_id!,
                     name: result.data.name,
                     phone: result.data.phone,
                     email: result.data.email,
-                    source: 'WhatsApp',
+                    source: sourceLabel,
                     property_interest: result.data.interest,
                     status: 'new'
+                });
+
+                // Se o lead já existia, enviar aviso diferente
+                if (leadResult.already_exists) {
+                    await sendWhatsAppReply(
+                        instanceName,
+                        remoteJid.split('@')[0],
+                        `ℹ️ *Lead já cadastrado*\n\n👤 *Nome:* ${result.data.name}\n📱 *Telefone:* ${result.data.phone}\n\nJá existe um lead ativo para este contato no sistema.`
+                    );
+                    return NextResponse.json({
+                        success: true,
+                        lead_id: leadResult.lead_id,
+                        already_exists: true
+                    });
+                }
+
+                // Registrar no system_logs para auditoria
+                await supabase.from('system_logs').insert({
+                    tenant_id: instance.tenant_id,
+                    action: 'create',
+                    entity_type: 'lead',
+                    entity_id: leadResult.lead_id,
+                    details: {
+                        method: type,
+                        source: 'whatsapp_webhook',
+                        phone: result.data.phone,
+                        name: result.data.name
+                    }
                 });
 
                 // Enviar confirmação via WhatsApp
@@ -73,7 +116,8 @@ export async function POST(req: Request) {
                     result.data.email ? `📧 *Email:* ${result.data.email}` : null,
                     result.data.interest ? `🏠 *Interesse:* ${result.data.interest}` : null,
                     `🔗 *Origem:* WhatsApp (${methodLabel})`,
-                    leadResult.assigned_to ? `\n👥 *Distribuído para corretor automaticamente*` : null
+                    leadResult.assigned_to ? `\n👥 *Distribuído para corretor automaticamente*` : null,
+                    phoneWarning ? `\n${phoneWarning}` : null
                 ].filter(Boolean).join('\n');
 
                 await sendWhatsAppReply(

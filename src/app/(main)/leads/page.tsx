@@ -233,14 +233,12 @@ export default function LeadsPage() {
                         <Plus size={18} />
                         Novo Estágio
                     </button>
-                    <div className="w-full md:w-auto order-3 md:order-1">
-                        <LeadsHeader 
-                            onSearch={handleSearch} 
-                            brokers={brokers}
-                            onBrokerChange={handleBrokerChange}
-                            isAdmin={userRole === 'admin' || userRole === 'superadmin'}
-                        />
-                    </div>
+                    <LeadsHeader 
+                        onSearch={handleSearch} 
+                        brokers={brokers}
+                        onBrokerChange={handleBrokerChange}
+                        isAdmin={userRole === 'admin' || userRole === 'superadmin'}
+                    />
                 </div>
             </PageHeader>
 

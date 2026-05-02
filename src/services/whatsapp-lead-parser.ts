@@ -209,7 +209,7 @@ export async function parseWithAI(text: string): Promise<ParseResult> {
     if (!text.trim()) {
         return {
             success: false,
-            error: 'Mensagem vazia. Envie o texto com os dados do lead após o comando.\n\nExemplo:\n#ia João Silva quer um apartamento de 2 quartos, tel 48999887766, email joao@gmail.com'
+            error: 'Mensagem vazia. Envie o texto com os dados do lead após o comando.\n\n📝 *Exemplos:*\n\n#ia João Silva quer um apartamento de 2 quartos, tel 48999887766, email joao@gmail.com\n\n/lead Maria Santos, 11988776655, procura casa 3 quartos em Florianópolis'
         };
     }
 
@@ -238,7 +238,7 @@ export async function parseWithAI(text: string): Promise<ParseResult> {
             if (!parsed.phone) missing.push('telefone');
             return {
                 success: false,
-                error: `A IA não conseguiu identificar: ${missing.join(', ')}\n\nCertifique-se de mencionar o nome e telefone do lead na mensagem.`
+                error: `A IA não conseguiu identificar: ${missing.join(', ')}\n\n📝 *Dica:* Mencione claramente o nome e telefone do lead.\n\n*Exemplo:*\n#ia Cliente João Silva, telefone 48999887766, quer apartamento 2 quartos`
             };
         }
 
@@ -256,7 +256,7 @@ export async function parseWithAI(text: string): Promise<ParseResult> {
         console.error('[WhatsAppLeadParser] Erro no parsing com IA:', error.message);
         return {
             success: false,
-            error: 'Erro ao processar com IA. Tente o formato estruturado:\n\n#lead\nJoão Silva\n48999999999'
+            error: 'Erro ao processar com IA. Tente o formato estruturado:\n\n📝 *Formato alternativo:*\n#lead\nJoão Silva\n48999999999\njoao@email.com\nApartamento 2 quartos'
         };
     }
 }

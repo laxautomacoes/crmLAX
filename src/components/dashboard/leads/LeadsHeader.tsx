@@ -12,7 +12,7 @@ interface LeadsHeaderProps {
 
 export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin }: LeadsHeaderProps) {
     return (
-        <div className="flex flex-wrap items-center gap-2 w-full md:w-auto">
+        <div className="flex items-center gap-2 w-full md:w-auto">
             <FormInput
                 placeholder="Pesquisar leads ou imóveis..."
                 onChange={(e) => onSearch(e.target.value)}

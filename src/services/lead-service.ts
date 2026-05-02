@@ -15,6 +15,13 @@ export interface LeadCreateData {
     property_interest?: string;
 }
 
+export interface LeadCreateResult {
+    contact_id: string;
+    lead_id: string;
+    assigned_to: string | null;
+    already_exists?: boolean;
+}
+
 export async function processLeadInbound(data: LeadCreateData) {
     const { tenant_id, name, phone, email, property_id, source, tags, utm_data, status = 'new', property_interest } = data;
 
@@ -35,7 +42,7 @@ export async function processLeadInbound(data: LeadCreateData) {
                 name, 
                 phone, 
                 email, 
-                tags: JSON.stringify(tags || []) 
+                tags: tags || [] 
             },
             { onConflict: 'tenant_id,phone' }
         )
@@ -44,7 +51,21 @@ export async function processLeadInbound(data: LeadCreateData) {
 
     if (contactError) throw contactError;
 
-    // 2. Criar o lead vinculado
+    // 2. Verificar se já existe lead ativo para este contato (evitar duplicados)
+    const { data: existingLead } = await supabase
+        .from('leads')
+        .select('id')
+        .eq('contact_id', contact.id)
+        .eq('tenant_id', tenant_id)
+        .not('status', 'in', '(closed,lost)')
+        .eq('is_archived', false)
+        .maybeSingle();
+
+    if (existingLead) {
+        return { contact_id: contact.id, lead_id: existingLead.id, assigned_to: null, already_exists: true };
+    }
+
+    // 3. Criar o lead vinculado
     const { data: lead, error: leadError } = await supabase
         .from('leads')
         .insert({
@@ -61,7 +82,7 @@ export async function processLeadInbound(data: LeadCreateData) {
 
     if (leadError) throw leadError;
 
-    // 3. Distribuição Automática (Round Robin)
+    // 4. Distribuição Automática (Round Robin)
     let assignedTo = null;
     try {
         const { data: broker, error: brokerError } = await supabase
@@ -85,7 +106,7 @@ export async function processLeadInbound(data: LeadCreateData) {
                 .update({ last_lead_assigned_at: new Date().toISOString() })
                 .eq('id', assignedTo);
 
-            // 4. Notificação Interna e WhatsApp via Service
+            // 5. Notificação Interna e WhatsApp via Service
             await notificationService.create({
                 user_id: assignedTo,
                 tenant_id,
