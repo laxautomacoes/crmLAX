@@ -21,7 +21,7 @@ interface ClientProps {
         tags: string[]
         broker_name?: string
         marital_status?: string
-        primary_interest?: string
+        contact_type?: string[]
         address_street?: string
         birth_date?: string
     }
@@ -78,7 +78,6 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
 
     return (
         <motion.div
-            layout
             initial={{ opacity: 0, scale: 0.95 }}
             animate={{ opacity: 1, scale: 1 }}
             className={`bg-card rounded-2xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-pointer group relative overflow-hidden ${isExpanded ? 'shadow-sm ring-1 ring-primary/10' : ''}`}
@@ -166,7 +165,7 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
                                     <div className="grid grid-cols-1 gap-2">
                                         <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-bold">
                                             <Target size={12} className="text-muted-foreground/70" />
-                                            <span className="capitalize">Interesse: {client.primary_interest || client.interest}</span>
+                                            <span className="capitalize">Interesse: {client.interest}</span>
                                         </div>
                                     </div>
                                 </div>
@@ -187,10 +186,20 @@ export default function ClientCard({ client, tenantId, profileId, isPro = true, 
                                             <span>{client.marital_status}</span>
                                         </div>
                                     )}
-                                    {client.primary_interest && (
-                                        <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-bold">
-                                            <Target size={12} className="text-muted-foreground/70" />
-                                            <span className="capitalize">Interesse: {client.primary_interest}</span>
+                                    {client.contact_type && client.contact_type.length > 0 && (
+                                        <div className="flex flex-wrap gap-1.5">
+                                            {client.contact_type.map((type: string) => {
+                                                const colors: Record<string, string> = {
+                                                    comprador: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-100 dark:border-green-500/20',
+                                                    vendedor: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-500/20',
+                                                    construtora: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-500/20'
+                                                }
+                                                return (
+                                                    <span key={type} className={`px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase ${colors[type] || ''}`}>
+                                                        {type}
+                                                    </span>
+                                                )
+                                            })}
                                         </div>
                                     )}
                                     {client.address_street && (

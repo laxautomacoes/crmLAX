@@ -43,6 +43,7 @@ export const createPropertySchema = z.object({
     documents: jsonArray,
     is_published: z.boolean().optional().default(false),
     is_archived: z.boolean().optional().default(false),
+    owner_contact_id: optionalUuid,
 })
 
 export const updatePropertySchema = createPropertySchema.partial()
@@ -66,7 +67,7 @@ export const createLeadSchema = z.object({
     address_zip_code: z.string().max(10).optional().nullable(),
     marital_status: z.string().max(50).optional().nullable(),
     birth_date: z.string().optional().nullable(),
-    primary_interest: z.string().max(200).optional().nullable(),
+    contact_type: z.array(z.enum(['comprador', 'vendedor', 'construtora'])).optional().default([]),
     stage_id: optionalUuid,
     notes: optionalText,
     value: price,
@@ -117,7 +118,7 @@ export const createContactSchema = z.object({
     address_zip_code: z.string().max(10).optional().nullable(),
     marital_status: z.string().max(50).optional().nullable(),
     birth_date: z.string().optional().nullable(),
-    primary_interest: z.string().max(200).optional().nullable(),
+    contact_type: z.array(z.enum(['comprador', 'vendedor', 'construtora'])).optional().default([]),
 })
 
 export const updateContactSchema = createContactSchema.partial()

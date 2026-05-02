@@ -197,10 +197,14 @@ function ClientExpandedContent({
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onArchive(); }}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm whitespace-nowrap"
-                        title="Arquivar Cliente"
+                        className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border rounded-lg text-sm font-bold transition-colors shadow-sm whitespace-nowrap ${
+                            client.is_archived
+                                ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
+                                : 'bg-card border-border text-foreground hover:bg-muted/50'
+                        }`}
+                        title={client.is_archived ? 'Desarquivar Cliente' : 'Arquivar Cliente'}
                     >
-                        <Archive size={13} /> Arquivar
+                        <Archive size={13} /> {client.is_archived ? 'Desarquivar' : 'Arquivar'}
                     </button>
                     <button
                         onClick={(e) => { e.stopPropagation(); onDelete(); }}
@@ -218,6 +222,22 @@ function ClientExpandedContent({
                     <div className="bg-muted/30 p-4 rounded-xl border border-border space-y-3 shadow-sm flex-1">
                         <h5 className="text-sm font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2 mb-3">Dados Pessoais</h5>
                         <div className="text-base text-foreground space-y-2">
+                            {client.contact_type && client.contact_type.length > 0 && (
+                                <div className="flex flex-wrap gap-1.5 mb-2">
+                                    {client.contact_type.map((type: string) => {
+                                        const colors: Record<string, string> = {
+                                            comprador: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-100 dark:border-green-500/20',
+                                            vendedor: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-100 dark:border-amber-500/20',
+                                            construtora: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-100 dark:border-blue-500/20'
+                                        }
+                                        return (
+                                            <span key={type} className={`px-2 py-0.5 rounded-md text-[10px] font-bold border uppercase ${colors[type] || ''}`}>
+                                                {type}
+                                            </span>
+                                        )
+                                    })}
+                                </div>
+                            )}
                             <div>Cliente desde: <span className="font-medium">{new Date(client.created_at).toLocaleDateString('pt-BR')}</span></div>
                             {client.cpf && <div>CPF: <span className="font-medium">{client.cpf}</span></div>}
                             <div>Nascimento: <span className="font-medium">{client.birth_date ? new Date(client.birth_date).toLocaleDateString('pt-BR') : 'Não informado'}</span></div>

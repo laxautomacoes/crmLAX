@@ -59,7 +59,7 @@ export async function updateLead(tenantId: string, leadId: string, data: unknown
     if (input.address_zip_code !== undefined) contactUpdate.address_zip_code = input.address_zip_code
     if (input.marital_status !== undefined) contactUpdate.marital_status = input.marital_status
     if (input.birth_date !== undefined) contactUpdate.birth_date = input.birth_date || null
-    if (input.primary_interest !== undefined) contactUpdate.primary_interest = input.primary_interest
+    if (input.contact_type !== undefined) contactUpdate.contact_type = input.contact_type
 
     if (Object.keys(contactUpdate).length > 0) {
         const { error: contactError } = await supabase.from('contacts').update(contactUpdate).eq('id', lead.contact_id)

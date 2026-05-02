@@ -25,6 +25,7 @@ interface PropertyModalProps {
 export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRole }: PropertyModalProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const [brokers, setBrokers] = useState<any[]>([])
+    const [tenantId, setTenantId] = useState<string>('')
     const [currentProfile, setCurrentProfile] = useState<any>(null)
     const [formData, setFormData] = useState({
         title: '',
@@ -33,6 +34,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         type: 'apartment',
         status: 'Pending',
         created_by: null as string | null,
+        owner_contact_id: null as string | null,
         images: [] as string[],
         videos: [] as string[],
         documents: [] as { name: string, url: string }[],
@@ -78,7 +80,9 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 endereco_bairro: '',
                 endereco_cidade: '',
                 endereco_estado: '',
-                endereco_cep: ''
+                endereco_cep: '',
+                is_construtora: false,
+                regime_comunhao: ''
             },
             endereco: {
                 rua: '',
@@ -102,6 +106,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             const { profile } = await getProfile()
             if (profile) {
                 setCurrentProfile(profile)
+                setTenantId(profile.tenant_id)
                 if (profile.role === 'admin' || profile.role === 'superadmin') {
                     const res = await getBrokers(profile.tenant_id)
                     if (res.success) {
@@ -128,6 +133,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 type: editingProperty.type || 'apartment',
                 status: editingProperty.status || 'Pending',
                 created_by: editingProperty.created_by || null,
+                owner_contact_id: editingProperty.owner_contact_id || null,
                 images: editingProperty.images || [],
                 videos: editingProperty.videos || [],
                 documents: editingProperty.documents || [],
@@ -196,6 +202,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 type: 'apartment',
                 status: 'Pending',
                 created_by: null,
+                owner_contact_id: null,
                 images: [],
                 videos: [],
                 documents: [],
@@ -241,7 +248,9 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         endereco_bairro: '',
                         endereco_cidade: '',
                         endereco_estado: '',
-                        endereco_cep: ''
+                        endereco_cep: '',
+                        is_construtora: false,
+                        regime_comunhao: ''
                     },
                     endereco: {
                         rua: '',
@@ -399,7 +408,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         removeFile={removeFile} 
                     />
                     <div className="border-t border-border/60" />
-                    <OwnerFields formData={formData} setFormData={setFormData} />
+                    <OwnerFields formData={formData} setFormData={setFormData} tenantId={tenantId} />
                 </div>
             </div>
         </Modal>

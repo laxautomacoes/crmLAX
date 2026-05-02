@@ -39,7 +39,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         interest: '',
         primaryInterest: '',
         brokerId: 'all',
-        maritalStatus: ''
+        maritalStatus: '',
+        status: 'active'
     })
 
     useEffect(() => {
@@ -64,7 +65,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         address_zip_code: '',
         marital_status: '',
         birth_date: '',
-        primary_interest: '',
+        contact_type: [] as string[],
         property_regime: '',
         spouse_name: '',
         spouse_email: '',
@@ -209,16 +210,20 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     }, [tenantId])
 
     const filteredClients = clients.filter(client => {
+        // Filtro de status (ativo/arquivado)
+        if (filters.status === 'active' && client.is_archived) return false
+        if (filters.status === 'archived' && !client.is_archived) return false
+
         const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
             client.email.toLowerCase().includes(searchTerm.toLowerCase())
 
         const matchesBroker = filters.brokerId === 'all' || client.assigned_to === filters.brokerId
 
         const matchesInterest = !filters.interest ||
-            (client.interest && client.interest.toLowerCase().includes(filters.interest.toLowerCase())) ||
-            (client.primary_interest && client.primary_interest.toLowerCase().includes(filters.interest.toLowerCase()))
+            (client.interest && client.interest.toLowerCase().includes(filters.interest.toLowerCase()))
 
-        const matchesPrimaryInterest = !filters.primaryInterest || client.primary_interest === filters.primaryInterest
+        const matchesContactType = !filters.primaryInterest || 
+            (client.contact_type && client.contact_type.includes(filters.primaryInterest))
 
         const matchesMaritalStatus = !filters.maritalStatus || client.marital_status === filters.maritalStatus
 
@@ -237,7 +242,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             }
         }
 
-        return matchesSearch && matchesBroker && matchesInterest && matchesPrimaryInterest && matchesMaritalStatus && matchesDate
+        return matchesSearch && matchesBroker && matchesInterest && matchesContactType && matchesMaritalStatus && matchesDate
     })
 
     const handleEdit = (client: any) => {
@@ -256,7 +261,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             address_zip_code: client.address_zip_code || '',
             marital_status: client.marital_status || '',
             birth_date: client.birth_date || '',
-            primary_interest: client.primary_interest || '',
+            contact_type: client.contact_type || [],
             property_regime: client.property_regime || '',
             spouse_name: client.spouse_name || '',
             spouse_email: client.spouse_email || '',
@@ -288,7 +293,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             address_zip_code: '',
             marital_status: '',
             birth_date: '',
-            primary_interest: '',
+            contact_type: [],
             property_regime: '',
             spouse_name: '',
             spouse_email: '',
@@ -317,13 +322,17 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     }
 
     const handleArchive = async (id: string) => {
-        if (confirm('Tem certeza que deseja arquivar este cliente?')) {
+        const client = clients.find(c => c.id === id)
+        const isCurrentlyArchived = client?.is_archived
+        const action = isCurrentlyArchived ? 'desarquivar' : 'arquivar'
+
+        if (confirm(`Tem certeza que deseja ${action} este cliente?`)) {
             const res = await archiveClient(id)
             if (res.success) {
-                toast.success('Cliente arquivado com sucesso')
+                toast.success(isCurrentlyArchived ? 'Cliente desarquivado!' : 'Cliente arquivado!')
                 window.location.reload()
             } else {
-                toast.error('Erro ao arquivar cliente')
+                toast.error(`Erro ao ${action} cliente`)
             }
         }
     }
@@ -358,7 +367,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     address_zip_code: '',
                     marital_status: '',
                     birth_date: '',
-                    primary_interest: '',
+                    contact_type: [],
                     property_regime: '',
                     spouse_name: '',
                     spouse_email: '',
@@ -420,7 +429,11 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
 
                     <button
                         onClick={() => setIsFilterModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-3 md:order-3"
+                        className={`flex items-center justify-center gap-2 px-4 py-3 md:py-2 border rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-3 md:order-3 ${
+                            filters.status !== 'active' || filters.startDate || filters.endDate || filters.interest || filters.primaryInterest || filters.maritalStatus || (filters.brokerId && filters.brokerId !== 'all')
+                                ? 'bg-secondary/10 border-secondary text-secondary-foreground'
+                                : 'border-border bg-card hover:bg-muted/10 text-foreground'
+                        }`}
                     >
                         <Filter size={18} />
                         Filtrar
@@ -433,26 +446,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                             icon={Search}
                         />
                     </div>
-                    {(userRole === 'admin' || userRole === 'superadmin') && brokers.length > 0 && (
-                        <div className="hidden md:block relative group min-w-[180px] order-2 md:order-2">
-                            <select
-                                value={selectedBroker}
-                                onChange={(e) => {
-                                    setSelectedBroker(e.target.value);
-                                    setFilters(prev => ({ ...prev, brokerId: e.target.value }));
-                                }}
-                                className="w-full appearance-none pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer hover:bg-muted/10"
-                            >
-                                <option value="all">Todos os Corretores</option>
-                                {brokers.map((broker) => (
-                                    <option key={broker.id} value={broker.id}>
-                                        {broker.full_name}
-                                    </option>
-                                ))}
-                            </select>
-                            <Filter size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                        </div>
-                    )}
+
                 </div>
             </PageHeader>
 
@@ -534,6 +528,39 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     {/* Dados Pessoais */}
                     <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-4 shadow-sm">
                         <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2">Dados Pessoais</h3>
+                        
+                        {/* Tipo de Contato */}
+                        <div className="space-y-2">
+                            <label className="text-xs font-bold text-foreground uppercase ml-1">Tipo de Contato</label>
+                            <div className="flex flex-wrap gap-3">
+                                {[
+                                    { value: 'comprador', label: 'Comprador', color: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/30' },
+                                    { value: 'vendedor', label: 'Vendedor', color: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30' },
+                                    { value: 'construtora', label: 'Construtora', color: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30' }
+                                ].map(option => {
+                                    const isChecked = formData.contact_type.includes(option.value)
+                                    return (
+                                        <button
+                                            key={option.value}
+                                            type="button"
+                                            onClick={() => {
+                                                const updated = isChecked
+                                                    ? formData.contact_type.filter((t: string) => t !== option.value)
+                                                    : [...formData.contact_type, option.value]
+                                                setFormData({ ...formData, contact_type: updated })
+                                            }}
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
+                                                isChecked
+                                                    ? option.color + ' ring-1 ring-current/20 shadow-sm'
+                                                    : 'bg-muted/30 text-muted-foreground border-border hover:bg-muted/50'
+                                            }`}
+                                        >
+                                            {isChecked ? '✓ ' : ''}{option.label}
+                                        </button>
+                                    )
+                                })}
+                            </div>
+                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="md:col-span-2">
                                 <FormInput
@@ -786,7 +813,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         interest: '',
                         primaryInterest: '',
                         brokerId: 'all',
-                        maritalStatus: ''
+                        maritalStatus: '',
+                        status: 'active'
                     });
                     setSelectedBroker('all');
                 }}

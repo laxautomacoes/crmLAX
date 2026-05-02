@@ -198,7 +198,7 @@ export type Database = {
           name: string
           notes: string | null
           phone: string | null
-          primary_interest: string | null
+          contact_type: string[] | null
           tags: Json | null
           tenant_id: string | null
           videos: Json | null
@@ -223,7 +223,7 @@ export type Database = {
           name: string
           notes?: string | null
           phone?: string | null
-          primary_interest?: string | null
+          contact_type?: string[] | null
           tags?: Json | null
           tenant_id?: string | null
           videos?: Json | null
@@ -248,7 +248,7 @@ export type Database = {
           name?: string
           notes?: string | null
           phone?: string | null
-          primary_interest?: string | null
+          contact_type?: string[] | null
           tags?: Json | null
           tenant_id?: string | null
           videos?: Json | null

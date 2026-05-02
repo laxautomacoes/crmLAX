@@ -19,7 +19,7 @@ export default async function ClientsPage() {
     const tenantId = profile.tenant_id
     const profileId = profile.id
 
-    const { data: clients, success } = await getClients(tenantId)
+    const { data: clients, success } = await getClients(tenantId, true)
 
     // Se falhar ou estiver vazio, passa array vazio para não quebrar a UI
     const initialClients = success && clients ? clients : []

@@ -31,7 +31,14 @@ export async function getProperties(tenantId: string, status?: string, callerUse
     try {
         let query = supabase
             .from('properties')
-            .select('*')
+            .select(`
+                *,
+                owner_contact:contacts!owner_contact_id (
+                    id,
+                    name,
+                    contact_type
+                )
+            `)
             .eq('tenant_id', tenantId)
             .eq('is_archived', false)
 
@@ -52,6 +59,145 @@ export async function getProperties(tenantId: string, status?: string, callerUse
     } catch (error: any) {
         console.error('Error fetching properties:', error)
         return { success: false, error: error.message }
+    }
+}
+
+/**
+ * Busca contatos por nome ou telefone para autocomplete no modal de imóvel
+ */
+export async function searchContacts(tenantId: string, query: string) {
+    const supabase = await createClient()
+
+    try {
+        if (!query || query.trim().length < 2) {
+            return { success: true, data: [] }
+        }
+
+        const cleanQuery = query.trim()
+        const phoneDigits = cleanQuery.replace(/\D/g, '')
+
+        let queryBuilder = supabase
+            .from('contacts')
+            .select('id, name, phone, email, cpf, contact_type, birth_date, marital_status, address_street, address_number, address_complement, address_neighborhood, address_city, address_state, address_zip_code')
+            .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
+
+        // Busca por telefone se o input parece ser numérico, senão busca por nome
+        if (phoneDigits.length >= 4) {
+            queryBuilder = queryBuilder.or(`name.ilike.%${cleanQuery}%,phone.ilike.%${phoneDigits}%`)
+        } else {
+            queryBuilder = queryBuilder.ilike('name', `%${cleanQuery}%`)
+        }
+
+        const { data, error } = await queryBuilder
+            .order('name')
+            .limit(10)
+
+        if (error) throw error
+
+        return { success: true, data: data || [] }
+    } catch (error: any) {
+        console.error('Error searching contacts:', error)
+        return { success: false, data: [], error: error.message }
+    }
+}
+
+/**
+ * Cria ou atualiza um contato a partir dos dados do proprietário do imóvel.
+ * Se o contato já existir (por _contact_id ou por telefone), atualiza.
+ * Preserva contact_type existentes (ex: comprador + vendedor).
+ */
+async function upsertOwnerContact(
+    supabase: any,
+    tenantId: string,
+    proprietario: any
+): Promise<string | null> {
+    if (!proprietario?.nome) return null
+
+    const ownerType = proprietario.is_construtora ? 'construtora' : 'vendedor'
+    const existingContactId = proprietario._contact_id || null
+
+    // Dados do contato baseados nos campos do proprietário
+    const contactData: Record<string, any> = {
+        name: proprietario.nome,
+        phone: proprietario.telefone || null,
+        email: proprietario.email || null,
+        cpf: proprietario.cpf || null,
+        birth_date: proprietario.data_nascimento || null,
+        marital_status: proprietario.estado_civil || null,
+        address_street: proprietario.endereco_rua || null,
+        address_number: proprietario.endereco_numero || null,
+        address_complement: proprietario.endereco_complemento || null,
+        address_neighborhood: proprietario.endereco_bairro || null,
+        address_city: proprietario.endereco_cidade || null,
+        address_state: proprietario.endereco_estado || null,
+        address_zip_code: proprietario.endereco_cep || null,
+        tenant_id: tenantId,
+    }
+
+    try {
+        // Caso 1: Contato já vinculado (edição)
+        if (existingContactId) {
+            // Buscar contact_type atual para preservar tipos existentes
+            const { data: existing } = await supabase
+                .from('contacts')
+                .select('contact_type')
+                .eq('id', existingContactId)
+                .single()
+
+            const currentTypes: string[] = existing?.contact_type || []
+            const newTypes = Array.from(new Set([...currentTypes.filter((t: string) => t !== 'vendedor' && t !== 'construtora'), ownerType]))
+
+            await supabase
+                .from('contacts')
+                .update({ ...contactData, contact_type: newTypes })
+                .eq('id', existingContactId)
+
+            return existingContactId
+        }
+
+        // Caso 2: Buscar por telefone (evitar duplicatas)
+        if (proprietario.telefone) {
+            const cleanPhone = proprietario.telefone.replace(/\D/g, '')
+            if (cleanPhone.length >= 10) {
+                const { data: byPhone } = await supabase
+                    .from('contacts')
+                    .select('id, contact_type')
+                    .eq('tenant_id', tenantId)
+                    .ilike('phone', `%${cleanPhone.slice(-9)}%`)
+                    .limit(1)
+                    .single()
+
+                if (byPhone) {
+                    const currentTypes: string[] = byPhone.contact_type || []
+                    const newTypes = Array.from(new Set([...currentTypes, ownerType]))
+
+                    await supabase
+                        .from('contacts')
+                        .update({ ...contactData, contact_type: newTypes })
+                        .eq('id', byPhone.id)
+
+                    return byPhone.id
+                }
+            }
+        }
+
+        // Caso 3: Criar novo contato
+        const { data: newContact, error } = await supabase
+            .from('contacts')
+            .insert([{ ...contactData, contact_type: [ownerType] }])
+            .select('id')
+            .single()
+
+        if (error) {
+            console.error('[upsertOwnerContact] Erro ao criar contato:', error)
+            return null
+        }
+
+        return newContact?.id || null
+    } catch (error) {
+        console.error('[upsertOwnerContact] Erro:', error)
+        return null
     }
 }
 
@@ -86,11 +232,19 @@ export async function createProperty(tenantId: string, propertyData: unknown) {
     const { profile } = await getProfile()
 
     try {
+        // Sincronizar proprietário → tabela contacts
+        let ownerContactId = input.owner_contact_id || null
+        if (input.details?.proprietario?.nome) {
+            const contactId = await upsertOwnerContact(supabase, tenantId, input.details.proprietario)
+            if (contactId) ownerContactId = contactId
+        }
+
         const insertData: Record<string, any> = {
             created_by: profile?.id,
             ...input,
             tenant_id: tenantId,
-            slug: input.slug || slugify(input.title)
+            slug: input.slug || slugify(input.title),
+            owner_contact_id: ownerContactId
         }
 
         // Se não for admin, o status é sempre Pendente
@@ -142,6 +296,12 @@ export async function updateProperty(tenantId: string, propertyId: string, prope
 
         if (input.title && !input.slug) {
             updateData.slug = slugify(input.title)
+        }
+
+        // Sincronizar proprietário → tabela contacts
+        if (input.details?.proprietario?.nome) {
+            const contactId = await upsertOwnerContact(supabase, tenantId, input.details.proprietario)
+            if (contactId) updateData.owner_contact_id = contactId
         }
         
         // Se não for admin, permitimos a edição mas forçamos o status para Pendente

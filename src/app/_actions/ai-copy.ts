@@ -49,7 +49,7 @@ export async function generatePropertyCopy(
 Título: ${property.title}
 Tipo: ${typeLabels[property.type] || property.type}
 Preço: ${price}
-Modalidade: ${property.transaction_type === 'rent' ? 'Aluguel' : 'Venda'}
+Modalidade: Venda
 Dormitórios: ${d.dormitorios || d.quartos || 'N/A'}
 Suítes: ${d.suites || 'N/A'}
 Área privativa: ${d.area_privativa ? `${d.area_privativa}m²` : 'N/A'}

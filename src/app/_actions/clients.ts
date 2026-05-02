@@ -23,7 +23,7 @@ export interface ClientData {
     address_zip_code?: string
     marital_status?: string
     birth_date?: string
-    primary_interest?: string
+    contact_type?: string[]
     property_regime?: string
     spouse_name?: string
     spouse_email?: string
@@ -35,7 +35,7 @@ export interface ClientData {
     documents?: { name: string, url: string }[]
 }
 
-export async function getClients(tenantId: string) {
+export async function getClients(tenantId: string, includeArchived = false) {
     const supabase = await createClient()
 
     // Verificar role do usuário para filtrar por atribuição
@@ -57,7 +57,7 @@ export async function getClients(tenantId: string) {
     }
 
     // Buscar contatos
-    const { data: contacts, error } = await supabase
+    let query = supabase
         .from('contacts')
         .select(`
       *,
@@ -81,8 +81,13 @@ export async function getClients(tenantId: string) {
       )
     `)
         .eq('tenant_id', tenantId)
-        .eq('is_archived', false)
         .order('created_at', { ascending: false })
+
+    if (!includeArchived) {
+        query = query.eq('is_archived', false)
+    }
+
+    const { data: contacts, error } = await query
 
     if (error) {
         console.error('Error fetching clients:', error)
@@ -117,7 +122,7 @@ export async function getClients(tenantId: string) {
             address_zip_code: contact.address_zip_code,
             marital_status: contact.marital_status,
             birth_date: contact.birth_date,
-            primary_interest: contact.primary_interest,
+            contact_type: contact.contact_type || [],
             property_regime: contact.property_regime,
             spouse_name: contact.spouse_name,
             spouse_email: contact.spouse_email,
@@ -125,6 +130,7 @@ export async function getClients(tenantId: string) {
             spouse_cpf: contact.spouse_cpf,
             spouse_birth_date: contact.spouse_birth_date,
             created_at: contact.created_at,
+            is_archived: contact.is_archived || false,
             interest,
             value: 0, // Implementar lógica de valor baseada em properties depois
             notes: contact.notes || lastInteraction || '',
@@ -176,7 +182,7 @@ export async function createNewClient(tenantId: string, data: ClientData) {
             address_zip_code: data.address_zip_code,
             marital_status: data.marital_status,
             birth_date: data.birth_date || null,
-            primary_interest: data.primary_interest,
+            contact_type: data.contact_type || [],
             property_regime: data.property_regime,
             spouse_name: data.spouse_name,
             spouse_email: data.spouse_email,
@@ -237,7 +243,7 @@ export async function updateClient(clientId: string, data: Partial<ClientData>) 
             address_zip_code: data.address_zip_code,
             marital_status: data.marital_status,
             birth_date: data.birth_date || null,
-            primary_interest: data.primary_interest,
+            contact_type: data.contact_type || [],
             property_regime: data.property_regime,
             spouse_name: data.spouse_name,
             spouse_email: data.spouse_email,
@@ -276,13 +282,30 @@ export async function deleteClient(clientId: string) {
 export async function archiveClient(clientId: string) {
     const supabase = await createClient()
 
+    // Verificar estado atual do contato
+    const { data: contact } = await supabase
+        .from('contacts')
+        .select('is_archived')
+        .eq('id', clientId)
+        .single()
+
+    const newState = !(contact?.is_archived ?? false)
+
+    // Toggle o contato
     const { error } = await supabase
         .from('contacts')
-        .update({ is_archived: true })
+        .update({ is_archived: newState })
         .eq('id', clientId)
 
     if (error) return { success: false, error: error.message }
 
+    // Toggle todos os leads vinculados
+    await supabase
+        .from('leads')
+        .update({ is_archived: newState })
+        .eq('contact_id', clientId)
+
     revalidatePath('/clients')
-    return { success: true }
+    revalidatePath('/leads')
+    return { success: true, archived: newState }
 }

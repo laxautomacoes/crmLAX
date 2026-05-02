@@ -35,7 +35,7 @@ export async function createLead(tenantId: string, data: unknown) {
                 address_zip_code: input.address_zip_code,
                 marital_status: input.marital_status,
                 birth_date: input.birth_date || null,
-                primary_interest: input.primary_interest
+                contact_type: input.contact_type || []
             },
             { onConflict: 'tenant_id,phone' }
         )

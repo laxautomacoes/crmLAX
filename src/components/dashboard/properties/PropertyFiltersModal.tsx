@@ -45,7 +45,8 @@ export function PropertyFiltersModal({
             parking: 'all',
             sortBy: 'newest',
             city: '',
-            neighborhood: ''
+            neighborhood: '',
+            ownerType: 'all'
         })
     }
 
@@ -222,6 +223,18 @@ export function PropertyFiltersModal({
                             options={[
                                 { value: 'all', label: 'Todos os Tipos' },
                                 ...Object.entries(propertyTypes).map(([val, label]) => ({ value: val, label }))
+                            ]}
+                        />
+
+                        <FormSelect
+                            label="Origem"
+                            value={filters.ownerType}
+                            onChange={(e) => setFilters({ ...filters, ownerType: e.target.value })}
+                            options={[
+                                { value: 'all', label: 'Todos' },
+                                { value: 'vendedor', label: 'Vendedor (PF)' },
+                                { value: 'construtora', label: 'Construtora' },
+                                { value: 'sem_proprietario', label: 'Sem Proprietário' }
                             ]}
                         />
 

@@ -61,7 +61,8 @@ export default function PropertiesClient({
         parking: 'all',
         sortBy: 'newest',
         city: '',
-        neighborhood: ''
+        neighborhood: '',
+        ownerType: 'all'
     })
 
     // Recarrega lista usando server action com contexto de sessão correto
@@ -280,9 +281,14 @@ export default function PropertiesClient({
         const matchesNeighborhood = !filters.neighborhood ||
             prop.details?.endereco?.bairro?.toLowerCase().includes(filters.neighborhood.toLowerCase())
 
+        const matchesOwnerType = filters.ownerType === 'all' || 
+            (filters.ownerType === 'vendedor' && prop.details?.proprietario?.nome && !prop.details?.proprietario?.is_construtora) ||
+            (filters.ownerType === 'construtora' && prop.details?.proprietario?.is_construtora) ||
+            (filters.ownerType === 'sem_proprietario' && !prop.details?.proprietario?.nome)
+
         return matchesSearch && matchesType && matchesMinPrice && matchesMaxPrice &&
             matchesBedrooms && matchesBathrooms && matchesParking &&
-            matchesCity && matchesNeighborhood
+            matchesCity && matchesNeighborhood && matchesOwnerType
     }).sort((a, b) => {
         switch (filters.sortBy) {
             case 'price_high': return (b.price || 0) - (a.price || 0)
