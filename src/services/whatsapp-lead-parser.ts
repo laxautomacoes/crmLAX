@@ -15,7 +15,7 @@ export interface ParsedLeadData {
     phone: string;
     email?: string;
     interest?: string;
-    source: 'whatsapp_structured' | 'whatsapp_ai';
+    source: 'whatsapp_structured' | 'whatsapp_ai' | 'whatsapp_audio';
 }
 
 export interface ParseResult {
@@ -24,7 +24,7 @@ export interface ParseResult {
     error?: string;
 }
 
-export type CommandType = 'structured' | 'ai' | null;
+export type CommandType = 'structured' | 'ai' | 'audio' | null;
 
 // ─── Detecção de Comando ────────────────────────────────────────────────────
 
@@ -257,6 +257,104 @@ export async function parseWithAI(text: string): Promise<ParseResult> {
         return {
             success: false,
             error: 'Erro ao processar com IA. Tente o formato estruturado:\n\n📝 *Formato alternativo:*\n#lead\nJoão Silva\n48999999999\njoao@email.com\nApartamento 2 quartos'
+        };
+    }
+}
+
+// ─── Prompt de Extração de Lead via Áudio ────────────────────────────────────
+
+const AUDIO_EXTRACTION_PROMPT = `Você é um assistente de CRM imobiliário. Sua tarefa é analisar este áudio e:
+
+1. Transcrever o conteúdo do áudio
+2. Determinar se o áudio contém dados para cadastro de um LEAD (cliente potencial)
+3. Se contiver, extrair: nome, telefone, email e interesse imobiliário
+
+Um áudio contém dados de lead quando o corretor menciona informações de um novo cliente/prospect, como:
+- "Cadastrar o lead João Silva..."
+- "Novo cliente: Maria, telefone 48..."
+- "Recebi contato do Pedro sobre apartamento..."
+
+Se o áudio for uma conversa casual, cumprimento, ou NÃO contiver dados de cadastro, retorne:
+{"is_lead": false}
+
+Se contiver dados de lead, retorne:
+{"is_lead": true, "name": "string", "phone": "string ou null", "email": "string ou null", "interest": "string ou null"}
+
+REGRAS:
+- phone: apenas dígitos, com DDD (ex: 48999887766)
+- Se o telefone não for mencionado, retorne phone como null
+- name é obrigatório para considerar como lead
+- Responda SOMENTE com o JSON, sem explicações`;
+
+/**
+ * Usa o Gemini multimodal para transcrever áudio e extrair dados de lead.
+ * Retorna null se o áudio não contiver dados de lead.
+ */
+export async function parseAudioLead(audioBase64: string, mimeType: string): Promise<ParseResult | null> {
+    try {
+        const model = getAIModel('gemini-2.0-flash');
+
+        // Remover prefixo data:... se existir
+        const cleanBase64 = audioBase64.replace(/^data:[^;]+;base64,/, '');
+
+        const result = await model.generateContent([
+            AUDIO_EXTRACTION_PROMPT,
+            {
+                inlineData: {
+                    data: cleanBase64,
+                    mimeType: mimeType || 'audio/ogg',
+                },
+            },
+        ]);
+
+        const response = await result.response;
+        const responseText = response.text().trim();
+
+        // Extrair JSON da resposta
+        const jsonMatch = responseText.match(/\{[\s\S]*\}/);
+        if (!jsonMatch) {
+            console.error('[AudioParser] Gemini não retornou JSON válido:', responseText);
+            return null;
+        }
+
+        const parsed = JSON.parse(jsonMatch[0]);
+
+        // Se o Gemini decidiu que não é um lead, ignorar silenciosamente
+        if (!parsed.is_lead) {
+            return null;
+        }
+
+        // Validar campo obrigatório: nome
+        if (!parsed.name) {
+            return {
+                success: false,
+                error: '🎙️ Identifiquei que você quer cadastrar um lead, mas não consegui entender o *nome*.\n\n📝 *Dica:* Grave novamente mencionando claramente o nome e telefone do cliente.'
+            };
+        }
+
+        // Validar telefone
+        if (!parsed.phone) {
+            return {
+                success: false,
+                error: `🎙️ Identifiquei o lead *${parsed.name}*, mas não consegui entender o *telefone*.\n\n📝 *Dica:* Grave novamente incluindo o número com DDD. Ex: "cadastrar João Silva, telefone 48 9 9988 7766"`
+            };
+        }
+
+        return {
+            success: true,
+            data: {
+                name: parsed.name,
+                phone: String(parsed.phone).replace(/\D/g, ''),
+                email: parsed.email || undefined,
+                interest: parsed.interest || undefined,
+                source: 'whatsapp_audio'
+            }
+        };
+    } catch (error: any) {
+        console.error('[AudioParser] Erro ao processar áudio:', error.message);
+        return {
+            success: false,
+            error: '❌ Erro ao processar o áudio. Tente novamente ou use o formato de texto:\n\n#lead\nNome: João\nTel: 48999999999'
         };
     }
 }

@@ -203,5 +203,19 @@ export const evolutionService = {
                 }),
             });
         });
+    },
+
+    async getBase64FromMediaMessage(instanceName: string, messageId: string): Promise<{ base64: string; mimetype: string }> {
+        return evolutionFetch(`/chat/getBase64FromMediaMessage/${instanceName}`, {
+            method: 'POST',
+            body: JSON.stringify({
+                message: {
+                    key: {
+                        id: messageId
+                    }
+                },
+                convertToMp4: false
+            }),
+        });
     }
 };

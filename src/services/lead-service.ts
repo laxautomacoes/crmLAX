@@ -65,7 +65,16 @@ export async function processLeadInbound(data: LeadCreateData) {
         return { contact_id: contact.id, lead_id: existingLead.id, assigned_to: null, already_exists: true };
     }
 
-    // 3. Criar o lead vinculado
+    // 3. Buscar o primeiro estágio do pipeline (ex: "Novo") para atribuir ao lead
+    const { data: firstStage } = await supabase
+        .from('lead_stages')
+        .select('id')
+        .eq('tenant_id', tenant_id)
+        .order('order_index', { ascending: true })
+        .limit(1)
+        .maybeSingle();
+
+    // 4. Criar o lead vinculado
     const { data: lead, error: leadError } = await supabase
         .from('leads')
         .insert({
@@ -75,7 +84,8 @@ export async function processLeadInbound(data: LeadCreateData) {
             source: source || 'Direct',
             utm_data: utm_data || {},
             status,
-            property_interest: property_interest || null
+            property_interest: property_interest || null,
+            stage_id: firstStage?.id || null
         })
         .select('id')
         .single();

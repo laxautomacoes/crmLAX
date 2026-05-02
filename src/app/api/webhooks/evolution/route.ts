@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { NextResponse } from 'next/server';
 import { processLeadInbound } from '@/services/lead-service';
-import { parseWhatsAppLeadMessage } from '@/services/whatsapp-lead-parser';
+import { parseWhatsAppLeadMessage, parseAudioLead } from '@/services/whatsapp-lead-parser';
 import { evolutionService } from '@/lib/evolution';
 
 export async function POST(req: Request) {
@@ -25,8 +25,10 @@ export async function POST(req: Request) {
     const fromMe = message.key.fromMe;
     const pushName = message.pushName;
     const text = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+    const audioMessage = message.message?.audioMessage;
 
-    if (!text) return NextResponse.json({ received: true });
+    // Se não tem texto nem áudio, ignorar
+    if (!text && !audioMessage) return NextResponse.json({ received: true });
 
     // 1. Find the instance to get tenant_id and user_id
     const { data: instance } = await supabase
@@ -39,8 +41,120 @@ export async function POST(req: Request) {
 
     // ─── CRIAÇÃO DE LEAD VIA WHATSAPP ───────────────────────────────────
     // Apenas mensagens enviadas pelo próprio corretor (fromMe: true)
-    // com prefixos especiais (#lead, #ia, /lead) ativam a criação de leads
+    // Suporta: texto (#lead, #ia, /lead) e áudio (transcrição automática)
     if (fromMe) {
+
+        // ─── ÁUDIO: Transcrição + Extração via Gemini ────────────────────
+        if (audioMessage) {
+            try {
+                // 1. Notificar que está processando
+                await sendWhatsAppReply(
+                    instanceName,
+                    remoteJid.split('@')[0],
+                    '🎙️ Processando áudio...'
+                );
+
+                // 2. Buscar base64 do áudio via Evolution API
+                const mediaResult = await evolutionService.getBase64FromMediaMessage(
+                    instanceName,
+                    message.key.id
+                );
+
+                if (!mediaResult?.base64) {
+                    await sendWhatsAppReply(
+                        instanceName,
+                        remoteJid.split('@')[0],
+                        '❌ Não foi possível recuperar o áudio. Tente enviar novamente.'
+                    );
+                    return NextResponse.json({ success: false, error: 'Could not retrieve audio' });
+                }
+
+                // 3. Enviar para o Gemini transcrever e extrair dados
+                const audioResult = await parseAudioLead(
+                    mediaResult.base64,
+                    mediaResult.mimetype || audioMessage.mimetype || 'audio/ogg'
+                );
+
+                // 4. Se não identificou dados de lead, ignorar silenciosamente
+                if (audioResult === null) {
+                    return NextResponse.json({ received: true, note: 'audio_no_lead_data' });
+                }
+
+                // 5. Se houve erro de validação, informar o corretor
+                if (!audioResult.success || !audioResult.data) {
+                    await sendWhatsAppReply(
+                        instanceName,
+                        remoteJid.split('@')[0],
+                        audioResult.error || '❌ Não foi possível extrair dados do áudio.'
+                    );
+                    return NextResponse.json({ success: false, error: audioResult.error });
+                }
+
+                // 6. Criar o lead (mesmo fluxo do texto)
+                const sourceLabel = 'WhatsApp (Áudio)';
+
+                const leadResult = await processLeadInbound({
+                    tenant_id: instance.tenant_id!,
+                    name: audioResult.data.name,
+                    phone: audioResult.data.phone,
+                    email: audioResult.data.email,
+                    source: sourceLabel,
+                    property_interest: audioResult.data.interest,
+                    status: 'new'
+                });
+
+                if (leadResult.already_exists) {
+                    await sendWhatsAppReply(
+                        instanceName,
+                        remoteJid.split('@')[0],
+                        `ℹ️ *Lead já cadastrado*\n\n👤 *Nome:* ${audioResult.data.name}\n📱 *Telefone:* ${audioResult.data.phone}\n\nJá existe um lead ativo para este contato no sistema.`
+                    );
+                    return NextResponse.json({ success: true, lead_id: leadResult.lead_id, already_exists: true });
+                }
+
+                // Registrar no system_logs
+                await supabase.from('system_logs').insert({
+                    tenant_id: instance.tenant_id,
+                    action: 'create',
+                    entity_type: 'lead',
+                    entity_id: leadResult.lead_id,
+                    details: {
+                        method: 'audio',
+                        source: 'whatsapp_webhook',
+                        phone: audioResult.data.phone,
+                        name: audioResult.data.name
+                    }
+                });
+
+                // Enviar confirmação
+                const confirmMsg = [
+                    `✅ *Lead criado via áudio!*`,
+                    ``,
+                    `👤 *Nome:* ${audioResult.data.name}`,
+                    `📱 *Telefone:* ${audioResult.data.phone}`,
+                    audioResult.data.email ? `📧 *Email:* ${audioResult.data.email}` : null,
+                    audioResult.data.interest ? `🏠 *Interesse:* ${audioResult.data.interest}` : null,
+                    `🔗 *Origem:* WhatsApp (Áudio)`,
+                    leadResult.assigned_to ? `\n👥 *Distribuído para corretor automaticamente*` : null
+                ].filter(Boolean).join('\n');
+
+                await sendWhatsAppReply(instanceName, remoteJid.split('@')[0], confirmMsg);
+
+                return NextResponse.json({
+                    success: true,
+                    lead_id: leadResult.lead_id,
+                    contact_id: leadResult.contact_id
+                });
+            } catch (error: any) {
+                console.error('[Evolution Webhook] Erro ao processar áudio:', error.message);
+                await sendWhatsAppReply(
+                    instanceName,
+                    remoteJid.split('@')[0],
+                    `❌ Erro ao processar áudio: ${error.message}`
+                );
+                return NextResponse.json({ success: false, error: error.message });
+            }
+        }
         const parseResult = await parseWhatsAppLeadMessage(text);
 
         if (parseResult) {
