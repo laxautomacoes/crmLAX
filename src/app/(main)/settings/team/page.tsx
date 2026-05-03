@@ -56,7 +56,7 @@ export default function TeamSettingsPage() {
 
                 setIsAuthorized(true);
                 await loadTeamData();
-            } catch (err) {
+            } catch {
                 router.push('/dashboard');
             }
         }

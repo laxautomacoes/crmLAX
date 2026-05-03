@@ -1,14 +1,27 @@
 'use client'
 
+import type { Dispatch, SetStateAction } from 'react'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { BedDouble, Building2, DollarSign } from 'lucide-react'
 
-interface RoomsFieldsProps {
-    formData: any
-    setFormData: (data: any) => void
+/** Campos de `details` usados apenas neste bloco (o formulário completo pode ter mais chaves). */
+interface RoomsDetailsSlice {
+    quartos: string
+    banheiros: string
+    vagas: string
+    vagas_numeracao: string
+    torre_bloco: string
+    valor_condominio: string
+    valor_iptu: string
 }
 
-export function RoomsFields({ formData, setFormData }: RoomsFieldsProps) {
+type FormWithRoomsDetails = { details: RoomsDetailsSlice }
+
+interface RoomsFieldsProps<T extends FormWithRoomsDetails> {
+    formData: T
+    setFormData: Dispatch<SetStateAction<T>>
+}
+
+export function RoomsFields<T extends FormWithRoomsDetails>({ formData, setFormData }: RoomsFieldsProps<T>) {
     return (
         <div className="space-y-8">
             <div className="space-y-4">

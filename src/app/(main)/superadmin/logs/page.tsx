@@ -1,7 +1,6 @@
 import { getProfile } from '@/app/_actions/profile';
 import { LogsTable } from '@/components/settings/logs/LogsTable';
 import { redirect } from 'next/navigation';
-import { PageHeader } from '@/components/shared/PageHeader';
 
 export const dynamic = 'force-dynamic';
 

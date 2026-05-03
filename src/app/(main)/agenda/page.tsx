@@ -7,9 +7,7 @@ import {
     setMinutes, 
     setSeconds, 
     differenceInMinutes, 
-    addMinutes,
-    parseISO,
-    isSameDay
+    addMinutes
 } from 'date-fns';
 import CalendarGrid from '@/components/Agenda/CalendarGrid';
 import EventModal from '@/components/Agenda/EventModal';

@@ -6,13 +6,12 @@ import {
   Cpu, 
   TrendingUp, 
   AlertCircle,
-  Clock,
   CheckCircle2,
   XCircle,
   ArrowUpRight,
   BarChart3
 } from 'lucide-react'
-import { format, subMonths, startOfMonth, endOfMonth, isAfter } from 'date-fns'
+import { format, subMonths, startOfMonth, endOfMonth } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { GrowthChart } from '@/components/superadmin/reports/GrowthChart'
 import { PlanDistributionChart } from '@/components/superadmin/PlanDistributionChart'
@@ -76,15 +75,17 @@ export default async function SuperadminReportsPage() {
   })
 
   // Cumulative Growth
-  let cumulative = 0
-  const growthData = last6Months.map(m => {
-    cumulative += m.count
-    return {
-      month: m.name,
-      total: cumulative,
-      new: m.count
-    }
-  })
+  const growthData = last6Months.reduce<Array<{ month: string; total: number; new: number }>>((acc, m) => {
+    const previousTotal = acc.length > 0 ? acc[acc.length - 1].total : 0
+    return [
+      ...acc,
+      {
+        month: m.name,
+        total: previousTotal + m.count,
+        new: m.count
+      }
+    ]
+  }, [])
 
   // 6. AI Usage Ranking
   const aiRankingMap = new Map()

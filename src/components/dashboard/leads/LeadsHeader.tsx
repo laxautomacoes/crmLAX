@@ -3,9 +3,14 @@
 import { Search, Filter } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 
+interface Broker {
+    id: string
+    full_name: string
+}
+
 interface LeadsHeaderProps {
     onSearch: (term: string) => void
-    brokers?: any[]
+    brokers?: Broker[]
     onBrokerChange?: (brokerId: string) => void
     isAdmin?: boolean
 }

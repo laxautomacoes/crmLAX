@@ -5,7 +5,7 @@ import { LocationFilters } from '@/components/properties/analysis/LocationFilter
 import { AnalysisResults } from '@/components/properties/analysis/AnalysisResults';
 import { analyzeMarketValue, MarketAnalysisResult } from '@/app/_actions/market-analysis';
 import { toast } from 'sonner';
-import { Info, BarChart3, Search, Sparkles } from 'lucide-react';
+import { Info, Search, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { PageHeader } from '@/components/shared/PageHeader';
 

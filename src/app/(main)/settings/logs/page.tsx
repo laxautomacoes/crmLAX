@@ -2,7 +2,6 @@
 import { getProfile } from '@/app/_actions/profile';
 import { LogsTable } from '@/components/settings/logs/LogsTable';
 import { redirect } from 'next/navigation';
-import { ShieldAlert } from 'lucide-react';
 
 export const dynamic = 'force-dynamic';
 

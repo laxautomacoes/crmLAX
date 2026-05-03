@@ -7,7 +7,6 @@ import { BrandingTab } from '@/components/settings/BrandingTab';
 import { DomainTab } from '@/components/settings/DomainTab';
 import { EmailSettingsForm } from '@/components/settings/emails/EmailSettingsForm';
 import { getProfile } from '@/app/_actions/profile';
-import { Save, Loader2 } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 
 export const dynamic = 'force-dynamic';

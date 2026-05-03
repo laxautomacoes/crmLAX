@@ -10,11 +10,10 @@ import {
     useSensor,
     useSensors,
     DragStartEvent,
-    DragOverEvent,
     DragEndEvent,
     defaultDropAnimationSideEffects,
 } from '@dnd-kit/core'
-import { arrayMove, sortableKeyboardCoordinates } from '@dnd-kit/sortable'
+import { sortableKeyboardCoordinates } from '@dnd-kit/sortable'
 import { PipelineColumn } from './PipelineColumn'
 import { LeadCard } from './LeadCard'
 import { updateLeadStage } from '@/app/_actions/leads'
@@ -35,7 +34,7 @@ export interface Lead {
     images?: string[]
     videos?: string[]
     documents?: { name: string; url: string }[]
-    whatsapp_chat?: any[]
+    whatsapp_chat?: Array<{ fromMe?: boolean; message?: string; text?: string }>
 }
 
 interface Stage {

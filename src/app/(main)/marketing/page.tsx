@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import { getProfile } from '@/app/_actions/profile';
 import MarketingDashboard from '@/components/marketing/MarketingDashboard';
 import PlanGate from '@/components/ui/PlanGate';
-import { Megaphone, Sparkles } from 'lucide-react';
 
 export const metadata: Metadata = {
     title: 'Marketing & IA | CRM LAX',

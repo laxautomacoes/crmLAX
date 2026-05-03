@@ -16,7 +16,7 @@ export default async function PropertiesPage() {
     }
 
     // Inicializar buckets (best-effort, não bloqueia)
-    try { await initStorageBuckets() } catch (_) {}
+    try { await initStorageBuckets() } catch {}
 
     const [propertiesResult, tenant, aiAccess, marketingAccess] = await Promise.all([
         getProperties(profile.tenant_id, undefined, profile.id, profile.role || 'user'),

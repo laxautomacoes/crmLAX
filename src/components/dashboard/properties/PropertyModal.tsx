@@ -14,19 +14,112 @@ import { AddressFields } from './PropertyModal/AddressFields'
 import { OwnerFields } from './PropertyModal/OwnerFields'
 import { Switch } from '@/components/ui/Switch'
 
+interface Broker {
+    id: string
+    full_name: string
+}
+
+interface CurrentProfile {
+    id: string
+    full_name?: string | null
+    role: string
+    tenant_id: string
+}
+
+interface PropertyDocument {
+    name: string
+    url: string
+}
+
+interface EditingPropertyDetails {
+    description?: string
+    situacao?: string
+    area_privativa?: string
+    area_total?: string
+    area_terreno?: string
+    area_construida?: string
+    area_util?: string
+    dormitorios?: string
+    quartos?: string
+    suites?: string
+    banheiros?: string
+    vagas?: string
+    vagas_numeracao?: string
+    torre_bloco?: string
+    valor_condominio?: string
+    valor_iptu?: string
+    portaria_24h?: boolean
+    portaria_virtual?: boolean
+    piscina?: boolean
+    piscina_aquecida?: boolean
+    espaco_gourmet?: boolean
+    salao_festas?: boolean
+    academia?: boolean
+    sala_jogos?: boolean
+    sala_estudos_coworking?: boolean
+    sala_cinema?: boolean
+    playground?: boolean
+    brinquedoteca?: boolean
+    home_market?: boolean
+    proprietario?: {
+        nome: string
+        responsavel: string
+        telefone: string
+        email: string
+        cpf: string
+        estado_civil: string
+        data_nascimento: string
+        endereco_rua: string
+        endereco_numero: string
+        endereco_complemento: string
+        endereco_bairro: string
+        endereco_cidade: string
+        endereco_estado: string
+        endereco_cep: string
+        is_construtora?: boolean
+        regime_comunhao?: string
+    }
+    endereco?: {
+        rua?: string
+        numero?: string
+        complemento?: string
+        bairro?: string
+        cidade?: string
+        estado?: string
+        cep?: string
+        latitude?: number | null
+        longitude?: number | null
+    }
+}
+
+interface EditingProperty {
+    title?: string
+    description?: string
+    price?: number | string
+    type?: string
+    status?: string
+    created_by?: string | null
+    owner_contact_id?: string | null
+    images?: string[]
+    videos?: string[]
+    documents?: PropertyDocument[]
+    is_published?: boolean
+    details?: EditingPropertyDetails
+}
+
 interface PropertyModalProps {
     isOpen: boolean
     onClose: () => void
-    editingProperty: any | null
-    onSave: (propertyData: any) => Promise<void>
+    editingProperty: EditingProperty | null
+    onSave: (propertyData: Record<string, unknown>) => Promise<void>
     userRole?: string
 }
 
 export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRole }: PropertyModalProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
-    const [brokers, setBrokers] = useState<any[]>([])
+    const [brokers, setBrokers] = useState<Broker[]>([])
     const [tenantId, setTenantId] = useState<string>('')
-    const [currentProfile, setCurrentProfile] = useState<any>(null)
+    const [currentProfile, setCurrentProfile] = useState<CurrentProfile | null>(null)
     const [formData, setFormData] = useState({
         title: '',
         description: '',
@@ -311,9 +404,10 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 ...prev, 
                 [type]: [...prev[type], ...uploadedFiles] 
             }))
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Por favor, tente novamente.'
             console.error(`Error uploading ${type}:`, error)
-            alert(`Erro ao carregar ${type}: ${error.message || 'Por favor, tente novamente.'}`)
+            alert(`Erro ao carregar ${type}: ${errorMessage}`)
         } finally {
             setIsUploading(null)
             e.target.value = ''
@@ -321,9 +415,23 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     }
 
     const removeFile = (index: number, type: 'images' | 'videos' | 'documents') => {
-        const newFiles = [...(formData[type] as any)]
+        if (type === 'documents') {
+            const newFiles = [...formData.documents]
+            newFiles.splice(index, 1)
+            setFormData({ ...formData, documents: newFiles })
+            return
+        }
+
+        if (type === 'images') {
+            const newFiles = [...formData.images]
+            newFiles.splice(index, 1)
+            setFormData({ ...formData, images: newFiles })
+            return
+        }
+
+        const newFiles = [...formData.videos]
         newFiles.splice(index, 1)
-        setFormData({ ...formData, [type]: newFiles })
+        setFormData({ ...formData, videos: newFiles })
     }
 
     const handleSaveLocal = async () => {
@@ -335,7 +443,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             const parsedPrice = parseFloat(cleanPriceStr)
             
             // Filtrar campos para evitar enviar dados sujos
-            const { created_by, ...restData } = formData
+            const restData = { ...formData }
+            delete restData.created_by
 
             const propertyData = {
                 ...restData,
@@ -347,9 +456,10 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 }
             }
             await onSave(propertyData)
-        } catch (error: any) {
+        } catch (error: unknown) {
+            const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
             console.error('Error in handleSaveLocal:', error)
-            alert('Erro ao processar dados: ' + (error.message || 'Erro desconhecido'))
+            alert('Erro ao processar dados: ' + errorMessage)
         } finally {
             setIsSaving(false)
         }

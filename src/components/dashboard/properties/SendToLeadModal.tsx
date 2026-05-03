@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
-import { Search, Mail, MessageCircle, Send, Loader2, User, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Video, FileText, MapPin, Info, Home } from 'lucide-react'
+import { Search, Mail, MessageCircle, Loader2, User, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Video, FileText, MapPin, Info, Home } from 'lucide-react'
 import { getPipelineData, createLead } from '@/app/_actions/leads'
 import { sendPropertyEmail, logInteraction } from '@/app/_actions/messaging'
 import { getProfile } from '@/app/_actions/profile'
@@ -13,23 +13,67 @@ import { formatPhone } from '@/lib/utils/phone'
 import { getPropertyUrl } from '@/lib/utils/url'
 import { createClient } from '@/lib/supabase/client'
 import { UserPlus, ArrowLeft } from 'lucide-react'
+import type { Lead } from '@/components/dashboard/leads/PipelineBoard'
+
+interface PropertyDocument {
+    name?: string
+    url: string
+}
+
+interface PropertyDetailsAddress {
+    bairro?: string
+    cidade?: string
+    rua?: string
+    numero?: string
+}
+
+interface PropertyDetails {
+    dormitorios?: number
+    quartos?: number
+    suites?: number
+    area_privativa?: number
+    endereco?: PropertyDetailsAddress
+}
+
+interface PropertyData {
+    id: string
+    slug: string
+    type: string
+    title: string
+    price: number
+    description?: string
+    images?: string[]
+    videos?: string[]
+    documents?: PropertyDocument[]
+    details?: PropertyDetails
+}
+
+interface BrokerProfile {
+    id: string
+}
+
+interface TenantRecord {
+    slug?: string
+    custom_domain?: string | null
+    custom_domain_verified?: boolean
+}
 
 interface SendToLeadModalProps {
     isOpen: boolean
     onClose: () => void
-    property: any
+    property: PropertyData
     tenantId: string
     tenantSlug: string
 }
 
 export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlug }: SendToLeadModalProps) {
     const [searchTerm, setSearchTerm] = useState('')
-    const [leads, setLeads] = useState<any[]>([])
+    const [leads, setLeads] = useState<Lead[]>([])
     const [isLoading, setIsLoading] = useState(false)
-    const [selectedLead, setSelectedLead] = useState<any>(null)
+    const [selectedLead, setSelectedLead] = useState<Lead | null>(null)
     const [sending, setSending] = useState(false)
-    const [currentBroker, setCurrentBroker] = useState<any>(null)
-    const [tenant, setTenant] = useState<any>(null)
+    const [currentBroker, setCurrentBroker] = useState<BrokerProfile | null>(null)
+    const [tenant, setTenant] = useState<TenantRecord | null>(null)
     const [isManualMode, setIsManualMode] = useState(false)
     const [manualLead, setManualLead] = useState({ name: '', email: '', phone: '' })
     
@@ -45,7 +89,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         showType: boolean;
         selectedImages: string[];
         selectedVideos: string[];
-        selectedDocs: any[];
+        selectedDocs: PropertyDocument[];
     }>({
         title: true,
         price: true,
@@ -85,14 +129,6 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         setExpandedSections(prev => ({ ...prev, [section]: !prev[section] }))
     }
 
-    useEffect(() => {
-        if (isOpen) {
-            fetchLeads()
-            fetchCurrentBroker()
-            fetchTenant()
-        }
-    }, [isOpen])
-
     const fetchTenant = async () => {
         const supabase = createClient()
         const { data } = await supabase
@@ -120,13 +156,21 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         setIsLoading(false)
     }
 
+    useEffect(() => {
+        if (isOpen) {
+            void fetchLeads()
+            void fetchCurrentBroker()
+            void fetchTenant()
+        }
+    }, [isOpen])
+
     const filteredLeads = leads.filter(lead => 
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.phone.includes(searchTerm)
     )
 
-    const handleSendEmail = async (lead: any) => {
+    const handleSendEmail = async (lead: Lead | null) => {
         let currentLead = lead
 
         if (isManualMode && !selectedLead) {
@@ -170,7 +214,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         setSending(false)
     }
 
-    const handleSendWhatsApp = async (lead: any) => {
+    const handleSendWhatsApp = async (lead: Lead | null) => {
         let currentLead = lead
 
         if (isManualMode && !selectedLead) {
@@ -230,7 +274,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         }
 
         const docIndices = config.selectedDocs
-            .map((doc: any) => (property.documents || []).findIndex((d: any) => d.url === doc.url))
+            .map((doc) => (property.documents || []).findIndex((d) => d.url === doc.url))
             .filter(idx => idx !== -1)
         if (docIndices.length < (property.documents || []).length) {
             queryParams.set('cdoc', docIndices.join(','))
@@ -287,7 +331,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
     const selectedImagesSet = useMemo(() => new Set(config.selectedImages), [config.selectedImages])
     const selectedVideosSet = useMemo(() => new Set(config.selectedVideos), [config.selectedVideos])
-    const selectedDocsSet = useMemo(() => new Set(config.selectedDocs.map((d: any) => d.url)), [config.selectedDocs])
+    const selectedDocsSet = useMemo(() => new Set(config.selectedDocs.map((d) => d.url)), [config.selectedDocs])
 
     return (
         <Modal
@@ -413,7 +457,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                         className="inline-flex items-center gap-2 px-4 py-2 bg-foreground text-background rounded-xl font-bold hover:opacity-90 transition-all text-sm"
                                                     >
                                                         <UserPlus size={16} />
-                                                        Criar "{searchTerm}" como novo lead
+                                                        Criar &quot;{searchTerm}&quot; como novo lead
                                                     </button>
                                                 )}
                                             </div>
@@ -550,7 +594,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 ].map((opt) => (
                                                     <button 
                                                         key={opt.id}
-                                                        onClick={() => setConfig({...config, location: opt.id as any})}
+                                                        onClick={() => setConfig({...config, location: opt.id as 'exact' | 'approximate' | 'none'})}
                                                         className={`text-xs px-3 py-1.5 rounded-full transition-all ${config.location === opt.id ? 'bg-foreground/10 text-foreground font-bold' : 'text-foreground'}`}
                                                     >
                                                         {opt.label}
@@ -661,7 +705,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         <div className="p-4 pt-0 space-y-4">
                                             {property.documents?.length > 0 ? (
                                                 <div className="space-y-1">
-                                                    {property.documents.map((doc: any, idx: number) => (
+                                                    {property.documents.map((doc: PropertyDocument, idx: number) => (
                                                         <FormCheckbox 
                                                             key={idx}
                                                             label={doc.name || `Documento ${idx + 1}`}
@@ -670,7 +714,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                                 const checked = e.target.checked
                                                                 const newDocs = checked
                                                                     ? [...config.selectedDocs, doc]
-                                                                    : config.selectedDocs.filter((d: any) => d.url !== doc.url)
+                                                                    : config.selectedDocs.filter((d) => d.url !== doc.url)
                                                                 setConfig({...config, selectedDocs: newDocs})
                                                             }}
                                                         />

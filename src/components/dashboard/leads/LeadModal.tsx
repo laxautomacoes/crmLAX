@@ -11,8 +11,40 @@ import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
-import { Calendar, MessageSquare, X, Sparkles, User, Info } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User } from 'lucide-react'
 import LeadAICard from '@/components/ai/LeadAICard'
+import type { Lead } from './PipelineBoard'
+
+interface Broker {
+    id: string
+    full_name: string
+}
+
+interface NamedOption {
+    name: string
+}
+
+interface SelectedProperty {
+    id: string
+    title: string
+}
+
+interface ChatMessage {
+    fromMe?: boolean
+    message?: string
+    text?: string
+}
+
+type EditableLead = Partial<Lead> & {
+    id?: string
+    lead_source?: string
+    campaign?: string
+    property_id?: string
+    property_interest?: string
+    date?: string
+}
+
+const LEAD_MODAL_INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira'] as const
 
 interface LeadModalProps {
     isOpen: boolean
@@ -20,7 +52,7 @@ interface LeadModalProps {
     tenantId: string
     stages: Array<{ id: string; name: string }>
     onSuccess: () => void
-    editingLead?: any // Para edição
+    editingLead?: EditableLead // Para edição
     hasAIAccess: boolean
 }
 
@@ -34,10 +66,10 @@ export function LeadModal({
     hasAIAccess
 }: LeadModalProps) {
     const [isLoading, setIsLoading] = useState(false)
-    const [brokers, setBrokers] = useState<any[]>([])
+    const [brokers, setBrokers] = useState<Broker[]>([])
     const [userRole, setUserRole] = useState<string>('user')
-    const [sources, setSources] = useState<any[]>([])
-    const [campaigns, setCampaigns] = useState<any[]>([])
+    const [sources, setSources] = useState<string[]>([])
+    const [campaigns, setCampaigns] = useState<string[]>([])
     const [isAddingSource, setIsAddingSource] = useState(false)
     const [isAddingCampaign, setIsAddingCampaign] = useState(false)
     const [newSource, setNewSource] = useState('')
@@ -51,7 +83,7 @@ export function LeadModal({
         campaign: '',
         property_id: '',
         property_interest: '',
-        selectedProperty: null as any,
+        selectedProperty: null as SelectedProperty | null,
         date: new Date().toISOString().split('T')[0],
         value: '',
         notes: '',
@@ -63,7 +95,7 @@ export function LeadModal({
     })
     const [activeTab, setActiveTab] = useState<'info' | 'ai'>('info')
 
-    const INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira']
+    const firstStageId = stages[0]?.id ?? ''
 
     useEffect(() => {
         async function fetchContext() {
@@ -81,11 +113,11 @@ export function LeadModal({
             const sourcesRes = await getLeadSources(tenantId)
             if (sourcesRes.success) {
                 // Mesclar iniciais com as do banco
-                const dbSources = (sourcesRes.data || []).map((s: any) => s.name)
-                const merged = Array.from(new Set([...INITIAL_SOURCES, ...dbSources]))
+                const dbSources = ((sourcesRes.data || []) as NamedOption[]).map((s) => s.name)
+                const merged = Array.from(new Set([...LEAD_MODAL_INITIAL_SOURCES, ...dbSources]))
                 setSources(merged)
             } else {
-                setSources(INITIAL_SOURCES)
+                setSources([...LEAD_MODAL_INITIAL_SOURCES])
             }
         }
         if (isOpen) fetchContext()
@@ -96,7 +128,7 @@ export function LeadModal({
             if (leadData.lead_source) {
                 const res = await getLeadCampaigns(tenantId, leadData.lead_source)
                 if (res.success) {
-                    setCampaigns((res.data || []).map((c: any) => c.name))
+                    setCampaigns(((res.data || []) as NamedOption[]).map((c) => c.name))
                 } else {
                     setCampaigns([])
                 }
@@ -124,7 +156,7 @@ export function LeadModal({
                 date: editingLead.date || new Date().toISOString().split('T')[0],
                 value: editingLead.value?.toString() || '',
                 notes: editingLead.notes || '',
-                stage_id: editingLead.status || (stages.length > 0 ? stages[0].id : ''),
+                stage_id: editingLead.status || firstStageId,
                 assigned_to: editingLead.assigned_to || '',
                 images: Array.isArray(editingLead.images) ? editingLead.images : [],
                 videos: Array.isArray(editingLead.videos) ? editingLead.videos : [],
@@ -144,16 +176,16 @@ export function LeadModal({
                 date: new Date().toISOString().split('T')[0],
                 value: '',
                 notes: '',
-                stage_id: stages.length > 0 ? stages[0].id : '',
+                stage_id: firstStageId,
                 assigned_to: '',
                 images: [],
                 videos: [],
                 documents: []
             })
         }
-    }, [editingLead, isOpen]) // Removido stages daqui para evitar loops se stages mudar externamente
+    }, [editingLead, isOpen, firstStageId])
 
-    const handleMediaUpload = (type: 'images' | 'videos' | 'documents', files: any[]) => {
+    const handleMediaUpload = (type: 'images' | 'videos' | 'documents', files: string[] | { name: string; url: string }[]) => {
         setLeadData(prev => ({
             ...prev,
             [type]: [...prev[type], ...files]
@@ -478,7 +510,7 @@ export function LeadModal({
                     </div>
                 </div>
             </div>
-            ) : (
+            ) : editingLead?.id ? (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                         <LeadAICard 
                             leadId={editingLead.id}
@@ -486,13 +518,13 @@ export function LeadModal({
                             profileId={editingLead.assigned_to}
                             leadName={leadData.name}
                             leadSource={leadData.lead_source}
-                            interactions={(editingLead.whatsapp_chat || []).map((m: any) => 
+                            interactions={((editingLead.whatsapp_chat || []) as ChatMessage[]).map((m) => 
                                 `${m.fromMe ? 'Corretor' : 'Lead'}: ${m.message || m.text || ''}`
                             )}
                             hasAIAccess={hasAIAccess}
                         />
                     </div>
-                )}
+                ) : null}
 
 
             </div>

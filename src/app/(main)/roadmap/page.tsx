@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
-import { Rocket, Plus, Edit2, Trash2, Loader2, MoreHorizontal, Copy } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Rocket, Plus, Loader2 } from 'lucide-react';
 import {
     getRoadmap,
     createRoadmapItem,
@@ -96,8 +96,41 @@ export default function RoadmapPage() {
     };
 
     useEffect(() => {
-        loadData();
-    }, []);
+        let isMounted = true;
+
+        const loadInitialData = async () => {
+            setLoading(true);
+            const [roadmapRes, profileRes] = await Promise.all([
+                getRoadmap(),
+                getProfile()
+            ]);
+
+            if (!isMounted) return;
+
+            if (profileRes.profile) {
+                if (profileRes.profile.role === 'user') {
+                    router.push('/dashboard');
+                    return;
+                }
+                setProfile(profileRes.profile);
+            }
+
+            if (roadmapRes.stages) {
+                setStages(roadmapRes.stages);
+            }
+
+            if (roadmapRes.items) {
+                setItems(roadmapRes.items);
+            }
+            setLoading(false);
+        };
+
+        void loadInitialData();
+
+        return () => {
+            isMounted = false;
+        };
+    }, [router]);
 
     const isSuperAdmin = profile?.role === 'superadmin';
 

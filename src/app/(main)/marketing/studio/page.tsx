@@ -2,7 +2,6 @@ import { Metadata } from 'next';
 import { getProfile } from '@/app/_actions/profile';
 import { MarketingStudio } from '@/components/marketing/MarketingStudio';
 import PlanGate from '@/components/ui/PlanGate';
-import { Sparkles } from 'lucide-react';
 import { PageHeader } from '@/components/shared/PageHeader';
 
 export const metadata: Metadata = {

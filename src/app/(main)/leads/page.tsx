@@ -3,7 +3,6 @@
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import { Plus } from 'lucide-react'
-import { formatPhone } from '@/lib/utils/phone'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { LeadsHeader } from '@/components/dashboard/leads/LeadsHeader'
 import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
@@ -15,22 +14,43 @@ import { createStage, deleteStage, duplicateStage, updateStageName, updateStageC
 import { checkPlanFeatureAction } from '@/app/_actions/plan'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
+import type { Lead } from '@/components/dashboard/leads/PipelineBoard'
 
 export const dynamic = 'force-dynamic'
+
+interface Stage {
+    id: string
+    name: string
+    order_index: number
+    color?: string
+}
+
+interface Broker {
+    id: string
+    full_name: string
+}
+
+type PipelineLead = Lead & {
+    property_interest?: string
+    lead_source?: string
+    campaign?: string
+    property_id?: string
+    date?: string | null
+}
 
 export default function LeadsPage() {
     const [isStageModalOpen, setIsStageModalOpen] = useState(false)
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)
     const [newStageName, setNewStageName] = useState('')
     const [tenantId, setTenantId] = useState<string | null>(null)
-    const [stages, setStages] = useState<any[]>([])
-    const [leads, setLeads] = useState<any[]>([])
-    const [filteredLeads, setFilteredLeads] = useState<any[]>([])
-    const [brokers, setBrokers] = useState<any[]>([])
+    const [stages, setStages] = useState<Stage[]>([])
+    const [leads, setLeads] = useState<PipelineLead[]>([])
+    const [filteredLeads, setFilteredLeads] = useState<PipelineLead[]>([])
+    const [brokers, setBrokers] = useState<Broker[]>([])
     const [userRole, setUserRole] = useState<string>('user')
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedBroker, setSelectedBroker] = useState('all')
-    const [editingLead, setEditingLead] = useState<any | null>(null)
+    const [editingLead, setEditingLead] = useState<Partial<PipelineLead> | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [hasAIAccess, setHasAIAccess] = useState(false)
     const searchParams = useSearchParams()
@@ -52,13 +72,14 @@ export default function LeadsPage() {
                 ])
 
                 if (pipelineResult.success && pipelineResult.data) {
-                    setStages(pipelineResult.data.stages || [])
-                    setLeads(pipelineResult.data.leads || [])
-                    setFilteredLeads(pipelineResult.data.leads || [])
+                    setStages((pipelineResult.data.stages || []) as Stage[])
+                    const pipelineLeads = (pipelineResult.data.leads || []) as PipelineLead[]
+                    setLeads(pipelineLeads)
+                    setFilteredLeads(pipelineLeads)
                 }
 
                 if (brokersResult.success) {
-                    setBrokers(brokersResult.data || [])
+                    setBrokers((brokersResult.data || []) as Broker[])
                 }
                 setHasAIAccess(aiAccessResult)
             }
@@ -117,7 +138,7 @@ export default function LeadsPage() {
         }
     }
 
-    const handleEditLead = (lead: any) => {
+    const handleEditLead = (lead: PipelineLead) => {
         setEditingLead(lead)
         setIsLeadModalOpen(true)
     }

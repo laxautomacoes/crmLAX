@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { Plus, Search, FileText, User, Building2, Calendar, Trash2, Edit2, LayoutGrid, Table as TableIcon, Paperclip, Image as ImageIcon, ExternalLink, PlayCircle } from 'lucide-react'
+import { Plus, Search, FileText, User, Building2, Trash2, Edit2, LayoutGrid, Table as TableIcon, Paperclip, Image as ImageIcon, ExternalLink, PlayCircle } from 'lucide-react'
 import { getNotes, deleteNote } from '@/app/_actions/notes'
 import { getProfile } from '@/app/_actions/profile'
 import { NoteModal } from '@/components/dashboard/notes/NoteModal'
@@ -98,7 +98,30 @@ export default function NotesPage() {
     }
 
     useEffect(() => {
-        loadNotes()
+        let isMounted = true
+
+        const loadInitialNotes = async () => {
+            setIsLoading(true)
+            const { profile } = await getProfile()
+            if (!isMounted) return
+
+            if (profile?.tenant_id) {
+                setTenantId(profile.tenant_id)
+                const res = await getNotes(profile.tenant_id)
+                if (!isMounted) return
+
+                if (res.success) {
+                    setNotes(res.data || [])
+                }
+            }
+            setIsLoading(false)
+        }
+
+        void loadInitialNotes()
+
+        return () => {
+            isMounted = false
+        }
     }, [])
 
     const handleDelete = async (id: string) => {
