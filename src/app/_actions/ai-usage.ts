@@ -115,6 +115,33 @@ export async function updatePlanAIProvider(planType: string, provider: 'gemini' 
 }
 
 /**
+ * Retorna a configuração de IA (provider e modelo) do tenant do usuário logado.
+ * Usado pelo PropertyImportPDFModal para exibir qual LLM será utilizada.
+ */
+export async function getTenantAIConfig(tenantId: string): Promise<{ provider: string; model: string }> {
+    const supabase = await createClient();
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('plan_type')
+        .eq('id', tenantId)
+        .single();
+
+    if (!tenant) return { provider: 'gemini', model: 'gemini-2.0-flash' };
+
+    const { data: limit } = await supabase
+        .from('plan_limits')
+        .select('ai_provider, ai_model')
+        .eq('plan_type', tenant.plan_type)
+        .single();
+
+    return {
+        provider: limit?.ai_provider || 'gemini',
+        model: limit?.ai_model || 'gemini-2.0-flash',
+    };
+}
+
+/**
  * Busca uso detalhado com informações de tenant.
  */
 export async function getDetailedAIUsage(limit = 50) {

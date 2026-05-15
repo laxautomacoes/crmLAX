@@ -6,6 +6,13 @@ html {
   scroll-behavior: smooth;
 }
 
+/* Reduz fontes apenas em telas de notebook/desktop */
+@media screen and (min-width: 769px) {
+  html {
+    font-size: 13px;
+  }
+}
+
 [id] {
   scroll-margin-top: 72px;
 }
@@ -35,6 +42,18 @@ html {
   --accent-icon: #404F4F;
   --sidebar: #404F4F;
   --sidebar-foreground: #FFFFFF;
+
+  /* ═══════════════════════════════════════════════
+     ESCALA TIPOGRÁFICA — Design Tokens
+     Hierarquia: page-title > section-title > card-value > body > label > caption > micro
+     ═══════════════════════════════════════════════ */
+  --font-size-page-title: 1.375rem;      /* ~22px — Títulos de página (Dashboard, Leads, etc.) */
+  --font-size-section-title: 1rem;        /* ~16px — Títulos de seção, cards, modais */
+  --font-size-card-value: 1.625rem;       /* ~26px — Números de destaque (KPIs) */
+  --font-size-body: 0.8125rem;            /* ~13px — Texto principal, parágrafos, inputs */
+  --font-size-label: 0.75rem;             /* ~12px — Labels, badges, botões pequenos */
+  --font-size-caption: 0.6875rem;         /* ~11px — Texto auxiliar, timestamps, dicas */
+  --font-size-micro: 0.625rem;            /* ~10px — Tags mínimas, contadores */
 }
 
 .dark {
@@ -91,13 +110,73 @@ html {
   --radius-sm: calc(var(--radius) - 4px);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
+
+  /* Escala Tipográfica — registrada como classes Tailwind */
+  --font-size-page-title: var(--font-size-page-title);
+  --font-size-section-title: var(--font-size-section-title);
+  --font-size-card-value: var(--font-size-card-value);
+  --font-size-body: var(--font-size-body);
+  --font-size-label: var(--font-size-label);
+  --font-size-caption: var(--font-size-caption);
+  --font-size-micro: var(--font-size-micro);
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
   font-family: var(--font-sans), Arial, Helvetica, sans-serif;
+  font-size: var(--font-size-body);
+  line-height: 1.5;
   transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+/* ═══════════════════════════════════════════════
+   CLASSES TIPOGRÁFICAS UTILITÁRIAS
+   Uso: className="typo-page-title" (já inclui size + weight + line-height)
+   Ou use apenas o font-size via Tailwind: className="text-[length:var(--font-size-body)]"
+   ═══════════════════════════════════════════════ */
+.typo-page-title {
+  font-size: var(--font-size-page-title);
+  font-weight: 700;
+  line-height: 1.3;
+  letter-spacing: -0.01em;
+}
+
+.typo-section-title {
+  font-size: var(--font-size-section-title);
+  font-weight: 600;
+  line-height: 1.4;
+}
+
+.typo-card-value {
+  font-size: var(--font-size-card-value);
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.typo-body {
+  font-size: var(--font-size-body);
+  font-weight: 400;
+  line-height: 1.5;
+}
+
+.typo-label {
+  font-size: var(--font-size-label);
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.typo-caption {
+  font-size: var(--font-size-caption);
+  font-weight: 400;
+  line-height: 1.4;
+}
+
+.typo-micro {
+  font-size: var(--font-size-micro);
+  font-weight: 600;
+  line-height: 1.3;
+  letter-spacing: 0.02em;
 }
 
 /* Customizing native date/time picker */

@@ -453,6 +453,61 @@ export async function getBulkCampaigns(tenantId: string) {
     return { success: true, data: campaigns }
 }
 
+export async function deleteBulkCampaign(campaignId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile) return { success: false, error: 'Perfil não encontrado.' }
+
+    const { error } = await supabase
+        .from('bulk_campaigns')
+        .delete()
+        .eq('id', campaignId)
+        .eq('tenant_id', profile.tenant_id)
+
+    if (error) {
+        console.error('Error deleting bulk campaign:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
+}
+
+export async function deleteAllBulkCampaigns(tenantId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || profile.tenant_id !== tenantId) {
+        return { success: false, error: 'Acesso negado.' }
+    }
+
+    const { error } = await supabase
+        .from('bulk_campaigns')
+        .delete()
+        .eq('tenant_id', tenantId)
+
+    if (error) {
+        console.error('Error deleting all bulk campaigns:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
+}
+
 // ─── Vinculação Automática com Leads Existentes ────────────────────────────────
 
 export async function matchRecipientsWithLeads(

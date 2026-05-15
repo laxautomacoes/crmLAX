@@ -14,7 +14,8 @@ import {
     getLeadsForBulk, getBulkFilterOptions, createBulkCampaign, updateBulkCampaign, getBulkCampaigns,
     matchRecipientsWithLeads, fetchGoogleSheetData, fetchGoogleSheetTabs,
     saveBulkTemplate, getBulkTemplates, deleteBulkTemplate,
-    logBulkRecipientResult, getBulkCampaignRecipients
+    logBulkRecipientResult, getBulkCampaignRecipients,
+    deleteBulkCampaign, deleteAllBulkCampaigns
 } from '@/app/_actions/whatsapp-bulk'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone } from '@/lib/utils/phone'
@@ -111,6 +112,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     const [expandedCampaignId, setExpandedCampaignId] = useState<string | null>(null)
     const [campaignRecipients, setCampaignRecipients] = useState<RecipientResult[]>([])
     const [isLoadingRecipients, setIsLoadingRecipients] = useState(false)
+    // Delete de histórico
+    const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
     // Plan
     const [planRemaining, setPlanRemaining] = useState<number | null>(null)
     // Import stats
@@ -540,6 +543,33 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         setIsLoadingRecipients(false)
     }
 
+    const handleDeleteCampaign = async (campaignId: string) => {
+        const result = await deleteBulkCampaign(campaignId)
+        if (result.success) {
+            setCampaignHistory(prev => prev.filter(c => c.id !== campaignId))
+            if (expandedCampaignId === campaignId) {
+                setExpandedCampaignId(null)
+                setCampaignRecipients([])
+            }
+            toast.success('Campanha excluída.')
+        } else {
+            toast.error(result.error || 'Erro ao excluir.')
+        }
+    }
+
+    const handleDeleteAllCampaigns = async () => {
+        const result = await deleteAllBulkCampaigns(tenantId)
+        if (result.success) {
+            setCampaignHistory([])
+            setExpandedCampaignId(null)
+            setCampaignRecipients([])
+            setConfirmDeleteAll(false)
+            toast.success('Histórico limpo com sucesso.')
+        } else {
+            toast.error(result.error || 'Erro ao limpar histórico.')
+        }
+    }
+
     // ─── Template Handlers ──────────────────────────────────────────────────────
 
     const handleLoadTemplates = async () => {
@@ -607,9 +637,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                 {/* Composição */}
                 <div className="space-y-6">
                     {/* Título da Campanha */}
-                    <div className="space-y-2">
-                        <label className="text-sm font-bold text-gray-800 ml-1 flex items-center gap-1.5">
-                            <Type size={14} className="text-accent-icon" />
+                    <div className="space-y-1">
+                        <label className="text-sm font-bold text-gray-800 ml-1">
                             Título da Campanha
                         </label>
                         <input
@@ -719,17 +748,17 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             {media ? (
                                 <div className="relative group w-full">
                                     {media.type === 'image' ? (
-                                        <div className="relative aspect-video rounded-2xl overflow-hidden border border-gray-200 shadow-sm">
-                                            <img src={media.url} alt="Preview" className="w-full h-full object-cover" />
+                                        <div className="relative max-h-[180px] rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex items-center justify-center">
+                                            <img src={media.url} alt="Preview" className="max-h-[180px] w-auto object-contain" />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <p className="text-white text-xs font-bold">{media.name}</p>
                                             </div>
                                         </div>
                                     ) : media.type === 'video' ? (
-                                        <div className="relative aspect-video rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-black flex items-center justify-center">
+                                        <div className="relative max-h-[180px] rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-black flex items-center justify-center">
                                             <video 
                                                 src={media.url} 
-                                                className="w-full h-full object-cover opacity-80"
+                                                className="max-h-[180px] w-auto object-contain opacity-80"
                                                 controls={false}
                                                 muted
                                             />
@@ -804,19 +833,14 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     {/* Estágios */}
                                     <div>
                                         <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Estágio do Funil</label>
-                                        <div className="flex flex-wrap gap-1.5">
-                                            {filterOptions.stages.map(s => (
-                                                <button
-                                                    key={s.id}
-                                                    onClick={() => setSelectedStages(prev => prev.includes(s.id) ? prev.filter(x => x !== s.id) : [...prev, s.id])}
-                                                    className={`px-3 py-1.5 rounded-lg text-[10px] font-bold border transition-all ${
-                                                        selectedStages.includes(s.id)
-                                                            ? 'bg-[#404F4F] text-white border-[#404F4F]'
-                                                            : 'bg-white text-gray-600 border-gray-200 hover:border-[#404F4F]/30'
-                                                    }`}
-                                                >{s.name}</button>
-                                            ))}
-                                        </div>
+                                        <select
+                                            value={selectedStages[0] || ''}
+                                            onChange={e => setSelectedStages(e.target.value ? [e.target.value] : [])}
+                                            className="w-full h-9 px-3 text-xs font-bold bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40"
+                                        >
+                                            <option value="">Todos os estágios</option>
+                                            {filterOptions.stages.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
+                                        </select>
                                     </div>
                                     {/* Origem */}
                                     {filterOptions.sources.length > 0 && (
@@ -1160,14 +1184,44 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
             {/* Histórico de Campanhas */}
             <div className="pt-4 border-t border-gray-100">
-                <button
-                    onClick={handleLoadHistory}
-                    className="flex items-center gap-2 text-xs font-bold text-[#404F4F]/70 hover:text-[#404F4F] transition-colors"
-                >
-                    <History size={14} />
-                    <span>Histórico de Disparos</span>
-                    {showHistory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </button>
+                <div className="flex items-center justify-between">
+                    <button
+                        onClick={handleLoadHistory}
+                        className="flex items-center gap-2 text-sm font-bold text-gray-800 hover:text-[#404F4F] transition-colors"
+                    >
+                        <span>Histórico de Disparos</span>
+                        {showHistory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                    </button>
+                    {showHistory && campaignHistory.length > 0 && (
+                        <div className="flex items-center gap-1">
+                            {confirmDeleteAll ? (
+                                <>
+                                    <span className="text-[10px] text-red-500 font-bold">Apagar tudo?</span>
+                                    <button
+                                        onClick={handleDeleteAllCampaigns}
+                                        className="text-[10px] font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                                    >
+                                        Sim
+                                    </button>
+                                    <button
+                                        onClick={() => setConfirmDeleteAll(false)}
+                                        className="text-[10px] font-bold text-gray-500 hover:text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors"
+                                    >
+                                        Não
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => setConfirmDeleteAll(true)}
+                                    className="flex items-center gap-1 text-[10px] font-bold text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
+                                >
+                                    <Trash2 size={10} />
+                                    Limpar Tudo
+                                </button>
+                            )}
+                        </div>
+                    )}
+                </div>
                 {showHistory && (
                     <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
                         {isLoadingHistory ? (
@@ -1179,7 +1233,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 <div key={c.id} className="space-y-0">
                                     <button
                                         onClick={() => c.total_errors > 0 ? handleExpandCampaign(c.id) : null}
-                                        className={`w-full flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 text-left transition-colors ${
+                                        className={`w-full flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 text-left transition-colors group/card ${
                                             c.total_errors > 0 ? 'hover:bg-gray-100 cursor-pointer' : 'cursor-default'
                                         } ${expandedCampaignId === c.id ? 'rounded-b-none border-b-0' : ''}`}
                                     >
@@ -1197,7 +1251,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                                 {c.profiles && <span className="text-gray-400">por {c.profiles.full_name}</span>}
                                             </div>
                                         </div>
-                                        <div className="flex items-center gap-2 shrink-0 ml-3">
+                                        <div className="flex items-center gap-1.5 shrink-0 ml-3">
                                             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                                                 c.status === 'completed' ? 'bg-green-50 text-green-600' : c.status === 'cancelled' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'
                                             }`}>
@@ -1206,6 +1260,13 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                             {c.total_errors > 0 && (
                                                 expandedCampaignId === c.id ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />
                                             )}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteCampaign(c.id); }}
+                                                className="p-1.5 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover/card:opacity-100"
+                                                title="Excluir campanha"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
                                         </div>
                                     </button>
 

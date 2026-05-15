@@ -454,6 +454,7 @@ export default function PropertiesClient({
                 onClose={() => setIsImportPDFOpen(false)}
                 tenantId={tenantId}
                 onImportSuccess={() => refreshProperties(filters.status)}
+                properties={properties.map(p => ({ id: p.id, title: p.title }))}
             />
         </div>
     )
