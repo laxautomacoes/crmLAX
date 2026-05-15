@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
     MessageCircle, 
     QrCode, 
@@ -10,7 +10,11 @@ import {
     RefreshCw, 
     Power,
     ChevronDown,
-    Trash2
+    Trash2,
+    Send,
+    Phone,
+    Wifi,
+    WifiOff
 } from 'lucide-react';
 import { 
     setupWhatsAppInstance, 
@@ -18,12 +22,28 @@ import {
     getQrCode, 
     refreshInstanceStatus, 
     disconnectWhatsApp,
-    deleteWhatsAppInstance 
+    deleteWhatsAppInstance,
+    sendTestMessage
 } from '@/app/_actions/whatsapp';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/Switch';
 import { getIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
 import { motion, AnimatePresence } from 'framer-motion';
+
+/** Formata telefone para exibição: 5548999887766 → (48) 99988-7766 */
+function formatPhoneDisplay(phone: string | null | undefined): string {
+    if (!phone) return '';
+    const digits = phone.replace(/\D/g, '');
+    // Remove DDI 55 se presente
+    const local = digits.startsWith('55') && digits.length > 11 ? digits.slice(2) : digits;
+    if (local.length === 11) {
+        return `(${local.slice(0, 2)}) ${local.slice(2, 7)}-${local.slice(7)}`;
+    }
+    if (local.length === 10) {
+        return `(${local.slice(0, 2)}) ${local.slice(2, 6)}-${local.slice(6)}`;
+    }
+    return phone;
+}
 
 export function WhatsAppCard() {
     const [instance, setInstance] = useState<any>(null);
@@ -33,6 +53,10 @@ export function WhatsAppCard() {
     const [isActive, setIsActive] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
     const [isExpanded, setIsExpanded] = useState(false);
+    const [isTesting, setIsTesting] = useState(false);
+    const [liveStatus, setLiveStatus] = useState<'checking' | 'connected' | 'disconnected' | null>(null);
+    const [qrError, setQrError] = useState<string | null>(null);
+    const [showQr, setShowQr] = useState(false);
 
     const loadData = async () => {
         setLoading(true);
@@ -40,12 +64,80 @@ export function WhatsAppCard() {
         setIsActive(integData?.status === 'active');
 
         const { data } = await getWhatsAppInstance();
-        setInstance(data);
-        if (data && data.status === 'disconnected') {
-            await fetchQrCode(data.instance_name);
+        if (data) {
+            // Verificar status real na Evolution API (não confiar no banco)
+            const { status, connectedPhone, error } = await refreshInstanceStatus();
+            if (error) {
+                data.status = 'disconnected';
+                data.connected_phone = null;
+            } else {
+                data.status = status || data.status;
+                data.connected_phone = connectedPhone || data.connected_phone;
+            }
+            setInstance(data);
+            // NÃO buscar QR code automaticamente — usuário decide quando reconectar
+        } else {
+            setInstance(null);
         }
         setLoading(false);
     };
+
+    // Verificação em tempo real ao expandir o card
+    const checkLiveStatus = useCallback(async () => {
+        if (!instance) return;
+        setLiveStatus('checking');
+        const { status, connectedPhone, error } = await refreshInstanceStatus();
+        if (error) {
+            setLiveStatus('disconnected');
+            setInstance((prev: any) => prev ? { ...prev, status: 'disconnected', connected_phone: null } : prev);
+        } else {
+            setLiveStatus(status === 'connected' ? 'connected' : 'disconnected');
+            // Atualizar instância local com dados novos
+            setInstance((prev: any) => prev ? { 
+                ...prev, 
+                status, 
+                connected_phone: connectedPhone || prev.connected_phone 
+            } : prev);
+            if (status !== 'connected') {
+                setInstance((prev: any) => prev ? { ...prev, status: 'disconnected' } : prev);
+            }
+        }
+    }, [instance]);
+
+    // Auto-verificar ao expandir
+    useEffect(() => {
+        if (isExpanded && instance && !loading) {
+            checkLiveStatus();
+        }
+    }, [isExpanded]);
+
+    // Polling automático: verificar conexão a cada 5s quando QR code está visível
+    const pollingRef = useRef<NodeJS.Timeout | null>(null);
+    useEffect(() => {
+        const shouldPoll = instance && instance.status === 'disconnected' && isExpanded && !loading;
+        if (shouldPoll) {
+            pollingRef.current = setInterval(async () => {
+                const { status, connectedPhone, error } = await refreshInstanceStatus();
+                if (!error && status === 'connected') {
+                    // Conexão detectada! Atualizar UI
+                    setInstance((prev: any) => prev ? {
+                        ...prev,
+                        status: 'connected',
+                        connected_phone: connectedPhone || prev.connected_phone
+                    } : prev);
+                    setLiveStatus('connected');
+                    setQrCode(null);
+                    toast.success('WhatsApp conectado com sucesso!');
+                }
+            }, 5000);
+        }
+        return () => {
+            if (pollingRef.current) {
+                clearInterval(pollingRef.current);
+                pollingRef.current = null;
+            }
+        };
+    }, [instance?.status, isExpanded, loading]);
 
     const handleToggleStatus = async (checked: boolean) => {
         setIsUpdatingStatus(true);
@@ -61,9 +153,17 @@ export function WhatsAppCard() {
     };
 
     const fetchQrCode = async (instanceName: string) => {
-        const { data, error } = await getQrCode();
-        if (data?.base64) {
-            setQrCode(data.base64);
+        setQrCode(null);
+        setQrError(null);
+        const result = await getQrCode();
+        if (result.data?.base64) {
+            setQrCode(result.data.base64);
+            setQrError(null);
+        } else if ((result as any).connected) {
+            // A instância já está conectada, atualizar status
+            setInstance((prev: any) => prev ? { ...prev, status: 'connected' } : prev);
+        } else if (result.error) {
+            setQrError(result.error);
         }
     };
 
@@ -81,22 +181,21 @@ export function WhatsAppCard() {
             });
         } else {
             setInstance(data);
+            setShowQr(true);
             await fetchQrCode(data.instance_name);
         }
         setRefreshing(false);
     };
 
     const handleDisconnect = async () => {
-        if (!confirm('Tem certeza que deseja desconectar o WhatsApp? A instância será mantida para reconexão.')) return;
+        if (!confirm('Tem certeza que deseja desconectar o WhatsApp?')) return;
         setRefreshing(true);
-        const { error } = await disconnectWhatsApp();
-        if (error) {
-            toast.error('Erro ao desconectar: ' + error);
-        } else {
-            setInstance((prev: any) => prev ? { ...prev, status: 'disconnected' } : null);
-            setQrCode(null);
-            toast.success('WhatsApp desconectado. Escaneie o QR Code para reconectar.');
-        }
+        await disconnectWhatsApp();
+        setInstance((prev: any) => prev ? { ...prev, status: 'disconnected', connected_phone: null } : prev);
+        setQrCode(null);
+        setShowQr(false);
+        setLiveStatus('disconnected');
+        toast.success('WhatsApp desconectado com sucesso.');
         setRefreshing(false);
     };
 
@@ -109,6 +208,7 @@ export function WhatsAppCard() {
         } else {
             setInstance(null);
             setQrCode(null);
+            setLiveStatus(null);
             toast.success('Instância excluída com sucesso');
         }
         setRefreshing(false);
@@ -116,16 +216,41 @@ export function WhatsAppCard() {
 
     const handleRefresh = async () => {
         setRefreshing(true);
-        const { status, error } = await refreshInstanceStatus();
+        setLiveStatus('checking');
+        const { status, connectedPhone, error } = await refreshInstanceStatus();
         if (error) {
-            toast.error('Erro ao atualizar status');
+            toast.error('Instância desconectada ou não encontrada no servidor.');
+            setLiveStatus('disconnected');
+            // Atualizar para mostrar tela de QR code
+            setInstance((prev: any) => prev ? { ...prev, status: 'disconnected', connected_phone: null } : prev);
+            if (instance?.instance_name) await fetchQrCode(instance.instance_name);
         } else if (status === 'connected') {
             toast.success('WhatsApp conectado!');
-            await loadData();
+            setLiveStatus('connected');
+            setInstance((prev: any) => prev ? { 
+                ...prev, 
+                status: 'connected',
+                connected_phone: connectedPhone || prev.connected_phone
+            } : prev);
         } else {
+            setLiveStatus('disconnected');
+            setInstance((prev: any) => prev ? { ...prev, status: 'disconnected' } : prev);
             await fetchQrCode(instance.instance_name);
         }
         setRefreshing(false);
+    };
+
+    const handleSendTest = async () => {
+        setIsTesting(true);
+        const { success, error } = await sendTestMessage();
+        if (error) {
+            toast.error('Falha no teste', { description: error });
+        } else {
+            toast.success('Mensagem de teste enviada!', {
+                description: 'Verifique seu WhatsApp — você deve receber a mensagem agora.'
+            });
+        }
+        setIsTesting(false);
     };
 
     if (loading) {
@@ -136,6 +261,17 @@ export function WhatsAppCard() {
             </div>
         );
     }
+
+    // Helper para texto do subtitle no header
+    const isConnected = instance?.status === 'connected';
+    const headerSubtitle = () => {
+        if (isConnected && instance?.connected_phone) {
+            return `Conectado · ${formatPhoneDisplay(instance.connected_phone)}`;
+        }
+        if (isConnected) return 'Conectado e pronto para uso';
+        if (instance) return 'Aguardando conexão — escaneie o QR Code';
+        return 'Nenhuma instância configurada';
+    };
 
     return (
         <div className="bg-card rounded-2xl border border-border overflow-hidden transition-all hover:bg-muted/5">
@@ -151,31 +287,15 @@ export function WhatsAppCard() {
                         <div>
                             <div className="flex items-center gap-2">
                                 <h3 className="text-base font-bold text-foreground">WhatsApp</h3>
-                                <span className={`flex h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+                                <span className={`flex h-2 w-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
                             </div>
                             <p className="text-xs text-muted-foreground max-w-xl line-clamp-1">
-                                {isExpanded 
-                                    ? 'Conecte seu WhatsApp para enviar mensagens e sincronizar conversas em tempo real.'
-                                    : instance?.status === 'connected' ? '✓ Conectado e pronto para uso' : 'Aguardando configuração de conexão'}
+                                {headerSubtitle()}
                             </p>
                         </div>
                     </div>
 
                     <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => handleToggleStatus(!isActive)}>
-                            <span className={`text-[10px] font-black uppercase tracking-wider hidden sm:block ${isActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
-                                {isActive ? 'Ativo' : 'Desativado'}
-                            </span>
-                            <Switch 
-                                checked={isActive} 
-                                onChange={handleToggleStatus}
-                                disabled={isUpdatingStatus}
-                                className="scale-75"
-                            />
-                        </div>
-
-                        <div className="h-6 w-px bg-border hidden sm:block" />
-
                         <button 
                             className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
                             onClick={() => setIsExpanded(!isExpanded)}
@@ -220,42 +340,72 @@ export function WhatsAppCard() {
                                     </button>
                                 </div>
                             ) : instance.status === 'connected' ? (
-                                <div className="text-center space-y-6">
-                                    <div className="p-8 rounded-full bg-emerald-500/10 text-emerald-500 inline-flex items-center justify-center">
-                                        <CheckCircle2 size={64} />
-                                    </div>
-                                    <div>
-                                        <h4 className="text-xl font-bold text-foreground">Conectado com sucesso!</h4>
-                                        <p className="text-sm text-muted-foreground mt-1">Seu WhatsApp está pronto para uso e sincronização.</p>
-                                    </div>
-                                    <div className="flex flex-wrap gap-3 justify-center">
-                                        <button
-                                            onClick={handleRefresh}
-                                            disabled={refreshing}
-                                            className="px-6 py-2.5 bg-card border border-border text-foreground rounded-lg font-bold hover:bg-muted transition-all flex items-center gap-2 active:scale-95"
-                                        >
-                                            <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-                                            Atualizar Status
-                                        </button>
-                                        <button
-                                            onClick={handleDisconnect}
-                                            disabled={refreshing}
-                                            className="px-6 py-2.5 bg-orange-500/10 text-orange-500 rounded-lg font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center gap-2 active:scale-95"
-                                        >
-                                            <Power size={18} />
-                                            Desconectar
-                                        </button>
-                                        <button
-                                            onClick={handleDelete}
-                                            disabled={refreshing}
-                                            className="px-6 py-2.5 bg-red-500/10 text-red-500 rounded-lg font-bold hover:bg-red-500 hover:text-white transition-all flex items-center gap-2 active:scale-95"
-                                        >
-                                            <Trash2 size={18} />
-                                            Excluir Instância
-                                        </button>
+                                <div className="w-full space-y-4">
+                                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
+                                        {/* Número conectado - esquerda */}
+                                        <div className="flex items-center gap-3 px-5 py-3 bg-card rounded-xl border border-border shrink-0">
+                                            <Phone size={16} className="text-[#25D366] shrink-0" />
+                                            <div className="min-w-0">
+                                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Número Conectado</p>
+                                                <p className="text-sm font-bold text-foreground">{instance.connected_phone ? formatPhoneDisplay(instance.connected_phone) : '—'}</p>
+                                            </div>
+                                            <div className="flex items-center gap-1.5 ml-3">
+                                                {liveStatus === 'connected' && (
+                                                    <>
+                                                        <Wifi size={14} className="text-emerald-500" />
+                                                        <span className="text-[10px] font-bold text-emerald-500 uppercase">Online</span>
+                                                    </>
+                                                )}
+                                                {liveStatus === 'disconnected' && (
+                                                    <>
+                                                        <WifiOff size={14} className="text-red-500" />
+                                                        <span className="text-[10px] font-bold text-red-500 uppercase">Offline</span>
+                                                    </>
+                                                )}
+                                                {liveStatus === 'checking' && (
+                                                    <Loader2 size={14} className="text-muted-foreground animate-spin" />
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {/* Botões - direita */}
+                                        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 md:ml-auto">
+                                            <button
+                                                onClick={handleSendTest}
+                                                disabled={isTesting || !instance.connected_phone}
+                                                className="flex-1 md:flex-none px-4 py-2.5 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#20BA5A] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-xs whitespace-nowrap"
+                                            >
+                                                {isTesting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                                Enviar Teste
+                                            </button>
+                                            <button
+                                                onClick={handleRefresh}
+                                                disabled={refreshing}
+                                                className="flex-1 md:flex-none px-4 py-2.5 bg-card border border-border text-foreground rounded-lg font-bold hover:bg-muted transition-all flex items-center justify-center gap-2 active:scale-95 text-xs whitespace-nowrap"
+                                            >
+                                                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                                                Verificar
+                                            </button>
+                                            <button
+                                                onClick={handleDisconnect}
+                                                disabled={refreshing}
+                                                className="flex-1 md:flex-none px-4 py-2.5 bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded-lg font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 text-xs whitespace-nowrap"
+                                            >
+                                                <Power size={14} />
+                                                Desconectar
+                                            </button>
+                                            <button
+                                                onClick={handleDelete}
+                                                disabled={refreshing}
+                                                className="flex-1 md:flex-none px-4 py-2.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-bold hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 text-xs whitespace-nowrap"
+                                            >
+                                                <Trash2 size={14} />
+                                                Excluir
+                                            </button>
+                                        </div>
                                     </div>
                                 </div>
-                            ) : (
+                            ) : showQr ? (
                                 <div className="flex flex-col md:flex-row items-center gap-12 max-w-2xl w-full">
                                     <div className="flex-1 space-y-4 text-center md:text-left">
                                         <div className="flex items-center justify-center md:justify-start gap-2 text-orange-500">
@@ -279,7 +429,7 @@ export function WhatsAppCard() {
                                                 Já escaneei
                                             </button>
                                             <button
-                                                onClick={handleDisconnect}
+                                                onClick={() => { setShowQr(false); setQrCode(null); }}
                                                 className="px-6 py-2 text-muted-foreground hover:text-red-500 transition-colors text-sm font-medium"
                                             >
                                                 Cancelar
@@ -291,6 +441,19 @@ export function WhatsAppCard() {
                                         <div className="relative p-4 bg-white rounded-2xl border border-border shadow-xl">
                                             {qrCode ? (
                                                 <img src={qrCode} alt="WhatsApp QR Code" className="w-56 h-56" />
+                                            ) : qrError ? (
+                                                <div className="w-56 h-56 flex flex-col items-center justify-center gap-3 p-4">
+                                                    <WifiOff size={32} className="text-red-400" />
+                                                    <p className="text-xs text-center text-red-500 font-medium leading-tight">
+                                                        Servidor indisponível
+                                                    </p>
+                                                    <button
+                                                        onClick={() => instance && fetchQrCode(instance.instance_name)}
+                                                        className="text-xs px-3 py-1.5 bg-secondary/10 text-secondary rounded-md font-bold hover:bg-secondary/20 transition-colors"
+                                                    >
+                                                        Tentar novamente
+                                                    </button>
+                                                </div>
                                             ) : (
                                                 <div className="w-56 h-56 flex items-center justify-center">
                                                     <Loader2 className="w-8 h-8 animate-spin text-secondary" />
@@ -298,6 +461,35 @@ export function WhatsAppCard() {
                                             )}
                                         </div>
                                     </div>
+                                </div>
+                            ) : (
+                                /* Estado desconectado — botão para reconectar */
+                                <div className="text-center space-y-6 max-w-sm">
+                                    <div className="p-6 rounded-2xl bg-orange-500/5 border border-orange-500/20 inline-flex flex-col items-center gap-3">
+                                        <WifiOff size={40} className="text-orange-400" />
+                                        <div>
+                                            <h4 className="text-base font-bold text-foreground">Desconectado</h4>
+                                            <p className="text-xs text-muted-foreground mt-1">A sessão do WhatsApp não está ativa.</p>
+                                        </div>
+                                    </div>
+                                    <button
+                                        onClick={async () => {
+                                            setShowQr(true);
+                                            if (instance) await fetchQrCode(instance.instance_name);
+                                        }}
+                                        disabled={refreshing}
+                                        className="w-full py-3 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#20BA5A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 active:scale-[0.98]"
+                                    >
+                                        <Power size={20} />
+                                        Reconectar WhatsApp
+                                    </button>
+                                    <button
+                                        onClick={handleDelete}
+                                        disabled={refreshing}
+                                        className="text-xs text-muted-foreground hover:text-red-500 transition-colors font-medium"
+                                    >
+                                        <span className="flex items-center justify-center gap-1.5"><Trash2 size={14} /> Excluir instância</span>
+                                    </button>
                                 </div>
                             )}
                         </div>

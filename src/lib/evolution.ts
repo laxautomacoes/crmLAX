@@ -51,6 +51,10 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
 
         return data;
     } catch (error: any) {
+        // Se o erro já foi tratado (lançado pelo bloco !response.ok acima), re-lançar
+        if (error.message && !error.message.includes('fetch')) {
+            throw error;
+        }
         console.error('Fetch error in evolutionFetch:', {
             url,
             message: error.message,
@@ -107,6 +111,11 @@ export const evolutionService = {
 
     async getInstanceStatus(instanceName: string) {
         return evolutionFetch(`/instance/connectionState/${instanceName}`);
+    },
+
+    /** Busca detalhes da instância incluindo ownerJid (número conectado) */
+    async fetchInstanceInfo(instanceName: string) {
+        return evolutionFetch(`/instance/fetchInstances?instanceName=${instanceName}`);
     },
 
     async logoutInstance(instanceName: string) {

@@ -281,20 +281,17 @@ export async function sendSingleBulkMessage(payload: SingleBulkMessagePayload) {
         .replace(/{primeiro_nome}/g, recipient.name.split(' ')[0]);
     
     try {
-        // Verificar se o número tem WhatsApp ativo
+        // Verificar se o número tem WhatsApp ativo (não-bloqueante)
         try {
             const checkResult = await evolutionService.checkNumber(instanceName, normalizedNumber);
-            if (!checkResult || !checkResult[0] || !checkResult[0].exists) {
+            // A Evolution API pode retornar array OU objeto direto dependendo da versão
+            const parsed = Array.isArray(checkResult) ? checkResult[0] : checkResult;
+            if (parsed && parsed.exists === false) {
                 return { success: false, phone: recipient.phone, error: 'Número não possui WhatsApp ativo.' };
             }
-            
-            // Opcional: usar o número formatado devolvido pela API caso queira, 
-            // mas o normalizedNumber já deve funcionar.
         } catch (checkErr: any) {
-            console.error(`Erro ao verificar número ${normalizedNumber}:`, checkErr);
-            // Dependendo do comportamento desejado, você pode bloquear o envio
-            // ou tentar enviar mesmo assim. Por segurança, bloqueamos:
-            return { success: false, phone: recipient.phone, error: 'Falha na verificação do número no WhatsApp.' };
+            // Se a verificação falhar (timeout, rede, etc.), NÃO bloquear — tentar enviar mesmo assim
+            console.warn(`Aviso: verificação do número ${normalizedNumber} falhou, tentando envio direto:`, checkErr.message);
         }
 
         // CORREÇÃO: Quando há mídia + texto, enviar APENAS a mídia com caption
@@ -355,6 +352,7 @@ export async function sendSingleBulkMessage(payload: SingleBulkMessagePayload) {
 export async function createBulkCampaign(data: {
     tenantId: string;
     profileId: string;
+    title: string;
     message: string;
     mediaUrl?: string;
     mediaType?: string;
@@ -370,6 +368,7 @@ export async function createBulkCampaign(data: {
         .insert({
             tenant_id: data.tenantId,
             profile_id: data.profileId,
+            title: data.title,
             message: data.message,
             media_url: data.mediaUrl || null,
             media_type: data.mediaType || null,
@@ -541,6 +540,44 @@ export async function matchRecipientsWithLeads(
 
 // ─── Importação via Google Sheets ──────────────────────────────────────────────
 
+export async function fetchGoogleSheetTabs(sheetUrl: string): Promise<{ success: boolean; tabs?: { name: string; gid: string }[]; error?: string }> {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const match = sheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
+    if (!match || !match[1]) {
+        return { success: false, error: 'URL inválida.' }
+    }
+
+    const sheetId = match[1]
+
+    try {
+        const response = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/htmlview`, {
+            redirect: 'follow'
+        })
+
+        if (!response.ok) {
+            return { success: false, error: 'Não foi possível acessar a planilha.' }
+        }
+
+        const html = await response.text()
+
+        // Extrair nomes e IDs das abas do HTML
+        const tabMatches = [...html.matchAll(/id="sheet-button-(\d+)"[^>]*>([^<]+)</g)]
+        
+        if (tabMatches.length <= 1) {
+            return { success: true, tabs: [] } // Apenas uma aba ou não detectou
+        }
+
+        const tabs = tabMatches.map(m => ({ name: m[2].trim(), gid: m[1] }))
+        return { success: true, tabs }
+    } catch (error: any) {
+        console.error('Erro ao buscar abas do Google Sheets:', error)
+        return { success: false, error: 'Falha ao detectar abas da planilha.' }
+    }
+}
+
 export async function fetchGoogleSheetData(sheetUrl: string): Promise<{ success: boolean; csvData?: string; error?: string }> {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
@@ -591,4 +628,174 @@ export async function fetchGoogleSheetData(sheetUrl: string): Promise<{ success:
         console.error('Erro ao buscar Google Sheet:', error)
         return { success: false, error: 'Falha na conexão com o Google Sheets. Tente novamente.' }
     }
+}
+
+// ─── CRUD de Templates Reutilizáveis ───────────────────────────────────────────
+
+export async function saveBulkTemplate(data: {
+    tenantId: string;
+    name: string;
+    message?: string;
+    mediaUrl?: string;
+    mediaType?: string;
+    mediaName?: string;
+}) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || profile.tenant_id !== data.tenantId) {
+        return { success: false, error: 'Acesso negado.' }
+    }
+
+    const { data: template, error } = await supabase
+        .from('bulk_templates')
+        .insert({
+            tenant_id: data.tenantId,
+            profile_id: user.id,
+            name: data.name,
+            message: data.message || null,
+            media_url: data.mediaUrl || null,
+            media_type: data.mediaType || null,
+            media_name: data.mediaName || null
+        })
+        .select()
+        .single()
+
+    if (error) {
+        console.error('Error saving bulk template:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true, data: template }
+}
+
+export async function getBulkTemplates(tenantId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || profile.tenant_id !== tenantId) {
+        return { success: false, error: 'Acesso negado.' }
+    }
+
+    const { data: templates, error } = await supabase
+        .from('bulk_templates')
+        .select('*')
+        .eq('tenant_id', tenantId)
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+    if (error) {
+        console.error('Error fetching bulk templates:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true, data: templates }
+}
+
+export async function deleteBulkTemplate(templateId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile) return { success: false, error: 'Perfil não encontrado.' }
+
+    // Validar que o template pertence ao tenant do usuário (RLS também protege)
+    const { error } = await supabase
+        .from('bulk_templates')
+        .delete()
+        .eq('id', templateId)
+        .eq('tenant_id', profile.tenant_id)
+
+    if (error) {
+        console.error('Error deleting bulk template:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
+}
+
+// ─── Logs Individuais de Destinatários ─────────────────────────────────────────
+
+export async function logBulkRecipientResult(data: {
+    campaignId: string;
+    tenantId: string;
+    recipientName: string;
+    recipientPhone: string;
+    leadId?: string;
+    status: 'success' | 'error';
+    errorMessage?: string;
+}) {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+        .from('bulk_campaign_recipients')
+        .insert({
+            campaign_id: data.campaignId,
+            tenant_id: data.tenantId,
+            recipient_name: data.recipientName,
+            recipient_phone: data.recipientPhone,
+            lead_id: data.leadId || null,
+            status: data.status,
+            error_message: data.errorMessage || null
+        })
+
+    if (error) {
+        console.error('Error logging bulk recipient:', error)
+    }
+
+    return { success: !error }
+}
+
+export async function getBulkCampaignRecipients(campaignId: string, statusFilter?: 'error' | 'success' | 'all') {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile) return { success: false, error: 'Perfil não encontrado.' }
+
+    let query = supabase
+        .from('bulk_campaign_recipients')
+        .select('id, recipient_name, recipient_phone, lead_id, status, error_message, sent_at')
+        .eq('campaign_id', campaignId)
+        .eq('tenant_id', profile.tenant_id)
+        .order('sent_at', { ascending: true })
+
+    if (statusFilter && statusFilter !== 'all') {
+        query = query.eq('status', statusFilter)
+    }
+
+    const { data: recipients, error } = await query
+
+    if (error) {
+        console.error('Error fetching campaign recipients:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true, data: recipients }
 }

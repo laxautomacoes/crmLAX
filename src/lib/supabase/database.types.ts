@@ -1366,6 +1366,7 @@ export type Database = {
       }
       whatsapp_instances: {
         Row: {
+          connected_phone: string | null
           created_at: string | null
           id: string
           instance_name: string
@@ -1375,6 +1376,7 @@ export type Database = {
           user_id: string | null
         }
         Insert: {
+          connected_phone?: string | null
           created_at?: string | null
           id?: string
           instance_name: string
@@ -1384,6 +1386,7 @@ export type Database = {
           user_id?: string | null
         }
         Update: {
+          connected_phone?: string | null
           created_at?: string | null
           id?: string
           instance_name?: string
