@@ -1,18 +1,113 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { createClient } from '@/lib/supabase/client'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
 import { AreaFields } from './PropertyModal/AreaFields'
 import { RoomsFields } from './PropertyModal/RoomsFields'
+import { TowersFields } from './PropertyModal/TowersFields'
 import { AmenitiesFields } from './PropertyModal/AmenitiesFields'
 import { DescriptionField } from './PropertyModal/DescriptionField'
 import { MediaFields } from './PropertyModal/MediaFields'
 import { AddressFields } from './PropertyModal/AddressFields'
 import { OwnerFields } from './PropertyModal/OwnerFields'
 import { Switch } from '@/components/ui/Switch'
+import { Eraser } from 'lucide-react'
+
+const DRAFT_KEY = 'crm_new_property_draft'
+
+function getEmptyFormData() {
+    return {
+        title: '',
+        description: '',
+        price: '',
+        type: 'apartment',
+        status: 'Pending',
+        created_by: null as string | null,
+        owner_contact_id: null as string | null,
+        images: [] as string[],
+        videos: [] as string[],
+        documents: [] as { name: string, url: string }[],
+        is_published: false,
+        details: {
+            situacao: 'lançamento',
+            area_privativa: '',
+            area_total: '',
+            area_terreno: '',
+            area_construida: '',
+            quartos: '',
+            suites: '',
+            banheiros: '',
+            vagas: '',
+            vagas_numeracao: '',
+            torre_bloco: '',
+            valor_condominio: '',
+            valor_iptu: '',
+            obs_dormitorios: '',
+            is_empreendimento: false,
+            empreendimento: {
+                construtora: '',
+                previsao_entrega: '',
+                torres: [] as { nome: string, tipologias: { tipo: string, dormitorios: string, suites: string, area_privativa: string, vagas: string, preco_a_partir: string, unidades_por_andar: string }[] }[]
+            },
+            portaria_24h: false,
+            portaria_virtual: false,
+            piscina: false,
+            piscina_aquecida: false,
+            espaco_gourmet: false,
+            salao_festas: false,
+            academia: false,
+            sala_jogos: false,
+            sala_estudos_coworking: false,
+            sala_cinema: false,
+            playground: false,
+            brinquedoteca: false,
+            home_market: false,
+            proprietario: {
+                nome: '',
+                responsavel: '',
+                telefone: '',
+                email: '',
+                cpf: '',
+                estado_civil: '',
+                data_nascimento: '',
+                endereco_rua: '',
+                endereco_numero: '',
+                endereco_complemento: '',
+                endereco_bairro: '',
+                endereco_cidade: '',
+                endereco_estado: '',
+                endereco_cep: '',
+                is_construtora: false,
+                regime_comunhao: ''
+            },
+            endereco: {
+                rua: '',
+                numero: '',
+                complemento: '',
+                bairro: '',
+                cidade: '',
+                estado: '',
+                cep: '',
+                latitude: null as number | null,
+                longitude: null as number | null
+            }
+        }
+    }
+}
+
+function isFormEmpty(data: ReturnType<typeof getEmptyFormData>): boolean {
+    const empty = getEmptyFormData()
+    return data.title === empty.title &&
+        data.description === empty.description &&
+        data.price === empty.price &&
+        data.type === empty.type &&
+        data.images.length === 0 &&
+        data.videos.length === 0 &&
+        data.documents.length === 0
+}
 
 interface Broker {
     id: string
@@ -29,6 +124,27 @@ interface CurrentProfile {
 interface PropertyDocument {
     name: string
     url: string
+}
+
+export interface EmpreendimentoTipologia {
+    tipo: string
+    dormitorios: string
+    suites: string
+    area_privativa: string
+    vagas: string
+    preco_a_partir: string
+    unidades_por_andar: string
+}
+
+export interface EmpreendimentoTorre {
+    nome: string
+    tipologias: EmpreendimentoTipologia[]
+}
+
+export interface EmpreendimentoData {
+    construtora: string
+    previsao_entrega: string
+    torres: EmpreendimentoTorre[]
 }
 
 interface EditingPropertyDetails {
@@ -48,6 +164,9 @@ interface EditingPropertyDetails {
     torre_bloco?: string
     valor_condominio?: string
     valor_iptu?: string
+    obs_dormitorios?: string
+    is_empreendimento?: boolean
+    empreendimento?: EmpreendimentoData
     portaria_24h?: boolean
     portaria_virtual?: boolean
     piscina?: boolean
@@ -120,76 +239,42 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const [brokers, setBrokers] = useState<Broker[]>([])
     const [tenantId, setTenantId] = useState<string>('')
     const [currentProfile, setCurrentProfile] = useState<CurrentProfile | null>(null)
-    const [formData, setFormData] = useState({
-        title: '',
-        description: '',
-        price: '',
-        type: 'apartment',
-        status: 'Pending',
-        created_by: null as string | null,
-        owner_contact_id: null as string | null,
-        images: [] as string[],
-        videos: [] as string[],
-        documents: [] as { name: string, url: string }[],
-        is_published: false,
-        details: {
-            situacao: 'lançamento',
-            area_privativa: '',
-            area_total: '',
-            area_terreno: '',
-            area_construida: '',
-            quartos: '',
-            suites: '',
-            banheiros: '',
-            vagas: '',
-            vagas_numeracao: '',
-            torre_bloco: '',
-            valor_condominio: '',
-            valor_iptu: '',
-            portaria_24h: false,
-            portaria_virtual: false,
-            piscina: false,
-            piscina_aquecida: false,
-            espaco_gourmet: false,
-            salao_festas: false,
-            academia: false,
-            sala_jogos: false,
-            sala_estudos_coworking: false,
-            sala_cinema: false,
-            playground: false,
-            brinquedoteca: false,
-            home_market: false,
-            proprietario: {
-                nome: '',
-                responsavel: '',
-                telefone: '',
-                email: '',
-                cpf: '',
-                estado_civil: '',
-                data_nascimento: '',
-                endereco_rua: '',
-                endereco_numero: '',
-                endereco_complemento: '',
-                endereco_bairro: '',
-                endereco_cidade: '',
-                endereco_estado: '',
-                endereco_cep: '',
-                is_construtora: false,
-                regime_comunhao: ''
-            },
-            endereco: {
-                rua: '',
-                numero: '',
-                complemento: '',
-                bairro: '',
-                cidade: '',
-                estado: '',
-                cep: '',
-                latitude: null as number | null,
-                longitude: null as number | null
-            }
+    const [hasDraft, setHasDraft] = useState(false)
+    const [formData, setFormData] = useState(getEmptyFormData())
+    const draftTimerRef = useRef<NodeJS.Timeout | null>(null)
+
+    // Salva rascunho no localStorage (debounced, apenas para novo imóvel)
+    const saveDraft = useCallback((data: typeof formData) => {
+        if (editingProperty) return
+        if (isFormEmpty(data)) {
+            localStorage.removeItem(DRAFT_KEY)
+            setHasDraft(false)
+            return
         }
-    })
+        try {
+            const draftData = { ...data, created_by: null, owner_contact_id: null }
+            localStorage.setItem(DRAFT_KEY, JSON.stringify(draftData))
+            setHasDraft(true)
+        } catch { /* quota exceeded - ignore */ }
+    }, [editingProperty])
+
+    // Auto-save com debounce de 500ms
+    useEffect(() => {
+        if (!isOpen || editingProperty) return
+        if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
+        draftTimerRef.current = setTimeout(() => saveDraft(formData), 500)
+        return () => { if (draftTimerRef.current) clearTimeout(draftTimerRef.current) }
+    }, [formData, isOpen, editingProperty, saveDraft])
+
+    const clearDraft = useCallback(() => {
+        localStorage.removeItem(DRAFT_KEY)
+        setHasDraft(false)
+        const empty = getEmptyFormData()
+        if (currentProfile && currentProfile.role !== 'admin' && currentProfile.role !== 'superadmin') {
+            empty.created_by = currentProfile.id
+        }
+        setFormData(empty)
+    }, [currentProfile])
 
     const [isUploading, setIsUploading] = useState<string | null>(null)
     const [isSaving, setIsSaving] = useState(false)
@@ -245,6 +330,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     torre_bloco: editingProperty.details?.torre_bloco || '',
                     valor_condominio: editingProperty.details?.valor_condominio || '',
                     valor_iptu: editingProperty.details?.valor_iptu || '',
+                    obs_dormitorios: editingProperty.details?.obs_dormitorios || '',
+                    is_empreendimento: editingProperty.details?.is_empreendimento || false,
+                    empreendimento: editingProperty.details?.empreendimento || {
+                        construtora: '',
+                        previsao_entrega: '',
+                        torres: []
+                    },
                     portaria_24h: editingProperty.details?.portaria_24h || false,
                     portaria_virtual: editingProperty.details?.portaria_virtual || false,
                     piscina: editingProperty.details?.piscina || false,
@@ -288,76 +380,21 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 }
             })
         } else {
-            setFormData({
-                title: '',
-                description: '',
-                price: '',
-                type: 'apartment',
-                status: 'Pending',
-                created_by: null,
-                owner_contact_id: null,
-                images: [],
-                videos: [],
-                documents: [],
-                is_published: false,
-                details: {
-                    situacao: 'lançamento',
-                    area_privativa: '',
-                    area_total: '',
-                    area_terreno: '',
-                    area_construida: '',
-                    quartos: '',
-                    suites: '',
-                    banheiros: '',
-                    vagas: '',
-                    vagas_numeracao: '',
-                    torre_bloco: '',
-                    valor_condominio: '',
-                    valor_iptu: '',
-                    portaria_24h: false,
-                    portaria_virtual: false,
-                    piscina: false,
-                    piscina_aquecida: false,
-                    espaco_gourmet: false,
-                    salao_festas: false,
-                    academia: false,
-                    sala_jogos: false,
-                    sala_estudos_coworking: false,
-                    sala_cinema: false,
-                    playground: false,
-                    brinquedoteca: false,
-                    home_market: false,
-                    proprietario: {
-                        nome: '',
-                        responsavel: '',
-                        telefone: '',
-                        email: '',
-                        cpf: '',
-                        estado_civil: '',
-                        data_nascimento: '',
-                        endereco_rua: '',
-                        endereco_numero: '',
-                        endereco_complemento: '',
-                        endereco_bairro: '',
-                        endereco_cidade: '',
-                        endereco_estado: '',
-                        endereco_cep: '',
-                        is_construtora: false,
-                        regime_comunhao: ''
-                    },
-                    endereco: {
-                        rua: '',
-                        numero: '',
-                        complemento: '',
-                        bairro: '',
-                        cidade: '',
-                        estado: '',
-                        cep: '',
-                        latitude: null,
-                        longitude: null
-                    }
+            // Novo imóvel: tenta restaurar rascunho salvo
+            try {
+                const saved = localStorage.getItem(DRAFT_KEY)
+                if (saved) {
+                    const parsed = JSON.parse(saved)
+                    setFormData(parsed)
+                    setHasDraft(true)
+                } else {
+                    setFormData(getEmptyFormData())
+                    setHasDraft(false)
                 }
-            })
+            } catch {
+                setFormData(getEmptyFormData())
+                setHasDraft(false)
+            }
         }
     }, [editingProperty, isOpen])
 
@@ -456,6 +493,9 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 }
             }
             await onSave(propertyData)
+            // Limpa rascunho após salvar com sucesso
+            localStorage.removeItem(DRAFT_KEY)
+            setHasDraft(false)
         } catch (error: unknown) {
             const errorMessage = error instanceof Error ? error.message : 'Erro desconhecido'
             console.error('Error in handleSaveLocal:', error)
@@ -471,13 +511,23 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             onClose={onClose}
             title={editingProperty ? "Editar Imóvel" : "Novo Imóvel"}
             extraHeaderContent={
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
                     {isAdmin && (
                         <Switch 
                             checked={formData.is_published}
                             onChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
                             label="SITE"
                         />
+                    )}
+                    {!editingProperty && hasDraft && (
+                        <button
+                            onClick={clearDraft}
+                            title="Limpar formulário"
+                            className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive/50 transition-all text-sm font-medium"
+                        >
+                            <Eraser size={15} />
+                            <span className="hidden sm:inline">Limpar</span>
+                        </button>
                     )}
                     <button
                         onClick={handleSaveLocal}
@@ -501,9 +551,19 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         currentProfile={currentProfile}
                     />
                     <div className="border-t border-border/60" />
-                    <AreaFields formData={formData} setFormData={setFormData} />
-                    <div className="border-t border-border/60" />
-                    <RoomsFields formData={formData} setFormData={setFormData} />
+                    {formData.details.is_empreendimento && (
+                        <>
+                            <TowersFields formData={formData} setFormData={setFormData} />
+                            <div className="border-t border-border/60" />
+                        </>
+                    )}
+                    {!formData.details.is_empreendimento && (
+                        <>
+                            <AreaFields formData={formData} setFormData={setFormData} />
+                            <div className="border-t border-border/60" />
+                        </>
+                    )}
+                    <RoomsFields formData={formData} setFormData={setFormData} isEmpreendimento={formData.details.is_empreendimento} />
                     <div className="border-t border-border/60" />
                     <AmenitiesFields formData={formData} setFormData={setFormData} />
                     <div className="border-t border-border/60" />

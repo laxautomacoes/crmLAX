@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
-import { Plus, Search, LayoutGrid, List, Filter, WifiOff, FileText } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Filter, WifiOff, FileText, Globe } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty } from '@/app/_actions/properties'
 import { toast } from 'sonner'
@@ -13,6 +13,7 @@ import { PropertyDetailsModal } from '@/components/dashboard/properties/Property
 import { SendToLeadModal } from '@/components/dashboard/properties/SendToLeadModal'
 import { PropertyFiltersModal } from '@/components/dashboard/properties/PropertyFiltersModal'
 import { PropertyImportPDFModal } from '@/components/dashboard/properties/PropertyImportPDFModal'
+import { PropertyScrapingModal } from '@/components/dashboard/properties/PropertyScrapingModal'
 import { useOfflineSync } from '@/hooks/use-offline-sync'
 import { getOfflineProperties } from '@/services/db'
 import { PageHeader } from '@/components/shared/PageHeader'
@@ -43,6 +44,7 @@ export default function PropertiesClient({
     const [isSendModalOpen, setIsSendModalOpen] = useState(false)
     const [isFiltersOpen, setIsFiltersOpen] = useState(false)
     const [isImportPDFOpen, setIsImportPDFOpen] = useState(false)
+    const [isScrapingOpen, setIsScrapingOpen] = useState(false)
     const [isRefreshing, setIsRefreshing] = useState(false)
     const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery')
     const [properties, setProperties] = useState<any[]>(initialProperties)
@@ -316,17 +318,17 @@ export default function PropertiesClient({
                 subtitle={`${filteredProperties.length} imóveis encontrados`}
             >
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
-                    <div className="flex items-center bg-card border border-border rounded-lg p-0.5 shadow-sm order-1">
+                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm order-1">
                         <button
                             onClick={() => setViewMode('gallery')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
                             title="Visualização em Galeria"
                         >
                             <LayoutGrid size={16} />
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
                             title="Visualização em Lista"
                         >
                             <List size={16} />
@@ -341,24 +343,33 @@ export default function PropertiesClient({
                             }`}
                     >
                         <Filter size={18} />
-                        Filtros
-                    </button>
-
-                    <button
-                        onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-3"
-                    >
-                        <Plus size={18} />
-                        Novo Imóvel
+                        Filtrar
                     </button>
 
                     <button
                         onClick={() => setIsImportPDFOpen(true)}
-                        className="flex items-center gap-2 bg-primary/10 text-primary px-4 py-3 md:py-2 rounded-lg hover:bg-primary/20 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-4"
+                        className="flex items-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-3 bg-card border-border text-foreground hover:bg-muted"
                         title="Importar Tabela de Preços via IA"
                     >
                         <FileText size={18} />
                         Importar PDF
+                    </button>
+
+                    <button
+                        onClick={() => setIsScrapingOpen(true)}
+                        className="flex items-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-3 bg-card border-border text-foreground hover:bg-muted"
+                        title="Importar imóvel de qualquer site via IA"
+                    >
+                        <Globe size={18} />
+                        Importar URL
+                    </button>
+
+                    <button
+                        onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
+                        className="flex items-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-4"
+                    >
+                        <Plus size={18} />
+                        Novo Imóvel
                     </button>
 
                     <div className="w-full md:w-64 order-5 md:order-first">
@@ -455,6 +466,32 @@ export default function PropertiesClient({
                 tenantId={tenantId}
                 onImportSuccess={() => refreshProperties(filters.status)}
                 properties={properties.map(p => ({ id: p.id, title: p.title }))}
+            />
+
+            <PropertyScrapingModal
+                isOpen={isScrapingOpen}
+                onClose={() => setIsScrapingOpen(false)}
+                tenantId={tenantId}
+                onScrapingSuccess={(data) => {
+                    setIsScrapingOpen(false)
+                    setEditingProperty({
+                        title: data.title || '',
+                        description: data.description || '',
+                        price: data.price || '',
+                        type: data.type || 'apartment',
+                        status: 'Disponível',
+                        images: [],
+                        videos: [],
+                        documents: [],
+                        is_published: false,
+                        details: {
+                            ...data.details,
+                            description: data.description || '',
+                        }
+                    })
+                    setIsModalOpen(true)
+                    toast.success('Dados importados! Revise e salve o imóvel.')
+                }}
             />
         </div>
     )

@@ -6,7 +6,7 @@ import { revalidatePath } from 'next/cache';
 export async function getIntegration(provider: string) {
     const supabase = await createClient();
     
-    // Get user to find tenant_id
+    // Get user to find tenant_id and profile_id
     const { data: { user } } = await supabase.auth.getUser();
     if (!user) {
         console.error('getIntegration: Usuário não autenticado');
@@ -28,17 +28,19 @@ export async function getIntegration(provider: string) {
         console.error(`getIntegration: tenant_id não encontrado no perfil do usuário ${user.id}`);
     }
 
+    // Buscar integração específica do usuário (por profile_id)
     const { data, error } = await supabase
         .from('integrations')
         .select('*')
         .eq('tenant_id', profile.tenant_id)
         .eq('provider', provider)
+        .eq('profile_id', user.id)
         .maybeSingle();
 
     if (error) {
         console.error(`getIntegration: Erro ao buscar integração ${provider}:`, error);
     } else {
-        console.log(`getIntegration: Sucesso ao buscar ${provider}. Status: ${data?.status || 'Não iniciada'}`);
+        console.log(`getIntegration: Sucesso ao buscar ${provider} para user ${user.id}. Status: ${data?.status || 'Não iniciada'}`);
     }
 
     return { data, error: error?.message };
@@ -62,11 +64,12 @@ export async function saveIntegration(provider: string, credentials: any) {
         .from('integrations')
         .upsert({
             tenant_id: profile.tenant_id,
+            profile_id: user.id,
             provider,
             credentials,
             status: 'active',
             updated_at: new Date().toISOString()
-        }, { onConflict: 'tenant_id,provider' });
+        }, { onConflict: 'tenant_id,provider,profile_id' });
 
     if (error) return { error: error.message };
 
@@ -96,6 +99,7 @@ export async function updateIntegrationStatus(provider: string, status: 'active'
         })
         .eq('tenant_id', profile.tenant_id)
         .eq('provider', provider)
+        .eq('profile_id', user.id)
         .select();
 
     // Se não encontrou linha para atualizar, insere uma nova
@@ -104,6 +108,7 @@ export async function updateIntegrationStatus(provider: string, status: 'active'
             .from('integrations')
             .insert({
                 tenant_id: profile.tenant_id,
+                profile_id: user.id,
                 provider,
                 status,
                 updated_at: new Date().toISOString()

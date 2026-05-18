@@ -148,9 +148,12 @@ async function upsertOwnerContact(
             const currentTypes: string[] = existing?.contact_type || []
             const newTypes = Array.from(new Set([...currentTypes.filter((t: string) => t !== 'vendedor' && t !== 'construtora'), ownerType]))
 
+            const updatePayload: Record<string, any> = { ...contactData, contact_type: newTypes }
+            if (proprietario.tambem_cliente) updatePayload.is_owner_only = false
+
             await supabase
                 .from('contacts')
-                .update({ ...contactData, contact_type: newTypes })
+                .update(updatePayload)
                 .eq('id', existingContactId)
 
             return existingContactId
@@ -172,9 +175,12 @@ async function upsertOwnerContact(
                     const currentTypes: string[] = byPhone.contact_type || []
                     const newTypes = Array.from(new Set([...currentTypes, ownerType]))
 
+                    const phoneUpdatePayload: Record<string, any> = { ...contactData, contact_type: newTypes }
+                    if (proprietario.tambem_cliente) phoneUpdatePayload.is_owner_only = false
+
                     await supabase
                         .from('contacts')
-                        .update({ ...contactData, contact_type: newTypes })
+                        .update(phoneUpdatePayload)
                         .eq('id', byPhone.id)
 
                     return byPhone.id
@@ -182,10 +188,37 @@ async function upsertOwnerContact(
             }
         }
 
-        // Caso 3: Criar novo contato
+        // Caso 3: Buscar por nome exato (evitar duplicatas sem telefone, ex: construtoras)
+        if (proprietario.nome) {
+            const { data: byName } = await supabase
+                .from('contacts')
+                .select('id, contact_type')
+                .eq('tenant_id', tenantId)
+                .ilike('name', proprietario.nome.trim())
+                .limit(1)
+                .single()
+
+            if (byName) {
+                const currentTypes: string[] = byName.contact_type || []
+                const newTypes = Array.from(new Set([...currentTypes, ownerType]))
+
+                const nameUpdatePayload: Record<string, any> = { ...contactData, contact_type: newTypes }
+                if (proprietario.tambem_cliente) nameUpdatePayload.is_owner_only = false
+
+                await supabase
+                    .from('contacts')
+                    .update(nameUpdatePayload)
+                    .eq('id', byName.id)
+
+                return byName.id
+            }
+        }
+
+        // Caso 4: Criar novo contato (como proprietário apenas, não aparece em Clientes)
+        const isOwnerOnly = !proprietario.tambem_cliente
         const { data: newContact, error } = await supabase
             .from('contacts')
-            .insert([{ ...contactData, contact_type: [ownerType] }])
+            .insert([{ ...contactData, contact_type: [ownerType], is_owner_only: isOwnerOnly }])
             .select('id')
             .single()
 
@@ -569,18 +602,23 @@ export async function approveProperty(tenantId: string, propertyId: string) {
     }
 }
 
-export async function getPropertyBySlug(type: string, slug: string) {
+export async function getPropertyBySlug(type: string, slug: string, allowUnpublished = false) {
     const supabase = await createClient()
 
     try {
-        const { data, error } = await supabase
+        let query = supabase
             .from('properties')
             .select('*')
             .eq('type', type)
             .eq('slug', slug)
             .eq('is_archived', false)
-            .eq('is_published', true)
-            .single()
+
+        // Se não permitir não-publicados, filtra por is_published = true
+        if (!allowUnpublished) {
+            query = query.eq('is_published', true)
+        }
+
+        const { data, error } = await query.single()
 
         if (error) throw error
 

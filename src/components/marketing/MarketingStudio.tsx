@@ -52,11 +52,11 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
             <div className="max-w-4xl mx-auto space-y-10 py-10 animate-in fade-in duration-700">
                 {/* Cabeçalho Minimalista */}
                 <div className="text-center space-y-2">
-                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-icon/10 text-[#404F4F] text-[10px] font-black uppercase tracking-widest border border-accent-icon/20">
+                    <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-accent-icon/10 text-foreground text-[10px] font-black uppercase tracking-widest border border-accent-icon/20">
                         <Sparkles size={12} className="text-accent-icon" />
                         IA Creative Assistant
                     </div>
-                    <h2 className="text-3xl font-black text-[#404F4F] tracking-tight">O que vamos criar hoje?</h2>
+                    <h2 className="text-3xl font-black text-foreground tracking-tight">O que vamos criar hoje?</h2>
                 </div>
 
                 {/* Área de Input Centralizada */}
@@ -65,7 +65,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                         value={topic}
                         onChange={(e) => setTopic(e.target.value)}
                         placeholder="Descreva o assunto do post..."
-                        className="w-full min-h-[140px] p-8 rounded-[2rem] bg-white border border-border/50 text-xl font-medium focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all shadow-sm hover:shadow-md placeholder:text-gray-300"
+                        className="w-full min-h-[140px] p-8 rounded-[2rem] bg-foreground/5 border border-border/50 text-xl font-medium text-foreground focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all shadow-sm hover:shadow-md placeholder:text-muted-foreground/50"
                     />
                     
                     <div className="absolute right-4 bottom-4 flex gap-2">
@@ -80,7 +80,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                         <button
                             onClick={handleGenerate}
                             disabled={loading || !topic.trim()}
-                            className="h-12 px-8 bg-[#404F4F] hover:bg-[#2d3939] text-white rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg active:scale-95 disabled:opacity-30"
+                            className="h-12 px-8 bg-muted hover:bg-muted/80 text-foreground rounded-xl font-black text-xs uppercase tracking-widest transition-all flex items-center gap-3 shadow-lg active:scale-95 disabled:opacity-30"
                         >
                             {loading ? <Loader2 size={16} className="animate-spin" /> : <Sparkles size={16} className="text-accent-icon" />}
                             Gerar
@@ -102,8 +102,8 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     onClick={() => setActiveTab(tab.id as any)}
                                     className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest transition-all border ${
                                         activeTab === tab.id
-                                            ? 'bg-[#404F4F] text-white border-[#404F4F]'
-                                            : 'bg-white text-[#404F4F]/40 border-border/50 hover:bg-gray-50'
+                                            ? 'bg-muted text-foreground border-muted'
+                                            : 'bg-foreground/5 text-muted-foreground border-border/50 hover:bg-foreground/10'
                                     }`}
                                 >
                                     {tab.label}
@@ -111,22 +111,22 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                             ))}
                         </div>
 
-                        <div className="bg-white rounded-[2.5rem] p-10 shadow-sm border border-border/50 relative group">
-                            <p className="text-lg text-[#404F4F] leading-loose whitespace-pre-wrap font-medium text-center italic">
+                        <div className="bg-card rounded-[2.5rem] p-10 shadow-sm border border-border/50 relative group">
+                            <p className="text-lg text-foreground leading-loose whitespace-pre-wrap font-medium text-center italic">
                                 "{results[activeTab]}"
                             </p>
                             
                             <div className="mt-8 flex justify-center gap-4 pt-8 border-t border-border/20">
                                 <button
                                     onClick={() => handleCopy(results[activeTab])}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gray-50 hover:bg-gray-100 text-[#404F4F] font-black text-[10px] uppercase tracking-widest transition-all"
+                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-foreground/5 hover:bg-foreground/10 text-foreground font-black text-[10px] uppercase tracking-widest transition-all"
                                 >
                                     {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
                                     Copiar
                                 </button>
                                 <button
                                     onClick={() => toast.info('Funcionalidade de postagem direta em breve.')}
-                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-black text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-95"
+                                    className="flex items-center gap-2 px-6 py-3 rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground font-black text-[10px] uppercase tracking-widest transition-all shadow-md active:scale-95"
                                 >
                                     <Send size={14} />
                                     Postar Agora
@@ -143,15 +143,15 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
         <section className="space-y-6">
             <div className="flex items-center gap-3 ml-1">
                 <Sparkles className="h-5 w-5 text-accent-icon" />
-                <h2 className="text-xl font-black text-[#404F4F]">Estúdio de Criação IA</h2>
+                <h2 className="text-xl font-black text-foreground">Estúdio de Criação IA</h2>
             </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full min-h-[460px]">
                 {/* Lado Esquerdo: Input */}
-                <div className="bg-white rounded-[2rem] border border-border/50 shadow-sm p-8 flex flex-col space-y-6 transition-all hover:shadow-md">
+                <div className="bg-card rounded-[2rem] border border-border/50 shadow-sm p-8 flex flex-col space-y-6 transition-all hover:shadow-md">
                     <div className="space-y-4 flex-1">
                         <div className="flex items-center justify-between">
-                            <label className="text-[10px] font-black text-[#404F4F]/60 uppercase tracking-[0.2em]">O que vamos postar hoje?</label>
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">O que vamos postar hoje?</label>
                             {topic && (
                                 <button 
                                     onClick={() => setTopic('')}
@@ -165,14 +165,14 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                             value={topic}
                             onChange={(e) => setTopic(e.target.value)}
                             placeholder="Ex: Frase motivacional sobre conquista do primeiro property, ou um post sobre as vantagens de morar perto da praia..."
-                            className="w-full h-80 p-6 rounded-2xl bg-gray-50/50 border border-border/50 text-base focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all placeholder:text-gray-400 font-medium leading-relaxed"
+                            className="w-full h-80 p-6 rounded-2xl bg-foreground/5 border border-border/50 text-base text-foreground focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all placeholder:text-muted-foreground/50 font-medium leading-relaxed"
                         />
                     </div>
 
                     <button
                         onClick={handleGenerate}
                         disabled={loading || !topic.trim()}
-                        className="w-full h-14 bg-[#404F4F] hover:bg-[#2d3939] text-white rounded-2xl font-black text-sm uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] disabled:opacity-50"
+                        className="w-full h-14 bg-muted hover:bg-muted/80 text-foreground rounded-2xl font-black text-sm uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] disabled:opacity-50"
                     >
                         {loading ? (
                             <Loader2 className="h-5 w-5 animate-spin" />
@@ -245,7 +245,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                             </button>
                             <button
                                 onClick={() => {/* Futura integração direta com redes */}}
-                                className="h-12 flex items-center justify-center gap-2 px-6 rounded-xl bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-[0.95]"
+                                className="h-12 flex items-center justify-center gap-2 px-6 rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-[0.95]"
                             >
                                 <Send size={16} />
                                 Postar Agora

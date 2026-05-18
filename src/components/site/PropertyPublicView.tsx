@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from 'react';
 import { 
     Home, BedDouble, Bath, Square, Car, Waves, Utensils, 
     PartyPopper, Dumbbell, MessageCircle, MapPin,
-    ChevronLeft, ChevronRight, Maximize2, Play, Video, FileText
+    ChevronLeft, ChevronRight, Maximize2, Play, Video, FileText,
+    Baby, Flame, Droplets, Laptop, PawPrint, Trophy
 } from 'lucide-react';
-import { translatePropertyType } from '@/utils/property-translations';
+import { translatePropertyType, translateStatus, getSituacaoStyles, getPropertyTypeStyles } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
 import { SafeMarkdownRenderer } from '@/components/shared/SafeMarkdownRenderer';
@@ -92,10 +93,17 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
     
     const details = property.details || {};
     const amenities = [
-        { id: 'piscina', icon: <Waves size={16} />, label: 'Piscina' },
-        { id: 'academia', icon: <Dumbbell size={16} />, label: 'Academia' },
-        { id: 'espaco_gourmet', icon: <Utensils size={16} />, label: 'Espaço Gourmet' },
-        { id: 'salao_festas', icon: <PartyPopper size={16} />, label: 'Salão de Festas' },
+        { id: 'piscina', icon: <Waves size={20} />, label: 'Piscina' },
+        { id: 'academia', icon: <Dumbbell size={20} />, label: 'Academia' },
+        { id: 'espaco_gourmet', icon: <Utensils size={20} />, label: 'Espaço Gourmet' },
+        { id: 'salao_festas', icon: <PartyPopper size={20} />, label: 'Salão de Festas' },
+        { id: 'playground', icon: <Baby size={20} />, label: 'Playground' },
+        { id: 'brinquedoteca', icon: <Baby size={20} />, label: 'Brinquedoteca' },
+        { id: 'churrasqueira', icon: <Flame size={20} />, label: 'Churrasqueira' },
+        { id: 'sauna', icon: <Droplets size={20} />, label: 'Sauna' },
+        { id: 'coworking', icon: <Laptop size={20} />, label: 'Coworking' },
+        { id: 'pet_place', icon: <PawPrint size={20} />, label: 'Pet Place' },
+        { id: 'quadra', icon: <Trophy size={20} />, label: 'Quadra' },
     ].filter(a => details[a.id]);
 
     const brokerPhone = broker?.whatsapp_number || tenant?.branding?.whatsapp || '';
@@ -104,22 +112,24 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
 
     // Handle title and price visibility
     const displayTitle = config?.title === false ? 'Imóvel disponível' : property.title;
-    const displayPrice = config?.price === false ? 'Sob consulta' : (property.price ? `R$ ${Number(property.price).toLocaleString('pt-BR')}` : 'Sob consulta');
+    const displayPrice = config?.price === false ? 'Valor sob consulta' : (property.price ? `R$ ${Number(property.price).toLocaleString('pt-BR')}` : 'Valor sob consulta');
 
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-                <div className="lg:col-span-2 space-y-8">
+            <div className="space-y-8">
+                <div className="space-y-8">
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             {config?.showType !== false && (
-                                <span className="px-2 py-1 bg-primary/10 text-primary text-[10px] font-bold rounded uppercase tracking-wider">
+                                <span className={`px-2 py-1 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(property.type || property.details?.type)}`}>
                                     {translatePropertyType(property.type || property.details?.type)}
                                 </span>
                             )}
-                            <span className="px-2 py-1 bg-muted text-muted-foreground text-[10px] font-bold rounded uppercase tracking-wider">
-                                {property.status}
-                            </span>
+                            {details.situacao && (
+                                <span className={`px-2 py-1 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getSituacaoStyles(details.situacao)}`}>
+                                    {details.situacao}
+                                </span>
+                            )}
                         </div>
                         <h1 className="text-3xl font-bold text-foreground mb-2">{displayTitle}</h1>
                         
@@ -276,7 +286,13 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                         initialTime={allMedia[fullscreenIndex]?.type === 'video' ? videoTime[allMedia[fullscreenIndex].url] || 0 : 0}
                     />
 
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4 p-6 bg-card rounded-2xl border border-border shadow-sm">
+                    <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                        <Home className="text-primary" size={24} />
+                        Dados do Imóvel
+                    </h2>
+
+                    <div className="p-5 bg-card rounded-2xl border border-border shadow-sm">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {config?.showBedrooms !== false && (
                             <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
                                 <BedDouble className="text-primary mb-2" size={24} />
@@ -308,12 +324,29 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                                 <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Área</span>
                             </div>
                         )}
+                        </div>
+                    </div>
+
+                    {amenities.length > 0 && (
+                        <div className="p-5 bg-card rounded-2xl border border-border shadow-sm">
+                            <div className="flex flex-wrap gap-3">
+                                {amenities.map(a => (
+                                    <div key={a.id} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/30">
+                                        <span className="text-primary">{a.icon}</span>
+                                        <span className="text-sm font-medium text-foreground">{a.label}</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="p-5 bg-card rounded-2xl border border-border shadow-sm">
+                        <span className="text-2xl font-black text-foreground">{displayPrice}</span>
                     </div>
 
                     {config?.description !== 'none' && (
-                        <div className="space-y-4">
-                            <h2 className="text-2xl font-bold text-foreground">Descrição</h2>
-                            <div className="text-muted-foreground leading-relaxed">
+                        <div className="p-5 bg-card rounded-2xl border border-border shadow-sm">
+                            <div className="text-base md:text-lg text-foreground leading-relaxed">
                                 {property.description ? (
                                     <SafeMarkdownRenderer content={property.description} />
                                 ) : (
@@ -345,7 +378,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                                 <FileText className="text-primary" size={24} />
                                 Documentos
                             </h2>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                                 {filteredDocs.map((doc: any, i: number) => (
                                     <a 
                                         key={i}
@@ -366,44 +399,6 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                             </div>
                         </div>
                     )}
-                </div>
-
-                <div className="space-y-6">
-                    <div className="p-6 bg-card rounded-2xl border border-border shadow-sm sticky top-24">
-                        <div className="mb-6">
-                            <span className="text-sm font-bold text-muted-foreground dark:text-white uppercase tracking-widest">Valor do Imóvel</span>
-                            <div className="flex items-baseline gap-2 mt-1">
-                                <span className="text-3xl font-black text-foreground">
-                                    {displayPrice}
-                                </span>
-                            </div>
-                        </div>
-
-                        <div className="pt-6 border-t border-border space-y-6">
-                            <div className="flex items-center gap-4">
-                                <div className="w-16 h-16 rounded-full overflow-hidden bg-muted border-2 border-primary/20 shadow-sm">
-                                    {broker?.avatar_url ? (
-                                        <img src={broker.avatar_url} className="w-full h-full object-cover" alt={broker.full_name} />
-                                    ) : (
-                                        <div className="w-full h-full flex items-center justify-center bg-primary/10 text-primary">
-                                            <Home size={32} />
-                                        </div>
-                                    )}
-                                </div>
-                                <div>
-                                    <p className="text-xs text-muted-foreground dark:text-white uppercase font-bold tracking-wider">Corretor Responsável</p>
-                                    <p className="text-lg font-bold text-foreground">{broker?.full_name || (broker?.id ? 'Léo Acosta' : tenant?.name)}</p>
-                                </div>
-                            </div>
-
-                            <div className="space-y-3">
-                                <a href={whatsappUrl} target="_blank" rel="noopener noreferrer" className="w-full flex items-center justify-center gap-3 bg-[#25D366] hover:bg-[#20BA5A] text-white font-bold py-4 px-6 rounded-xl transition-all shadow-md">
-                                    <MessageCircle size={22} />
-                                    Falar no WhatsApp
-                                </a>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

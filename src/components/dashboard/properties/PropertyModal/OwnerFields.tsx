@@ -315,7 +315,7 @@ export function OwnerFields({ formData, setFormData, tenantId }: OwnerFieldsProp
 
                 {/* Responsável + Toggle Construtora */}
                 <div className="lg:col-span-2">
-                    <div className="grid grid-cols-2 gap-x-3">
+                    <div className="grid grid-cols-3 gap-x-3">
                         <FormInput
                             label="Responsável"
                             value={formData.details.proprietario.responsavel}
@@ -337,6 +337,26 @@ export function OwnerFields({ formData, setFormData, tenantId }: OwnerFieldsProp
                                 })}
                                 className="mt-1"
                             />
+                        </div>
+                        <div className="flex flex-col">
+                            <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1 tracking-tight">É Cliente?</label>
+                            <Switch
+                                checked={formData.details.proprietario.tambem_cliente || false}
+                                onChange={(checked) => setFormData({
+                                    ...formData,
+                                    details: {
+                                        ...formData.details,
+                                        proprietario: {
+                                            ...formData.details.proprietario,
+                                            tambem_cliente: checked
+                                        }
+                                    }
+                                })}
+                                className="mt-1"
+                            />
+                            <span className="text-[9px] text-muted-foreground mt-1 ml-1">
+                                {formData.details.proprietario.tambem_cliente ? 'Visível em Clientes' : 'Apenas proprietário'}
+                            </span>
                         </div>
                     </div>
                 </div>

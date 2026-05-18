@@ -67,7 +67,8 @@ export function ClientListItem({
                 <td className="px-4 py-5">
                     <div className="flex flex-col items-center justify-center gap-1 text-sm whitespace-nowrap">
                         <div className="flex items-center justify-center gap-1.5">
-                            <span className="text-foreground font-medium">{formatPhone(client.phone)}</span>
+                            <span className="text-foreground font-medium">{formatPhone(client.phone || '')}</span>
+                            {client.phone && (
                             <a
                                 href={`https://wa.me/55${client.phone.replace(/\D/g, '')}`}
                                 target="_blank"
@@ -78,6 +79,7 @@ export function ClientListItem({
                             >
                                 <MessageSquare size={12} />
                             </a>
+                            )}
                         </div>
                         {client.email && (
                             <div className="flex items-center justify-center gap-1.5">

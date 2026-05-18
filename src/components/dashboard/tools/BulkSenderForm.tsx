@@ -638,7 +638,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                 <div className="space-y-6">
                     {/* Título da Campanha */}
                     <div className="space-y-1">
-                        <label className="text-sm font-bold text-gray-800 ml-1">
+                        <label className="text-sm font-bold text-foreground ml-1">
                             Título da Campanha
                         </label>
                         <input
@@ -646,21 +646,21 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             value={campaignTitle}
                             onChange={(e) => setCampaignTitle(e.target.value)}
                             placeholder="Ex: Lançamento Residencial Park Sul"
-                            className="w-full h-10 px-3 text-sm font-medium bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-gray-900 placeholder:text-gray-400"
+                            className="w-full h-10 px-3 text-sm font-medium bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50"
                         />
                     </div>
 
                     {/* Mensagem + Templates */}
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <label className="text-sm font-bold text-gray-800 ml-1">Mensagem do WhatsApp</label>
+                            <label className="text-sm font-bold text-foreground ml-1">Mensagem do WhatsApp</label>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleLoadTemplates}
                                     className={`flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border transition-all ${
                                         showTemplates
-                                            ? 'bg-[#404F4F]/5 border-[#404F4F]/20 text-[#404F4F]'
-                                            : 'bg-white border-gray-200 text-gray-500 hover:border-[#404F4F]/20 hover:text-[#404F4F]'
+                                            ? 'bg-foreground/10 border-border text-foreground'
+                                            : 'bg-foreground/5 border-border/40 text-muted-foreground hover:border-border hover:text-foreground'
                                     }`}
                                 >
                                     <BookOpen size={12} />
@@ -669,7 +669,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 {(message || media) && (
                                     <button
                                         onClick={() => setShowSaveTemplate(true)}
-                                        className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border bg-white border-gray-200 text-gray-500 hover:border-green-300 hover:text-green-600 transition-all"
+                                        className="flex items-center gap-1.5 text-[10px] font-bold px-2.5 py-1.5 rounded-lg border bg-foreground/5 border-border/40 text-muted-foreground hover:border-green-500/40 hover:text-green-500 transition-all"
                                     >
                                         <Save size={12} />
                                         Salvar
@@ -680,22 +680,22 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                         {/* Lista de Templates */}
                         {showTemplates && (
-                            <div className="p-3 bg-gray-50 rounded-xl border border-gray-100 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">Templates Salvos</p>
+                            <div className="p-3 bg-foreground/5 rounded-xl border border-border/40 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Templates Salvos</p>
                                 {isLoadingTemplates ? (
-                                    <div className="flex items-center justify-center py-4"><Loader2 className="animate-spin text-gray-400" size={16} /></div>
+                                    <div className="flex items-center justify-center py-4"><Loader2 className="animate-spin text-muted-foreground" size={16} /></div>
                                 ) : templates.length === 0 ? (
-                                    <p className="text-xs text-gray-400 text-center py-4">Nenhum template salvo ainda.</p>
+                                    <p className="text-xs text-muted-foreground text-center py-4">Nenhum template salvo ainda.</p>
                                 ) : (
                                     <div className="max-h-[200px] overflow-y-auto space-y-1.5 custom-scrollbar">
                                         {templates.map(t => (
-                                            <div key={t.id} className="flex items-center justify-between p-2.5 bg-white rounded-lg border border-gray-100 hover:border-[#404F4F]/20 transition-colors group">
+                                            <div key={t.id} className="flex items-center justify-between p-2.5 bg-foreground/5 rounded-lg border border-border/40 hover:border-border transition-colors group">
                                                 <button
                                                     onClick={() => handleSelectTemplate(t)}
                                                     className="flex-1 min-w-0 text-left"
                                                 >
                                                     <div className="flex items-center gap-2">
-                                                        <p className="text-xs font-bold text-[#404F4F] truncate">{t.name}</p>
+                                                        <p className="text-xs font-bold text-foreground truncate">{t.name}</p>
                                                         {t.media_type && (
                                                             <span className="shrink-0">
                                                                 {t.media_type === 'image' && <ImageIcon size={10} className="text-blue-400" />}
@@ -705,14 +705,14 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                                         )}
                                                     </div>
                                                     {t.message && (
-                                                        <p className="text-[10px] text-gray-400 truncate mt-0.5">
+                                                        <p className="text-[10px] text-muted-foreground truncate mt-0.5">
                                                             {t.message.substring(0, 60)}{t.message.length > 60 ? '...' : ''}
                                                         </p>
                                                     )}
                                                 </button>
                                                 <button
                                                     onClick={() => handleDeleteTemplate(t.id)}
-                                                    className="p-1.5 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 shrink-0 ml-2"
+                                                    className="p-1.5 text-muted-foreground/50 hover:text-red-500 transition-colors opacity-0 group-hover:opacity-100 shrink-0 ml-2"
                                                     title="Excluir template"
                                                 >
                                                     <Trash2 size={12} />
@@ -730,13 +730,13 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             onChange={(e) => setMessage(e.target.value)}
                             rows={8}
                         />
-                        <p className="text-[10px] text-gray-500 flex items-center gap-1 mt-1 italic">
+                        <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1 italic">
                             <Info size={12} /> Use {"{nome}"} ou {"{primeiro_nome}"} para personalizar.
                         </p>
                     </div>
 
                     <div className="space-y-3">
-                        <label className="text-sm font-bold text-gray-800 ml-1">Anexar Mídia ou Documento</label>
+                        <label className="text-sm font-bold text-foreground ml-1">Anexar Mídia ou Documento</label>
                         <div className="flex flex-wrap gap-2">
                             <input 
                                 type="file" 
@@ -748,14 +748,14 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             {media ? (
                                 <div className="relative group w-full">
                                     {media.type === 'image' ? (
-                                        <div className="relative max-h-[180px] rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-gray-100 flex items-center justify-center">
+                                        <div className="relative max-h-[180px] rounded-2xl overflow-hidden border border-border/40 shadow-sm bg-foreground/5 flex items-center justify-center">
                                             <img src={media.url} alt="Preview" className="max-h-[180px] w-auto object-contain" />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <p className="text-white text-xs font-bold">{media.name}</p>
                                             </div>
                                         </div>
                                     ) : media.type === 'video' ? (
-                                        <div className="relative max-h-[180px] rounded-2xl overflow-hidden border border-gray-200 shadow-sm bg-black flex items-center justify-center">
+                                        <div className="relative max-h-[180px] rounded-2xl overflow-hidden border border-border/40 shadow-sm bg-black flex items-center justify-center">
                                             <video 
                                                 src={media.url} 
                                                 className="max-h-[180px] w-auto object-contain opacity-80"
@@ -772,13 +772,13 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-4 p-5 bg-[#404F4F]/5 rounded-2xl border-2 border-dashed border-[#404F4F]/20 w-full group-hover:bg-[#404F4F]/10 transition-colors">
-                                            <div className="w-14 h-14 rounded-xl bg-white shadow-sm flex items-center justify-center text-[#404F4F] border border-[#404F4F]/10">
+                                        <div className="flex items-center gap-4 p-5 bg-foreground/5 rounded-2xl border-2 border-dashed border-border/40 w-full group-hover:bg-foreground/10 transition-colors">
+                                            <div className="w-14 h-14 rounded-xl bg-card shadow-sm flex items-center justify-center text-foreground border border-border/40">
                                                 <FileText size={32} strokeWidth={1.5} />
                                             </div>
                                             <div className="flex-1 min-w-0">
-                                                <p className="text-sm font-bold text-[#404F4F] truncate">{media.name}</p>
-                                                <p className="text-[10px] text-gray-500 uppercase font-black tracking-widest mt-0.5">Documento • PDF/Excel</p>
+                                                <p className="text-sm font-bold text-foreground truncate">{media.name}</p>
+                                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">Documento • PDF/Excel</p>
                                             </div>
                                         </div>
                                     )}
@@ -794,13 +794,13 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 <button 
                                     onClick={() => mediaInputRef.current?.click()}
                                     disabled={isMediaUploading}
-                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-gray-200 rounded-2xl hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-gray-500 hover:text-[#404F4F] group"
+                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border/40 rounded-2xl hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground group"
                                 >
                                     {isMediaUploading ? (
-                                        <Loader2 className="animate-spin text-[#404F4F]" size={24} />
+                                        <Loader2 className="animate-spin text-foreground" size={24} />
                                     ) : (
                                         <>
-                                            <div className="w-10 h-10 rounded-full bg-gray-100 flex items-center justify-center group-hover:bg-accent-icon/20 transition-colors">
+                                            <div className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-accent-icon/20 transition-colors">
                                                 <ImageIcon size={20} />
                                             </div>
                                             <span className="text-xs font-bold">Adicionar Foto, Vídeo ou PDF</span>
@@ -814,14 +814,14 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                 {/* Destinatários */}
                 <div className="space-y-6">
-                    <label className="text-sm font-bold text-gray-800 ml-1">Destinatários ({recipients.length})</label>
+                    <label className="text-sm font-bold text-foreground ml-1">Destinatários ({recipients.length})</label>
                     
                     {recipients.length === 0 ? (
                         <div className="space-y-4">
                             {/* Filtros */}
                             <button
                                 onClick={() => setShowFilters(!showFilters)}
-                                className="flex items-center gap-2 text-xs font-bold text-[#404F4F] hover:text-accent-icon transition-colors"
+                                className="flex items-center gap-2 text-xs font-bold text-foreground hover:text-accent-icon transition-colors"
                             >
                                 <Filter size={14} />
                                 <span>Filtros de Segmentação</span>
@@ -829,14 +829,14 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             </button>
 
                             {showFilters && filterOptions && (
-                                <div className="space-y-3 p-4 bg-gray-50 rounded-xl border border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="space-y-3 p-4 bg-foreground/5 rounded-xl border border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
                                     {/* Estágios */}
                                     <div>
-                                        <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Estágio do Funil</label>
+                                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Estágio do Funil</label>
                                         <select
                                             value={selectedStages[0] || ''}
                                             onChange={e => setSelectedStages(e.target.value ? [e.target.value] : [])}
-                                            className="w-full h-9 px-3 text-xs font-bold bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40"
+                                            className="w-full h-9 px-3 text-xs font-bold bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:border-ring text-foreground"
                                         >
                                             <option value="">Todos os estágios</option>
                                             {filterOptions.stages.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
@@ -845,11 +845,11 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     {/* Origem */}
                                     {filterOptions.sources.length > 0 && (
                                         <div>
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Origem</label>
+                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Origem</label>
                                             <select
                                                 value={selectedSource}
                                                 onChange={e => { setSelectedSource(e.target.value); setSelectedCampaign('') }}
-                                                className="w-full h-9 px-3 text-xs font-bold bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40"
+                                                className="w-full h-9 px-3 text-xs font-bold bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:border-ring text-foreground"
                                             >
                                                 <option value="">Todas as origens</option>
                                                 {filterOptions.sources.map(s => (<option key={s.id} value={s.name}>{s.name}</option>))}
@@ -859,11 +859,11 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     {/* Campanha */}
                                     {selectedSource && filterOptions.campaigns.filter(c => c.source_name === selectedSource).length > 0 && (
                                         <div>
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Campanha</label>
+                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Campanha</label>
                                             <select
                                                 value={selectedCampaign}
                                                 onChange={e => setSelectedCampaign(e.target.value)}
-                                                className="w-full h-9 px-3 text-xs font-bold bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40"
+                                                className="w-full h-9 px-3 text-xs font-bold bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:border-ring text-foreground"
                                             >
                                                 <option value="">Todas</option>
                                                 {filterOptions.campaigns.filter(c => c.source_name === selectedSource).map(c => (<option key={c.id} value={c.name}>{c.name}</option>))}
@@ -873,11 +873,11 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     {/* Corretor (só admin) */}
                                     {isAdmin && filterOptions.brokers.length > 0 && (
                                         <div>
-                                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Corretor</label>
+                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Corretor</label>
                                             <select
                                                 value={selectedBroker}
                                                 onChange={e => setSelectedBroker(e.target.value)}
-                                                className="w-full h-9 px-3 text-xs font-bold bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40"
+                                                className="w-full h-9 px-3 text-xs font-bold bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:border-ring text-foreground"
                                             >
                                                 <option value="">Todos os corretores</option>
                                                 {filterOptions.brokers.map(b => (<option key={b.id} value={b.id}>{b.full_name}</option>))}
@@ -897,26 +897,26 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             <button 
                                 onClick={handleFetchSystemLeads}
                                 disabled={isSelectingLeads}
-                                className="flex flex-col items-center gap-3 p-5 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#404F4F]/20 hover:bg-gray-100 transition-all text-gray-600 group"
+                                className="flex flex-col items-center gap-3 p-5 bg-foreground/5 rounded-2xl border border-border/40 hover:border-border hover:bg-foreground/10 transition-all text-muted-foreground group"
                             >
-                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                    {isSelectingLeads ? <Loader2 className="animate-spin" size={24} /> : <Users className="text-[#404F4F]" size={24} />}
+                                <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                    {isSelectingLeads ? <Loader2 className="animate-spin" size={24} /> : <Users className="text-foreground" size={24} />}
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-xs font-bold text-[#404F4F]">Leads do Sistema</p>
+                                    <p className="text-xs font-bold text-foreground">Leads do Sistema</p>
                                     <p className="text-[10px]">{selectedStages.length > 0 || selectedSource ? 'Filtros aplicados' : 'Leads cadastrados'}</p>
                                 </div>
                             </button>
 
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex flex-col items-center gap-3 p-5 bg-gray-50 rounded-2xl border border-gray-100 hover:border-[#404F4F]/20 hover:bg-gray-100 transition-all text-gray-600 group"
+                                className="flex flex-col items-center gap-3 p-5 bg-foreground/5 rounded-2xl border border-border/40 hover:border-border hover:bg-foreground/10 transition-all text-muted-foreground group"
                             >
-                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                    <FileSpreadsheet className="text-[#404F4F]" size={24} />
+                                <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                    <FileSpreadsheet className="text-foreground" size={24} />
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-xs font-bold text-[#404F4F]">Subir Planilha</p>
+                                    <p className="text-xs font-bold text-foreground">Subir Planilha</p>
                                     <p className="text-[10px]">Excel ou CSV</p>
                                 </div>
                                 <input 
@@ -930,17 +930,17 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                             <button 
                                 onClick={() => setShowGoogleSheet(!showGoogleSheet)}
-                                className={`flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all text-gray-600 group ${
+                                className={`flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all text-muted-foreground group ${
                                     showGoogleSheet 
-                                        ? 'bg-[#404F4F]/5 border-[#404F4F]/20' 
-                                        : 'bg-gray-50 border-gray-100 hover:border-[#404F4F]/20 hover:bg-gray-100'
+                                        ? 'bg-foreground/10 border-border' 
+                                        : 'bg-foreground/5 border-border/40 hover:border-border hover:bg-foreground/10'
                                 }`}
                             >
-                                <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                                     <Globe className="text-[#0F9D58]" size={24} />
                                 </div>
                                 <div className="text-center">
-                                    <p className="text-xs font-bold text-[#404F4F]">Google Sheets</p>
+                                    <p className="text-xs font-bold text-foreground">Google Sheets</p>
                                     <p className="text-[10px]">Colar link</p>
                                 </div>
                             </button>
@@ -948,10 +948,10 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                         {/* Google Sheets URL Input */}
                         {showGoogleSheet && (
-                            <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="p-4 bg-foreground/5 rounded-xl border border-border/40 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <div className="flex items-center gap-2">
                                     <Globe size={14} className="text-[#0F9D58] shrink-0" />
-                                    <p className="text-[10px] font-bold text-gray-700">Cole o link de compartilhamento da planilha</p>
+                                    <p className="text-[10px] font-bold text-foreground">Cole o link de compartilhamento da planilha</p>
                                 </div>
                                 <div className="flex gap-2">
                                     <input
@@ -959,7 +959,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                         value={googleSheetUrl}
                                         onChange={(e) => setGoogleSheetUrl(e.target.value)}
                                         placeholder="https://docs.google.com/spreadsheets/d/..."
-                                        className="flex-1 h-10 px-3 text-xs bg-white border border-gray-200 rounded-lg focus:outline-none focus:border-[#404F4F]/40 focus:ring-2 focus:ring-ring/50"
+                                        className="flex-1 h-10 px-3 text-xs bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 text-foreground placeholder:text-muted-foreground/50"
                                         onKeyDown={(e) => e.key === 'Enter' && handleGoogleSheetImport()}
                                     />
                                     <button
@@ -967,7 +967,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                         disabled={isLoadingSheet || !googleSheetUrl.trim()}
                                         className={`h-10 px-4 text-xs font-bold rounded-lg transition-all flex items-center gap-2 shrink-0 ${
                                             isLoadingSheet || !googleSheetUrl.trim()
-                                                ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                                                ? 'bg-muted text-muted-foreground cursor-not-allowed'
                                                 : 'bg-[#0F9D58] text-white hover:bg-[#0D8C4D]'
                                         }`}
                                     >
@@ -979,7 +979,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                         {isLoadingSheet ? 'Importando...' : 'Importar'}
                                     </button>
                                 </div>
-                                <p className="text-[10px] text-gray-400 italic flex items-center gap-1">
+                                <p className="text-[10px] text-muted-foreground italic flex items-center gap-1">
                                     <Info size={10} />
                                     A planilha deve estar compartilhada como "Qualquer pessoa com o link"
                                 </p>
@@ -989,7 +989,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                     ) : (
                         <div className="space-y-4">
                             <div className="flex items-center justify-between">
-                                <span className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Lista de Envio</span>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Lista de Envio</span>
                                 <button 
                                     onClick={() => { setRecipients([]); setSourceType(null); setImportStats(null); setShowDuplicates(false); setShowInvalids(false); }}
                                     className="text-[10px] font-bold text-red-500 hover:underline flex items-center gap-1"
@@ -1026,7 +1026,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                         </button>
                                     )}
                                     {isLinking && (
-                                        <span className="px-2.5 py-1 rounded-lg bg-gray-50 text-gray-500 border border-gray-100 flex items-center gap-1">
+                                        <span className="px-2.5 py-1 rounded-lg bg-foreground/5 text-muted-foreground border border-border/40 flex items-center gap-1">
                                             <Loader2 className="animate-spin" size={10} /> Vinculando...
                                         </span>
                                     )}
@@ -1079,18 +1079,18 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     <div key={i} className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${
                                         r.isInvalid 
                                             ? 'bg-red-50/50 border-red-100' 
-                                            : 'bg-gray-50 border-gray-100'
+                                            : 'bg-foreground/5 border-border/40'
                                     }`}>
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-1.5">
-                                                <p className={`text-xs font-bold truncate ${r.isInvalid ? 'text-red-500' : 'text-[#404F4F]'}`}>{r.name}</p>
+                                                <p className={`text-xs font-bold truncate ${r.isInvalid ? 'text-red-500' : 'text-foreground'}`}>{r.name}</p>
                                                 {r.lead_id && (
                                                     <span title="Vinculado ao CRM">
                                                         <Link size={10} className="text-blue-500 shrink-0" />
                                                     </span>
                                                 )}
                                             </div>
-                                            <p className={`text-[10px] ${r.isInvalid ? 'text-red-400' : 'text-gray-500'}`}>{formatPhone(r.phone)}</p>
+                                            <p className={`text-[10px] ${r.isInvalid ? 'text-red-400' : 'text-muted-foreground'}`}>{formatPhone(r.phone)}</p>
                                         </div>
                                         <div className={`w-2 h-2 rounded-full shrink-0 ${
                                             r.isInvalid ? 'bg-red-400' : r.lead_id ? 'bg-blue-400' : 'bg-yellow-400'
@@ -1101,14 +1101,14 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         </div>
                     )}
 
-                    <div className="bg-blue-50/50 p-4 rounded-xl border border-blue-100 flex gap-3">
-                        <HelpCircle className="text-blue-500 shrink-0" size={18} />
+                    <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 flex gap-3">
+                        <HelpCircle className="text-blue-400 shrink-0" size={18} />
                         <div className="space-y-1">
-                            <p className="text-xs font-bold text-blue-900">Como funciona o disparo?</p>
-                            <p className="text-[10px] text-blue-700 leading-relaxed text-pretty">
+                            <p className="text-xs font-bold text-blue-400">Como funciona o disparo?</p>
+                            <p className="text-[10px] text-blue-400/80 leading-relaxed text-pretty">
                                 O sistema enviará as mensagens uma por uma, com um intervalo aleatório entre 1.5s e 3s para simular comportamento humano e reduzir o risco de bloqueio. 
                                 <br/><br/>
-                                <strong className="text-blue-900">Importante:</strong> Mantenha esta aba aberta até o fim do processo.
+                                <strong className="text-blue-400">Importante:</strong> Mantenha esta aba aberta até o fim do processo.
                             </p>
                         </div>
                     </div>
@@ -1116,17 +1116,17 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             </div>
 
             {/* Ações e Progresso */}
-            <div className="pt-6 border-t border-gray-100 flex flex-col gap-4">
+            <div className="pt-6 border-t border-border/40 flex flex-col gap-4">
                 {isSending && (
                     <div className="space-y-3">
-                        <div className="flex items-center justify-between text-xs font-bold text-[#404F4F]">
+                        <div className="flex items-center justify-between text-xs font-bold text-foreground">
                             <div className="flex items-center gap-2">
                                 <Loader2 className="animate-spin text-accent-icon" size={14} />
                                 <span>Enviando mensagens ({progress.current}/{progress.total})</span>
                             </div>
                             <span>{Math.round((progress.current / progress.total) * 100)}%</span>
                         </div>
-                        <div className="h-2 w-full bg-gray-100 rounded-full overflow-hidden">
+                        <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                             <div 
                                 className="h-full bg-accent-icon transition-all duration-500"
                                 style={{ width: `${(progress.current / progress.total) * 100}%` }}
@@ -1140,19 +1140,19 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                 )}
 
                 {isFinished && !isSending && (
-                    <div className="p-4 bg-gray-50 rounded-xl border border-gray-100 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
+                    <div className="p-4 bg-foreground/5 rounded-xl border border-border/40 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                                 <CheckCircle2 size={20} />
                             </div>
                             <div>
-                                <p className="text-xs font-bold text-[#404F4F]">Disparo Finalizado</p>
-                                <p className="text-[10px] text-gray-500">{results.success} enviados, {results.error} falhas.</p>
+                                <p className="text-xs font-bold text-foreground">Disparo Finalizado</p>
+                                <p className="text-[10px] text-muted-foreground">{results.success} enviados, {results.error} falhas.</p>
                             </div>
                         </div>
                         <button 
                             onClick={() => setIsFinished(false)}
-                            className="text-[10px] font-bold text-[#404F4F] hover:underline"
+                            className="text-[10px] font-bold text-foreground hover:underline"
                         >
                             Fechar Resumo
                         </button>
@@ -1163,7 +1163,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                     {isSending ? (
                         <button 
                             onClick={handleStop}
-                            className="w-full h-12 text-sm font-bold bg-white border border-red-200 text-red-500 hover:bg-red-50 transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2"
+                            className="w-full h-12 text-sm font-bold bg-card border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2"
                         >
                             <X size={20} />
                             Interromper Disparo
@@ -1172,7 +1172,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         <button 
                             onClick={handleSend}
                             disabled={isSending || recipients.length === 0 || (!message && !media)}
-                            className={`w-full h-12 text-sm font-bold bg-[#FFE600] border-none text-black hover:bg-[#F2DB00] transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2 ${(recipients.length === 0 || (!message && !media)) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                            className={`w-full h-12 text-sm font-bold bg-secondary border-none text-secondary-foreground hover:bg-secondary/90 transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2 ${(recipients.length === 0 || (!message && !media)) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
                         >
                             <Send size={20} />
                             Iniciar Disparo para {recipients.length} Contatos
@@ -1183,11 +1183,11 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             </div>
 
             {/* Histórico de Campanhas */}
-            <div className="pt-4 border-t border-gray-100">
+            <div className="pt-4 border-t border-border/40">
                 <div className="flex items-center justify-between">
                     <button
                         onClick={handleLoadHistory}
-                        className="flex items-center gap-2 text-sm font-bold text-gray-800 hover:text-[#404F4F] transition-colors"
+                        className="flex items-center gap-2 text-sm font-bold text-foreground hover:text-foreground/80 transition-colors"
                     >
                         <span>Histórico de Disparos</span>
                         {showHistory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
@@ -1199,13 +1199,13 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     <span className="text-[10px] text-red-500 font-bold">Apagar tudo?</span>
                                     <button
                                         onClick={handleDeleteAllCampaigns}
-                                        className="text-[10px] font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-50 transition-colors"
+                                        className="text-[10px] font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
                                     >
                                         Sim
                                     </button>
                                     <button
                                         onClick={() => setConfirmDeleteAll(false)}
-                                        className="text-[10px] font-bold text-gray-500 hover:text-gray-700 px-2 py-1 rounded-lg hover:bg-gray-50 transition-colors"
+                                        className="text-[10px] font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-foreground/5 transition-colors"
                                     >
                                         Não
                                     </button>
@@ -1213,7 +1213,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             ) : (
                                 <button
                                     onClick={() => setConfirmDeleteAll(true)}
-                                    className="flex items-center gap-1 text-[10px] font-bold text-gray-400 hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-50"
+                                    className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10"
                                 >
                                     <Trash2 size={10} />
                                     Limpar Tudo
@@ -1225,16 +1225,16 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                 {showHistory && (
                     <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
                         {isLoadingHistory ? (
-                            <div className="flex items-center justify-center py-8"><Loader2 className="animate-spin text-gray-400" size={20} /></div>
+                            <div className="flex items-center justify-center py-8"><Loader2 className="animate-spin text-muted-foreground" size={20} /></div>
                         ) : campaignHistory.length === 0 ? (
-                            <p className="text-xs text-gray-400 text-center py-6">Nenhum disparo realizado ainda.</p>
+                            <p className="text-xs text-muted-foreground text-center py-6">Nenhum disparo realizado ainda.</p>
                         ) : (
                             campaignHistory.map(c => (
                                 <div key={c.id} className="space-y-0">
                                     <button
                                         onClick={() => c.total_errors > 0 ? handleExpandCampaign(c.id) : null}
-                                        className={`w-full flex items-center justify-between p-3 bg-gray-50 rounded-xl border border-gray-100 text-left transition-colors group/card ${
-                                            c.total_errors > 0 ? 'hover:bg-gray-100 cursor-pointer' : 'cursor-default'
+                                        className={`w-full flex items-center justify-between p-3 bg-foreground/5 rounded-xl border border-border/40 text-left transition-colors group/card ${
+                                            c.total_errors > 0 ? 'hover:bg-foreground/10 cursor-pointer' : 'cursor-default'
                                         } ${expandedCampaignId === c.id ? 'rounded-b-none border-b-0' : ''}`}
                                     >
                                         <div className="min-w-0 flex-1">
@@ -1242,27 +1242,27 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                                 {c.status === 'completed' && <CheckCircle2 size={12} className="text-green-500 shrink-0" />}
                                                 {c.status === 'cancelled' && <Ban size={12} className="text-red-500 shrink-0" />}
                                                 {c.status === 'sending' && <Loader2 size={12} className="animate-spin text-amber-500 shrink-0" />}
-                                                <p className="text-xs font-bold text-[#404F4F] truncate">{c.title || (c.message ? c.message.substring(0, 50) + (c.message.length > 50 ? '...' : '') : 'Somente mídia')}</p>
+                                                <p className="text-xs font-bold text-foreground truncate">{c.title || (c.message ? c.message.substring(0, 50) + (c.message.length > 50 ? '...' : '') : 'Somente mídia')}</p>
                                             </div>
-                                            <div className="flex items-center gap-3 text-[10px] text-gray-500">
+                                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
                                                 <span className="flex items-center gap-1"><Clock size={10} />{new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                                                 <span className="text-green-600 font-bold">{c.total_success} ✓</span>
                                                 <span className="text-red-500 font-bold">{c.total_errors} ✗</span>
-                                                {c.profiles && <span className="text-gray-400">por {c.profiles.full_name}</span>}
+                                                {c.profiles && <span className="text-muted-foreground/60">por {c.profiles.full_name}</span>}
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0 ml-3">
                                             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
-                                                c.status === 'completed' ? 'bg-green-50 text-green-600' : c.status === 'cancelled' ? 'bg-red-50 text-red-500' : 'bg-amber-50 text-amber-600'
+                                                c.status === 'completed' ? 'bg-green-600 text-white' : c.status === 'cancelled' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
                                             }`}>
                                                 {c.status === 'completed' ? 'Concluído' : c.status === 'cancelled' ? 'Cancelado' : 'Enviando'}
                                             </span>
                                             {c.total_errors > 0 && (
-                                                expandedCampaignId === c.id ? <ChevronUp size={14} className="text-gray-400" /> : <ChevronDown size={14} className="text-gray-400" />
+                                                expandedCampaignId === c.id ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />
                                             )}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleDeleteCampaign(c.id); }}
-                                                className="p-1.5 text-gray-300 hover:text-red-500 transition-colors opacity-0 group-hover/card:opacity-100"
+                                                className="p-1.5 text-muted-foreground/50 hover:text-red-500 transition-colors opacity-0 group-hover/card:opacity-100"
                                                 title="Excluir campanha"
                                             >
                                                 <Trash2 size={12} />
@@ -1272,22 +1272,22 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                                     {/* Detalhes expandidos — destinatários com falha */}
                                     {expandedCampaignId === c.id && (
-                                        <div className="p-3 bg-red-50/50 rounded-b-xl border border-t-0 border-gray-100 animate-in fade-in slide-in-from-top-2 duration-200">
+                                        <div className="p-3 bg-red-500/10 rounded-b-xl border border-t-0 border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
                                             {isLoadingRecipients ? (
-                                                <div className="flex items-center justify-center py-4"><Loader2 className="animate-spin text-gray-400" size={16} /></div>
+                                                <div className="flex items-center justify-center py-4"><Loader2 className="animate-spin text-muted-foreground" size={16} /></div>
                                             ) : campaignRecipients.length === 0 ? (
-                                                <p className="text-xs text-gray-400 text-center py-3">Sem detalhes de falha registrados para esta campanha.</p>
+                                                <p className="text-xs text-muted-foreground text-center py-3">Sem detalhes de falha registrados para esta campanha.</p>
                                             ) : (
                                                 <div className="space-y-1.5">
                                                     <p className="text-[10px] font-bold text-red-700 uppercase tracking-wider mb-2">Falhas de Envio ({campaignRecipients.length})</p>
                                                     <div className="max-h-[200px] overflow-y-auto space-y-1 custom-scrollbar">
                                                         {campaignRecipients.map(r => (
-                                                            <div key={r.id} className="flex items-center justify-between p-2 bg-white rounded-lg border border-red-100">
+                                                            <div key={r.id} className="flex items-center justify-between p-2 bg-foreground/5 rounded-lg border border-red-500/20">
                                                                 <div className="min-w-0 flex-1">
                                                                     <div className="flex items-center gap-2">
                                                                         <AlertCircle size={10} className="text-red-500 shrink-0" />
-                                                                        <p className="text-xs font-bold text-[#404F4F] truncate">{r.recipient_name}</p>
-                                                                        <p className="text-[10px] text-gray-400">{formatPhone(r.recipient_phone)}</p>
+                                                                        <p className="text-xs font-bold text-foreground truncate">{r.recipient_name}</p>
+                                                                        <p className="text-[10px] text-muted-foreground">{formatPhone(r.recipient_phone)}</p>
                                                                     </div>
                                                                     {r.error_message && (
                                                                         <p className="text-[10px] text-red-500 mt-0.5 ml-[18px] truncate">{r.error_message}</p>
@@ -1310,21 +1310,21 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             {/* Modal de Salvar Template */}
             {showSaveTemplate && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
-                        <div className="px-6 py-5 border-b border-gray-100">
+                    <div className="bg-card rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+                        <div className="px-6 py-5 border-b border-border/40">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
                                     <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
                                         <Save className="text-green-600" size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-black text-[#404F4F]">Salvar Template</h3>
-                                        <p className="text-[10px] text-gray-500">Reutilize em disparos futuros</p>
+                                        <h3 className="text-sm font-black text-foreground">Salvar Template</h3>
+                                        <p className="text-[10px] text-muted-foreground">Reutilize em disparos futuros</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => { setShowSaveTemplate(false); setTemplateName(''); }}
-                                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors"
+                                    className="w-8 h-8 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <X size={16} />
                                 </button>
@@ -1332,28 +1332,28 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         </div>
                         <div className="px-6 py-5 space-y-4">
                             <div className="space-y-2">
-                                <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider">Nome do Template</label>
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Nome do Template</label>
                                 <input
                                     type="text"
                                     value={templateName}
                                     onChange={(e) => setTemplateName(e.target.value)}
                                     placeholder="Ex: Lançamento Padrão"
-                                    className="w-full h-10 px-3 text-sm font-medium bg-gray-50 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-gray-900 placeholder:text-gray-400"
+                                    className="w-full h-10 px-3 text-sm font-medium bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50"
                                     autoFocus
                                     onKeyDown={(e) => e.key === 'Enter' && handleSaveTemplate()}
                                 />
                             </div>
-                            <div className="p-3 bg-gray-50 rounded-lg border border-gray-100">
-                                <p className="text-[10px] text-gray-500 font-bold mb-1">Conteúdo que será salvo:</p>
-                                {message && <p className="text-[10px] text-gray-600 truncate">📝 {message.substring(0, 80)}{message.length > 80 ? '...' : ''}</p>}
-                                {media && <p className="text-[10px] text-gray-600 truncate mt-0.5">📎 {media.name}</p>}
-                                {!message && !media && <p className="text-[10px] text-gray-400 italic">Nenhum conteúdo</p>}
+                            <div className="p-3 bg-foreground/5 rounded-lg border border-border/40">
+                                <p className="text-[10px] text-muted-foreground font-bold mb-1">Conteúdo que será salvo:</p>
+                                {message && <p className="text-[10px] text-foreground/80 truncate">📝 {message.substring(0, 80)}{message.length > 80 ? '...' : ''}</p>}
+                                {media && <p className="text-[10px] text-foreground/80 truncate mt-0.5">📎 {media.name}</p>}
+                                {!message && !media && <p className="text-[10px] text-muted-foreground italic">Nenhum conteúdo</p>}
                             </div>
                         </div>
-                        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50 flex justify-end gap-2">
+                        <div className="px-6 py-4 border-t border-border/40 bg-foreground/5 flex justify-end gap-2">
                             <button
                                 onClick={() => { setShowSaveTemplate(false); setTemplateName(''); }}
-                                className="px-4 py-2 text-xs font-bold text-gray-500 hover:text-gray-700 transition-colors"
+                                className="px-4 py-2 text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
                             >
                                 Cancelar
                             </button>
@@ -1362,8 +1362,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 disabled={isSavingTemplate || !templateName.trim()}
                                 className={`px-4 py-2 text-xs font-bold rounded-lg transition-all flex items-center gap-2 ${
                                     isSavingTemplate || !templateName.trim()
-                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
-                                        : 'bg-[#404F4F] text-white hover:bg-[#2d3939]'
+                                        ? 'bg-muted text-muted-foreground cursor-not-allowed'
+                                        : 'bg-muted text-foreground hover:bg-muted/80'
                                 }`}
                             >
                                 {isSavingTemplate ? <Loader2 className="animate-spin" size={14} /> : <Save size={14} />}
@@ -1377,22 +1377,22 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             {/* Modal de Seleção de Aba da Planilha */}
             {showSheetPicker && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+                    <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                         {/* Header */}
-                        <div className="px-6 py-5 border-b border-gray-100">
+                        <div className="px-6 py-5 border-b border-border/40">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-[#404F4F]/10 flex items-center justify-center">
-                                        <FileSpreadsheet className="text-[#404F4F]" size={20} />
+                                    <div className="w-10 h-10 rounded-xl bg-foreground/10 flex items-center justify-center">
+                                        <FileSpreadsheet className="text-foreground" size={20} />
                                     </div>
                                     <div>
-                                        <h3 className="text-sm font-black text-[#404F4F]">Selecionar Aba</h3>
-                                        <p className="text-[10px] text-gray-500">Planilha com {availableSheets.length} abas detectadas</p>
+                                        <h3 className="text-sm font-black text-foreground">Selecionar Aba</h3>
+                                        <p className="text-[10px] text-muted-foreground">Planilha com {availableSheets.length} abas detectadas</p>
                                     </div>
                                 </div>
                                 <button
                                     onClick={() => { setShowSheetPicker(false); setPendingWorkbook(null); setAvailableSheets([]); setGoogleSheetTabs([]); setPendingGoogleSheetId(''); }}
-                                    className="w-8 h-8 rounded-full bg-gray-100 hover:bg-gray-200 flex items-center justify-center text-gray-500 hover:text-gray-700 transition-colors"
+                                    className="w-8 h-8 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <X size={16} />
                                 </button>
@@ -1401,30 +1401,30 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                         {/* Lista de abas */}
                         <div className="px-6 py-4 max-h-[400px] overflow-y-auto custom-scrollbar">
-                            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider mb-3">Escolha a aba para importar</p>
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Escolha a aba para importar</p>
                             <div className="space-y-2">
                                 {availableSheets.map((name, idx) => (
                                     <button
                                         key={idx}
                                         onClick={() => handleSheetSelection(name)}
-                                        className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-gray-100 bg-gray-50 hover:bg-[#404F4F]/5 hover:border-[#404F4F]/20 transition-all group text-left"
+                                        className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-border/40 bg-foreground/5 hover:bg-foreground/10 hover:border-border transition-all group text-left"
                                     >
-                                        <div className="w-8 h-8 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-[10px] font-black text-[#404F4F] group-hover:bg-[#404F4F] group-hover:text-white group-hover:border-[#404F4F] transition-all shrink-0">
+                                        <div className="w-8 h-8 rounded-lg bg-card border border-border/40 flex items-center justify-center text-[10px] font-black text-foreground group-hover:bg-muted group-hover:text-foreground group-hover:border-muted transition-all shrink-0">
                                             {idx + 1}
                                         </div>
                                         <div className="min-w-0 flex-1">
-                                            <p className="text-xs font-bold text-[#404F4F] truncate">{name}</p>
-                                            <p className="text-[10px] text-gray-400">Aba {idx + 1} de {availableSheets.length}</p>
+                                            <p className="text-xs font-bold text-foreground truncate">{name}</p>
+                                            <p className="text-[10px] text-muted-foreground">Aba {idx + 1} de {availableSheets.length}</p>
                                         </div>
-                                        <ChevronDown size={14} className="text-gray-300 group-hover:text-[#404F4F] -rotate-90 transition-colors shrink-0" />
+                                        <ChevronDown size={14} className="text-muted-foreground/50 group-hover:text-foreground -rotate-90 transition-colors shrink-0" />
                                     </button>
                                 ))}
                             </div>
                         </div>
 
                         {/* Footer */}
-                        <div className="px-6 py-4 border-t border-gray-100 bg-gray-50/50">
-                            <p className="text-[10px] text-gray-400 italic flex items-center gap-1">
+                        <div className="px-6 py-4 border-t border-border/40 bg-foreground/5">
+                            <p className="text-[10px] text-muted-foreground italic flex items-center gap-1">
                                 <Info size={10} />
                                 Clique na aba desejada para importar os contatos
                             </p>

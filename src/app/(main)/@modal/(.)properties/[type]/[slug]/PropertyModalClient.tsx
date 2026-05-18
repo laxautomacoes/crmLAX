@@ -1,6 +1,7 @@
 'use client';
 
 import { useRouter } from 'next/navigation';
+import { useRef } from 'react';
 import { PropertyDetailsModal } from '@/components/dashboard/properties/PropertyDetailsModal';
 
 interface PropertyModalClientProps {
@@ -19,11 +20,20 @@ export function PropertyModalClient({
     tenantId 
 }: PropertyModalClientProps) {
     const router = useRouter();
+    const hasHistory = useRef(typeof window !== 'undefined' && window.history.length > 1);
+
+    const handleClose = () => {
+        if (hasHistory.current) {
+            router.back();
+        } else {
+            router.push('/properties');
+        }
+    };
 
     return (
         <PropertyDetailsModal 
             isOpen={true} 
-            onClose={() => router.back()} 
+            onClose={handleClose} 
             prop={prop}
             userRole={userRole}
             hasAIAccess={hasAIAccess}

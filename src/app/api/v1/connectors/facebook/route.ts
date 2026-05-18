@@ -38,20 +38,31 @@ export async function POST(req: NextRequest) {
 
         console.log('Facebook Lead ID Received:', leadgen_id);
 
-        // 2. Buscar o Access Token do Tenant no banco
+        // 2. Buscar o Access Token no banco (agora cada usuário tem o seu)
         const { createAdminClient } = await import('@/lib/supabase/admin');
         const supabase = createAdminClient();
         
-        const { data: integration } = await supabase
+        const { data: integrations } = await supabase
             .from('integrations')
-            .select('credentials, status')
+            .select('credentials, status, profile_id')
             .eq('tenant_id', tenantId)
-            .eq('provider', 'facebook & instagram ads') // Usando o título do card como chave
-            .maybeSingle();
+            .eq('provider', 'facebook & instagram ads')
+            .eq('status', 'active');
 
-        if (integration?.status !== 'active') {
+        if (!integrations || integrations.length === 0) {
             console.warn('Facebook Integration is disabled for tenant:', tenantId);
             return NextResponse.json({ error: 'Integration disabled' }, { status: 403 });
+        }
+
+        // Tentar encontrar a integração pelo page_id (se o webhook enviar info da página)
+        const pageId = entry?.id ? String(entry.id) : null;
+        let integration = pageId 
+            ? integrations.find((i: any) => String(i.credentials?.page_id) === pageId) 
+            : null;
+        
+        // Fallback: usar a primeira integração ativa
+        if (!integration) {
+            integration = integrations[0];
         }
 
         const accessToken = (integration?.credentials as any)?.access_token;

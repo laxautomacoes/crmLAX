@@ -87,6 +87,9 @@ export async function getClients(tenantId: string, includeArchived = false) {
         query = query.eq('is_archived', false)
     }
 
+    // Excluir contatos que são apenas proprietários de imóvel (não são clientes)
+    query = query.eq('is_owner_only', false)
+
     const { data: contacts, error } = await query
 
     if (error) {

@@ -6,7 +6,7 @@ import { Sparkles, Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Ut
     PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, 
     Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info, Send,
     ChevronLeft, ChevronRight, Maximize2, Map as MapIcon, DollarSign, Trees,
-    Instagram
+    Instagram, Building2, Layers
 } from 'lucide-react';
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
@@ -345,18 +345,101 @@ export function PropertyDetailsContent({
                                             Informações Gerais
                                         </h4>
                                         <div className="flex flex-col gap-0 divide-y divide-border/30">
-                                            <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
+                                            {!details.is_empreendimento && (
+                                                <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
+                                            )}
                                             <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
                                             <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
                                             <InfoRow icon={<User size={14} />} label="Corretor" value={prop.corretor_nome || details.corretor_nome || 'Não informado'} />
-                                            <InfoRow icon={<BedDouble size={14} />} label="Dormitórios" value={`${details.dormitorios || details.quartos || 0} ${Number(details.suites) > 0 ? `(${details.suites} Suítes)` : ''}`} />
-                                            <InfoRow icon={<Bath size={14} />} label="Banheiros" value={details.banheiros || 0} />
-                                            <InfoRow icon={<Car size={14} />} label="Vagas" value={`${details.vagas || 0} ${details.vagas_numeracao ? `(${details.vagas_numeracao})` : ''}`} />
-                                            <InfoRow icon={<Maximize2 size={14} />} label="Área Privativa" value={`${details.area_privativa || 0}m²`} />
-                                            <InfoRow icon={<Maximize2 size={14} />} label="Área Total" value={`${details.area_total || 0}m²`} />
-                                            <InfoRow icon={<Home size={14} />} label="Torre/Bloco" value={details.torre_bloco || 'Não informado'} />
+                                            {!details.is_empreendimento && (
+                                                <>
+                                                    <InfoRow icon={<BedDouble size={14} />} label="Dormitórios" value={`${details.dormitorios || details.quartos || 0} ${Number(details.suites) > 0 ? `(${details.suites} Suítes)` : ''}`} />
+                                                    {details.obs_dormitorios && (
+                                                        <InfoRow icon={<BedDouble size={14} />} label="Obs. Dormitórios" value={details.obs_dormitorios} />
+                                                    )}
+                                                    <InfoRow icon={<Bath size={14} />} label="Banheiros" value={details.banheiros || 0} />
+                                                    <InfoRow icon={<Car size={14} />} label="Vagas" value={`${details.vagas || 0} ${details.vagas_numeracao ? `(${details.vagas_numeracao})` : ''}`} />
+                                                    <InfoRow icon={<Maximize2 size={14} />} label="Área Privativa" value={`${details.area_privativa || 0}m²`} />
+                                                    <InfoRow icon={<Maximize2 size={14} />} label="Área Total" value={`${details.area_total || 0}m²`} />
+                                                    <InfoRow icon={<Home size={14} />} label="Torre/Bloco" value={details.torre_bloco || 'Não informado'} />
+                                                </>
+                                            )}
+                                            {details.is_empreendimento && details.empreendimento?.construtora && (
+                                                <InfoRow icon={<Building2 size={14} />} label="Construtora" value={details.empreendimento.construtora} />
+                                            )}
+                                            {details.is_empreendimento && details.empreendimento?.previsao_entrega && (
+                                                <InfoRow icon={<Calendar size={14} />} label="Previsão Entrega" value={details.empreendimento.previsao_entrega} />
+                                            )}
                                         </div>
                                     </div>
+
+                                    {/* Torres e Tipologias (Empreendimento) */}
+                                    {details.is_empreendimento && details.empreendimento?.torres?.length > 0 && (
+                                        <div className="space-y-4">
+                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                                <Building2 size={14} className="text-foreground" />
+                                                Torres e Tipologias
+                                            </h4>
+                                            <div className="space-y-4">
+                                                {details.empreendimento.torres.map((torre: any, torreIdx: number) => (
+                                                    <div key={torreIdx} className="rounded-xl border border-border/50 overflow-hidden">
+                                                        <div className="flex items-center gap-2 px-4 py-3 bg-foreground/5 border-b border-border/30">
+                                                            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-secondary text-secondary-foreground font-black text-xs">
+                                                                {torreIdx + 1}
+                                                            </div>
+                                                            <span className="text-sm font-black text-foreground">{torre.nome}</span>
+                                                        </div>
+                                                        <div className="p-4 space-y-3">
+                                                            {torre.tipologias?.map((tip: any, tipIdx: number) => (
+                                                                <div key={tipIdx} className="flex flex-wrap items-center gap-x-6 gap-y-2 p-3 rounded-xl bg-muted/30 border border-border/30">
+                                                                    <div className="flex items-center gap-1.5">
+                                                                        <Layers size={12} className="text-muted-foreground" />
+                                                                        <span className="text-xs font-bold text-foreground uppercase">
+                                                                            {translatePropertyType(tip.tipo)}
+                                                                        </span>
+                                                                    </div>
+                                                                    {tip.dormitorios && (
+                                                                        <div className="flex items-center gap-1 text-xs text-foreground">
+                                                                            <BedDouble size={12} className="text-muted-foreground" />
+                                                                            <span className="font-bold">{tip.dormitorios}</span>
+                                                                            <span className="text-muted-foreground">dorm</span>
+                                                                            {Number(tip.suites) > 0 && (
+                                                                                <span className="text-muted-foreground">({tip.suites} suítes)</span>
+                                                                            )}
+                                                                        </div>
+                                                                    )}
+                                                                    {tip.area_privativa && (
+                                                                        <div className="flex items-center gap-1 text-xs text-foreground">
+                                                                            <Maximize2 size={12} className="text-muted-foreground" />
+                                                                            <span className="font-bold">{tip.area_privativa}m²</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {tip.vagas && (
+                                                                        <div className="flex items-center gap-1 text-xs text-foreground">
+                                                                            <Car size={12} className="text-muted-foreground" />
+                                                                            <span className="font-bold">{tip.vagas}</span>
+                                                                            <span className="text-muted-foreground">vagas</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {tip.preco_a_partir && (
+                                                                        <div className="flex items-center gap-1 text-xs text-foreground">
+                                                                            <DollarSign size={12} className="text-muted-foreground" />
+                                                                            <span className="font-bold">R$ {Number(tip.preco_a_partir).toLocaleString('pt-BR')}</span>
+                                                                        </div>
+                                                                    )}
+                                                                    {tip.unidades_por_andar && (
+                                                                        <span className="text-[10px] text-muted-foreground">
+                                                                            {tip.unidades_por_andar} un/andar
+                                                                        </span>
+                                                                    )}
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    )}
 
                                     {/* Amenities */}
                                     {amenities.length > 0 && (

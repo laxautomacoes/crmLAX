@@ -32,27 +32,31 @@ export async function setupWhatsAppInstance() {
 
     if (existing) return { error: 'Você já possui uma instância ativa.' };
 
-    // Buscar tenant para usar o slug como nome da instância
+    // Buscar profile do usuário para usar o nome como identificador da instância
     const { data: profile } = await supabase
         .from('profiles')
-        .select('tenant_id')
+        .select('tenant_id, full_name')
         .eq('id', user.id)
         .single();
 
     let instanceName = 'instance';
     let tenantSlug: string | null = null;
+
+    // Usar o nome do usuário logado para gerar o nome da instância
+    // Cada usuário terá sua própria instância com nome único
+    if (profile?.full_name) {
+        instanceName = profile.full_name;
+    }
+
     if (profile?.tenant_id) {
         const { data: tenant } = await supabase
             .from('tenants')
-            .select('slug, name')
+            .select('slug')
             .eq('id', profile.tenant_id)
             .single();
 
         if (tenant?.slug) {
-            instanceName = tenant.slug;
             tenantSlug = tenant.slug;
-        } else if (tenant?.name) {
-            instanceName = tenant.name;
         }
     }
 

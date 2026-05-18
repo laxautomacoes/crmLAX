@@ -65,10 +65,10 @@ async function handleMetaLead(payload: any, supabase: any) {
         const leadgenId = change.value.leadgen_id;
         console.log(`[Webhook] Lead Ads detectado. Page: ${pageId}, Lead: ${leadgenId}`);
 
-        // A. Buscar integrações ativas
+        // A. Buscar integrações ativas (agora pode ter múltiplas por tenant, uma por usuário)
         const { data: integrations, error: intError } = await supabase
           .from('integrations')
-          .select('*')
+          .select('*, profile_id')
           .eq('provider', 'facebook & instagram ads')
           .eq('status', 'active');
 

@@ -49,18 +49,18 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
             <PageHeader title="Dashboard">
                 <div className="flex flex-row items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
-                        onClick={() => setIsLeadModalOpen(true)}
-                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none"
-                    >
-                        <Plus size={18} />
-                        Novo Lead
-                    </button>
-                    <button
                         onClick={() => setIsFilterOpen(true)}
                         className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium whitespace-nowrap flex-1 md:flex-none"
                     >
                         <Filter size={18} />
                         Filtrar
+                    </button>
+                    <button
+                        onClick={() => setIsLeadModalOpen(true)}
+                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none"
+                    >
+                        <Plus size={18} />
+                        Novo Lead
                     </button>
                 </div>
             </PageHeader>

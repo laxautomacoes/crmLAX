@@ -750,6 +750,7 @@ export async function getBulkTemplates(tenantId: string) {
         .from('bulk_templates')
         .select('*')
         .eq('tenant_id', tenantId)
+        .eq('profile_id', user.id)
         .order('created_at', { ascending: false })
         .limit(50)
 
@@ -780,6 +781,7 @@ export async function deleteBulkTemplate(templateId: string) {
         .delete()
         .eq('id', templateId)
         .eq('tenant_id', profile.tenant_id)
+        .eq('profile_id', user.id)
 
     if (error) {
         console.error('Error deleting bulk template:', error)

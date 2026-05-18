@@ -2,7 +2,7 @@
 
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { Home, User } from 'lucide-react'
+import { Building2 } from 'lucide-react'
 
 interface BasicInfoFieldsProps {
     formData: any
@@ -14,24 +14,91 @@ interface BasicInfoFieldsProps {
 
 export function BasicInfoFields({ formData, setFormData, userRole, brokers = [], currentProfile }: BasicInfoFieldsProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
+    const isEmpreendimento = formData.details?.is_empreendimento || false
+
+    const toggleEmpreendimento = () => {
+        setFormData({
+            ...formData,
+            details: {
+                ...formData.details,
+                is_empreendimento: !isEmpreendimento
+            }
+        })
+    }
 
     return (
         <div className="space-y-6">
             <div className="space-y-4">
-                <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-4">
-                    Imóvel | Empreendimento
-                    <span className="ml-1 text-[10px] font-normal italic normal-case text-muted-foreground">
-                        (título do imóvel)
-                    </span>
-                </h4>
+                <div className="flex items-center justify-between">
+                    <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
+                        {isEmpreendimento ? 'Empreendimento' : 'Imóvel | Empreendimento'}
+                        <span className="ml-1 text-[10px] font-normal italic normal-case text-muted-foreground">
+                            ({isEmpreendimento ? 'nome do empreendimento' : 'título do imóvel'})
+                        </span>
+                    </h4>
+                    <button
+                        type="button"
+                        onClick={toggleEmpreendimento}
+                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border ${
+                            isEmpreendimento
+                                ? 'bg-secondary text-secondary-foreground border-secondary shadow-sm'
+                                : 'bg-transparent text-muted-foreground border-border hover:bg-muted/50'
+                        }`}
+                    >
+                        <Building2 size={14} />
+                        Empreendimento
+                    </button>
+                </div>
                 <div className="grid grid-cols-1 gap-x-3 gap-y-6">
                     <FormInput
                         value={formData.title}
                         onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder="Ex: Apartamento 3 suítes Beira Mar"
+                        placeholder={isEmpreendimento ? 'Ex: WOA SKY Towers' : 'Ex: Apartamento 3 suítes Beira Mar'}
                     />
                 </div>
             </div>
+
+            {/* Campos extras de empreendimento */}
+            {isEmpreendimento && (
+                <div className="space-y-4 p-4 rounded-xl bg-foreground/5 border border-border/40">
+                    <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                        <Building2 size={12} />
+                        Dados do Empreendimento
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-6">
+                        <FormInput
+                            label="Construtora / Incorporadora"
+                            value={formData.details.empreendimento?.construtora || ''}
+                            onChange={(e) => setFormData({
+                                ...formData,
+                                details: {
+                                    ...formData.details,
+                                    empreendimento: {
+                                        ...formData.details.empreendimento,
+                                        construtora: e.target.value
+                                    }
+                                }
+                            })}
+                            placeholder="Ex: WOA Empreendimentos"
+                        />
+                        <FormInput
+                            label="Previsão de Entrega"
+                            type="month"
+                            value={formData.details.empreendimento?.previsao_entrega || ''}
+                            onChange={(e) => setFormData({
+                                ...formData,
+                                details: {
+                                    ...formData.details,
+                                    empreendimento: {
+                                        ...formData.details.empreendimento,
+                                        previsao_entrega: e.target.value
+                                    }
+                                }
+                            })}
+                        />
+                    </div>
+                </div>
+            )}
 
             <div className="space-y-4">
                 <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-4">
@@ -60,12 +127,14 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
 
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6 pt-4">
-                <FormInput
-                    label="Preço (R$)"
-                    type="number"
-                    value={formData.price}
-                    onChange={(e) => setFormData({ ...formData, price: e.target.value })}
-                />
+                {!isEmpreendimento && (
+                    <FormInput
+                        label="Preço (R$)"
+                        type="number"
+                        value={formData.price}
+                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                    />
+                )}
 
                 <FormSelect
                     label="Tipo"
