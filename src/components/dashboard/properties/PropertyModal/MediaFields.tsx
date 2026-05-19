@@ -2,6 +2,66 @@
 
 import { useState } from 'react'
 import { Image as ImageIcon, Film, FileText, X, Upload, Loader2, Download, Check, Globe } from 'lucide-react'
+import {
+    DndContext,
+    closestCenter,
+    KeyboardSensor,
+    PointerSensor,
+    useSensor,
+    useSensors,
+    DragOverlay,
+} from '@dnd-kit/core';
+import {
+    arrayMove,
+    SortableContext,
+    sortableKeyboardCoordinates,
+    rectSortingStrategy,
+    useSortable,
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+
+interface SortableImageProps {
+    url: string;
+    index: number;
+    onRemove: (index: number) => void;
+}
+
+function SortableImage({ url, index, onRemove }: SortableImageProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: url });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1 : 0,
+    };
+
+    return (
+        <div 
+            ref={setNodeRef} 
+            style={style} 
+            className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5"
+        >
+            <div {...attributes} {...listeners} className="w-full h-full cursor-grab active:cursor-grabbing">
+                <img src={url} alt={`Imóvel ${index}`} className="w-full h-full object-cover pointer-events-none" />
+            </div>
+            <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onRemove(index); }}
+                className="absolute top-1 right-1 p-1 bg-destructive/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            >
+                <X size={12} />
+            </button>
+        </div>
+    );
+}
 
 interface MediaFieldsProps {
     formData: any
@@ -12,13 +72,49 @@ interface MediaFieldsProps {
     isImportingImages?: boolean
     onImportImages?: (urls: string[]) => Promise<void>
     onRemoveSourceImage?: (index: number) => void
+    onReorderImages?: (newImages: string[]) => void
 }
 
 export function MediaFields({ 
     formData, isUploading, handleFileUpload, removeFile,
-    sourceImages = [], isImportingImages = false, onImportImages, onRemoveSourceImage
+    sourceImages = [], isImportingImages = false, onImportImages, onRemoveSourceImage, onReorderImages
 }: MediaFieldsProps) {
     const [selectedSourceImages, setSelectedSourceImages] = useState<Set<number>>(new Set())
+    const [activeId, setActiveId] = useState<string | null>(null)
+
+    const sensors = useSensors(
+        useSensor(PointerSensor, {
+            activationConstraint: {
+                distance: 5,
+            },
+        }),
+        useSensor(KeyboardSensor, {
+            coordinateGetter: sortableKeyboardCoordinates,
+        })
+    )
+
+    const handleDragStart = (event: any) => {
+        setActiveId(event.active.id)
+    }
+
+    const handleDragEnd = (event: any) => {
+        const { active, over } = event
+        
+        if (over && active.id !== over.id) {
+            const oldIndex = formData.images.findIndex((img: string) => img === active.id)
+            const newIndex = formData.images.findIndex((img: string) => img === over.id)
+            
+            if (oldIndex !== -1 && newIndex !== -1 && onReorderImages) {
+                const newImages = arrayMove(formData.images, oldIndex, newIndex)
+                onReorderImages(newImages)
+            }
+        }
+        
+        setActiveId(null)
+    }
+
+    // Usaremos as URLs como IDs, então vamos criar um array de IDs para o SortableContext
+    const imageIds = formData.images || []
 
     const toggleSourceImage = (index: number) => {
         setSelectedSourceImages(prev => {
@@ -135,20 +231,27 @@ export function MediaFields({
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Imagens</span>
                     </div>
-                    <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-3">
-                        {formData.images.map((url: string, index: number) => (
-                            <div key={index} className="relative aspect-square rounded-lg overflow-hidden group">
-                                <img src={url} alt={`Imóvel ${index}`} className="w-full h-full object-cover" />
-                                <button
-                                    type="button"
-                                    onClick={() => removeFile(index, 'images')}
-                                    className="absolute top-1 right-1 p-1 bg-destructive/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <X size={12} />
-                                </button>
-                            </div>
-                        ))}
-                        <label className="aspect-square rounded-lg bg-foreground/5 hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all">
+                    <DndContext 
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleDragStart}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-3">
+                            <SortableContext 
+                                items={imageIds}
+                                strategy={rectSortingStrategy}
+                            >
+                                {formData.images.map((url: string, index: number) => (
+                                    <SortableImage 
+                                        key={url} 
+                                        url={url} 
+                                        index={index} 
+                                        onRemove={(i) => removeFile(i, 'images')} 
+                                    />
+                                ))}
+                            </SortableContext>
+                            <label className="aspect-square rounded-lg bg-foreground/5 hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all">
                             {isUploading === 'images' ? (
                                 <Loader2 className="w-6 h-6 text-foreground animate-spin" />
                             ) : (
@@ -167,7 +270,15 @@ export function MediaFields({
                             />
                         </label>
                     </div>
-                </div>
+                    <DragOverlay>
+                        {activeId ? (
+                            <div className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 cursor-grabbing opacity-80 shadow-2xl scale-105">
+                                <img src={activeId} alt="Arrastando" className="w-full h-full object-cover pointer-events-none" />
+                            </div>
+                        ) : null}
+                    </DragOverlay>
+                </DndContext>
+            </div>
 
                 {/* Vídeos */}
                 <div className="border-t border-border/40 pt-6 space-y-4">

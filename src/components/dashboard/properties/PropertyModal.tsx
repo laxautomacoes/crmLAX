@@ -623,6 +623,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         isImportingImages={isImportingImages}
                         onImportImages={handleImportImages}
                         onRemoveSourceImage={(index) => setSourceImages(prev => prev.filter((_, i) => i !== index))}
+                        onReorderImages={(newImages) => setFormData(prev => ({ ...prev, images: newImages }))}
                     />
                     <div className="border-t border-border/60" />
                     <OwnerFields formData={formData} setFormData={setFormData} tenantId={tenantId} />

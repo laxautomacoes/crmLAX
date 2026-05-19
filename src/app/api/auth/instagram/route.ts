@@ -20,12 +20,13 @@ export async function GET(req: NextRequest) {
     const appId = process.env.META_APP_ID;
     const redirectUri = `${process.env.NEXT_PUBLIC_ROOT_DOMAIN === 'localhost' ? 'http://localhost:3000' : `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`}/api/auth/instagram/callback`;
     
-    // Scopes necessários para o Instagram Graph API (Publishing)
+    // Scopes necessários para o Instagram Graph API (Publishing) e Facebook Pages
     const scopes = [
         'instagram_basic',
         'instagram_content_publish',
         'pages_show_list',
         'pages_read_engagement',
+        'pages_manage_posts',
         'public_profile'
     ].join(',');
 

@@ -59,6 +59,7 @@ export async function GET(req: NextRequest) {
                 credentials: {
                     access_token: pageAccessToken,
                     account_id: igAccountId,
+                    page_id: pageWithIg.id,
                     page_name: pageWithIg.name,
                     user_ll_token: longLivedToken // Guardamos o do usuário também se precisar no futuro
                 },
