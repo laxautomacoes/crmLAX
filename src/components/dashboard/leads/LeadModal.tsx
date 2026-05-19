@@ -41,7 +41,7 @@ type EditableLead = Partial<Lead> & {
     campaign?: string
     property_id?: string
     property_interest?: string
-    date?: string
+    date?: string | null
 }
 
 const LEAD_MODAL_INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira'] as const
