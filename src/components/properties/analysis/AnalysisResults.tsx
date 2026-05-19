@@ -23,9 +23,10 @@ import { motion } from 'framer-motion';
 
 interface AnalysisResultsProps {
     data: MarketAnalysisResult;
+    location?: string;
 }
 
-export function AnalysisResults({ data }: AnalysisResultsProps) {
+export function AnalysisResults({ data, location }: AnalysisResultsProps) {
     const formatCurrency = (val: number) => 
         new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
 
@@ -95,35 +96,45 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                     <div className="h-[300px] w-full">
                         <ResponsiveContainer width="100%" height="100%">
                             <BarChart data={data.chartData} margin={{ top: 10, right: 10, left: 10, bottom: 20 }}>
-                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="hsl(var(--muted-foreground) / 0.1)" />
+                                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" strokeOpacity={0.4} />
                                 <XAxis 
                                     dataKey="bedrooms" 
-                                    tick={{ fontSize: 12, fontWeight: 'bold', fill: 'hsl(var(--foreground))' }}
+                                    tick={{ fontSize: 12, fontWeight: 'bold', fill: 'var(--foreground)' }}
                                     axisLine={false}
                                     tickLine={false}
                                 />
                                 <YAxis 
                                     tickFormatter={(val) => `R$ ${val/1000}k`}
-                                    tick={{ fontSize: 11, fill: 'hsl(var(--muted-foreground))' }}
+                                    tick={{ fontSize: 11, fill: 'var(--muted-foreground)' }}
                                     axisLine={false}
                                     tickLine={false}
                                 />
                                 <Tooltip 
+                                    cursor={{ fill: 'transparent' }}
                                     contentStyle={{ 
-                                        backgroundColor: 'hsl(var(--card))', 
-                                        borderColor: 'hsl(var(--border))',
+                                        backgroundColor: 'var(--card)', 
+                                        borderColor: 'var(--border)',
                                         borderRadius: '12px',
                                         fontSize: '12px',
                                         fontWeight: 'bold',
-                                        color: 'hsl(var(--foreground))'
+                                        color: 'var(--foreground)'
                                     }}
-                                    itemStyle={{ color: 'hsl(var(--secondary))' }}
+                                    itemStyle={{ color: 'var(--secondary)' }}
                                     formatter={(value: any) => [formatCurrency(Number(value) || 0), 'Valor Médio/m²']}
                                     labelFormatter={(label) => `${label} Quarto(s)`}
                                 />
-                                <Bar dataKey="averageValue" radius={[6, 6, 0, 0]} barSize={40}>
+                                <Bar 
+                                    dataKey="averageValue" 
+                                    radius={[6, 6, 0, 0]} 
+                                    barSize={40}
+                                    activeBar={{ fillOpacity: 1, stroke: 'var(--foreground)', strokeWidth: 2 }}
+                                >
                                     {data.chartData.map((entry, index) => (
-                                        <Cell key={`cell-${index}`} fill={index % 2 === 0 ? 'hsl(var(--secondary))' : 'hsl(var(--secondary) / 0.7)'} />
+                                        <Cell 
+                                            key={`cell-${index}`} 
+                                            fill="var(--secondary)" 
+                                            fillOpacity={index % 2 === 0 ? 1 : 0.7} 
+                                        />
                                     ))}
                                 </Bar>
                             </BarChart>
@@ -143,29 +154,31 @@ export function AnalysisResults({ data }: AnalysisResultsProps) {
                         Amostras Encontradas
                     </h3>
                     <div className="flex-1 space-y-3 overflow-y-auto pr-2 custom-scrollbar">
-                        {data.properties.map((prop, i) => (
-                            <a 
-                                key={i}
-                                href={prop.url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="block p-3 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 transition-all group"
-                            >
-                                <div className="flex justify-between items-start mb-1">
-                                    <p className="text-[10px] font-black text-secondary uppercase tracking-wider">
-                                        {prop.bedrooms} Quartos • {prop.area}m²
+                        {data.properties.map((prop, i) => {
+                            return (
+                                <a 
+                                    key={i}
+                                    href={prop.url}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                    className="block p-3 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 transition-all group"
+                                >
+                                    <div className="flex justify-between items-start mb-1">
+                                        <p className="text-[10px] font-black text-secondary uppercase tracking-wider">
+                                            {prop.bedrooms} Quartos • {prop.area}m²
+                                        </p>
+                                        <ArrowUpRight size={12} className="text-muted-foreground group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-all" />
+                                    </div>
+                                    <p className="text-xs font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
+                                        {prop.title}
                                     </p>
-                                    <ArrowUpRight size={12} className="text-muted-foreground group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-all" />
-                                </div>
-                                <p className="text-xs font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
-                                    {prop.title}
-                                </p>
-                                <div className="flex items-center justify-between mt-2">
-                                    <span className="text-sm font-black text-foreground">{formatCurrency(prop.price)}</span>
-                                    <span className="text-[10px] text-muted-foreground font-bold uppercase">Fonte Internet</span>
-                                </div>
-                            </a>
-                        ))}
+                                    <div className="flex items-center justify-between mt-2">
+                                        <span className="text-sm font-black text-foreground">{formatCurrency(prop.price)}</span>
+                                        <span className="text-[10px] text-muted-foreground font-bold uppercase">VER ANÚNCIO</span>
+                                    </div>
+                                </a>
+                            );
+                        })}
                     </div>
                 </div>
             </div>

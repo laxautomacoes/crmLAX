@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { LocationFilters } from '@/components/properties/analysis/LocationFilters';
 import { AnalysisResults } from '@/components/properties/analysis/AnalysisResults';
-import { analyzeMarketValue, MarketAnalysisResult } from '@/app/_actions/market-analysis';
+import { analyzeMarketValue, MarketAnalysisResult, SearchFilters } from '@/app/_actions/market-analysis';
 import { toast } from 'sonner';
 import { Info, Search, Sparkles } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -12,15 +12,15 @@ import { PageHeader } from '@/components/shared/PageHeader';
 export default function AnalysisPage() {
     const [loading, setLoading] = useState(false);
     const [result, setResult] = useState<MarketAnalysisResult | null>(null);
-    const [lastQuery, setLastQuery] = useState<{ uf: string; city: string; neighborhood: string } | null>(null);
+    const [lastQuery, setLastQuery] = useState<SearchFilters | null>(null);
 
-    const handleSearch = async (filters: { uf: string; city: string; neighborhood: string }) => {
+    const handleSearch = async (filters: SearchFilters) => {
         setLoading(true);
         setResult(null);
         setLastQuery(filters);
 
         try {
-            const response = await analyzeMarketValue(filters.uf, filters.city, filters.neighborhood);
+            const response = await analyzeMarketValue(filters);
             
             if (response.success && response.data) {
                 setResult(response.data);
@@ -48,7 +48,7 @@ export default function AnalysisPage() {
             <LocationFilters onSearch={handleSearch} loading={loading} />
 
             {/* Content Section */}
-            <div className="min-h-[400px] relative">
+            <div className="relative">
                 <AnimatePresence mode="wait">
                     {loading ? (
                         <motion.div 
@@ -66,7 +66,7 @@ export default function AnalysisPage() {
                             </div>
                             <h3 className="text-lg font-bold text-foreground">Escaneando o Mercado...</h3>
                             <p className="text-sm text-muted-foreground mt-1 text-center max-w-xs px-4">
-                                Buscando properties em {lastQuery?.neighborhood}, {lastQuery?.city} e extraindo padrões de preços com IA.
+                                Buscando imóveis em {lastQuery?.neighborhood}, {lastQuery?.city} e extraindo padrões de preços com IA.
                             </p>
                             <div className="mt-8 flex gap-1">
                                 {[0, 1, 2].map((i) => (
@@ -80,7 +80,7 @@ export default function AnalysisPage() {
                             </div>
                         </motion.div>
                     ) : result ? (
-                        <AnalysisResults key="results" data={result} />
+                        <AnalysisResults key="results" data={result} location={`${lastQuery?.neighborhood}, ${lastQuery?.city}, ${lastQuery?.uf}`} />
                     ) : (
                         <motion.div 
                             key="empty"
@@ -104,8 +104,8 @@ export default function AnalysisPage() {
                 <div className="space-y-1">
                     <p className="text-xs text-foreground font-bold leading-relaxed">Sobre esta análise</p>
                     <p className="text-[11px] text-muted-foreground leading-relaxed">
-                        Os dados são obtidos via pesquisa web aberta em tempo real e processador por inteligência artificial (Gemini 2.0 Flash). 
-                        Os valores apresentados são estimativas baseadas em ofertas atuais e podem variar conforme o estado de conservação e acabamento de cada property.
+                        Os dados são obtidos via pesquisa web aberta em tempo real e processados por inteligência artificial. 
+                        Os valores apresentados são estimativas baseadas em ofertas atuais.
                     </p>
                 </div>
             </div>

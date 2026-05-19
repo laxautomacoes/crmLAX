@@ -5,7 +5,7 @@ import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { MapPin, Search } from 'lucide-react';
 
 interface LocationFiltersProps {
-    onSearch: (filters: { uf: string; city: string; neighborhood: string }) => void;
+    onSearch: (filters: { uf: string; city: string; neighborhood: string; propertyType?: string; bedrooms?: string; priceMin?: string; priceMax?: string; }) => void;
     loading?: boolean;
 }
 
@@ -15,6 +15,11 @@ export function LocationFilters({ onSearch, loading }: LocationFiltersProps) {
     const [selectedUF, setSelectedUF] = useState('');
     const [selectedCity, setSelectedCity] = useState('');
     const [neighborhood, setNeighborhood] = useState('');
+    
+    const [propertyType, setPropertyType] = useState('');
+    const [bedrooms, setBedrooms] = useState('');
+    const [priceMin, setPriceMin] = useState('');
+    const [priceMax, setPriceMax] = useState('');
 
     useEffect(() => {
         fetch('https://servicodados.ibge.gov.br/api/v1/localidades/estados?orderBy=nome')
@@ -43,31 +48,82 @@ export function LocationFilters({ onSearch, loading }: LocationFiltersProps) {
 
     const handleSearch = () => {
         if (!selectedUF || !selectedCity || !neighborhood) return;
-        onSearch({ uf: selectedUF, city: selectedCity, neighborhood });
+        onSearch({ 
+            uf: selectedUF, city: selectedCity, neighborhood,
+            propertyType, bedrooms, priceMin, priceMax 
+        });
     };
 
     return (
         <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-6">
             <h2 className="text-lg font-bold text-foreground">
-                Localização da Análise
+                Características e Localização
             </h2>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <FormSelect
-                    label="Estado"
+                    label="Tipo de Imóvel"
+                    value={propertyType}
+                    onChange={(e) => setPropertyType(e.target.value)}
+                    options={[
+                        { value: '', label: 'Qualquer Tipo' },
+                        { value: 'Apartamento', label: 'Apartamento' },
+                        { value: 'Casa', label: 'Casa' },
+                        { value: 'Cobertura', label: 'Cobertura' },
+                        { value: 'Sobrado', label: 'Sobrado' },
+                        { value: 'Terreno', label: 'Terreno' }
+                    ]}
+                />
+                <FormSelect
+                    label="Dormitórios"
+                    value={bedrooms}
+                    onChange={(e) => setBedrooms(e.target.value)}
+                    options={[
+                        { value: '', label: 'Qualquer' },
+                        { value: '1', label: '1 Quarto' },
+                        { value: '2', label: '2 Quartos' },
+                        { value: '3', label: '3 Quartos' },
+                        { value: '4 ou mais', label: '4+ Quartos' }
+                    ]}
+                />
+                <div className="w-full">
+                    <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1">Preço Mínimo</label>
+                    <input
+                        type="number"
+                        value={priceMin}
+                        onChange={(e) => setPriceMin(e.target.value)}
+                        placeholder="R$ Mín."
+                        className="w-full rounded-lg border border-muted-foreground/30 bg-card px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-foreground"
+                    />
+                </div>
+                <div className="w-full">
+                    <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1">Preço Máximo</label>
+                    <input
+                        type="number"
+                        value={priceMax}
+                        onChange={(e) => setPriceMax(e.target.value)}
+                        placeholder="R$ Máx."
+                        className="w-full rounded-lg border border-muted-foreground/30 bg-card px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-foreground"
+                    />
+                </div>
+            </div>
+
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end pt-4 border-t border-border">
+                <FormSelect
+                    label="Estado *"
                     value={selectedUF}
                     onChange={(e) => setSelectedUF(e.target.value)}
                     options={states}
                 />
                 <FormSelect
-                    label="Cidade"
+                    label="Cidade *"
                     value={selectedCity}
                     onChange={(e) => setSelectedCity(e.target.value)}
                     options={cities}
                     disabled={!selectedUF}
                 />
                 <div className="w-full">
-                    <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1">Bairro</label>
+                    <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1">Bairro *</label>
                     <input
                         type="text"
                         value={neighborhood}
@@ -76,22 +132,21 @@ export function LocationFilters({ onSearch, loading }: LocationFiltersProps) {
                         className="w-full rounded-lg border border-muted-foreground/30 bg-card px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-foreground"
                     />
                 </div>
+                <button
+                    onClick={handleSearch}
+                    disabled={loading || !selectedUF || !selectedCity || !neighborhood}
+                    className="w-full h-[38px] bg-secondary text-secondary-foreground font-black rounded-lg hover:bg-secondary/90 transition-all shadow-lg hover:shadow-secondary/20 flex items-center justify-center gap-2 disabled:opacity-50 uppercase text-xs tracking-wider"
+                >
+                    {loading ? (
+                        <div className="flex items-center gap-2">
+                            <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            Analisando...
+                        </div>
+                    ) : (
+                        'Consultar Valor'
+                    )}
+                </button>
             </div>
-
-            <button
-                onClick={handleSearch}
-                disabled={loading || !selectedUF || !selectedCity || !neighborhood}
-                className="w-full md:w-auto px-8 py-2.5 bg-secondary text-secondary-foreground font-black rounded-lg hover:bg-secondary/90 transition-all shadow-lg hover:shadow-secondary/20 flex items-center justify-center gap-2 disabled:opacity-50 uppercase text-xs tracking-wider"
-            >
-                {loading ? (
-                    <div className="flex items-center gap-2">
-                        <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                        Analisando...
-                    </div>
-                ) : (
-                    'Consultar Valor'
-                )}
-            </button>
         </div>
     );
 }

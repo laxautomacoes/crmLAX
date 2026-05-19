@@ -228,14 +228,26 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={editingSequence ? 'Editar Sequência' : 'Nova Sequência de Follow-Up'} size="xl">
+        <Modal 
+            isOpen={isOpen} 
+            onClose={onClose} 
+            title={editingSequence ? 'Editar Sequência' : 'Nova Sequência de Follow-Up'} 
+            size="xl"
+            extraHeaderContent={
+                <button onClick={handleSave} disabled={isSaving}
+                    className="flex items-center justify-center px-4 py-2 rounded-lg bg-[#FFE600] text-[#404F4F] text-xs font-bold hover:bg-[#FFE600]/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
+                    {isSaving && <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />}
+                    {editingSequence ? 'Salvar Alterações' : 'Criar Sequência'}
+                </button>
+            }
+        >
             {/* Input de arquivo oculto */}
             <input type="file" ref={mediaInputRef} className="hidden" onChange={handleMediaUpload}
                 accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx" />
 
             {isLoadingEdit ? (
                 <div className="flex flex-col items-center justify-center py-16">
-                    <Loader2 className="h-8 w-8 animate-spin text-[#404F4F]/30" />
+                    <Loader2 className="h-8 w-8 animate-spin text-muted-foreground/50" />
                     <p className="text-sm text-muted-foreground mt-3">Carregando...</p>
                 </div>
             ) : (
@@ -243,35 +255,35 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                     {/* Informações Básicas */}
                     <div className="space-y-4">
                         <div>
-                            <label className="block text-xs font-bold text-[#404F4F] mb-1.5">Nome da Sequência *</label>
+                            <label className="block text-xs font-bold text-foreground mb-1.5">Nome da Sequência *</label>
                             <input type="text" value={name} onChange={e => setName(e.target.value)}
                                 placeholder="Ex: Boas-vindas, Reaquecimento, Pós-visita..."
-                                className="w-full px-4 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent-icon/20 focus:border-accent-icon transition-all" />
+                                className="w-full px-4 py-2.5 rounded-lg border border-border/40 bg-foreground/5 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent-icon/20 focus:border-accent-icon transition-all" />
                         </div>
                         <div>
-                            <label className="block text-xs font-bold text-[#404F4F] mb-1.5">Descrição (opcional)</label>
+                            <label className="block text-xs font-bold text-foreground mb-1.5">Descrição (opcional)</label>
                             <input type="text" value={description} onChange={e => setDescription(e.target.value)}
                                 placeholder="Breve descrição da finalidade da sequência..."
-                                className="w-full px-4 py-2.5 rounded-xl border border-border bg-white text-sm focus:outline-none focus:ring-2 focus:ring-accent-icon/20 focus:border-accent-icon transition-all" />
+                                className="w-full px-4 py-2.5 rounded-lg border border-border/40 bg-foreground/5 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-accent-icon/20 focus:border-accent-icon transition-all" />
                         </div>
                     </div>
 
                     {/* Configurações */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div>
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Tipo de Gatilho</label>
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Tipo de Gatilho</label>
                             <select value={triggerType} onChange={e => setTriggerType(e.target.value as any)}
-                                className="w-full h-10 px-3 text-xs font-bold bg-white border border-gray-200 rounded-xl focus:outline-none focus:border-[#404F4F]/40 focus:ring-2 focus:ring-ring/50">
+                                className="w-full h-10 px-3 text-xs font-bold bg-foreground/5 border border-border/40 text-foreground rounded-lg focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50">
                                 {TRIGGER_TYPES.map(t => (<option key={t.value} value={t.value}>{t.label}</option>))}
                             </select>
                             <p className="text-[10px] text-muted-foreground mt-1">{TRIGGER_TYPES.find(t => t.value === triggerType)?.description}</p>
                         </div>
                         <div>
-                            <label className="text-[10px] font-bold text-gray-500 uppercase tracking-wider mb-1.5 block">Saída Automática</label>
-                            <label className="flex items-center gap-3 h-10 px-4 rounded-xl border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 transition-all">
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Saída Automática</label>
+                            <label className="flex items-center gap-3 h-10 px-4 rounded-lg border border-border/40 bg-foreground/5 cursor-pointer hover:bg-foreground/10 transition-all">
                                 <input type="checkbox" checked={exitOnReply} onChange={e => setExitOnReply(e.target.checked)}
-                                    className="w-4 h-4 rounded border-border text-[#404F4F] focus:ring-[#404F4F]" />
-                                <span className="text-xs font-bold text-[#404F4F]">Remover lead ao responder</span>
+                                    className="w-4 h-4 rounded border-border text-primary focus:ring-primary" />
+                                <span className="text-xs font-bold text-foreground">Remover lead ao responder</span>
                             </label>
                             <p className="text-[10px] text-muted-foreground mt-1">Lead passa para atendimento humano ao responder.</p>
                         </div>
@@ -280,8 +292,8 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                     {/* Builder de Etapas */}
                     <div className="space-y-3">
                         <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-[#404F4F] flex items-center gap-2">
-                                <MessageSquare className="h-4 w-4 text-[#404F4F]/40" />
+                            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
+                                <MessageSquare className="h-4 w-4 text-muted-foreground" />
                                 Etapas da Sequência
                             </h3>
                             <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
@@ -290,11 +302,11 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                         </div>
 
                         {/* Variáveis disponíveis */}
-                        <div className="flex flex-wrap items-center gap-1.5 bg-blue-50/50 rounded-xl px-3 py-2">
+                        <div className="flex flex-wrap items-center gap-1.5 bg-blue-500/10 rounded-lg px-3 py-2">
                             <Info className="h-3.5 w-3.5 text-blue-500 shrink-0" />
-                            <span className="text-[10px] font-bold text-blue-700 uppercase tracking-wider mr-1">Variáveis:</span>
+                            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider mr-1">Variáveis:</span>
                             {VARIABLES.map(v => (
-                                <span key={v.key} className="px-2 py-0.5 rounded-lg bg-blue-100 text-blue-700 text-[10px] font-bold" title={v.label}>{v.key}</span>
+                                <span key={v.key} className="px-2 py-0.5 rounded-md bg-blue-500/20 text-blue-400 text-[10px] font-bold" title={v.label}>{v.key}</span>
                             ))}
                         </div>
 
@@ -312,17 +324,17 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                                         </div>
                                     )}
 
-                                    <div className="bg-gray-50 rounded-2xl border border-border/50 p-4 space-y-3 hover:border-[#404F4F]/20 transition-all">
+                                    <div className="bg-foreground/5 rounded-xl border border-border/40 p-4 space-y-3 hover:border-border transition-all">
                                         {/* Header da etapa */}
                                         <div className="flex items-center justify-between">
                                             <div className="flex items-center gap-2">
-                                                <div className="w-6 h-6 rounded-lg bg-[#404F4F] text-white flex items-center justify-center text-[10px] font-black">{index + 1}</div>
+                                                <div className="w-6 h-6 rounded-md bg-foreground text-background flex items-center justify-center text-[10px] font-black">{index + 1}</div>
                                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">{getDelayPreview(step, index)}</span>
                                             </div>
                                             <div className="flex items-center gap-1">
-                                                {index > 0 && <button onClick={() => moveStep(index, 'up')} className="p-1 rounded-md text-muted-foreground hover:bg-white transition-all text-xs" title="Mover para cima">↑</button>}
-                                                {index < steps.length - 1 && <button onClick={() => moveStep(index, 'down')} className="p-1 rounded-md text-muted-foreground hover:bg-white transition-all text-xs" title="Mover para baixo">↓</button>}
-                                                <button onClick={() => removeStep(step.id)} className="p-1 rounded-md text-muted-foreground hover:text-red-600 hover:bg-red-50 transition-all" title="Remover etapa"><Trash2 className="h-3.5 w-3.5" /></button>
+                                                {index > 0 && <button onClick={() => moveStep(index, 'up')} className="p-1 rounded text-muted-foreground hover:bg-foreground/10 transition-all text-xs" title="Mover para cima">↑</button>}
+                                                {index < steps.length - 1 && <button onClick={() => moveStep(index, 'down')} className="p-1 rounded text-muted-foreground hover:bg-foreground/10 transition-all text-xs" title="Mover para baixo">↓</button>}
+                                                <button onClick={() => removeStep(step.id)} className="p-1 rounded text-muted-foreground hover:text-red-500 hover:bg-red-500/10 transition-all" title="Remover etapa"><Trash2 className="h-3.5 w-3.5" /></button>
                                             </div>
                                         </div>
 
@@ -332,9 +344,9 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                                             <span className="text-xs text-muted-foreground shrink-0">Aguardar:</span>
                                             <input type="number" min={1} value={step.delay_value}
                                                 onChange={e => updateStep(step.id, 'delay_value', Math.max(1, parseInt(e.target.value) || 1))}
-                                                className="w-16 h-9 px-2 rounded-lg border border-gray-200 bg-white text-sm text-center focus:outline-none focus:border-[#404F4F]/40 focus:ring-2 focus:ring-ring/50" />
+                                                className="w-16 h-9 px-2 rounded-md border border-border/40 bg-foreground/5 text-foreground text-sm text-center focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50" />
                                             <select value={step.delay_unit} onChange={e => updateStep(step.id, 'delay_unit', e.target.value)}
-                                                className="h-9 px-2 rounded-lg border border-gray-200 bg-white text-xs font-bold focus:outline-none focus:border-[#404F4F]/40 focus:ring-2 focus:ring-ring/50">
+                                                className="h-9 px-2 rounded-md border border-border/40 bg-foreground/5 text-foreground text-xs font-bold focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50">
                                                 {DELAY_UNITS.map(u => (<option key={u.value} value={u.value}>{u.label}</option>))}
                                             </select>
                                         </div>
@@ -342,11 +354,11 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                                         {/* Mensagem */}
                                         <div>
                                             <div className="flex items-center justify-between mb-1">
-                                                <label className="text-[10px] font-bold text-[#404F4F] uppercase tracking-wider">Mensagem</label>
+                                                <label className="text-[10px] font-bold text-foreground uppercase tracking-wider">Mensagem</label>
                                                 <div className="flex gap-1">
                                                     {VARIABLES.map(v => (
                                                         <button key={v.key} onClick={() => insertVariable(step.id, v.key)}
-                                                            className="px-1.5 py-0.5 rounded-md bg-white border border-border text-[9px] font-bold text-muted-foreground hover:text-[#404F4F] hover:border-[#404F4F]/30 transition-all"
+                                                            className="px-1.5 py-0.5 rounded bg-foreground/5 border border-border/40 text-[9px] font-bold text-muted-foreground hover:text-foreground hover:border-border transition-all"
                                                             title={`Inserir ${v.label}`}>{v.key}</button>
                                                     ))}
                                                 </div>
@@ -355,30 +367,30 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                                                 onChange={e => updateStep(step.id, 'message_template', e.target.value)}
                                                 placeholder={`Ex: Olá {primeiro_nome}, tudo bem? Passando para saber se tem alguma dúvida sobre o ${index === 0 ? 'imóvel que conversamos.' : 'nosso último contato.'}`}
                                                 rows={3}
-                                                className="w-full px-3 py-2 rounded-xl border border-border bg-white text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent-icon/20 focus:border-accent-icon transition-all" />
+                                                className="w-full px-3 py-2 rounded-lg border border-border/40 bg-foreground/5 text-foreground text-sm resize-none focus:outline-none focus:ring-2 focus:ring-accent-icon/20 focus:border-accent-icon transition-all" />
                                             <p className="text-[9px] text-muted-foreground mt-0.5 text-right">{step.message_template.length} caracteres</p>
                                         </div>
 
                                         {/* Mídia/Documento */}
                                         <div>
-                                            <label className="text-[10px] font-bold text-[#404F4F] uppercase tracking-wider mb-1.5 block">Mídia ou Documento (opcional)</label>
+                                            <label className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1.5 block">Mídia ou Documento (opcional)</label>
                                             {step.media_url ? (
                                                 <div className="relative group">
                                                     {step.media_type === 'image' ? (
-                                                        <div className="relative h-24 rounded-xl overflow-hidden border border-gray-200 shadow-sm">
+                                                        <div className="relative h-24 rounded-lg overflow-hidden border border-border/40 bg-foreground/5 shadow-sm">
                                                             <img src={step.media_url} alt="Preview" className="w-full h-full object-cover" />
                                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                                 <p className="text-white text-[10px] font-bold">{step.media_name}</p>
                                                             </div>
                                                         </div>
                                                     ) : (
-                                                        <div className="flex items-center gap-3 p-3 bg-[#404F4F]/5 rounded-xl border border-dashed border-[#404F4F]/20">
-                                                            <div className="w-10 h-10 rounded-lg bg-white shadow-sm flex items-center justify-center border border-[#404F4F]/10">
+                                                        <div className="flex items-center gap-3 p-3 bg-foreground/5 rounded-lg border border-dashed border-border/40">
+                                                            <div className="w-10 h-10 rounded-md bg-card shadow-sm flex items-center justify-center border border-border/40">
                                                                 {getMediaIcon(step.media_type)}
                                                             </div>
                                                             <div className="flex-1 min-w-0">
-                                                                <p className="text-xs font-bold text-[#404F4F] truncate">{step.media_name}</p>
-                                                                <p className="text-[9px] text-gray-500 uppercase font-black tracking-widest">{step.media_type === 'video' ? 'Vídeo' : 'Documento'}</p>
+                                                                <p className="text-xs font-bold text-foreground truncate">{step.media_name}</p>
+                                                                <p className="text-[9px] text-muted-foreground uppercase font-black tracking-widest">{step.media_type === 'video' ? 'Vídeo' : 'Documento'}</p>
                                                             </div>
                                                         </div>
                                                     )}
@@ -389,9 +401,9 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                                                 </div>
                                             ) : (
                                                 <button onClick={() => triggerMediaSelect(step.id)} disabled={uploadingStepId === step.id}
-                                                    className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-gray-200 rounded-xl hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-gray-500 hover:text-[#404F4F]">
+                                                    className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-border/40 rounded-lg hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground">
                                                     {uploadingStepId === step.id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin text-[#404F4F]" />
+                                                        <Loader2 className="h-4 w-4 animate-spin text-foreground" />
                                                     ) : (
                                                         <>
                                                             <ImageIcon className="h-4 w-4" />
@@ -407,18 +419,8 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                         </div>
 
                         <button onClick={addStep}
-                            className="w-full flex items-center justify-center gap-2 py-3 rounded-xl border-2 border-dashed border-border text-muted-foreground text-xs font-bold hover:border-[#404F4F]/30 hover:text-[#404F4F] transition-all">
+                            className="w-full flex items-center justify-center gap-2 py-3 rounded-lg border-2 border-dashed border-border/40 text-muted-foreground text-xs font-bold hover:border-border hover:text-foreground transition-all">
                             <Plus className="h-4 w-4" /> Adicionar Etapa
-                        </button>
-                    </div>
-
-                    {/* Botões */}
-                    <div className="flex items-center justify-end gap-3 pt-4 border-t border-border/30">
-                        <button onClick={onClose} className="px-4 py-2.5 rounded-xl border border-border text-sm font-bold text-muted-foreground hover:bg-gray-50 transition-all">Cancelar</button>
-                        <button onClick={handleSave} disabled={isSaving}
-                            className="flex items-center gap-2 px-6 py-2.5 rounded-xl bg-[#FFE600] text-[#404F4F] text-sm font-bold hover:bg-[#FFE600]/80 transition-all disabled:opacity-50 disabled:cursor-not-allowed">
-                            {isSaving ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />}
-                            {editingSequence ? 'Salvar Alterações' : 'Criar Sequência'}
                         </button>
                     </div>
                 </div>

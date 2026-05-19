@@ -21,11 +21,21 @@ export interface MarketAnalysisResult {
     chartData: { bedrooms: number; averageValue: number }[];
 }
 
+export interface SearchFilters {
+    uf: string;
+    city: string;
+    neighborhood: string;
+    propertyType?: string;
+    bedrooms?: string;
+    priceMin?: string;
+    priceMax?: string;
+}
+
 /**
  * Realiza uma análise do valor do metro quadrado baseada em dados atuais do mercado.
  * Utiliza o provedor de IA configurado para buscar/simular dados fidedignos da região.
  */
-export async function analyzeMarketValue(uf: string, city: string, neighborhood: string) {
+export async function analyzeMarketValue(filters: SearchFilters) {
     try {
         const supabase = await createClient();
         const { data: { user } } = await supabase.auth.getUser();
@@ -37,29 +47,83 @@ export async function analyzeMarketValue(uf: string, city: string, neighborhood:
         // Validar plano (requer recurso de IA)
         await requirePlanFeature(profile.tenant_id, 'ai');
 
-        // Prompt otimizado para extração de dados reais
-        const prompt = `Você é um analista sênior do mercado imobiliário brasileiro, com acesso em tempo real a dados de portais como ZapProperties, VivaReal, Propertyweb e OLX.
+        // Condicionais do prompt baseados nos filtros
+        const typeCondition = filters.propertyType ? `O TIPO DE IMÓVEL DEVE SER ESTRITAMENTE: ${filters.propertyType}.` : '';
+        const bedroomsCondition = filters.bedrooms ? `OS IMÓVEIS DEVEM TER ESTRITAMENTE ${filters.bedrooms} QUARTO(S).` : '';
         
-Seu objetivo é extrair uma lista de pelo menos 10 exemplos de properties residenciais à venda no bairro ${neighborhood}, em ${city} - ${uf}.
+        let priceCondition = '';
+        if (filters.priceMin || filters.priceMax) {
+            priceCondition = `OS PREÇOS DOS IMÓVEIS DEVEM ESTAR ENTRE `;
+            if (filters.priceMin) priceCondition += `NO MÍNIMO R$ ${filters.priceMin} `;
+            if (filters.priceMax) priceCondition += `E NO MÁXIMO R$ ${filters.priceMax}`;
+            priceCondition += `.`;
+        }
 
-Tente ser o mais fiel possível aos preços praticados HOJE nesse bairro específico. 
-Se for um bairro nobre (ex: Itaim Bibi, Savassi, Leblon), os preços devem refletir o alto padrão.
-Se for um bairro popular, devem refletir a realidade local.
+        const serperKey = process.env.SERPER_API_KEY;
+        if (!serperKey) throw new Error("Chave de API do Serper não configurada no servidor.");
+
+        // 1. Construir query de busca avançada (sem usar operador site: pois o plano free bloqueia)
+        const searchQuery = `vivareal comprar ${filters.propertyType || 'imóvel'} ${filters.bedrooms ? `${filters.bedrooms} quartos` : ''} ${filters.neighborhood} ${filters.city} ${filters.uf}`;
+        
+        // 2. Chamar API Serper.dev
+        const serperRes = await fetch("https://google.serper.dev/search", {
+            method: "POST",
+            headers: {
+                "X-API-KEY": serperKey,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                q: searchQuery,
+                gl: "br",
+                hl: "pt-br",
+                num: 15
+            })
+        });
+
+        if (!serperRes.ok) {
+            const errorText = await serperRes.text();
+            console.error("Serper API Error:", serperRes.status, errorText);
+            throw new Error(`Falha ao buscar dados reais do mercado (Serper API). Status: ${serperRes.status}`);
+        }
+        const serperData = await serperRes.json();
+        
+        const searchResults = serperData.organic || [];
+        if (searchResults.length === 0) {
+             throw new Error("Não encontramos anúncios reais no momento para este filtro específico.");
+        }
+
+        // 3. Montar Prompt passando os dados REAIS para a IA apenas parsear
+        const prompt = `Você é um analista de dados imobiliários e extração estruturada.
+Recebemos os seguintes resultados brutos de busca (snippets do Google) de anúncios REAIS do portal VivaReal.
+
+RESULTADOS REAIS ENCONTRADOS:
+${JSON.stringify(searchResults.map((r: any) => ({ title: r.title, link: r.link, snippet: r.snippet })), null, 2)}
+
+${typeCondition}
+${bedroomsCondition}
+${priceCondition}
+
+REGRAS ESTritas:
+1. Leia o 'title' e o 'snippet' de cada resultado e extraia: Preço total, Área útil (m²) e Quartos. 
+2. Se a string contiver "R$ 500.000", extraia o number 500000.
+3. A "url" DEVE SER EXATAMENTE a string "link" fornecida no resultado. NÃO invente URLs.
+4. Só inclua o imóvel se o preço for plausível e legível no texto.
+5. Se o resultado não bater com os filtros estritos acima (ex: é de aluguel em vez de venda, ou valor totalmente fora da faixa estipulada), ignore-o.
 
 Retorne EXATAMENTE um objeto JSON (e nada mais) com a seguinte estrutura:
 {
   "properties": [
     {
-      "price": number, // Preço total do property
+      "price": number, // Preço total do imóvel
       "area": number,  // Área em m²
-      "bedrooms": number, // Número de quartos
-      "title": "string", // Título resumido (ex: 'Apto 3 qtos Próximo ao Metro')
-      "url": "string"    // Link simulado ou real para a fonte (ex: zapproperties.com.br/...)
+      "bedrooms": number, // Número de quartos (se não tiver, use 0 ou null, mas prefira inferir do texto)
+      "title": "string", // Título resumido 
+      "url": "string"    // LINK REAL extraído
     }
   ]
 }
 
-Não adicione textos explicativos antes ou depois do JSON.`;
+NÃO adicione formatações markdown (\`\`\`json) se puder evitar. Retorne apenas o JSON limpo.`;
 
         const result = await runAI(profile.tenant_id, prompt);
         const text = result.text;

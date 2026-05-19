@@ -345,7 +345,7 @@ export default function PropertiesClient({
                         </button>
                     </div>
 
-                    {/* Linha 2 mobile: Filtrar + Novo Imóvel */}
+                    {/* Linha 2 mobile: Filtrar + Importar URL */}
                     <button
                         onClick={() => setIsFiltersOpen(true)}
                         className={`flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-2 ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest')
@@ -358,23 +358,15 @@ export default function PropertiesClient({
                     </button>
 
                     <button
-                        onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2"
-                    >
-                        <Plus size={18} />
-                        Novo Imóvel
-                    </button>
-
-                    {/* Linha 3 mobile: Importar URL + Importar PDF */}
-                    <button
                         onClick={() => setIsScrapingOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-3 bg-card border-border text-foreground hover:bg-muted"
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-2 bg-card border-border text-foreground hover:bg-muted"
                         title="Importar imóvel de qualquer site via IA"
                     >
                         <Globe size={18} />
                         Importar URL
                     </button>
 
+                    {/* Linha 3 mobile: Importar PDF + Novo Imóvel */}
                     <button
                         onClick={() => setIsImportPDFOpen(true)}
                         className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-3 bg-card border-border text-foreground hover:bg-muted"
@@ -382,6 +374,14 @@ export default function PropertiesClient({
                     >
                         <FileText size={18} />
                         Importar PDF
+                    </button>
+
+                    <button
+                        onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
+                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-3"
+                    >
+                        <Plus size={18} />
+                        Novo Imóvel
                     </button>
                 </div>
             </PageHeader>

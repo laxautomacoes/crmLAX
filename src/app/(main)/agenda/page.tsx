@@ -1,7 +1,13 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Plus } from 'lucide-react';
+import { Plus, Filter } from 'lucide-react';
+import {
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
 import { 
     setHours, 
     setMinutes, 
@@ -27,6 +33,7 @@ export default function AgendaPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [tenantId, setTenantId] = useState<string | null>(null);
     const [profileId, setProfileId] = useState<string | null>(null);
+    const [filterType, setFilterType] = useState<string>('all');
 
     // Modal state
     const [isModalOpen, setIsModalOpen] = useState(false);
@@ -163,17 +170,48 @@ export default function AgendaPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader title="Agenda">
-                <button
-                    onClick={() => handleAddEvent(new Date())}
-                    className="bg-secondary hover:opacity-90 text-secondary-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg flex items-center gap-2 transition-all transform active:scale-[0.99] shadow-sm w-fit whitespace-nowrap"
-                >
-                    <Plus size={18} />
-                    Agendar
-                </button>
+                <div className="flex items-center gap-2">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger asChild>
+                            <button className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium whitespace-nowrap flex-1 md:flex-none outline-none focus:ring-2 focus:ring-ring/50 data-[state=open]:bg-muted/50">
+                                <Filter size={18} />
+                                Filtrar
+                                {filterType !== 'all' && (
+                                    <div className="w-1.5 h-1.5 rounded-full bg-secondary ml-1" />
+                                )}
+                            </button>
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-48 p-1">
+                            {[
+                                { value: 'all', label: 'Todos os tipos' },
+                                { value: 'duty', label: 'Plantão de Venda' },
+                                { value: 'visit', label: 'Visita de Cliente' },
+                                { value: 'note', label: 'Anotação/Lembrete' },
+                                { value: 'other', label: 'Outro' }
+                            ].map((option) => (
+                                <DropdownMenuItem
+                                    key={option.value}
+                                    onClick={() => setFilterType(option.value)}
+                                    className={`cursor-pointer py-2 ${filterType === option.value ? 'bg-accent text-accent-foreground font-bold' : 'text-muted-foreground'}`}
+                                >
+                                    <div className={`w-1.5 h-1.5 rounded-full mr-1.5 ${filterType === option.value ? 'bg-secondary' : 'bg-transparent'}`} />
+                                    {option.label}
+                                </DropdownMenuItem>
+                            ))}
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+                    <button
+                        onClick={() => handleAddEvent(new Date())}
+                        className="bg-secondary hover:opacity-90 text-secondary-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg flex items-center gap-2 transition-all transform active:scale-[0.99] shadow-sm w-fit whitespace-nowrap"
+                    >
+                        <Plus size={18} />
+                        Agendar
+                    </button>
+                </div>
             </PageHeader>
 
             <CalendarGrid
-                events={events}
+                events={filterType === 'all' ? events : events.filter(e => e.event_type === filterType)}
                 onAddEvent={handleAddEvent}
                 onEditEvent={handleEditEvent}
                 onEventMove={handleEventMove}

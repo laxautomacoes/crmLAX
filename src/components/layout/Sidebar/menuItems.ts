@@ -43,7 +43,7 @@ export const menuItems = [
         roles: ['admin', 'user', 'corretor'],
         subItems: [
             { name: 'Listagem', href: '/properties' },
-            { name: 'Análise de m²', href: '/properties/analysis' },
+            { name: 'Análise Valor m²', href: '/properties/analysis' },
         ]
     },
     { 
