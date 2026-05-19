@@ -241,18 +241,18 @@ export default function LeadsPage() {
             <PageHeader title="Leads">
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
-                        onClick={() => handleOpenLeadModal()}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-1 md:order-3"
-                    >
-                        <Plus size={18} />
-                        Novo Lead
-                    </button>
-                    <button
                         onClick={() => setIsStageModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none order-2 md:order-2"
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none order-1 md:order-2"
                     >
                         <Plus size={18} />
                         Novo Estágio
+                    </button>
+                    <button
+                        onClick={() => handleOpenLeadModal()}
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2 md:order-3"
+                    >
+                        <Plus size={18} />
+                        Novo Lead
                     </button>
                     <LeadsHeader 
                         onSearch={handleSearch} 

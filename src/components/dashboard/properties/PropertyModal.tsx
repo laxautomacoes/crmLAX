@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef, useCallback } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { createClient } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
 import { AreaFields } from './PropertyModal/AreaFields'
@@ -209,6 +210,7 @@ interface EditingPropertyDetails {
         latitude?: number | null
         longitude?: number | null
     }
+    _source_images?: string[]
 }
 
 interface EditingProperty {
@@ -278,6 +280,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
 
     const [isUploading, setIsUploading] = useState<string | null>(null)
     const [isSaving, setIsSaving] = useState(false)
+    const [sourceImages, setSourceImages] = useState<string[]>([])
+    const [isImportingImages, setIsImportingImages] = useState(false)
 
     useEffect(() => {
         async function loadData() {
@@ -379,8 +383,11 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     }
                 }
             })
+            // Load source images from scraping
+            setSourceImages((editingProperty.details as any)?._source_images || [])
         } else {
             // Novo imóvel: tenta restaurar rascunho salvo
+            setSourceImages([])
             try {
                 const saved = localStorage.getItem(DRAFT_KEY)
                 if (saved) {
@@ -469,6 +476,42 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         const newFiles = [...formData.videos]
         newFiles.splice(index, 1)
         setFormData({ ...formData, videos: newFiles })
+    }
+
+    const handleImportImages = async (selectedUrls: string[]) => {
+        if (selectedUrls.length === 0) return
+        setIsImportingImages(true)
+        try {
+            const response = await fetch(`${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/download-images`, {
+                method: 'POST',
+                headers: {
+                    'Authorization': `Bearer ${process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY}`,
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ urls: selectedUrls, tenant_id: tenantId })
+            })
+            const result = await response.json()
+            if (!response.ok || !result.success) {
+                throw new Error(result.error || 'Erro ao importar imagens.')
+            }
+            if (result.uploaded.length > 0) {
+                setFormData(prev => ({
+                    ...prev,
+                    images: [...prev.images, ...result.uploaded]
+                }))
+                // Remove imported URLs from sourceImages
+                setSourceImages(prev => prev.filter(url => !selectedUrls.includes(url)))
+                toast.success(`${result.uploaded.length} imagem(ns) importada(s)!`)
+            }
+            if (result.failed_count > 0) {
+                toast.warning(`${result.failed_count} imagem(ns) não puderam ser baixadas.`)
+            }
+        } catch (error: any) {
+            console.error('Error importing images:', error)
+            toast.error(error.message || 'Erro ao importar imagens.')
+        } finally {
+            setIsImportingImages(false)
+        }
     }
 
     const handleSaveLocal = async () => {
@@ -575,7 +618,11 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         formData={formData} 
                         isUploading={isUploading} 
                         handleFileUpload={handleFileUpload} 
-                        removeFile={removeFile} 
+                        removeFile={removeFile}
+                        sourceImages={sourceImages}
+                        isImportingImages={isImportingImages}
+                        onImportImages={handleImportImages}
+                        onRemoveSourceImage={(index) => setSourceImages(prev => prev.filter((_, i) => i !== index))}
                     />
                     <div className="border-t border-border/60" />
                     <OwnerFields formData={formData} setFormData={setFormData} tenantId={tenantId} />

@@ -3,6 +3,7 @@
 import { useState, Suspense, useEffect } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
+import { MobileServiceBar } from '@/components/layout/MobileServiceBar';
 import { WelcomePopup } from '@/components/shared/WelcomePopup';
 import { createClient } from '@/lib/supabase/client';
 import { User } from '@supabase/supabase-js';
@@ -45,6 +46,7 @@ export default function DashboardLayout({
                 />
 
                 <main className="flex-1 p-4 md:p-8 overflow-y-auto w-full">
+                    <MobileServiceBar />
                     <Suspense fallback={
                         <div className="flex h-[60vh] items-center justify-center">
                             <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>

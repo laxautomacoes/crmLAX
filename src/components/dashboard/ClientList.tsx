@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare, Loader2, Calendar, LayoutGrid, List } from 'lucide-react'
+import { useState, useEffect, useRef, useMemo } from 'react'
+import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare, Loader2, Calendar, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
 import { ClientFilterModal } from './ClientFilterModal'
 import ClientCard from './ClientCard'
@@ -32,6 +32,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     const [userRole, setUserRole] = useState<string>('user')
     const [expandedId, setExpandedId] = useState<string | null>(null)
     const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+    const [sortField, setSortField] = useState<'name' | 'created_at' | null>(null)
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
     const [filters, setFilters] = useState({
         startDate: '',
@@ -245,6 +247,45 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         return matchesSearch && matchesBroker && matchesInterest && matchesContactType && matchesMaritalStatus && matchesDate
     })
 
+    const toggleSort = (field: 'name' | 'created_at') => {
+        if (sortField === field) {
+            if (sortDirection === 'asc') {
+                setSortDirection('desc')
+            } else {
+                // Terceiro clique: desativar sort
+                setSortField(null)
+                setSortDirection('asc')
+            }
+        } else {
+            setSortField(field)
+            setSortDirection('asc')
+        }
+    }
+
+    const sortedClients = useMemo(() => {
+        if (!sortField) return filteredClients
+        return [...filteredClients].sort((a, b) => {
+            if (sortField === 'name') {
+                const nameA = (a.name || '').toLowerCase()
+                const nameB = (b.name || '').toLowerCase()
+                return sortDirection === 'asc' ? nameA.localeCompare(nameB, 'pt-BR') : nameB.localeCompare(nameA, 'pt-BR')
+            }
+            if (sortField === 'created_at') {
+                const dateA = new Date(a.created_at || 0).getTime()
+                const dateB = new Date(b.created_at || 0).getTime()
+                return sortDirection === 'asc' ? dateA - dateB : dateB - dateA
+            }
+            return 0
+        })
+    }, [filteredClients, sortField, sortDirection])
+
+    const SortIcon = ({ field }: { field: 'name' | 'created_at' }) => {
+        if (sortField !== field) return <ArrowUpDown size={12} className="opacity-40 ml-1" />
+        return sortDirection === 'asc'
+            ? <ArrowUp size={12} className="text-secondary ml-1" />
+            : <ArrowDown size={12} className="text-secondary ml-1" />
+    }
+
     const handleEdit = (client: any) => {
         setFormData({
             name: client.name,
@@ -395,16 +436,17 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         <div className="space-y-4 md:space-y-6">
             <PageHeader title="Clientes">
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
-                    <button
-                        onClick={handleOpenCreate}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-1 md:order-4"
-                    >
-                        <Plus size={18} />
-                        Novo Cliente
-                    </button>
+                    {/* Linha 1 mobile: Busca + Toggle */}
+                    <div className="w-[calc(100%-84px)] md:w-[310px] md:flex-none order-1 md:order-1">
+                        <FormInput
+                            placeholder="Buscar por nome ou email..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            icon={Search}
+                        />
+                    </div>
 
-                    {/* View Toggle */}
-                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm w-fit order-2 md:order-2">
+                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm w-fit order-1 md:order-2">
                         <button
                             onClick={() => setViewMode('list')}
                             className={`p-1.5 rounded-md transition-all ${viewMode === 'list'
@@ -427,9 +469,10 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         </button>
                     </div>
 
+                    {/* Linha 2 mobile: Filtrar + Novo Cliente */}
                     <button
                         onClick={() => setIsFilterModalOpen(true)}
-                        className={`flex items-center justify-center gap-2 px-4 py-3 md:py-2 border rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-3 md:order-3 ${
+                        className={`flex items-center justify-center gap-2 px-4 py-3 md:py-2 border rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2 md:order-3 ${
                             filters.status !== 'active' || filters.startDate || filters.endDate || filters.interest || filters.primaryInterest || filters.maritalStatus || (filters.brokerId && filters.brokerId !== 'all')
                                 ? 'bg-secondary/10 border-secondary text-secondary-foreground'
                                 : 'border-border bg-card hover:bg-muted/10 text-foreground'
@@ -438,14 +481,14 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         <Filter size={18} />
                         Filtrar
                     </button>
-                    <div className="w-full md:w-[310px] order-4 md:order-1">
-                        <FormInput
-                            placeholder="Buscar por nome ou email..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            icon={Search}
-                        />
-                    </div>
+
+                    <button
+                        onClick={handleOpenCreate}
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2 md:order-4"
+                    >
+                        <Plus size={18} />
+                        Novo Cliente
+                    </button>
 
                 </div>
             </PageHeader>
@@ -454,18 +497,37 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             {viewMode === 'list' ? (
                 <div className="bg-card rounded-2xl border border-muted-foreground/30 overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
-                        <table className="w-full text-left">
+                        <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
                             <thead className="bg-muted/50 border-b border-muted-foreground/30">
                                 <tr>
-                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Cliente</th>
-                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Contato</th>
-                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell">Leads</th>
-                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell">Status</th>
-                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center w-16"></th>
+                                    <th
+                                        className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center cursor-pointer select-none hover:text-foreground transition-colors"
+                                        style={{ width: '18%' }}
+                                        onClick={() => toggleSort('name')}
+                                    >
+                                        <span className="inline-flex items-center justify-center">
+                                            Cliente
+                                            <SortIcon field="name" />
+                                        </span>
+                                    </th>
+                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center" style={{ width: '22%' }}>Contato</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell" style={{ width: '20%' }}>Leads</th>
+                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell" style={{ width: '14%' }}>Status</th>
+                                    <th
+                                        className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
+                                        style={{ width: '14%' }}
+                                        onClick={() => toggleSort('created_at')}
+                                    >
+                                        <span className="inline-flex items-center justify-center">
+                                            Desde de
+                                            <SortIcon field="created_at" />
+                                        </span>
+                                    </th>
+                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center" style={{ width: '5%' }}></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-muted-foreground/30">
-                                {filteredClients.map(client => (
+                                {sortedClients.map(client => (
                                     <ClientListItem
                                         key={client.id}
                                         client={client}

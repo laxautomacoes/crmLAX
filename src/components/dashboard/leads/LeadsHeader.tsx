@@ -19,7 +19,7 @@ export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin }: Lead
     return (
         <div className="flex items-center gap-2 w-full md:w-auto">
             <FormInput
-                placeholder="Pesquisar leads ou imóveis..."
+                placeholder="Pesquisar leads..."
                 onChange={(e) => onSearch(e.target.value)}
                 icon={Search}
                 className="w-full md:w-[310px]"

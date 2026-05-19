@@ -17,6 +17,7 @@ export interface DashboardMetrics {
         label: string
         count: number
         stageId: string
+        color?: string
     }>
     recentLeads: Array<{
         id: string
@@ -102,7 +103,7 @@ export async function getDashboardMetrics(tenantId: string) {
         // 4. Buscar estágios e contar leads por estágio
         let { data: stages, error: stagesError } = await supabase
             .from('lead_stages')
-            .select('id, name, order_index')
+            .select('id, name, order_index, color')
             .eq('tenant_id', tenantId)
             .order('order_index', { ascending: true })
 
@@ -163,7 +164,8 @@ export async function getDashboardMetrics(tenantId: string) {
         const funnelSteps = uniqueStages.map((stage) => ({
             label: stage.name,
             count: stageCountMap.get(stage.id) || 0,
-            stageId: stage.id
+            stageId: stage.id,
+            color: stage.color || undefined
         }))
 
         // 5. Buscar leads recentes (últimos 5)

@@ -141,10 +141,6 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
 
     return (
         <section className="space-y-6">
-            <div className="flex items-center gap-3 ml-1">
-                <Sparkles className="h-5 w-5 text-accent-icon" />
-                <h2 className="text-xl font-black text-foreground">Estúdio de Criação IA</h2>
-            </div>
 
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 h-full min-h-[460px]">
                 {/* Lado Esquerdo: Input */}
@@ -172,14 +168,14 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                     <button
                         onClick={handleGenerate}
                         disabled={loading || !topic.trim()}
-                        className="w-full h-14 bg-muted hover:bg-muted/80 text-foreground rounded-2xl font-black text-sm uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] disabled:opacity-50"
+                        className="w-full h-14 bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-lg font-black text-sm uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] disabled:opacity-50"
                     >
                         {loading ? (
                             <Loader2 className="h-5 w-5 animate-spin" />
                         ) : (
                             <>
-                                <Sparkles className="h-5 w-5 text-accent-icon" />
-                                Gerar com Inteligência Artificial
+                                <Sparkles className="h-5 w-5" />
+                                Gerar conteúdo
                             </>
                         )}
                     </button>
@@ -187,9 +183,8 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
 
                 {/* Lado Direito: Resultados/Preview */}
                 <div className="bg-gradient-to-br from-[#404F4F] to-[#2d3939] rounded-[2rem] shadow-xl overflow-hidden flex flex-col relative group">
-                    <div className="p-8 pb-4 border-b border-white/10">
-                        <div className="flex items-center justify-between gap-2 overflow-x-auto custom-scrollbar no-scrollbar">
-                            <div className="flex gap-2">
+                    <div className="p-4 md:p-8 pb-4 border-b border-white/10">
+                        <div className="flex items-center gap-1.5 w-full">
                                 {[
                                     { id: 'medium', label: 'Feed Social', icon: Layout },
                                     { id: 'short', label: 'WhatsApp', icon: MessageSquare },
@@ -198,17 +193,16 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id as any)}
-                                        className={`flex items-center gap-2 px-4 py-2.3 rounded-xl text-[10px] font-black uppercase tracking-widest transition-all ${
+                                        className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
                                             activeTab === tab.id
                                                 ? 'bg-[#FFE600] text-[#404F4F] shadow-lg shadow-black/20'
                                                 : 'text-white/60 hover:text-white hover:bg-white/5'
                                         }`}
                                     >
-                                        <tab.icon size={14} />
+                                        <tab.icon size={13} />
                                         {tab.label}
                                     </button>
                                 ))}
-                            </div>
                         </div>
                     </div>
 

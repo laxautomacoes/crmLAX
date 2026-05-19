@@ -653,7 +653,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                     {/* Mensagem + Templates */}
                     <div className="space-y-2">
                         <div className="flex items-center justify-between">
-                            <label className="text-sm font-bold text-foreground ml-1">Mensagem do WhatsApp</label>
+                            <label className="text-sm font-bold text-foreground ml-1">Mensagem</label>
                             <div className="flex items-center gap-2">
                                 <button
                                     onClick={handleLoadTemplates}
@@ -794,7 +794,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 <button 
                                     onClick={() => mediaInputRef.current?.click()}
                                     disabled={isMediaUploading}
-                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 border-2 border-dashed border-border/40 rounded-2xl hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground group"
+                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 border border-dashed border-border/40 rounded-lg hover:border-solid hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground group"
                                 >
                                     {isMediaUploading ? (
                                         <Loader2 className="animate-spin text-foreground" size={24} />
@@ -814,20 +814,20 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                 {/* Destinatários */}
                 <div className="space-y-6">
-                    <label className="text-sm font-bold text-foreground ml-1">Destinatários ({recipients.length})</label>
-                    
+                    <div className="flex items-center justify-between">
+                        <label className="text-sm font-bold text-foreground ml-1">Destinatários ({recipients.length})</label>
+                        <button
+                            onClick={() => setShowFilters(!showFilters)}
+                            className="flex items-center gap-1.5 text-xs font-bold text-foreground hover:text-accent-icon transition-colors"
+                        >
+                            <Filter size={14} />
+                            <span>Filtros</span>
+                            {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+                    </div>
+
                     {recipients.length === 0 ? (
                         <div className="space-y-4">
-                            {/* Filtros */}
-                            <button
-                                onClick={() => setShowFilters(!showFilters)}
-                                className="flex items-center gap-2 text-xs font-bold text-foreground hover:text-accent-icon transition-colors"
-                            >
-                                <Filter size={14} />
-                                <span>Filtros de Segmentação</span>
-                                {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                            </button>
-
                             {showFilters && filterOptions && (
                                 <div className="space-y-3 p-4 bg-foreground/5 rounded-xl border border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
                                     {/* Estágios */}
@@ -893,30 +893,30 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 </div>
                             )}
 
-                            <div className="grid grid-cols-3 gap-3">
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <button 
                                 onClick={handleFetchSystemLeads}
                                 disabled={isSelectingLeads}
-                                className="flex flex-col items-center gap-3 p-5 bg-foreground/5 rounded-2xl border border-border/40 hover:border-border hover:bg-foreground/10 transition-all text-muted-foreground group"
+                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-foreground/5 rounded-lg border border-border/40 hover:border-border hover:bg-foreground/10 transition-all text-muted-foreground group text-center"
                             >
-                                <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                    {isSelectingLeads ? <Loader2 className="animate-spin" size={24} /> : <Users className="text-foreground" size={24} />}
+                                <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                    {isSelectingLeads ? <Loader2 className="animate-spin" size={20} /> : <Users className="text-foreground" size={20} />}
                                 </div>
-                                <div className="text-center">
-                                    <p className="text-xs font-bold text-foreground">Leads do Sistema</p>
+                                <div>
+                                    <p className="text-xs font-bold text-foreground">Leads</p>
                                     <p className="text-[10px]">{selectedStages.length > 0 || selectedSource ? 'Filtros aplicados' : 'Leads cadastrados'}</p>
                                 </div>
                             </button>
 
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex flex-col items-center gap-3 p-5 bg-foreground/5 rounded-2xl border border-border/40 hover:border-border hover:bg-foreground/10 transition-all text-muted-foreground group"
+                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-foreground/5 rounded-lg border border-border/40 hover:border-border hover:bg-foreground/10 transition-all text-muted-foreground group text-center"
                             >
-                                <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                    <FileSpreadsheet className="text-foreground" size={24} />
+                                <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                    <FileSpreadsheet className="text-foreground" size={20} />
                                 </div>
-                                <div className="text-center">
-                                    <p className="text-xs font-bold text-foreground">Subir Planilha</p>
+                                <div>
+                                    <p className="text-xs font-bold text-foreground">Planilha</p>
                                     <p className="text-[10px]">Excel ou CSV</p>
                                 </div>
                                 <input 
@@ -930,16 +930,16 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                             <button 
                                 onClick={() => setShowGoogleSheet(!showGoogleSheet)}
-                                className={`flex flex-col items-center gap-3 p-5 rounded-2xl border transition-all text-muted-foreground group ${
+                                className={`flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 rounded-lg border transition-all text-muted-foreground group text-center ${
                                     showGoogleSheet 
                                         ? 'bg-foreground/10 border-border' 
                                         : 'bg-foreground/5 border-border/40 hover:border-border hover:bg-foreground/10'
                                 }`}
                             >
-                                <div className="w-12 h-12 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                    <Globe className="text-[#0F9D58]" size={24} />
+                                <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                    <Globe className="text-[#0F9D58]" size={20} />
                                 </div>
-                                <div className="text-center">
+                                <div>
                                     <p className="text-xs font-bold text-foreground">Google Sheets</p>
                                     <p className="text-[10px]">Colar link</p>
                                 </div>
@@ -1101,8 +1101,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         </div>
                     )}
 
-                    <div className="bg-blue-500/10 p-4 rounded-xl border border-blue-500/20 flex gap-3">
-                        <HelpCircle className="text-blue-400 shrink-0" size={18} />
+                    <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20 flex gap-3">
                         <div className="space-y-1">
                             <p className="text-xs font-bold text-blue-400">Como funciona o disparo?</p>
                             <p className="text-[10px] text-blue-400/80 leading-relaxed text-pretty">
@@ -1172,9 +1171,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         <button 
                             onClick={handleSend}
                             disabled={isSending || recipients.length === 0 || (!message && !media)}
-                            className={`w-full h-12 text-sm font-bold bg-secondary border-none text-secondary-foreground hover:bg-secondary/90 transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2 ${(recipients.length === 0 || (!message && !media)) ? 'opacity-50 cursor-not-allowed grayscale' : ''}`}
+                            className={`w-full h-12 text-sm font-bold bg-secondary border-none text-secondary-foreground hover:bg-secondary/90 transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2 ${(recipients.length === 0 || (!message && !media)) ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            <Send size={20} />
                             Iniciar Disparo para {recipients.length} Contatos
                         </button>
                     )}

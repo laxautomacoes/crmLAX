@@ -48,25 +48,9 @@ export function LocationFilters({ onSearch, loading }: LocationFiltersProps) {
 
     return (
         <div className="bg-card border border-border p-6 rounded-2xl shadow-sm space-y-6">
-            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <h2 className="text-lg font-bold text-foreground">
-                    Localização da Análise
-                </h2>
-                <button
-                    onClick={handleSearch}
-                    disabled={loading || !selectedUF || !selectedCity || !neighborhood}
-                    className="w-full md:w-auto px-8 py-2.5 bg-secondary text-secondary-foreground font-black rounded-xl hover:bg-secondary/90 transition-all shadow-lg hover:shadow-secondary/20 flex items-center justify-center gap-2 disabled:opacity-50 uppercase text-xs tracking-wider"
-                >
-                    {loading ? (
-                        <div className="flex items-center gap-2">
-                            <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                            Analisando...
-                        </div>
-                    ) : (
-                        'Consultar Valor'
-                    )}
-                </button>
-            </div>
+            <h2 className="text-lg font-bold text-foreground">
+                Localização da Análise
+            </h2>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <FormSelect
@@ -93,6 +77,21 @@ export function LocationFilters({ onSearch, loading }: LocationFiltersProps) {
                     />
                 </div>
             </div>
+
+            <button
+                onClick={handleSearch}
+                disabled={loading || !selectedUF || !selectedCity || !neighborhood}
+                className="w-full md:w-auto px-8 py-2.5 bg-secondary text-secondary-foreground font-black rounded-lg hover:bg-secondary/90 transition-all shadow-lg hover:shadow-secondary/20 flex items-center justify-center gap-2 disabled:opacity-50 uppercase text-xs tracking-wider"
+            >
+                {loading ? (
+                    <div className="flex items-center gap-2">
+                        <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                        Analisando...
+                    </div>
+                ) : (
+                    'Consultar Valor'
+                )}
+            </button>
         </div>
     );
 }
