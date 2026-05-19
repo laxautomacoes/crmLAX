@@ -13,27 +13,7 @@ export default async function proxy(request: NextRequest) {
     const pathname = request.nextUrl.pathname
     const isCRMRequest = hostname.startsWith('crm.') || hostname.includes('crm.laxperience.online');
     
-    // 1. Identificação do Tenant
-    let tenant = await getTenantByHostname(hostname);
-    if (!tenant && pathname.startsWith('/site/')) {
-        const slug = pathname.split('/')[2];
-        if (slug) tenant = await getTenantBySlug(slug);
-    }
-
-    // 2. Roteamento Especial (Landing Page do Sistema)
-    if (hostname.includes('crm.laxperience.online') && pathname === '/') {
-        return NextResponse.rewrite(new URL('/conheca', request.url))
-    }
-
-    // 3. Roteamento de Vitrine (Rewrites de Domínios Customizados/Subdomínios)
-    if (tenant && !isCRMRequest && !pathname.startsWith('/api') && !pathname.startsWith('/_next') && !isPublicRoute(pathname)) {
-        if (pathname === '/') return NextResponse.rewrite(new URL(`/site/${tenant.slug}`, request.url));
-        if (tenant.custom_domain && hostname.includes(tenant.custom_domain) && !pathname.startsWith('/site/')) {
-            return NextResponse.rewrite(new URL(`/site/${tenant.slug}${pathname}`, request.url));
-        }
-    }
-
-    // 4. Configuração Supabase (Edge-friendly)
+    // 1. Configuração Supabase (Edge-friendly)
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
     const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
     let supabaseResponse = NextResponse.next({ request });
@@ -48,6 +28,26 @@ export default async function proxy(request: NextRequest) {
             },
         },
     });
+
+    // 2. Identificação do Tenant
+    let tenant = await getTenantByHostname(hostname, supabase);
+    if (!tenant && pathname.startsWith('/site/')) {
+        const slug = pathname.split('/')[2];
+        if (slug) tenant = await getTenantBySlug(slug, supabase);
+    }
+
+    // 3. Roteamento Especial (Landing Page do Sistema)
+    if (hostname.includes('crm.laxperience.online') && pathname === '/') {
+        return NextResponse.rewrite(new URL('/conheca', request.url))
+    }
+
+    // 4. Roteamento de Vitrine (Rewrites de Domínios Customizados/Subdomínios)
+    if (tenant && !isCRMRequest && !pathname.startsWith('/api') && !pathname.startsWith('/_next') && !isPublicRoute(pathname)) {
+        if (pathname === '/') return NextResponse.rewrite(new URL(`/site/${tenant.slug}`, request.url));
+        if (tenant.custom_domain && hostname.includes(tenant.custom_domain) && !pathname.startsWith('/site/')) {
+            return NextResponse.rewrite(new URL(`/site/${tenant.slug}${pathname}`, request.url));
+        }
+    }
 
     const { data: { user } } = await supabase.auth.getUser();
 
