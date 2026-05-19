@@ -353,6 +353,7 @@ export type Database = {
           created_at: string | null
           credentials: Json | null
           id: string
+          profile_id: string | null
           provider: string
           settings: Json | null
           status: string | null
@@ -363,6 +364,7 @@ export type Database = {
           created_at?: string | null
           credentials?: Json | null
           id?: string
+          profile_id?: string | null
           provider: string
           settings?: Json | null
           status?: string | null
@@ -373,6 +375,7 @@ export type Database = {
           created_at?: string | null
           credentials?: Json | null
           id?: string
+          profile_id?: string | null
           provider?: string
           settings?: Json | null
           status?: string | null
