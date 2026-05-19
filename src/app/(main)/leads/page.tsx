@@ -311,7 +311,7 @@ export default function LeadsPage() {
                     tenantId={tenantId}
                     stages={stages}
                     onSuccess={fetchData}
-                    editingLead={editingLead}
+                    editingLead={editingLead ?? undefined}
                     hasAIAccess={hasAIAccess}
                 />
             )}
