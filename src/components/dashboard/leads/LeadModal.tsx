@@ -152,7 +152,7 @@ export function LeadModal({
                 campaign: editingLead.campaign || '',
                 property_id: editingLead.property_id || '',
                 property_interest: editingLead.property_interest || '',
-                selectedProperty: editingLead.property_id ? { id: editingLead.property_id, title: editingLead.interest } : null,
+                selectedProperty: editingLead.property_id ? { id: editingLead.property_id, title: editingLead.interest || '' } : null,
                 date: editingLead.date || new Date().toISOString().split('T')[0],
                 value: editingLead.value?.toString() || '',
                 notes: editingLead.notes || '',
@@ -515,7 +515,7 @@ export function LeadModal({
                         <LeadAICard 
                             leadId={editingLead.id}
                             tenantId={tenantId}
-                            profileId={editingLead.assigned_to}
+                            profileId={editingLead.assigned_to || ''}
                             leadName={leadData.name}
                             leadSource={leadData.lead_source}
                             interactions={((editingLead.whatsapp_chat || []) as ChatMessage[]).map((m) => 

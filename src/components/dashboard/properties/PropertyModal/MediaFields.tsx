@@ -105,7 +105,7 @@ export function MediaFields({
             const newIndex = formData.images.findIndex((img: string) => img === over.id)
             
             if (oldIndex !== -1 && newIndex !== -1 && onReorderImages) {
-                const newImages = arrayMove(formData.images, oldIndex, newIndex)
+                const newImages = arrayMove(formData.images, oldIndex, newIndex) as string[]
                 onReorderImages(newImages)
             }
         }

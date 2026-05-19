@@ -281,7 +281,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         }
 
         const queryString = queryParams.toString()
-        const propertyUrl = getPropertyUrl(tenant || { slug: tenantSlug }, property.id, property.slug, property.type) + (queryString ? `?${queryString}` : '')
+        const propertyUrl = getPropertyUrl(tenant ? { slug: tenant.slug || tenantSlug, custom_domain: tenant.custom_domain, custom_domain_verified: tenant.custom_domain_verified } : { slug: tenantSlug }, property.id, property.slug, property.type) + (queryString ? `?${queryString}` : '')
         
         // Build dynamic message
         let message = `Olá ${currentLead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste imóvel que pode te interessar:\n\n`
@@ -619,9 +619,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     </button>
                                     {expandedSections.images && (
                                         <div className="p-4 pt-0">
-                                            {property.images?.length > 0 ? (
+                                            {(property.images?.length ?? 0) > 0 ? (
                                                 <div className="grid grid-cols-4 gap-2 max-h-[300px] overflow-y-auto pr-1">
-                                                    {property.images.map((img: string, idx: number) => (
+                                                    {(property.images ?? []).map((img: string, idx: number) => (
                                                         <div 
                                                             key={idx} 
                                                             onClick={() => {
@@ -666,9 +666,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     </button>
                                     {expandedSections.videos && (
                                         <div className="p-4 pt-0 space-y-4">
-                                            {property.videos?.length > 0 ? (
+                                            {(property.videos?.length ?? 0) > 0 ? (
                                                 <div className="space-y-1">
-                                                    {property.videos.map((video: string, idx: number) => (
+                                                    {(property.videos ?? []).map((video: string, idx: number) => (
                                                         <FormCheckbox 
                                                             key={idx}
                                                             label={`Vídeo ${idx + 1}`}
@@ -703,9 +703,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     </button>
                                     {expandedSections.docs && (
                                         <div className="p-4 pt-0 space-y-4">
-                                            {property.documents?.length > 0 ? (
+                                            {(property.documents?.length ?? 0) > 0 ? (
                                                 <div className="space-y-1">
-                                                    {property.documents.map((doc: PropertyDocument, idx: number) => (
+                                                    {(property.documents ?? []).map((doc: PropertyDocument, idx: number) => (
                                                         <FormCheckbox 
                                                             key={idx}
                                                             label={doc.name || `Documento ${idx + 1}`}

@@ -42,7 +42,7 @@ export function MarketingSuperadmin({ tenantId, profileId }: MarketingSuperadmin
     const fetchFeed = async () => {
         setIsLoadingFeed(true);
         try {
-            const result = await getInstagramFeed();
+            const result = await getInstagramFeed(tenantId);
             if (result.success) {
                 setInstaFeed(result.data);
             } else {

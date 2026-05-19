@@ -354,21 +354,23 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     playground: editingProperty.details?.playground || false,
                     brinquedoteca: editingProperty.details?.brinquedoteca || false,
                     home_market: editingProperty.details?.home_market || false,
-                    proprietario: editingProperty.details?.proprietario || {
-                        nome: '',
-                        responsavel: '',
-                        telefone: '',
-                        email: '',
-                        cpf: '',
-                        estado_civil: '',
-                        data_nascimento: '',
-                        endereco_rua: '',
-                        endereco_numero: '',
-                        endereco_complemento: '',
-                        endereco_bairro: '',
-                        endereco_cidade: '',
-                        endereco_estado: '',
-                        endereco_cep: ''
+                    proprietario: {
+                        nome: editingProperty.details?.proprietario?.nome || '',
+                        responsavel: editingProperty.details?.proprietario?.responsavel || '',
+                        telefone: editingProperty.details?.proprietario?.telefone || '',
+                        email: editingProperty.details?.proprietario?.email || '',
+                        cpf: editingProperty.details?.proprietario?.cpf || '',
+                        estado_civil: editingProperty.details?.proprietario?.estado_civil || '',
+                        data_nascimento: editingProperty.details?.proprietario?.data_nascimento || '',
+                        endereco_rua: editingProperty.details?.proprietario?.endereco_rua || '',
+                        endereco_numero: editingProperty.details?.proprietario?.endereco_numero || '',
+                        endereco_complemento: editingProperty.details?.proprietario?.endereco_complemento || '',
+                        endereco_bairro: editingProperty.details?.proprietario?.endereco_bairro || '',
+                        endereco_cidade: editingProperty.details?.proprietario?.endereco_cidade || '',
+                        endereco_estado: editingProperty.details?.proprietario?.endereco_estado || '',
+                        endereco_cep: editingProperty.details?.proprietario?.endereco_cep || '',
+                        is_construtora: editingProperty.details?.proprietario?.is_construtora || false,
+                        regime_comunhao: editingProperty.details?.proprietario?.regime_comunhao || ''
                     },
                     endereco: {
                         rua: editingProperty.details?.endereco?.rua || '',
@@ -523,8 +525,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             const parsedPrice = parseFloat(cleanPriceStr)
             
             // Filtrar campos para evitar enviar dados sujos
-            const restData = { ...formData }
-            delete restData.created_by
+            const { created_by: _omit, ...restData } = formData
 
             const propertyData = {
                 ...restData,
