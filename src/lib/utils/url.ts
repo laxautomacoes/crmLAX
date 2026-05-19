@@ -1,6 +1,14 @@
 import { TenantInfo } from './tenant-types';
 
 /**
+ * Auxiliar para verificar se o ambiente atual é desenvolvimento ou localhost.
+ */
+function checkIsDev(): boolean {
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+    return process.env.NODE_ENV === 'development' || rootDomain.includes('localhost');
+}
+
+/**
  * Retorna a URL base do tenant (Domínio Próprio ou Subdomínio).
  */
 export function getTenantBaseUrl(tenant: { 
@@ -8,7 +16,7 @@ export function getTenantBaseUrl(tenant: {
     custom_domain?: string | null; 
     custom_domain_verified?: boolean | null 
 }): string {
-    const isDev = process.env.NODE_ENV === 'development';
+    const isDev = checkIsDev();
     const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
     const protocol = isDev ? 'http' : 'https';
 
@@ -37,7 +45,7 @@ export function getPropertyUrl(tenant: {
     custom_domain_verified?: boolean | null 
 }, propertyId: string, propertySlug?: string | null, propertyType?: string | null): string {
     const baseUrl = getTenantBaseUrl(tenant);
-    const isDev = process.env.NODE_ENV === 'development';
+    const isDev = checkIsDev();
 
     // Se tiver slug semântico, usar URL SEO-friendly
     if (propertySlug && propertyType) {
@@ -64,7 +72,7 @@ export function getSiteUrl(tenant: {
     custom_domain_verified?: boolean | null 
 }): string {
     const baseUrl = getTenantBaseUrl(tenant);
-    const isDev = process.env.NODE_ENV === 'development';
+    const isDev = checkIsDev();
 
     if (!isDev && tenant.custom_domain && tenant.custom_domain_verified) {
         return baseUrl;
@@ -72,3 +80,4 @@ export function getSiteUrl(tenant: {
 
     return `${baseUrl}/site/${tenant.slug}`;
 }
+

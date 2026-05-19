@@ -131,7 +131,10 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                                 </span>
                             )}
                         </div>
-                        <h1 className="text-3xl font-bold text-foreground mb-2">{displayTitle}</h1>
+                        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 mb-2">
+                            <h1 className="text-3xl font-bold text-foreground">{displayTitle}</h1>
+                            <span className="text-2xl md:text-3xl font-black text-foreground shrink-0">{displayPrice}</span>
+                        </div>
                         
                         {config?.location !== 'none' && (
                             <p className="text-lg text-muted-foreground">
@@ -340,9 +343,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                         </div>
                     )}
 
-                    <div className="p-5 bg-card rounded-2xl border border-border shadow-sm">
-                        <span className="text-2xl font-black text-foreground">{displayPrice}</span>
-                    </div>
+
 
                     {config?.description !== 'none' && (
                         <div className="p-5 bg-card rounded-2xl border border-border shadow-sm">

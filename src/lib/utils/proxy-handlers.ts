@@ -78,7 +78,7 @@ export function handleCompulsoryRedirects(
 ) {
     const hostname = request.headers.get('host') || ''
     const pathname = request.nextUrl.pathname
-    const isDevelopment = process.env.NODE_ENV === 'development';
+    const isDevelopment = process.env.NODE_ENV === 'development' || hostname.includes('localhost');
 
     if (!tenant || isDevelopment) return null;
 
