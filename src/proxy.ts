@@ -38,14 +38,22 @@ export default async function proxy(request: NextRequest) {
 
     // 3. Roteamento Especial (Landing Page do Sistema)
     if (hostname.includes('crm.laxperience.online') && pathname === '/') {
-        return NextResponse.rewrite(new URL('/conheca', request.url))
+        const url = request.nextUrl.clone();
+        url.pathname = '/conheca';
+        return NextResponse.rewrite(url);
     }
 
     // 4. Roteamento de Vitrine (Rewrites de Domínios Customizados/Subdomínios)
     if (tenant && !isCRMRequest && !pathname.startsWith('/api') && !pathname.startsWith('/_next') && !isPublicRoute(pathname)) {
-        if (pathname === '/') return NextResponse.rewrite(new URL(`/site/${tenant.slug}`, request.url));
+        if (pathname === '/') {
+            const url = request.nextUrl.clone();
+            url.pathname = `/site/${tenant.slug}`;
+            return NextResponse.rewrite(url);
+        }
         if (tenant.custom_domain && hostname.includes(tenant.custom_domain) && !pathname.startsWith('/site/')) {
-            return NextResponse.rewrite(new URL(`/site/${tenant.slug}${pathname}`, request.url));
+            const url = request.nextUrl.clone();
+            url.pathname = `/site/${tenant.slug}${pathname}`;
+            return NextResponse.rewrite(url);
         }
     }
 

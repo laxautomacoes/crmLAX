@@ -1,6 +1,7 @@
 'use server'
 
 import { createClient } from '@/lib/supabase/server'
+import { createAdminClient } from '@/lib/supabase/admin'
 import { revalidatePath } from 'next/cache'
 
 import { getProfile } from './profile'
@@ -603,7 +604,7 @@ export async function approveProperty(tenantId: string, propertyId: string) {
 }
 
 export async function getPropertyBySlug(type: string, slug: string, allowUnpublished = false) {
-    const supabase = await createClient()
+    const supabase = allowUnpublished ? createAdminClient() : await createClient()
 
     try {
         let query = supabase
