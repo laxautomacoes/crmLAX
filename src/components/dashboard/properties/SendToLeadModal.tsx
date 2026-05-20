@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { formatPhone } from '@/lib/utils/phone'
 import { getPropertyUrl } from '@/lib/utils/url'
 import { createClient } from '@/lib/supabase/client'
-import { UserPlus, ArrowLeft } from 'lucide-react'
+import { UserPlus, ArrowLeft, Check } from 'lucide-react'
 import type { Lead } from '@/components/dashboard/leads/PipelineBoard'
 
 interface PropertyDocument {
@@ -33,6 +33,7 @@ interface PropertyDetails {
     suites?: number
     area_privativa?: number
     endereco?: PropertyDetailsAddress
+    [key: string]: any
 }
 
 interface PropertyData {
@@ -87,6 +88,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         showSuites: boolean;
         showArea: boolean;
         showType: boolean;
+        showAmenities: boolean;
         selectedImages: string[];
         selectedVideos: string[];
         selectedDocs: PropertyDocument[];
@@ -99,6 +101,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         showSuites: true,
         showArea: true,
         showType: true,
+        showAmenities: true,
         selectedImages: [],
         selectedVideos: [],
         selectedDocs: []
@@ -117,7 +120,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     }, [isOpen, property])
 
     const [expandedSections, setExpandedSections] = useState({
-        basic: true,
+        basic: false,
         details: false,
         location: false,
         images: false,
@@ -257,6 +260,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (!config.showSuites) queryParams.set('cst', '0')
         if (!config.showArea) queryParams.set('car', '0')
         if (!config.showType) queryParams.set('cty', '0')
+        if (!config.showAmenities) queryParams.set('cam', '0')
         
         // Add media selections as indices
         const imageIndices = config.selectedImages
@@ -307,6 +311,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (config.showSuites && property.details?.suites) details.push(`${property.details.suites} Suítes`)
         if (config.showArea && property.details?.area_privativa) details.push(`${property.details.area_privativa}m² privativos`)
         if (config.showType) details.push(`Tipo: ${property.type}`)
+        if (config.showAmenities) {
+            const amenityKeys = ['piscina', 'academia', 'espaco_gourmet', 'salao_festas', 'playground', 'brinquedoteca', 'churrasqueira', 'sauna', 'coworking', 'pet_place', 'quadra'];
+            const hasAmenities = amenityKeys.some(k => property.details?.[k]);
+            if (hasAmenities) details.push('Área de lazer');
+        }
         
         if (details.length > 0) {
             message += `\n*Detalhes:* \n• ${details.join('\n• ')}\n`
@@ -376,26 +385,22 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     
                                     <div className="pt-4 border-t">
                                         <p className="text-xs text-muted-foreground mb-4">O lead será cadastrado automaticamente ao enviar o imóvel.</p>
-                                        <div className="grid grid-cols-2 gap-4">
+                                        <div className="grid grid-cols-2 gap-2">
                                             <button
                                                 onClick={() => handleSendEmail(null)}
                                                 disabled={sending}
-                                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-foreground/5 transition-all group"
+                                                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-border hover:bg-blue-500/5 hover:border-blue-500/20 transition-all group"
                                             >
-                                                <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center text-foreground group-hover:scale-110 transition-transform">
-                                                    <Mail size={20} />
-                                                </div>
-                                                <p className="font-bold text-foreground text-sm">Enviar E-mail</p>
+                                                <Mail size={16} className="text-blue-500 group-hover:scale-110 transition-transform" />
+                                                <p className="font-bold text-foreground text-xs">E-mail</p>
                                             </button>
                                             <button
                                                 onClick={() => handleSendWhatsApp(null)}
                                                 disabled={sending}
-                                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-foreground/5 transition-all group"
+                                                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-border hover:bg-[#25D366]/5 hover:border-[#25D366]/20 transition-all group"
                                             >
-                                                <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center text-foreground group-hover:scale-110 transition-transform">
-                                                    <MessageCircle size={20} />
-                                                </div>
-                                                <p className="font-bold text-foreground text-sm">Enviar WhatsApp</p>
+                                                <MessageCircle size={16} className="text-[#25D366] group-hover:scale-110 transition-transform" />
+                                                <p className="font-bold text-foreground text-xs">WhatsApp</p>
                                             </button>
                                         </div>
                                     </div>
@@ -409,6 +414,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
                                                 icon={Search}
+                                                className="h-11"
                                             />
                                         </div>
                                         <button 
@@ -416,10 +422,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 setIsManualMode(true)
                                                 setManualLead({ name: searchTerm, email: '', phone: '' })
                                             }}
-                                            className="p-3 bg-foreground/5 hover:bg-foreground/10 rounded-xl transition-all text-foreground"
+                                            className="h-11 w-11 flex-shrink-0 flex items-center justify-center bg-[#FFE600] hover:bg-[#F2DB00] rounded-lg transition-all group shadow-sm hover:shadow"
                                             title="Novo Lead"
                                         >
-                                            <UserPlus size={20} />
+                                            <UserPlus size={20} className="text-[#404F4F] transition-transform group-hover:scale-110" />
                                         </button>
                                     </div>
 
@@ -469,12 +475,12 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                     ) : (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             {/* Lead Header */}
-                            <div className="flex items-center gap-4 p-4 rounded-xl bg-foreground/5">
-                                <div className="w-12 h-12 rounded-full bg-foreground/10 flex items-center justify-center text-foreground">
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-[#FFE600]/10 border border-[#FFE600]/20">
+                                <div className="w-12 h-12 rounded-full bg-[#FFE600]/20 flex items-center justify-center text-[#FFE600]">
                                     <User size={24} />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-sm font-bold text-foreground uppercase tracking-wider">Lead Selecionado</p>
+                                    <p className="text-xs font-bold text-foreground uppercase tracking-wider">Lead Selecionado</p>
                                     <p className="text-lg font-bold text-foreground">{selectedLead.name}</p>
                                 </div>
                                 <button 
@@ -486,7 +492,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             </div>
 
                             {/* Configuration Options */}
-                            <div className="space-y-4 rounded-xl overflow-hidden bg-card">
+                            <div className="space-y-0 rounded-xl overflow-hidden bg-card">
                                 {/* Basic Info Section */}
                                 <div className="">
                                     <button 
@@ -495,7 +501,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     >
                                         <div className="flex items-center gap-2">
                                             <Info size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Informações Básicas</span>
+                                            <span className="font-bold text-foreground">Identificação e valor</span>
                                         </div>
                                         {expandedSections.basic ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                     </button>
@@ -511,23 +517,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 checked={config.price} 
                                                 onChange={(e) => setConfig({...config, price: e.target.checked})} 
                                             />
-                                            <div className="flex flex-col gap-2 pt-1">
-                                                <p className="text-xs font-bold text-foreground uppercase">Descrição</p>
-                                                <div className="flex gap-4">
-                                                    <button 
-                                                        onClick={() => setConfig({...config, description: 'full'})}
-                                                        className={`text-xs px-3 py-1.5 rounded-full transition-all ${config.description === 'full' ? 'bg-foreground/10 text-foreground font-bold' : 'text-foreground'}`}
-                                                    >
-                                                        Completa
-                                                    </button>
-                                                    <button 
-                                                        onClick={() => setConfig({...config, description: 'none'})}
-                                                        className={`text-xs px-3 py-1.5 rounded-full transition-all ${config.description === 'none' ? 'bg-foreground/10 text-foreground font-bold' : 'text-foreground'}`}
-                                                    >
-                                                        Não enviar
-                                                    </button>
-                                                </div>
-                                            </div>
+                                            <FormCheckbox 
+                                                label="Descrição" 
+                                                checked={config.description === 'full'} 
+                                                onChange={(e) => setConfig({...config, description: e.target.checked ? 'full' : 'none'})} 
+                                            />
                                         </div>
                                     )}
                                 </div>
@@ -540,7 +534,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     >
                                         <div className="flex items-center gap-2">
                                             <Home size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Detalhes (Cômodos/Áreas)</span>
+                                            <span className="font-bold text-foreground">Informações</span>
                                         </div>
                                         {expandedSections.details ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                     </button>
@@ -567,6 +561,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     checked={config.showType} 
                                                     onChange={(e) => setConfig({...config, showType: e.target.checked})} 
                                                 />
+                                                <FormCheckbox 
+                                                    label="Área de Lazer" 
+                                                    checked={config.showAmenities} 
+                                                    onChange={(e) => setConfig({...config, showAmenities: e.target.checked})} 
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -586,20 +585,22 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     </button>
                                     {expandedSections.location && (
                                         <div className="p-4 pt-0">
-                                            <div className="flex flex-wrap gap-2">
-                                                {[
-                                                    { id: 'exact', label: 'Endereço Exato' },
-                                                    { id: 'approximate', label: 'Aproximada (Bairro)' },
-                                                    { id: 'none', label: 'Não enviar' }
-                                                ].map((opt) => (
-                                                    <button 
-                                                        key={opt.id}
-                                                        onClick={() => setConfig({...config, location: opt.id as 'exact' | 'approximate' | 'none'})}
-                                                        className={`text-xs px-3 py-1.5 rounded-full transition-all ${config.location === opt.id ? 'bg-foreground/10 text-foreground font-bold' : 'text-foreground'}`}
-                                                    >
-                                                        {opt.label}
-                                                    </button>
-                                                ))}
+                                            <div className="flex flex-col gap-3">
+                                                <FormCheckbox 
+                                                    label="Endereço Exato" 
+                                                    checked={config.location === 'exact'} 
+                                                    onChange={() => setConfig({...config, location: 'exact'})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Aproximada (Bairro)" 
+                                                    checked={config.location === 'approximate'} 
+                                                    onChange={() => setConfig({...config, location: 'approximate'})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Não enviar" 
+                                                    checked={config.location === 'none'} 
+                                                    onChange={() => setConfig({...config, location: 'none'})} 
+                                                />
                                             </div>
                                         </div>
                                     )}
@@ -630,7 +631,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                                     : [...config.selectedImages, img]
                                                                 setConfig({...config, selectedImages: newImages})
                                                             }}
-                                                            className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-opacity ${selectedImagesSet.has(img) ? 'ring-2 ring-foreground ring-inset' : 'opacity-60 hover:opacity-100'}`}
+                                                            className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-opacity ${selectedImagesSet.has(img) ? 'ring-2 ring-[#FFE600] ring-inset' : 'opacity-60 hover:opacity-100'}`}
                                                         >
                                                             <img 
                                                                 src={img} 
@@ -640,7 +641,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                             />
                                                             {selectedImagesSet.has(img) && (
                                                                 <div className="absolute inset-0 bg-foreground/20 flex items-center justify-center">
-                                                                    <CheckCircle2 className="text-background fill-foreground" size={20} />
+                                                                    <div className="w-5 h-5 rounded-full bg-[#FFE600] flex items-center justify-center">
+                                                                        <Check className="text-[#404F4F]" size={14} strokeWidth={3.5} />
+                                                                    </div>
                                                                 </div>
                                                             )}
                                                         </div>
@@ -732,33 +735,33 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 </div>
 
                 {selectedLead && (
-                    <div className="pt-6 mt-auto">
-                        <div className="grid grid-cols-2 gap-4">
+                    <div className="pt-4 mt-auto">
+                        <div className="grid grid-cols-2 gap-2">
                             <button
                                 onClick={() => handleSendEmail(selectedLead)}
                                 disabled={sending || !selectedLead.email}
-                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-foreground/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-blue-500/5 hover:border-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
-                                <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center text-foreground group-hover:scale-110 transition-transform">
-                                    <Mail size={20} />
+                                <div className="w-7 h-7 rounded-full bg-blue-500/10 flex-shrink-0 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                                    <Mail size={14} />
                                 </div>
-                                <div className="text-center">
-                                    <p className="font-bold text-foreground text-sm">Enviar E-mail</p>
-                                    <p className="text-[10px] text-foreground truncate max-w-[120px]">{selectedLead.email || 'Sem e-mail'}</p>
+                                <div className="overflow-hidden min-w-0 flex-1">
+                                    <p className="font-bold text-foreground text-xs truncate">E-mail</p>
+                                    <p className="text-[9px] text-foreground truncate">{selectedLead.email || 'Sem e-mail'}</p>
                                 </div>
                             </button>
 
                             <button
                                 onClick={() => handleSendWhatsApp(selectedLead)}
                                 disabled={sending || !selectedLead.phone}
-                                className="flex flex-col items-center justify-center gap-3 p-4 rounded-xl hover:bg-foreground/5 transition-all disabled:opacity-50 disabled:cursor-not-allowed group"
+                                className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-[#25D366]/5 hover:border-[#25D366]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
-                                <div className="w-10 h-10 rounded-full bg-foreground/10 flex items-center justify-center text-foreground group-hover:scale-110 transition-transform">
-                                    <MessageCircle size={20} />
+                                <div className="w-7 h-7 rounded-full bg-[#25D366]/10 flex-shrink-0 flex items-center justify-center text-[#25D366] group-hover:scale-110 transition-transform">
+                                    <MessageCircle size={14} />
                                 </div>
-                                <div className="text-center">
-                                    <p className="font-bold text-foreground text-sm">Enviar WhatsApp</p>
-                                    <p className="text-[10px] text-foreground">{formatPhone(selectedLead.phone)}</p>
+                                <div className="overflow-hidden min-w-0 flex-1">
+                                    <p className="font-bold text-foreground text-xs truncate">WhatsApp</p>
+                                    <p className="text-[9px] text-foreground truncate">{formatPhone(selectedLead.phone) || 'Sem telefone'}</p>
                                 </div>
                             </button>
                         </div>

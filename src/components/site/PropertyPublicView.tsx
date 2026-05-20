@@ -159,7 +159,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                                 }
                                 setIsFullscreenOpen(true);
                             }}
-                            className="relative group w-full aspect-video rounded-3xl overflow-hidden bg-black/90 border border-border flex items-center justify-center cursor-zoom-in shadow-lg"
+                            className="relative group w-full aspect-video rounded-2xl overflow-hidden bg-black/90 border border-border flex items-center justify-center cursor-zoom-in shadow-lg"
                         >
                             {allMedia[selectedMediaIndex] ? (
                                 <>
@@ -226,7 +226,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                                         key={i} 
                                         ref={el => { thumbnailRefs.current[i] = el; }}
                                         onClick={() => setSelectedMediaIndex(i)}
-                                        className={`relative flex-shrink-0 w-24 md:w-32 aspect-video rounded-xl overflow-hidden border-2 transition-all snap-start ${
+                                        className={`relative flex-shrink-0 w-24 md:w-32 aspect-video rounded-lg overflow-hidden border-2 transition-all snap-start ${
                                             selectedMediaIndex === i ? 'border-primary ring-2 ring-primary/20 scale-[1.02]' : 'border-transparent hover:border-border'
                                         }`}
                                     >
@@ -247,7 +247,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                                     {videoMedia.map((video: any, i: number) => (
                                         <div 
                                             key={i}
-                                            className="relative flex-shrink-0 w-24 md:w-32 aspect-video rounded-xl overflow-hidden bg-black group cursor-pointer snap-start border border-border"
+                                            className="relative flex-shrink-0 w-24 md:w-32 aspect-video rounded-lg overflow-hidden bg-black group cursor-pointer snap-start border border-border"
                                             onClick={() => {
                                                 const mediaIndex = imageMedia.length + i;
                                                 setSelectedMediaIndex(mediaIndex);
@@ -294,34 +294,34 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                         Dados do Imóvel
                     </h2>
 
-                    <div className="p-5 bg-card rounded-2xl border border-border shadow-sm">
+                    <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                         {config?.showBedrooms !== false && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
+                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
                                 <BedDouble className="text-primary mb-2" size={24} />
                                 <span className="text-lg font-bold">{details.dormitorios || details.quartos || 0}</span>
                                 <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Dormitórios</span>
                             </div>
                         )}
                         {config?.showSuites !== false && details.suites > 0 && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
+                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
                                 <Bath className="text-primary mb-2" size={24} />
                                 <span className="text-lg font-bold">{details.suites}</span>
                                 <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Suítes</span>
                             </div>
                         )}
-                        <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
+                        <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
                             <Bath className="text-primary mb-2" size={24} />
                             <span className="text-lg font-bold">{details.banheiros || 0}</span>
                             <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Banheiros</span>
                         </div>
-                        <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
+                        <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
                             <Car className="text-primary mb-2" size={24} />
                             <span className="text-lg font-bold">{details.vagas || 0}</span>
                             <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Vagas</span>
                         </div>
                         {config?.showArea !== false && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-xl bg-muted/30">
+                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
                                 <Square className="text-primary mb-2" size={24} />
                                 <span className="text-lg font-bold">{details.area_util || details.area_total || 0}m²</span>
                                 <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Área</span>
@@ -331,10 +331,10 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                     </div>
 
                     {amenities.length > 0 && (
-                        <div className="p-5 bg-card rounded-2xl border border-border shadow-sm">
+                        <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
                             <div className="flex flex-wrap gap-3">
                                 {amenities.map(a => (
-                                    <div key={a.id} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-muted/30">
+                                    <div key={a.id} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/30">
                                         <span className="text-primary">{a.icon}</span>
                                         <span className="text-sm font-medium text-foreground">{a.label}</span>
                                     </div>
@@ -346,7 +346,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
 
 
                     {config?.description !== 'none' && (
-                        <div className="p-5 bg-card rounded-2xl border border-border shadow-sm">
+                        <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
                             <div className="text-base md:text-lg text-foreground leading-relaxed">
                                 {property.description ? (
                                     <SafeMarkdownRenderer content={property.description} />
@@ -386,7 +386,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                                         href={doc.url}
                                         target="_blank"
                                         rel="noopener noreferrer"
-                                        className="flex items-center gap-3 p-4 rounded-xl bg-card border border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
+                                        className="flex items-center gap-3 p-4 rounded-lg bg-card border border-border hover:border-primary/50 hover:bg-primary/5 transition-all group"
                                     >
                                         <div className="p-2 rounded-lg bg-primary/10 text-primary group-hover:bg-primary group-hover:text-white transition-colors">
                                             <FileText size={20} />
