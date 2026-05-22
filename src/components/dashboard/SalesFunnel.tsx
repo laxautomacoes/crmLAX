@@ -1,5 +1,7 @@
 'use client';
 
+import Link from 'next/link';
+
 interface SalesFunnelProps {
     funnelSteps: Array<{
         label: string
@@ -11,8 +13,13 @@ interface SalesFunnelProps {
 
 export default function SalesFunnel({ funnelSteps }: SalesFunnelProps) {
     return (
-        <div className="bg-card p-6 rounded-lg shadow-sm border border-muted-foreground/30 mb-8">
-            <h3 className="text-lg font-bold text-foreground mb-6">Funil de Vendas</h3>
+        <Link 
+            href="/leads"
+            className="block bg-card p-6 rounded-lg shadow-sm border border-muted-foreground/30 mb-8 hover:bg-muted/30 hover:border-foreground/30 transition-all duration-200 cursor-pointer group"
+        >
+            <h3 className="text-lg font-bold text-foreground mb-6 group-hover:text-primary transition-colors">
+                Funil de Vendas
+            </h3>
             <div className="flex flex-wrap gap-4">
                 {funnelSteps.length > 0 ? (
                     funnelSteps.map((step, index) => {
@@ -36,6 +43,6 @@ export default function SalesFunnel({ funnelSteps }: SalesFunnelProps) {
                     </div>
                 )}
             </div>
-        </div>
+        </Link>
     );
 }

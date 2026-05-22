@@ -26,3 +26,5 @@ yarn-error.log*
 analyze_db.mjs
 .vercel
 *.mjs.map
+scratch/
+

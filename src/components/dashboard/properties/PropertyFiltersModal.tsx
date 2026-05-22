@@ -150,7 +150,29 @@ export function PropertyFiltersModal({
     }
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Filtros e Ações" size="lg">
+        <Modal 
+            isOpen={isOpen} 
+            onClose={onClose} 
+            title="Filtros e Ações" 
+            size="lg"
+            extraHeaderContent={
+                <div className="flex items-center gap-2">
+                    <button
+                        onClick={handleClearFilters}
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-foreground border border-border hover:bg-foreground/5 rounded-md transition-colors"
+                    >
+                        <Trash2 size={14} />
+                        Limpar Filtros
+                    </button>
+                    <button
+                        onClick={onClose}
+                        className="px-4 py-1.5 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all active:scale-95"
+                    >
+                        Aplicar Filtros
+                    </button>
+                </div>
+            }
+        >
             <div className="space-y-8">
                 <div className="space-y-4">
                     <div className="flex items-center gap-2 text-foreground font-bold">
@@ -310,9 +332,9 @@ export function PropertyFiltersModal({
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
                             onClick={onExport}
-                            className="flex items-center justify-center gap-2 p-4 bg-card rounded-xl hover:bg-muted/50 transition-colors group"
+                            className="flex items-center justify-center gap-2 p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors group"
                         >
-                            <div className="p-2 bg-foreground/10 rounded-lg group-hover:bg-foreground/20 transition-colors">
+                            <div className="p-2 bg-foreground/10 rounded-md group-hover:bg-foreground/20 transition-colors">
                                 <Download size={20} className="text-foreground" />
                             </div>
                             <div className="text-left">
@@ -324,9 +346,9 @@ export function PropertyFiltersModal({
                         <button
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isImporting}
-                            className="flex items-center justify-center gap-2 p-4 bg-card rounded-xl hover:bg-muted/50 transition-colors group disabled:opacity-50"
+                            className="flex items-center justify-center gap-2 p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors group disabled:opacity-50"
                         >
-                            <div className="p-2 bg-foreground/10 rounded-lg group-hover:bg-foreground/20 transition-colors">
+                            <div className="p-2 bg-foreground/10 rounded-md group-hover:bg-foreground/20 transition-colors">
                                 <Upload size={20} className="text-foreground" />
                             </div>
                             <div className="text-left">
@@ -343,32 +365,6 @@ export function PropertyFiltersModal({
                             accept=".csv"
                             className="hidden"
                         />
-                    </div>
-                </div>
-
-                {/* Rodapé do Modal */}
-                <div className="pt-6 flex items-center justify-between">
-                    <button
-                        onClick={handleClearFilters}
-                        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-foreground hover:bg-foreground/10 rounded-lg transition-colors"
-                    >
-                        <Trash2 size={16} />
-                        Limpar Filtros
-                    </button>
-                    
-                    <div className="flex gap-3">
-                        <button
-                            onClick={onClose}
-                            className="px-6 py-2 text-sm font-bold text-foreground hover:bg-muted/50 rounded-lg transition-colors"
-                        >
-                            Fechar
-                        </button>
-                        <button
-                            onClick={onClose}
-                            className="px-6 py-2 text-sm font-bold bg-foreground text-background hover:bg-foreground/90 rounded-lg shadow-sm transition-all active:scale-95"
-                        >
-                            Aplicar Filtros
-                        </button>
                     </div>
                 </div>
             </div>

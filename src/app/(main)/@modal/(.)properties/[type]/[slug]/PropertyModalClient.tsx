@@ -7,6 +7,7 @@ import { PropertyDetailsModal } from '@/components/dashboard/properties/Property
 interface PropertyModalClientProps {
     prop: any;
     userRole?: string;
+    userId?: string;
     hasAIAccess: boolean;
     hasMarketingAccess: boolean;
     tenantId: string;
@@ -15,6 +16,7 @@ interface PropertyModalClientProps {
 export function PropertyModalClient({ 
     prop, 
     userRole, 
+    userId,
     hasAIAccess, 
     hasMarketingAccess, 
     tenantId 
@@ -36,6 +38,7 @@ export function PropertyModalClient({
             onClose={handleClose} 
             prop={prop}
             userRole={userRole}
+            userId={userId}
             hasAIAccess={hasAIAccess}
             hasMarketingAccess={hasMarketingAccess}
             tenantId={tenantId}

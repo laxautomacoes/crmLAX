@@ -19,7 +19,7 @@ export default async function PropertyInterceptedModal({ params }: PropertyModal
     if (!profile || !profile.tenant_id) return null
 
     const [propertyResult, aiAccess, marketingAccess] = await Promise.all([
-        getPropertyBySlug(type, slug),
+        getPropertyBySlug(type, slug, true),
         checkPlanFeatureAction(profile.tenant_id, 'ai'),
         checkPlanFeatureAction(profile.tenant_id, 'marketing'),
     ])
@@ -32,6 +32,7 @@ export default async function PropertyInterceptedModal({ params }: PropertyModal
         <PropertyModalClient
             prop={prop}
             userRole={profile.role || 'user'}
+            userId={profile.id}
             hasAIAccess={aiAccess}
             hasMarketingAccess={marketingAccess}
             tenantId={profile.tenant_id}

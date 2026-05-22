@@ -19,6 +19,7 @@ import {
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
+import { SourceImageItem } from './SourceImageItem'
 
 interface SortableImageProps {
     url: string;
@@ -170,36 +171,16 @@ export function MediaFields({
                         </div>
 
                         <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                            {sourceImages.map((url, index) => {
-                                const isSelected = selectedSourceImages.has(index)
-                                return (
-                                    <div key={index} className="relative aspect-square rounded-lg overflow-hidden group cursor-pointer" onClick={() => toggleSourceImage(index)}>
-                                        <img 
-                                            src={url} 
-                                            alt={`Imagem ${index + 1}`} 
-                                            className={`w-full h-full object-cover transition-all ${isSelected ? 'ring-2 ring-primary ring-offset-1 ring-offset-background' : 'opacity-70 group-hover:opacity-100'}`}
-                                            onError={(e) => {
-                                                (e.target as HTMLImageElement).style.display = 'none'
-                                                if (onRemoveSourceImage) onRemoveSourceImage(index)
-                                            }}
-                                        />
-                                        {/* Selection overlay */}
-                                        <div className={`absolute inset-0 flex items-center justify-center transition-all ${isSelected ? 'bg-primary/20' : 'bg-black/0 group-hover:bg-black/10'}`}>
-                                            <div className={`w-5 h-5 rounded-full border-2 flex items-center justify-center transition-all ${isSelected ? 'bg-primary border-primary' : 'border-white/70 bg-black/30'}`}>
-                                                {isSelected && <Check size={12} className="text-primary-foreground" />}
-                                            </div>
-                                        </div>
-                                        {/* Remove btn */}
-                                        <button
-                                            type="button"
-                                            onClick={(e) => { e.stopPropagation(); onRemoveSourceImage?.(index) }}
-                                            className="absolute top-1 right-1 p-1 bg-destructive/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                        >
-                                            <X size={10} />
-                                        </button>
-                                    </div>
-                                )
-                            })}
+                            {sourceImages.map((url, index) => (
+                                <SourceImageItem
+                                    key={index}
+                                    url={url}
+                                    index={index}
+                                    isSelected={selectedSourceImages.has(index)}
+                                    onToggle={toggleSourceImage}
+                                    onRemove={(idx) => onRemoveSourceImage?.(idx)}
+                                />
+                            ))}
                         </div>
 
                         {/* Import button */}
@@ -346,7 +327,7 @@ export function MediaFields({
                             ) : (
                                 <>
                                     <Upload size={16} className="text-foreground" />
-                                    <span className="text-sm font-medium text-foreground">Carregar Doc</span>
+                                    <span className="text-sm font-medium text-foreground">Carregar Documento</span>
                                 </>
                             )}
                             <input

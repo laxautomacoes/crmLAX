@@ -768,3 +768,205 @@ export async function deleteEmailDomain(tenantId: string, resendDomainId: string
         return { success: false, error: err.message };
     }
 }
+
+export interface CustomAmenity {
+    id: string;
+    label: string;
+    status: 'pending' | 'approved';
+    created_by: string;
+}
+
+export async function getTenantCustomAmenities(tenantId: string) {
+    const supabase = await createClient()
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_amenities')
+        .eq('id', tenantId)
+        .single()
+
+    return { success: true, data: (tenant?.custom_amenities || []) as CustomAmenity[] }
+}
+
+export async function addTenantCustomAmenity(tenantId: string, label: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', user.id)
+        .single()
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_amenities')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_amenities || []) as CustomAmenity[]
+    const newId = `custom_${label.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Math.floor(Math.random() * 1000)}`
+    
+    if (current.some(a => a.label.toLowerCase() === label.toLowerCase())) {
+        return { success: false, error: 'Esta área já existe.' }
+    }
+
+    const newAmenity: CustomAmenity = {
+        id: newId,
+        label,
+        status: 'pending',
+        created_by: user.id
+    }
+
+    const updated = [...current, newAmenity]
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_amenities: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+
+    // Notificar os admins do tenant sobre a nova área pendente
+    try {
+        const { data: admins } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .in('role', ['admin', 'superadmin'])
+
+        if (admins && admins.length > 0) {
+            const userName = profile?.full_name || 'Um colaborador'
+            const { notificationService } = await import('@/services/notification-service')
+            
+            const notificationPromises = admins.map((admin: { id: string }) =>
+                notificationService.create({
+                    user_id: admin.id,
+                    tenant_id: tenantId,
+                    title: 'Nova Área de Lazer Pendente',
+                    message: `${userName} criou a área "${label}". Acesse Editar Imóvel para aprovar.`,
+                    type: 'warning'
+                })
+            )
+            await Promise.all(notificationPromises)
+        }
+    } catch (e) {
+        console.error('Erro ao enviar notificações para admins:', e)
+    }
+
+    return { success: true, data: newAmenity }
+}
+
+export async function approveTenantCustomAmenity(tenantId: string, amenityId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem aprovar.' }
+    }
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_amenities')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_amenities || []) as CustomAmenity[]
+    const updated = current.map(a => 
+        a.id === amenityId ? { ...a, status: 'approved' as const } : a
+    )
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_amenities: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}
+
+export async function editTenantCustomAmenity(tenantId: string, amenityId: string, newLabel: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem editar áreas personalizadas.' }
+    }
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_amenities')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_amenities || []) as CustomAmenity[]
+    
+    // Verificar se já existe outra área com o mesmo nome (case-insensitive)
+    if (current.some(a => a.id !== amenityId && a.label.toLowerCase() === newLabel.toLowerCase())) {
+        return { success: false, error: 'Já existe outra área com este nome.' }
+    }
+
+    const updated = current.map(a => 
+        a.id === amenityId ? { ...a, label: newLabel } : a
+    )
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_amenities: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}
+
+export async function deleteTenantCustomAmenity(tenantId: string, amenityId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem excluir áreas personalizadas.' }
+    }
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_amenities')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_amenities || []) as CustomAmenity[]
+    const updated = current.filter(a => a.id !== amenityId)
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_amenities: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}

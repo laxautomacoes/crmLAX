@@ -5,6 +5,8 @@ import { Modal } from '@/components/shared/Modal'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
+import { getTenantCustomAmenities } from '@/app/_actions/tenant'
+import type { CustomAmenity } from '@/app/_actions/tenant'
 import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
 import { AreaFields } from './PropertyModal/AreaFields'
 import { RoomsFields } from './PropertyModal/RoomsFields'
@@ -282,6 +284,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const [isSaving, setIsSaving] = useState(false)
     const [sourceImages, setSourceImages] = useState<string[]>([])
     const [isImportingImages, setIsImportingImages] = useState(false)
+    const [customAmenities, setCustomAmenities] = useState<CustomAmenity[]>([])
 
     useEffect(() => {
         async function loadData() {
@@ -289,6 +292,12 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             if (profile) {
                 setCurrentProfile(profile)
                 setTenantId(profile.tenant_id)
+                // Carregar áreas customizadas do tenant
+                const amenitiesRes = await getTenantCustomAmenities(profile.tenant_id)
+                if (amenitiesRes.success) {
+                    setCustomAmenities(amenitiesRes.data || [])
+                }
+
                 if (profile.role === 'admin' || profile.role === 'superadmin') {
                     const res = await getBrokers(profile.tenant_id)
                     if (res.success) {
@@ -609,7 +618,14 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     )}
                     <RoomsFields formData={formData} setFormData={setFormData} isEmpreendimento={formData.details.is_empreendimento} />
                     <div className="border-t border-border/60" />
-                    <AmenitiesFields formData={formData} setFormData={setFormData} />
+                    <AmenitiesFields 
+                        formData={formData} 
+                        setFormData={setFormData}
+                        tenantId={tenantId}
+                        isAdmin={isAdmin}
+                        customAmenities={customAmenities}
+                        onCustomAmenitiesChange={setCustomAmenities}
+                    />
                     <div className="border-t border-border/60" />
                     <DescriptionField formData={formData} setFormData={setFormData} />
                     <div className="border-t border-border/60" />

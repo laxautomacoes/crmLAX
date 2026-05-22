@@ -6,12 +6,11 @@ import { Sparkles, Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Ut
     PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, 
     Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info, Send,
     ChevronLeft, ChevronRight, Maximize2, Map as MapIcon, DollarSign, Trees,
-    Instagram, Building2, Layers
+    Instagram, Building2, Layers, Star
 } from 'lucide-react';
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
-import { Switch } from '@/components/ui/Switch';
-import { updateProperty } from '@/app/_actions/properties';
+
 import { toast } from 'sonner';
 import { cn } from '@/lib/utils';
 import { InstagramPostModal } from '@/components/marketing/InstagramPostModal';
@@ -19,6 +18,8 @@ import PlanGate from '@/components/ui/PlanGate';
 import PropertyCopyCard from '@/components/ai/PropertyCopyCard';
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
 import { SafeMarkdownRenderer } from '@/components/shared/SafeMarkdownRenderer';
+import { getTenantCustomAmenities } from '@/app/_actions/tenant';
+import type { CustomAmenity } from '@/app/_actions/tenant';
 
 interface PropertyDetailsContentProps {
     prop: any;
@@ -42,15 +43,25 @@ export function PropertyDetailsContent({
     const isAdmin = userRole === 'admin' || userRole === 'superadmin';
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
-    const [isPublished, setIsPublished] = useState(prop?.is_published || false);
-    const [isUpdating, setIsUpdating] = useState(false);
+
     const [activeTab, setActiveTab] = useState<'details' | 'ai_copy'>('details');
     const [isInstagramModalOpen, setIsInstagramModalOpen] = useState(false);
     const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
+    const [customAmenities, setCustomAmenities] = useState<CustomAmenity[]>([]);
 
+    // Carregar áreas customizadas do tenant
     useEffect(() => {
-        setIsPublished(prop?.is_published || false);
-    }, [prop?.is_published]);
+        async function loadCustomAmenities() {
+            if (!tenantId) return;
+            const res = await getTenantCustomAmenities(tenantId);
+            if (res.success) {
+                setCustomAmenities(res.data || []);
+            }
+        }
+        loadCustomAmenities();
+    }, [tenantId]);
+
+
 
     useEffect(() => {
         if (thumbnailRefs.current[selectedImageIndex]) {
@@ -74,25 +85,7 @@ export function PropertyDetailsContent({
         setSelectedImageIndex((prev) => (prev - 1 + allMedia.length) % allMedia.length);
     };
 
-    const handleTogglePublished = async (checked: boolean) => {
-        try {
-            setIsUpdating(true);
-            setIsPublished(checked);
-            const res = await updateProperty(tenantId, prop.id, { is_published: checked });
-            if (!res.success) {
-                setIsPublished(!checked);
-                toast.error('Erro ao atualizar status de publicação');
-            } else {
-                toast.success(checked ? 'Imóvel publicado no site' : 'Imóvel removido do site');
-            }
-        } catch (error) {
-            console.error('Error toggling published:', error);
-            setIsPublished(!checked);
-            toast.error('Ocorreu um erro inesperado');
-        } finally {
-            setIsUpdating(false);
-        }
-    };
+
 
     const allMedia = [
         ...(prop.images || []).map((url: string) => ({ type: 'image' as const, url })),
@@ -117,6 +110,16 @@ export function PropertyDetailsContent({
         { id: 'home_market', icon: <Home size={16} />, label: 'Home Market' },
     ].filter(a => details[a.id]);
 
+    // Áreas customizadas ativas neste imóvel
+    const activeCustomAmenities = customAmenities
+        .filter(a => (a.status === 'approved' || isAdmin) && details[a.id])
+        .map(a => ({
+            id: a.id,
+            icon: <Star size={16} />,
+            label: a.label,
+            isPending: a.status === 'pending'
+        }));
+
     const formattedPrice = prop.price
         ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}`
         : 'Sob consulta';
@@ -138,17 +141,7 @@ export function PropertyDetailsContent({
     return (
         <div className={cn("w-full", !isModal && "bg-background min-h-screen p-4 md:p-8")}>
             <div className={cn("max-w-7xl mx-auto", !isModal && "space-y-8")}>
-                <div className="flex items-center gap-4 mb-4">
-                    {isAdmin && (
-                        <Switch 
-                            checked={isPublished}
-                            onChange={handleTogglePublished}
-                            label="Site"
-                            disabled={isUpdating}
-                            className="bg-muted/30 px-3 py-1.5 rounded-xl border border-border/50"
-                        />
-                    )}
-                </div>
+
 
                 {activeTab === 'details' ? (
                     <>
@@ -166,15 +159,8 @@ export function PropertyDetailsContent({
                             {/* Header Info */}
                             <div className="flex flex-col gap-6 pb-6">
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                            <Home size={14} className="text-foreground" />
-                                            Imóvel | Empreendimento
-                                        </h4>
-                                    </div>
                                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                        <div className="space-y-1">
-                                            <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
+                                        <div className="space-y-3">
                                             <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
                                                 <div className="flex items-center gap-2">
                                                     {details.situacao && (
@@ -192,6 +178,11 @@ export function PropertyDetailsContent({
                                                     )}
                                                 </div>
                                             </div>
+                                            <h4 className="text-sm font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                                <Home size={14} className="text-foreground" />
+                                                {details.is_empreendimento ? 'Empreendimento' : 'Imóvel'}
+                                            </h4>
+                                            <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
                                         </div>
                                         {onSend && (
                                             <div className="flex flex-wrap items-center gap-3">
@@ -218,18 +209,16 @@ export function PropertyDetailsContent({
                                     </div>
                                 </div>
 
-                                <div className="space-y-4 pt-6 text-[#A37B5C]">
-                                    <h4 className="text-lg font-black uppercase tracking-widest flex items-center gap-2">
+                                <div className="space-y-4 pt-6">
+                                    <h4 className="text-lg font-black uppercase tracking-widest flex items-center gap-2 text-white">
                                         <MapPin size={14} />
                                         Endereço
                                     </h4>
-                                    <div className="flex items-center gap-1.5 text-sm font-medium">
+                                    <div className="flex items-center gap-1.5 text-sm font-medium text-white">
                                         {fullAddress || 'Endereço não informado'}
                                     </div>
                                 </div>
                             </div>
-
-                            <div className="border-t-2 border-border/100" />
 
                             {/* Gallery */}
                             <div className="space-y-4 pt-6">
@@ -337,20 +326,17 @@ export function PropertyDetailsContent({
                             <div className="border-t-2 border-border/100" />
 
                             {/* Main Content */}
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-12 pt-6">
+                            <div className="flex flex-col gap-12 pt-6">
                                 <div className="space-y-8">
                                     <div className="space-y-4">
                                         <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
                                             <Info size={14} className="text-foreground" />
-                                            Informações Gerais
+                                            Informações
                                         </h4>
                                         <div className="flex flex-col gap-0 divide-y divide-border/30">
                                             {!details.is_empreendimento && (
                                                 <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
                                             )}
-                                            <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
-                                            <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
-                                            <InfoRow icon={<User size={14} />} label="Corretor" value={prop.corretor_nome || details.corretor_nome || 'Não informado'} />
                                             {!details.is_empreendimento && (
                                                 <>
                                                     <InfoRow icon={<BedDouble size={14} />} label="Dormitórios" value={`${details.dormitorios || details.quartos || 0} ${Number(details.suites) > 0 ? `(${details.suites} Suítes)` : ''}`} />
@@ -364,6 +350,9 @@ export function PropertyDetailsContent({
                                                     <InfoRow icon={<Home size={14} />} label="Torre/Bloco" value={details.torre_bloco || 'Não informado'} />
                                                 </>
                                             )}
+                                            <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
+                                            <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
+                                            <InfoRow icon={<User size={14} />} label="Corretor" value={prop.corretor_nome || details.corretor_nome || 'Não informado'} />
                                             {details.is_empreendimento && details.empreendimento?.construtora && (
                                                 <InfoRow icon={<Building2 size={14} />} label="Construtora" value={details.empreendimento.construtora} />
                                             )}
@@ -442,16 +431,26 @@ export function PropertyDetailsContent({
                                     )}
 
                                     {/* Amenities */}
-                                    {amenities.length > 0 && (
+                                    {(amenities.length > 0 || activeCustomAmenities.length > 0) && (
                                         <div className="space-y-4">
-                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
+                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                                <Trees size={14} className="text-foreground" />
                                                 Área comum | Lazer
                                             </h4>
                                             <div className="grid grid-cols-2 gap-4">
                                                 {amenities.map(a => (
-                                                    <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl bg-muted/30 border border-border/50">
-                                                        <div className="text-[#A37B5C]">{a.icon}</div>
+                                                    <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/10 border border-secondary/20">
+                                                        <div className="text-secondary">{a.icon}</div>
                                                         <span className="text-sm font-medium text-foreground">{a.label}</span>
+                                                    </div>
+                                                ))}
+                                                {activeCustomAmenities.map(a => (
+                                                    <div key={a.id} className={`flex items-center gap-3 p-3 rounded-xl border ${a.isPending ? 'bg-amber-500/5 border-amber-500/30' : 'bg-secondary/10 border-secondary/20'}`}>
+                                                        <div className="text-secondary">{a.icon}</div>
+                                                        <span className="text-sm font-medium text-foreground">{a.label}</span>
+                                                        {a.isPending && isAdmin && (
+                                                            <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded-md">Pendente</span>
+                                                        )}
                                                     </div>
                                                 ))}
                                             </div>
@@ -461,21 +460,10 @@ export function PropertyDetailsContent({
 
                                 <div className="space-y-8">
                                     <div className="space-y-4">
-                                        <div className="flex items-center justify-between gap-4">
-                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                <Info size={14} className="text-foreground" />
-                                                Descrição
-                                            </h4>
-                                            {prop?.id && (
-                                                <button 
-                                                    onClick={() => setActiveTab('ai_copy')}
-                                                    className="rounded-lg font-bold gap-2 flex items-center px-3 py-1.5 transition-all text-xs uppercase tracking-widest border bg-white text-foreground border-border hover:bg-muted/10 shadow-sm"
-                                                >
-                                                    <Sparkles size={14} className="text-emerald-600" />
-                                                    Copy com IA
-                                                </button>
-                                            )}
-                                        </div>
+                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                            <Info size={14} className="text-foreground" />
+                                            Descrição
+                                        </h4>
                                         <div className="text-foreground leading-relaxed bg-muted/20 p-6 rounded-3xl border border-border/50">
                                             {prop.description ? (
                                                 <SafeMarkdownRenderer content={prop.description} />
@@ -604,7 +592,7 @@ function InfoRow({ icon, label, value }: { icon: React.ReactNode, label: string,
                 <span className="text-muted-foreground">{icon}</span>
                 <span className="text-sm">{label}</span>
             </div>
-            <div className="text-sm font-black text-foreground">
+            <div className="text-sm font-medium text-foreground">
                 {value}
             </div>
         </div>

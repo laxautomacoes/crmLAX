@@ -31,7 +31,7 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
                     <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
-                        {isEmpreendimento ? 'Empreendimento' : 'Imóvel | Empreendimento'}
+                        {isEmpreendimento ? 'Empreendimento' : 'Imóvel'}
                         <span className="ml-1 text-[10px] font-normal italic normal-case text-muted-foreground">
                             ({isEmpreendimento ? 'nome do empreendimento' : 'título do imóvel'})
                         </span>
@@ -45,7 +45,6 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                                 : 'bg-transparent text-muted-foreground border-border hover:bg-muted/50'
                         }`}
                     >
-                        <Building2 size={14} />
                         Empreendimento
                     </button>
                 </div>

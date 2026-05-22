@@ -24,6 +24,7 @@ export interface DashboardMetrics {
         name: string
         interest: string
         status: string
+        color?: string
         created_at: string
     }>
 }
@@ -193,13 +194,17 @@ export async function getDashboardMetrics(tenantId: string) {
 
         if (recentError) throw recentError
 
-        const recentLeads = (recentLeadsData || []).map((lead: any) => ({
-            id: lead.id,
-            name: lead.contacts?.name || 'Sem nome',
-            interest: lead.source || 'N/A',
-            status: (stages || []).find((s: Record<string, any>) => s.id === lead.stage_id)?.name || 'Novo',
-            created_at: lead.created_at
-        }))
+        const recentLeads = (recentLeadsData || []).map((lead: any) => {
+            const stage = (stages || []).find((s: Record<string, any>) => s.id === lead.stage_id);
+            return {
+                id: lead.id,
+                name: lead.contacts?.name || 'Sem nome',
+                interest: lead.source || 'N/A',
+                status: stage?.name || 'Novo',
+                color: stage?.color || undefined,
+                created_at: lead.created_at
+            };
+        })
 
         // 6. Calcular trends (período atual vs anterior — 30 dias)
         const now = new Date()

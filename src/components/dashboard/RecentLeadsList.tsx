@@ -6,6 +6,7 @@ interface RecentLeadsListProps {
         name: string
         interest: string
         status: string
+        color?: string
         created_at: string
     }>
 }
@@ -59,7 +60,12 @@ export default function RecentLeadsList({ recentLeads }: RecentLeadsListProps) {
                                 </div>
                             </div>
                             <div className="text-right flex flex-col items-end">
-                                <span className="text-xs font-bold text-green-600 mb-1">{lead.status}</span>
+                                <span 
+                                    className={`text-xs font-bold mb-1 ${!lead.color ? 'text-green-600' : ''}`}
+                                    style={lead.color ? { color: lead.color } : undefined}
+                                >
+                                    {lead.status}
+                                </span>
                                 <div className="flex flex-col items-end gap-0.5">
                                     <span className="text-[10px] text-muted-foreground/60 leading-none">{formatDate(lead.created_at)}</span>
                                     <span className="text-[10px] font-medium text-muted-foreground leading-none">{getTimeAgo(lead.created_at)}</span>

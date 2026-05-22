@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { useRouter } from 'next/navigation'
+import { useState, useEffect } from 'react'
+import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Search, LayoutGrid, List, Filter, WifiOff, FileText, Globe } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty } from '@/app/_actions/properties'
@@ -38,6 +38,7 @@ export default function PropertiesClient({
     hasMarketingAccess,
 }: PropertiesClientProps) {
     const router = useRouter()
+    const searchParams = useSearchParams()
     const { isOnline } = useOfflineSync()
     const [isModalOpen, setIsModalOpen] = useState(false)
     const [isDetailsOpen, setIsDetailsOpen] = useState(false)
@@ -66,6 +67,20 @@ export default function PropertiesClient({
         neighborhood: '',
         ownerType: 'all'
     })
+
+    // Abre modal de edição automaticamente via query param ?edit={id}
+    useEffect(() => {
+        const editId = searchParams.get('edit')
+        if (editId) {
+            const propToEdit = properties.find((p: any) => p.id === editId)
+            if (propToEdit) {
+                setEditingProperty(propToEdit)
+                setIsModalOpen(true)
+            }
+            // Limpa o query param da URL sem reload
+            router.replace('/properties', { scroll: false })
+        }
+    }, [searchParams])
 
     // Recarrega lista usando server action com contexto de sessão correto
     const refreshProperties = async (statusFilter?: string) => {
@@ -433,7 +448,9 @@ export default function PropertiesClient({
                 }}
                 prop={viewingProperty}
                 onSend={handleSend}
+                onEdit={handleEdit}
                 userRole={userRole}
+                userId={userId}
                 hasAIAccess={hasAIAccess}
                 hasMarketingAccess={hasMarketingAccess}
                 tenantId={tenantId}

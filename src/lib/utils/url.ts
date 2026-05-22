@@ -1,12 +1,4 @@
-import { TenantInfo } from './tenant-types';
-
-/**
- * Auxiliar para verificar se o ambiente atual é desenvolvimento ou localhost.
- */
-function checkIsDev(): boolean {
-    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
-    return process.env.NODE_ENV === 'development' || rootDomain.includes('localhost');
-}
+import { checkIsDev, getRootDomain } from './domain';
 
 /**
  * Retorna a URL base do tenant (Domínio Próprio ou Subdomínio).
@@ -17,7 +9,7 @@ export function getTenantBaseUrl(tenant: {
     custom_domain_verified?: boolean | null 
 }): string {
     const isDev = checkIsDev();
-    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+    const rootDomain = getRootDomain();
     const protocol = isDev ? 'http' : 'https';
 
     // Se estiver em dev, usa sempre o localhost com slug se for necessário, 
@@ -80,4 +72,5 @@ export function getSiteUrl(tenant: {
 
     return `${baseUrl}/site/${tenant.slug}`;
 }
+
 
