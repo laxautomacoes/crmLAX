@@ -239,7 +239,7 @@ interface PropertyModalProps {
 }
 
 export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRole }: PropertyModalProps) {
-    const isAdmin = userRole === 'admin' || userRole === 'superadmin'
+    const isAdmin = userRole?.toLowerCase() === 'admin' || userRole?.toLowerCase() === 'superadmin'
     const [brokers, setBrokers] = useState<Broker[]>([])
     const [tenantId, setTenantId] = useState<string>('')
     const [currentProfile, setCurrentProfile] = useState<CurrentProfile | null>(null)
@@ -298,7 +298,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     setCustomAmenities(amenitiesRes.data || [])
                 }
 
-                if (profile.role === 'admin' || profile.role === 'superadmin') {
+                const roleLower = profile.role?.toLowerCase();
+                if (roleLower === 'admin' || roleLower === 'superadmin') {
                     const res = await getBrokers(profile.tenant_id)
                     if (res.success) {
                         setBrokers(res.data || [])

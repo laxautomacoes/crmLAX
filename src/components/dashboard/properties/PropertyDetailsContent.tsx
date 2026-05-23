@@ -6,7 +6,7 @@ import { Sparkles, Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Ut
     PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, 
     Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info, Send,
     ChevronLeft, ChevronRight, Maximize2, Map as MapIcon, DollarSign, Trees,
-    Instagram, Building2, Layers, Star
+    Instagram, Building2, Layers, Star, Image as ImageIcon
 } from 'lucide-react';
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
@@ -155,7 +155,7 @@ export function PropertyDetailsContent({
                             </button>
                         )}
 
-                        <div className={cn("space-y-8", isModal && "max-h-[85vh] overflow-y-auto pr-4 custom-scrollbar")}>
+                        <div className="space-y-8">
                             {/* Header Info */}
                             <div className="flex flex-col gap-6 pb-6">
                                 <div className="space-y-4">
@@ -223,7 +223,7 @@ export function PropertyDetailsContent({
                             {/* Gallery */}
                             <div className="space-y-4 pt-6">
                                 <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                    <Maximize2 size={14} className="text-foreground" />
+                                    <ImageIcon size={14} className="text-foreground" />
                                     Imagens
                                 </h4>
                                 <div className="relative group w-full aspect-video rounded-3xl overflow-hidden bg-black/90 flex items-center justify-center shadow-xl">
@@ -437,19 +437,19 @@ export function PropertyDetailsContent({
                                                 <Trees size={14} className="text-foreground" />
                                                 Área comum | Lazer
                                             </h4>
-                                            <div className="grid grid-cols-2 gap-4">
+                                            <div className="flex flex-wrap gap-3">
                                                 {amenities.map(a => (
-                                                    <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/10 border border-secondary/20">
+                                                    <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/10 border border-secondary/20 w-fit pr-6">
                                                         <div className="text-secondary">{a.icon}</div>
-                                                        <span className="text-sm font-medium text-foreground">{a.label}</span>
+                                                        <span className="text-sm font-medium text-foreground whitespace-nowrap">{a.label}</span>
                                                     </div>
                                                 ))}
                                                 {activeCustomAmenities.map(a => (
-                                                    <div key={a.id} className={`flex items-center gap-3 p-3 rounded-xl border ${a.isPending ? 'bg-amber-500/5 border-amber-500/30' : 'bg-secondary/10 border-secondary/20'}`}>
+                                                    <div key={a.id} className={`flex items-center gap-3 p-3 rounded-xl border w-fit pr-6 ${a.isPending ? 'bg-amber-500/5 border-amber-500/30' : 'bg-secondary/10 border-secondary/20'}`}>
                                                         <div className="text-secondary">{a.icon}</div>
-                                                        <span className="text-sm font-medium text-foreground">{a.label}</span>
+                                                        <span className="text-sm font-medium text-foreground whitespace-nowrap">{a.label}</span>
                                                         {a.isPending && isAdmin && (
-                                                            <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded-md">Pendente</span>
+                                                            <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded-md whitespace-nowrap">Pendente</span>
                                                         )}
                                                     </div>
                                                 ))}
@@ -509,7 +509,7 @@ export function PropertyDetailsContent({
                                                 <MapPin size={14} className="text-foreground" />
                                                 Localização
                                             </h4>
-                                            <div className="rounded-3xl overflow-hidden bg-muted/30 border-2 border-border shadow-inner aspect-[4/3]">
+                                            <div className="rounded-3xl overflow-hidden bg-muted/30 border-2 border-border shadow-inner p-1">
                                                 <PropertyMap 
                                                     lat={endereco.latitude} 
                                                     lng={endereco.longitude} 

@@ -3,7 +3,7 @@
 import { useRouter } from 'next/navigation';
 import { Modal } from '@/components/shared/Modal';
 import { PropertyDetailsContent } from './PropertyDetailsContent';
-import { Send, Pencil } from 'lucide-react';
+import { Send } from 'lucide-react';
 
 interface PropertyDetailsModalProps {
     isOpen: boolean;
@@ -25,19 +25,37 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, onEdit, us
     const isAdmin = userRole === 'admin' || userRole === 'superadmin';
     const isOwner = userId && prop.created_by === userId;
     const canEdit = isAdmin || isOwner;
+    const details = prop.details || {};
 
-    const handleEdit = () => {
+    const handleEdit = (e: React.MouseEvent) => {
+        e.preventDefault();
+        e.stopPropagation();
         if (onEdit) {
             onEdit(prop);
+            onClose();
         } else {
             // Redireciona para a lista de imóveis com o query param ?edit=id
             router.push(`/properties?edit=${prop.id}`);
         }
-        onClose();
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title={null} size="xl">
+        <Modal 
+            isOpen={isOpen} 
+            onClose={onClose} 
+            title="Visualização Imóvel" 
+            size="xl"
+            extraHeaderContent={
+                canEdit ? (
+                    <button
+                        onClick={handleEdit}
+                        className="px-4 py-2 bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] rounded-lg font-bold text-sm shadow-sm transition-all whitespace-nowrap"
+                    >
+                        Editar
+                    </button>
+                ) : null
+            }
+        >
             <PropertyDetailsContent 
                 prop={prop}
                 onSend={onSend}
@@ -48,23 +66,8 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, onEdit, us
                 isModal={true}
             />
             
-            <div className="flex gap-3 pt-6 border-t mt-6">
-                <button
-                    onClick={onClose}
-                    className="flex-1 py-3 bg-muted text-foreground border border-border rounded-xl font-bold hover:bg-muted/80 transition-all active:scale-[0.98]"
-                >
-                    Fechar
-                </button>
-                {canEdit && (
-                    <button
-                        onClick={handleEdit}
-                        className="flex-1 py-3 bg-primary text-primary-foreground rounded-xl font-bold hover:opacity-90 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
-                    >
-                        <Pencil size={18} />
-                        Editar Imóvel
-                    </button>
-                )}
-                {onSend && (
+            {onSend && (
+                <div className="flex gap-3 pt-6 border-t mt-6">
                     <button
                         onClick={() => onSend(prop)}
                         className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
@@ -72,8 +75,8 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, onEdit, us
                         <Send size={18} />
                         Enviar para Lead
                     </button>
-                )}
-            </div>
+                </div>
+            )}
         </Modal>
     );
 }

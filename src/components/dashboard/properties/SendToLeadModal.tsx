@@ -288,10 +288,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const propertyUrl = getPropertyUrl(tenant ? { slug: tenant.slug || tenantSlug, custom_domain: tenant.custom_domain, custom_domain_verified: tenant.custom_domain_verified } : { slug: tenantSlug }, property.id, property.slug, property.type) + (queryString ? `?${queryString}` : '')
         
         // Build dynamic message
-        let message = `Olá ${currentLead.name}! Tudo bem?\n\nEstou te enviando os detalhes deste imóvel que pode te interessar:\n\n`
+        const firstName = currentLead.name.split(' ')[0]
+        let message = `Olá ${firstName}! Tudo bem?\n\nEstou enviando os detalhes deste imóvel que pode te interessar:\n\n`
         
         if (config.title) message += `*${property.title}*\n`
-        if (config.price) message += `💰 Valor: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}\n`
         
         if (config.location !== 'none') {
             const bairro = property.details?.endereco?.bairro || ''
@@ -299,33 +299,63 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             const rua = property.details?.endereco?.rua || ''
             const numero = property.details?.endereco?.numero || ''
             
-            if (config.location === 'exact') {
+            if (config.location === 'exact' && rua) {
                 message += `📍 ${rua}, ${numero} - ${bairro}, ${cidade}\n`
-            } else {
+            } else if (bairro && cidade) {
                 message += `📍 ${bairro} - ${cidade}\n`
             }
         }
 
         const details = []
-        if (config.showBedrooms && (property.details?.dormitorios || property.details?.quartos)) details.push(`${property.details.dormitorios || property.details.quartos} Dorms`)
-        if (config.showSuites && property.details?.suites) details.push(`${property.details.suites} Suítes`)
-        if (config.showArea && property.details?.area_privativa) details.push(`${property.details.area_privativa}m² privativos`)
-        if (config.showType) details.push(`Tipo: ${property.type}`)
-        if (config.showAmenities) {
-            const amenityKeys = ['piscina', 'academia', 'espaco_gourmet', 'salao_festas', 'playground', 'brinquedoteca', 'churrasqueira', 'sauna', 'coworking', 'pet_place', 'quadra'];
-            const hasAmenities = amenityKeys.some(k => property.details?.[k]);
-            if (hasAmenities) details.push('Área de lazer');
+        
+        // Dormitórios e Suítes
+        const dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'))
+        const suites = parseInt(String(property.details?.suites || '0'))
+        
+        if (config.showBedrooms || config.showSuites) {
+            if (dorms > 0 && dorms === suites) {
+                details.push(`${suites} suíte${suites > 1 ? 's' : ''}`)
+            } else if (dorms > 0 && suites > 0) {
+                details.push(`${dorms} dormitório${dorms > 1 ? 's' : ''} (${suites} suíte${suites > 1 ? 's' : ''})`)
+            } else if (dorms > 0) {
+                details.push(`${dorms} dormitório${dorms > 1 ? 's' : ''}`)
+            } else if (suites > 0) {
+                details.push(`${suites} suíte${suites > 1 ? 's' : ''}`)
+            }
+        }
+
+        // Outros ambientes
+        if (property.details?.lavabo) details.push('Lavabo')
+        
+        if (property.details?.sacada && property.details?.churrasqueira) {
+            details.push('Sacada com churrasqueira')
+        } else if (property.details?.sacada) {
+            details.push('Sacada')
+        } else if (property.details?.churrasqueira) {
+            details.push('Churrasqueira')
+        }
+
+        if (property.details?.escritorio) details.push('Escritório')
+        if (property.details?.dependencia_empregada) details.push('Dependência de empregada')
+        
+        // Área privativa
+        if (config.showArea && property.details?.area_privativa) {
+            details.push(`Área privativa: ${property.details.area_privativa} m²`)
+        }
+        
+        // Vagas
+        const vagas = parseInt(String(property.details?.vagas || '0'))
+        if (vagas > 0) {
+            details.push(`${vagas} vaga${vagas > 1 ? 's' : ''} de garagem`)
         }
         
         if (details.length > 0) {
             message += `\n*Detalhes:* \n• ${details.join('\n• ')}\n`
         }
 
-        if (config.description === 'full' && property.description) {
-            message += `\n*Descrição:* \n${property.description}\n`
-        }
+        if (config.price) message += `\n💰 Valor: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}\n`
 
-        message += `\nConfira todas as fotos e detalhes aqui: ${propertyUrl}\n\nQualquer dúvida estou à disposição!`
+        message += `\nConfira imagens e mais informações em:\n${propertyUrl}\n\nQualquer dúvida, estou à disposição!`
         
         const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`
         

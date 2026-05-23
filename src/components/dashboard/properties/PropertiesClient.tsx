@@ -82,6 +82,21 @@ export default function PropertiesClient({
         }
     }, [searchParams])
 
+    // Abre modal de edição instantaneamente via evento customizado (vido do modal de detalhes interceptado)
+    useEffect(() => {
+        const handleOpenEdit = (e: Event) => {
+            const customEvent = e as CustomEvent
+            if (customEvent.detail) {
+                setEditingProperty(customEvent.detail)
+                setIsModalOpen(true)
+            }
+        }
+        window.addEventListener('open-edit-property', handleOpenEdit)
+        return () => {
+            window.removeEventListener('open-edit-property', handleOpenEdit)
+        }
+    }, [])
+
     // Recarrega lista usando server action com contexto de sessão correto
     const refreshProperties = async (statusFilter?: string) => {
         setIsRefreshing(true)

@@ -69,7 +69,7 @@ export function PropertyDetailsModal({ isOpen, onClose, property }: { isOpen: bo
             } 
             size="2xl"
         >
-            <div className="space-y-8 max-h-[80vh] overflow-y-auto pr-2">
+            <div className="space-y-8">
                 <div className="flex flex-col gap-8">
                     <div className="space-y-6">
                         <div 
@@ -263,7 +263,7 @@ export function PropertyDetailsModal({ isOpen, onClose, property }: { isOpen: bo
                                     </div>
                                     Localização
                                 </h4>
-                                <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-1 aspect-video">
+                                <div className="rounded-xl overflow-hidden border border-border bg-muted/30 p-1">
                                     <PropertyMap 
                                         lat={details.endereco.latitude} 
                                         lng={details.endereco.longitude} 

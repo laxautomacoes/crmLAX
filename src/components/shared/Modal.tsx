@@ -1,7 +1,7 @@
 'use client';
 
 import { X } from 'lucide-react';
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 
 interface ModalProps {
     isOpen: boolean;
@@ -22,9 +22,14 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
         '2xl': 'max-w-6xl',
         full: 'max-w-[95vw]'
     };
+    const contentRef = useRef<HTMLDivElement>(null);
+
     useEffect(() => {
         if (isOpen) {
             document.body.style.overflow = 'hidden';
+            if (contentRef.current) {
+                contentRef.current.scrollTop = 0;
+            }
         } else {
             document.body.style.overflow = 'unset';
         }
@@ -36,7 +41,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
             <div onClick={(e) => e.stopPropagation()} className={`bg-card rounded-xl shadow-xl w-full ${sizeClasses[size]} max-h-[95vh] md:max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative`}>
                 {title ? (
                     <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border shrink-0 gap-3 md:gap-4">
@@ -68,7 +73,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
                         </button>
                     </div>
                 )}
-                <div className="p-4 md:p-6 overflow-y-auto no-scrollbar flex-1">
+                <div ref={contentRef} className="p-4 md:p-6 overflow-y-auto no-scrollbar flex-1">
                     {children}
                 </div>
             </div>
