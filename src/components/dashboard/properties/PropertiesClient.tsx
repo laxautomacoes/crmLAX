@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Search, LayoutGrid, List, Filter, WifiOff, FileText, Globe, Archive } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Filter, WifiOff, FileText, Globe, Archive, Trash2 } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty, archiveProperty } from '@/app/_actions/properties'
 import { toast } from 'sonner'
@@ -54,6 +54,7 @@ export default function PropertiesClient({
     const [sendingProperty, setSendingProperty] = useState<any | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
     const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null)
+    const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
 
     const [filters, setFilters] = useState({
         status: 'all',
@@ -193,14 +194,19 @@ export default function PropertiesClient({
         setIsSendModalOpen(true)
     }
 
-    const handleDelete = async (id: string) => {
-        if (!confirm('Tem certeza que deseja excluir este imóvel permanentemente?')) return
+    const handleDelete = (id: string) => {
+        setConfirmDeleteId(id)
+    }
+
+    const handleConfirmDelete = async (id: string) => {
         const result = await deleteProperty(tenantId, id)
         if (result.success) {
             toast.success('Imóvel excluído!')
+            setConfirmDeleteId(null)
             refreshProperties(filters.status)
         } else {
             toast.error('Erro ao excluir')
+            setConfirmDeleteId(null)
         }
     }
 
@@ -573,6 +579,40 @@ export default function PropertiesClient({
                                 className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-bold text-sm hover:bg-amber-600 transition-colors"
                             >
                                 Arquivar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de confirmação de exclusão */}
+            {confirmDeleteId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2.5 bg-red-500/10 rounded-xl">
+                                <Trash2 size={22} className="text-red-500" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-foreground">Excluir imóvel?</h3>
+                                <p className="text-xs text-muted-foreground">O imóvel será excluído permanentemente.</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-foreground mb-6">
+                            Esta ação não pode ser desfeita e removerá o imóvel definitivamente do sistema.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmDeleteId(null)}
+                                className="flex-1 px-4 py-2.5 rounded-xl border border-border text-foreground font-bold text-sm hover:bg-muted/50 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => handleConfirmDelete(confirmDeleteId)}
+                                className="flex-1 px-4 py-2.5 rounded-xl bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors"
+                            >
+                                Excluir
                             </button>
                         </div>
                     </div>

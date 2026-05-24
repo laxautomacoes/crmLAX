@@ -102,17 +102,17 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                                     {onArchive && (
                                         <button
                                             onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onArchive(prop.id) }}
-                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-amber-500 hover:bg-amber-500/10 transition-colors"
+                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-amber-500/10 transition-colors"
                                         >
-                                            <Archive size={14} />
+                                            <Archive size={14} className="text-amber-500" />
                                             Arquivar
                                         </button>
                                     )}
                                     <button
                                         onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onDelete(prop.id) }}
-                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-red-500/10 transition-colors"
                                     >
-                                        <Trash2 size={14} />
+                                        <Trash2 size={14} className="text-red-500" />
                                         Excluir
                                     </button>
                                 </>
@@ -148,7 +148,9 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                         )}
                     </div>
                     <div>
-                        <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1">{prop.title}</h3>
+                        <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1">
+                            {prop.title ? prop.title.replace(/\s*-\s*Apto\s+.*/i, '') : ''}
+                        </h3>
                         {prop.details?.endereco?.apto && (
                             <div className="flex items-center gap-1 text-foreground text-xs mt-1">
                                 <Home size={12} />

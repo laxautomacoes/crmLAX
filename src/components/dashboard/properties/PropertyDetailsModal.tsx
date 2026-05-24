@@ -43,8 +43,11 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, onEdit, us
         <Modal 
             isOpen={isOpen} 
             onClose={onClose} 
-            title="Visualização Imóvel" 
-            size="xl"
+            title={
+                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                    Visualização Imóvel
+                </h3>
+            }            size="xl"
             extraHeaderContent={
                 canEdit ? (
                     <button

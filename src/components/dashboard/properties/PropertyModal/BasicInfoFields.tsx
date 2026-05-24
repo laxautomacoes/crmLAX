@@ -2,7 +2,7 @@
 
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { Building2, Home, User } from 'lucide-react'
+import { Building2, Home } from 'lucide-react'
 
 interface BasicInfoFieldsProps {
     formData: any
@@ -99,32 +99,6 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                     </div>
                 </div>
             )}
-
-            <div className="space-y-4">
-                <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                    <User size={14} className="text-foreground" />
-                    Responsável | Corretor
-                </h4>
-                {isAdmin ? (
-                    <FormSelect
-                        value={formData.created_by || 'all'}
-                        onChange={(e) => setFormData({ ...formData, created_by: e.target.value === 'all' ? null : e.target.value })}
-                        options={[
-                            { value: 'all', label: 'Todos' },
-                            ...brokers.map(broker => ({
-                                value: broker.id,
-                                label: broker.full_name
-                            }))
-                        ]}
-                    />
-                ) : (
-                    <FormInput
-                        value={currentProfile?.full_name || ''}
-                        disabled
-                        onChange={() => {}}
-                    />
-                )}
-            </div>
 
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6 pt-4">

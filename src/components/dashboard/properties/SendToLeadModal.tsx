@@ -420,8 +420,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title="Enviar para Lead"
-            size="md"
+            title={
+                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                    Enviar para Lead
+                </h3>
+            }            size="md"
         >
             <div className="flex flex-col max-h-[calc(90vh-120px)]">
                 <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-6 min-h-0">

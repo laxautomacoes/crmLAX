@@ -612,7 +612,42 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         <Modal
             isOpen={isOpen}
             onClose={onClose}
-            title={editingProperty ? "Editar Imóvel" : "Novo Imóvel"}
+            title={
+                <div className="flex flex-wrap items-center gap-4">
+                    <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                        {editingProperty ? "Editar Imóvel" : "Novo Imóvel"}
+                    </h3>
+                    <div className="flex items-center gap-2 border-l border-border pl-4">
+                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground whitespace-nowrap">
+                            Responsável:
+                        </span>
+                        {isAdmin ? (
+                            <select
+                                value={formData.created_by || 'all'}
+                                onChange={(e) => setFormData(prev => ({ ...prev, created_by: e.target.value === 'all' ? null : e.target.value }))}
+                                className="h-8 py-1 pl-2 pr-8 text-xs font-bold text-foreground bg-input border border-muted-foreground/30 rounded-lg outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all appearance-none cursor-pointer min-w-[150px] max-w-[200px]"
+                                style={{
+                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
+                                    backgroundPosition: 'right 0.5rem center',
+                                    backgroundSize: '1rem',
+                                    backgroundRepeat: 'no-repeat'
+                                }}
+                            >
+                                <option value="all">Todos</option>
+                                {brokers.map(broker => (
+                                    <option key={broker.id} value={broker.id}>
+                                        {broker.full_name}
+                                    </option>
+                                ))}
+                            </select>
+                        ) : (
+                            <span className="text-xs font-bold text-foreground whitespace-nowrap">
+                                {currentProfile?.full_name || ''}
+                            </span>
+                        )}
+                    </div>
+                </div>
+            }
             extraHeaderContent={
                 <div className="flex items-center gap-3">
                     {isAdmin && (
