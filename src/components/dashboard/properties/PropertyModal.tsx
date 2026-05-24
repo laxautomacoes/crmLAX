@@ -560,7 +560,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
 
             // Validação: tipo unidade exige campo Apartamento preenchido
             const tiposComApto = ['apartment', 'penthouse', 'studio']
-            const tipo = (formData.type || formData.details?.type || '').toLowerCase()
+            const tipo = (formData.type || '').toLowerCase()
             const apto = formData.details?.endereco?.apto?.trim()
             if (tiposComApto.includes(tipo) && !apto) {
                 toast.error('Informe o número do Apartamento antes de salvar.', {
