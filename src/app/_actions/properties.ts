@@ -38,6 +38,12 @@ export async function getProperties(tenantId: string, status?: string, callerUse
                     id,
                     name,
                     contact_type
+                ),
+                created_by_profile:profiles!created_by (
+                    id,
+                    full_name,
+                    whatsapp_number,
+                    avatar_url
                 )
             `)
             .eq('tenant_id', tenantId)
@@ -615,7 +621,15 @@ export async function getPropertyBySlug(type: string, slug: string, allowUnpubli
     try {
         let query = supabase
             .from('properties')
-            .select('*')
+            .select(`
+                *,
+                created_by_profile:profiles!created_by (
+                    id,
+                    full_name,
+                    whatsapp_number,
+                    avatar_url
+                )
+            `)
             .eq('type', type)
             .eq('slug', slug)
             .eq('is_archived', false)

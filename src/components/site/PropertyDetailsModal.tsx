@@ -224,8 +224,22 @@ export function PropertyDetailsModal({ isOpen, onClose, property }: { isOpen: bo
                             {details.torre_bloco && (
                                 <div className="flex items-center gap-2">
                                     <span className="flex-shrink-0">•</span>
-                                    <span className="text-base text-muted-foreground dark:text-white">Torre/Bloco:</span>
+                                    <span className="text-base text-muted-foreground dark:text-white">Número de Torre | Bloco:</span>
                                     <span className="text-base text-foreground dark:text-white">{details.torre_bloco}</span>
+                                </div>
+                            )}
+                            {details.nome_torre_bloco && (
+                                <div className="flex items-center gap-2">
+                                    <span className="flex-shrink-0">•</span>
+                                    <span className="text-base text-muted-foreground dark:text-white">Nome Torre | Bloco:</span>
+                                    <span className="text-base text-foreground dark:text-white">{details.nome_torre_bloco}</span>
+                                </div>
+                            )}
+                            {details.has_elevadores && (
+                                <div className="flex items-center gap-2">
+                                    <span className="flex-shrink-0">•</span>
+                                    <span className="text-base text-muted-foreground dark:text-white">Elevadores:</span>
+                                    <span className="text-base text-foreground dark:text-white">{details.numero_elevadores ? `Sim (${details.numero_elevadores} elevadores)` : 'Sim'}</span>
                                 </div>
                             )}
                         </div>

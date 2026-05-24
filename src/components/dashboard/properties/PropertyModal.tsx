@@ -9,7 +9,7 @@ import { getTenantCustomAmenities } from '@/app/_actions/tenant'
 import type { CustomAmenity } from '@/app/_actions/tenant'
 import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
 import { AreaFields } from './PropertyModal/AreaFields'
-import { RoomsFields } from './PropertyModal/RoomsFields'
+import { DormitoriosVagasFields, EstruturaCustosFields } from './PropertyModal/RoomsFields'
 import { TowersFields } from './PropertyModal/TowersFields'
 import { AmenitiesFields } from './PropertyModal/AmenitiesFields'
 import { DescriptionField } from './PropertyModal/DescriptionField'
@@ -46,9 +46,17 @@ function getEmptyFormData() {
             vagas: '',
             vagas_numeracao: '',
             torre_bloco: '',
+            nome_torre_bloco: '',
+            has_elevadores: false,
+            numero_elevadores: '',
             valor_condominio: '',
             valor_iptu: '',
             obs_dormitorios: '',
+            has_sacada_com_churrasqueira: false,
+            has_sacada_sem_churrasqueira: false,
+            has_lavabo: false,
+            has_escritorio: false,
+            has_dependencia_empregada: false,
             is_empreendimento: false,
             empreendimento: {
                 construtora: '',
@@ -165,9 +173,17 @@ interface EditingPropertyDetails {
     vagas?: string
     vagas_numeracao?: string
     torre_bloco?: string
+    nome_torre_bloco?: string
+    has_elevadores?: boolean
+    numero_elevadores?: string
     valor_condominio?: string
     valor_iptu?: string
     obs_dormitorios?: string
+    has_sacada_com_churrasqueira?: boolean
+    has_sacada_sem_churrasqueira?: boolean
+    has_lavabo?: boolean
+    has_escritorio?: boolean
+    has_dependencia_empregada?: boolean
     is_empreendimento?: boolean
     empreendimento?: EmpreendimentoData
     portaria_24h?: boolean
@@ -342,9 +358,17 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     vagas: editingProperty.details?.vagas || '',
                     vagas_numeracao: editingProperty.details?.vagas_numeracao || '',
                     torre_bloco: editingProperty.details?.torre_bloco || '',
+                    nome_torre_bloco: editingProperty.details?.nome_torre_bloco || '',
+                    has_elevadores: editingProperty.details?.has_elevadores || false,
+                    numero_elevadores: editingProperty.details?.numero_elevadores || '',
                     valor_condominio: editingProperty.details?.valor_condominio || '',
                     valor_iptu: editingProperty.details?.valor_iptu || '',
                     obs_dormitorios: editingProperty.details?.obs_dormitorios || '',
+                    has_sacada_com_churrasqueira: editingProperty.details?.has_sacada_com_churrasqueira || false,
+                    has_sacada_sem_churrasqueira: editingProperty.details?.has_sacada_sem_churrasqueira || false,
+                    has_lavabo: editingProperty.details?.has_lavabo || false,
+                    has_escritorio: editingProperty.details?.has_escritorio || false,
+                    has_dependencia_empregada: editingProperty.details?.has_dependencia_empregada || false,
                     is_empreendimento: editingProperty.details?.is_empreendimento || false,
                     empreendimento: editingProperty.details?.empreendimento || {
                         construtora: '',
@@ -613,11 +637,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     )}
                     {!formData.details.is_empreendimento && (
                         <>
+                            <DormitoriosVagasFields formData={formData} setFormData={setFormData} isEmpreendimento={formData.details.is_empreendimento} />
+                            <div className="border-t border-border/60" />
                             <AreaFields formData={formData} setFormData={setFormData} />
                             <div className="border-t border-border/60" />
                         </>
                     )}
-                    <RoomsFields formData={formData} setFormData={setFormData} isEmpreendimento={formData.details.is_empreendimento} />
+                    <EstruturaCustosFields formData={formData} setFormData={setFormData} isEmpreendimento={formData.details.is_empreendimento} />
                     <div className="border-t border-border/60" />
                     <AmenitiesFields 
                         formData={formData} 

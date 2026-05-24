@@ -82,6 +82,8 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     const [config, setConfig] = useState<{
         title: boolean;
         price: boolean;
+        showCondo: boolean;
+        showIptu: boolean;
         description: 'full' | 'none';
         location: 'exact' | 'approximate' | 'none';
         showBedrooms: boolean;
@@ -89,12 +91,18 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         showArea: boolean;
         showType: boolean;
         showAmenities: boolean;
+        showSacada: boolean;
+        showEscritorio: boolean;
+        showDependencia: boolean;
+        showObservations: boolean;
         selectedImages: string[];
         selectedVideos: string[];
         selectedDocs: PropertyDocument[];
     }>({
         title: true,
         price: true,
+        showCondo: true,
+        showIptu: true,
         description: 'full',
         location: 'approximate',
         showBedrooms: true,
@@ -102,6 +110,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         showArea: true,
         showType: true,
         showAmenities: true,
+        showSacada: true,
+        showEscritorio: true,
+        showDependencia: true,
+        showObservations: true,
         selectedImages: [],
         selectedVideos: [],
         selectedDocs: []
@@ -254,6 +266,8 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         // Add display toggles (only if false, to keep URL short, but let's be explicit for now)
         if (!config.title) queryParams.set('ct', '0')
         if (!config.price) queryParams.set('cp', '0')
+        if (!config.showCondo) queryParams.set('cco', '0')
+        if (!config.showIptu) queryParams.set('cip', '0')
         if (config.description === 'none') queryParams.set('cd', 'n')
         if (config.location !== 'approximate') queryParams.set('cl', config.location === 'exact' ? 'e' : 'n')
         if (!config.showBedrooms) queryParams.set('cbr', '0')
@@ -261,6 +275,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (!config.showArea) queryParams.set('car', '0')
         if (!config.showType) queryParams.set('cty', '0')
         if (!config.showAmenities) queryParams.set('cam', '0')
+        if (!config.showSacada) queryParams.set('csa', '0')
+        if (!config.showEscritorio) queryParams.set('ces', '0')
+        if (!config.showDependencia) queryParams.set('cde', '0')
+        if (!config.showObservations) queryParams.set('cob', '0')
         
         // Add media selections as indices
         const imageIndices = config.selectedImages
@@ -291,8 +309,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const firstName = currentLead.name.split(' ')[0]
         let message = `Olá ${firstName}! Tudo bem?\n\nEstou enviando os detalhes deste imóvel que pode te interessar:\n\n`
         
-        if (config.title) message += `*${property.title}*\n`
+        if (config.title) message += `Imóvel: *${property.title}*\n`
         
+        const details: string[] = []
+
         if (config.location !== 'none') {
             const bairro = property.details?.endereco?.bairro || ''
             const cidade = property.details?.endereco?.cidade || ''
@@ -300,13 +320,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             const numero = property.details?.endereco?.numero || ''
             
             if (config.location === 'exact' && rua) {
-                message += `📍 ${rua}, ${numero} - ${bairro}, ${cidade}\n`
+                details.push(`local: ${rua}, ${numero} - ${bairro}, ${cidade}`)
             } else if (bairro && cidade) {
-                message += `📍 ${bairro} - ${cidade}\n`
+                details.push(`local: ${bairro} - ${cidade}`)
+            } else if (bairro || cidade) {
+                details.push(`local: ${bairro || cidade}`)
             }
         }
-
-        const details = []
         
         // Dormitórios e Suítes
         const dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'))
@@ -324,19 +344,19 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             }
         }
 
-        // Outros ambientes
-        if (property.details?.lavabo) details.push('Lavabo')
-        
-        if (property.details?.sacada && property.details?.churrasqueira) {
-            details.push('Sacada com churrasqueira')
-        } else if (property.details?.sacada) {
-            details.push('Sacada')
-        } else if (property.details?.churrasqueira) {
-            details.push('Churrasqueira')
+        // Sacada
+        if (config.showSacada) {
+            if (property.details?.has_sacada_com_churrasqueira) {
+                details.push('Sacada com churrasqueira')
+            } else if (property.details?.has_sacada_sem_churrasqueira) {
+                details.push('Sacada')
+            }
         }
 
-        if (property.details?.escritorio) details.push('Escritório')
-        if (property.details?.dependencia_empregada) details.push('Dependência de empregada')
+        // Outros ambientes
+        if (property.details?.has_lavabo) details.push('Lavabo')
+        if (config.showEscritorio && property.details?.has_escritorio) details.push('Escritório')
+        if (config.showDependencia && property.details?.has_dependencia_empregada) details.push('Dependência de empregada')
         
         // Área privativa
         if (config.showArea && property.details?.area_privativa) {
@@ -348,14 +368,38 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (vagas > 0) {
             details.push(`${vagas} vaga${vagas > 1 ? 's' : ''} de garagem`)
         }
+
+        // Observações
+        if (config.showObservations && property.details?.obs_dormitorios) {
+            details.push(`Observações: ${property.details.obs_dormitorios}`)
+        }
         
         if (details.length > 0) {
-            message += `\n*Detalhes:* \n• ${details.join('\n• ')}\n`
+            message += `• ${details.join('\n• ')}\n`
         }
 
-        if (config.price) message += `\n💰 Valor: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}\n`
+        // Preço, Condomínio e IPTU — cada um como bullet separado
+        const priceLines: string[] = []
+        if (config.price) {
+            priceLines.push(`Valor: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}`)
+        }
+        if (config.showCondo && property.details?.valor_condominio) {
+            const condoNum = parseFloat(String(property.details.valor_condominio))
+            if (!isNaN(condoNum) && condoNum > 0) {
+                priceLines.push(`Condomínio: R$ ${new Intl.NumberFormat('pt-BR').format(condoNum)}`)
+            }
+        }
+        if (config.showIptu && property.details?.valor_iptu) {
+            const iptuNum = parseFloat(String(property.details.valor_iptu))
+            if (!isNaN(iptuNum) && iptuNum > 0) {
+                priceLines.push(`IPTU: R$ ${new Intl.NumberFormat('pt-BR').format(iptuNum)}`)
+            }
+        }
+        if (priceLines.length > 0) {
+            message += `\n• ${priceLines.join('\n• ')}\n`
+        }
 
-        message += `\nConfira imagens e mais informações em:\n${propertyUrl}\n\nQualquer dúvida, estou à disposição!`
+        message += `\nConfira imagens e mais informações em:\n\n• ${propertyUrl}\n\nQualquer dúvida, estou à disposição!`
         
         const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`
         
@@ -538,7 +582,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     {expandedSections.basic && (
                                         <div className="p-4 pt-0 space-y-3">
                                             <FormCheckbox 
-                                                label="Título do Imóvel" 
+                                                label="Nome imóvel" 
                                                 checked={config.title} 
                                                 onChange={(e) => setConfig({...config, title: e.target.checked})} 
                                             />
@@ -546,6 +590,16 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 label="Preço" 
                                                 checked={config.price} 
                                                 onChange={(e) => setConfig({...config, price: e.target.checked})} 
+                                            />
+                                            <FormCheckbox 
+                                                label="Condomínio" 
+                                                checked={config.showCondo} 
+                                                onChange={(e) => setConfig({...config, showCondo: e.target.checked})} 
+                                            />
+                                            <FormCheckbox 
+                                                label="IPTU" 
+                                                checked={config.showIptu} 
+                                                onChange={(e) => setConfig({...config, showIptu: e.target.checked})} 
                                             />
                                             <FormCheckbox 
                                                 label="Descrição" 
@@ -582,14 +636,29 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     onChange={(e) => setConfig({...config, showSuites: e.target.checked})} 
                                                 />
                                                 <FormCheckbox 
-                                                    label="Área Privativa" 
+                                                    label="Áreas" 
                                                     checked={config.showArea} 
                                                     onChange={(e) => setConfig({...config, showArea: e.target.checked})} 
                                                 />
                                                 <FormCheckbox 
-                                                    label="Tipo do Imóvel" 
-                                                    checked={config.showType} 
-                                                    onChange={(e) => setConfig({...config, showType: e.target.checked})} 
+                                                    label="Sacada" 
+                                                    checked={config.showSacada} 
+                                                    onChange={(e) => setConfig({...config, showSacada: e.target.checked})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Escritório" 
+                                                    checked={config.showEscritorio} 
+                                                    onChange={(e) => setConfig({...config, showEscritorio: e.target.checked})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Dependência" 
+                                                    checked={config.showDependencia} 
+                                                    onChange={(e) => setConfig({...config, showDependencia: e.target.checked})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Observações" 
+                                                    checked={config.showObservations} 
+                                                    onChange={(e) => setConfig({...config, showObservations: e.target.checked})} 
                                                 />
                                                 <FormCheckbox 
                                                     label="Área de Lazer" 

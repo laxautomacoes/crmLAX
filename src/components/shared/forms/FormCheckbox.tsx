@@ -16,7 +16,7 @@ export function FormCheckbox({ label, error, className = '', ...props }: FormChe
                     className={`w-4 h-4 rounded border border-muted-foreground/30 bg-input accent-secondary focus:ring-secondary/50 transition-all cursor-pointer ${className}`}
                     {...props}
                 />
-                <span className="text-xs font-medium text-foreground transition-colors">
+                <span className="text-sm font-medium text-foreground transition-colors">
                     {label}
                 </span>
             </label>

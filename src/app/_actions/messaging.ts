@@ -21,12 +21,18 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
     if (config) {
         if (config.title === false) queryParams.set('ct', '0')
         if (config.price === false) queryParams.set('cp', '0')
+        if (config.showCondo === false) queryParams.set('cco', '0')
+        if (config.showIptu === false) queryParams.set('cip', '0')
         if (config.description === 'none') queryParams.set('cd', 'n')
         if (config.location !== 'approximate') queryParams.set('cl', config.location === 'exact' ? 'e' : 'n')
         if (config.showBedrooms === false) queryParams.set('cbr', '0')
         if (config.showSuites === false) queryParams.set('cst', '0')
         if (config.showArea === false) queryParams.set('car', '0')
         if (config.showType === false) queryParams.set('cty', '0')
+        if (config.showSacada === false) queryParams.set('csa', '0')
+        if (config.showEscritorio === false) queryParams.set('ces', '0')
+        if (config.showDependencia === false) queryParams.set('cde', '0')
+        if (config.showObservations === false) queryParams.set('cob', '0')
         
         // Add media selections as indices
         if (config.images && (propertyData as any).images) {

@@ -157,7 +157,7 @@ export function PropertyDetailsContent({
 
                         <div className="space-y-8">
                             {/* Header Info */}
-                            <div className="flex flex-col gap-6 pb-6">
+                            <div>
                                 <div className="space-y-4">
                                     <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                                         <div className="space-y-3">
@@ -209,24 +209,28 @@ export function PropertyDetailsContent({
                                     </div>
                                 </div>
 
-                                <div className="space-y-4 pt-6">
-                                    <h4 className="text-lg font-black uppercase tracking-widest flex items-center gap-2 text-white">
-                                        <MapPin size={14} />
+                                <div className="border-t border-border/60 my-8" />
+
+                                <div className="space-y-4">
+                                    <h4 className="text-lg font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
+                                        <MapPin size={14} className="text-foreground" />
                                         Endereço
                                     </h4>
-                                    <div className="flex items-center gap-1.5 text-sm font-medium text-white">
+                                    <div className="flex items-center gap-1.5 text-base font-semibold text-foreground">
                                         {fullAddress || 'Endereço não informado'}
                                     </div>
                                 </div>
                             </div>
 
+                            <div className="border-t border-border/60 my-8" />
+
                             {/* Gallery */}
-                            <div className="space-y-4 pt-6">
+                            <div className="space-y-4">
                                 <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
                                     <ImageIcon size={14} className="text-foreground" />
                                     Imagens
                                 </h4>
-                                <div className="relative group w-full aspect-video rounded-3xl overflow-hidden bg-black/90 flex items-center justify-center shadow-xl">
+                                <div className="relative group w-full aspect-video rounded-xl overflow-hidden bg-black/90 flex items-center justify-center shadow-xl">
                                     {allMedia[selectedImageIndex]?.type === 'image' ? (
                                         <div 
                                             onClick={() => setIsFullscreenOpen(true)}
@@ -281,7 +285,7 @@ export function PropertyDetailsContent({
                                                 ref={el => { thumbnailRefs.current[i] = el; }}
                                                 onClick={() => setSelectedImageIndex(i)}
                                                 className={cn(
-                                                    "relative flex-shrink-0 w-32 md:w-40 aspect-video rounded-2xl overflow-hidden transition-all snap-start",
+                                                    "relative flex-shrink-0 w-32 md:w-40 aspect-video rounded-xl overflow-hidden transition-all snap-start",
                                                     selectedImageIndex === i ? 'ring-2 ring-accent-icon scale-[0.98] shadow-lg' : 'opacity-70 hover:opacity-100'
                                                 )}
                                             >
@@ -292,48 +296,51 @@ export function PropertyDetailsContent({
                                 )}
 
                                 {prop.videos?.length > 0 && (
-                                    <div className="space-y-4 pt-4">
-                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                            <Video size={14} className="text-foreground" />
-                                            Vídeos
-                                        </h4>
-                                        <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
-                                            {prop.videos.map((url: string, i: number) => (
-                                                <button 
-                                                    key={i} 
-                                                    onClick={() => {
-                                                        const videoIndex = (prop.images?.length || 0) + i;
-                                                        setSelectedImageIndex(videoIndex);
-                                                    }}
-                                                    className={cn(
-                                                        "relative flex-shrink-0 w-32 md:w-40 aspect-video rounded-2xl overflow-hidden transition-all snap-start group bg-black",
-                                                        selectedImageIndex === (prop.images?.length || 0) + i ? 'ring-2 ring-accent-icon scale-[0.98]' : 'opacity-70 hover:opacity-100'
-                                                    )}
-                                                >
-                                                    <div className="absolute inset-0 flex items-center justify-center z-10">
-                                                        <div className="p-2 rounded-full bg-foreground/80 text-background shadow-lg group-hover:scale-110 transition-transform">
-                                                            <Play size={20} className="fill-background ml-0.5" />
+                                    <>
+                                        <div className="border-t border-border/60 my-8" />
+                                        <div className="space-y-4">
+                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                                <Video size={14} className="text-foreground" />
+                                                Vídeos
+                                            </h4>
+                                            <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
+                                                {prop.videos.map((url: string, i: number) => (
+                                                    <button 
+                                                        key={i} 
+                                                        onClick={() => {
+                                                            const videoIndex = (prop.images?.length || 0) + i;
+                                                            setSelectedImageIndex(videoIndex);
+                                                        }}
+                                                        className={cn(
+                                                            "relative flex-shrink-0 w-32 md:w-40 aspect-video rounded-xl overflow-hidden transition-all snap-start group bg-black",
+                                                            selectedImageIndex === (prop.images?.length || 0) + i ? 'ring-2 ring-accent-icon scale-[0.98]' : 'opacity-70 hover:opacity-100'
+                                                        )}
+                                                    >
+                                                        <div className="absolute inset-0 flex items-center justify-center z-10">
+                                                            <div className="p-2 rounded-full bg-foreground/80 text-background shadow-lg group-hover:scale-110 transition-transform">
+                                                                <Play size={20} className="fill-background ml-0.5" />
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                    <video src={url} className="w-full h-full object-cover opacity-60" />
-                                                </button>
-                                            ))}
+                                                        <video src={url} className="w-full h-full object-cover opacity-60" />
+                                                    </button>
+                                                ))}
+                                            </div>
                                         </div>
-                                    </div>
+                                    </>
                                 )}
                             </div>
 
-                            <div className="border-t-2 border-border/100" />
+                            <div className="border-t border-border/60 my-8" />
 
                             {/* Main Content */}
-                            <div className="flex flex-col gap-12 pt-6">
-                                <div className="space-y-8">
+                            <div className="flex flex-col">
+                                <div>
                                     <div className="space-y-4">
                                         <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
                                             <Info size={14} className="text-foreground" />
                                             Informações
                                         </h4>
-                                        <div className="flex flex-col gap-0 divide-y divide-border/30">
+                                         <div className="text-foreground bg-muted/20 p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
                                             {!details.is_empreendimento && (
                                                 <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
                                             )}
@@ -341,18 +348,40 @@ export function PropertyDetailsContent({
                                                 <>
                                                     <InfoRow icon={<BedDouble size={14} />} label="Dormitórios" value={`${details.dormitorios || details.quartos || 0} ${Number(details.suites) > 0 ? `(${details.suites} Suítes)` : ''}`} />
                                                     {details.obs_dormitorios && (
-                                                        <InfoRow icon={<BedDouble size={14} />} label="Obs. Dormitórios" value={details.obs_dormitorios} />
+                                                        <InfoRow icon={<BedDouble size={14} />} label="Observações" value={details.obs_dormitorios} />
+                                                    )}
+                                                    {details.has_sacada_com_churrasqueira && (
+                                                        <InfoRow icon={<Home size={14} />} label="Sacada com churrasqueira" value="Sim" />
+                                                    )}
+                                                    {details.has_sacada_sem_churrasqueira && (
+                                                        <InfoRow icon={<Home size={14} />} label="Sacada sem churrasqueira" value="Sim" />
+                                                    )}
+                                                    {details.has_lavabo && (
+                                                        <InfoRow icon={<Bath size={14} />} label="Lavabo" value="Sim" />
+                                                    )}
+                                                    {details.has_escritorio && (
+                                                        <InfoRow icon={<BookOpen size={14} />} label="Escritório" value="Sim" />
+                                                    )}
+                                                    {details.has_dependencia_empregada && (
+                                                        <InfoRow icon={<User size={14} />} label="Dependência Empregada" value="Sim" />
                                                     )}
                                                     <InfoRow icon={<Bath size={14} />} label="Banheiros" value={details.banheiros || 0} />
                                                     <InfoRow icon={<Car size={14} />} label="Vagas" value={`${details.vagas || 0} ${details.vagas_numeracao ? `(${details.vagas_numeracao})` : ''}`} />
                                                     <InfoRow icon={<Maximize2 size={14} />} label="Área Privativa" value={`${details.area_privativa || 0}m²`} />
                                                     <InfoRow icon={<Maximize2 size={14} />} label="Área Total" value={`${details.area_total || 0}m²`} />
-                                                    <InfoRow icon={<Home size={14} />} label="Torre/Bloco" value={details.torre_bloco || 'Não informado'} />
+                                                    {details.torre_bloco && (
+                                                        <InfoRow icon={<Home size={14} />} label="Número de Torre | Bloco" value={details.torre_bloco} />
+                                                    )}
+                                                    {details.nome_torre_bloco && (
+                                                        <InfoRow icon={<Home size={14} />} label="Nome Torre | Bloco" value={details.nome_torre_bloco} />
+                                                    )}
+                                                    {details.has_elevadores && (
+                                                        <InfoRow icon={<Layers size={14} />} label="Elevadores" value={details.numero_elevadores ? `Sim (${details.numero_elevadores} elevadores)` : 'Sim'} />
+                                                    )}
                                                 </>
                                             )}
                                             <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
                                             <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
-                                            <InfoRow icon={<User size={14} />} label="Corretor" value={prop.corretor_nome || details.corretor_nome || 'Não informado'} />
                                             {details.is_empreendimento && details.empreendimento?.construtora && (
                                                 <InfoRow icon={<Building2 size={14} />} label="Construtora" value={details.empreendimento.construtora} />
                                             )}
@@ -364,114 +393,187 @@ export function PropertyDetailsContent({
 
                                     {/* Torres e Tipologias (Empreendimento) */}
                                     {details.is_empreendimento && details.empreendimento?.torres?.length > 0 && (
-                                        <div className="space-y-4">
-                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                <Building2 size={14} className="text-foreground" />
-                                                Torres e Tipologias
-                                            </h4>
+                                        <>
+                                            <div className="border-t border-border/60 my-8" />
                                             <div className="space-y-4">
-                                                {details.empreendimento.torres.map((torre: any, torreIdx: number) => (
-                                                    <div key={torreIdx} className="rounded-xl border border-border/50 overflow-hidden">
-                                                        <div className="flex items-center gap-2 px-4 py-3 bg-foreground/5 border-b border-border/30">
-                                                            <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-secondary text-secondary-foreground font-black text-xs">
-                                                                {torreIdx + 1}
-                                                            </div>
-                                                            <span className="text-sm font-black text-foreground">{torre.nome}</span>
-                                                        </div>
-                                                        <div className="p-4 space-y-3">
-                                                            {torre.tipologias?.map((tip: any, tipIdx: number) => (
-                                                                <div key={tipIdx} className="flex flex-wrap items-center gap-x-6 gap-y-2 p-3 rounded-xl bg-muted/30 border border-border/30">
-                                                                    <div className="flex items-center gap-1.5">
-                                                                        <Layers size={12} className="text-muted-foreground" />
-                                                                        <span className="text-xs font-bold text-foreground uppercase">
-                                                                            {translatePropertyType(tip.tipo)}
-                                                                        </span>
-                                                                    </div>
-                                                                    {tip.dormitorios && (
-                                                                        <div className="flex items-center gap-1 text-xs text-foreground">
-                                                                            <BedDouble size={12} className="text-muted-foreground" />
-                                                                            <span className="font-bold">{tip.dormitorios}</span>
-                                                                            <span className="text-muted-foreground">dorm</span>
-                                                                            {Number(tip.suites) > 0 && (
-                                                                                <span className="text-muted-foreground">({tip.suites} suítes)</span>
-                                                                            )}
-                                                                        </div>
-                                                                    )}
-                                                                    {tip.area_privativa && (
-                                                                        <div className="flex items-center gap-1 text-xs text-foreground">
-                                                                            <Maximize2 size={12} className="text-muted-foreground" />
-                                                                            <span className="font-bold">{tip.area_privativa}m²</span>
-                                                                        </div>
-                                                                    )}
-                                                                    {tip.vagas && (
-                                                                        <div className="flex items-center gap-1 text-xs text-foreground">
-                                                                            <Car size={12} className="text-muted-foreground" />
-                                                                            <span className="font-bold">{tip.vagas}</span>
-                                                                            <span className="text-muted-foreground">vagas</span>
-                                                                        </div>
-                                                                    )}
-                                                                    {tip.preco_a_partir && (
-                                                                        <div className="flex items-center gap-1 text-xs text-foreground">
-                                                                            <DollarSign size={12} className="text-muted-foreground" />
-                                                                            <span className="font-bold">R$ {Number(tip.preco_a_partir).toLocaleString('pt-BR')}</span>
-                                                                        </div>
-                                                                    )}
-                                                                    {tip.unidades_por_andar && (
-                                                                        <span className="text-[10px] text-muted-foreground">
-                                                                            {tip.unidades_por_andar} un/andar
-                                                                        </span>
-                                                                    )}
+                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                                    <Building2 size={14} className="text-foreground" />
+                                                    Torres e Tipologias
+                                                </h4>
+                                                <div className="space-y-4">
+                                                    {details.empreendimento.torres.map((torre: any, torreIdx: number) => (
+                                                        <div key={torreIdx} className="rounded-lg border border-border/50 overflow-hidden">
+                                                            <div className="flex items-center gap-2 px-4 py-3 bg-foreground/5 border-b border-border/30">
+                                                                <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-secondary text-secondary-foreground font-black text-xs">
+                                                                    {torreIdx + 1}
                                                                 </div>
-                                                            ))}
+                                                                <span className="text-sm font-black text-foreground">{torre.nome}</span>
+                                                            </div>
+                                                            <div className="p-4 space-y-3">
+                                                                {torre.tipologias?.map((tip: any, tipIdx: number) => (
+                                                                    <div key={tipIdx} className="flex flex-wrap items-center gap-x-6 gap-y-2 p-3 rounded-lg bg-muted/30 border border-border/30">
+                                                                        <div className="flex items-center gap-1.5">
+                                                                            <Layers size={12} className="text-muted-foreground" />
+                                                                            <span className="text-xs font-bold text-foreground uppercase">
+                                                                                {translatePropertyType(tip.tipo)}
+                                                                            </span>
+                                                                        </div>
+                                                                        {tip.dormitorios && (
+                                                                            <div className="flex items-center gap-1 text-xs text-foreground">
+                                                                                <BedDouble size={12} className="text-muted-foreground" />
+                                                                                <span className="font-bold">{tip.dormitorios}</span>
+                                                                                <span className="text-muted-foreground">dorm</span>
+                                                                                {Number(tip.suites) > 0 && (
+                                                                                    <span className="text-muted-foreground">({tip.suites} suítes)</span>
+                                                                                )}
+                                                                            </div>
+                                                                        )}
+                                                                        {tip.area_privativa && (
+                                                                            <div className="flex items-center gap-1 text-xs text-foreground">
+                                                                                <Maximize2 size={12} className="text-muted-foreground" />
+                                                                                <span className="font-bold">{tip.area_privativa}m²</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {tip.vagas && (
+                                                                            <div className="flex items-center gap-1 text-xs text-foreground">
+                                                                                <Car size={12} className="text-muted-foreground" />
+                                                                                <span className="font-bold">{tip.vagas}</span>
+                                                                                <span className="text-muted-foreground">vagas</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {tip.preco_a_partir && (
+                                                                            <div className="flex items-center gap-1 text-xs text-foreground">
+                                                                                <DollarSign size={12} className="text-muted-foreground" />
+                                                                                <span className="font-bold">R$ {Number(tip.preco_a_partir).toLocaleString('pt-BR')}</span>
+                                                                            </div>
+                                                                        )}
+                                                                        {tip.unidades_por_andar && (
+                                                                            <span className="text-[10px] text-muted-foreground">
+                                                                                {tip.unidades_por_andar} un/andar
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                ))}
+                                                            </div>
                                                         </div>
-                                                    </div>
-                                                ))}
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
+                                        </>
                                     )}
 
                                     {/* Amenities */}
                                     {(amenities.length > 0 || activeCustomAmenities.length > 0) && (
-                                        <div className="space-y-4">
-                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                <Trees size={14} className="text-foreground" />
-                                                Área comum | Lazer
-                                            </h4>
-                                            <div className="flex flex-wrap gap-3">
-                                                {amenities.map(a => (
-                                                    <div key={a.id} className="flex items-center gap-3 p-3 rounded-xl bg-secondary/10 border border-secondary/20 w-fit pr-6">
-                                                        <div className="text-secondary">{a.icon}</div>
-                                                        <span className="text-sm font-medium text-foreground whitespace-nowrap">{a.label}</span>
-                                                    </div>
-                                                ))}
-                                                {activeCustomAmenities.map(a => (
-                                                    <div key={a.id} className={`flex items-center gap-3 p-3 rounded-xl border w-fit pr-6 ${a.isPending ? 'bg-amber-500/5 border-amber-500/30' : 'bg-secondary/10 border-secondary/20'}`}>
-                                                        <div className="text-secondary">{a.icon}</div>
-                                                        <span className="text-sm font-medium text-foreground whitespace-nowrap">{a.label}</span>
-                                                        {a.isPending && isAdmin && (
-                                                            <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded-md whitespace-nowrap">Pendente</span>
-                                                        )}
-                                                    </div>
-                                                ))}
+                                        <>
+                                            <div className="border-t border-border/60 my-8" />
+                                            <div className="space-y-4">
+                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                                    <Trees size={14} className="text-foreground" />
+                                                    Área comum | Lazer
+                                                </h4>
+                                                <div className="flex flex-wrap gap-3">
+                                                    {amenities.map(a => (
+                                                        <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/10 border border-secondary/20 w-fit pr-6">
+                                                            <div className="text-secondary">{a.icon}</div>
+                                                            <span className="text-base font-semibold text-foreground whitespace-nowrap">{a.label}</span>
+                                                        </div>
+                                                    ))}
+                                                    {activeCustomAmenities.map(a => (
+                                                        <div key={a.id} className={`flex items-center gap-3 p-3 rounded-lg border w-fit pr-6 ${a.isPending ? 'bg-amber-500/5 border-amber-500/30' : 'bg-secondary/10 border-secondary/20'}`}>
+                                                            <div className="text-secondary">{a.icon}</div>
+                                                            <span className="text-base font-semibold text-foreground whitespace-nowrap">{a.label}</span>
+                                                            {a.isPending && isAdmin && (
+                                                                <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded-md whitespace-nowrap">Pendente</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
                                             </div>
-                                        </div>
+                                        </>
                                     )}
                                 </div>
 
-                                <div className="space-y-8">
+                                <div className="border-t border-border/60 my-8" />
+
+                                <div>
                                     <div className="space-y-4">
                                         <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
                                             <Info size={14} className="text-foreground" />
                                             Descrição
                                         </h4>
-                                        <div className="text-foreground leading-relaxed bg-muted/20 p-6 rounded-3xl border border-border/50">
+                                        <div className="text-foreground leading-relaxed bg-muted/20 p-6 rounded-xl border border-border/50">
                                             {prop.description ? (
-                                                <SafeMarkdownRenderer content={prop.description} />
+                                                <SafeMarkdownRenderer content={prop.description} className="text-base [&>p]:text-base [&>p]:leading-relaxed" />
                                             ) : (
-                                                <p className="italic text-muted-foreground">Nenhuma descrição informada para este imóvel.</p>
+                                                <p className="italic text-muted-foreground text-base">Nenhuma descrição informada para este imóvel.</p>
                                             )}
                                         </div>
                                     </div>
+
+                                    {/* Location Map */}
+                                    {endereco.latitude && endereco.longitude && (
+                                        <>
+                                            <div className="border-t border-border/60 my-8" />
+                                            <div className="space-y-4">
+                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                                    <MapPin size={14} className="text-foreground" />
+                                                    Localização
+                                                </h4>
+                                                <div className="rounded-xl overflow-hidden bg-muted/30 border-2 border-border shadow-inner p-1">
+                                                    <PropertyMap 
+                                                        lat={endereco.latitude} 
+                                                        lng={endereco.longitude} 
+                                                        readOnly={true}
+                                                        zoom={16}
+                                                    />
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* Corretor / Responsável */}
+                                    {prop.created_by_profile && (
+                                        <>
+                                            <div className="border-t border-border/60 my-8" />
+                                            <div className="space-y-4">
+                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                                    <User size={14} className="text-foreground" />
+                                                    Corretor Responsável
+                                                </h4>
+                                                <div className="flex items-center gap-4 p-4 rounded-xl bg-foreground/5 border border-border/40">
+                                                    {prop.created_by_profile.avatar_url ? (
+                                                        <img 
+                                                            src={prop.created_by_profile.avatar_url} 
+                                                            alt={prop.created_by_profile.full_name} 
+                                                            className="w-12 h-12 rounded-full object-cover border-2 border-secondary/30 flex-shrink-0"
+                                                        />
+                                                    ) : (
+                                                        <div className="w-12 h-12 rounded-full bg-secondary/20 flex items-center justify-center text-secondary font-black text-lg flex-shrink-0">
+                                                            {(prop.created_by_profile.full_name || '?').charAt(0).toUpperCase()}
+                                                        </div>
+                                                    )}
+                                                    <div className="flex flex-col gap-0.5 min-w-0">
+                                                        <span className="text-base font-bold text-foreground truncate">
+                                                            {prop.created_by_profile.full_name || 'Não informado'}
+                                                        </span>
+                                                        {prop.created_by_profile.whatsapp_number && (
+                                                            <a 
+                                                                href={`https://wa.me/${prop.created_by_profile.whatsapp_number.replace(/\D/g, '')}`}
+                                                                target="_blank"
+                                                                rel="noopener noreferrer"
+                                                                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                                            >
+                                                                <Phone size={14} />
+                                                                {prop.created_by_profile.whatsapp_number}
+                                                            </a>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <div className="border-t border-border/60 my-8" />
 
                                     {/* Propriedade/Construtora */}
                                     <div className="space-y-4">
@@ -479,68 +581,53 @@ export function PropertyDetailsContent({
                                             <User size={14} className="text-foreground" />
                                             Proprietário | Construtora
                                         </h4>
-                                        <div className="bg-[#404F4F] text-white p-6 rounded-3xl space-y-6 shadow-lg">
+                                        <div className="bg-foreground/5 border border-border/40 p-6 rounded-xl space-y-6">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h3 className="text-xl font-black">{details.proprietario?.nome || prop.owner_name || 'Não informado'}</h3>
+                                                    <h3 className="text-xl font-black text-foreground">{details.proprietario?.nome || prop.owner_name || 'Não informado'}</h3>
                                                     {details.proprietario?.responsavel && (
-                                                        <p className="text-emerald-400 text-sm font-bold">Resp: {details.proprietario.responsavel}</p>
+                                                        <p className="text-emerald-600 dark:text-emerald-400 text-sm font-bold">Resp: {details.proprietario.responsavel}</p>
                                                     )}
                                                 </div>
                                             </div>
                                             
                                             <div className="grid grid-cols-1 gap-4">
-                                                <div className="flex items-center gap-3 text-sm">
-                                                    <div className="p-2 bg-white/10 rounded-lg"><Phone size={14} /></div>
+                                                <div className="flex items-center gap-3 text-sm text-foreground">
+                                                    <div className="p-2 bg-foreground/10 text-muted-foreground rounded-lg"><Phone size={14} /></div>
                                                     {details.proprietario?.telefone || prop.owner_phone || 'Não informado'}
                                                 </div>
-                                                <div className="flex items-center gap-3 text-sm">
-                                                    <div className="p-2 bg-white/10 rounded-lg"><Mail size={14} /></div>
+                                                <div className="flex items-center gap-3 text-sm text-foreground">
+                                                    <div className="p-2 bg-foreground/10 text-muted-foreground rounded-lg"><Mail size={14} /></div>
                                                     {details.proprietario?.email || prop.owner_email || 'Não informado'}
                                                 </div>
                                             </div>
                                         </div>
                                     </div>
-
-                                    {/* Location Map */}
-                                    {endereco.latitude && endereco.longitude && (
-                                        <div className="space-y-4">
-                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                <MapPin size={14} className="text-foreground" />
-                                                Localização
-                                            </h4>
-                                            <div className="rounded-3xl overflow-hidden bg-muted/30 border-2 border-border shadow-inner p-1">
-                                                <PropertyMap 
-                                                    lat={endereco.latitude} 
-                                                    lng={endereco.longitude} 
-                                                    readOnly={true}
-                                                    zoom={16}
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
                                 </div>
                             </div>
 
                             {/* Documents */}
                             {prop.documents?.length > 0 && (
-                                <div className="space-y-4 pt-6">
-                                    <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                        <FileText size={14} className="text-foreground" />
-                                        Documentos
-                                    </h4>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                        {prop.documents?.map((doc: any, i: number) => (
-                                            <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between p-4 rounded-2xl bg-white border border-border hover:shadow-md transition-all group">
-                                                <div className="flex items-center gap-3 text-foreground">
-                                                    <FileText size={20} className="text-emerald-600" />
-                                                    <span className="text-sm font-bold truncate max-w-[200px]">{doc.name}</span>
-                                                </div>
-                                                <ExternalLink size={14} className="text-muted-foreground group-hover:text-emerald-600" />
-                                            </a>
-                                        ))}
+                                <>
+                                    <div className="border-t border-border/60 my-8" />
+                                    <div className="space-y-4">
+                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                            <FileText size={14} className="text-foreground" />
+                                            Documentos
+                                        </h4>
+                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                                            {prop.documents?.map((doc: any, i: number) => (
+                                                <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between p-4 rounded-xl bg-white border border-border hover:shadow-md transition-all group">
+                                                    <div className="flex items-center gap-3 text-foreground">
+                                                        <FileText size={20} className="text-emerald-600" />
+                                                        <span className="text-sm font-bold truncate max-w-[200px]">{doc.name}</span>
+                                                    </div>
+                                                    <ExternalLink size={14} className="text-muted-foreground group-hover:text-emerald-600" />
+                                                </a>
+                                            ))}
+                                        </div>
                                     </div>
-                                </div>
+                                </>
                             )}
                         </div>
                     </>
@@ -555,7 +642,7 @@ export function PropertyDetailsContent({
                                 Voltar para o Imóvel
                             </button>
                         </div>
-                        <div className="bg-white rounded-3xl border border-border shadow-sm p-6">
+                        <div className="bg-white rounded-xl border border-border shadow-sm p-6">
                             <PropertyCopyCard 
                                 propertyId={prop.id} 
                                 tenantId={tenantId}
@@ -588,11 +675,11 @@ export function PropertyDetailsContent({
 function InfoRow({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | number }) {
     return (
         <div className="flex items-center justify-between py-3">
-            <div className="flex items-center gap-2 text-foreground font-medium">
+            <div className="flex items-center gap-2 text-foreground font-semibold">
                 <span className="text-muted-foreground">{icon}</span>
-                <span className="text-sm">{label}</span>
+                <span className="text-base">{label}</span>
             </div>
-            <div className="text-sm font-medium text-foreground">
+            <div className="text-base font-bold text-foreground">
                 {value}
             </div>
         </div>

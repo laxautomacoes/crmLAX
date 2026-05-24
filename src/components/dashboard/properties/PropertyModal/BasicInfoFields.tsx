@@ -2,7 +2,7 @@
 
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { Building2 } from 'lucide-react'
+import { Building2, Home, User } from 'lucide-react'
 
 interface BasicInfoFieldsProps {
     formData: any
@@ -30,7 +30,8 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
         <div className="space-y-6">
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
+                    <h4 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                        <Home size={14} className="text-foreground" />
                         {isEmpreendimento ? 'Empreendimento' : 'Imóvel'}
                         <span className="ml-1 text-[10px] font-normal italic normal-case text-muted-foreground">
                             ({isEmpreendimento ? 'nome do empreendimento' : 'título do imóvel'})
@@ -100,7 +101,8 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
             )}
 
             <div className="space-y-4">
-                <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-4">
+                <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                    <User size={14} className="text-foreground" />
                     Responsável | Corretor
                 </h4>
                 {isAdmin ? (
@@ -125,7 +127,7 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
             </div>
 
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6 pt-4">
                 {!isEmpreendimento && (
                     <FormInput
                         label="Preço (R$)"
@@ -134,7 +136,21 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                         onChange={(e) => setFormData({ ...formData, price: e.target.value })}
                     />
                 )}
+                <FormInput
+                    label="Condomínio (R$)"
+                    type="number"
+                    value={formData.details.valor_condominio}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_condominio: e.target.value } })}
+                />
+                <FormInput
+                    label="IPTU (R$)"
+                    type="number"
+                    value={formData.details.valor_iptu}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_iptu: e.target.value } })}
+                />
+            </div>
 
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
                 <FormSelect
                     label="Tipo"
                     value={formData.type}

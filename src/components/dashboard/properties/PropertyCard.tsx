@@ -25,7 +25,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
     return (
         <div 
             onClick={() => onView(prop)}
-            className="bg-card rounded-2xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer"
+            className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer"
         >
             <div className="aspect-video bg-muted relative">
                 {prop.images?.[0] ? (

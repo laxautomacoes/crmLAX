@@ -247,9 +247,22 @@ export function getSuspensionEmailTemplate(tenantName: string, settings?: EmailS
 
 export function getPropertyEmail(property: any, propertyUrl: string, config: any, settings: any) {
     const displayTitle = config?.title !== false ? property.title : 'Imóvel disponível';
-    const displayPrice = config?.price !== false ? `R$ ${new Intl.NumberFormat('pt-BR').format(property.price || 0)}` : 'Preço sob consulta';
+    let displayPrice = config?.price !== false ? `R$ ${new Intl.NumberFormat('pt-BR').format(property.price || 0)}` : 'Preço sob consulta';
     const displayImages = config?.images?.length > 0 ? config.images : property.images || [];
     const details = property.details || {};
+
+    if (config?.showCondo !== false && details.valor_condominio) {
+        const val = details.valor_condominio;
+        const condoNum = parseFloat(String(val));
+        const formattedCondo = (!isNaN(condoNum) && condoNum > 0) ? `R$ ${new Intl.NumberFormat('pt-BR').format(condoNum)}` : val;
+        displayPrice += ` <span style="font-size: 14px; font-weight: normal; color: #666;">| Condomínio: ${formattedCondo}</span>`;
+    }
+    if (config?.showIptu !== false && details.valor_iptu) {
+        const val = details.valor_iptu;
+        const iptuNum = parseFloat(String(val));
+        const formattedIptu = (!isNaN(iptuNum) && iptuNum > 0) ? `R$ ${new Intl.NumberFormat('pt-BR').format(iptuNum)}` : val;
+        displayPrice += ` <span style="font-size: 14px; font-weight: normal; color: #666;">| IPTU: ${formattedIptu}</span>`;
+    }
 
     const bodyContent = `
         <div style="margin-bottom: 24px; border-radius: 12px; overflow: hidden; background: #f9f9f9;">
@@ -275,7 +288,11 @@ export function getPropertyEmail(property: any, propertyUrl: string, config: any
                     ${(config?.showBedrooms !== false && (details.dormitorios || details.quartos)) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.dormitorios || details.quartos}</strong> Dormitórios</p>` : ''}
                     ${(config?.showSuites !== false && details.suites) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.suites}</strong> Suítes</p>` : ''}
                     ${(config?.showArea !== false && details.area_privativa) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.area_privativa}m²</strong> privativos</p>` : ''}
-                    ${config?.showType !== false ? `<p style="margin: 0; color: #444; font-size: 14px;">• Tipo: <strong>${property.type}</strong></p>` : ''}
+                    ${(config?.showSacada !== false && details.has_sacada_com_churrasqueira) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Sacada com churrasqueira</p>` : ''}
+                    ${(config?.showSacada !== false && details.has_sacada_sem_churrasqueira) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Sacada</p>` : ''}
+                    ${(config?.showEscritorio !== false && details.has_escritorio) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Escritório</p>` : ''}
+                    ${(config?.showDependencia !== false && details.has_dependencia_empregada) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Dependência de empregada</p>` : ''}
+                    ${(config?.showObservations !== false && details.obs_dormitorios) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Obs: <strong>${details.obs_dormitorios}</strong></p>` : ''}
                 </div>
             </div>
         ` : ''}

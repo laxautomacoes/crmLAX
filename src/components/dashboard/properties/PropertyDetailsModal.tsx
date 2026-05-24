@@ -67,7 +67,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, onEdit, us
             />
             
             {onSend && (
-                <div className="flex gap-3 pt-6 border-t mt-6">
+                <div className="flex gap-3 pt-8 border-t mt-8">
                     <button
                         onClick={() => onSend(prop)}
                         className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"

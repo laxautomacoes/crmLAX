@@ -143,7 +143,8 @@ export function MediaFields({
 
     return (
         <div className="col-span-2 space-y-6">
-            <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-4">
+            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
+                <ImageIcon size={14} className="text-foreground" />
                 Mídia e Documentos
             </h4>
 
@@ -262,7 +263,7 @@ export function MediaFields({
             </div>
 
                 {/* Vídeos */}
-                <div className="border-t border-border/40 pt-6 space-y-4">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Vídeos</span>
                     </div>
@@ -301,7 +302,7 @@ export function MediaFields({
                 </div>
 
                 {/* Documentos */}
-                <div className="border-t border-border/40 pt-6 space-y-4">
+                <div className="space-y-4">
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Documentos</span>
                     </div>

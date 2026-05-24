@@ -5,7 +5,8 @@ import {
     Home, BedDouble, Bath, Square, Car, Waves, Utensils, 
     PartyPopper, Dumbbell, MessageCircle, MapPin,
     ChevronLeft, ChevronRight, Maximize2, Play, Video, FileText,
-    Baby, Flame, Droplets, Laptop, PawPrint, Trophy
+    Baby, Flame, Droplets, Laptop, PawPrint, Trophy,
+    Briefcase, User, NotebookPen, Fence, FileType
 } from 'lucide-react';
 import { translatePropertyType, translateStatus, getSituacaoStyles, getPropertyTypeStyles } from '@/utils/property-translations';
 import { PropertyMap } from '@/components/shared/PropertyMap';
@@ -19,12 +20,18 @@ interface PropertyPublicViewProps {
     config?: {
         title: boolean;
         price: boolean;
+        showCondo?: boolean;
+        showIptu?: boolean;
         description: 'full' | 'none';
         location: 'exact' | 'approximate' | 'none';
         showBedrooms: boolean;
         showSuites: boolean;
         showArea: boolean;
         showType: boolean;
+        showSacada?: boolean;
+        showEscritorio?: boolean;
+        showDependencia?: boolean;
+        showObservations?: boolean;
         imageIndices: number[] | null;
         videoIndices: number[] | null;
         docIndices: number[] | null;
@@ -114,6 +121,16 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
     const displayTitle = config?.title === false ? 'Imóvel disponível' : property.title;
     const displayPrice = config?.price === false ? 'Valor sob consulta' : (property.price ? `R$ ${Number(property.price).toLocaleString('pt-BR')}` : 'Valor sob consulta');
 
+    // Condomínio e IPTU
+    const showCondo = config?.showCondo !== false;
+    const showIptu = config?.showIptu !== false;
+    const formattedCondo = details.valor_condominio
+        ? `R$ ${Number(details.valor_condominio).toLocaleString('pt-BR')}`
+        : null;
+    const formattedIptu = details.valor_iptu
+        ? `R$ ${Number(details.valor_iptu).toLocaleString('pt-BR')}`
+        : null;
+
     return (
         <div className="max-w-6xl mx-auto px-4 py-8">
             <div className="space-y-8">
@@ -131,18 +148,35 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                                 </span>
                             )}
                         </div>
-                        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-4 mb-2">
-                            <h1 className="text-3xl font-bold text-foreground">{displayTitle}</h1>
-                            <span className="text-2xl md:text-3xl font-black text-foreground shrink-0">{displayPrice}</span>
+                        <div className="flex flex-col md:flex-row md:items-baseline md:justify-between gap-6 md:gap-4 mb-2">
+                            <div className="flex flex-col gap-1">
+                                <h1 className="text-3xl font-bold text-foreground">{displayTitle}</h1>
+                                {config?.location !== 'none' && (
+                                    <p className="text-base text-muted-foreground">
+                                        {config?.location === 'exact' && property.details?.endereco?.rua && `${property.details.endereco.rua}, ${property.details.endereco.numero || ''} - `}
+                                        {(property.details?.endereco?.bairro || details.endereco?.bairro) && `${property.details?.endereco?.bairro || details.endereco.bairro}, `}
+                                        {(property.details?.endereco?.cidade || details.endereco?.cidade) && `${property.details?.endereco?.cidade || details.endereco.cidade}`}
+                                    </p>
+                                )}
+                            </div>
+                            <div className="flex flex-col items-start md:items-end gap-1 shrink-0">
+                                <span className="text-2xl md:text-3xl font-black text-foreground">{displayPrice}</span>
+                                {(showCondo && formattedCondo) || (showIptu && formattedIptu) ? (
+                                    <div className="flex flex-wrap gap-2">
+                                        {showCondo && formattedCondo && (
+                                            <span className="text-xs font-medium text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">
+                                                Cond: {formattedCondo}
+                                            </span>
+                                        )}
+                                        {showIptu && formattedIptu && (
+                                            <span className="text-xs font-medium text-muted-foreground bg-muted/40 px-2 py-0.5 rounded-full">
+                                                IPTU: {formattedIptu}
+                                            </span>
+                                        )}
+                                    </div>
+                                ) : null}
+                            </div>
                         </div>
-                        
-                        {config?.location !== 'none' && (
-                            <p className="text-lg text-muted-foreground">
-                                {config?.location === 'exact' && property.details?.endereco?.rua && `${property.details.endereco.rua}, ${property.details.endereco.numero || ''} - `}
-                                {(property.details?.endereco?.bairro || details.endereco?.bairro) && `${property.details?.endereco?.bairro || details.endereco.bairro}, `}
-                                {(property.details?.endereco?.cidade || details.endereco?.cidade) && `${property.details?.endereco?.cidade || details.endereco.cidade}`}
-                            </p>
-                        )}
                     </div>
 
                     <div className="space-y-4">
@@ -323,38 +357,81 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                         {config?.showArea !== false && (
                             <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
                                 <Square className="text-primary mb-2" size={24} />
-                                <span className="text-lg font-bold">{details.area_util || details.area_total || 0}m²</span>
+                                <span className="text-lg font-bold">{details.area_privativa || details.area_util || details.area_total || 0}m²</span>
                                 <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Área</span>
                             </div>
                         )}
+                        {config?.showSacada !== false && details.has_sacada_com_churrasqueira && (
+                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
+                                <Fence className="text-primary mb-2" size={24} />
+                                <span className="text-lg font-bold text-center">Sacada c/</span>
+                                <span className="text-lg font-bold text-center">churrasco</span>
+                            </div>
+                        )}
+                        {config?.showSacada !== false && !details.has_sacada_com_churrasqueira && details.has_sacada_sem_churrasqueira && (
+                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
+                                <Fence className="text-primary mb-2" size={24} />
+                                <span className="text-lg font-bold">Sacada</span>
+                            </div>
+                        )}
+                        {config?.showEscritorio !== false && details.has_escritorio && (
+                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
+                                <Briefcase className="text-primary mb-2" size={24} />
+                                <span className="text-lg font-bold">Escritório</span>
+                            </div>
+                        )}
+                        {config?.showDependencia !== false && details.has_dependencia_empregada && (
+                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
+                                <User className="text-primary mb-2" size={24} />
+                                <span className="text-lg font-bold">Dependência</span>
+                            </div>
+                        )}
                         </div>
+                        {config?.showObservations !== false && details.obs_dormitorios && (
+                            <div className="mt-3 pt-3 border-t border-border/40 flex items-start gap-2">
+                                <NotebookPen size={14} className="text-muted-foreground mt-0.5 shrink-0" />
+                                <span className="text-xs text-muted-foreground italic">{details.obs_dormitorios}</span>
+                            </div>
+                        )}
                     </div>
 
                     {amenities.length > 0 && (
-                        <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
-                            <div className="flex flex-wrap gap-3">
-                                {amenities.map(a => (
-                                    <div key={a.id} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/30">
-                                        <span className="text-primary">{a.icon}</span>
-                                        <span className="text-sm font-medium text-foreground">{a.label}</span>
-                                    </div>
-                                ))}
+                        <>
+                            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                                <Waves className="text-primary" size={24} />
+                                Área Comum | Lazer
+                            </h2>
+                            <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
+                                <div className="flex flex-wrap gap-3">
+                                    {amenities.map(a => (
+                                        <div key={a.id} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/30">
+                                            <span className="text-primary">{a.icon}</span>
+                                            <span className="text-sm font-medium text-foreground">{a.label}</span>
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        </>
                     )}
 
 
 
                     {config?.description !== 'none' && (
-                        <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
-                            <div className="text-base md:text-lg text-foreground leading-relaxed">
-                                {property.description ? (
-                                    <SafeMarkdownRenderer content={property.description} />
-                                ) : (
-                                    <p className="italic">Sem descrição disponível.</p>
-                                )}
+                        <>
+                            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
+                                <FileType className="text-primary" size={24} />
+                                Descrição do Imóvel
+                            </h2>
+                            <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
+                                <div className="text-base md:text-lg text-foreground leading-relaxed">
+                                    {property.description ? (
+                                        <SafeMarkdownRenderer content={property.description} />
+                                    ) : (
+                                        <p className="italic">Sem descrição disponível.</p>
+                                    )}
+                                </div>
                             </div>
-                        </div>
+                        </>
                     )}
 
                     {config?.location === 'exact' && details.endereco?.latitude && details.endereco?.longitude && (
