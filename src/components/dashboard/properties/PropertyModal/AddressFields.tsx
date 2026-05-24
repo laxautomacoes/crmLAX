@@ -167,20 +167,22 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
                 <MapPin size={14} className="text-foreground" />
                 Endereço
             </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6">
-                <FormInput
-                    label={
-                        <div className="flex items-center gap-1">
-                            CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
-                        </div>
-                    }
-                    type="text"
-                    value={formData.details.endereco.cep}
-                    onChange={(e) => handleCepChange(e.target.value)}
-                    placeholder="00000-000"
-                    disabled={loading}
-                />
-                <div className="sm:col-span-2 lg:col-span-2 relative" ref={resultsRef}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-6">
+                <div className="sm:col-span-1 lg:col-span-3">
+                    <FormInput
+                        label={
+                            <div className="flex items-center gap-1">
+                                CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
+                            </div>
+                        }
+                        type="text"
+                        value={formData.details.endereco.cep}
+                        onChange={(e) => handleCepChange(e.target.value)}
+                        placeholder="00000-000"
+                        disabled={loading}
+                    />
+                </div>
+                <div className="sm:col-span-2 lg:col-span-7 relative" ref={resultsRef}>
                     <FormInput
                         label="Avenida | Rua"
                         type="text"
@@ -223,37 +225,55 @@ export function AddressFields({ formData, setFormData }: AddressFieldsProps) {
                         </div>
                     )}
                 </div>
-                <FormInput
-                    label="Nº"
-                    type="text"
-                    value={formData.details.endereco.numero}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, numero: e.target.value } } })}
-                />
-                <FormInput
-                    label="Complemento"
-                    type="text"
-                    value={formData.details.endereco.complemento}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, complemento: e.target.value } } })}
-                />
-                <FormInput
-                    label="Bairro"
-                    type="text"
-                    value={formData.details.endereco.bairro}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, bairro: e.target.value } } })}
-                />
-                <FormInput
-                    label="Cidade"
-                    type="text"
-                    value={formData.details.endereco.cidade}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, cidade: e.target.value } } })}
-                />
-                <FormInput
-                    label="Estado"
-                    type="text"
-                    value={formData.details.endereco.estado}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, estado: e.target.value } } })}
-                    placeholder="UF"
-                />
+                <div className="sm:col-span-1 lg:col-span-2">
+                    <FormInput
+                        label="Nº"
+                        type="text"
+                        value={formData.details.endereco.numero}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, numero: e.target.value } } })}
+                    />
+                </div>
+                <div className="sm:col-span-1 lg:col-span-2">
+                    <FormInput
+                        label="Apartamento"
+                        type="text"
+                        value={formData.details.endereco.apto || ''}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, apto: e.target.value } } })}
+                    />
+                </div>
+                <div className="sm:col-span-1 lg:col-span-3">
+                    <FormInput
+                        label="Complemento | Torre"
+                        type="text"
+                        value={formData.details.endereco.complemento}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, complemento: e.target.value } } })}
+                    />
+                </div>
+                <div className="sm:col-span-1 lg:col-span-2">
+                    <FormInput
+                        label="Bairro"
+                        type="text"
+                        value={formData.details.endereco.bairro}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, bairro: e.target.value } } })}
+                    />
+                </div>
+                <div className="sm:col-span-1 lg:col-span-3">
+                    <FormInput
+                        label="Cidade"
+                        type="text"
+                        value={formData.details.endereco.cidade}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, cidade: e.target.value } } })}
+                    />
+                </div>
+                <div className="sm:col-span-1 lg:col-span-2">
+                    <FormInput
+                        label="Estado"
+                        type="text"
+                        value={formData.details.endereco.estado}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, estado: e.target.value } } })}
+                        placeholder="UF"
+                    />
+                </div>
             </div>
 
             <div className="mt-8 pt-6 space-y-4">

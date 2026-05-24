@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Search, LayoutGrid, List, Filter, WifiOff, FileText, Globe } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Filter, WifiOff, FileText, Globe, Archive } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty } from '@/app/_actions/properties'
+import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty, archiveProperty } from '@/app/_actions/properties'
 import { toast } from 'sonner'
 import { PropertyGallery } from '@/components/dashboard/properties/PropertyGallery'
 import { PropertyList } from '@/components/dashboard/properties/PropertyList'
@@ -53,6 +53,7 @@ export default function PropertiesClient({
     const [viewingProperty, setViewingProperty] = useState<any | null>(null)
     const [sendingProperty, setSendingProperty] = useState<any | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
+    const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null)
 
     const [filters, setFilters] = useState({
         status: 'all',
@@ -65,7 +66,8 @@ export default function PropertiesClient({
         sortBy: 'newest',
         city: '',
         neighborhood: '',
-        ownerType: 'all'
+        ownerType: 'all',
+        archived: false
     })
 
     // Abre modal de edição automaticamente via query param ?edit={id}
@@ -202,6 +204,18 @@ export default function PropertiesClient({
         }
     }
 
+    const handleArchive = async (id: string) => {
+        const result = await archiveProperty(tenantId, id)
+        if (result.success) {
+            toast.success('Imóvel arquivado!')
+            setConfirmArchiveId(null)
+            refreshProperties(filters.archived ? 'archived' : filters.status)
+        } else {
+            toast.error('Erro ao arquivar: ' + result.error)
+            setConfirmArchiveId(null)
+        }
+    }
+
     const handleExportCSV = () => {
         if (filteredProperties.length === 0) {
             toast.error('Nenhum imóvel para exportar')
@@ -279,10 +293,10 @@ export default function PropertiesClient({
 
     // Quando o filtro de status muda, recarrega do servidor
     const handleSetFilters = (newFilters: typeof filters) => {
-        const statusChanged = newFilters.status !== filters.status
+        const statusChanged = newFilters.status !== filters.status || newFilters.archived !== filters.archived
         setFilters(newFilters)
         if (statusChanged) {
-            refreshProperties(newFilters.status)
+            refreshProperties(newFilters.archived ? 'archived' : newFilters.status)
         }
     }
 
@@ -344,7 +358,7 @@ export default function PropertiesClient({
                 </div>
             )}
             <PageHeader
-                title="Imóveis"
+                title={filters.archived ? 'Imóveis Arquivados' : 'Imóveis'}
                 subtitle={`${filteredProperties.length} imóveis encontrados`}
             >
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
@@ -428,6 +442,7 @@ export default function PropertiesClient({
                     onView={handleView}
                     onSend={handleSend}
                     onApprove={handleApprove}
+                    onArchive={(id) => setConfirmArchiveId(id)}
                     userRole={userRole}
                     userId={userId}
                 />
@@ -439,6 +454,7 @@ export default function PropertiesClient({
                     onView={handleView}
                     onSend={handleSend}
                     onApprove={handleApprove}
+                    onArchive={(id) => setConfirmArchiveId(id)}
                     userRole={userRole}
                     userId={userId}
                 />
@@ -529,6 +545,39 @@ export default function PropertiesClient({
                     toast.success('Dados importados! Revise e salve o imóvel.')
                 }}
             />
+            {/* Modal de confirmação de arquivamento */}
+            {confirmArchiveId && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">
+                    <div className="bg-card border border-border rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4 animate-in fade-in zoom-in-95 duration-200">
+                        <div className="flex items-center gap-3 mb-4">
+                            <div className="p-2.5 bg-amber-500/10 rounded-xl">
+                                <Archive size={22} className="text-amber-500" />
+                            </div>
+                            <div>
+                                <h3 className="font-bold text-foreground">Arquivar imóvel?</h3>
+                                <p className="text-xs text-muted-foreground">O imóvel será removido da lista ativa.</p>
+                            </div>
+                        </div>
+                        <p className="text-sm text-foreground mb-6">
+                            Você pode visualizá-lo depois em <strong>Filtrar → Arquivados</strong>.
+                        </p>
+                        <div className="flex gap-3">
+                            <button
+                                onClick={() => setConfirmArchiveId(null)}
+                                className="flex-1 px-4 py-2.5 rounded-xl border border-border text-foreground font-bold text-sm hover:bg-muted/50 transition-colors"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={() => handleArchive(confirmArchiveId)}
+                                className="flex-1 px-4 py-2.5 rounded-xl bg-amber-500 text-white font-bold text-sm hover:bg-amber-600 transition-colors"
+                            >
+                                Arquivar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     )
 }

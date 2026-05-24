@@ -1,6 +1,7 @@
 'use client'
 
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2 } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2, MoreVertical, Archive } from 'lucide-react'
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyCardProps {
@@ -10,17 +11,32 @@ interface PropertyCardProps {
     onView: (prop: any) => void
     onSend: (prop: any) => void
     onApprove?: (id: string) => void
+    onArchive?: (id: string) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove, userRole, userId }: PropertyCardProps) {
+export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove, onArchive, userRole, userId }: PropertyCardProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId && prop.created_by && (
         userId === prop.created_by || 
         userId === prop.created_by?.id
     )
     const canEdit = isAdmin || isOwner
+    const [mounted, setMounted] = useState(false)
+    const [dropdownOpen, setDropdownOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        setMounted(true)
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
     
     return (
         <div 
@@ -56,42 +72,55 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                     </div>
                 )}
 
-                <div className="absolute top-3 right-3 flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                {mounted && (
+                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-20" ref={dropdownRef}>
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onSend(prop)
-                        }}
-                        className="p-2 bg-emerald-600 text-white rounded-lg shadow-sm hover:bg-emerald-700 transition-colors"
-                        title="Enviar para Lead"
+                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(o => !o) }}
+                        className="p-2 bg-black/60 text-white rounded-lg shadow-sm hover:bg-black/80 transition-colors"
+                        title="Ações"
                     >
-                        <Send size={16} />
+                        <MoreVertical size={16} />
                     </button>
-                    {canEdit && (
-                        <>
+                    {dropdownOpen && (
+                        <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-30">
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    onEdit(prop)
-                                }}
-                                className="p-2 bg-blue-600 text-white rounded-lg shadow-sm hover:bg-blue-700 transition-colors"
-                                title="Editar"
+                                onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onSend(prop) }}
+                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
                             >
-                                <Edit size={16} />
+                                <Send size={14} className="text-emerald-500" />
+                                Enviar para Lead
                             </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    onDelete(prop.id)
-                                }}
-                                className="p-2 bg-[#EF4444] text-white rounded-lg shadow-sm hover:bg-[#DC2626] transition-colors"
-                                title="Excluir"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </>
+                            {canEdit && (
+                                <>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onEdit(prop) }}
+                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                                    >
+                                        <Edit size={14} className="text-blue-500" />
+                                        Editar
+                                    </button>
+                                    {onArchive && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onArchive(prop.id) }}
+                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-amber-500 hover:bg-amber-500/10 transition-colors"
+                                        >
+                                            <Archive size={14} />
+                                            Arquivar
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onDelete(prop.id) }}
+                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+                                    >
+                                        <Trash2 size={14} />
+                                        Excluir
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     )}
                 </div>
+                )}
             </div>
 
             <div className="p-5 space-y-4">
@@ -120,9 +149,17 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                     </div>
                     <div>
                         <h3 className="font-bold text-foreground text-lg leading-tight line-clamp-1">{prop.title}</h3>
-                        <div className="flex items-center gap-1 text-foreground text-xs mt-1">
+                        {prop.details?.endereco?.apto && (
+                            <div className="flex items-center gap-1 text-foreground text-xs mt-1">
+                                <Home size={12} />
+                                <span>Apto {prop.details.endereco.apto}</span>
+                            </div>
+                        )}
+                        <div className="flex items-center gap-1 text-foreground text-xs mt-0.5">
                             <MapPin size={12} />
-                            <span className="line-clamp-1">{prop.details?.endereco?.bairro || 'Bairro ñ inf.'}, {prop.details?.endereco?.cidade || 'Cidade ñ inf.'}</span>
+                            <span className="line-clamp-1">
+                                {prop.details?.endereco?.bairro || 'Bairro ñ inf.'}, {prop.details?.endereco?.cidade || 'Cidade ñ inf.'}
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -140,10 +177,54 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                         <Car size={16} />
                         <span className="text-xs font-semibold">{prop.details?.vagas || 0}</span>
                     </div>
-                    <div className="flex items-center gap-1 text-foreground" title="Área Construída">
-                        <Maximize2 size={16} />
-                        <span className="text-xs font-semibold">{prop.details?.area_construida || prop.details?.area_util || 0}m²</span>
-                    </div>
+                    {(() => {
+                        const type = (prop.type || prop.details?.type || '').toLowerCase()
+                        const d = prop.details || {}
+                        const fmt = (v: any) => v ? String(v).replace(/\s*m[²2]/gi, '') + 'm²' : null
+                        if (type === 'land') {
+                            return (d.area_total || d.area_terreno) ? (
+                                <div className="flex items-center gap-1 text-foreground" title="Área do Terreno">
+                                    <Maximize2 size={16} />
+                                    <span className="text-xs font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
+                                </div>
+                            ) : null
+                        }
+                        if (type === 'house' || type === 'rural') {
+                            return (
+                                <>
+                                    {(d.area_construida || d.area_util) ? (
+                                        <div className="flex items-center gap-1 text-foreground" title="Área Construída">
+                                            <Maximize2 size={16} />
+                                            <span className="text-xs font-semibold">{fmt(d.area_construida || d.area_util)}</span>
+                                        </div>
+                                    ) : null}
+                                    {(d.area_total || d.area_terreno) ? (
+                                        <div className="flex items-center gap-1 text-foreground/50" title="Área Terreno">
+                                            <Maximize2 size={14} />
+                                            <span className="text-xs font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
+                                        </div>
+                                    ) : null}
+                                </>
+                            )
+                        }
+                        // apartment, penthouse, studio, commercial, etc.
+                        return (
+                            <>
+                                {(d.area_privativa || d.area_util) ? (
+                                    <div className="flex items-center gap-1 text-foreground" title="Área Privativa">
+                                        <Maximize2 size={16} />
+                                        <span className="text-xs font-semibold">{fmt(d.area_privativa || d.area_util)}</span>
+                                    </div>
+                                ) : null}
+                                {d.area_total ? (
+                                    <div className="flex items-center gap-1 text-foreground/50" title="Área Total">
+                                        <Maximize2 size={14} />
+                                        <span className="text-xs font-semibold">{fmt(d.area_total)}</span>
+                                    </div>
+                                ) : null}
+                            </>
+                        )
+                    })()}
                 </div>
 
                 <div className="flex items-center justify-between">

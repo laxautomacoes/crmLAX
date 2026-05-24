@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { Download, Upload, Filter, Trash2, ArrowUpDown } from 'lucide-react'
+import { Download, Upload, Filter, Trash2, ArrowUpDown, Archive } from 'lucide-react'
 import { propertyTypes } from '@/utils/property-translations'
 import { toast } from 'sonner'
 import { bulkCreateProperties } from '@/app/_actions/properties'
@@ -46,7 +46,8 @@ export function PropertyFiltersModal({
             sortBy: 'newest',
             city: '',
             neighborhood: '',
-            ownerType: 'all'
+            ownerType: 'all',
+            archived: false
         })
     }
 
@@ -237,6 +238,27 @@ export function PropertyFiltersModal({
                                 ]}
                             />
                         )}
+
+                        {/* Toggle: Exibir Arquivados */}
+                        <div className="col-span-full">
+                            <button
+                                onClick={() => setFilters({ ...filters, archived: !filters.archived, status: 'all' })}
+                                className={`flex items-center gap-3 w-full p-3 rounded-xl border transition-all ${
+                                    filters.archived
+                                        ? 'bg-amber-500/10 border-amber-500/40 text-amber-500'
+                                        : 'bg-card border-border text-foreground hover:bg-muted/50'
+                                }`}
+                            >
+                                <Archive size={16} className={filters.archived ? 'text-amber-500' : 'text-muted-foreground'} />
+                                <div className="text-left">
+                                    <p className="text-sm font-bold">{filters.archived ? 'Exibindo Arquivados' : 'Exibir Arquivados'}</p>
+                                    <p className="text-xs text-muted-foreground">Imóveis removidos da lista ativa</p>
+                                </div>
+                                <div className={`ml-auto w-4 h-4 rounded-full border-2 transition-all ${
+                                    filters.archived ? 'bg-amber-500 border-amber-500' : 'border-border'
+                                }`} />
+                            </button>
+                        </div>
 
                         <FormSelect
                             label="Tipo de Imóvel"

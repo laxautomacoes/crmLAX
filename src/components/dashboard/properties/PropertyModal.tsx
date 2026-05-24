@@ -557,12 +557,34 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             setIsSaving(true)
             const cleanPriceStr = (formData.price || '0').toString().replace(/[^\d.,]/g, '').replace(',', '.')
             const parsedPrice = parseFloat(cleanPriceStr)
+
+            // Validação: tipo unidade exige campo Apartamento preenchido
+            const tiposComApto = ['apartment', 'penthouse', 'studio']
+            const tipo = (formData.type || formData.details?.type || '').toLowerCase()
+            const apto = formData.details?.endereco?.apto?.trim()
+            if (tiposComApto.includes(tipo) && !apto) {
+                toast.error('Informe o número do Apartamento antes de salvar.', {
+                    description: 'Imóveis do tipo Apartamento, Cobertura ou Studio precisam do número do apto para evitar títulos duplicados.',
+                })
+                setIsSaving(false)
+                return
+            }
+
+            // Compor título único: "Nome - Apto 201"
+            let finalTitle = formData.title?.trim() || ''
+            if (tiposComApto.includes(tipo) && apto) {
+                const aptoSuffix = ` - Apto ${apto}`
+                if (!finalTitle.includes(aptoSuffix)) {
+                    finalTitle = finalTitle + aptoSuffix
+                }
+            }
             
             // Filtrar campos para evitar enviar dados sujos
             const { created_by: _omit, ...restData } = formData
 
             const propertyData = {
                 ...restData,
+                title: finalTitle,
                 price: isNaN(parsedPrice) ? 0 : parsedPrice,
                 description: formData.description || '',
                 details: {

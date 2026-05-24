@@ -47,7 +47,7 @@ export async function getProperties(tenantId: string, status?: string, callerUse
                 )
             `)
             .eq('tenant_id', tenantId)
-            .eq('is_archived', false)
+            .eq('is_archived', status === 'archived')
 
         // Restrição de visibilidade: se não for admin, vê apenas publicados ou os criados por si mesmo
         if (effectiveRole !== 'admin' && effectiveRole !== 'superadmin') {
@@ -59,8 +59,8 @@ export async function getProperties(tenantId: string, status?: string, callerUse
         }
 
 
-        // Aplicar filtro de status se fornecido
-        if (status) {
+        // Aplicar filtro de status se fornecido (exceto o especial 'archived')
+        if (status && status !== 'archived') {
             query = query.eq('status', status)
         }
 

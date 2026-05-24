@@ -1,6 +1,7 @@
 'use client'
 
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2 } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, MoreVertical, Archive } from 'lucide-react'
 import { translatePropertyType, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
@@ -10,17 +11,30 @@ interface PropertyListItemProps {
     onView: (prop: any) => void
     onSend: (prop: any) => void
     onApprove?: (id: string) => void
+    onArchive?: (id: string) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApprove, userRole, userId }: PropertyListItemProps) {
+export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApprove, onArchive, userRole, userId }: PropertyListItemProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId && prop.created_by && (
         userId === prop.created_by || 
         userId === prop.created_by?.id
     )
     const canEdit = isAdmin || isOwner
+    const [dropdownOpen, setDropdownOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setDropdownOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
     const formattedPrice = prop.price
         ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}`
         : 'Sob consulta'
@@ -85,27 +99,30 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                     </div>
                     <div className="text-left max-w-md">
                         <div className="font-bold text-foreground text-sm line-clamp-1">{prop.title}</div>
-                        {prop.details?.situacao && (
-                            <div className={`mt-0.5 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-sm w-fit ${getSituacaoStyles(prop.details.situacao)}`}>
-                                {prop.details.situacao}
+                        {prop.details?.endereco?.apto && (
+                            <div className="flex items-center gap-1 text-foreground text-[10px] mt-0.5">
+                                <Home size={10} />
+                                <span>Apto {prop.details.endereco.apto}</span>
                             </div>
                         )}
-                        <div className="flex flex-col gap-0.5 mt-0.5">
-                            <div className="flex items-center gap-1 text-foreground text-[10px]">
-                                <MapPin size={10} />
-                                <span className="line-clamp-1">{prop.details?.endereco?.bairro || 'Bairro ñ inf.'}</span>
-                            </div>
-                            {prop.details?.torre_bloco && (
-                                <div className="text-[10px] text-foreground font-medium italic">
-                                    {prop.details.torre_bloco}
-                                </div>
-                            )}
+                        <div className="flex items-center gap-1 text-foreground text-[10px] mt-0.5">
+                            <MapPin size={10} />
+                            <span className="line-clamp-1">
+                                {prop.details?.endereco?.bairro || 'Bairro ñ inf.'}, {prop.details?.endereco?.cidade || 'Cidade ñ inf.'}
+                            </span>
                         </div>
                     </div>
                 </div>
             </td>
             <td className="px-6 py-4 text-center">
-                <span className="text-xs font-medium text-foreground">{translatePropertyType(prop.type)}</span>
+                <div className="flex flex-col items-center gap-1">
+                    <span className="text-xs font-medium text-foreground">{translatePropertyType(prop.type)}</span>
+                    {prop.details?.situacao && (
+                        <div className={`px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-sm w-fit ${getSituacaoStyles(prop.details.situacao)}`}>
+                            {prop.details.situacao}
+                        </div>
+                    )}
+                </div>
             </td>
             <td className="px-6 py-4">
                 <div className="flex flex-col gap-1 items-center">
@@ -128,28 +145,54 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-6 py-4">
                 <div className="flex flex-col gap-1 items-center">
-                    <div className="flex items-center gap-1 text-foreground" title="Área Construída">
-                        <Maximize2 size={12} />
-                        <span className="text-[10px] font-semibold">C: {prop.details?.area_construida || prop.details?.area_util || 0}m²</span>
-                    </div>
-                    {prop.details?.area_privativa && (
-                        <div className="flex items-center gap-1 text-foreground" title="Área Privativa">
-                            <Maximize2 size={12} className="text-foreground" />
-                            <span className="text-[10px] font-semibold">P: {prop.details.area_privativa}m²</span>
-                        </div>
-                    )}
-                    {prop.details?.area_total && (
-                        <div className="flex items-center gap-1 text-foreground" title="Área Total">
-                            <Maximize2 size={12} className="text-foreground" />
-                            <span className="text-[10px] font-semibold">T: {prop.details.area_total}m²</span>
-                        </div>
-                    )}
-                    {prop.details?.area_terreno && (
-                        <div className="flex items-center gap-1 text-foreground" title="Área Terreno">
-                            <Maximize2 size={12} className="text-foreground" />
-                            <span className="text-[10px] font-semibold">Tr: {prop.details.area_terreno}m²</span>
-                        </div>
-                    )}
+                    {(() => {
+                        const type = (prop.type || prop.details?.type || '').toLowerCase()
+                        const d = prop.details || {}
+                        const fmt = (v: any) => v ? String(v).replace(/\s*m[²2]/gi, '') + 'm²' : null
+                        if (type === 'land') {
+                            return (d.area_total || d.area_terreno) ? (
+                                <div className="flex items-center gap-1 text-foreground" title="Área do Terreno">
+                                    <Maximize2 size={12} />
+                                    <span className="text-[10px] font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
+                                </div>
+                            ) : null
+                        }
+                        if (type === 'house' || type === 'rural') {
+                            return (
+                                <>
+                                    {(d.area_construida || d.area_util) ? (
+                                        <div className="flex items-center gap-1 text-foreground" title="Área Construída">
+                                            <Maximize2 size={12} />
+                                            <span className="text-[10px] font-semibold">{fmt(d.area_construida || d.area_util)}</span>
+                                        </div>
+                                    ) : null}
+                                    {(d.area_total || d.area_terreno) ? (
+                                        <div className="flex items-center gap-1 text-foreground/50" title="Área Terreno">
+                                            <Maximize2 size={10} />
+                                            <span className="text-[10px] font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
+                                        </div>
+                                    ) : null}
+                                </>
+                            )
+                        }
+                        // apartment, penthouse, studio, commercial, etc.
+                        return (
+                            <>
+                                {(d.area_privativa || d.area_util) ? (
+                                    <div className="flex items-center gap-1 text-foreground" title="Área Privativa">
+                                        <Maximize2 size={12} />
+                                        <span className="text-[10px] font-semibold">{fmt(d.area_privativa || d.area_util)}</span>
+                                    </div>
+                                ) : null}
+                                {d.area_total ? (
+                                    <div className="flex items-center gap-1 text-foreground/50" title="Área Total">
+                                        <Maximize2 size={10} />
+                                        <span className="text-[10px] font-semibold">{fmt(d.area_total)}</span>
+                                    </div>
+                                ) : null}
+                            </>
+                        )
+                    })()}
                 </div>
             </td>
             <td className="px-6 py-4">
@@ -169,52 +212,60 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                 </div>
             </td>
             <td className="px-6 py-4 text-right">
-                <div className="flex items-center justify-end gap-2">
+                <div className="flex items-center justify-end" ref={dropdownRef}>
                     {isAdmin && prop.status === 'Pending' && onApprove && (
                         <button
-                            onClick={(e) => {
-                                e.stopPropagation()
-                                onApprove(prop.id)
-                            }}
-                            className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                            onClick={(e) => { e.stopPropagation(); onApprove(prop.id) }}
+                            className="p-2 mr-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
                             title="Autorizar Imóvel"
                         >
                             <FileText size={16} />
                         </button>
                     )}
                     <button
-                        onClick={(e) => {
-                            e.stopPropagation()
-                            onSend(prop)
-                        }}
-                        className="p-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
-                        title="Enviar para Lead"
+                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(o => !o) }}
+                        className="p-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors shadow-sm"
+                        title="Ações"
                     >
-                        <Send size={16} />
+                        <MoreVertical size={16} />
                     </button>
-                    {canEdit && (
-                        <>
+                    {dropdownOpen && (
+                        <div className="absolute right-6 mt-1 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-30">
                             <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    onEdit(prop)
-                                }}
-                                className="p-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors shadow-sm"
-                                title="Editar"
+                                onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onSend(prop) }}
+                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
                             >
-                                <Edit size={16} />
+                                <Send size={14} className="text-emerald-500" />
+                                Enviar para Lead
                             </button>
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    onDelete(prop.id)
-                                }}
-                                className="p-2 bg-[#EF4444] text-white rounded-lg hover:bg-[#DC2626] transition-colors shadow-sm"
-                                title="Excluir"
-                            >
-                                <Trash2 size={16} />
-                            </button>
-                        </>
+                            {canEdit && (
+                                <>
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onEdit(prop) }}
+                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                                    >
+                                        <Edit size={14} className="text-blue-500" />
+                                        Editar
+                                    </button>
+                                    {onArchive && (
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onArchive(prop.id) }}
+                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-amber-500 hover:bg-amber-500/10 transition-colors"
+                                        >
+                                            <Archive size={14} />
+                                            Arquivar
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onDelete(prop.id) }}
+                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-red-500 hover:bg-red-500/10 transition-colors"
+                                    >
+                                        <Trash2 size={14} />
+                                        Excluir
+                                    </button>
+                                </>
+                            )}
+                        </div>
                     )}
                 </div>
             </td>
