@@ -98,6 +98,7 @@ function getEmptyFormData() {
                 rua: '',
                 numero: '',
                 complemento: '',
+                apto: '',
                 bairro: '',
                 cidade: '',
                 estado: '',
@@ -221,6 +222,7 @@ interface EditingPropertyDetails {
         rua?: string
         numero?: string
         complemento?: string
+        apto?: string
         bairro?: string
         cidade?: string
         estado?: string
@@ -410,6 +412,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         rua: editingProperty.details?.endereco?.rua || '',
                         numero: editingProperty.details?.endereco?.numero || '',
                         complemento: editingProperty.details?.endereco?.complemento || '',
+                        apto: editingProperty.details?.endereco?.apto || '',
                         bairro: editingProperty.details?.endereco?.bairro || '',
                         cidade: editingProperty.details?.endereco?.cidade || '',
                         estado: editingProperty.details?.endereco?.estado || '',
