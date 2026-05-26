@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react'
 import { Bold, Italic, List, ListOrdered, Type, Quote, Underline, Strikethrough, ChevronDown, Undo, Redo, Palette, Image as ImageIcon, Paperclip, Upload, Loader2, Link } from 'lucide-react'
+import { markdownToHtml } from '@/lib/utils/markdown'
 
 interface FormRichTextareaProps {
     label?: string
@@ -28,32 +29,6 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
 
     const [selectedStyle, setSelectedStyle] = useState('p')
     const fileInputRef = useRef<HTMLInputElement>(null)
-
-    // Função para converter Markdown básico para HTML (para o editor)
-    const markdownToHtml = (md: string) => {
-        if (!md) return ''
-        let html = md
-            .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-            .replace(/\*(.*?)\*/g, '<em>$1</em>')
-            .replace(/__(.*?)__/g, '<u>$1</u>')
-            .replace(/~~(.*?)~~/g, '<strike>$1</strike>')
-            .replace(/^### (.*$)/gm, '<h3>$1</h3>')
-            .replace(/^## (.*$)/gm, '<h2>$1</h2>')
-            .replace(/^# (.*$)/gm, '<h1>$1</h1>')
-            .replace(/^> (.*$)/gm, '<blockquote>$1</blockquote>')
-            .replace(/^- (.*$)/gm, '<ul><li>$1</li></ul>')
-            .replace(/^1\. (.*$)/gm, '<ol><li>$1</li></ol>')
-            .replace(/<color:\s*([^>]+?)\s*>(.*?)<\/color>/g, '<span style="color: $1">$2</span>')
-            .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 8px;" />')
-            .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
-            .replace(/\n/g, '<br>')
-        
-        // Corrigir listas consecutivas
-        html = html.replace(/<\/ul><br><ul>/g, '')
-        html = html.replace(/<\/ol><br><ol>/g, '')
-        
-        return html
-    }
 
     // Função para converter HTML de volta para Markdown (para o estado/banco)
     const htmlToMarkdown = (html: string) => {

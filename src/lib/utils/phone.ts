@@ -7,7 +7,12 @@ export function formatPhone(value: string | null | undefined): string {
     if (!value) return '';
 
     // Remove todos os caracteres não numéricos
-    const digits = value.replace(/\D/g, '');
+    let digits = value.replace(/\D/g, '');
+
+    // Se começar com 55 (DDI do Brasil) e tiver 12 ou 13 dígitos, remove o 55
+    if (digits.startsWith('55') && (digits.length === 12 || digits.length === 13)) {
+        digits = digits.slice(2);
+    }
 
     if (digits.length <= 2) {
         return digits;

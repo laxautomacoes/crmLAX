@@ -6,6 +6,8 @@ import { ProfileTab } from '@/components/settings/ProfileTab';
 import { BrandingTab } from '@/components/settings/BrandingTab';
 import { DomainTab } from '@/components/settings/DomainTab';
 import { EmailSettingsForm } from '@/components/settings/emails/EmailSettingsForm';
+import { TemplatesTab } from '@/components/settings/TemplatesTab';
+import { SourcesTab } from '@/components/settings/SourcesTab';
 import { getProfile } from '@/app/_actions/profile';
 import { PageHeader } from '@/components/shared/PageHeader';
 
@@ -16,6 +18,7 @@ export default function SettingsPage() {
     const router = useRouter();
     const tabParam = searchParams.get('tab');
     const [role, setRole] = useState<string | null>(null);
+    const [tenantId, setTenantId] = useState<string | null>(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -23,6 +26,7 @@ export default function SettingsPage() {
             const { profile } = await getProfile();
             if (profile) {
                 setRole(profile.role);
+                setTenantId(profile.tenant_id);
             }
             setLoading(false);
         }
@@ -43,6 +47,8 @@ export default function SettingsPage() {
         tabs.push({ id: 'identity', label: 'Identidade' });
         tabs.push({ id: 'emails', label: 'E-mails' });
         tabs.push({ id: 'domain', label: 'Domínio' });
+        tabs.push({ id: 'sources', label: 'Origens' });
+        tabs.push({ id: 'templates', label: 'Templates' });
     }
 
     if (loading) return null;
@@ -53,6 +59,8 @@ export default function SettingsPage() {
             case 'identity': return 'Identidade da Empresa';
             case 'emails': return 'Configurações de E-mail';
             case 'domain': return 'Domínio Personalizado';
+            case 'templates': return 'Templates de Proposta';
+            case 'sources': return 'Origens de Leads';
             default: return 'Configurações';
         }
     };
@@ -86,6 +94,8 @@ export default function SettingsPage() {
                 {activeTab === 'identity' && <BrandingTab />}
                 {activeTab === 'emails' && <EmailSettingsForm />}
                 {activeTab === 'domain' && <DomainTab />}
+                {activeTab === 'templates' && tenantId && <TemplatesTab tenantId={tenantId} />}
+                {activeTab === 'sources' && tenantId && <SourcesTab tenantId={tenantId} />}
             </div>
         </div>
     );

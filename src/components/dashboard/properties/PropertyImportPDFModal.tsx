@@ -21,16 +21,13 @@ interface PropertyImportPDFModalProps {
 
 const OCR_MODELS = {
     gemini: [
-        { id: 'gemini-3-flash', name: 'Gemini 3 Flash' },
-        { id: 'gemini-3.1-pro', name: 'Gemini 3.1 Pro' },
-        { id: 'gemini-2.5-pro', name: 'Gemini 2.5 Pro' },
         { id: 'gemini-2.0-flash', name: 'Gemini 2.0 Flash' },
+        { id: 'gemini-1.5-flash', name: 'Gemini 1.5 Flash' },
+        { id: 'gemini-1.5-pro', name: 'Gemini 1.5 Pro' },
     ],
     openai: [
-        { id: 'gpt-4o', name: 'GPT-4o' },
         { id: 'gpt-4o-mini', name: 'GPT-4o Mini' },
-        { id: 'gpt-5.4', name: 'GPT-5.4' },
-        { id: 'gpt-5.4-mini', name: 'GPT-5.4 Mini' },
+        { id: 'gpt-4o', name: 'GPT-4o' },
     ]
 }
 
@@ -152,8 +149,8 @@ export function PropertyImportPDFModal({
                 formData.append('property_id', selectedPropertyId)
             }
 
-            // Para Book: renderizar páginas como imagens
-            if (mode === 'book') {
+            // Para Book ou OpenAI: renderizar páginas como imagens para viabilizar multimodal
+            if (mode === 'book' || selectedProvider === 'openai') {
                 setProcessingStep('Renderizando páginas do PDF...')
                 const pageImages = await renderPDFPages(file)
                 formData.append('page_images', JSON.stringify(pageImages))
@@ -242,7 +239,7 @@ export function PropertyImportPDFModal({
                 </div>
 
                 {/* ── Descrição do modo ── */}
-                <div className="bg-primary/5 border border-primary/20 rounded-2xl p-4 flex gap-3">
+                <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 flex gap-3">
                     <ModeIcon className={`shrink-0 mt-0.5 ${modeConfig.color}`} size={18} />
                     <p className="text-xs text-foreground/80 leading-relaxed">{modeConfig.description}</p>
                 </div>
@@ -324,7 +321,7 @@ export function PropertyImportPDFModal({
                 {!file ? (
                     <div
                         onClick={() => fileInputRef.current?.click()}
-                        className="border-2 border-dashed border-border rounded-2xl p-8 flex flex-col items-center justify-center gap-3 hover:border-primary/50 hover:bg-muted/30 transition-all cursor-pointer group"
+                        className="border border-muted-foreground/30 rounded-lg p-8 flex flex-col items-center justify-center gap-3 hover:border-accent-icon/50 hover:bg-muted/20 transition-all cursor-pointer group"
                     >
                         <div className="p-3 bg-muted rounded-full group-hover:bg-primary/10 group-hover:text-primary transition-colors">
                             <Upload size={24} />
@@ -338,7 +335,7 @@ export function PropertyImportPDFModal({
                         <input type="file" ref={fileInputRef} onChange={handleFileChange} accept=".pdf" className="hidden" />
                     </div>
                 ) : (
-                    <div className="bg-card border border-border rounded-2xl p-4 flex items-center justify-between">
+                    <div className="bg-card border border-muted-foreground/30 rounded-lg p-4 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="p-2.5 bg-red-500/10 text-red-500 rounded-xl">
                                 <FileText size={20} />

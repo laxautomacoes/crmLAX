@@ -85,13 +85,13 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
     }
 
     return (
-        <div className="space-y-4 rounded-2xl border border-gray-100 bg-white p-6">
+        <div className="space-y-4 rounded-2xl border border-border/40 bg-card p-6">
             <div className="flex items-center gap-2">
                 <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-icon/20">
-                    <Sparkles className="h-4 w-4 text-[#404F4F]" />
+                    <Sparkles className="h-4 w-4 text-accent-icon" />
                 </div>
-                <h3 className="font-bold text-[#404F4F]">Análise de IA</h3>
-                <span className="ml-auto rounded-full bg-accent-icon/20 px-2 py-0.5 text-xs font-bold text-[#404F4F]">Pro</span>
+                <h3 className="font-bold text-foreground">Análise de IA</h3>
+                <span className="ml-auto rounded-full bg-accent-icon/10 px-2 py-0.5 text-xs font-bold text-foreground">Pro</span>
             </div>
 
             {errorMsg && (
@@ -103,16 +103,16 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
                 <button
                     onClick={handleAnalysis}
                     disabled={loadingAnalysis}
-                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-[#404F4F]/20 bg-[#404F4F]/5 px-4 py-2.5 text-sm font-bold text-[#404F4F] transition-all hover:bg-[#404F4F]/10 disabled:opacity-50"
+                    className="flex w-full items-center justify-center gap-2 rounded-lg border border-accent-icon/20 bg-accent-icon/5 px-4 py-2.5 text-sm font-bold text-accent-icon transition-all hover:bg-accent-icon/10 disabled:opacity-50"
                 >
                     {loadingAnalysis ? <Loader2 className="h-4 w-4 animate-spin" /> : <TrendingUp className="h-4 w-4" />}
                     {loadingAnalysis ? 'Analisando...' : 'Analisar Probabilidade de Fechamento'}
                 </button>
-
+ 
                 {analysis && (
-                    <div className="relative rounded-lg bg-gray-50 p-4">
-                        <p className="pr-8 text-sm text-gray-700 leading-relaxed whitespace-pre-wrap">{analysis}</p>
-                        <button onClick={() => handleCopy(analysis)} className="absolute right-3 top-3 text-gray-400 hover:text-[#404F4F]">
+                    <div className="relative rounded-lg bg-muted/40 border border-border/30 p-4">
+                        <p className="pr-8 text-sm text-foreground leading-relaxed whitespace-pre-wrap">{analysis}</p>
+                        <button onClick={() => handleCopy(analysis)} className="absolute right-3 top-3 text-muted-foreground hover:text-accent-icon">
                             {copied ? <Check className="h-4 w-4 text-green-500" /> : <Copy className="h-4 w-4" />}
                         </button>
                     </div>
@@ -131,9 +131,9 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
                 </button>
 
                 {leadSummary && (
-                    <div className="flex items-start gap-2 rounded-lg bg-blue-50 p-3">
+                    <div className="flex items-start gap-2 rounded-lg bg-blue-50 dark:bg-blue-950/20 p-3 border border-blue-100 dark:border-blue-900/30">
                         <Brain className="mt-0.5 h-4 w-4 shrink-0 text-blue-500" />
-                        <p className="text-sm text-blue-700">{leadSummary}</p>
+                        <p className="text-sm text-blue-700 dark:text-blue-400">{leadSummary}</p>
                     </div>
                 )}
 
@@ -148,21 +148,21 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
                         </button>
 
                         {showMatches && matches.map((match, i) => (
-                            <div key={match.property_id} className="flex items-start gap-3 rounded-lg border border-gray-100 bg-gray-50 p-3">
-                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-[#404F4F] text-xs font-bold text-white">
+                            <div key={match.property_id} className="flex items-start gap-3 rounded-lg border border-border/30 bg-muted/40 p-3">
+                                <span className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-accent-icon text-xs font-bold text-primary-foreground">
                                     {i + 1}
                                 </span>
                                 <div className="flex-1 min-w-0">
                                     <div className="flex items-center gap-2">
-                                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200">
+                                        <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-gray-200 dark:bg-muted">
                                             <div
-                                                className="h-full rounded-full bg-[#FFE600] transition-all"
+                                                className="h-full rounded-full transition-all"
                                                 style={{ width: `${match.score}%`, backgroundColor: match.score >= 80 ? '#00B087' : match.score >= 60 ? '#FFE600' : '#6B7280' }}
                                             />
                                         </div>
-                                        <span className="text-xs font-bold text-gray-700">{match.score}%</span>
+                                        <span className="text-xs font-bold text-foreground">{match.score}%</span>
                                     </div>
-                                    <p className="mt-1 text-xs text-gray-500">{match.reason}</p>
+                                    <p className="mt-1 text-xs text-muted-foreground">{match.reason}</p>
                                 </div>
                             </div>
                         ))}

@@ -70,3 +70,14 @@ export async function createLeadCampaign(tenantId: string, sourceName: string, n
     if (error) return { success: false, error: error.message }
     return { success: true, data }
 }
+
+export async function deleteLeadSource(id: string) {
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('lead_sources')
+        .delete()
+        .eq('id', id)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}

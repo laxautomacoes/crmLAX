@@ -154,8 +154,12 @@ export default function PropertiesClient({
 
         if (result.success) {
             toast.success(editingProperty ? 'Imóvel atualizado!' : 'Imóvel cadastrado!')
-            setIsModalOpen(false)
-            setEditingProperty(null)
+            // Atualiza o editingProperty com os dados salvos para manter o modal sincronizado
+            if (result.data) {
+                setEditingProperty(result.data)
+            } else if (editingProperty?.id) {
+                setEditingProperty({ ...editingProperty, ...propertyData })
+            }
             refreshProperties(filters.status)
         } else {
             toast.error('Erro ao salvar imóvel: ' + result.error)

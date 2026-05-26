@@ -71,7 +71,7 @@ export const createLeadSchema = z.object({
     stage_id: optionalUuid,
     notes: optionalText,
     value: price,
-    interest: z.string().max(100).optional().nullable(),
+    interest: z.string().max(200).optional().nullable(),
     lead_source: z.string().max(100).optional().default('Direto'),
     campaign: z.string().max(200).optional().nullable(),
     property_id: optionalUuid,

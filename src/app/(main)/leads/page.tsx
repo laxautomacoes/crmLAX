@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Plus, Sparkles } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { LeadsHeader } from '@/components/dashboard/leads/LeadsHeader'
 import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
 import { Modal } from '@/components/shared/Modal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
+import { LeadImportImageModal } from '@/components/dashboard/leads/LeadImportImageModal'
 import { getProfile, getBrokers } from '@/app/_actions/profile'
 import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
 import { createStage, deleteStage, duplicateStage, updateStageName, updateStageColor } from '@/app/_actions/stages'
@@ -41,6 +42,7 @@ type PipelineLead = Lead & {
 export default function LeadsPage() {
     const [isStageModalOpen, setIsStageModalOpen] = useState(false)
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)
+    const [isLeadImportImageModalOpen, setIsLeadImportImageModalOpen] = useState(false)
     const [newStageName, setNewStageName] = useState('')
     const [tenantId, setTenantId] = useState<string | null>(null)
     const [stages, setStages] = useState<Stage[]>([])
@@ -241,6 +243,13 @@ export default function LeadsPage() {
             <PageHeader title="Leads">
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
+                        onClick={() => setIsLeadImportImageModalOpen(true)}
+                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none order-1 md:order-2"
+                    >
+                        <Sparkles size={18} className="text-accent-icon" />
+                        Importar
+                    </button>
+                    <button
                         onClick={() => setIsStageModalOpen(true)}
                         className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none order-1 md:order-2"
                     >
@@ -313,6 +322,19 @@ export default function LeadsPage() {
                     onSuccess={fetchData}
                     editingLead={editingLead ?? undefined}
                     hasAIAccess={hasAIAccess}
+                />
+            )}
+
+            {/* Modal Importar Print (IA) */}
+            {tenantId && (
+                <LeadImportImageModal
+                    isOpen={isLeadImportImageModalOpen}
+                    onClose={() => setIsLeadImportImageModalOpen(false)}
+                    tenantId={tenantId}
+                    stages={stages}
+                    brokers={brokers}
+                    isAdmin={userRole === 'admin' || userRole === 'superadmin'}
+                    onImportSuccess={fetchData}
                 />
             )}
         </div>

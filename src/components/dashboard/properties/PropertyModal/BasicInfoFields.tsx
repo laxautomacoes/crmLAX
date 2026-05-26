@@ -2,6 +2,7 @@
 
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
+import { Switch } from '@/components/ui/Switch'
 import { Building2, Home } from 'lucide-react'
 
 interface BasicInfoFieldsProps {
@@ -33,28 +34,63 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                     <h4 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-2">
                         <Home size={14} className="text-foreground" />
                         {isEmpreendimento ? 'Empreendimento' : 'Imóvel'}
-                        <span className="ml-1 text-[10px] font-normal italic normal-case text-muted-foreground">
-                            ({isEmpreendimento ? 'nome do empreendimento' : 'título do imóvel'})
-                        </span>
                     </h4>
-                    <button
-                        type="button"
-                        onClick={toggleEmpreendimento}
-                        className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest transition-all border ${
-                            isEmpreendimento
-                                ? 'bg-secondary text-secondary-foreground border-secondary shadow-sm'
-                                : 'bg-transparent text-muted-foreground border-border hover:bg-muted/50'
-                        }`}
-                    >
-                        Empreendimento
-                    </button>
+                    <div className="flex items-center gap-4">
+                        <Switch
+                            checked={isEmpreendimento}
+                            onChange={toggleEmpreendimento}
+                            label="Empreendimento"
+                        />
+                        {isAdmin && (
+                            <Switch
+                                checked={formData.is_published || false}
+                                onChange={(checked) => setFormData({ ...formData, is_published: checked })}
+                                label="SITE"
+                            />
+                        )}
+                    </div>
                 </div>
-                <div className="grid grid-cols-1 gap-x-3 gap-y-6">
-                    <FormInput
-                        value={formData.title}
-                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                        placeholder={isEmpreendimento ? 'Ex: WOA SKY Towers' : 'Ex: Apartamento 3 suítes Beira Mar'}
-                    />
+                <div className="flex gap-3 items-end">
+                    <div className="flex-1 min-w-0">
+                        <FormInput
+                            label="Nome"
+                            value={formData.title}
+                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                            placeholder={isEmpreendimento ? 'Ex: WOA SKY Towers' : 'Ex: Apartamento 3 suítes Beira Mar'}
+                        />
+                    </div>
+                    <div className="w-[100px] shrink-0">
+                        <FormInput
+                            label="Apartamento"
+                            value={formData.details?.endereco?.apto || ''}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, apto: e.target.value } } })}
+                            placeholder="Apto"
+                        />
+                    </div>
+                    {isAdmin && brokers.length > 0 ? (
+                        <div className="shrink-0 min-w-[180px]">
+                            <FormSelect
+                                label="Responsável"
+                                value={formData.created_by || 'all'}
+                                onChange={(e) => setFormData({ ...formData, created_by: e.target.value === 'all' ? null : e.target.value })}
+                                options={[
+                                    { value: 'all', label: 'Todos' },
+                                    ...brokers.map(broker => ({ value: broker.id, label: broker.full_name }))
+                                ]}
+                            />
+                        </div>
+                    ) : (
+                        currentProfile?.full_name && (
+                            <div className="shrink-0 min-w-[140px]">
+                                <FormInput
+                                    label="Responsável"
+                                    value={currentProfile.full_name}
+                                    onChange={() => {}}
+                                    readOnly
+                                />
+                            </div>
+                        )
+                    )}
                 </div>
             </div>
 
@@ -101,7 +137,7 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
             )}
 
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6 pt-4">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
                 {!isEmpreendimento && (
                     <FormInput
                         label="Preço (R$)"

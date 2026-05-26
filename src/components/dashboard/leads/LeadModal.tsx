@@ -11,9 +11,12 @@ import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
-import { MessageSquare, X, Sparkles, User } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User, FileText, DollarSign } from 'lucide-react'
 import LeadAICard from '@/components/ai/LeadAICard'
 import type { Lead } from './PipelineBoard'
+import { LeadProposalTab } from './LeadProposalTab'
+import { LeadDocumentsTab } from './LeadDocumentsTab'
+import { LeadFinanceTab } from './LeadFinanceTab'
 
 interface Broker {
     id: string
@@ -93,7 +96,7 @@ export function LeadModal({
         videos: [] as string[],
         documents: [] as { name: string; url: string }[]
     })
-    const [activeTab, setActiveTab] = useState<'info' | 'ai'>('info')
+    const [activeTab, setActiveTab] = useState<'info' | 'ai' | 'proposta' | 'documents' | 'financeiro'>('info')
 
     const firstStageId = stages[0]?.id ?? ''
 
@@ -264,7 +267,7 @@ export function LeadModal({
             isOpen={isOpen}
             onClose={onClose}
             title={editingLead ? "Editar Lead" : "Novo Lead"}
-            size="lg"
+            size="xl"
             extraHeaderContent={
                 <button
                     onClick={handleSubmit}
@@ -278,20 +281,46 @@ export function LeadModal({
             <div className="space-y-6">
                 {/* Tabs for IA if editing */}
                 {editingLead?.id && (
-                    <div className="flex items-center gap-1 p-1 bg-muted/50 rounded-xl mb-6">
+                    <div className="flex items-center gap-1.5 p-1.5 bg-muted/70 rounded-xl mb-6 overflow-x-auto no-scrollbar border border-border/10">
                         <button
+                            type="button"
                             onClick={() => setActiveTab('info')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'info' ? 'bg-white text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'info' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
-                            <User size={16} />
+                            <User size={14} />
                             Informações
                         </button>
                         <button
-                            onClick={() => setActiveTab('ai')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2 text-sm font-bold rounded-lg transition-all ${activeTab === 'ai' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground'}`}
+                            type="button"
+                            onClick={() => setActiveTab('proposta')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'proposta' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
-                            <Sparkles size={16} />
-                            IA & Matchmaking
+                            <FileText size={14} />
+                            Proposta
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('documents')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'documents' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                        >
+                            <FileText size={14} />
+                            Documentos & Contratos
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('financeiro')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'financeiro' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                        >
+                            <DollarSign size={14} />
+                            Financeiro
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('ai')}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'ai' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                        >
+                            <Sparkles size={14} />
+                            IA Match
                         </button>
                     </div>
                 )}
@@ -498,7 +527,7 @@ export function LeadModal({
                     </div>
 
                     <div className="col-span-1 md:col-span-2">
-                        <h3 className="text-sm font-bold text-gray-800 ml-1 mb-3">Anexos</h3>
+                        <h3 className="text-sm font-bold text-gray-800 dark:text-foreground/80 ml-1 mb-3">Anexos</h3>
                         <MediaUpload
                             pathPrefix={`leads/${tenantId}`}
                             images={leadData.images}
@@ -511,7 +540,25 @@ export function LeadModal({
                 </div>
             </div>
             ) : editingLead?.id ? (
-                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    {activeTab === 'proposta' && <LeadProposalTab leadId={editingLead.id} tenantId={tenantId} />}
+                    {activeTab === 'documents' && (
+                        <LeadDocumentsTab 
+                            leadId={editingLead.id} 
+                            tenantId={tenantId} 
+                            leadName={leadData.name} 
+                            propertyInterest={leadData.interest || leadData.property_interest} 
+                            userRole={userRole}
+                        />
+                    )}
+                    {activeTab === 'financeiro' && (
+                        <LeadFinanceTab 
+                            leadId={editingLead.id} 
+                            tenantId={tenantId} 
+                            assignedToId={leadData.assigned_to} 
+                        />
+                    )}
+                    {activeTab === 'ai' && (
                         <LeadAICard 
                             leadId={editingLead.id}
                             tenantId={tenantId}
@@ -523,8 +570,9 @@ export function LeadModal({
                             )}
                             hasAIAccess={hasAIAccess}
                         />
-                    </div>
-                ) : null}
+                    )}
+                </div>
+            ) : null}
 
 
             </div>

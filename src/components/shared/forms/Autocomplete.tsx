@@ -13,6 +13,7 @@ interface AutocompleteProps {
     itemToString: (item: any) => string
     itemToId: (item: any) => string
     icon?: any
+    showIcon?: boolean
     error?: string
 }
 
@@ -26,6 +27,7 @@ export function Autocomplete({
     itemToString,
     itemToId,
     icon: Icon = Search,
+    showIcon = true,
     error
 }: AutocompleteProps) {
     const [searchTerm, setSearchTerm] = useState('')
@@ -74,9 +76,9 @@ export function Autocomplete({
 
             <div className="relative">
                 {selectedItem ? (
-                    <div className="flex items-center justify-between w-full p-3 bg-muted/40 border border-muted-foreground/30 rounded-lg group">
+                    <div className="flex items-center justify-between w-full py-2 pl-3 pr-2 bg-muted/40 border border-muted-foreground/30 rounded-lg group">
                         <div className="flex items-center gap-2 truncate">
-                            <Icon size={16} className="text-muted-foreground shrink-0" />
+                            {showIcon && Icon && <Icon size={16} className="text-muted-foreground shrink-0" />}
                             <span className="text-sm font-medium text-foreground truncate">
                                 {itemToString(selectedItem)}
                             </span>
@@ -91,12 +93,14 @@ export function Autocomplete({
                     </div>
                 ) : (
                     <>
-                        <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
-                            {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Icon size={16} />}
-                        </div>
+                        {showIcon && Icon && (
+                            <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
+                                {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Icon size={16} />}
+                            </div>
+                        )}
                         <input
                             type="text"
-                            className="w-full pl-10 pr-4 py-3 bg-input border border-muted-foreground/30 rounded-lg text-sm text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all placeholder:text-muted-foreground/50"
+                            className={`w-full pr-4 py-2 bg-input border border-muted-foreground/30 rounded-lg text-sm text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all placeholder:text-muted-foreground/50 ${showIcon && Icon ? 'pl-10' : 'pl-4'}`}
                             placeholder={placeholder}
                             value={searchTerm}
                             onChange={(e) => {

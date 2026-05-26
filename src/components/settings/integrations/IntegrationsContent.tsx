@@ -5,6 +5,7 @@ import { IntegrationEndpointCard } from '@/components/settings/integrations/Inte
 import { MarketDataCard } from '@/components/settings/integrations/MarketDataCard';
 import { NewsFeedCard } from '@/components/settings/integrations/NewsFeedCard';
 import { GatewayCard } from '@/components/settings/integrations/GatewayCard';
+import { DocuSignCard } from '@/components/settings/integrations/DocuSignCard';
 import { Facebook, Chrome, Building2 } from 'lucide-react';
 
 interface IntegrationsContentProps {
@@ -83,7 +84,19 @@ export function IntegrationsContent({ tenantId, slug, customDomain }: Integratio
                 </div>
             </div>
 
-            {/* SEÇÃO 4: INTELIGÊNCIA DE MERCADO */}
+            {/* SEÇÃO 4: ASSINATURA DIGITAL */}
+            <div className="space-y-6">
+                <div className="flex items-center gap-4">
+                    <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em]">Assinatura Digital & Alertas</h2>
+                    <div className="h-px bg-border flex-1" />
+                </div>
+
+                <div className="flex flex-col gap-6">
+                    <DocuSignCard />
+                </div>
+            </div>
+
+            {/* SEÇÃO 5: INTELIGÊNCIA DE MERCADO */}
             <div className="space-y-6">
                 <div className="flex items-center gap-4">
                     <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em]">Inteligência de Mercado</h2>

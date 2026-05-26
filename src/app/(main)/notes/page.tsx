@@ -9,6 +9,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { markdownToHtml } from '@/lib/utils/markdown'
 
 // Componente local para o Dropdown de Anexos
 function AttachmentsDropdown({ attachments }: { attachments: any[] }) {
@@ -231,7 +232,7 @@ export default function NotesPage() {
 
                                 <div 
                                     className="text-card-foreground text-sm line-clamp-4 leading-relaxed overflow-hidden prose prose-sm dark:prose-invert max-w-none"
-                                    dangerouslySetInnerHTML={{ __html: note.content }}
+                                    dangerouslySetInnerHTML={{ __html: markdownToHtml(note.content) }}
                                 />
 
                                 <div className="space-y-2 pt-2 border-t border-border">
@@ -279,7 +280,7 @@ export default function NotesPage() {
                                             <td className="px-6 py-4 max-w-md">
                                                 <div 
                                                     className="text-sm text-card-foreground line-clamp-2 prose prose-sm dark:prose-invert"
-                                                    dangerouslySetInnerHTML={{ __html: note.content }}
+                                                    dangerouslySetInnerHTML={{ __html: markdownToHtml(note.content) }}
                                                 />
                                             </td>
                                             <td className="px-6 py-4">

@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { Image as ImageIcon, Film, FileText, X, Upload, Loader2, Download, Check, Globe } from 'lucide-react'
+import { Image as ImageIcon, Film, FileText, X, Upload, Loader2, Download, Check, Globe, Trash2 } from 'lucide-react'
+import { toast } from 'sonner'
 import {
     DndContext,
     closestCenter,
@@ -25,9 +26,11 @@ interface SortableImageProps {
     url: string;
     index: number;
     onRemove: (index: number) => void;
+    isSelected?: boolean;
+    onToggleSelect?: (url: string) => void;
 }
 
-function SortableImage({ url, index, onRemove }: SortableImageProps) {
+function SortableImage({ url, index, onRemove, isSelected, onToggleSelect }: SortableImageProps) {
     const {
         attributes,
         listeners,
@@ -48,11 +51,27 @@ function SortableImage({ url, index, onRemove }: SortableImageProps) {
         <div 
             ref={setNodeRef} 
             style={style} 
-            className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5"
+            className={`relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 border ${isSelected ? 'ring-2 ring-[#FFE600] ring-inset border-[#FFE600]/50' : 'border-muted-foreground/30'} transition-all`}
         >
             <div {...attributes} {...listeners} className="w-full h-full cursor-grab active:cursor-grabbing">
                 <img src={url} alt={`Imóvel ${index}`} className="w-full h-full object-cover pointer-events-none" />
             </div>
+            {/* Selection overlay */}
+            {onToggleSelect && (
+                <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onToggleSelect(url); }}
+                    className="absolute inset-0 z-[5] cursor-pointer"
+                >
+                    {isSelected && (
+                        <div className="absolute inset-0 bg-foreground/20 flex items-center justify-center">
+                            <div className="w-5 h-5 rounded-full bg-[#FFE600] flex items-center justify-center">
+                                <Check className="text-[#404F4F]" size={14} strokeWidth={3.5} />
+                            </div>
+                        </div>
+                    )}
+                </button>
+            )}
             <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onRemove(index); }}
@@ -74,14 +93,76 @@ interface MediaFieldsProps {
     onImportImages?: (urls: string[]) => Promise<void>
     onRemoveSourceImage?: (index: number) => void
     onReorderImages?: (newImages: string[]) => void
+    propertyTitle?: string
+    onRemoveMultipleImages?: (urls: string[]) => void
 }
 
 export function MediaFields({ 
     formData, isUploading, handleFileUpload, removeFile,
-    sourceImages = [], isImportingImages = false, onImportImages, onRemoveSourceImage, onReorderImages
+    sourceImages = [], isImportingImages = false, onImportImages, onRemoveSourceImage, onReorderImages,
+    propertyTitle, onRemoveMultipleImages
 }: MediaFieldsProps) {
     const [selectedSourceImages, setSelectedSourceImages] = useState<Set<number>>(new Set())
     const [activeId, setActiveId] = useState<string | null>(null)
+    const [isDownloading, setIsDownloading] = useState(false)
+    const [selectedDownloadImages, setSelectedDownloadImages] = useState<Set<string>>(new Set())
+
+    const toggleDownloadImage = (url: string) => {
+        setSelectedDownloadImages(prev => {
+            const next = new Set(prev)
+            if (next.has(url)) next.delete(url)
+            else next.add(url)
+            return next
+        })
+    }
+
+    const selectAllDownloadImages = () => {
+        const images = formData.images || []
+        if (selectedDownloadImages.size === images.length) {
+            setSelectedDownloadImages(new Set())
+        } else {
+            setSelectedDownloadImages(new Set(images))
+        }
+    }
+
+    const handleDownloadImages = async () => {
+        const images = Array.from(selectedDownloadImages)
+        if (images.length === 0) return
+        setIsDownloading(true)
+        try {
+            for (let i = 0; i < images.length; i++) {
+                const url = images[i]
+                const response = await fetch(url)
+                const blob = await response.blob()
+
+                const contentType = response.headers.get('content-type')
+                let ext = 'jpg'
+                if (contentType?.includes('image/png')) ext = 'png'
+                else if (contentType?.includes('image/webp')) ext = 'webp'
+
+                const blobUrl = URL.createObjectURL(blob)
+                const link = document.createElement('a')
+                link.href = blobUrl
+
+                const cleanTitle = (propertyTitle || 'imovel').toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                link.download = `${cleanTitle}-foto-${i + 1}.${ext}`
+
+                document.body.appendChild(link)
+                link.click()
+
+                document.body.removeChild(link)
+                URL.revokeObjectURL(blobUrl)
+
+                await new Promise(resolve => setTimeout(resolve, 150))
+            }
+            toast.success('Download das fotos iniciado!')
+        } catch (error) {
+            console.error('Erro ao baixar imagens:', error)
+            toast.error('Erro ao realizar o download das fotos.')
+        } finally {
+            setIsDownloading(false)
+        }
+    }
 
     const sensors = useSensors(
         useSensor(PointerSensor, {
@@ -145,7 +226,7 @@ export function MediaFields({
         <div className="col-span-2 space-y-6">
             <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
                 <ImageIcon size={14} className="text-foreground" />
-                Mídia e Documentos
+                Mídias e Documentos
             </h4>
 
             <div className="space-y-8">
@@ -210,8 +291,37 @@ export function MediaFields({
 
                 {/* ── Imagens (já salvas no Storage) ── */}
                 <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Imagens</span>
+                    <div className="flex items-center justify-between">
+                        <div className="flex items-center gap-2">
+                            <span className="text-[10px] font-bold text-muted-foreground tracking-wider">Imagens</span>
+                        </div>
+                        {formData.images?.length > 0 && (
+                            <div className="flex items-center gap-3">
+                                {selectedDownloadImages.size >= 2 && (
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            const urls = Array.from(selectedDownloadImages)
+                                            if (onRemoveMultipleImages) {
+                                                onRemoveMultipleImages(urls)
+                                            }
+                                            setSelectedDownloadImages(new Set())
+                                        }}
+                                        className="text-[10px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/40 rounded-md px-2 py-1 transition-all uppercase tracking-wider flex items-center gap-1"
+                                    >
+                                        <Trash2 size={12} />
+                                        Excluir {selectedDownloadImages.size}
+                                    </button>
+                                )}
+                                <button
+                                    type="button"
+                                    onClick={selectAllDownloadImages}
+                                    className={`text-[10px] font-bold rounded-md px-2 py-1 transition-all uppercase tracking-wider ${selectedDownloadImages.size > 0 ? 'text-foreground border border-muted-foreground/50 hover:bg-foreground/10' : 'text-muted-foreground/50 border border-border/30 hover:text-muted-foreground hover:border-border/50'}`}
+                                >
+                                    {selectedDownloadImages.size === formData.images.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                                </button>
+                            </div>
+                        )}
                     </div>
                     <DndContext 
                         sensors={sensors}
@@ -229,11 +339,13 @@ export function MediaFields({
                                         key={url} 
                                         url={url} 
                                         index={index} 
-                                        onRemove={(i) => removeFile(i, 'images')} 
+                                        onRemove={(i) => removeFile(i, 'images')}
+                                        isSelected={selectedDownloadImages.has(url)}
+                                        onToggleSelect={toggleDownloadImage}
                                     />
                                 ))}
                             </SortableContext>
-                            <label className="aspect-square rounded-lg bg-foreground/5 hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all">
+                            <label className="aspect-square rounded-lg bg-foreground/5 hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
                             {isUploading === 'images' ? (
                                 <Loader2 className="w-6 h-6 text-foreground animate-spin" />
                             ) : (
@@ -252,9 +364,29 @@ export function MediaFields({
                             />
                         </label>
                     </div>
+                    {selectedDownloadImages.size > 0 && (
+                        <button
+                            type="button"
+                            onClick={handleDownloadImages}
+                            disabled={isDownloading}
+                            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-muted-foreground/30 text-muted-foreground hover:bg-foreground/5 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        >
+                            {isDownloading ? (
+                                <>
+                                    <Loader2 className="animate-spin" size={14} />
+                                    <span>Baixando fotos...</span>
+                                </>
+                            ) : (
+                                <>
+                                    <Download size={14} />
+                                    <span>Baixar {selectedDownloadImages.size} {selectedDownloadImages.size === 1 ? 'foto selecionada' : 'fotos selecionadas'}</span>
+                                </>
+                            )}
+                        </button>
+                    )}
                     <DragOverlay>
                         {activeId ? (
-                            <div className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 cursor-grabbing opacity-80 shadow-2xl scale-105">
+                            <div className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 cursor-grabbing opacity-80 shadow-2xl scale-105 border border-muted-foreground/30">
                                 <img src={activeId} alt="Arrastando" className="w-full h-full object-cover pointer-events-none" />
                             </div>
                         ) : null}
@@ -265,11 +397,11 @@ export function MediaFields({
                 {/* Vídeos */}
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Vídeos</span>
+                        <span className="text-[10px] font-bold text-muted-foreground tracking-wider">Vídeos</span>
                     </div>
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
                         {formData.videos.map((url: string, index: number) => (
-                            <div key={index} className="relative aspect-video rounded-lg overflow-hidden group bg-black/5 flex items-center justify-center">
+                            <div key={index} className="relative aspect-video rounded-lg overflow-hidden group bg-black/5 flex items-center justify-center border border-muted-foreground/30">
                                 <Film size={24} className="text-foreground" />
                                 <button
                                     type="button"
@@ -280,7 +412,7 @@ export function MediaFields({
                                 </button>
                             </div>
                         ))}
-                        <label className="aspect-video rounded-lg bg-foreground/5 hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all">
+                        <label className="aspect-video rounded-lg bg-foreground/5 hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
                             {isUploading === 'videos' ? (
                                 <Loader2 className="w-6 h-6 text-foreground animate-spin" />
                             ) : (
@@ -304,11 +436,11 @@ export function MediaFields({
                 {/* Documentos */}
                 <div className="space-y-4">
                     <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Documentos</span>
+                        <span className="text-[10px] font-bold text-muted-foreground tracking-wider">Documentos</span>
                     </div>
                     <div className="flex flex-col gap-2">
                         {formData.documents.map((doc: any, index: number) => (
-                            <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-foreground/5 border border-border/40 group">
+                            <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-foreground/5 border border-muted-foreground/30 group">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <FileText size={14} className="text-foreground shrink-0" />
                                     <span className="text-xs font-medium truncate">{doc.name}</span>
@@ -322,7 +454,7 @@ export function MediaFields({
                                 </button>
                             </div>
                         ))}
-                        <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-foreground/5 border border-border/40 hover:bg-foreground/10 cursor-pointer transition-all">
+                        <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-foreground/5 border border-muted-foreground/30 hover:bg-foreground/10 cursor-pointer transition-all">
                             {isUploading === 'documents' ? (
                                 <Loader2 className="w-5 h-5 text-foreground animate-spin" />
                             ) : (

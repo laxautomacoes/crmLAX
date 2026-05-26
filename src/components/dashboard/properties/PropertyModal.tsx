@@ -573,14 +573,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 return
             }
 
-            // Compor título único: "Nome - Apto 201"
             let finalTitle = formData.title?.trim() || ''
-            if (tiposComApto.includes(tipo) && apto) {
-                const aptoSuffix = ` - Apto ${apto}`
-                if (!finalTitle.includes(aptoSuffix)) {
-                    finalTitle = finalTitle + aptoSuffix
-                }
-            }
             
             // Filtrar campos para evitar enviar dados sujos
             const { created_by: _omit, ...restData } = formData
@@ -613,50 +606,15 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             isOpen={isOpen}
             onClose={onClose}
             title={
-                <div className="flex flex-wrap items-center gap-4">
+                <div className="flex items-center gap-4">
                     <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
                         {editingProperty ? "Editar Imóvel" : "Novo Imóvel"}
                     </h3>
-                    <div className="flex items-center gap-2 border-l border-border pl-4">
-                        <span className="text-[10px] font-black uppercase tracking-wider text-muted-foreground whitespace-nowrap">
-                            Responsável:
-                        </span>
-                        {isAdmin ? (
-                            <select
-                                value={formData.created_by || 'all'}
-                                onChange={(e) => setFormData(prev => ({ ...prev, created_by: e.target.value === 'all' ? null : e.target.value }))}
-                                className="h-8 py-1 pl-2 pr-8 text-xs font-bold text-foreground bg-input border border-muted-foreground/30 rounded-lg outline-none focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all appearance-none cursor-pointer min-w-[150px] max-w-[200px]"
-                                style={{
-                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='currentColor'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='M19 9l-7 7-7-7' /%3E%3C/svg%3E")`,
-                                    backgroundPosition: 'right 0.5rem center',
-                                    backgroundSize: '1rem',
-                                    backgroundRepeat: 'no-repeat'
-                                }}
-                            >
-                                <option value="all">Todos</option>
-                                {brokers.map(broker => (
-                                    <option key={broker.id} value={broker.id}>
-                                        {broker.full_name}
-                                    </option>
-                                ))}
-                            </select>
-                        ) : (
-                            <span className="text-xs font-bold text-foreground whitespace-nowrap">
-                                {currentProfile?.full_name || ''}
-                            </span>
-                        )}
-                    </div>
                 </div>
             }
             extraHeaderContent={
                 <div className="flex items-center gap-3">
-                    {isAdmin && (
-                        <Switch 
-                            checked={formData.is_published}
-                            onChange={(checked) => setFormData(prev => ({ ...prev, is_published: checked }))}
-                            label="SITE"
-                        />
-                    )}
+
                     {!editingProperty && hasDraft && (
                         <button
                             onClick={clearDraft}
@@ -670,7 +628,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     <button
                         onClick={handleSaveLocal}
                         disabled={isSaving || !!isUploading}
-                        className={`px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold shadow-sm active:scale-[0.99] transition-all text-sm whitespace-nowrap
+                        className={`px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold shadow-sm active:scale-[0.99] transition-all text-sm whitespace-nowrap min-w-[160px] text-center
                             ${(isSaving || isUploading) ? 'opacity-50 cursor-not-allowed' : 'hover:opacity-90'}`}
                     >
                         {isSaving ? "Salvando..." : (editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel")}
@@ -716,8 +674,6 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     <div className="border-t border-border/60" />
                     <DescriptionField formData={formData} setFormData={setFormData} />
                     <div className="border-t border-border/60" />
-                    <AddressFields formData={formData} setFormData={setFormData} />
-                    <div className="border-t border-border/60" />
                     <MediaFields 
                         formData={formData} 
                         isUploading={isUploading} 
@@ -728,7 +684,11 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         onImportImages={handleImportImages}
                         onRemoveSourceImage={(index) => setSourceImages(prev => prev.filter((_, i) => i !== index))}
                         onReorderImages={(newImages) => setFormData(prev => ({ ...prev, images: newImages }))}
+                        propertyTitle={formData.title}
+                        onRemoveMultipleImages={(urls) => setFormData(prev => ({ ...prev, images: prev.images.filter((img: string) => !urls.includes(img)) }))}
                     />
+                    <div className="border-t border-border/60" />
+                    <AddressFields formData={formData} setFormData={setFormData} />
                     <div className="border-t border-border/60" />
                     <OwnerFields formData={formData} setFormData={setFormData} tenantId={tenantId} />
                 </div>

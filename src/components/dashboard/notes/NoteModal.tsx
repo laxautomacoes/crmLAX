@@ -92,41 +92,54 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
             isOpen={isOpen}
             onClose={onClose}
             title={editingNote ? "Editar Nota" : "Nova Nota"}
-            size="lg"
+            size="xl"
+            extraHeaderContent={
+                <button
+                    onClick={handleSave}
+                    disabled={isLoading || !formData.content.trim()}
+                    className="px-4 py-2 text-xs font-bold bg-[#FFE600] text-[#404F4F] hover:bg-[#F2DB00] rounded-lg transition-all disabled:opacity-50 flex items-center justify-center shrink-0 cursor-pointer"
+                >
+                    {isLoading ? 'Salvando...' : (editingNote ? "Salvar" : "Criar Nota")}
+                </button>
+            }
         >
             <div className="space-y-6 max-h-[75vh] overflow-y-auto px-1 py-1">
                 {/* Cabeçalho de Configurações */}
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormInput
-                        label="Data"
-                        type="date"
-                        icon={Calendar}
-                        value={formData.date}
-                        onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
-                    />
+                <div className="flex flex-col md:flex-row gap-4">
+                    <div className="w-full md:w-[145px] flex-shrink-0">
+                        <FormInput
+                            label="Data"
+                            type="date"
+                            value={formData.date}
+                            onChange={(e) => setFormData(prev => ({ ...prev, date: e.target.value }))}
+                        />
+                    </div>
                     
-                    <PropertyAutocomplete
-                        tenantId={tenantId}
-                        selectedItem={formData.selectedProperty}
-                        onSelect={(property) => setFormData(prev => ({ ...prev, selectedProperty: property, property_id: property.id }))}
-                        onClear={() => setFormData(prev => ({ ...prev, selectedProperty: null, property_id: null }))}
-                    />
+                    <div className="flex-1 min-w-0">
+                        <PropertyAutocomplete
+                            tenantId={tenantId}
+                            showIcon={false}
+                            selectedItem={formData.selectedProperty}
+                            onSelect={(property) => setFormData(prev => ({ ...prev, selectedProperty: property, property_id: property.id }))}
+                            onClear={() => setFormData(prev => ({ ...prev, selectedProperty: null, property_id: null }))}
+                        />
+                    </div>
 
-                    <LeadAutocomplete
-                        tenantId={tenantId}
-                        selectedItem={formData.selectedLead}
-                        onSelect={(lead) => setFormData(prev => ({ ...prev, selectedLead: lead, lead_id: lead.id }))}
-                        onClear={() => setFormData(prev => ({ ...prev, selectedLead: null, lead_id: null }))}
-                    />
+                    <div className="flex-1 min-w-0">
+                        <LeadAutocomplete
+                            tenantId={tenantId}
+                            showIcon={false}
+                            selectedItem={formData.selectedLead}
+                            onSelect={(lead) => setFormData(prev => ({ ...prev, selectedLead: lead, lead_id: lead.id }))}
+                            onClear={() => setFormData(prev => ({ ...prev, selectedLead: null, lead_id: null }))}
+                        />
+                    </div>
                 </div>
 
                 <div className="border-t border-border/60" />
 
                 {/* Área de Escrita */}
                 <div className="space-y-2">
-                    <label className="block text-[11px] font-bold text-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis uppercase tracking-tight">
-                        Conteúdo da Nota
-                    </label>
                     <FormRichTextarea
                         value={formData.content}
                         onChange={(val) => setFormData(prev => ({ ...prev, content: val }))}
@@ -138,9 +151,6 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
 
                 {/* Upload de Arquivos */}
                 <div className="space-y-2">
-                    <label className="block text-[11px] font-bold text-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis uppercase tracking-tight">
-                        Anexos (PDF, Imagens)
-                    </label>
                     <MediaUpload
                         pathPrefix={`notes/${tenantId}`}
                         images={formData.attachments.filter(a => a.type === 'images').map(a => a.url)}
@@ -162,23 +172,6 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
                             setFormData(prev => ({ ...prev, attachments: [...others, ...remaining] }))
                         }}
                     />
-                </div>
-
-                {/* Botões */}
-                <div className="flex gap-3 pt-4">
-                    <button
-                        onClick={onClose}
-                        className="flex-1 py-3 bg-muted text-foreground border border-border rounded-lg font-bold hover:bg-muted/80 transition-all"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleSave}
-                        disabled={isLoading || !formData.content.trim()}
-                        className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 shadow-sm active:scale-[0.99] transition-all disabled:opacity-50"
-                    >
-                        {isLoading ? 'Salvando...' : (editingNote ? "Salvar Alterações" : "Criar Nota")}
-                    </button>
                 </div>
             </div>
         </Modal>

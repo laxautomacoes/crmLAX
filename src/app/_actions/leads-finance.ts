@@ -1,0 +1,144 @@
+'use server'
+
+import { createClient } from '@/lib/supabase/server'
+import { revalidatePath } from 'next/cache'
+import { getProfile } from './profile'
+
+export async function getLeadFinancials(leadId: string) {
+    const supabase = await createClient()
+    const { profile } = await getProfile()
+
+    if (!profile) return { success: false, error: 'Usuário não autenticado.' }
+
+    try {
+        const { data, error } = await supabase
+            .from('transacoes_financeiras')
+            .select('*')
+            .eq('lead_id', leadId)
+            .order('data_transacao', { ascending: true })
+
+        if (error) throw error
+        return { success: true, data }
+    } catch (error: any) {
+        console.error('Error fetching lead financials:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+interface InvoiceData {
+    saleValue: number;
+    commissionRate: number; // ex: 6% = 6.00
+    installmentsCount: number;
+    firstDueDate: string; // YYYY-MM-DD
+    brokerId?: string; // Corretor que receberá o repasse
+    brokerRate?: number; // ex: 30% do valor da comissão da imobiliária
+}
+
+export async function invoiceLeadCommission(leadId: string, tenantId: string, data: InvoiceData) {
+    const supabase = await createClient()
+    const { profile } = await getProfile()
+
+    if (!profile) return { success: false, error: 'Usuário não autenticado.' }
+
+    try {
+        // 1. Buscar dados do Lead para compor a descrição
+        const { data: lead } = await supabase
+            .from('leads')
+            .select('*, contacts(name)')
+            .eq('id', leadId)
+            .single()
+
+        const leadName = lead?.contacts?.name || 'Cliente'
+
+        // 2. Atualizar tabela leads com dados de faturamento
+        const { error: updateError } = await supabase
+            .from('leads')
+            .update({
+                sale_value: data.saleValue,
+                final_commission_rate: data.commissionRate,
+                finance_installments_count: data.installmentsCount
+            })
+            .eq('id', leadId)
+
+        if (updateError) throw updateError
+
+        // 3. Remover transações financeiras pendentes anteriores vinculadas a este lead para evitar duplicidade
+        await supabase
+            .from('transacoes_financeiras')
+            .delete()
+            .eq('lead_id', leadId)
+            .eq('status', 'pendente')
+
+        // 4. Calcular comissões
+        const totalCommission = (data.saleValue * data.commissionRate) / 100
+        const installmentValue = totalCommission / data.installmentsCount
+
+        const brokerCommissionTotal = data.brokerId && data.brokerRate 
+            ? (totalCommission * data.brokerRate) / 100 
+            : 0
+        const brokerInstallmentValue = brokerCommissionTotal / data.installmentsCount
+
+        const startDate = new Date(data.firstDueDate)
+
+        // 5. Inserir as parcelas no banco
+        const transactionsToInsert = []
+
+        for (let i = 1; i <= data.installmentsCount; i++) {
+            const dueDate = new Date(startDate)
+            dueDate.setMonth(startDate.getMonth() + (i - 1))
+            const isoDueDate = dueDate.toISOString()
+
+            // A. Lançamento da Comissão (Receita para a imobiliária)
+            transactionsToInsert.push({
+                tenant_id: tenantId,
+                profile_id: profile.id,
+                lead_id: leadId,
+                valor: parseFloat(installmentValue.toFixed(2)),
+                tipo: 'Receita',
+                categoria: 'Comissão',
+                descricao: `Comissão Parcela ${i}/${data.installmentsCount} - Venda ${leadName}`,
+                data_transacao: isoDueDate,
+                status: 'pendente',
+                fonte: 'CRM'
+            })
+
+            // B. Lançamento do Repasse do Corretor (Despesa para a imobiliária, se houver)
+            if (brokerCommissionTotal > 0 && data.brokerId) {
+                transactionsToInsert.push({
+                    tenant_id: tenantId,
+                    profile_id: data.brokerId,
+                    lead_id: leadId,
+                    valor: parseFloat(brokerInstallmentValue.toFixed(2)),
+                    tipo: 'Despesa',
+                    categoria: 'Repasse de Comissão',
+                    descricao: `Repasse Corretor Parcela ${i}/${data.installmentsCount} - Venda ${leadName}`,
+                    data_transacao: isoDueDate,
+                    status: 'pendente',
+                    fonte: 'CRM'
+                })
+            }
+        }
+
+        const { error: insertError } = await supabase
+            .from('transacoes_financeiras')
+            .insert(transactionsToInsert)
+
+        if (insertError) throw insertError
+
+        // Registrar uma interação no histórico do Lead
+        await supabase
+            .from('interactions')
+            .insert([{
+                lead_id: leadId,
+                type: 'system',
+                content: `Comissão faturada no financeiro: R$ ${totalCommission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em ${data.installmentsCount}x.`
+            }])
+
+        revalidatePath(`/leads`)
+        revalidatePath(`/financeiro`)
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error invoicing lead commission:', error)
+        return { success: false, error: error.message }
+    }
+}

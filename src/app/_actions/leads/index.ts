@@ -10,6 +10,7 @@ export {
     getNextBrokerForDistribution,
     getLeadSources,
     createLeadSource,
+    deleteLeadSource,
     getLeadCampaigns,
     createLeadCampaign
 } from './distribution'

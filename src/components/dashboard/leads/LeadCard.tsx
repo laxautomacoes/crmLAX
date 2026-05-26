@@ -1,12 +1,9 @@
-import { Phone, Mail, Tag, MessageSquare, MoreVertical, Sparkles, Edit, Trash2, User, ChevronDown, ChevronUp, CircleDollarSign, FileText, Image as ImageIcon, Video } from 'lucide-react'
-import { formatPhone } from '@/lib/utils/phone'
+import { MoreVertical, Edit, Trash2, FileText } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useRef, useEffect } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Lead } from './PipelineBoard'
-import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
-import { MediaPreviewModal } from '@/components/shared/MediaPreviewModal'
 
 interface LeadCardProps {
     lead: Lead
@@ -18,16 +15,7 @@ interface LeadCardProps {
 
 export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadCardProps) {
     const [showDropdown, setShowDropdown] = useState(false)
-    const [isExpanded, setIsExpanded] = useState(false)
-    const [previewOpen, setPreviewOpen] = useState(false)
-    const [previewIndex, setPreviewIndex] = useState(0)
     const dropdownRef = useRef<HTMLDivElement>(null)
-
-    // Build media items for preview modal
-    const mediaItems = [
-        ...(lead.images || []).map((img: string, i: number) => ({ type: 'image' as const, url: img, label: `Imagem ${i + 1}` })),
-        ...(lead.videos || []).map((vid: string, i: number) => ({ type: 'video' as const, url: vid, label: `Vídeo ${i + 1}` }))
-    ]
 
     const {
         attributes,
@@ -60,8 +48,8 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
             style={{ ...style, backgroundColor: 'var(--background)' }}
             {...attributes}
             {...listeners}
-            onClick={() => !isDragging && setIsExpanded(!isExpanded)}
-            className={`p-4 rounded-2xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''} ${isExpanded ? 'shadow-sm' : ''}`}
+            onClick={() => !isDragging && onEdit?.(lead)}
+            className={`p-4 rounded-2xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''}`}
         >
             <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -130,131 +118,8 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
                             )}
                         </AnimatePresence>
                     </div>
-                    <div className="text-muted-foreground">
-                        {isExpanded ? <ChevronUp size={16} /> : <ChevronDown size={16} />}
-                    </div>
                 </div>
             </div>
-
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0, marginTop: 0 }}
-                        animate={{ height: 'auto', opacity: 1, marginTop: 16 }}
-                        exit={{ height: 0, opacity: 0, marginTop: 0 }}
-                        className="overflow-hidden"
-                    >
-                        <div className="space-y-1.5 mb-4 px-0.5">
-                            <div className="flex items-center justify-between gap-2 text-[11px] text-foreground/80 font-medium">
-                                <div className="flex items-center gap-2">
-                                    <Phone size={12} className="text-foreground/70" />
-                                    <span className="text-foreground/70 dark:text-foreground/80">{formatPhone(lead.phone)}</span>
-                                </div>
-                                <a
-                                    href={`https://wa.me/55${lead.phone.replace(/\D/g, '')}`}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="p-1 bg-emerald-500/10 text-emerald-600 rounded-md hover:bg-emerald-500/20 transition-colors"
-                                    title="Abrir no WhatsApp"
-                                    onClick={(e) => e.stopPropagation()}
-                                >
-                                    <MessageSquare size={10} />
-                                </a>
-                            </div>
-                            {lead.email && (
-                                <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-medium">
-                                    <Mail size={12} className="text-foreground/70" />
-                                    <span className="truncate text-foreground/70 dark:text-foreground/80">{lead.email}</span>
-                                </div>
-                            )}
-                            {lead.value && (
-                                <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-medium">
-                                    <CircleDollarSign size={12} className="text-foreground/70" />
-                                    <span className="text-foreground/70 dark:text-foreground/80">
-                                        {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(lead.value)}
-                                    </span>
-                                </div>
-                            )}
-                            <div className="flex items-center gap-2 text-[11px] text-foreground/80 font-medium pt-1 border-t border-muted-foreground/30 mt-2">
-                                <User size={12} className="text-primary" />
-                                <span className="text-primary/90 font-bold truncate">
-                                    {lead.broker_name || 'Não atribuído'}
-                                </span>
-                            </div>
-                        </div>
-
-                        {lead.notes && (
-                            <div className="bg-muted/5 dark:bg-card/50 p-2 rounded-lg mb-4 border border-muted-foreground/30">
-                                <p className="text-[10px] text-muted-foreground italic line-clamp-2">"{lead.notes}"</p>
-                            </div>
-                        )}
-
-                        <div className="space-y-1.5 mb-4">
-                            <h5 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">WhatsApp Mirror</h5>
-                            <LeadWhatsAppConversation chat={lead.whatsapp_chat || []} />
-                        </div>
-
-                        {/* Anexos do Lead */}
-                        {((lead.images?.length ?? 0) > 0 || (lead.videos?.length ?? 0) > 0 || (lead.documents?.length ?? 0) > 0) && (
-                            <div className="space-y-1.5 mb-4">
-                                <h5 className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider px-0.5">Anexos</h5>
-                                <div className="grid grid-cols-1 gap-1">
-                                    {lead.images?.map((img: string, i: number) => (
-                                        <button
-                                            key={i}
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                setPreviewIndex(i)
-                                                setPreviewOpen(true)
-                                            }}
-                                            className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors text-left"
-                                        >
-                                            <ImageIcon size={10} className="text-blue-500" />
-                                            <span className="truncate">Imagem {i + 1}</span>
-                                        </button>
-                                    ))}
-                                    {lead.videos?.map((vid: string, i: number) => (
-                                        <button
-                                            key={i}
-                                            onClick={(e) => {
-                                                e.stopPropagation()
-                                                const videoIndex = (lead.images?.length || 0) + i
-                                                setPreviewIndex(videoIndex)
-                                                setPreviewOpen(true)
-                                            }}
-                                            className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors text-left"
-                                        >
-                                            <Video size={10} className="text-purple-500" />
-                                            <span className="truncate">Vídeo {i + 1}</span>
-                                        </button>
-                                    ))}
-                                    {lead.documents?.map((doc: any, i: number) => (
-                                        <a key={i} href={doc.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1.5 p-1.5 bg-muted/10 border border-muted-foreground/20 rounded text-[9px] hover:bg-muted/20 transition-colors" onClick={(e) => e.stopPropagation()}>
-                                            <FileText size={10} className="text-emerald-500" />
-                                            <span className="truncate">{doc.name || `Doc ${i + 1}`}</span>
-                                        </a>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        <div className="flex flex-wrap gap-1 mb-4">
-                            {lead.tags?.map(tag => (
-                                <span key={tag} className="px-2 py-0.5 bg-muted/5 text-muted-foreground rounded-full text-[9px] font-bold border border-muted-foreground/30 flex items-center gap-1">
-                                    <Tag size={8} /> {tag}
-                                </span>
-                            ))}
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-
-            <MediaPreviewModal
-                isOpen={previewOpen}
-                onClose={() => setPreviewOpen(false)}
-                items={mediaItems}
-                initialIndex={previewIndex}
-            />
         </div>
     )
 }

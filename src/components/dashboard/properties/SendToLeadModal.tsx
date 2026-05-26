@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
-import { Search, Mail, MessageCircle, Loader2, User, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Video, FileText, MapPin, Info, Home } from 'lucide-react'
+import { Search, Mail, MessageCircle, Loader2, User, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Video, FileText, MapPin, Info, Home, Download } from 'lucide-react'
 import { getPipelineData, createLead } from '@/app/_actions/leads'
 import { sendPropertyEmail, logInteraction } from '@/app/_actions/messaging'
 import { getProfile } from '@/app/_actions/profile'
@@ -77,6 +77,44 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     const [tenant, setTenant] = useState<TenantRecord | null>(null)
     const [isManualMode, setIsManualMode] = useState(false)
     const [manualLead, setManualLead] = useState({ name: '', email: '', phone: '' })
+    const [isDownloading, setIsDownloading] = useState(false)
+
+    const handleDownloadImages = async () => {
+        setIsDownloading(true)
+        try {
+            for (let i = 0; i < config.selectedImages.length; i++) {
+                const url = config.selectedImages[i]
+                const response = await fetch(url)
+                const blob = await response.blob()
+                
+                const contentType = response.headers.get('content-type')
+                let ext = 'jpg'
+                if (contentType?.includes('image/png')) ext = 'png'
+                else if (contentType?.includes('image/webp')) ext = 'webp'
+                
+                const blobUrl = URL.createObjectURL(blob)
+                const link = document.createElement("a")
+                link.href = blobUrl
+                
+                const cleanTitle = property.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+                link.download = `${cleanTitle}-foto-${i + 1}.${ext}`
+                
+                document.body.appendChild(link)
+                link.click()
+                
+                document.body.removeChild(link)
+                URL.revokeObjectURL(blobUrl)
+                
+                await new Promise(resolve => setTimeout(resolve, 150))
+            }
+            toast.success("Download das fotos iniciado!")
+        } catch (error) {
+            console.error("Erro ao baixar imagens:", error)
+            toast.error("Erro ao realizar o download das fotos.")
+        } finally {
+            setIsDownloading(false)
+        }
+    }
     
     // Configuration State
     const [config, setConfig] = useState<{
@@ -721,7 +759,26 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         {expandedSections.images ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                     </button>
                                     {expandedSections.images && (
-                                        <div className="p-4 pt-0">
+                                        <div className="p-4 pt-0 space-y-3">
+                                            {config.selectedImages.length > 0 && (
+                                                <button
+                                                    onClick={handleDownloadImages}
+                                                    disabled={isDownloading}
+                                                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-[#404F4F]/20 text-[#404F4F] hover:bg-[#404F4F]/5 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                                >
+                                                    {isDownloading ? (
+                                                        <>
+                                                            <Loader2 className="animate-spin" size={14} />
+                                                            <span>Baixando fotos...</span>
+                                                        </>
+                                                    ) : (
+                                                        <>
+                                                            <Download size={14} />
+                                                            <span>Baixar {config.selectedImages.length} fotos selecionadas</span>
+                                                        </>
+                                                    )}
+                                                </button>
+                                            )}
                                             {(property.images?.length ?? 0) > 0 ? (
                                                 <div className="grid grid-cols-4 gap-2 max-h-[300px] overflow-y-auto pr-1">
                                                     {(property.images ?? []).map((img: string, idx: number) => (

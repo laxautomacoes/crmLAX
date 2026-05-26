@@ -11,6 +11,8 @@ interface LeadAutocompleteProps {
     onClear: () => void
     label?: string
     placeholder?: string
+    icon?: any
+    showIcon?: boolean
 }
 
 export function LeadAutocomplete({ 
@@ -19,7 +21,9 @@ export function LeadAutocomplete({
     onSelect, 
     onClear,
     label = "Lead Relacionado",
-    placeholder = "Buscar lead"
+    placeholder = "Buscar lead",
+    icon = User,
+    showIcon = true
 }: LeadAutocompleteProps) {
     const fetchLeads = async (search: string) => {
         const supabase = createClient()
@@ -45,7 +49,8 @@ export function LeadAutocomplete({
         <Autocomplete
             label={label}
             placeholder={placeholder}
-            icon={User}
+            icon={icon}
+            showIcon={showIcon}
             selectedItem={selectedItem}
             onSelect={onSelect}
             onClear={onClear}
