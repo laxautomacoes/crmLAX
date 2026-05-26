@@ -74,30 +74,30 @@ export function AIPlanConfig({ configs }: Props) {
     };
 
     return (
-        <div className="bg-white p-10 rounded-[40px] border border-slate-100 shadow-sm space-y-12">
+        <div className="bg-card p-10 rounded-[40px] border border-border shadow-sm space-y-12">
             <div className="space-y-2">
-                <div className="flex items-center gap-3 text-slate-600">
-                    <div className="p-2 bg-slate-50 rounded-xl">
+                <div className="flex items-center gap-3 text-muted-foreground">
+                    <div className="p-2 bg-muted rounded-xl">
                         <Settings2 className="w-5 h-5" />
                     </div>
-                    <h3 className="text-xl font-bold text-slate-900 font-outfit tracking-tight">Motores de Inteligência</h3>
+                    <h3 className="text-xl font-bold text-foreground font-outfit tracking-tight">Motores de Inteligência</h3>
                 </div>
-                <p className="text-xs text-slate-400 font-bold tracking-[0.2em] uppercase">Mapeamento Técnico por Assinatura</p>
+                <p className="text-xs text-muted-foreground font-bold tracking-[0.2em] uppercase">Mapeamento Técnico por Assinatura</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                 {localConfigs.map((plan) => (
                     <div key={plan.plan_type} className="space-y-6 flex flex-col">
                         <div className="flex justify-between items-center px-1">
-                            <span className="text-xs font-black text-slate-400 uppercase tracking-widest">{plan.display_name}</span>
-                            {isPending && <Loader2 className="w-3 h-3 animate-spin text-indigo-500" />}
+                            <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">{plan.display_name}</span>
+                            {isPending && <Loader2 className="w-3 h-3 animate-spin text-secondary" />}
                         </div>
                         
                         <div className="space-y-4 flex-1">
                             {/* Provider Selection (Segmented) */}
-                            <div className="relative flex p-1 bg-slate-50 rounded-2xl border border-slate-100 h-12">
+                            <div className="relative flex p-1 bg-muted rounded-2xl border border-border h-12">
                                 <div 
-                                    className={`absolute inset-y-1 w-[calc(50%-4px)] bg-white rounded-xl shadow-sm border border-slate-200/50 transition-all duration-300 ease-out pointer-events-none ${
+                                    className={`absolute inset-y-1 w-[calc(50%-4px)] bg-card rounded-xl shadow-sm border border-border/50 transition-all duration-300 ease-out pointer-events-none ${
                                         plan.ai_provider === 'openai' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'
                                     }`}
                                 />
@@ -106,7 +106,7 @@ export function AIPlanConfig({ configs }: Props) {
                                     onClick={() => handleUpdate(plan.plan_type, 'gemini')}
                                     disabled={isPending}
                                     className={`relative z-10 flex-1 flex items-center justify-center gap-2 text-[10px] font-black transition-colors ${
-                                        plan.ai_provider === 'gemini' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-500'
+                                        plan.ai_provider === 'gemini' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/70'
                                     }`}
                                 >
                                     <Cpu className="w-3.5 h-3.5" />
@@ -117,7 +117,7 @@ export function AIPlanConfig({ configs }: Props) {
                                     onClick={() => handleUpdate(plan.plan_type, 'openai')}
                                     disabled={isPending}
                                     className={`relative z-10 flex-1 flex items-center justify-center gap-2 text-[10px] font-black transition-colors ${
-                                        plan.ai_provider === 'openai' ? 'text-slate-900' : 'text-slate-400 hover:text-slate-500'
+                                        plan.ai_provider === 'openai' ? 'text-foreground' : 'text-muted-foreground hover:text-foreground/70'
                                     }`}
                                 >
                                     <Globe className="w-3.5 h-3.5" />
@@ -131,8 +131,8 @@ export function AIPlanConfig({ configs }: Props) {
                                     value={plan.ai_model || ''}
                                     onChange={(e) => handleUpdate(plan.plan_type, plan.ai_provider as any, e.target.value)}
                                     disabled={isPending}
-                                    className="w-full bg-slate-50/50 border border-slate-100 rounded-xl px-4 py-3 text-[11px] font-bold text-slate-600 focus:outline-none focus:ring-2 focus:ring-indigo-500/10 transition-all appearance-none cursor-pointer group-hover:bg-white"
-                                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7' /%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '14px' }}
+                                    className="w-full bg-muted/50 border border-border rounded-xl px-4 py-3 text-[11px] font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all appearance-none cursor-pointer group-hover:bg-muted"
+                                    style={{ backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%239CA3AF'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7' /%3E%3C/svg%3E")`, backgroundRepeat: 'no-repeat', backgroundPosition: 'right 12px center', backgroundSize: '14px' }}
                                 >
                                     {models[plan.ai_provider as 'openai' | 'gemini']?.map(m => (
                                         <option key={m.id} value={m.id}>{m.name}</option>
@@ -144,10 +144,10 @@ export function AIPlanConfig({ configs }: Props) {
                 ))}
             </div>
             
-            <div className="pt-8 border-t border-slate-50">
+            <div className="pt-8 border-t border-border">
                 <div className="flex items-center justify-center gap-3">
-                    <div className="h-1 w-1 bg-amber-400 rounded-full animate-pulse" />
-                    <p className="text-[10px] text-slate-400 font-bold uppercase tracking-wider">
+                    <div className="h-1 w-1 bg-secondary rounded-full animate-pulse" />
+                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">
                         Configurações refletidas instantaneamente em toda a infraestrutura neural
                     </p>
                 </div>

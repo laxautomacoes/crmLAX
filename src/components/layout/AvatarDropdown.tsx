@@ -34,22 +34,26 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
 
     useEffect(() => {
         const syncAccount = async () => {
-            const { profile: fetchedProfile } = await getProfile();
-            if (fetchedProfile) {
-                setProfile(fetchedProfile);
-                
-                // Sync with multi-account list
-                const { data: { session } } = await supabase.auth.getSession();
-                if (session) {
-                    saveAccount({
-                        email: session.user.email!,
-                        name: fetchedProfile.full_name || session.user.email!,
-                        avatar_url: fetchedProfile.avatar_url || null,
-                        role: fetchedProfile.role || null,
-                        tenant_id: fetchedProfile.tenant_id || null,
-                        session: session
-                    });
+            try {
+                const { profile: fetchedProfile } = await getProfile();
+                if (fetchedProfile) {
+                    setProfile(fetchedProfile);
+                    
+                    // Sync with multi-account list
+                    const { data: { session } } = await supabase.auth.getSession();
+                    if (session) {
+                        saveAccount({
+                            email: session.user.email!,
+                            name: fetchedProfile.full_name || session.user.email!,
+                            avatar_url: fetchedProfile.avatar_url || null,
+                            role: fetchedProfile.role || null,
+                            tenant_id: fetchedProfile.tenant_id || null,
+                            session: session
+                        });
+                    }
                 }
+            } catch (err) {
+                console.error('[AvatarDropdown] Erro ao sincronizar conta:', err);
             }
         };
 

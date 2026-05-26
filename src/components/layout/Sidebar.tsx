@@ -93,6 +93,8 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                         }
                     }
                 }
+            } catch (err) {
+                console.error('[Sidebar] Erro ao buscar dados do perfil:', err);
             } finally {
                 setBrandingLoading(false);
             }

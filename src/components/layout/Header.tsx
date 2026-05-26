@@ -90,14 +90,19 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
     const [mounted, setMounted] = useState(false);
 
     const fetchNotifications = async () => {
-        const { notifications: data } = await getNotifications();
-        if (data) setNotifications(data as any);
+        try {
+            const { notifications: data } = await getNotifications();
+            if (data) setNotifications(data as any);
+        } catch (err) {
+            console.error('[Header] Erro ao buscar notificações:', err);
+        }
     };
 
     useEffect(() => {
         fetchNotifications();
 
         // Configurar Realtime para novas notificações
+        // Obs: erros são capturados para não causar exceção client-side
         const setupRealtime = async () => {
             const { createClient: createBrowserClient } = await import('@/lib/supabase/client');
             const supabase = createBrowserClient();
@@ -128,11 +133,13 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
             return channel;
         };
 
-        const channelPromise = setupRealtime();
+        const channelPromise = setupRealtime().catch(err => {
+            console.error('[Header] Erro ao configurar realtime:', err);
+        });
 
         return () => {
-            channelPromise.then(channel => {
-                const { createClient: createBrowserClient } = require('@/lib/supabase/client');
+            channelPromise.then(async channel => {
+                const { createClient: createBrowserClient } = await import('@/lib/supabase/client');
                 const supabase = createBrowserClient();
                 supabase.removeChannel(channel);
             });
@@ -188,6 +195,8 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                         }
                     }
                 }
+            } catch (err) {
+                console.error('[Header] Erro ao carregar dados do perfil:', err);
             } finally {
                 setBrandingLoading(false);
             }

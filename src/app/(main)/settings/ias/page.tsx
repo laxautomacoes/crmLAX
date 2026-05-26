@@ -16,7 +16,7 @@ export default async function AIConfigurationPage() {
 
     const { data: profile } = await supabase
         .from('profiles')
-        .select('role')
+        .select('role, tenant_id')
         .eq('id', user.id)
         .single();
 
@@ -34,12 +34,12 @@ export default async function AIConfigurationPage() {
     ]);
 
     return (
-        <div className="flex-1 min-h-screen bg-[#fafafa] p-8 pt-12">
+        <div className="flex-1 min-h-screen bg-background p-8 pt-12">
             <div className="max-w-7xl mx-auto space-y-12">
                 {/* Header Section */}
                 <div className="space-y-1">
-                    <h2 className="text-3xl font-bold tracking-tight text-slate-900 font-outfit">Inteligência Artificial</h2>
-                    <p className="text-sm text-slate-500 font-medium">
+                    <h2 className="text-3xl font-bold tracking-tight text-foreground font-outfit">Inteligência Artificial</h2>
+                    <p className="text-sm text-muted-foreground font-medium">
                         Gestão centralizada de infraestrutura neural e monitoramento de consumo.
                     </p>
                 </div>
@@ -51,8 +51,8 @@ export default async function AIConfigurationPage() {
                 {isSuperadmin && planConfigs.length > 0 && (
                     <div className="space-y-6">
                         <div className="flex items-center gap-2">
-                            <span className="h-6 w-1 bg-indigo-500 rounded-full" />
-                            <h3 className="text-xl font-bold text-slate-900">Configuração Estratégica</h3>
+                            <span className="h-6 w-1 bg-secondary rounded-full" />
+                            <h3 className="text-xl font-bold text-foreground">Configuração Estratégica</h3>
                         </div>
                         <AIPlanConfig configs={planConfigs as any} />
                     </div>
@@ -60,10 +60,6 @@ export default async function AIConfigurationPage() {
 
                 {/* Activity & Performance Section */}
                 <div className="space-y-8">
-                    <div className="flex items-center gap-2">
-                        <span className="h-6 w-1 bg-indigo-500 rounded-full" />
-                        <h3 className="text-xl font-bold text-slate-900">Análise de Performance</h3>
-                    </div>
 
                     <AISystemPromptManager prompts={tenantPrompts} tenantId={profile.tenant_id} isSuperadmin={false} />
                     

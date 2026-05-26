@@ -18,26 +18,30 @@ export function DynamicFavicon() {
         };
 
         const loadInitialBranding = async () => {
-            const supabase = createClient();
-            const { data: { user } } = await supabase.auth.getUser();
-            if (user) {
-                const { data: profile } = await supabase
-                    .from('profiles')
-                    .select('tenant_id')
-                    .eq('id', user.id)
-                    .maybeSingle();
-
-                if (profile?.tenant_id) {
-                    const { data: tenant } = await supabase
-                        .from('tenants')
-                        .select('branding')
-                        .eq('id', profile.tenant_id)
+            try {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                if (user) {
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('tenant_id')
+                        .eq('id', user.id)
                         .maybeSingle();
 
-                    if (tenant?.branding && (tenant.branding as any).logo_icon) {
-                        updateFavicon((tenant.branding as any).logo_icon);
+                    if (profile?.tenant_id) {
+                        const { data: tenant } = await supabase
+                            .from('tenants')
+                            .select('branding')
+                            .eq('id', profile.tenant_id)
+                            .maybeSingle();
+
+                        if (tenant?.branding && (tenant.branding as any).logo_icon) {
+                            updateFavicon((tenant.branding as any).logo_icon);
+                        }
                     }
                 }
+            } catch (err) {
+                console.error('[DynamicFavicon] Erro ao carregar branding:', err);
             }
         };
 

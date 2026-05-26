@@ -4,6 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { Tables } from "../../lib/supabase/database.types";
+import { calculateCostBRL } from "@/utils/ai-pricing";
 
 /**
  * Busca estatísticas agregadas de uso de IA.
@@ -31,17 +32,46 @@ export async function getAIUsageStats() {
 
     const usageData = (data || []) as Tables<'ai_usage'>[];
 
-    // Agregação simples
+    // Buscar dados do plano do tenant para limites
+    let planLimit: { ai_requests_per_month: number | null; display_name: string | null } | null = null;
+    if (profile?.tenant_id) {
+        const { data: tenant } = await supabase
+            .from('tenants')
+            .select('plan_type')
+            .eq('id', profile.tenant_id)
+            .single();
+        if (tenant?.plan_type) {
+            const { data: limit } = await supabase
+                .from('plan_limits')
+                .select('ai_requests_per_month, display_name')
+                .eq('plan_type', tenant.plan_type)
+                .single();
+            planLimit = limit;
+        }
+    }
+
+    // Filtrar uso do mês atual
+    const now = new Date();
+    const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+    const monthlyData = usageData.filter(item => (item.created_at || '') >= startOfMonth);
+
+    // Agregação
     const stats = {
         total_tokens: 0,
+        total_cost_brl: 0,
         gpt_count: 0,
         gemini_count: 0,
         total_requests: usageData.length,
+        monthly_requests: monthlyData.length,
+        monthly_limit: planLimit?.ai_requests_per_month || 0,
+        plan_name: planLimit?.display_name || 'N/A',
         usage_by_day: {} as Record<string, { gpt: number, gemini: number }>,
     };
 
     usageData.forEach((item: Tables<'ai_usage'>) => {
-        stats.total_tokens += (item.total_tokens || 0);
+        const tokens = item.total_tokens || 0;
+        stats.total_tokens += tokens;
+        stats.total_cost_brl += calculateCostBRL(item.model || '', tokens);
         const isGPT = item.model?.toLowerCase().includes('gpt');
         if (isGPT) stats.gpt_count++;
         else stats.gemini_count++;

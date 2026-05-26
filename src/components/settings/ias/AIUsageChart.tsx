@@ -17,11 +17,11 @@ export function AIUsageChart({ data }: ChartProps) {
         .sort((a, b) => a.fullDate.localeCompare(b.fullDate));
 
     return (
-        <div className="bg-white p-8 rounded-3xl border border-slate-100 shadow-sm">
+        <div className="bg-card p-8 rounded-xl border border-border shadow-sm">
             <div className="flex items-center justify-between mb-10">
                 <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-slate-900">Histórico de Atividade</h3>
-                    <p className="text-xs text-slate-400 font-medium uppercase tracking-wider">REQUISIÇÕES DOS ÚLTIMOS 15 DIAS</p>
+                    <h3 className="text-lg font-semibold text-foreground">Histórico de Atividade</h3>
+                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">REQUISIÇÕES DOS ÚLTIMOS 15 DIAS</p>
                 </div>
             </div>
 
@@ -30,37 +30,39 @@ export function AIUsageChart({ data }: ChartProps) {
                     <AreaChart data={chartData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <defs>
                             <linearGradient id="colorGpt" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.05}/>
+                                <stop offset="5%" stopColor="#10b981" stopOpacity={0.15}/>
                                 <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
                             </linearGradient>
                             <linearGradient id="colorGemini" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.05}/>
+                                <stop offset="5%" stopColor="#6366f1" stopOpacity={0.15}/>
                                 <stop offset="95%" stopColor="#6366f1" stopOpacity={0}/>
                             </linearGradient>
                         </defs>
-                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f8fafc" />
+                        <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="var(--border)" />
                         <XAxis 
                             dataKey="date" 
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                            tick={{ fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 600 }}
                             dy={15}
                         />
                         <YAxis 
                             axisLine={false}
                             tickLine={false}
-                            tick={{ fill: '#94a3b8', fontSize: 10, fontWeight: 600 }}
+                            tick={{ fill: 'var(--muted-foreground)', fontSize: 10, fontWeight: 600 }}
                         />
                         <Tooltip 
                             contentStyle={{ 
                                 borderRadius: '16px', 
-                                border: '1px solid #f1f5f9', 
-                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.05)',
+                                border: '1px solid var(--border)', 
+                                backgroundColor: 'var(--card)',
+                                color: 'var(--foreground)',
+                                boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)',
                                 padding: '12px',
                                 fontSize: '12px',
                                 fontWeight: '600'
                             }}
-                            cursor={{ stroke: '#f1f5f9', strokeWidth: 2 }}
+                            cursor={{ stroke: 'var(--border)', strokeWidth: 2 }}
                         />
                         <Legend 
                             verticalAlign="top" 
@@ -68,7 +70,7 @@ export function AIUsageChart({ data }: ChartProps) {
                             height={40} 
                             iconType="circle" 
                             iconSize={8}
-                            wrapperStyle={{ fontSize: '11px', fontWeight: '700', color: '#64748b', letterSpacing: '0.05em' }} 
+                            wrapperStyle={{ fontSize: '11px', fontWeight: '700', color: 'var(--muted-foreground)', letterSpacing: '0.05em' }} 
                         />
                         <Area 
                             type="monotone" 

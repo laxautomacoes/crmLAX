@@ -23,6 +23,8 @@ export default function DashboardLayout({
         const supabase = createClient();
         supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
             setUser(data.user);
+        }).catch((err: any) => {
+            console.error('[Layout] Erro ao buscar usuário:', err);
         });
     }, []);
 

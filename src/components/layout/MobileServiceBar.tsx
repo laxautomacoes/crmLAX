@@ -55,19 +55,23 @@ export function MobileServiceBar() {
 
     useEffect(() => {
         async function loadData() {
-            const { profile: profileData } = await getProfile();
-            if (profileData) {
-                setProfile(profileData);
-                if (profileData.tenant_id) {
-                    const { createClient } = await import('@/lib/supabase/client');
-                    const supabase = createClient();
-                    const { data: tenant } = await supabase
-                        .from('tenants')
-                        .select('name')
-                        .eq('id', profileData.tenant_id)
-                        .maybeSingle();
-                    if (tenant?.name) setCompanyName(tenant.name);
+            try {
+                const { profile: profileData } = await getProfile();
+                if (profileData) {
+                    setProfile(profileData);
+                    if (profileData.tenant_id) {
+                        const { createClient } = await import('@/lib/supabase/client');
+                        const supabase = createClient();
+                        const { data: tenant } = await supabase
+                            .from('tenants')
+                            .select('name')
+                            .eq('id', profileData.tenant_id)
+                            .maybeSingle();
+                        if (tenant?.name) setCompanyName(tenant.name);
+                    }
                 }
+            } catch (err) {
+                console.error('[MobileServiceBar] Erro ao carregar dados:', err);
             }
         }
         loadData();

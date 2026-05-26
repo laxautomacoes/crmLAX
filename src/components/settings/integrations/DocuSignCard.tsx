@@ -3,13 +3,16 @@
 import { useState, useEffect } from 'react';
 import { getIntegration, saveIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
 import { toast } from 'sonner';
-import { PenTool, CheckCircle2, Loader2, Save, MessageSquare } from 'lucide-react';
+import { PenTool, CheckCircle2, Loader2, Save, MessageSquare, ChevronDown, ShieldCheck } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
+import { Switch } from '@/components/ui/Switch';
+import { motion, AnimatePresence } from 'framer-motion';
 
 export function DocuSignCard() {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [status, setStatus] = useState<'active' | 'inactive'>('inactive');
+    const [isExpanded, setIsExpanded] = useState(false);
     
     // Credenciais DocuSign
     const [integrationKey, setIntegrationKey] = useState('');
@@ -19,6 +22,7 @@ export function DocuSignCard() {
     // WhatsApp Group JID
     const [groupJid, setGroupJid] = useState('');
     const [savingWa, setSavingWa] = useState(false);
+    const [waExpanded, setWaExpanded] = useState(false);
 
     useEffect(() => {
         async function loadSettings() {
@@ -78,8 +82,8 @@ export function DocuSignCard() {
         setSavingWa(false);
     };
 
-    const handleToggleStatus = async () => {
-        const nextStatus = status === 'active' ? 'inactive' : 'active';
+    const handleToggleStatus = async (checked: boolean) => {
+        const nextStatus = checked ? 'active' : 'inactive';
         const res = await updateIntegrationStatus('docusign', nextStatus);
         if (res.success) {
             setStatus(nextStatus);
@@ -91,122 +95,209 @@ export function DocuSignCard() {
 
     if (loading) {
         return (
-            <div className="bg-card border border-gray-100 rounded-2xl p-6 shadow-sm flex items-center justify-center min-h-[150px]">
-                <Loader2 className="w-6 h-6 animate-spin text-secondary" />
+            <div className="flex flex-col gap-6">
+                <div className="bg-card rounded-2xl border border-border p-6 flex items-center justify-center min-h-[72px]">
+                    <Loader2 className="w-6 h-6 animate-spin text-secondary" />
+                </div>
+                <div className="bg-card rounded-2xl border border-border p-6 flex items-center justify-center min-h-[72px]">
+                    <Loader2 className="w-6 h-6 animate-spin text-secondary" />
+                </div>
             </div>
         );
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            
-            {/* CARD 1: DocuSign */}
-            <div className="bg-card border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
-                <div className="flex justify-between items-start">
-                    <div className="flex items-center gap-3">
-                        <div className="p-2.5 bg-blue-500/10 text-blue-500 rounded-xl">
-                            <PenTool size={20} />
+        <>
+            {/* CARD 1: DocuSign — Padrão GatewayCard */}
+            <div className="bg-card rounded-2xl border border-border overflow-hidden transition-all hover:bg-muted/5">
+                <div 
+                    className="px-6 py-4 border-b border-border bg-muted/30 cursor-pointer select-none"
+                    onClick={() => setIsExpanded(!isExpanded)}
+                >
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
+                                <PenTool size={20} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-base font-bold text-foreground">DocuSign</h3>
+                                    <span className={`flex h-1.5 w-1.5 rounded-full ${status === 'active' ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-1 max-w-xl">
+                                    Assinatura digital e gestão de contratos eletrônicos.
+                                </p>
+                            </div>
                         </div>
-                        <div>
-                            <h3 className="text-sm font-bold text-gray-900 leading-tight">DocuSign</h3>
-                            <p className="text-[11px] text-muted-foreground mt-0.5">Assinatura digital e gestão de contratos eletrônicos.</p>
+
+                        <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
+                            <div className="flex items-center gap-2 group cursor-pointer" onClick={() => handleToggleStatus(status !== 'active')}>
+                                <span className={`text-[10px] font-black uppercase tracking-wider hidden sm:block ${status === 'active' ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
+                                    {status === 'active' ? 'Ativo' : 'Desativado'}
+                                </span>
+                                <Switch 
+                                    checked={status === 'active'} 
+                                    onChange={handleToggleStatus}
+                                    className="scale-75"
+                                />
+                            </div>
+
+                            <div className="h-6 w-px bg-border hidden sm:block" />
+
+                            <button 
+                                className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+                                onClick={() => setIsExpanded(!isExpanded)}
+                            >
+                                <motion.div
+                                    animate={{ rotate: isExpanded ? 180 : 0 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <ChevronDown size={20} />
+                                </motion.div>
+                            </button>
                         </div>
-                    </div>
-
-                    <button
-                        onClick={handleToggleStatus}
-                        className={`text-[10px] font-black uppercase tracking-wider px-2.5 py-1 rounded-full ${
-                            status === 'active' 
-                                ? 'bg-emerald-100 text-emerald-800' 
-                                : 'bg-gray-100 text-gray-800'
-                        }`}
-                    >
-                        {status === 'active' ? 'Ativo' : 'Inativo'}
-                    </button>
-                </div>
-
-                <form onSubmit={handleSaveDocuSign} className="space-y-3">
-                    <FormInput
-                        label="Integration Key (Client ID) *"
-                        value={integrationKey}
-                        onChange={(e) => setIntegrationKey(e.target.value)}
-                        placeholder="Ex: 8a4c112b-..."
-                        required
-                    />
-                    <FormInput
-                        label="Secret Key *"
-                        type="password"
-                        value={secretKey}
-                        onChange={(e) => setSecretKey(e.target.value)}
-                        placeholder="••••••••••••••••"
-                        required
-                    />
-                    <FormInput
-                        label="Account ID *"
-                        value={accountId}
-                        onChange={(e) => setAccountId(e.target.value)}
-                        placeholder="Ex: 1234567"
-                        required
-                    />
-
-                    <div className="flex justify-end pt-2">
-                        <button
-                            type="submit"
-                            disabled={saving}
-                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#404F4F] text-white hover:bg-[#2d3939] rounded-lg shadow-sm transition-all"
-                        >
-                            {saving ? (
-                                <><Loader2 size={13} className="animate-spin" /> Salvando...</>
-                            ) : (
-                                <><Save size={13} /> Salvar Credenciais</>
-                            )}
-                        </button>
-                    </div>
-                </form>
-            </div>
-
-            {/* CARD 2: WhatsApp Notification Group */}
-            <div className="bg-card border border-gray-100 rounded-2xl p-6 shadow-sm space-y-4">
-                <div className="flex items-center gap-3">
-                    <div className="p-2.5 bg-emerald-500/10 text-emerald-500 rounded-xl">
-                        <MessageSquare size={20} />
-                    </div>
-                    <div>
-                        <h3 className="text-sm font-bold text-gray-900 leading-tight">Grupo de Notificações</h3>
-                        <p className="text-[11px] text-muted-foreground mt-0.5">Grupo do WhatsApp onde os corretores e gerentes serão notificados.</p>
                     </div>
                 </div>
 
-                <form onSubmit={handleSaveWhatsApp} className="space-y-3 flex flex-col justify-between h-[calc(100%-48px)]">
-                    <div className="space-y-2">
-                        <FormInput
-                            label="ID do Grupo do WhatsApp (JID) *"
-                            value={groupJid}
-                            onChange={(e) => setGroupJid(e.target.value)}
-                            placeholder="Ex: 1203630283726@g.us"
-                            required
-                        />
-                        <p className="text-[9px] text-muted-foreground leading-normal ml-0.5">
-                            O ID do grupo (JID) pode ser obtido enviando uma mensagem no grupo ou usando a listagem de chats conectada à Evolution API. Formato esperado: **120363...d@g.us**.
-                        </p>
-                    </div>
-
-                    <div className="flex justify-end pt-2">
-                        <button
-                            type="submit"
-                            disabled={savingWa}
-                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-[#404F4F] text-white hover:bg-[#2d3939] rounded-lg shadow-sm transition-all"
+                <AnimatePresence>
+                    {isExpanded && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="overflow-hidden"
                         >
-                            {savingWa ? (
-                                <><Loader2 size={13} className="animate-spin" /> Salvando...</>
-                            ) : (
-                                <><Save size={13} /> Salvar Grupo</>
-                            )}
-                        </button>
-                    </div>
-                </form>
+                            <form onSubmit={handleSaveDocuSign} className="p-6 space-y-4 border-t border-border/50">
+                                <FormInput
+                                    label="Integration Key (Client ID) *"
+                                    value={integrationKey}
+                                    onChange={(e) => setIntegrationKey(e.target.value)}
+                                    placeholder="Ex: 8a4c112b-..."
+                                    required
+                                />
+                                <FormInput
+                                    label="Secret Key *"
+                                    type="password"
+                                    value={secretKey}
+                                    onChange={(e) => setSecretKey(e.target.value)}
+                                    placeholder="••••••••••••••••"
+                                    required
+                                />
+                                <FormInput
+                                    label="Account ID *"
+                                    value={accountId}
+                                    onChange={(e) => setAccountId(e.target.value)}
+                                    placeholder="Ex: 1234567"
+                                    required
+                                />
+
+                                <div className="flex items-center gap-2 justify-between pt-2 border-t border-border/50">
+                                    <div className="flex items-center gap-2">
+                                        <ShieldCheck size={14} className="text-emerald-500 opacity-60" />
+                                        <span className="text-[10px] font-black text-muted-foreground/60 uppercase tracking-widest">Credenciais criptografadas</span>
+                                    </div>
+                                    <button
+                                        type="submit"
+                                        disabled={saving}
+                                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all"
+                                    >
+                                        {saving ? (
+                                            <><Loader2 size={13} className="animate-spin" /> Salvando...</>
+                                        ) : (
+                                            <><Save size={13} /> Salvar Credenciais</>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
 
-        </div>
+            {/* CARD 2: Grupo de Notificações — Padrão GatewayCard */}
+            <div className="bg-card rounded-2xl border border-border overflow-hidden transition-all hover:bg-muted/5">
+                <div 
+                    className="px-6 py-4 border-b border-border bg-muted/30 cursor-pointer select-none"
+                    onClick={() => setWaExpanded(!waExpanded)}
+                >
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4">
+                            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
+                                <MessageSquare size={20} />
+                            </div>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-base font-bold text-foreground">Grupo de Notificações</h3>
+                                    <span className={`flex h-1.5 w-1.5 rounded-full ${groupJid ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+                                </div>
+                                <p className="text-xs text-muted-foreground line-clamp-1 max-w-xl">
+                                    Grupo do WhatsApp onde os corretores e gerentes serão notificados.
+                                </p>
+                            </div>
+                        </div>
+
+                        <div className="flex items-center gap-4">
+                            <span className={`text-[10px] font-black uppercase tracking-wider hidden sm:block ${groupJid ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
+                                {groupJid ? 'Configurado' : 'Pendente'}
+                            </span>
+
+                            <div className="h-6 w-px bg-border hidden sm:block" />
+
+                            <button 
+                                className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
+                                onClick={(e) => { e.stopPropagation(); setWaExpanded(!waExpanded); }}
+                            >
+                                <motion.div
+                                    animate={{ rotate: waExpanded ? 180 : 0 }}
+                                    transition={{ duration: 0.3 }}
+                                >
+                                    <ChevronDown size={20} />
+                                </motion.div>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <AnimatePresence>
+                    {waExpanded && (
+                        <motion.div
+                            initial={{ height: 0, opacity: 0 }}
+                            animate={{ height: 'auto', opacity: 1 }}
+                            exit={{ height: 0, opacity: 0 }}
+                            transition={{ duration: 0.3, ease: 'easeInOut' }}
+                            className="overflow-hidden"
+                        >
+                            <form onSubmit={handleSaveWhatsApp} className="p-6 space-y-4 border-t border-border/50">
+                                <FormInput
+                                    label="ID do Grupo do WhatsApp (JID) *"
+                                    value={groupJid}
+                                    onChange={(e) => setGroupJid(e.target.value)}
+                                    placeholder="Ex: 1203630283726@g.us"
+                                    required
+                                />
+                                <p className="text-[9px] text-muted-foreground leading-normal ml-0.5">
+                                    O ID do grupo (JID) pode ser obtido enviando uma mensagem no grupo ou usando a listagem de chats conectada à Evolution API. Formato esperado: **120363...d@g.us**.
+                                </p>
+
+                                <div className="flex justify-end pt-2 border-t border-border/50">
+                                    <button
+                                        type="submit"
+                                        disabled={savingWa}
+                                        className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all"
+                                    >
+                                        {savingWa ? (
+                                            <><Loader2 size={13} className="animate-spin" /> Salvando...</>
+                                        ) : (
+                                            <><Save size={13} /> Salvar Grupo</>
+                                        )}
+                                    </button>
+                                </div>
+                            </form>
+                        </motion.div>
+                    )}
+                </AnimatePresence>
+            </div>
+        </>
     );
 }
