@@ -1,12 +1,13 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronDown, Phone, Mail, Calendar, Sparkles, MessageSquare, Edit, Trash2, MapPin, User, IdCard, Heart, Target, FileText, Image as ImageIcon, Video, Archive } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { ChevronDown, Phone, Mail, Calendar, Sparkles, MessageSquare, Edit, Trash2, MapPin, User, IdCard, Heart, Target, FileText, Image as ImageIcon, Video, Archive, MoreVertical } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { formatPhone } from '@/lib/utils/phone'
 import { analyzeLeadProbability } from '@/app/_actions/ai-analysis'
 import { toast } from 'sonner'
 import { MediaPreviewModal } from '@/components/shared/MediaPreviewModal'
+import { LeadTemperatureBadge } from '@/components/dashboard/leads/LeadTemperatureBadge'
 
 interface ClientListItemProps {
     client: any
@@ -142,6 +143,16 @@ export function ClientListItem({
                         {client.created_at ? new Date(client.created_at).toLocaleDateString('pt-BR') : '—'}
                     </span>
                 </td>
+                <td className="px-4 py-5 text-center" onClick={(e) => e.stopPropagation()}>
+                    <div className="flex justify-center">
+                        <ClientActionsDropdown
+                            client={client}
+                            onEdit={onEdit}
+                            onDelete={onDelete}
+                            onArchive={onArchive}
+                        />
+                    </div>
+                </td>
                 <td className="px-4 py-5 text-center w-16">
                     <button className={`p-2 rounded-lg bg-card border border-border group-hover:border-border/80 transition-all ${isExpanded ? 'rotate-180 shadow-sm' : ''}`}>
                         <ChevronDown size={18} className="text-muted-foreground" />
@@ -149,7 +160,7 @@ export function ClientListItem({
                 </td>
             </tr>
             <tr>
-                <td colSpan={6} className="p-0 border-none">
+                <td colSpan={7} className="p-0 border-none">
                     <AnimatePresence>
                         {isExpanded && (
                             <motion.div
@@ -193,35 +204,6 @@ function ClientExpandedContent({
 }: any) {
     return (
         <div className="px-6 py-8 flex flex-col gap-8 border-t border-border">
-            <div className="w-full flex justify-end">
-                <div className="flex flex-row gap-2 w-full sm:w-auto">
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onEdit(); }}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted/50 transition-colors shadow-sm whitespace-nowrap"
-                        title="Editar Cadastro"
-                    >
-                        <Edit size={13} /> Editar
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onArchive(); }}
-                        className={`flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 border rounded-lg text-sm font-bold transition-colors shadow-sm whitespace-nowrap ${
-                            client.is_archived
-                                ? 'bg-amber-50 border-amber-300 text-amber-700 hover:bg-amber-100'
-                                : 'bg-card border-border text-foreground hover:bg-muted/50'
-                        }`}
-                        title={client.is_archived ? 'Desarquivar Cliente' : 'Arquivar Cliente'}
-                    >
-                        <Archive size={13} /> {client.is_archived ? 'Desarquivar' : 'Arquivar'}
-                    </button>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); onDelete(); }}
-                        className="flex-1 sm:flex-none flex items-center justify-center gap-1.5 px-4 py-2 bg-[#EF4444] text-white rounded-lg text-sm font-bold hover:bg-[#DC2626] transition-colors shadow-sm whitespace-nowrap"
-                        title="Excluir Cliente"
-                    >
-                        <Trash2 size={13} /> Excluir
-                    </button>
-                </div>
-            </div>
 
             <div className="space-y-4 w-full">
                 {/* Dados Pessoais & Endereço */}
@@ -332,7 +314,7 @@ function LeadCardDropdown({ lead }: { lead: any }) {
     const hasAttachments = lead.images?.length > 0 || lead.videos?.length > 0 || lead.documents?.length > 0
 
     return (
-        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="bg-card rounded-2xl border border-border shadow-sm overflow-hidden">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors text-left"
@@ -362,6 +344,7 @@ function LeadCardDropdown({ lead }: { lead: any }) {
                             </span>
                         )
                     })()}
+                    <LeadTemperatureBadge lastInteractionAt={lead.last_interaction_at || lead.created_at} />
                     {lead.created_at && (
                         <span className="text-xs text-muted-foreground font-medium">
                             {new Date(lead.created_at).toLocaleDateString('pt-BR')}
@@ -511,7 +494,7 @@ function ClientAIAnalysis({ isAnalyzed, analysisLoading, analysisResult, handleA
     return (
         <div className="space-y-4">
             <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-widest px-1">Inteligência Artificial</h4>
-            <div className="bg-primary p-4 rounded-2xl text-primary-foreground shadow-xl relative overflow-hidden group">
+            <div className="bg-primary p-4 rounded-xl text-primary-foreground shadow-xl relative overflow-hidden group">
 
                 {!isAnalyzed ? (
                     <div className="relative z-10 flex flex-col sm:flex-row items-start sm:items-center gap-4">
@@ -553,6 +536,58 @@ function ClientAIAnalysis({ isAnalyzed, analysisLoading, analysisResult, handleA
                     </motion.div>
                 )}
             </div>
+        </div>
+    )
+}
+
+function ClientActionsDropdown({ client, onEdit, onDelete, onArchive }: { client: any; onEdit: () => void; onDelete: () => void; onArchive: () => void }) {
+    const [isOpen, setIsOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                onClick={(e) => { e.stopPropagation(); setIsOpen(o => !o) }}
+                className="p-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors shadow-sm"
+                title="Ações"
+            >
+                <MoreVertical size={16} />
+            </button>
+            {isOpen && (
+                <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-2xl shadow-xl overflow-hidden z-30">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit() }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                        <Edit size={14} className="text-blue-500" />
+                        Editar
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onArchive() }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-amber-500/10 transition-colors"
+                    >
+                        <Archive size={14} className="text-amber-500" />
+                        {client.is_archived ? 'Desarquivar' : 'Arquivar'}
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDelete() }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-red-500/10 transition-colors"
+                    >
+                        <Trash2 size={14} className="text-red-500" />
+                        Excluir
+                    </button>
+                </div>
+            )}
         </div>
     )
 }

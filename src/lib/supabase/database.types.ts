@@ -596,6 +596,7 @@ export type Database = {
           value: number | null
           videos: Json | null
           whatsapp_chat: Json | null
+          last_interaction_at: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -622,6 +623,7 @@ export type Database = {
           value?: number | null
           videos?: Json | null
           whatsapp_chat?: Json | null
+          last_interaction_at?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -648,6 +650,7 @@ export type Database = {
           value?: number | null
           videos?: Json | null
           whatsapp_chat?: Json | null
+          last_interaction_at?: string | null
         }
         Relationships: [
           {

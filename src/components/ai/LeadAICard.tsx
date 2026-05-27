@@ -4,6 +4,8 @@ import { useState } from 'react';
 import { Sparkles, Brain, Target, TrendingUp, Loader2, ChevronDown, ChevronUp, Copy, Check } from 'lucide-react';
 import { analyzeLeadProbability } from '@/app/_actions/ai-analysis';
 import { matchLeadToProperties } from '@/app/_actions/ai-matching';
+import { LeadTemperatureBadge } from '@/components/dashboard/leads/LeadTemperatureBadge';
+import { getLeadTemperature, getTemperatureLabel, getDaysSinceInteraction } from '@/lib/utils/lead-temperature';
 
 interface LeadAICardProps {
     leadId: string;
@@ -13,6 +15,7 @@ interface LeadAICardProps {
     leadSource?: string;
     interactions: string[];
     hasAIAccess: boolean;
+    lastInteractionAt?: string | null;
 }
 
 interface MatchResult {
@@ -22,7 +25,7 @@ interface MatchResult {
     title?: string;
 }
 
-export default function LeadAICard({ leadId, tenantId, profileId, leadName, leadSource, interactions, hasAIAccess }: LeadAICardProps) {
+export default function LeadAICard({ leadId, tenantId, profileId, leadName, leadSource, interactions, hasAIAccess, lastInteractionAt }: LeadAICardProps) {
     const [analysis, setAnalysis] = useState<string | null>(null);
     const [matches, setMatches] = useState<MatchResult[] | null>(null);
     const [leadSummary, setLeadSummary] = useState<string | null>(null);
@@ -53,7 +56,16 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
         setLoadingAnalysis(true);
         setErrorMsg(null);
         try {
-            const res = await analyzeLeadProbability({ tenant_id: tenantId, profile_id: profileId, name: leadName, phone: '', source: leadSource, interactions });
+            const res = await analyzeLeadProbability({
+                tenant_id: tenantId,
+                profile_id: profileId,
+                name: leadName,
+                phone: '',
+                source: leadSource,
+                interactions,
+                lead_temperature: getTemperatureLabel(getLeadTemperature(lastInteractionAt)),
+                days_since_interaction: getDaysSinceInteraction(lastInteractionAt)
+            });
             if (res.success) setAnalysis(res.analysis);
         } catch (e: any) {
             setErrorMsg(e.message || 'Erro na análise.');
@@ -91,6 +103,9 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
                     <Sparkles className="h-4 w-4 text-accent-icon" />
                 </div>
                 <h3 className="font-bold text-foreground">Análise de IA</h3>
+                {lastInteractionAt && (
+                    <LeadTemperatureBadge lastInteractionAt={lastInteractionAt} size="md" />
+                )}
                 <span className="ml-auto rounded-full bg-accent-icon/10 px-2 py-0.5 text-xs font-bold text-foreground">Pro</span>
             </div>
 

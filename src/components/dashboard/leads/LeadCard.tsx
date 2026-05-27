@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
 import { Lead } from './PipelineBoard'
+import { LeadTemperatureBadge } from './LeadTemperatureBadge'
 
 interface LeadCardProps {
     lead: Lead
@@ -49,7 +50,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
             {...attributes}
             {...listeners}
             onClick={() => !isDragging && onEdit?.(lead)}
-            className={`p-4 rounded-2xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''}`}
+            className={`p-4 rounded-xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''}`}
         >
             <div className="flex justify-between items-start">
                 <div className="flex-1">
@@ -63,7 +64,8 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
                     )}
                 </div>
 
-                <div className="flex items-center gap-1">
+                <div className="flex items-center gap-1.5">
+                    <LeadTemperatureBadge lastInteractionAt={lead.last_interaction_at} />
                     <div className="relative" ref={dropdownRef} onClick={(e) => e.stopPropagation()}>
                         <button
                             onClick={(e) => {

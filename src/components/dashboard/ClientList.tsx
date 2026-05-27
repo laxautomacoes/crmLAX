@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef, useMemo } from 'react'
-import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare, Loader2, Calendar, LayoutGrid, List, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare, Loader2, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { Modal } from '@/components/shared/Modal'
 import { ClientFilterModal } from './ClientFilterModal'
 import ClientCard from './ClientCard'
@@ -31,7 +31,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     const [brokers, setBrokers] = useState<any[]>([])
     const [userRole, setUserRole] = useState<string>('user')
     const [expandedId, setExpandedId] = useState<string | null>(null)
-    const [viewMode, setViewMode] = useState<'list' | 'grid'>('list')
+    const [showAll, setShowAll] = useState(false)
+    const PAGE_SIZE = 25
     const [sortField, setSortField] = useState<'name' | 'created_at' | null>(null)
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
@@ -446,28 +447,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         />
                     </div>
 
-                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm w-fit order-1 md:order-2">
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list'
-                                    ? 'bg-secondary text-secondary-foreground'
-                                    : 'text-muted-foreground hover:bg-muted'
-                                }`}
-                            title="Visualização em Lista"
-                        >
-                            <List size={18} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('grid')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid'
-                                    ? 'bg-secondary text-secondary-foreground'
-                                    : 'text-muted-foreground hover:bg-muted'
-                                }`}
-                            title="Visualização em Quadro"
-                        >
-                            <LayoutGrid size={18} />
-                        </button>
-                    </div>
+
 
                     {/* Linha 2 mobile: Filtrar + Novo Cliente */}
                     <button
@@ -494,15 +474,14 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             </PageHeader>
 
             {/* Content Area */}
-            {viewMode === 'list' ? (
-                <div className="bg-card rounded-2xl border border-muted-foreground/30 overflow-hidden shadow-sm">
+                <div className="bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm">
                     <div className="overflow-x-auto">
                         <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
                             <thead className="bg-muted/50 border-b border-muted-foreground/30">
                                 <tr>
                                     <th
-                                        className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center cursor-pointer select-none hover:text-foreground transition-colors"
-                                        style={{ width: '18%' }}
+                                        className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center cursor-pointer select-none hover:text-foreground transition-colors"
+                                        style={{ width: '16%' }}
                                         onClick={() => toggleSort('name')}
                                     >
                                         <span className="inline-flex items-center justify-center">
@@ -510,24 +489,25 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                             <SortIcon field="name" />
                                         </span>
                                     </th>
-                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center" style={{ width: '22%' }}>Contato</th>
-                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell" style={{ width: '20%' }}>Leads</th>
-                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell" style={{ width: '14%' }}>Status</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '20%' }}>Contato</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center hidden lg:table-cell" style={{ width: '20%' }}>Leads</th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center hidden lg:table-cell" style={{ width: '12%' }}>Status</th>
                                     <th
-                                        className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center hidden lg:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
-                                        style={{ width: '14%' }}
+                                        className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center hidden lg:table-cell cursor-pointer select-none hover:text-foreground transition-colors"
+                                        style={{ width: '12%' }}
                                         onClick={() => toggleSort('created_at')}
                                     >
                                         <span className="inline-flex items-center justify-center">
-                                            Desde de
+                                            Criado em
                                             <SortIcon field="created_at" />
                                         </span>
                                     </th>
+                                    <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '10%' }}>Ações</th>
                                     <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center" style={{ width: '5%' }}></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-muted-foreground/30">
-                                {sortedClients.map(client => (
+                                {(showAll ? sortedClients : sortedClients.slice(0, PAGE_SIZE)).map(client => (
                                     <ClientListItem
                                         key={client.id}
                                         client={client}
@@ -544,27 +524,32 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         </table>
                     </div>
                 </div>
-            ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-                    {filteredClients.map(client => (
-                        <ClientCard
-                            key={client.id}
-                            client={{
-                                ...client,
-                                tags: client.tags || [],
-                                value: client.value || 0,
-                                notes: client.notes || ''
-                            }}
-                            tenantId={tenantId}
-                            profileId={profileId}
-                            onEdit={handleEdit}
-                        />
-                    ))}
+
+                {/* Contador + Carregar todos */}
+                <div className="flex flex-col items-center gap-2 px-2 mt-3">
+                    <span className="text-xs text-muted-foreground">
+                        Exibindo {Math.min(showAll ? sortedClients.length : PAGE_SIZE, sortedClients.length)} de {sortedClients.length} clientes
+                    </span>
+                    {sortedClients.length > PAGE_SIZE && !showAll && (
+                        <button
+                            onClick={() => setShowAll(true)}
+                            className="text-xs font-bold text-secondary hover:text-secondary/80 transition-colors"
+                        >
+                            Carregar todos ({sortedClients.length})
+                        </button>
+                    )}
+                    {showAll && sortedClients.length > PAGE_SIZE && (
+                        <button
+                            onClick={() => setShowAll(false)}
+                            className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
+                        >
+                            Mostrar menos
+                        </button>
+                    )}
                 </div>
-            )}
 
             {filteredClients.length === 0 && (
-                <div className="text-center py-20 bg-card rounded-2xl border border-dashed border-border">
+                <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
                     <p className="text-muted-foreground font-medium">Nenhum cliente disponível para exibição.</p>
                 </div>
             )}
@@ -574,7 +559,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
                 title={editingClientId ? "Editar Cliente" : "Novo Cliente"}
-                size="lg"
+                size="xl"
                 extraHeaderContent={
                     <button
                         type="submit"

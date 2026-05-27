@@ -1,4 +1,7 @@
+'use client'
+
 import Link from 'next/link';
+import { LeadTemperatureBadge } from './leads/LeadTemperatureBadge';
 
 interface RecentLeadsListProps {
     recentLeads: Array<{
@@ -8,6 +11,7 @@ interface RecentLeadsListProps {
         status: string
         color?: string
         created_at: string
+        last_interaction_at?: string | null
     }>
 }
 
@@ -40,7 +44,7 @@ export default function RecentLeadsList({ recentLeads }: RecentLeadsListProps) {
     };
 
     return (
-        <div className="bg-card p-6 rounded-lg shadow-sm border border-muted-foreground/30">
+        <div className="bg-card p-6 rounded-xl shadow-sm border border-muted-foreground/30">
             <h3 className="text-lg font-bold text-foreground mb-6">Leads Recentes</h3>
             <div className="space-y-4">
                 {recentLeads.length > 0 ? (
@@ -48,10 +52,10 @@ export default function RecentLeadsList({ recentLeads }: RecentLeadsListProps) {
                         <Link 
                             key={lead.id} 
                             href={`/leads?id=${lead.id}`}
-                            className="flex items-center justify-between p-4 border border-muted-foreground/30 rounded-lg md:bg-background hover:bg-muted/50 transition-colors cursor-pointer block"
+                            className="flex items-center justify-between p-4 border border-muted-foreground/30 rounded-xl md:bg-background hover:bg-muted/50 transition-colors cursor-pointer block"
                         >
                             <div className="flex items-center gap-4">
-                                <div className="h-10 w-10 rounded-full bg-yellow-100 flex items-center justify-center text-yellow-600 font-bold text-sm">
+                                <div className="h-10 w-10 rounded-full flex items-center justify-center font-bold text-sm shrink-0 bg-[#404F4F] text-white dark:bg-white dark:text-[#404F4F]">
                                     {getInitials(lead.name)}
                                 </div>
                                 <div className="flex flex-col">
@@ -61,9 +65,10 @@ export default function RecentLeadsList({ recentLeads }: RecentLeadsListProps) {
                             </div>
                             <div className="text-right flex flex-col items-end">
                                 <span 
-                                    className={`text-xs font-bold mb-1 ${!lead.color ? 'text-green-600' : ''}`}
+                                    className={`text-xs font-bold mb-1 flex items-center gap-1.5 ${!lead.color ? 'text-green-600' : ''}`}
                                     style={lead.color ? { color: lead.color } : undefined}
                                 >
+                                    <LeadTemperatureBadge lastInteractionAt={lead.last_interaction_at} size="sm" />
                                     {lead.status}
                                 </span>
                                 <div className="flex flex-col items-end gap-0.5">

@@ -258,10 +258,10 @@ export default function NotesPage() {
                             <table className="w-full text-left border-separate border-spacing-0">
                                 <thead className="bg-muted">
                                     <tr>
-                                        <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border first:rounded-tl-2xl">Data</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border">Conteúdo</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider border-b border-border">Relacionados</th>
-                                        <th className="px-6 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right border-b border-border last:rounded-tr-2xl">Ações</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider border-b border-border first:rounded-tl-2xl">Data</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider border-b border-border">Conteúdo</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider border-b border-border">Relacionados</th>
+                                        <th className="px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-right border-b border-border last:rounded-tr-2xl">Ações</th>
                                     </tr>
                                 </thead>
                                 <tbody className="divide-y divide-border">

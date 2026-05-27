@@ -35,6 +35,7 @@ export interface Lead {
     videos?: string[]
     documents?: { name: string; url: string }[]
     whatsapp_chat?: Array<{ fromMe?: boolean; message?: string; text?: string }>
+    last_interaction_at?: string | null
 }
 
 interface Stage {

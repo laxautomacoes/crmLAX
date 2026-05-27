@@ -239,10 +239,10 @@ export default async function SuperadminReportsPage() {
           <table className="w-full text-left">
             <thead>
               <tr className="border-b border-border">
-                <th className="pb-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Tenant</th>
-                <th className="pb-3 text-xs font-bold text-muted-foreground uppercase tracking-wider">Plano</th>
-                <th className="pb-3 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center">Status</th>
-                <th className="pb-3 text-xs font-bold text-muted-foreground uppercase tracking-wider text-right">Criado em</th>
+                <th className="pb-3 text-[10px] font-bold text-foreground uppercase tracking-wider">Tenant</th>
+                <th className="pb-3 text-[10px] font-bold text-foreground uppercase tracking-wider">Plano</th>
+                <th className="pb-3 text-[10px] font-bold text-foreground uppercase tracking-wider text-center">Status</th>
+                <th className="pb-3 text-[10px] font-bold text-foreground uppercase tracking-wider text-right">Criado em</th>
               </tr>
             </thead>
             <tbody className="divide-y divide-border">

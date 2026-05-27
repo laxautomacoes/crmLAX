@@ -43,7 +43,7 @@ export function InvitationsTable({ invitations, fetching, onRefresh, searchTerm 
                 <div className="overflow-x-auto">
                     <table className="w-full">
                         <thead>
-                            <tr className="bg-muted/50 text-center text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                            <tr className="bg-muted/50 text-center text-[10px] font-bold text-foreground uppercase tracking-wider">
                                 <th className="px-6 py-4 text-left">COLABORADOR</th>
                                 <th className="px-6 py-4">Criado em</th>
                                 <th className="px-6 py-4">Nível Acesso</th>

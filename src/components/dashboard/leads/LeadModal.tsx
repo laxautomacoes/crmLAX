@@ -569,6 +569,7 @@ export function LeadModal({
                                 `${m.fromMe ? 'Corretor' : 'Lead'}: ${m.message || m.text || ''}`
                             )}
                             hasAIAccess={hasAIAccess}
+                            lastInteractionAt={editingLead.last_interaction_at}
                         />
                     )}
                 </div>

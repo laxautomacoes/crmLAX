@@ -9,8 +9,15 @@ alwaysApply: true
 - fontes
 - cores
 - espaçamentos e centralizações
-- arredondamento de cards
+- arredondamento de cards: `rounded-xl` (padrão do sistema)
 - ocupação altura e largura
 - posições e alinhamento de títulos, subtítulos e textos
 - posição e alinhamento de botões
 - layout de modals
+
+4. Padrão de arredondamento de cards/containers: `rounded-xl`
+   - Todos os cards, containers de tabelas, dropdowns e modais devem usar `rounded-xl`
+   - NÃO usar `rounded-2xl` para cards — esse é mais arredondado que o padrão
+   - Sub-elementos internos (seções dentro de cards) podem usar `rounded-lg` ou `rounded-xl`
+
+5. Padrão de headers de tabela: `text-[10px] font-bold text-foreground uppercase tracking-wider`

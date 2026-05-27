@@ -26,6 +26,7 @@ export interface DashboardMetrics {
         status: string
         color?: string
         created_at: string
+        last_interaction_at?: string | null
     }>
 }
 
@@ -177,6 +178,7 @@ export async function getDashboardMetrics(tenantId: string) {
                 created_at,
                 stage_id,
                 source,
+                last_interaction_at,
                 contacts (
                     name
                 )
@@ -202,7 +204,8 @@ export async function getDashboardMetrics(tenantId: string) {
                 interest: lead.source || 'N/A',
                 status: stage?.name || 'Novo',
                 color: stage?.color || undefined,
-                created_at: lead.created_at
+                created_at: lead.created_at,
+                last_interaction_at: lead.last_interaction_at
             };
         })
 

@@ -42,6 +42,7 @@ interface LeadRecord {
     documents?: { name: string; url: string }[] | null
     whatsapp_chat?: Array<{ fromMe?: boolean; message?: string; text?: string }> | null
     date?: string | null
+    last_interaction_at?: string | null
 }
 
 type PipelineLead = Lead & {
@@ -115,7 +116,8 @@ export async function getPipelineData(tenantId: string) {
         images: lead.images || [],
         videos: lead.videos || [],
         documents: lead.documents || [],
-        whatsapp_chat: lead.whatsapp_chat || []
+        whatsapp_chat: lead.whatsapp_chat || [],
+        last_interaction_at: lead.last_interaction_at || lead.created_at || null
     })) as PipelineLead[]
 
     return {
