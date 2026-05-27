@@ -47,7 +47,7 @@ export default function PlanCardAdmin({
                 </div>
             )}
             {isCurrent && (
-                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#00B087] px-3 py-0.5 text-xs font-bold text-black shadow-sm">
+                <div className="absolute -top-3.5 left-1/2 -translate-x-1/2 rounded-full bg-[#FFE600] px-3 py-0.5 text-xs font-bold text-black shadow-sm">
                     Seu Plano
                 </div>
             )}
@@ -99,7 +99,7 @@ export default function PlanCardAdmin({
             )}
 
             {isCurrent ? (
-                <div className="rounded-lg bg-[#00B087] py-2.5 text-center text-sm font-bold text-black shadow-lg shadow-[#00B087]/20">
+                <div className="rounded-lg bg-[#FFE600] py-2.5 text-center text-sm font-bold text-black shadow-lg shadow-[#FFE600]/20">
                     Plano Atual
                 </div>
             ) : (
