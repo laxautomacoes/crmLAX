@@ -3,6 +3,7 @@ import { getProfile } from '@/app/_actions/profile';
 import DashboardClient from '@/components/dashboard/DashboardClient';
 import type { ROIMetrics } from '@/app/_actions/dashboard';
 import { redirect } from 'next/navigation';
+import { createClient } from '@/lib/supabase/server';
 
 export const dynamic = 'force-dynamic';
 
@@ -23,9 +24,29 @@ export default async function DashboardPage() {
         redirect('/superadmin/dashboard');
     }
 
-    const [metricsResult, roiResult] = await Promise.all([
+    const supabase = await createClient();
+    const isAdmin = profile.role === 'admin' || profile.role === 'superadmin';
+
+    const [metricsResult, roiResult, stagesResult, sourcesResult, membersResult] = await Promise.all([
         getDashboardMetrics(profile.tenant_id),
-        getROIMetrics(profile.tenant_id)
+        getROIMetrics(profile.tenant_id),
+        supabase
+            .from('lead_stages')
+            .select('id, name, order_index, color')
+            .eq('tenant_id', profile.tenant_id)
+            .order('order_index', { ascending: true }),
+        supabase
+            .from('lead_sources')
+            .select('id, name')
+            .eq('tenant_id', profile.tenant_id)
+            .order('name', { ascending: true }),
+        isAdmin
+            ? supabase
+                .from('profiles')
+                .select('id, full_name')
+                .eq('tenant_id', profile.tenant_id)
+                .order('full_name', { ascending: true })
+            : Promise.resolve({ data: [] })
     ]);
 
     const metrics = metricsResult.success && metricsResult.data ? metricsResult.data : {
@@ -49,6 +70,13 @@ export default async function DashboardPage() {
         leadsCount: 0
     };
 
+    // Dados para popular os filtros dinâmicos
+    const filterOptions = {
+        stages: (stagesResult.data || []).map((s: any) => ({ id: s.id, name: s.name, color: s.color })),
+        sources: (sourcesResult.data || []).map((s: any) => ({ id: s.id, name: s.name })),
+        members: (membersResult.data || []).map((m: any) => ({ id: m.id, name: m.full_name })),
+    };
+
     return (
         <DashboardClient 
             metrics={metrics} 
@@ -56,6 +84,8 @@ export default async function DashboardPage() {
             profileName={profile.full_name} 
             tenantId={profile.tenant_id} 
             userRole={profile.role}
+            isAdmin={isAdmin}
+            filterOptions={filterOptions}
         />
     );
 }

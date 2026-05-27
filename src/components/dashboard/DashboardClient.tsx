@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import { Plus, Filter } from 'lucide-react'
 import { useRouter } from 'next/navigation'
 import KPICards from '@/components/dashboard/KPICards'
@@ -9,9 +9,32 @@ import RecentLeadsList from '@/components/dashboard/RecentLeadsList'
 import { FilterModal } from '@/components/dashboard/FilterModal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
 import ROIDashboard from '@/components/dashboard/ROIDashboard'
-import { BarChart3 } from 'lucide-react'
 import { PageHeader } from '@/components/shared/PageHeader'
 import type { DashboardMetrics, ROIMetrics } from '@/app/_actions/dashboard'
+
+export interface DashboardFilter {
+    period: string
+    startDate: string
+    endDate: string
+    stageId: string
+    sourceId: string
+    brokerId: string
+}
+
+export interface FilterOptions {
+    stages: Array<{ id: string; name: string; color?: string | null }>
+    sources: Array<{ id: string; name: string }>
+    members: Array<{ id: string; name: string }>
+}
+
+const INITIAL_FILTERS: DashboardFilter = {
+    period: '',
+    startDate: '',
+    endDate: '',
+    stageId: '',
+    sourceId: '',
+    brokerId: '',
+}
 
 interface DashboardClientProps {
     metrics: DashboardMetrics
@@ -19,12 +42,96 @@ interface DashboardClientProps {
     profileName: string
     tenantId: string
     userRole: string
+    isAdmin: boolean
+    filterOptions: FilterOptions
 }
 
-export default function DashboardClient({ metrics, roiData, profileName, tenantId, userRole }: DashboardClientProps) {
+export default function DashboardClient({ metrics, roiData, profileName, tenantId, userRole, isAdmin, filterOptions }: DashboardClientProps) {
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)
+    const [filters, setFilters] = useState<DashboardFilter>(INITIAL_FILTERS)
     const router = useRouter()
+
+    // Contar filtros ativos
+    const activeFilterCount = useMemo(() => {
+        let count = 0
+        if (filters.period) count++
+        if (filters.startDate || filters.endDate) count++
+        if (filters.stageId) count++
+        if (filters.sourceId) count++
+        if (filters.brokerId) count++
+        return count
+    }, [filters])
+
+    // Filtrar leads recentes baseado nos filtros ativos
+    const filteredRecentLeads = useMemo(() => {
+        let leads = [...metrics.recentLeads]
+
+        // Filtro por período
+        if (filters.period || (filters.startDate && filters.endDate)) {
+            const now = new Date()
+            let start: Date | null = null
+            let end: Date | null = null
+
+            switch (filters.period) {
+                case 'today':
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+                    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
+                    break
+                case '7days':
+                    start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                    end = now
+                    break
+                case '30days':
+                    start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+                    end = now
+                    break
+                case 'month':
+                    start = new Date(now.getFullYear(), now.getMonth(), 1)
+                    end = now
+                    break
+                case 'custom':
+                    if (filters.startDate) start = new Date(filters.startDate + 'T00:00:00')
+                    if (filters.endDate) end = new Date(filters.endDate + 'T23:59:59')
+                    break
+            }
+
+            if (start || end) {
+                leads = leads.filter(lead => {
+                    const leadDate = new Date(lead.created_at)
+                    if (start && leadDate < start) return false
+                    if (end && leadDate > end) return false
+                    return true
+                })
+            }
+        }
+
+        // Filtro por estágio
+        if (filters.stageId) {
+            const stageName = filterOptions.stages.find(s => s.id === filters.stageId)?.name
+            if (stageName) {
+                leads = leads.filter(lead => lead.status === stageName)
+            }
+        }
+
+        // Filtro por origem (source do lead)
+        if (filters.sourceId) {
+            const sourceName = filterOptions.sources.find(s => s.id === filters.sourceId)?.name
+            if (sourceName) {
+                leads = leads.filter(lead =>
+                    lead.interest?.toLowerCase().includes(sourceName.toLowerCase())
+                )
+            }
+        }
+
+        return leads
+    }, [metrics.recentLeads, filters, filterOptions])
+
+    // Filtrar funil de vendas por estágio selecionado
+    const filteredFunnelSteps = useMemo(() => {
+        if (!filters.stageId) return metrics.funnelSteps
+        return metrics.funnelSteps.filter(step => step.stageId === filters.stageId)
+    }, [metrics.funnelSteps, filters.stageId])
 
     // Mapear os estágios do funil para o formato esperado pelo LeadModal
     const stages = metrics.funnelSteps.map(step => ({
@@ -34,6 +141,10 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
 
     const handleSuccess = () => {
         router.refresh()
+    }
+
+    const handleClearFilters = () => {
+        setFilters(INITIAL_FILTERS)
     }
 
     return (
@@ -50,10 +161,15 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
                 <div className="flex flex-row items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
                         onClick={() => setIsFilterOpen(true)}
-                        className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium whitespace-nowrap flex-1 md:flex-none"
+                        className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium whitespace-nowrap flex-1 md:flex-none outline-none focus:ring-2 focus:ring-ring/50 relative"
                     >
                         <Filter size={18} />
                         Filtrar
+                        {activeFilterCount > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 bg-secondary text-secondary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
+                                {activeFilterCount}
+                            </span>
+                        )}
                     </button>
                     <button
                         onClick={() => setIsLeadModalOpen(true)}
@@ -74,10 +190,18 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
                 </div>
             )}
 
-            <SalesFunnel funnelSteps={metrics.funnelSteps} />
-            <RecentLeadsList recentLeads={metrics.recentLeads} />
+            <SalesFunnel funnelSteps={filteredFunnelSteps} />
+            <RecentLeadsList recentLeads={filteredRecentLeads} />
 
-            <FilterModal isOpen={isFilterOpen} onClose={() => setIsFilterOpen(false)} />
+            <FilterModal
+                isOpen={isFilterOpen}
+                onClose={() => setIsFilterOpen(false)}
+                filters={filters}
+                setFilters={setFilters}
+                filterOptions={filterOptions}
+                isAdmin={isAdmin}
+                onClear={handleClearFilters}
+            />
 
             <LeadModal
                 isOpen={isLeadModalOpen}
