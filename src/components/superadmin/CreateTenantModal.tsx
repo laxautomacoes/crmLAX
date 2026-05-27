@@ -16,7 +16,7 @@ interface CreateTenantModalProps {
 export function CreateTenantModal({ isOpen, onClose, onSuccess }: CreateTenantModalProps) {
     const [name, setName] = useState('')
     const [slug, setSlug] = useState('')
-    const [plan, setPlan] = useState('freemium')
+    const [plan, setPlan] = useState('starter')
     const [isSubmitting, setIsSubmitting] = useState(false)
 
     // Gerar slug automaticamente a partir do nome
@@ -50,7 +50,7 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess }: CreateTenantMo
                 toast.success('Empresa criada com sucesso!')
                 setName('')
                 setSlug('')
-                setPlan('freemium')
+                setPlan('starter')
                 onSuccess?.()
                 onClose()
             } else {
@@ -100,9 +100,10 @@ export function CreateTenantModal({ isOpen, onClose, onSuccess }: CreateTenantMo
                         onChange={(e) => setPlan(e.target.value)}
                         required
                     >
-                        <option value="freemium">Freemium</option>
-                        <option value="starter">Starter</option>
-                        <option value="pro">Pro</option>
+                        <option value="starter">Starter — R$ 97</option>
+                        <option value="pro">Pro — R$ 197</option>
+                        <option value="business">Business — R$ 397</option>
+                        <option value="enterprise">Enterprise — R$ 797</option>
                     </select>
                 </div>
 

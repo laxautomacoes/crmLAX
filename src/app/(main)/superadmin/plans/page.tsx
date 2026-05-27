@@ -25,7 +25,7 @@ export default async function SuperadminPlansPage() {
             .gte('created_at', new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString())
     ]);
 
-    const currentPlan = tenant?.plan_type || 'freemium';
+    const currentPlan = tenant?.plan_type || 'starter';
     const limits = await getPlanLimits(profile.tenant_id);
     const aiUsageCount = (aiUsage as any)?.length || 0;
 

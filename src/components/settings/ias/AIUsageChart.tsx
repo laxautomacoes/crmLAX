@@ -84,7 +84,7 @@ export function AIUsageChart({ data }: ChartProps) {
                         <Area 
                             type="monotone" 
                             dataKey="gemini" 
-                            name="GEMINI-2.0"
+                            name="GEMINI"
                             stroke="#6366f1" 
                             strokeWidth={2}
                             fillOpacity={1} 

@@ -22,7 +22,8 @@ export async function POST(req: Request) {
         let priceId = '';
         if (planId === 'starter') priceId = process.env.STRIPE_PRICE_ID_STARTER!;
         if (planId === 'pro') priceId = process.env.STRIPE_PRICE_ID_PRO!;
-        if (planId === 'freemium') priceId = process.env.STRIPE_PRICE_ID_FREEMIUN!;
+        if (planId === 'business') priceId = process.env.STRIPE_PRICE_ID_BUSINESS!;
+        if (planId === 'enterprise') priceId = process.env.STRIPE_PRICE_ID_ENTERPRISE!;
 
         if (!priceId || priceId.includes('...')) {
             return NextResponse.json({ error: 'Configuração do Stripe incompleta (Price ID ausente)' }, { status: 400 });

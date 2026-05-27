@@ -101,7 +101,12 @@ Regras:
 
 // ─── AI Providers ────────────────────────────────────────────────────────
 
-async function callGeminiText(text: string, modelName: string, prompt: string): Promise<string> {
+interface AIResponse {
+  text: string;
+  tokens: number;
+}
+
+async function callGeminiText(text: string, modelName: string, prompt: string): Promise<AIResponse> {
   const apiKey = Deno.env.get('GOOGLE_GEMINI_API_KEY') || Deno.env.get('GEMINI_API_KEY');
   if (!apiKey) throw new Error('API_KEY_MISSING:GEMINI');
   const genAI = new GoogleGenerativeAI(apiKey);
@@ -110,10 +115,13 @@ async function callGeminiText(text: string, modelName: string, prompt: string): 
     prompt,
     `\n\n--- CONTEÚDO DA PÁGINA ---\n\n${text}`
   ]);
-  return result.response.text();
+  return {
+    text: result.response.text(),
+    tokens: result.response.usageMetadata?.totalTokenCount || 0,
+  };
 }
 
-async function callOpenAIText(text: string, modelName: string, prompt: string): Promise<string> {
+async function callOpenAIText(text: string, modelName: string, prompt: string): Promise<AIResponse> {
   const apiKey = Deno.env.get('OPENAI_API_KEY');
   if (!apiKey) throw new Error('API_KEY_MISSING:OPENAI');
   const response = await fetch('https://api.openai.com/v1/responses', {
@@ -136,10 +144,11 @@ async function callOpenAIText(text: string, modelName: string, prompt: string): 
   const data = await response.json();
   const output = data.output?.find((o: any) => o.type === 'message')?.content?.find((c: any) => c.type === 'output_text')?.text;
   if (!output) throw new Error('Resposta vazia da OpenAI.');
-  return output;
+  const totalTokens = (data.usage?.input_tokens || 0) + (data.usage?.output_tokens || 0);
+  return { text: output, tokens: totalTokens };
 }
 
-async function callAI(text: string, provider: string, model: string, prompt: string): Promise<string> {
+async function callAI(text: string, provider: string, model: string, prompt: string): Promise<AIResponse> {
   let primaryError: any = null;
   try {
     if (provider === 'openai') return await callOpenAIText(text, model, prompt);
@@ -150,7 +159,7 @@ async function callAI(text: string, provider: string, model: string, prompt: str
   }
   // Fallback
   try {
-    if (provider === 'openai') return await callGeminiText(text, 'gemini-2.0-flash', prompt);
+    if (provider === 'openai') return await callGeminiText(text, 'gemini-2.5-flash', prompt);
     return await callOpenAIText(text, 'gpt-4o', prompt);
   } catch (fbErr: any) {
     const keys: string[] = [];
@@ -166,9 +175,9 @@ async function callAI(text: string, provider: string, model: string, prompt: str
 async function resolveAIConfig(supabase: any, tenantId: string, manualProvider?: string|null, manualModel?: string|null) {
   if (manualProvider && manualModel) return { provider: manualProvider, model: manualModel };
   const { data: tenant } = await supabase.from('tenants').select('plan_type').eq('id', tenantId).single();
-  if (!tenant) return { provider: 'gemini', model: 'gemini-2.0-flash' };
+  if (!tenant) return { provider: 'gemini', model: 'gemini-2.5-flash' };
   const { data: limit } = await supabase.from('plan_limits').select('ai_provider, ai_model').eq('plan_type', tenant.plan_type).single();
-  return { provider: limit?.ai_provider || 'gemini', model: limit?.ai_model || 'gemini-2.0-flash' };
+  return { provider: limit?.ai_provider || 'gemini', model: limit?.ai_model || 'gemini-2.5-flash' };
 }
 
 function parseAIResponse(text: string): any {
@@ -436,8 +445,8 @@ Deno.serve(async (req: Request) => {
     console.log(`[Scrape] Text length: ${pageText.length} chars | Images found: ${imageUrls.length}`);
 
     // Call AI to extract structured data
-    const raw = await callAI(pageText, config.provider, config.model, PROMPT_SCRAPE);
-    const data = parseAIResponse(raw);
+    const aiResult = await callAI(pageText, config.provider, config.model, PROMPT_SCRAPE);
+    const data = parseAIResponse(aiResult.text);
 
     if (!data.properties || !Array.isArray(data.properties) || data.properties.length === 0) {
       throw new Error('A IA não conseguiu identificar nenhum imóvel na página. Tente outra URL ou cole o texto manualmente.');
@@ -452,7 +461,7 @@ Deno.serve(async (req: Request) => {
 
     // Log AI usage
     await supabase.from('ai_usage').insert({
-      tenant_id, model: config.model, feature_context: 'property-scrape-url'
+      tenant_id, model: config.model, total_tokens: aiResult.tokens, feature_context: 'property-scrape-url'
     });
 
     return new Response(

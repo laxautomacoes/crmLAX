@@ -24,7 +24,7 @@ Deno.serve(async (req: Request) => {
     const tenant_id = formData.get('tenant_id') as string;
     const mode = (formData.get('mode') as string) || 'cadastro';
     const ai_provider = (formData.get('ai_provider') as string) || 'gemini';
-    const ai_model = (formData.get('ai_model') as string) || 'gemini-2.0-flash';
+    const ai_model = (formData.get('ai_model') as string) || 'gemini-2.5-flash';
     const property_id = formData.get('property_id') as string;
     const pageImagesJson = formData.get('page_images') as string;
 
@@ -146,7 +146,7 @@ Deno.serve(async (req: Request) => {
       if (!geminiApiKey) throw new Error("Chave de API do Gemini não configurada.");
 
       const genAI = new GoogleGenerativeAI(geminiApiKey);
-      const model = genAI.getGenerativeModel({ model: ai_model || "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: ai_model || "gemini-2.5-flash" });
 
       let result;
       // Se tiver imagens base64, usar multimodal. Senão, enviar o arquivo PDF bruto.

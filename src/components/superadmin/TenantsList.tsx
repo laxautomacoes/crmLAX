@@ -44,7 +44,7 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
             setExpandedTenantId(tenant.id)
             setEditName(tenant.name)
             setEditSlug(tenant.slug)
-            setEditPlan(tenant.plan_type || 'freemium')
+            setEditPlan(tenant.plan_type || 'starter')
             setEditDomain(tenant.custom_domain || '')
         }
     }
@@ -158,11 +158,13 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
                                         <td className="px-6 py-4 align-middle">
                                             <div className="flex flex-col gap-1">
                                                 <span className={`inline-flex items-center w-fit px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                                    tenant.plan_type === 'enterprise' ? 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' :
+                                                    tenant.plan_type === 'business' ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' :
                                                     tenant.plan_type === 'pro' ? 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400' :
                                                     tenant.plan_type === 'starter' ? 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' :
                                                     'bg-zinc-100 text-zinc-700 dark:bg-zinc-800 dark:text-zinc-400'
                                                 }`}>
-                                                    {tenant.plan_type || 'freemium'}
+                                                    {tenant.plan_type || 'starter'}
                                                 </span>
                                                 <span className="text-[10px] text-muted-foreground">Desde: {new Date(tenant.created_at).toLocaleDateString('pt-BR')}</span>
                                             </div>
@@ -238,9 +240,10 @@ export default function TenantsList({ initialTenants, search, onRefresh }: { ini
                                                                     value={editPlan}
                                                                     onChange={(e) => setEditPlan(e.target.value)}
                                                                 >
-                                                                    <option value="freemium">Freemium</option>
-                                                                    <option value="starter">Starter</option>
-                                                                    <option value="pro">Pro</option>
+                                                                    <option value="starter">Starter — R$ 97</option>
+                                                                    <option value="pro">Pro — R$ 197</option>
+                                                                    <option value="business">Business — R$ 397</option>
+                                                                    <option value="enterprise">Enterprise — R$ 797</option>
                                                                 </select>
                                                             </div>
                                                             <div className="space-y-1">

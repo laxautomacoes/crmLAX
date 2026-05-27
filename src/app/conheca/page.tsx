@@ -13,7 +13,10 @@ import {
   Smartphone,
   Cpu,
   Loader2,
-  Sparkles
+  Sparkles,
+  Crown,
+  Gem,
+  Shield
 } from 'lucide-react';
 import LandingHeader from '@/components/layout/LandingHeader';
 import PricingCard from '@/components/shared/PricingCard';
@@ -22,15 +25,15 @@ import Image from 'next/image';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
-// Mapeamento de ícones por chave de plano (igual ao SubscriptionClient)
+// Mapeamento de ícones por chave de plano
 const planIcons: Record<string, React.ReactNode> = {
-  freemium: <Zap className="h-5 w-5 text-amber-500" />,
   starter: <Sparkles className="h-5 w-5 text-blue-500" />,
-  pro: <Crown className="h-5 w-5 text-[#FFE600]" />,
+  pro: <Crown className="h-5 w-5 text-purple-500" />,
+  business: <Gem className="h-5 w-5 text-emerald-500" />,
+  enterprise: <Shield className="h-5 w-5 text-amber-500" />,
 };
 
 import { useRouter } from 'next/navigation';
-import { Crown } from 'lucide-react';
 import LandingFooter from '@/components/layout/LandingFooter';
 import { getPlatformBranding } from '@/app/_actions/tenant';
 
@@ -75,7 +78,7 @@ export default function LandingPage() {
   const handleCheckout = async (planId: string) => {
     try {
       setLoadingPlan(planId);
-      const response = await fetch('/api/checkout', {
+      const response = await fetch('/api/checkout/abacatepay', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -144,7 +147,7 @@ export default function LandingPage() {
                 href="#planos" 
                 className="w-full sm:w-auto bg-[#FFE600] text-[#404F4F] px-8 py-4 rounded-lg text-lg font-bold hover:bg-[#F2DB00] transition-all transform active:scale-95 shadow-lg shadow-[#FFE600]/10 flex items-center justify-center gap-2"
               >
-                Experimentar Grátis <ArrowRight className="w-5 h-5" />
+                Começar Agora <ArrowRight className="w-5 h-5" />
               </a>
               <a 
                 href="#funcoes" 
@@ -234,10 +237,9 @@ export default function LandingPage() {
             <p className="text-gray-400 font-medium max-w-2xl mx-auto">Preços transparentes que acompanham o crescimento do seu negócio.</p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-6">
             {isLoadingPlans ? (
-              // Skeleton loading ou apenas um loader simples
-              <div className="col-span-1 md:col-span-3 flex justify-center py-20">
+              <div className="col-span-1 md:col-span-2 xl:col-span-4 flex justify-center py-20">
                 <Loader2 className="w-8 h-8 animate-spin text-[#FFE600]" />
               </div>
             ) : (

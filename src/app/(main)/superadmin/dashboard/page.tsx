@@ -84,7 +84,7 @@ export default async function SuperadminDashboardPage() {
             .eq('is_system', false)
 
         const counts = (plansData || []).reduce((acc: Record<string, number>, curr: any) => {
-            const type = curr.plan_type || 'freemium'
+            const type = curr.plan_type || 'starter'
             acc[type] = (acc[type] || 0) + 1
             return acc
         }, {})

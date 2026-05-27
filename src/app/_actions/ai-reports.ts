@@ -91,7 +91,7 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
         await supabase.from('ai_usage').insert({
             tenant_id: tenantId,
             profile_id: profileId,
-            model: 'gemini-2.0-flash',
+            model: 'gemini-2.5-flash',
             total_tokens: result.response.usageMetadata?.totalTokenCount || 0,
             feature_context: 'report_analysis'
         });

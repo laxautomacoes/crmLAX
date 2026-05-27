@@ -215,7 +215,7 @@ export async function parseWithAI(text: string): Promise<ParseResult> {
 
     try {
         const prompt = AI_EXTRACTION_PROMPT.replace('{MESSAGE}', text);
-        const model = getAIModel('gemini-2.0-flash'); // Modelo rápido para extração simples
+        const model = getAIModel('gemini-2.5-flash'); // Modelo rápido para extração simples
         const result = await model.generateContent(prompt);
         const response = await result.response;
         const responseText = response.text().trim();

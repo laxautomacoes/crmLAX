@@ -42,7 +42,7 @@ async function getAuthContext() {
         userId: user.id,
         tenantId: profile.tenant_id,
         role: profile.role,
-        planType: (profile as any).tenants?.plan_type || 'freemium',
+        planType: (profile as any).tenants?.plan_type || 'starter',
         isSystem: (profile as any).tenants?.is_system === true,
     }
 }

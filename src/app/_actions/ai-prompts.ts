@@ -96,7 +96,7 @@ ${currentPrompt}
         if (provider === 'gemini') {
             const { GoogleGenerativeAI } = await import('@google/generative-ai');
             const genAI = new GoogleGenerativeAI(process.env.GOOGLE_GEMINI_API_KEY || '');
-            const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
+            const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
             const result = await model.generateContent(INSTRUCTION);
             return { enhancedPrompt: result.response.text().trim() };
         } else {

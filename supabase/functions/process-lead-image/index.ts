@@ -23,7 +23,7 @@ Deno.serve(async (req: Request) => {
     const imageFile = formData.get('file') as File;
     const tenant_id = formData.get('tenant_id') as string;
     const ai_provider = (formData.get('ai_provider') as string) || 'gemini';
-    const ai_model = (formData.get('ai_model') as string) || 'gemini-2.0-flash';
+    const ai_model = (formData.get('ai_model') as string) || 'gemini-2.5-flash';
 
     if (!imageFile || !tenant_id) {
       throw new Error("Arquivo de imagem e tenant_id são obrigatórios.");
@@ -82,7 +82,7 @@ Deno.serve(async (req: Request) => {
       if (!geminiApiKey) throw new Error("Chave de API do Gemini não configurada.");
 
       const genAI = new GoogleGenerativeAI(geminiApiKey);
-      const model = genAI.getGenerativeModel({ model: ai_model || "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: ai_model || "gemini-2.5-flash" });
 
       const result = await model.generateContent([
         prompt,

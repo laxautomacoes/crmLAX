@@ -42,14 +42,15 @@ export default async function SuperadminReportsPage() {
 
   // MRR Estimation (Hardcoded values from DB check)
   const pricing: Record<string, number> = {
-    'pro': 247,
-    'starter': 97,
-    'freemium': 0
+    'enterprise': 797,
+    'business': 397,
+    'pro': 197,
+    'starter': 97
   }
 
   const estimatedMRR = tenants?.reduce((acc: number, t: any) => {
     if (t.status === 'active') {
-      return acc + (pricing[t.plan_type || 'freemium'] || 0)
+      return acc + (pricing[t.plan_type || 'starter'] || 0)
     }
     return acc
   }, 0) || 0
@@ -102,7 +103,7 @@ export default async function SuperadminReportsPage() {
 
   // 7. Plan Distribution for Chart
   const planCounts = tenants?.reduce((acc: Record<string, number>, curr: any) => {
-    const type = curr.plan_type || 'freemium'
+    const type = curr.plan_type || 'starter'
     acc[type] = (acc[type] || 0) + 1
     return acc
   }, {}) || {}
@@ -253,6 +254,8 @@ export default async function SuperadminReportsPage() {
                   </td>
                   <td className="py-4">
                     <span className={`text-[10px] font-bold uppercase px-2 py-1 rounded-full ${
+                      tenant.plan_type === 'enterprise' ? 'bg-[#F59E0B] text-white' :
+                      tenant.plan_type === 'business' ? 'bg-[#10B981] text-white' :
                       tenant.plan_type === 'pro' ? 'bg-[#FFE600] text-[#404F4F]' :
                       tenant.plan_type === 'starter' ? 'bg-[#404F4F] text-white' :
                       'bg-slate-100 text-slate-500'

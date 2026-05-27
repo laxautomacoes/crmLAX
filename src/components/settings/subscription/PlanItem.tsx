@@ -1,14 +1,15 @@
 'use client'
 
-import { Zap, Sparkles, Crown } from 'lucide-react';
+import { Zap, Sparkles, Crown, Gem, Shield } from 'lucide-react';
 import PlanCardAdmin from '../PlanCardAdmin';
 import PlanCardSuperadmin from '../PlanCardSuperadmin';
 import { SortableItem } from './SortableItem';
 
 const planIcons: Record<string, React.ReactNode> = {
-    freemium: <Zap className="h-5 w-5 text-amber-500" />,
     starter: <Sparkles className="h-5 w-5 text-blue-500" />,
-    pro: <Crown className="h-5 w-5 text-accent-icon" />,
+    pro: <Crown className="h-5 w-5 text-purple-500" />,
+    business: <Gem className="h-5 w-5 text-emerald-500" />,
+    enterprise: <Shield className="h-5 w-5 text-amber-500" />,
 };
 
 interface PlanItemProps {

@@ -9,7 +9,7 @@ interface PlanDistributionChartProps {
     }[]
 }
 
-const COLORS = ['#FFE600', '#404F4F', '#94A3B8'] // Pro (Yellow), Starter (Petrol), Freemium (Slate)
+const COLORS = ['#3B82F6', '#8B5CF6', '#10B981', '#F59E0B'] // Starter (Blue), Pro (Purple), Business (Green), Enterprise (Amber)
 
 export function PlanDistributionChart({ data }: PlanDistributionChartProps) {
     if (!data || data.length === 0) {

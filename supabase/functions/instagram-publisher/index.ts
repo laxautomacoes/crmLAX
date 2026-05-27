@@ -61,7 +61,7 @@ Deno.serve(async (req: Request) => {
       }
 
       const genAI = new GoogleGenerativeAI(Deno.env.get('GOOGLE_GEMINI_API_KEY') ?? '');
-      const model = genAI.getGenerativeModel({ model: "gemini-2.0-flash" });
+      const model = genAI.getGenerativeModel({ model: "gemini-2.5-flash" });
 
       const prompt = `Você é um Social Media Manager vendedor. Crie uma legenda IRRESISTÍVEL para o Instagram sobre este property imobiliário.
       Imóvel: ${asset.title}
@@ -78,13 +78,14 @@ Deno.serve(async (req: Request) => {
 
       const aiResult = await model.generateContent(prompt);
       caption = aiResult.response.text();
+      const totalTokens = aiResult.response.usageMetadata?.totalTokenCount || 0;
 
       // Log ai_usage
       await supabaseClient.from('ai_usage').insert({
         tenant_id,
         profile_id,
-        model: 'gemini-2.0-flash',
-        total_tokens: 500, // Estimativa
+        model: 'gemini-2.5-flash',
+        total_tokens: totalTokens,
         feature_context: 'instagram-caption'
       });
     }

@@ -48,14 +48,11 @@ export async function getPlanLimitsAction(tenantId: string) {
 }
 
 /**
- * Gera a URL do Portal do Cliente do Stripe para gestão de faturamento.
+ * Gera a URL do Portal de faturamento.
+ * Se gateway = abacatepay, retorna URL do dashboard AbacatePay.
+ * Se gateway = stripe, retorna Billing Portal do Stripe.
  */
 export async function getStripePortalUrl() {
-    const Stripe = (await import('stripe')).default
-    const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
-        apiVersion: '2025-01-27.acacia' as any,
-    })
-
     try {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
@@ -72,13 +69,26 @@ export async function getStripePortalUrl() {
 
         const { data: tenant } = await supabase
             .from('tenants')
-            .select('stripe_customer_id')
+            .select('stripe_customer_id, payment_gateway')
             .eq('id', profile.tenant_id)
             .single()
 
+        const gateway = (tenant as any)?.payment_gateway || 'abacatepay'
+
+        // Abacate Pay — redireciona para dashboard
+        if (gateway === 'abacatepay') {
+            return { url: 'https://app.abacatepay.com/' }
+        }
+
+        // Stripe — Billing Portal
         if (!tenant?.stripe_customer_id || tenant.stripe_customer_id.includes('...')) {
             return { error: 'Você ainda não possui uma assinatura ativa para gerenciar.' }
         }
+
+        const Stripe = (await import('stripe')).default
+        const stripe = new Stripe(process.env.STRIPE_SECRET_KEY!, {
+            apiVersion: '2025-01-27.acacia' as any,
+        })
 
         const domain = process.env.NEXT_PUBLIC_ROOT_DOMAIN?.startsWith('http') 
             ? process.env.NEXT_PUBLIC_ROOT_DOMAIN 

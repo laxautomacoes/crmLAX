@@ -4,7 +4,7 @@ import { createClient } from "@/lib/supabase/server";
 import { createAdminClient } from "@/lib/supabase/admin";
 import { revalidatePath } from "next/cache";
 import { Tables } from "../../lib/supabase/database.types";
-import { calculateCostBRL } from "@/utils/ai-pricing";
+import { calculateCostBRL, refreshExchangeRate, getUsdToBrl } from "@/utils/ai-pricing";
 
 /**
  * Busca estatísticas agregadas de uso de IA.
@@ -55,6 +55,9 @@ export async function getAIUsageStats() {
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
     const monthlyData = usageData.filter(item => (item.created_at || '') >= startOfMonth);
 
+    // Atualizar cotação USD/BRL antes de calcular custos
+    await refreshExchangeRate();
+
     // Agregação
     const stats = {
         total_tokens: 0,
@@ -66,6 +69,7 @@ export async function getAIUsageStats() {
         monthly_limit: planLimit?.ai_requests_per_month || 0,
         plan_name: planLimit?.display_name || 'N/A',
         usage_by_day: {} as Record<string, { gpt: number, gemini: number }>,
+        exchange_rate: getUsdToBrl(),
     };
 
     usageData.forEach((item: Tables<'ai_usage'>) => {
@@ -157,7 +161,7 @@ export async function getTenantAIConfig(tenantId: string): Promise<{ provider: s
         .eq('id', tenantId)
         .single();
 
-    if (!tenant) return { provider: 'gemini', model: 'gemini-2.0-flash' };
+    if (!tenant) return { provider: 'gemini', model: 'gemini-2.5-flash' };
 
     const { data: limit } = await supabase
         .from('plan_limits')
@@ -167,7 +171,7 @@ export async function getTenantAIConfig(tenantId: string): Promise<{ provider: s
 
     return {
         provider: limit?.ai_provider || 'gemini',
-        model: limit?.ai_model || 'gemini-2.0-flash',
+        model: limit?.ai_model || 'gemini-2.5-flash',
     };
 }
 

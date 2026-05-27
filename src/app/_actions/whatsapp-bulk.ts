@@ -40,7 +40,7 @@ export async function validateBulkAccess() {
     if (!profile?.tenant_id) return { allowed: false, error: 'Perfil não encontrado.' }
 
     const tenantId = profile.tenant_id
-    const planType = (profile as any).tenants?.plan_type || 'freemium'
+    const planType = (profile as any).tenants?.plan_type || 'starter'
     const isSystem = (profile as any).tenants?.is_system === true
     const isSuper = profile.role === 'superadmin' || isSystem
 

@@ -1200,6 +1200,9 @@ export type Database = {
           id: string
           is_system: boolean | null
           name: string
+          payment_gateway: string | null
+          abacatepay_customer_id: string | null
+          abacatepay_subscription_id: string | null
           plan_type: Database["public"]["Enums"]["plan_type"] | null
           slug: string
           status: string | null
@@ -1222,6 +1225,9 @@ export type Database = {
           id?: string
           is_system?: boolean | null
           name: string
+          payment_gateway?: string | null
+          abacatepay_customer_id?: string | null
+          abacatepay_subscription_id?: string | null
           plan_type?: Database["public"]["Enums"]["plan_type"] | null
           slug: string
           status?: string | null
@@ -1244,6 +1250,9 @@ export type Database = {
           id?: string
           is_system?: boolean | null
           name?: string
+          payment_gateway?: string | null
+          abacatepay_customer_id?: string | null
+          abacatepay_subscription_id?: string | null
           plan_type?: Database["public"]["Enums"]["plan_type"] | null
           slug?: string
           status?: string | null
@@ -1441,7 +1450,7 @@ export type Database = {
         | "studio"
       calendar_event_type: "duty" | "visit" | "note" | "other"
       interaction_type: "whatsapp" | "system" | "note"
-      plan_type: "freemium" | "starter" | "pro"
+      plan_type: "starter" | "pro" | "business" | "enterprise"
       profile_role: "superadmin" | "admin" | "user"
       update_type: "feature" | "fix" | "roadmap"
     }
@@ -1582,7 +1591,7 @@ export const Constants = {
       ],
       calendar_event_type: ["duty", "visit", "note", "other"],
       interaction_type: ["whatsapp", "system", "note"],
-      plan_type: ["freemium", "starter", "pro"],
+      plan_type: ["starter", "pro", "business", "enterprise"],
       profile_role: ["superadmin", "admin", "user"],
       update_type: ["feature", "fix", "roadmap"],
     },

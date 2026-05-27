@@ -13,6 +13,7 @@ interface StatsProps {
         monthly_requests: number;
         monthly_limit: number;
         plan_name: string;
+        exchange_rate: number;
     }
 }
 
@@ -47,6 +48,7 @@ export function AIUsageStats({ stats }: StatsProps) {
             title: 'Custo Estimado',
             value: formatBRL(stats.total_cost_brl),
             subtitle: `${stats.total_tokens.toLocaleString()} tokens`,
+            subtitle2: `USD 1.00 = R$ ${stats.exchange_rate.toFixed(2)}`,
             icon: DollarSign,
             highlight: true,
         }
@@ -77,6 +79,9 @@ export function AIUsageStats({ stats }: StatsProps) {
                             <h3 className="text-3xl font-semibold text-foreground">{card.value}</h3>
                             {card.subtitle && (
                                 <p className="text-[10px] text-muted-foreground font-medium">{card.subtitle}</p>
+                            )}
+                            {'subtitle2' in card && card.subtitle2 && (
+                                <p className="text-[10px] text-muted-foreground/60 font-medium">{card.subtitle2}</p>
                             )}
                         </div>
                     </div>

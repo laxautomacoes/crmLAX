@@ -169,7 +169,7 @@ export async function POST(req: Request) {
                 if (subscription.status === 'canceled' || subscription.status === 'unpaid') {
                     await supabase
                         .from('tenants')
-                        .update({ plan_type: 'freemium' })
+                        .update({ plan_type: 'starter' })
                         .eq('id', tenant.id);
                 }
             }

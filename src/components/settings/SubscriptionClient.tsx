@@ -59,11 +59,11 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
     }, [searchParams]);
 
     const handleSubscribe = async (planKey: string) => {
-        if (planKey === currentPlan || planKey === 'freemium') return;
+        if (planKey === currentPlan) return;
 
         setIsSubscribing(planKey);
         try {
-            const response = await fetch('/api/checkout', {
+            const response = await fetch('/api/checkout/abacatepay', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -147,7 +147,7 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
                             <Settings2 className="h-3 w-3" /> Modo Editor
                         </span>
                     )}
-                    {!isSuperadmin && currentPlan !== 'freemium' && (
+                    {!isSuperadmin && (
                         <button
                             onClick={handlePortal}
                             disabled={isPortaling}
@@ -179,7 +179,7 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
                         strategy={rectSortingStrategy}
                         disabled={!isSuperadmin}
                     >
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-3">
+                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
                             {allPlanLimits.map((planLimit: any) => (
                                 <SortableItem 
                                     key={planLimit.plan_type} 

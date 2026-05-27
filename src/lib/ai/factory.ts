@@ -21,7 +21,7 @@ export async function getAIConfig(tenantId: string): Promise<{ provider: AIProvi
         .eq('id', tenantId)
         .single();
         
-    if (!tenant) return { provider: 'gemini', model: 'gemini-1.5-pro' };
+    if (!tenant) return { provider: 'gemini', model: 'gemini-2.5-flash' };
 
     const { data: limit } = await supabase
         .from('plan_limits')
@@ -33,8 +33,10 @@ export async function getAIConfig(tenantId: string): Promise<{ provider: AIProvi
     let resolvedModel = limit?.ai_model || (limit?.ai_provider === 'openai' ? 'gpt-4o' : 'gemini-3.1-pro-preview');
     
     // Atualiza automaticamente typos ou modelos antigos para o topo de linha
-    if (resolvedModel === 'gemini-3-flash' || resolvedModel === 'gemini-1.5-flash' || resolvedModel === 'gemini-pro') {
-        resolvedModel = 'gemini-3.1-pro-preview'; // Modelo de altíssima performance no momento
+    // Atualiza modelos depreciados/antigos automaticamente
+    const DEPRECATED_MODELS = ['gemini-2.0-flash', 'gemini-1.5-flash', 'gemini-1.5-pro', 'gemini-pro'];
+    if (DEPRECATED_MODELS.includes(resolvedModel)) {
+        resolvedModel = 'gemini-2.5-flash'; // Substituição custo-eficiente para modelos depreciados
     }
 
     return {
