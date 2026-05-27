@@ -73,7 +73,7 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
 
             const data = await response.json();
             if (data.url) {
-                window.location.href = data.url;
+                window.open(data.url, '_blank');
             } else {
                 toast.error(data.error || 'Erro ao iniciar checkout');
             }

@@ -89,7 +89,7 @@ export default function LandingPage() {
       const data = await response.json();
 
       if (data.url) {
-        window.location.href = data.url;
+        window.open(data.url, '_blank');
       } else {
         console.error('Erro ao gerar checkout:', data.error);
         alert(`Erro no checkout: ${data.error || 'Ocorreu um erro inesperado. Tente novamente.'}`);
