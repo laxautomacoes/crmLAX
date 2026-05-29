@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Search, LayoutGrid, List, Filter, WifiOff, FileText, Globe, Archive, Trash2 } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Map, Filter, WifiOff, FileText, Globe, Archive, Trash2 } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty, archiveProperty } from '@/app/_actions/properties'
 import { toast } from 'sonner'
@@ -16,6 +16,7 @@ import { PropertyImportPDFModal } from '@/components/dashboard/properties/Proper
 import { PropertyScrapingModal } from '@/components/dashboard/properties/PropertyScrapingModal'
 import { useOfflineSync } from '@/hooks/use-offline-sync'
 import { getOfflineProperties } from '@/services/db'
+import { PropertiesMapView } from '@/components/shared/PropertiesMapView'
 import { PageHeader } from '@/components/shared/PageHeader'
 
 interface PropertiesClientProps {
@@ -47,7 +48,7 @@ export default function PropertiesClient({
     const [isImportPDFOpen, setIsImportPDFOpen] = useState(false)
     const [isScrapingOpen, setIsScrapingOpen] = useState(false)
     const [isRefreshing, setIsRefreshing] = useState(false)
-    const [viewMode, setViewMode] = useState<'gallery' | 'list'>('gallery')
+    const [viewMode, setViewMode] = useState<'gallery' | 'list' | 'map'>('gallery')
     const [properties, setProperties] = useState<any[]>(initialProperties)
     const [editingProperty, setEditingProperty] = useState<any | null>(null)
     const [viewingProperty, setViewingProperty] = useState<any | null>(null)
@@ -397,6 +398,13 @@ export default function PropertiesClient({
                         >
                             <List size={16} />
                         </button>
+                        <button
+                            onClick={() => setViewMode('map')}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'map' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
+                            title="Visualização em Mapa"
+                        >
+                            <Map size={16} />
+                        </button>
                     </div>
 
                     {/* Linha 2 mobile: Filtrar + Importar URL */}
@@ -444,6 +452,12 @@ export default function PropertiesClient({
                 <div className="flex h-[30vh] items-center justify-center">
                     <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
                 </div>
+            ) : viewMode === 'map' ? (
+                <PropertiesMapView
+                    properties={filteredProperties}
+                    onPropertyClick={handleView}
+                    className="animate-in fade-in duration-300"
+                />
             ) : viewMode === 'gallery' ? (
                 <PropertyGallery
                     properties={filteredProperties}

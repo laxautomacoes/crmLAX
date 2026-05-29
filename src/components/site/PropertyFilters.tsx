@@ -1,6 +1,6 @@
 'use client';
 
-import { Search, Filter, LayoutGrid, List } from 'lucide-react';
+import { Search, Filter, LayoutGrid, List, Map } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormSelect } from '@/components/shared/forms/FormSelect';
 
@@ -13,8 +13,8 @@ interface PropertyFiltersProps {
         search: string;
     };
     onFilterChange: (filters: PropertyFiltersProps['filters']) => void;
-    viewMode: 'gallery' | 'list';
-    onViewModeChange: (mode: 'gallery' | 'list') => void;
+    viewMode: 'gallery' | 'list' | 'map';
+    onViewModeChange: (mode: 'gallery' | 'list' | 'map') => void;
 }
 
 export function PropertyFilters({ filters, onFilterChange, viewMode, onViewModeChange }: PropertyFiltersProps) {
@@ -43,6 +43,13 @@ export function PropertyFilters({ filters, onFilterChange, viewMode, onViewModeC
                         title="Visualização em Lista"
                     >
                         <List size={18} />
+                    </button>
+                    <button
+                        onClick={() => onViewModeChange('map')}
+                        className={`p-2 rounded-md transition-all md:hidden ${viewMode === 'map' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                        title="Visualização em Mapa"
+                    >
+                        <Map size={18} />
                     </button>
                 </div>
             </div>
