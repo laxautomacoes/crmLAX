@@ -649,3 +649,40 @@ export async function getPropertyBySlug(type: string, slug: string, allowUnpubli
         return { success: false, error: 'Imóvel não encontrado' }
     }
 }
+
+export async function togglePublishProperty(tenantId: string, propertyId: string, isPublished: boolean) {
+    const supabase = await createClient()
+    const { profile } = await getProfile()
+    const userRole = profile?.role?.toLowerCase()
+
+    if (userRole !== 'admin' && userRole !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem alterar a publicação.' }
+    }
+
+    try {
+        const { data, error } = await supabase
+            .from('properties')
+            .update({ is_published: isPublished })
+            .eq('id', propertyId)
+            .eq('tenant_id', tenantId)
+            .select()
+            .single()
+
+        if (error) throw error
+
+        revalidatePath('/properties')
+
+        await createLog({
+            action: 'update_property',
+            entityType: 'property',
+            entityId: propertyId,
+            details: { field: 'is_published', value: isPublished }
+        })
+
+        return { success: true, data }
+    } catch (error: any) {
+        console.error('Error toggling publish property:', error)
+        return { success: false, error: error.message }
+    }
+}
+

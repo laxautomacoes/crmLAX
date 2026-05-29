@@ -138,7 +138,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                     <div>
                         <div className="flex items-center gap-2 mb-2">
                             {config?.showType !== false && (
-                                <span className={`px-2 py-1 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(property.type || property.details?.type)}`}>
+                                <span className={`px-2 py-1 text-[10px] font-black rounded uppercase tracking-widest shadow-sm dark:bg-white/15 dark:text-white ${getPropertyTypeStyles(property.type || property.details?.type)}`}>
                                     {translatePropertyType(property.type || property.details?.type)}
                                 </span>
                             )}
@@ -152,7 +152,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                             <div className="flex flex-col gap-1">
                                 <h1 className="text-3xl font-bold text-foreground">{displayTitle}</h1>
                                 {config?.location !== 'none' && (
-                                    <p className="text-base text-muted-foreground">
+                                    <p className="text-lg text-muted-foreground dark:text-white/80">
                                         {config?.location === 'exact' && property.details?.endereco?.rua && `${property.details.endereco.rua}, ${property.details.endereco.numero || ''} - `}
                                         {(property.details?.endereco?.bairro || details.endereco?.bairro) && `${property.details?.endereco?.bairro || details.endereco.bairro}, `}
                                         {(property.details?.endereco?.cidade || details.endereco?.cidade) && `${property.details?.endereco?.cidade || details.endereco.cidade}`}
@@ -323,67 +323,65 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                         initialTime={allMedia[fullscreenIndex]?.type === 'video' ? videoTime[allMedia[fullscreenIndex].url] || 0 : 0}
                     />
 
-                    <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                        <Home className="text-primary" size={24} />
+                    <h2 className="text-2xl font-bold text-foreground">
                         Dados do Imóvel
                     </h2>
 
-                    <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+                    <div className="p-4 bg-card rounded-xl border border-border shadow-sm">
+                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
                         {config?.showBedrooms !== false && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
-                                <BedDouble className="text-primary mb-2" size={24} />
-                                <span className="text-lg font-bold">{details.dormitorios || details.quartos || 0}</span>
-                                <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Dormitórios</span>
+                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
+                                <BedDouble className="text-primary dark:text-white mb-1.5" size={20} />
+                                <span className="text-base font-bold">{details.dormitorios || details.quartos || 0}</span>
+                                <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Dormitórios</span>
                             </div>
                         )}
                         {config?.showSuites !== false && details.suites > 0 && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
-                                <Bath className="text-primary mb-2" size={24} />
-                                <span className="text-lg font-bold">{details.suites}</span>
-                                <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Suítes</span>
+                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
+                                <Bath className="text-primary dark:text-white mb-1.5" size={20} />
+                                <span className="text-base font-bold">{details.suites}</span>
+                                <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Suítes</span>
                             </div>
                         )}
-                        <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
-                            <Bath className="text-primary mb-2" size={24} />
-                            <span className="text-lg font-bold">{details.banheiros || 0}</span>
-                            <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Banheiros</span>
+                        <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
+                            <Bath className="text-primary dark:text-white mb-1.5" size={20} />
+                            <span className="text-base font-bold">{details.banheiros || 0}</span>
+                            <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Banheiros</span>
                         </div>
-                        <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
-                            <Car className="text-primary mb-2" size={24} />
-                            <span className="text-lg font-bold">{details.vagas || 0}</span>
-                            <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Vagas</span>
+                        <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
+                            <Car className="text-primary dark:text-white mb-1.5" size={20} />
+                            <span className="text-base font-bold">{details.vagas || 0}</span>
+                            <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Vagas</span>
                         </div>
                         {config?.showArea !== false && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
-                                <Square className="text-primary mb-2" size={24} />
-                                <span className="text-lg font-bold">{details.area_privativa || details.area_util || details.area_total || 0}m²</span>
-                                <span className="text-xs text-muted-foreground dark:text-white uppercase font-medium">Área</span>
+                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
+                                <Square className="text-primary dark:text-white mb-1.5" size={20} />
+                                <span className="text-base font-bold">{details.area_privativa || details.area_util || details.area_total || 0}m²</span>
+                                <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Área</span>
                             </div>
                         )}
                         {config?.showSacada !== false && details.has_sacada_com_churrasqueira && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
-                                <Fence className="text-primary mb-2" size={24} />
-                                <span className="text-lg font-bold text-center">Sacada c/</span>
-                                <span className="text-lg font-bold text-center">churrasco</span>
+                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
+                                <Fence className="text-primary dark:text-white mb-1.5" size={20} />
+                                <span className="text-sm font-bold text-center leading-tight">Sacada c/ churr.</span>
                             </div>
                         )}
                         {config?.showSacada !== false && !details.has_sacada_com_churrasqueira && details.has_sacada_sem_churrasqueira && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
-                                <Fence className="text-primary mb-2" size={24} />
-                                <span className="text-lg font-bold">Sacada</span>
+                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
+                                <Fence className="text-primary dark:text-white mb-1.5" size={20} />
+                                <span className="text-sm font-bold">Sacada</span>
                             </div>
                         )}
                         {config?.showEscritorio !== false && details.has_escritorio && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
-                                <Briefcase className="text-primary mb-2" size={24} />
-                                <span className="text-lg font-bold">Escritório</span>
+                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
+                                <Briefcase className="text-primary dark:text-white mb-1.5" size={20} />
+                                <span className="text-sm font-bold">Escritório</span>
                             </div>
                         )}
                         {config?.showDependencia !== false && details.has_dependencia_empregada && (
-                            <div className="flex flex-col items-center justify-center p-4 rounded-lg bg-muted/30">
-                                <User className="text-primary mb-2" size={24} />
-                                <span className="text-lg font-bold">Dependência</span>
+                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
+                                <User className="text-primary dark:text-white mb-1.5" size={20} />
+                                <span className="text-sm font-bold">Dependência</span>
                             </div>
                         )}
                         </div>
@@ -397,15 +395,14 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
 
                     {amenities.length > 0 && (
                         <>
-                            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                                <Waves className="text-primary" size={24} />
+                            <h2 className="text-2xl font-bold text-foreground">
                                 Área Comum | Lazer
                             </h2>
                             <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
-                                <div className="flex flex-wrap gap-3">
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem' }}>
                                     {amenities.map(a => (
                                         <div key={a.id} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/30">
-                                            <span className="text-primary">{a.icon}</span>
+                                            <span className="text-primary dark:text-white">{a.icon}</span>
                                             <span className="text-sm font-medium text-foreground">{a.label}</span>
                                         </div>
                                     ))}
@@ -418,8 +415,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
 
                     {config?.description !== 'none' && (
                         <>
-                            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                                <FileType className="text-primary" size={24} />
+                            <h2 className="text-2xl font-bold text-foreground">
                                 Descrição do Imóvel
                             </h2>
                             <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
@@ -434,10 +430,9 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                         </>
                     )}
 
-                    {config?.location === 'exact' && details.endereco?.latitude && details.endereco?.longitude && (
+                    {details.endereco?.latitude && details.endereco?.longitude && (
                         <div className="space-y-4">
-                            <h2 className="text-2xl font-bold text-foreground flex items-center gap-2">
-                                <MapPin className="text-primary" size={24} />
+                            <h2 className="text-2xl font-bold text-foreground">
                                 Localização
                             </h2>
                             <PropertyMap 

@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Search, LayoutGrid, List, Map, Filter, WifiOff, FileText, Globe, Archive, Trash2 } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty, archiveProperty } from '@/app/_actions/properties'
+import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty, archiveProperty, togglePublishProperty } from '@/app/_actions/properties'
 import { toast } from 'sonner'
 import { PropertyGallery } from '@/components/dashboard/properties/PropertyGallery'
 import { PropertyList } from '@/components/dashboard/properties/PropertyList'
@@ -224,6 +224,16 @@ export default function PropertiesClient({
         } else {
             toast.error('Erro ao arquivar: ' + result.error)
             setConfirmArchiveId(null)
+        }
+    }
+
+    const handleTogglePublish = async (id: string, isPublished: boolean) => {
+        const result = await togglePublishProperty(tenantId, id, isPublished)
+        if (result.success) {
+            setProperties(prev => prev.map(p => p.id === id ? { ...p, is_published: isPublished } : p))
+            toast.success(isPublished ? 'Publicado no site!' : 'Removido do site')
+        } else {
+            toast.error('Erro ao alterar publicação: ' + result.error)
         }
     }
 
@@ -467,6 +477,7 @@ export default function PropertiesClient({
                     onSend={handleSend}
                     onApprove={handleApprove}
                     onArchive={(id) => setConfirmArchiveId(id)}
+                    onTogglePublish={handleTogglePublish}
                     userRole={userRole}
                     userId={userId}
                 />
@@ -479,6 +490,7 @@ export default function PropertiesClient({
                     onSend={handleSend}
                     onApprove={handleApprove}
                     onArchive={(id) => setConfirmArchiveId(id)}
+                    onTogglePublish={handleTogglePublish}
                     userRole={userRole}
                     userId={userId}
                 />

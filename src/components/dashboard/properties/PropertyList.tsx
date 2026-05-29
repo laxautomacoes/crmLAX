@@ -10,11 +10,12 @@ interface PropertyListProps {
     onSend: (prop: any) => void
     onApprove?: (id: string) => void
     onArchive?: (id: string) => void
+    onTogglePublish?: (id: string, isPublished: boolean) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onApprove, onArchive, userRole, userId }: PropertyListProps) {
+export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onApprove, onArchive, onTogglePublish, userRole, userId }: PropertyListProps) {
     if (properties.length === 0) {
         return (
             <div className="text-center py-20 bg-card rounded-2xl">
@@ -49,6 +50,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onA
                                 onSend={onSend}
                                 onApprove={onApprove}
                                 onArchive={onArchive}
+                                onTogglePublish={onTogglePublish}
                                 userRole={userRole}
                                 userId={userId}
                             />

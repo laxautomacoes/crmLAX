@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, MoreVertical, Archive } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, MoreVertical, Archive, Globe } from 'lucide-react'
 import { translatePropertyType, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
@@ -12,11 +12,12 @@ interface PropertyListItemProps {
     onSend: (prop: any) => void
     onApprove?: (id: string) => void
     onArchive?: (id: string) => void
+    onTogglePublish?: (id: string, isPublished: boolean) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApprove, onArchive, userRole, userId }: PropertyListItemProps) {
+export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApprove, onArchive, onTogglePublish, userRole, userId }: PropertyListItemProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId && prop.created_by && (
         userId === prop.created_by || 
@@ -210,6 +211,23 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
                             {translateStatus(prop.status)}
                         </span>
+                    )}
+                    {isAdmin && onTogglePublish && (
+                        <button
+                            onClick={(e) => {
+                                e.stopPropagation()
+                                onTogglePublish(prop.id, !prop.is_published)
+                            }}
+                            className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all ${
+                                prop.is_published
+                                    ? 'bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25'
+                                    : 'bg-foreground/5 text-muted-foreground hover:bg-foreground/10'
+                            }`}
+                            title={prop.is_published ? 'Publicado no site – clique para remover' : 'Não publicado – clique para publicar no site'}
+                        >
+                            <Globe size={9} strokeWidth={2.5} />
+                            Site
+                        </button>
                     )}
                 </div>
             </td>

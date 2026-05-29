@@ -7,7 +7,6 @@ import { PropertiesList } from './PropertiesList';
 import { WhatsAppButton } from './WhatsAppButton';
 import { Instagram, Facebook, Linkedin, Youtube, MapPin } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
-import { PropertiesMapView } from '@/components/shared/PropertiesMapView';
 
 interface SiteClientProps {
     properties: any[];
@@ -74,6 +73,7 @@ export function SiteClient({ properties, tenantName, tenantSlug, whatsappNumber,
                 onFilterChange={setFilters}
                 viewMode={viewMode}
                 onViewModeChange={setViewMode}
+                mapUrl={`/site/${tenantSlug}/busca`}
             />
 
             {properties.length === 0 || filteredProperties.length === 0 ? (
@@ -87,58 +87,14 @@ export function SiteClient({ properties, tenantName, tenantSlug, whatsappNumber,
                 </div>
             ) : (
                 <>
-                    {/* Desktop: Split-view (lista + mapa) */}
-                    <div className="hidden md:flex gap-6" style={{ height: '75vh' }}>
-                        {/* Lista scrollável à esquerda */}
-                        <div className="w-1/2 overflow-y-auto pr-2 custom-scrollbar">
-                            <p className="text-xs text-muted-foreground mb-4 font-medium">
-                                {filteredProperties.length} imóveis encontrados
-                            </p>
-                            {viewMode === 'list' ? (
-                                <PropertiesList properties={filteredProperties} tenantSlug={tenantSlug} />
-                            ) : (
-                                <PropertiesGrid properties={filteredProperties} tenantSlug={tenantSlug} />
-                            )}
-                        </div>
-
-                        {/* Mapa fixo à direita */}
-                        <div className="w-1/2 sticky top-0">
-                            <PropertiesMapView
-                                properties={filteredProperties}
-                                tenantSlug={tenantSlug}
-                                compact
-                                className="h-full"
-                                onPropertyClick={(prop) => {
-                                    if (prop.slug && prop.type) {
-                                        window.open(`/site/${tenantSlug}/imovel/${prop.type}/${prop.slug}`, '_blank')
-                                    }
-                                }}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Mobile: Toggle galeria/lista/mapa */}
-                    <div className="md:hidden">
-                        <p className="text-xs text-muted-foreground mb-4 font-medium">
-                            {filteredProperties.length} imóveis encontrados
-                        </p>
-                        {viewMode === 'map' ? (
-                            <PropertiesMapView
-                                properties={filteredProperties}
-                                tenantSlug={tenantSlug}
-                                className="animate-in fade-in duration-300"
-                                onPropertyClick={(prop) => {
-                                    if (prop.slug && prop.type) {
-                                        window.open(`/site/${tenantSlug}/imovel/${prop.type}/${prop.slug}`, '_blank')
-                                    }
-                                }}
-                            />
-                        ) : viewMode === 'list' ? (
-                            <PropertiesList properties={filteredProperties} tenantSlug={tenantSlug} />
-                        ) : (
-                            <PropertiesGrid properties={filteredProperties} tenantSlug={tenantSlug} />
-                        )}
-                    </div>
+                    <p className="text-xs text-muted-foreground mb-4 font-medium">
+                        {filteredProperties.length} imóveis encontrados
+                    </p>
+                    {viewMode === 'list' ? (
+                        <PropertiesList properties={filteredProperties} tenantSlug={tenantSlug} />
+                    ) : (
+                        <PropertiesGrid properties={filteredProperties} tenantSlug={tenantSlug} />
+                    )}
                 </>
             )}
             {whatsappNumber && <WhatsAppButton phone={whatsappNumber} />}

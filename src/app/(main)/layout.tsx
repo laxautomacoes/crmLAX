@@ -16,7 +16,7 @@ export default function DashboardLayout({
     modal: React.ReactNode;
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
-    const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+    const [sidebarCollapsed, setSidebarCollapsed] = useState(true);
     const [user, setUser] = useState<User | null>(null);
 
     useEffect(() => {

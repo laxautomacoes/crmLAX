@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2, MoreVertical, Archive } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2, MoreVertical, Archive, Globe } from 'lucide-react'
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyCardProps {
@@ -12,11 +12,12 @@ interface PropertyCardProps {
     onSend: (prop: any) => void
     onApprove?: (id: string) => void
     onArchive?: (id: string) => void
+    onTogglePublish?: (id: string, isPublished: boolean) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove, onArchive, userRole, userId }: PropertyCardProps) {
+export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove, onArchive, onTogglePublish, userRole, userId }: PropertyCardProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId && prop.created_by && (
         userId === prop.created_by || 
@@ -233,11 +234,30 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                     <span className="text-lg font-bold text-foreground">
                         {prop.price ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}` : 'Sob consulta'}
                     </span>
-                    {(isAdmin || prop.status === 'Pending') && (
-                        <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
-                            {translateStatus(prop.status)}
-                        </span>
-                    )}
+                    <div className="flex items-center gap-1.5">
+                        {isAdmin && onTogglePublish && (
+                            <button
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    onTogglePublish(prop.id, !prop.is_published)
+                                }}
+                                className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${
+                                    prop.is_published
+                                        ? 'bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25'
+                                        : 'bg-foreground/5 text-muted-foreground hover:bg-foreground/10'
+                                }`}
+                                title={prop.is_published ? 'Publicado no site – clique para remover' : 'Não publicado – clique para publicar no site'}
+                            >
+                                <Globe size={10} strokeWidth={2.5} />
+                                Site
+                            </button>
+                        )}
+                        {(isAdmin || prop.status === 'Pending') && (
+                            <span className={`text-[10px] font-black px-2 py-1 rounded-full uppercase tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
+                                {translateStatus(prop.status)}
+                            </span>
+                        )}
+                    </div>
                 </div>
             </div>
         </div>

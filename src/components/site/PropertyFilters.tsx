@@ -3,6 +3,7 @@
 import { Search, Filter, LayoutGrid, List, Map } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormSelect } from '@/components/shared/forms/FormSelect';
+import Link from 'next/link';
 
 interface PropertyFiltersProps {
     filters: {
@@ -15,9 +16,10 @@ interface PropertyFiltersProps {
     onFilterChange: (filters: PropertyFiltersProps['filters']) => void;
     viewMode: 'gallery' | 'list' | 'map';
     onViewModeChange: (mode: 'gallery' | 'list' | 'map') => void;
+    mapUrl?: string;
 }
 
-export function PropertyFilters({ filters, onFilterChange, viewMode, onViewModeChange }: PropertyFiltersProps) {
+export function PropertyFilters({ filters, onFilterChange, viewMode, onViewModeChange, mapUrl }: PropertyFiltersProps) {
     const handleChange = (key: keyof typeof filters, value: string) => {
         onFilterChange({ ...filters, [key]: value });
     };
@@ -44,13 +46,23 @@ export function PropertyFilters({ filters, onFilterChange, viewMode, onViewModeC
                     >
                         <List size={18} />
                     </button>
-                    <button
-                        onClick={() => onViewModeChange('map')}
-                        className={`p-2 rounded-md transition-all md:hidden ${viewMode === 'map' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-                        title="Visualização em Mapa"
-                    >
-                        <Map size={18} />
-                    </button>
+                    {mapUrl ? (
+                        <Link
+                            href={mapUrl}
+                            className="p-2 rounded-md transition-all text-muted-foreground hover:bg-muted hover:text-foreground"
+                            title="Buscar no Mapa"
+                        >
+                            <Map size={18} />
+                        </Link>
+                    ) : (
+                        <button
+                            onClick={() => onViewModeChange('map')}
+                            className={`p-2 rounded-md transition-all md:hidden ${viewMode === 'map' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
+                            title="Visualização em Mapa"
+                        >
+                            <Map size={18} />
+                        </button>
+                    )}
                 </div>
             </div>
 
