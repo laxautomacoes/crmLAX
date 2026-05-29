@@ -87,7 +87,7 @@ export function ClientFilterModal({
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Filtrar Clientes">
+        <Modal isOpen={isOpen} onClose={onClose} title={<h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">Filtrar Clientes</h3>}>
             <div className="space-y-4 max-h-[70vh] overflow-y-auto px-1">
                 {/* Período */}
                 <div className="grid grid-cols-2 gap-3">

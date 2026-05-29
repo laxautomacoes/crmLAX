@@ -558,7 +558,11 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             <Modal
                 isOpen={isModalOpen}
                 onClose={() => setIsModalOpen(false)}
-                title={editingClientId ? "Editar Cliente" : "Novo Cliente"}
+                title={
+                    <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                        {editingClientId ? "Editar Cliente" : "Novo Cliente"}
+                    </h3>
+                }
                 size="xl"
                 extraHeaderContent={
                     <button
@@ -571,52 +575,53 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     </button>
                 }
             >
-                <form id="client-form" onSubmit={handleSubmit} className="space-y-6 max-h-[70vh] overflow-y-auto px-1 pb-4">
+                <form id="client-form" onSubmit={handleSubmit} className="space-y-8 px-1 pb-4">
                     {/* Dados Pessoais */}
-                    <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-4 shadow-sm">
-                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2">Dados Pessoais</h3>
+                    <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
                         
-                        {/* Tipo de Contato */}
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-foreground uppercase ml-1">Tipo de Contato</label>
-                            <div className="flex flex-wrap gap-3">
-                                {[
-                                    { value: 'comprador', label: 'Comprador', color: 'bg-green-50 dark:bg-green-500/10 text-green-700 dark:text-green-400 border-green-200 dark:border-green-500/30' },
-                                    { value: 'vendedor', label: 'Vendedor', color: 'bg-amber-50 dark:bg-amber-500/10 text-amber-700 dark:text-amber-400 border-amber-200 dark:border-amber-500/30' },
-                                    { value: 'construtora', label: 'Construtora', color: 'bg-blue-50 dark:bg-blue-500/10 text-blue-700 dark:text-blue-400 border-blue-200 dark:border-blue-500/30' }
-                                ].map(option => {
-                                    const isChecked = formData.contact_type.includes(option.value)
-                                    return (
-                                        <button
-                                            key={option.value}
-                                            type="button"
-                                            onClick={() => {
-                                                const updated = isChecked
-                                                    ? formData.contact_type.filter((t: string) => t !== option.value)
-                                                    : [...formData.contact_type, option.value]
-                                                setFormData({ ...formData, contact_type: updated })
-                                            }}
-                                            className={`px-3 py-1.5 rounded-lg text-xs font-bold border transition-all ${
-                                                isChecked
-                                                    ? option.color + ' ring-1 ring-current/20 shadow-sm'
-                                                    : 'bg-muted/30 text-muted-foreground border-border hover:bg-muted/50'
-                                            }`}
-                                        >
-                                            {isChecked ? '✓ ' : ''}{option.label}
-                                        </button>
-                                    )
-                                })}
-                            </div>
-                        </div>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <FormInput
-                                    label="Nome Completo"
-                                    required
-                                    value={formData.name}
-                                    onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                    placeholder="Ex: João Silva"
-                                />
+                            <div className="md:col-span-2 flex flex-col md:flex-row md:items-end gap-4">
+                                <div className="flex-1">
+                                    <FormInput
+                                        label="Nome Completo"
+                                        required
+                                        value={formData.name}
+                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                        placeholder="Ex: João Silva"
+                                    />
+                                </div>
+                                {/* Tipo de Contato */}
+                                <div className="flex items-center gap-3 pb-[10px] shrink-0">
+                                    {[
+                                        { value: 'comprador', label: 'Comprador' },
+                                        { value: 'vendedor', label: 'Vendedor' },
+                                        { value: 'construtora', label: 'Construtora' }
+                                    ].map(option => {
+                                        const isChecked = formData.contact_type.includes(option.value)
+                                        return (
+                                            <label
+                                                key={option.value}
+                                                className="flex items-center gap-1.5 cursor-pointer select-none group"
+                                            >
+                                                <input
+                                                    type="checkbox"
+                                                    checked={isChecked}
+                                                    onChange={() => {
+                                                        const updated = isChecked
+                                                            ? formData.contact_type.filter((t: string) => t !== option.value)
+                                                            : [...formData.contact_type, option.value]
+                                                        setFormData({ ...formData, contact_type: updated })
+                                                    }}
+                                                    className="w-4 h-4 rounded border-muted-foreground/40 bg-foreground/5 text-secondary focus:ring-secondary/30 focus:ring-offset-0 cursor-pointer accent-[#FFE600]"
+                                                />
+                                                <span className={`text-xs font-bold transition-colors ${isChecked ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'}`}>
+                                                    {option.label}
+                                                </span>
+                                            </label>
+                                        )
+                                    })}
+                                </div>
                             </div>
                             <FormInput
                                 label="E-mail"
@@ -687,8 +692,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                         </div>
 
                         {/* Cônjuge | Sócio */}
-                        <div className="mt-4 pt-4 border-t border-border/50 space-y-4">
-                            <h4 className="text-xs font-bold text-muted-foreground uppercase tracking-widest">Cônjuge | Sócio</h4>
+                        <div className="mt-8 pt-8 border-t border-border/50 space-y-4">
+                            <h4 className="text-sm font-bold text-foreground uppercase tracking-widest">Cônjuge | Sócio</h4>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
                                     <FormInput
@@ -728,8 +733,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     </div>
 
                     {/* Endereço */}
-                    <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-4 shadow-sm">
-                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2">Endereço</h3>
+                    <div className="space-y-4 pt-8 border-t border-border/50">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Endereço</h3>
                         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                             <FormInput
                                 label={
@@ -821,8 +826,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     </div>
 
                     {/* Notas */}
-                    <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-4 shadow-sm">
-                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2">Notas</h3>
+                    <div className="space-y-4 pt-8 border-t border-border/50">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
                         <FormTextarea
                             label="Notas/Observações"
                             value={formData.notes}
@@ -833,8 +838,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     </div>
 
                     {/* Mídias e Docs */}
-                    <div className="bg-muted/30 p-5 rounded-xl border border-border space-y-4 shadow-sm">
-                        <h3 className="text-xs font-bold text-muted-foreground uppercase tracking-widest border-b border-border/50 pb-2">Mídias e Docs</h3>
+                    <div className="space-y-4 pt-8 border-t border-border/50">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Mídias e Docs</h3>
                         <MediaUpload
                             pathPrefix={`clients/${tenantId}`}
                             images={formData.images}

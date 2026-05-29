@@ -73,13 +73,21 @@ interface PropertyScrapingModalProps {
     onClose: () => void
     tenantId: string | null
     onScrapingSuccess: (data: ScrapedProperty) => void
+    initialInputMode?: 'url' | 'text'
 }
 
-export function PropertyScrapingModal({ isOpen, onClose, tenantId, onScrapingSuccess }: PropertyScrapingModalProps) {
+export function PropertyScrapingModal({ isOpen, onClose, tenantId, onScrapingSuccess, initialInputMode }: PropertyScrapingModalProps) {
     const [step, setStep] = useState<Step>('input')
-    const [inputMode, setInputMode] = useState<InputMode>('url')
+    const [inputMode, setInputMode] = useState<InputMode>(initialInputMode || 'url')
     const [urlValue, setUrlValue] = useState('')
     const [textValue, setTextValue] = useState('')
+
+    // Sincroniza inputMode com initialInputMode quando o modal abre
+    useEffect(() => {
+        if (isOpen && initialInputMode) {
+            setInputMode(initialInputMode)
+        }
+    }, [isOpen, initialInputMode])
     const [isProcessing, setIsProcessing] = useState(false)
     const [processingStep, setProcessingStep] = useState('')
     const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openai'>('gemini')

@@ -174,3 +174,23 @@ export async function updateStageColor(stageId: string, color: string) {
     revalidatePath('/leads');
     return { success: true };
 }
+
+export async function reorderStages(orderedIds: string[]) {
+    const supabase = await createClient();
+
+    // Atualizar order_index de cada estágio conforme a nova ordem
+    const updates = orderedIds.map((id, index) =>
+        supabase
+            .from('lead_stages')
+            .update({ order_index: index })
+            .eq('id', id)
+    );
+
+    const results = await Promise.all(updates);
+    const failed = results.find(r => r.error);
+
+    if (failed?.error) return { success: false, error: failed.error.message };
+
+    revalidatePath('/leads');
+    return { success: true };
+}

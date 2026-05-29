@@ -173,7 +173,7 @@ export default function AgendaPage() {
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium whitespace-nowrap flex-1 md:flex-none outline-none focus:ring-2 focus:ring-ring/50 data-[state=open]:bg-muted/50">
+                            <button className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium whitespace-nowrap flex-1 md:flex-none outline-none focus:ring-2 focus:ring-ring/50 data-[state=open]:bg-muted/50">
                                 <Filter size={18} />
                                 Filtrar
                                 {filterType !== 'all' && (

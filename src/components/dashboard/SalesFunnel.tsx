@@ -20,19 +20,19 @@ export default function SalesFunnel({ funnelSteps }: SalesFunnelProps) {
             <h3 className="text-lg font-bold text-foreground mb-6 group-hover:text-primary transition-colors">
                 Funil de Vendas
             </h3>
-            <div className="flex flex-wrap gap-4">
+            <div className="flex flex-col md:flex-row md:flex-wrap gap-3 md:gap-4">
                 {funnelSteps.length > 0 ? (
                     funnelSteps.map((step, index) => {
                         const hasColor = step.color && step.color !== '#FFFFFF';
                         return (
                             <div
                                 key={step.stageId || index}
-                                className="flex-1 min-w-[120px] flex flex-col items-center p-4 border border-muted-foreground/30 rounded-lg bg-muted/30 md:bg-background"
+                                className="flex-1 min-w-[120px] flex flex-row items-center justify-between md:flex-col md:justify-center p-4 border border-muted-foreground/30 rounded-lg bg-muted/30 md:bg-background"
                                 style={{
                                     borderTop: hasColor ? `4px solid ${step.color}` : undefined,
                                 }}
                             >
-                                <span className="text-xs text-muted-foreground font-medium capitalize mb-1">{step.label}</span>
+                                <span className="text-xs text-muted-foreground font-medium capitalize md:mb-1">{step.label}</span>
                                 <span className="text-xl font-bold text-foreground">{step.count}</span>
                             </div>
                         );

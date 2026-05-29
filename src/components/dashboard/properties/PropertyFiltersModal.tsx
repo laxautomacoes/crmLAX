@@ -4,7 +4,7 @@ import { useState, useRef } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { Download, Upload, Filter, Trash2, ArrowUpDown, Archive } from 'lucide-react'
+import { Download, Upload, Filter, ArrowUpDown, Archive } from 'lucide-react'
 import { propertyTypes } from '@/utils/property-translations'
 import { toast } from 'sonner'
 import { bulkCreateProperties } from '@/app/_actions/properties'
@@ -154,7 +154,7 @@ export function PropertyFiltersModal({
         <Modal 
             isOpen={isOpen} 
             onClose={onClose} 
-            title="Filtros e Ações" 
+            title={<h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">Filtros e Ações</h3>}
             size="lg"
             extraHeaderContent={
                 <div className="flex items-center gap-2">
@@ -162,8 +162,7 @@ export function PropertyFiltersModal({
                         onClick={handleClearFilters}
                         className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-foreground border border-border hover:bg-foreground/5 rounded-md transition-colors"
                     >
-                        <Trash2 size={14} />
-                        Limpar Filtros
+                        Limpar
                     </button>
                     <button
                         onClick={onClose}

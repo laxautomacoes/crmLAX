@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
-import { Plus, Search, LayoutGrid, List, Map, Filter, WifiOff, FileText, Globe, Archive, Trash2 } from 'lucide-react'
+import { Plus, Search, LayoutGrid, List, Map, Filter, WifiOff, Archive, Trash2 } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty, archiveProperty, togglePublishProperty } from '@/app/_actions/properties'
 import { toast } from 'sonner'
@@ -14,10 +14,12 @@ import { SendToLeadModal } from '@/components/dashboard/properties/SendToLeadMod
 import { PropertyFiltersModal } from '@/components/dashboard/properties/PropertyFiltersModal'
 import { PropertyImportPDFModal } from '@/components/dashboard/properties/PropertyImportPDFModal'
 import { PropertyScrapingModal } from '@/components/dashboard/properties/PropertyScrapingModal'
+import type { CreationMethod } from '@/components/dashboard/properties/PropertyModal'
 import { useOfflineSync } from '@/hooks/use-offline-sync'
 import { getOfflineProperties } from '@/services/db'
 import { PropertiesMapView } from '@/components/shared/PropertiesMapView'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { translatePropertyType } from '@/utils/property-translations'
 
 interface PropertiesClientProps {
     initialProperties: any[]
@@ -47,8 +49,9 @@ export default function PropertiesClient({
     const [isFiltersOpen, setIsFiltersOpen] = useState(false)
     const [isImportPDFOpen, setIsImportPDFOpen] = useState(false)
     const [isScrapingOpen, setIsScrapingOpen] = useState(false)
+    const [scrapingInitialMode, setScrapingInitialMode] = useState<'url' | 'text'>('url')
     const [isRefreshing, setIsRefreshing] = useState(false)
-    const [viewMode, setViewMode] = useState<'gallery' | 'list' | 'map'>('gallery')
+    const [viewMode, setViewMode] = useState<'gallery' | 'list' | 'map'>('list')
     const [properties, setProperties] = useState<any[]>(initialProperties)
     const [editingProperty, setEditingProperty] = useState<any | null>(null)
     const [viewingProperty, setViewingProperty] = useState<any | null>(null)
@@ -56,6 +59,7 @@ export default function PropertiesClient({
     const [searchTerm, setSearchTerm] = useState('')
     const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null)
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+    const [columnSort, setColumnSort] = useState<{ column: 'title' | 'type' | 'price' | null, direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' })
 
     const [filters, setFilters] = useState({
         status: 'all',
@@ -321,6 +325,16 @@ export default function PropertiesClient({
         }
     }
 
+    const handleColumnSort = (column: 'title' | 'type' | 'price') => {
+        setColumnSort(prev => {
+            if (prev.column === column) {
+                if (prev.direction === 'desc') return { column: null, direction: 'asc' }
+                return { column, direction: 'desc' }
+            }
+            return { column, direction: 'asc' }
+        })
+    }
+
     const filteredProperties = properties.filter(prop => {
         const matchesSearch = prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
             (prop.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -357,6 +371,16 @@ export default function PropertiesClient({
             matchesBedrooms && matchesBathrooms && matchesParking &&
             matchesCity && matchesNeighborhood && matchesOwnerType
     }).sort((a, b) => {
+        // Ordenação por coluna tem prioridade
+        if (columnSort.column) {
+            const dir = columnSort.direction === 'asc' ? 1 : -1
+            switch (columnSort.column) {
+                case 'title': return dir * (a.title || '').localeCompare(b.title || '')
+                case 'type': return dir * (translatePropertyType(a.type) || '').localeCompare(translatePropertyType(b.type) || '')
+                case 'price': return dir * ((a.price || 0) - (b.price || 0))
+            }
+        }
+        // Fallback para ordenação do filtro
         switch (filters.sortBy) {
             case 'price_high': return (b.price || 0) - (a.price || 0)
             case 'price_low': return (a.price || 0) - (b.price || 0)
@@ -384,45 +408,47 @@ export default function PropertiesClient({
             >
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     {/* Linha 1 mobile: Busca + Toggle */}
-                    <div className="w-[calc(100%-84px)] md:w-64 order-1 md:order-first">
-                        <FormInput
-                            placeholder="Buscar imóveis..."
-                            value={searchTerm}
-                            onChange={(e) => setSearchTerm(e.target.value)}
-                            icon={Search}
-                        />
+                    <div className="flex items-center gap-2 w-full md:w-auto order-1 md:order-first">
+                        <div className="flex-1 md:w-64 md:flex-none">
+                            <FormInput
+                                placeholder="Buscar imóveis..."
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                icon={Search}
+                            />
+                        </div>
+
+                        <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm shrink-0">
+                            <button
+                                onClick={() => setViewMode('list')}
+                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                                title="Visualização em Lista"
+                            >
+                                <List size={16} />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('gallery')}
+                                className={`p-1.5 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                                title="Visualização em Galeria"
+                            >
+                                <LayoutGrid size={16} />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('map')}
+                                className={`p-1.5 rounded-md transition-all ${viewMode === 'map' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                                title="Visualização em Mapa"
+                            >
+                                <Map size={16} />
+                            </button>
+                        </div>
                     </div>
 
-                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm order-1">
-                        <button
-                            onClick={() => setViewMode('gallery')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
-                            title="Visualização em Galeria"
-                        >
-                            <LayoutGrid size={16} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('list')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
-                            title="Visualização em Lista"
-                        >
-                            <List size={16} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('map')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'map' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted'}`}
-                            title="Visualização em Mapa"
-                        >
-                            <Map size={16} />
-                        </button>
-                    </div>
-
-                    {/* Linha 2 mobile: Filtrar + Importar URL */}
+                    {/* Linha 2 mobile: Filtrar + Novo Imóvel */}
                     <button
                         onClick={() => setIsFiltersOpen(true)}
-                        className={`flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-2 ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest')
-                            ? 'bg-primary text-primary-foreground border-primary'
-                            : 'bg-card border-border text-foreground hover:bg-muted'
+                        className={`flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-medium active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-2 outline-none focus:ring-2 focus:ring-ring/50 ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest' && v !== false)
+                            ? 'bg-secondary text-secondary-foreground border-secondary'
+                            : 'bg-card border-muted-foreground/30 text-foreground hover:bg-muted/50'
                             }`}
                     >
                         <Filter size={18} />
@@ -430,27 +456,8 @@ export default function PropertiesClient({
                     </button>
 
                     <button
-                        onClick={() => setIsScrapingOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-2 bg-card border-border text-foreground hover:bg-muted"
-                        title="Importar imóvel de qualquer site via IA"
-                    >
-                        <Globe size={18} />
-                        Importar URL
-                    </button>
-
-                    {/* Linha 3 mobile: Importar PDF + Novo Imóvel */}
-                    <button
-                        onClick={() => setIsImportPDFOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-bold shadow-sm active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-3 bg-card border-border text-foreground hover:bg-muted"
-                        title="Importar Tabela de Preços via IA"
-                    >
-                        <FileText size={18} />
-                        Importar PDF
-                    </button>
-
-                    <button
                         onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-3"
+                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2"
                     >
                         <Plus size={18} />
                         Novo Imóvel
@@ -493,6 +500,9 @@ export default function PropertiesClient({
                     onTogglePublish={handleTogglePublish}
                     userRole={userRole}
                     userId={userId}
+                    sortColumn={columnSort.column}
+                    sortDirection={columnSort.direction}
+                    onSort={handleColumnSort}
                 />
             )}
 
@@ -505,6 +515,16 @@ export default function PropertiesClient({
                 editingProperty={editingProperty}
                 onSave={handleSave}
                 userRole={userRole}
+                onSelectCreationMethod={(method) => {
+                    if (method === 'url' || method === 'text') {
+                        setIsModalOpen(false)
+                        setScrapingInitialMode(method === 'text' ? 'text' : 'url')
+                        setIsScrapingOpen(true)
+                    } else if (method === 'pdf') {
+                        setIsModalOpen(false)
+                        setIsImportPDFOpen(true)
+                    }
+                }}
             />
 
             <PropertyDetailsModal
@@ -559,6 +579,7 @@ export default function PropertiesClient({
                 isOpen={isScrapingOpen}
                 onClose={() => setIsScrapingOpen(false)}
                 tenantId={tenantId}
+                initialInputMode={scrapingInitialMode}
                 onScrapingSuccess={(data) => {
                     setIsScrapingOpen(false)
                     setEditingProperty({

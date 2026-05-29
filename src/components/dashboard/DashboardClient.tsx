@@ -149,12 +149,6 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
-            {/* Mobile-only Welcome Message */}
-            <div className="md:hidden text-center -mt-2 mb-2">
-                <p className="text-sm text-muted-foreground">
-                    Bem-vindo, <span className="font-semibold text-foreground">{profileName}</span>
-                </p>
-            </div>
 
             {/* Header / Actions Section */}
             <PageHeader title="Dashboard">

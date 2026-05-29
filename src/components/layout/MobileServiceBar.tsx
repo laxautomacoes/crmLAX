@@ -78,13 +78,20 @@ export function MobileServiceBar() {
     }, []);
 
     return (
-        <div className="md:hidden flex items-center justify-center flex-wrap gap-3 px-4 py-3 -mx-4 -mt-4 mb-4 w-[calc(100%+2rem)] bg-card border-b border-border">
-            <ServiceQueueToggle 
-                initialStatus={profile?.is_active_for_service} 
-                tenantId={profile?.tenant_id} 
-                companyName={companyName}
-            />
-            <SyncButtonMobile />
+        <div className="md:hidden flex flex-col items-center gap-4 px-4 py-5 -mx-4 -mt-4 mb-6 w-[calc(100%+2rem)] bg-card border-b border-border">
+            {profile?.full_name && (
+                <p className="text-sm text-muted-foreground">
+                    Bem-vindo, <span className="font-semibold text-foreground">{profile.full_name}{companyName ? ` - ${profile.role?.toUpperCase() || ''}` : ''}</span>
+                </p>
+            )}
+            <div className="flex items-center justify-center flex-wrap gap-3">
+                <ServiceQueueToggle 
+                    initialStatus={profile?.is_active_for_service} 
+                    tenantId={profile?.tenant_id} 
+                    companyName={companyName}
+                />
+                <SyncButtonMobile />
+            </div>
         </div>
     );
 }

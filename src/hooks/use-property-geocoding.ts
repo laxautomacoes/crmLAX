@@ -1,9 +1,6 @@
 'use client'
 
 import { useCallback, useState } from 'react'
-import { useJsApiLoader, Libraries } from '@react-google-maps/api'
-
-const libraries: Libraries = ['places', 'geometry']
 
 export interface GeocodingResult {
     rua?: string
@@ -16,70 +13,65 @@ export interface GeocodingResult {
 }
 
 export function usePropertyGeocoding() {
-    const { isLoaded, loadError } = useJsApiLoader({
-        id: 'google-map-script',
-        googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
-        libraries
-    })
-
     const [isGeocoding, setIsGeocoding] = useState(false)
 
-    const geocodeAddress = useCallback(async (address: string): Promise<google.maps.LatLngLiteral | null> => {
-        if (!isLoaded || !address) return null
+    const geocodeAddress = useCallback(async (address: string): Promise<{ lat: number; lng: number } | null> => {
+        if (!address) return null
 
-        return new Promise((resolve) => {
-            const geocoder = new google.maps.Geocoder()
-            geocoder.geocode({ address }, (results, status) => {
-                if (status === 'OK' && results?.[0]?.geometry?.location) {
-                    const location = results[0].geometry.location
-                    resolve({ lat: location.lat(), lng: location.lng() })
-                } else {
-                    console.error('Geocoding failed:', status)
-                    resolve(null)
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}&countrycodes=br&limit=1`,
+                { headers: { 'Accept-Language': 'pt-BR' } }
+            )
+            const data = await response.json()
+
+            if (data && data.length > 0) {
+                return {
+                    lat: parseFloat(data[0].lat),
+                    lng: parseFloat(data[0].lon)
                 }
-            })
-        })
-    }, [isLoaded])
+            }
+            return null
+        } catch (error) {
+            console.error('Geocoding failed:', error)
+            return null
+        }
+    }, [])
 
     const reverseGeocode = useCallback(async (lat: number, lng: number): Promise<GeocodingResult | null> => {
-        if (!isLoaded) return null
-
         setIsGeocoding(true)
-        return new Promise((resolve) => {
-            const geocoder = new google.maps.Geocoder()
-            geocoder.geocode({ location: { lat, lng } }, (results, status) => {
-                setIsGeocoding(false)
-                if (status === 'OK' && results?.[0]) {
-                    const result = results[0]
-                    const data: GeocodingResult = {
-                        latitude: lat,
-                        longitude: lng
-                    }
+        try {
+            const response = await fetch(
+                `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lng}&addressdetails=1`,
+                { headers: { 'Accept-Language': 'pt-BR' } }
+            )
+            const data = await response.json()
 
-                    // Mapear componentes do endereço
-                    result.address_components.forEach((component) => {
-                        const types = component.types
-                        if (types.includes('route')) data.rua = component.long_name
-                        if (types.includes('sublocality_level_1') || types.includes('sublocality')) {
-                            data.bairro = component.long_name
-                        }
-                        if (types.includes('administrative_area_level_2')) data.cidade = component.long_name
-                        if (types.includes('administrative_area_level_1')) data.estado = component.short_name
-                        if (types.includes('postal_code')) data.cep = component.long_name
-                    })
-
-                    resolve(data)
-                } else {
-                    console.error('Reverse geocoding failed:', status)
-                    resolve(null)
+            if (data && data.address) {
+                const addr = data.address
+                const result: GeocodingResult = {
+                    latitude: lat,
+                    longitude: lng,
+                    rua: addr.road || addr.pedestrian || addr.highway || undefined,
+                    bairro: addr.suburb || addr.neighbourhood || addr.city_district || undefined,
+                    cidade: addr.city || addr.town || addr.municipality || undefined,
+                    estado: addr.state_code?.toUpperCase() || addr.state || undefined,
+                    cep: addr.postcode || undefined
                 }
-            })
-        })
-    }, [isLoaded])
+                return result
+            }
+            return null
+        } catch (error) {
+            console.error('Reverse geocoding failed:', error)
+            return null
+        } finally {
+            setIsGeocoding(false)
+        }
+    }, [])
 
     return {
-        isLoaded,
-        loadError,
+        isLoaded: true, // Nominatim não precisa carregar SDK
+        loadError: null,
         isGeocoding,
         geocodeAddress,
         reverseGeocode

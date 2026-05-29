@@ -11,7 +11,7 @@ import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
-import { MessageSquare, X, Sparkles, User, FileText, DollarSign } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User, FileText, DollarSign, PenLine, ChevronRight } from 'lucide-react'
 import LeadAICard from '@/components/ai/LeadAICard'
 import type { Lead } from './PipelineBoard'
 import { LeadProposalTab } from './LeadProposalTab'
@@ -49,6 +49,8 @@ type EditableLead = Partial<Lead> & {
 
 const LEAD_MODAL_INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira'] as const
 
+export type LeadCreationMethod = 'manual' | 'import_print' | null
+
 interface LeadModalProps {
     isOpen: boolean
     onClose: () => void
@@ -57,6 +59,7 @@ interface LeadModalProps {
     onSuccess: () => void
     editingLead?: EditableLead // Para edição
     hasAIAccess: boolean
+    onSelectImportPrint?: () => void
 }
 
 export function LeadModal({
@@ -66,8 +69,10 @@ export function LeadModal({
     stages,
     onSuccess,
     editingLead,
-    hasAIAccess
+    hasAIAccess,
+    onSelectImportPrint
 }: LeadModalProps) {
+    const [creationMethod, setCreationMethod] = useState<LeadCreationMethod>(null)
     const [isLoading, setIsLoading] = useState(false)
     const [brokers, setBrokers] = useState<Broker[]>([])
     const [userRole, setUserRole] = useState<string>('user')
@@ -97,6 +102,13 @@ export function LeadModal({
         documents: [] as { name: string; url: string }[]
     })
     const [activeTab, setActiveTab] = useState<'info' | 'ai' | 'proposta' | 'documents' | 'financeiro'>('info')
+
+    // Quando o modal abre para novo lead, reseta o método de criação
+    useEffect(() => {
+        if (isOpen && !editingLead) {
+            setCreationMethod(null)
+        }
+    }, [isOpen, editingLead])
 
     const firstStageId = stages[0]?.id ?? ''
 
@@ -262,13 +274,30 @@ export function LeadModal({
         }
     }
 
+    const showMethodSelection = !editingLead && creationMethod === null
+
+    const handleSelectMethod = (method: LeadCreationMethod) => {
+        if (method === 'import_print') {
+            onSelectImportPrint?.()
+        } else {
+            setCreationMethod('manual')
+        }
+    }
+
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
-            title={editingLead ? "Editar Lead" : "Novo Lead"}
-            size="xl"
+            onClose={() => { setCreationMethod(null); onClose() }}
+            title={
+                <div className="flex items-center gap-4">
+                    <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                        {editingLead ? "Editar Lead" : "Novo Lead"}
+                    </h3>
+                </div>
+            }
+            size={showMethodSelection ? 'md' : 'xl'}
             extraHeaderContent={
+                showMethodSelection ? undefined : (
                 <button
                     onClick={handleSubmit}
                     disabled={isLoading}
@@ -276,8 +305,54 @@ export function LeadModal({
                 >
                     {isLoading ? "Processando..." : (editingLead ? "Salvar Alterações" : "Criar Lead")}
                 </button>
+                )
             }
         >
+            {showMethodSelection ? (
+                <div className="py-1">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 ml-1">
+                        Como deseja cadastrar?
+                    </p>
+                    <div className="flex flex-col gap-2">
+                        {/* Preenchimento Manual */}
+                        <button
+                            onClick={() => handleSelectMethod('manual')}
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-emerald-500/30 rounded-xl px-4 py-4 transition-all text-left"
+                        >
+                            <div className="p-2.5 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500/20 transition-colors shrink-0">
+                                <PenLine size={20} className="text-emerald-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-foreground">Preenchimento Manual</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                                    Preencha todos os campos do lead manualmente
+                                </p>
+                            </div>
+                            <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
+                        </button>
+
+                        {/* Importar Print (IA) */}
+                        <button
+                            onClick={() => handleSelectMethod('import_print')}
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-purple-500/30 rounded-xl px-4 py-4 transition-all text-left"
+                        >
+                            <div className="p-2.5 bg-purple-500/10 rounded-xl group-hover:bg-purple-500/20 transition-colors shrink-0">
+                                <Sparkles size={20} className="text-purple-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-bold text-foreground">Importar Print</p>
+                                    <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 text-[9px] font-black uppercase tracking-wider rounded-md">IA</span>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                                    Tire um print de outro CRM e a IA extrai os dados
+                                </p>
+                            </div>
+                            <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
+                        </button>
+                    </div>
+                </div>
+            ) : (
             <div className="space-y-6">
                 {/* Tabs for IA if editing */}
                 {editingLead?.id && (
@@ -577,6 +652,7 @@ export function LeadModal({
 
 
             </div>
+            )}
         </Modal>
     )
 }

@@ -70,8 +70,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
         <div className="space-y-6">
             {/* Imagens */}
             <div>
-                <h4 className="text-sm font-bold text-foreground flex items-center gap-2 mb-3">
-                    <ImageIcon size={14} />
+                <h4 className="text-sm font-bold text-foreground mb-3">
                     Imagens
                 </h4>
                 <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 gap-3">
@@ -110,8 +109,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
 
             {/* Vídeos */}
             <div>
-                <h4 className="text-sm font-bold text-foreground flex items-center gap-2 mb-3">
-                    <Film size={14} />
+                <h4 className="text-sm font-bold text-foreground mb-3">
                     Vídeos
                 </h4>
                 <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-3">
@@ -159,8 +157,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
 
             {/* Documentos */}
             <div>
-                <h4 className="text-sm font-bold text-foreground flex items-center gap-2 mb-3">
-                    <FileText size={14} />
+                <h4 className="text-sm font-bold text-foreground mb-3">
                     Documentos
                 </h4>
                 <div className="space-y-2">

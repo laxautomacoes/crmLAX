@@ -156,14 +156,14 @@ export default function NotesPage() {
                     <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm h-10 md:h-[40px]">
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Grade"
                         >
                             <LayoutGrid size={18} />
                         </button>
                         <button
                             onClick={() => setViewMode('table')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-secondary text-secondary-foreground' : 'text-muted-foreground hover:bg-muted'}`}
+                            className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Tabela"
                         >
                             <TableIcon size={18} />

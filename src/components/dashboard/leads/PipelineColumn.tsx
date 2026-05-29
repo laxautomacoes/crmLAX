@@ -1,6 +1,6 @@
 'use client'
 
-import { MoreHorizontal, Plus, Copy, Trash2, Edit2, Palette, Check } from 'lucide-react'
+import { MoreVertical, Plus, Copy, Trash2, Edit2, Palette, Check } from 'lucide-react'
 import { useDroppable } from '@dnd-kit/core'
 import {
     SortableContext,
@@ -139,7 +139,7 @@ export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDe
                         }}
                         className="text-muted-foreground hover:text-foreground transition-colors p-1 hover:bg-card rounded"
                     >
-                        <MoreHorizontal size={16} />
+                        <MoreVertical size={16} />
                     </button>
 
                     <AnimatePresence>

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Plus, Sparkles } from 'lucide-react'
+import { Plus } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { LeadsHeader } from '@/components/dashboard/leads/LeadsHeader'
 import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
@@ -243,20 +243,6 @@ export default function LeadsPage() {
             <PageHeader title="Leads">
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
-                        onClick={() => setIsLeadImportImageModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none order-1 md:order-2"
-                    >
-                        <Sparkles size={18} className="text-accent-icon" />
-                        Importar
-                    </button>
-                    <button
-                        onClick={() => setIsStageModalOpen(true)}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 border border-border bg-card hover:bg-muted/10 text-foreground rounded-lg transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none order-1 md:order-2"
-                    >
-                        <Plus size={18} />
-                        Novo Estágio
-                    </button>
-                    <button
                         onClick={() => handleOpenLeadModal()}
                         className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2 md:order-3"
                     >
@@ -281,6 +267,7 @@ export default function LeadsPage() {
                 onDuplicateStage={handleDuplicateStage}
                 onRenameStage={handleRenameStage}
                 onUpdateStageColor={handleUpdateStageColor}
+                onAddStage={() => setIsStageModalOpen(true)}
                 onEditLead={handleEditLead}
                 onDeleteLead={handleDeleteLead}
                 onArchiveLead={handleArchiveLead}
@@ -290,7 +277,11 @@ export default function LeadsPage() {
             <Modal
                 isOpen={isStageModalOpen}
                 onClose={() => setIsStageModalOpen(false)}
-                title="Novo Estágio"
+                title={
+                    <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                        Novo Estágio
+                    </h3>
+                }
             >
                 <div className="space-y-4">
                     <FormInput
@@ -322,6 +313,10 @@ export default function LeadsPage() {
                     onSuccess={fetchData}
                     editingLead={editingLead ?? undefined}
                     hasAIAccess={hasAIAccess}
+                    onSelectImportPrint={() => {
+                        setIsLeadModalOpen(false)
+                        setIsLeadImportImageModalOpen(true)
+                    }}
                 />
             )}
 

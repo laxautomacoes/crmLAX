@@ -180,13 +180,16 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
             return newItem;
         });
 
+    // No mobile, sempre mostrar os títulos (isCollapsed só vale para desktop)
+    const effectiveCollapsed = isOpen ? false : isCollapsed;
+
     return (
         <>
             {isOpen && <div className="fixed inset-0 bg-black/50 z-40 md:hidden" onClick={onClose} />}
             <div className={`fixed inset-y-0 left-0 z-50 bg-[var(--sidebar)] text-[var(--sidebar-foreground)] flex flex-col transition-all duration-300 md:translate-x-0 md:static ${isOpen ? 'translate-x-0' : '-translate-x-full'} ${isCollapsed ? 'md:w-20' : 'md:w-64'} w-64`}>
                 <div className="h-16 px-6 flex items-center relative justify-center border-b border-border/10 flex-none">
                     <div className="flex items-center justify-center">
-                        {isCollapsed ? (
+                        {effectiveCollapsed ? (
                             branding?.logo_icon ? (
                                 <img src={branding.logo_icon} alt="Icon" className="h-8 w-auto" />
                             ) : (
@@ -208,7 +211,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                     {filteredMenuItems.map(item => (
                         <NavItem
                             key={item.name} item={item} pathname={pathname} searchParams={searchParams}
-                            isCollapsed={isCollapsed} isExpanded={expandedItems.includes(item.name)}
+                            isCollapsed={effectiveCollapsed} isExpanded={expandedItems.includes(item.name)}
                             onToggleExpand={(name) => setExpandedItems(prev => prev.includes(name) ? prev.filter(i => i !== name) : [...prev, name])}
                             onClose={onClose}
                         />
@@ -216,7 +219,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                 </nav>
 
                 <Footer
-                    isCollapsed={isCollapsed}
+                    isCollapsed={effectiveCollapsed}
                     onLogout={handleLogout}
                     onClose={onClose}
                     profile={userProfile}

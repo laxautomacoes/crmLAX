@@ -231,8 +231,8 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                     )}
                 </div>
             </td>
-            <td className="px-6 py-4 text-right">
-                <div className="flex items-center justify-end" ref={dropdownRef}>
+            <td className="px-6 py-4 text-center">
+                <div className="flex items-center justify-center" ref={dropdownRef}>
                     {isAdmin && prop.status === 'Pending' && onApprove && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onApprove(prop.id) }}

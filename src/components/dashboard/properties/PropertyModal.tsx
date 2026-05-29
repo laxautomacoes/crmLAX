@@ -17,7 +17,7 @@ import { MediaFields } from './PropertyModal/MediaFields'
 import { AddressFields } from './PropertyModal/AddressFields'
 import { OwnerFields } from './PropertyModal/OwnerFields'
 import { Switch } from '@/components/ui/Switch'
-import { Eraser } from 'lucide-react'
+import { Eraser, Globe, FileText, ClipboardPaste, PenLine, ChevronRight } from 'lucide-react'
 
 const DRAFT_KEY = 'crm_new_property_draft'
 
@@ -248,15 +248,19 @@ interface EditingProperty {
     details?: EditingPropertyDetails
 }
 
+export type CreationMethod = 'url' | 'pdf' | 'text' | 'manual' | null
+
 interface PropertyModalProps {
     isOpen: boolean
     onClose: () => void
     editingProperty: EditingProperty | null
     onSave: (propertyData: Record<string, unknown>) => Promise<void>
     userRole?: string
+    onSelectCreationMethod?: (method: CreationMethod) => void
+    initialCreationMethod?: CreationMethod
 }
 
-export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRole }: PropertyModalProps) {
+export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRole, onSelectCreationMethod, initialCreationMethod }: PropertyModalProps) {
     const isAdmin = userRole?.toLowerCase() === 'admin' || userRole?.toLowerCase() === 'superadmin'
     const [brokers, setBrokers] = useState<Broker[]>([])
     const [tenantId, setTenantId] = useState<string>('')
@@ -264,6 +268,23 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const [hasDraft, setHasDraft] = useState(false)
     const [formData, setFormData] = useState(getEmptyFormData())
     const draftTimerRef = useRef<NodeJS.Timeout | null>(null)
+    const [creationMethod, setCreationMethod] = useState<CreationMethod>(initialCreationMethod ?? null)
+
+    // Quando o modal abre para novo imóvel, reseta o método de criação
+    useEffect(() => {
+        if (isOpen && !editingProperty) {
+            setCreationMethod(initialCreationMethod ?? null)
+        }
+    }, [isOpen, editingProperty, initialCreationMethod])
+
+    const handleSelectMethod = (method: CreationMethod) => {
+        if (method === 'url' || method === 'pdf' || method === 'text') {
+            // Delega para o PropertiesClient abrir o modal correto
+            onSelectCreationMethod?.(method)
+        } else {
+            setCreationMethod('manual')
+        }
+    }
 
     // Salva rascunho no localStorage (debounced, apenas para novo imóvel)
     const saveDraft = useCallback((data: typeof formData) => {
@@ -601,10 +622,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         }
     }
 
+    // Determinar se deve mostrar a tela de seleção de método
+    const showMethodSelection = !editingProperty && creationMethod === null
+
     return (
         <Modal
             isOpen={isOpen}
-            onClose={onClose}
+            onClose={() => { setCreationMethod(null); onClose() }}
             title={
                 <div className="flex items-center gap-4">
                     <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
@@ -613,6 +637,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 </div>
             }
             extraHeaderContent={
+                showMethodSelection ? undefined : (
                 <div className="flex items-center gap-3">
 
                     {!editingProperty && hasDraft && (
@@ -634,9 +659,95 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         {isSaving ? "Salvando..." : (editingProperty ? "Salvar Alterações" : "Cadastrar Imóvel")}
                     </button>
                 </div>
+                )
             }
-            size="xl"
+            size={showMethodSelection ? 'lg' : 'xl'}
         >
+            {showMethodSelection ? (
+                <div className="py-1">
+                    <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider mb-4 ml-1">
+                        Como deseja cadastrar?
+                    </p>
+                    <div className="flex flex-col gap-2">
+                        {/* Importar URL */}
+                        <button
+                            onClick={() => handleSelectMethod('url')}
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-blue-500/30 rounded-xl px-4 py-4 transition-all text-left"
+                        >
+                            <div className="p-2.5 bg-blue-500/10 rounded-xl group-hover:bg-blue-500/20 transition-colors shrink-0">
+                                <Globe size={20} className="text-blue-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-bold text-foreground">Importar URL</p>
+                                    <span className="px-1.5 py-0.5 bg-blue-500/10 text-blue-400 text-[9px] font-black uppercase tracking-wider rounded-md">IA</span>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                                    Cole o link de qualquer site de imóvel
+                                </p>
+                            </div>
+                            <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
+                        </button>
+
+                        {/* Importar PDF */}
+                        <button
+                            onClick={() => handleSelectMethod('pdf')}
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-red-500/30 rounded-xl px-4 py-4 transition-all text-left"
+                        >
+                            <div className="p-2.5 bg-red-500/10 rounded-xl group-hover:bg-red-500/20 transition-colors shrink-0">
+                                <FileText size={20} className="text-red-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-bold text-foreground">Importar PDF</p>
+                                    <span className="px-1.5 py-0.5 bg-red-500/10 text-red-400 text-[9px] font-black uppercase tracking-wider rounded-md">IA</span>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                                    Tabela de preços, book digital ou ficha técnica
+                                </p>
+                            </div>
+                            <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
+                        </button>
+
+                        {/* Colar Texto */}
+                        <button
+                            onClick={() => handleSelectMethod('text')}
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-amber-500/30 rounded-xl px-4 py-4 transition-all text-left"
+                        >
+                            <div className="p-2.5 bg-amber-500/10 rounded-xl group-hover:bg-amber-500/20 transition-colors shrink-0">
+                                <ClipboardPaste size={20} className="text-amber-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <div className="flex items-center gap-2">
+                                    <p className="text-sm font-bold text-foreground">Colar Texto</p>
+                                    <span className="px-1.5 py-0.5 bg-amber-500/10 text-amber-400 text-[9px] font-black uppercase tracking-wider rounded-md">IA</span>
+                                </div>
+                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                                    Cole texto copiado e a IA estrutura os dados
+                                </p>
+                            </div>
+                            <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
+                        </button>
+
+                        {/* Preenchimento Manual */}
+                        <button
+                            onClick={() => handleSelectMethod('manual')}
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-emerald-500/30 rounded-xl px-4 py-4 transition-all text-left"
+                        >
+                            <div className="p-2.5 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500/20 transition-colors shrink-0">
+                                <PenLine size={20} className="text-emerald-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-foreground">Preenchimento Manual</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                                    Preencha todos os campos do imóvel
+                                </p>
+                            </div>
+                            <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
+                        </button>
+                    </div>
+                </div>
+            ) : (
             <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1 no-scrollbar">
                 <div className="flex flex-col gap-8">
                     <BasicInfoFields 
@@ -693,6 +804,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     <OwnerFields formData={formData} setFormData={setFormData} tenantId={tenantId} />
                 </div>
             </div>
+            )}
         </Modal>
     )
 }

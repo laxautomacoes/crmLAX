@@ -72,7 +72,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
                                 e.stopPropagation()
                                 setShowDropdown(!showDropdown)
                             }}
-                            className="p-1 hover:bg-muted/50 rounded text-muted-foreground opacity-0 group-hover:opacity-100 transition-opacity"
+                            className="p-1 hover:bg-muted/50 rounded text-muted-foreground transition-colors"
                         >
                             <MoreVertical size={14} />
                         </button>
