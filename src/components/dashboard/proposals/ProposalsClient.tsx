@@ -127,9 +127,8 @@ function DroppableStatusColumn({ statusValue, statusLabel, borderColor, proposal
     return (
         <div
             ref={setNodeRef}
-            className={`flex flex-col rounded-xl p-4 border shadow-sm bg-card dark:bg-card overflow-hidden transition-all ${
-                isOver ? 'border-secondary ring-2 ring-secondary/20' : 'border-muted-foreground/30'
-            }`}
+            className={`flex flex-col rounded-xl p-4 border shadow-sm bg-card dark:bg-card overflow-hidden transition-all ${isOver ? 'border-secondary ring-2 ring-secondary/20' : 'border-muted-foreground/30'
+                }`}
             style={{ borderTop: `4px solid ${borderColor}` }}
         >
             {/* Header */}
@@ -333,25 +332,24 @@ export default function ProposalsClient() {
 
             {/* Contadores - apenas na lista */}
             {viewMode === 'list' && (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                {STATUS_OPTIONS.filter(s => s.value !== 'all').map(status => {
-                    const count = proposals.filter(p => p.status === status.value).length
-                    return (
-                        <button
-                            key={status.value}
-                            onClick={() => setStatusFilter(statusFilter === status.value ? 'all' : status.value)}
-                            className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${
-                                statusFilter === status.value 
-                                    ? 'border-secondary bg-secondary/10' 
-                                    : 'border-border/40 bg-card hover:border-border'
-                            }`}
-                        >
-                            <span className="text-xs font-bold text-foreground">{status.label}</span>
-                            <span className={`text-lg font-black ${count > 0 ? 'text-foreground' : 'text-muted-foreground/40'}`}>{count}</span>
-                        </button>
-                    )
-                })}
-            </div>
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                    {STATUS_OPTIONS.filter(s => s.value !== 'all').map(status => {
+                        const count = proposals.filter(p => p.status === status.value).length
+                        return (
+                            <button
+                                key={status.value}
+                                onClick={() => setStatusFilter(statusFilter === status.value ? 'all' : status.value)}
+                                className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${statusFilter === status.value
+                                        ? 'border-secondary bg-secondary/10'
+                                        : 'border-border/40 bg-card hover:border-border'
+                                    }`}
+                            >
+                                <span className="text-xs font-bold text-foreground">{status.label}</span>
+                                <span className={`text-lg font-black ${count > 0 ? 'text-foreground' : 'text-muted-foreground/40'}`}>{count}</span>
+                            </button>
+                        )
+                    })}
+                </div>
             )}
 
             {/* View: Lista ou Pipeline */}
@@ -365,8 +363,8 @@ export default function ProposalsClient() {
                         <div className="text-center">
                             <p className="text-sm font-bold text-foreground">Nenhuma proposta encontrada</p>
                             <p className="text-xs text-muted-foreground mt-1">
-                                {searchTerm || statusFilter !== 'all' 
-                                    ? 'Tente ajustar os filtros de busca.' 
+                                {searchTerm || statusFilter !== 'all'
+                                    ? 'Tente ajustar os filtros de busca.'
                                     : 'As propostas criadas nos leads aparecerão aqui.'}
                             </p>
                         </div>
@@ -386,8 +384,8 @@ export default function ProposalsClient() {
                                 </thead>
                                 <tbody>
                                     {filtered.map(proposal => (
-                                        <tr 
-                                            key={proposal.id} 
+                                        <tr
+                                            key={proposal.id}
                                             className="border-b border-border/20 last:border-0 hover:bg-muted/20 transition-colors"
                                         >
                                             <td className="px-4 py-3 text-center">
