@@ -46,6 +46,7 @@ export const menuItems = [
             { name: 'Análise Valor m²', href: '/properties/analysis' },
         ]
     },
+    { name: 'Propostas', icon: FileText, href: '/proposals', roles: ['admin', 'user', 'corretor'] },
     { 
         name: 'Marketing', 
         icon: Megaphone, 

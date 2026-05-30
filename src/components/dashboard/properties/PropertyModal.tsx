@@ -18,6 +18,7 @@ import { AddressFields } from './PropertyModal/AddressFields'
 import { OwnerFields } from './PropertyModal/OwnerFields'
 import { Switch } from '@/components/ui/Switch'
 import { Eraser, Globe, FileText, ClipboardPaste, PenLine, ChevronRight } from 'lucide-react'
+import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 
 const DRAFT_KEY = 'crm_new_property_draft'
 
@@ -360,7 +361,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             setFormData({
                 title: editingProperty.title || '',
                 description: editingProperty.description || editingProperty.details?.description || '',
-                price: editingProperty.price?.toString() || '',
+                price: editingProperty.price ? formatCurrencyBRL(Math.round(Number(editingProperty.price) * 100).toString()) : '',
                 type: editingProperty.type || 'apartment',
                 status: editingProperty.status || 'Pending',
                 created_by: editingProperty.created_by || null,
@@ -384,8 +385,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     nome_torre_bloco: editingProperty.details?.nome_torre_bloco || '',
                     has_elevadores: editingProperty.details?.has_elevadores || false,
                     numero_elevadores: editingProperty.details?.numero_elevadores || '',
-                    valor_condominio: editingProperty.details?.valor_condominio || '',
-                    valor_iptu: editingProperty.details?.valor_iptu || '',
+                    valor_condominio: editingProperty.details?.valor_condominio ? formatCurrencyBRL(Math.round(Number(editingProperty.details.valor_condominio) * 100).toString()) : '',
+                    valor_iptu: editingProperty.details?.valor_iptu ? formatCurrencyBRL(Math.round(Number(editingProperty.details.valor_iptu) * 100).toString()) : '',
                     obs_dormitorios: editingProperty.details?.obs_dormitorios || '',
                     has_sacada_com_churrasqueira: editingProperty.details?.has_sacada_com_churrasqueira || false,
                     has_sacada_sem_churrasqueira: editingProperty.details?.has_sacada_sem_churrasqueira || false,
@@ -579,8 +580,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         
         try {
             setIsSaving(true)
-            const cleanPriceStr = (formData.price || '0').toString().replace(/[^\d.,]/g, '').replace(',', '.')
-            const parsedPrice = parseFloat(cleanPriceStr)
+            const parsedPrice = parseCurrencyBRL(formData.price || '0')
 
             // Validação: tipo unidade exige campo Apartamento preenchido
             const tiposComApto = ['apartment', 'penthouse', 'studio']
@@ -606,6 +606,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 description: formData.description || '',
                 details: {
                     ...formData.details,
+                    valor_condominio: parseCurrencyBRL(formData.details.valor_condominio || '0'),
+                    valor_iptu: parseCurrencyBRL(formData.details.valor_iptu || '0'),
                     description: formData.description || ''
                 }
             }
@@ -662,6 +664,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 )
             }
             size={showMethodSelection ? 'lg' : 'xl'}
+            align="top"
         >
             {showMethodSelection ? (
                 <div className="py-1">

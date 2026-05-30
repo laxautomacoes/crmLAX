@@ -8,6 +8,7 @@ import { Download, Upload, Filter, ArrowUpDown, Archive } from 'lucide-react'
 import { propertyTypes } from '@/utils/property-translations'
 import { toast } from 'sonner'
 import { bulkCreateProperties } from '@/app/_actions/properties'
+import { formatCurrencyBRL } from '@/lib/utils/currency'
 
 interface PropertyFiltersModalProps {
     isOpen: boolean
@@ -284,20 +285,18 @@ export function PropertyFiltersModal({
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-foreground uppercase ml-1">Preço Mínimo</label>
                             <FormInput
-                                type="number"
-                                placeholder="R$ 0,00"
+                                placeholder="0,00"
                                 value={filters.minPrice}
-                                onChange={(e) => setFilters({ ...filters, minPrice: e.target.value })}
+                                onChange={(e) => setFilters({ ...filters, minPrice: formatCurrencyBRL(e.target.value) })}
                             />
                         </div>
 
                         <div className="space-y-1">
                             <label className="text-xs font-bold text-foreground uppercase ml-1">Preço Máximo</label>
                             <FormInput
-                                type="number"
-                                placeholder="R$ 0,00"
+                                placeholder="0,00"
                                 value={filters.maxPrice}
-                                onChange={(e) => setFilters({ ...filters, maxPrice: e.target.value })}
+                                onChange={(e) => setFilters({ ...filters, maxPrice: formatCurrencyBRL(e.target.value) })}
                             />
                         </div>
                     </div>

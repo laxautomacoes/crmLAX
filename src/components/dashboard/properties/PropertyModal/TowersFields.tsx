@@ -3,6 +3,7 @@
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { Building2, Plus, Trash2, Layers } from 'lucide-react'
+import { formatCurrencyBRL } from '@/lib/utils/currency'
 
 interface TowersFieldsProps {
     formData: any
@@ -195,9 +196,9 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
                                     />
                                     <FormInput
                                         label="Preço a partir (R$)"
-                                        type="number"
                                         value={tip.preco_a_partir}
-                                        onChange={(e) => updateTipologia(torreIndex, tipIndex, 'preco_a_partir', e.target.value)}
+                                        onChange={(e) => updateTipologia(torreIndex, tipIndex, 'preco_a_partir', formatCurrencyBRL(e.target.value))}
+                                        placeholder="0,00"
                                     />
                                     <FormInput
                                         label="Unidades/Andar"

@@ -35,6 +35,79 @@ export interface ClientData {
     documents?: { name: string, url: string }[]
 }
 
+export async function getClientById(contactId: string) {
+    const supabase = await createClient()
+
+    const { data: contact, error } = await supabase
+        .from('contacts')
+        .select(`
+            *,
+            leads (
+                *,
+                profiles:assigned_to ( full_name ),
+                properties ( id, title, price ),
+                lead_stages ( name, color ),
+                interactions ( content, type, created_at )
+            )
+        `)
+        .eq('id', contactId)
+        .single()
+
+    if (error || !contact) {
+        return { success: false, error: error?.message || 'Cliente não encontrado' }
+    }
+
+    const activeLead = (contact.leads as any[])?.sort((a, b) =>
+        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+    )[0]
+
+    const interest = activeLead?.property_interest || activeLead?.properties?.title || activeLead?.source || 'N/A'
+
+    const client = {
+        id: contact.id,
+        name: contact.name,
+        phone: contact.phone,
+        email: contact.email,
+        cpf: contact.cpf,
+        address_street: contact.address_street,
+        address_number: contact.address_number,
+        address_complement: contact.address_complement,
+        address_neighborhood: contact.address_neighborhood,
+        address_city: contact.address_city,
+        address_state: contact.address_state,
+        address_zip_code: contact.address_zip_code,
+        marital_status: contact.marital_status,
+        birth_date: contact.birth_date,
+        contact_type: contact.contact_type || [],
+        property_regime: contact.property_regime,
+        spouse_name: contact.spouse_name,
+        spouse_email: contact.spouse_email,
+        spouse_phone: contact.spouse_phone,
+        spouse_cpf: contact.spouse_cpf,
+        spouse_birth_date: contact.spouse_birth_date,
+        created_at: contact.created_at,
+        is_archived: contact.is_archived || false,
+        interest,
+        value: 0,
+        notes: contact.notes || '',
+        tags: contact.tags || [],
+        images: contact.images || [],
+        videos: contact.videos || [],
+        documents: contact.documents || [],
+        broker_name: activeLead?.profiles?.full_name || 'Não atribuído',
+        assigned_to: activeLead?.assigned_to,
+        leads: ((contact.leads as any[]) || [])
+            .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+            .map((l) => ({
+                ...l,
+                status_name: l.lead_stages?.name || l.status,
+                status_color: l.lead_stages?.color || null
+            }))
+    }
+
+    return { success: true, data: client }
+}
+
 export async function getClients(tenantId: string, includeArchived = false) {
     const supabase = await createClient()
 
@@ -67,7 +140,9 @@ export async function getClients(tenantId: string, includeArchived = false) {
             full_name
         ),
         properties (
-            title
+            id,
+            title,
+            price
         ),
         lead_stages (
             name,

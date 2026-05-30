@@ -6,6 +6,7 @@ import { Plus, Search, LayoutGrid, List, Map, Filter, WifiOff, Archive, Trash2 }
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty, archiveProperty, togglePublishProperty } from '@/app/_actions/properties'
 import { toast } from 'sonner'
+import { parseCurrencyBRL } from '@/lib/utils/currency'
 import { PropertyGallery } from '@/components/dashboard/properties/PropertyGallery'
 import { PropertyList } from '@/components/dashboard/properties/PropertyList'
 import { PropertyModal } from '@/components/dashboard/properties/PropertyModal'
@@ -344,8 +345,8 @@ export default function PropertiesClient({
         const matchesType = filters.type === 'all' || prop.type === filters.type
 
         const price = prop.price || 0
-        const matchesMinPrice = !filters.minPrice || price >= parseFloat(filters.minPrice)
-        const matchesMaxPrice = !filters.maxPrice || price <= parseFloat(filters.maxPrice)
+        const matchesMinPrice = !filters.minPrice || price >= parseCurrencyBRL(filters.minPrice)
+        const matchesMaxPrice = !filters.maxPrice || price <= parseCurrencyBRL(filters.maxPrice)
 
         const bedrooms = prop.details?.dormitorios || prop.details?.quartos || 0
         const matchesBedrooms = filters.bedrooms === 'all' || bedrooms >= parseInt(filters.bedrooms)

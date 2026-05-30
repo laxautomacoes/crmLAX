@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getProfile } from './profile'
 
+// ─── Buscar proposta de um lead (com dados do cliente e imóvel) ───
 export async function getProposal(leadId: string) {
     const supabase = await createClient()
     const { profile } = await getProfile()
@@ -13,7 +14,11 @@ export async function getProposal(leadId: string) {
     try {
         const { data, error } = await supabase
             .from('proposals')
-            .select('*')
+            .select(`
+                *,
+                contact:contacts(id, name, phone, email, cpf, address_street, address_number, address_neighborhood, address_city, address_state, address_zip_code),
+                property:properties(id, title, price, type, address_city, address_state)
+            `)
             .eq('lead_id', leadId)
             .maybeSingle()
 
@@ -25,7 +30,18 @@ export async function getProposal(leadId: string) {
     }
 }
 
-export async function saveProposal(leadId: string, tenantId: string, proposalData: { value: number, buyer_data: any, payment_terms: any, status?: string }) {
+// ─── Salvar/Atualizar proposta ───
+export async function saveProposal(
+    leadId: string,
+    tenantId: string,
+    proposalData: {
+        value: number
+        payment_terms: any
+        status?: string
+        contact_id?: string
+        property_id?: string
+    }
+) {
     const supabase = await createClient()
     const { profile } = await getProfile()
 
@@ -39,18 +55,21 @@ export async function saveProposal(leadId: string, tenantId: string, proposalDat
             .eq('lead_id', leadId)
             .maybeSingle()
 
-        let result;
+        const payload = {
+            value: proposalData.value,
+            payment_terms: proposalData.payment_terms,
+            status: proposalData.status || 'rascunho',
+            contact_id: proposalData.contact_id || null,
+            property_id: proposalData.property_id || null,
+            updated_at: new Date().toISOString()
+        }
+
+        let result
 
         if (existing?.id) {
             result = await supabase
                 .from('proposals')
-                .update({
-                    value: proposalData.value,
-                    buyer_data: proposalData.buyer_data,
-                    payment_terms: proposalData.payment_terms,
-                    status: proposalData.status || 'rascunho',
-                    updated_at: new Date().toISOString()
-                })
+                .update(payload)
                 .eq('id', existing.id)
                 .select()
                 .single()
@@ -60,11 +79,8 @@ export async function saveProposal(leadId: string, tenantId: string, proposalDat
                 .insert([{
                     lead_id: leadId,
                     tenant_id: tenantId,
-                    value: proposalData.value,
-                    buyer_data: proposalData.buyer_data,
-                    payment_terms: proposalData.payment_terms,
-                    status: proposalData.status || 'rascunho',
-                    created_by: profile.id
+                    created_by: profile.id,
+                    ...payload
                 }])
                 .select()
                 .single()
@@ -72,14 +88,134 @@ export async function saveProposal(leadId: string, tenantId: string, proposalDat
 
         if (result.error) throw result.error
 
-        revalidatePath(`/leads`)
+        revalidatePath('/leads')
+        revalidatePath('/proposals')
+        revalidatePath('/clients')
         return { success: true, data: result.data }
     } catch (error: any) {
         console.error('Error saving proposal:', error)
         return { success: false, error: error.message }
     }
 }
+// ─── Helper: enriquecer propostas com dados relacionados ───
+async function enrichProposals(supabase: any, proposals: any[]) {
+    if (!proposals || proposals.length === 0) return proposals
 
+    // Coletar IDs únicos
+    const contactIds = [...new Set(proposals.map(p => p.contact_id).filter(Boolean))]
+    const propertyIds = [...new Set(proposals.map(p => p.property_id).filter(Boolean))]
+    const leadIds = [...new Set(proposals.map(p => p.lead_id).filter(Boolean))]
+
+    // Buscar dados relacionados em paralelo (sem sub-relações)
+    const [contactsRes, propertiesRes, leadsRes] = await Promise.all([
+        contactIds.length > 0
+            ? supabase.from('contacts').select('id, name, phone, email, cpf').in('id', contactIds)
+            : { data: [] },
+        propertyIds.length > 0
+            ? supabase.from('properties').select('id, title, price, type, address_city, address_state').in('id', propertyIds)
+            : { data: [] },
+        leadIds.length > 0
+            ? supabase.from('leads').select('id, property_interest, stage_id').in('id', leadIds)
+            : { data: [] }
+    ])
+
+    // Buscar lead_stages separadamente
+    const stageIds = [...new Set((leadsRes.data || []).map((l: any) => l.stage_id).filter(Boolean))]
+    let stageMap = new Map()
+    if (stageIds.length > 0) {
+        const { data: stages } = await supabase
+            .from('lead_stages')
+            .select('id, name, color')
+            .in('id', stageIds)
+        if (stages) {
+            stageMap = new Map(stages.map((s: any) => [s.id, s]))
+        }
+    }
+
+    // Criar maps para lookup rápido
+    const contactMap = new Map((contactsRes.data || []).map((c: any) => [c.id, c]))
+    const propertyMap = new Map((propertiesRes.data || []).map((p: any) => [p.id, p]))
+    const leadMap = new Map((leadsRes.data || []).map((l: any) => {
+        const stage = stageMap.get(l.stage_id)
+        return [l.id, { ...l, lead_stages: stage || null }]
+    }))
+
+    // Enriquecer cada proposta
+    return proposals.map((p: any) => ({
+        ...p,
+        contact: contactMap.get(p.contact_id) || null,
+        property: propertyMap.get(p.property_id) || null,
+        lead: leadMap.get(p.lead_id) || null
+    }))
+}
+
+// ─── Buscar todas as propostas do tenant (página centralizada) ───
+export async function getAllProposals(tenantId: string) {
+    const supabase = await createClient()
+    const { profile } = await getProfile()
+
+    if (!profile) return { success: false, error: 'Usuário não autenticado.' }
+
+    try {
+        const { data, error } = await supabase
+            .from('proposals')
+            .select('*')
+            .eq('tenant_id', tenantId)
+            .order('updated_at', { ascending: false })
+
+        if (error) throw error
+
+        const enriched = await enrichProposals(supabase, data || [])
+        return { success: true, data: enriched }
+    } catch (error: any) {
+        console.error('[getAllProposals] ERROR:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+// ─── Buscar propostas de um cliente específico ───
+export async function getProposalsByContact(contactId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { data, error } = await supabase
+            .from('proposals')
+            .select('*')
+            .eq('contact_id', contactId)
+            .order('updated_at', { ascending: false })
+
+        if (error) throw error
+
+        const enriched = await enrichProposals(supabase, data || [])
+        return { success: true, data: enriched }
+    } catch (error: any) {
+        console.error('[getProposalsByContact] ERROR:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+// ─── Atualizar status da proposta ───
+export async function updateProposalStatus(proposalId: string, status: string) {
+    const supabase = await createClient()
+
+    try {
+        const { error } = await supabase
+            .from('proposals')
+            .update({ status, updated_at: new Date().toISOString() })
+            .eq('id', proposalId)
+
+        if (error) throw error
+
+        revalidatePath('/proposals')
+        revalidatePath('/leads')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error updating proposal status:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+// ─── Templates de Proposta ───
 export async function getProposalTemplates(tenantId: string) {
     const supabase = await createClient()
 

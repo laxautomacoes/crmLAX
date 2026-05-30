@@ -98,16 +98,7 @@ export default function LeadAICard({ leadId, tenantId, profileId, leadName, lead
 
     return (
         <div className="space-y-4 rounded-2xl border border-border/40 bg-card p-6">
-            <div className="flex items-center gap-2">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-accent-icon/20">
-                    <Sparkles className="h-4 w-4 text-accent-icon" />
-                </div>
-                <h3 className="font-bold text-foreground">Análise de IA</h3>
-                {lastInteractionAt && (
-                    <LeadTemperatureBadge lastInteractionAt={lastInteractionAt} size="md" />
-                )}
-                <span className="ml-auto rounded-full bg-accent-icon/10 px-2 py-0.5 text-xs font-bold text-foreground">Pro</span>
-            </div>
+
 
             {errorMsg && (
                 <p className="rounded-lg bg-red-50 p-3 text-sm text-red-600">{errorMsg}</p>

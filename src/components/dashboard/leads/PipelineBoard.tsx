@@ -38,6 +38,7 @@ export interface Lead {
     value?: number
     status: string
     assigned_to?: string
+    contact_id?: string
     broker_name?: string
     images?: string[]
     videos?: string[]

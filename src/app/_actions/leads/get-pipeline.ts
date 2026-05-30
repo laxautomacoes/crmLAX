@@ -24,6 +24,7 @@ interface AssignedProfileRecord {
 }
 
 interface LeadRecord {
+    contact_id?: string | null
     id: string
     contacts?: ContactRecord | null
     stage_id: string
@@ -50,6 +51,7 @@ type PipelineLead = Lead & {
     lead_source?: string
     campaign?: string
     property_id?: string
+    contact_id?: string
     date?: string | null
 }
 
@@ -110,6 +112,7 @@ export async function getPipelineData(tenantId: string) {
         lead_source: lead.lead_source || 'Direto',
         campaign: lead.campaign,
         property_id: lead.property_id,
+        contact_id: lead.contact_id || undefined,
         date: lead.date || (lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : null),
         assigned_to: lead.assigned_to,
         broker_name: lead.profiles?.full_name || 'Não atribuído',

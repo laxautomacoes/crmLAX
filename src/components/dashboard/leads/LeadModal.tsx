@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { formatPhone } from '@/lib/utils/phone'
+import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
@@ -11,12 +12,8 @@ import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
-import { MessageSquare, X, Sparkles, User, FileText, DollarSign, PenLine, ChevronRight } from 'lucide-react'
-import LeadAICard from '@/components/ai/LeadAICard'
+import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight } from 'lucide-react'
 import type { Lead } from './PipelineBoard'
-import { LeadProposalTab } from './LeadProposalTab'
-import { LeadDocumentsTab } from './LeadDocumentsTab'
-import { LeadFinanceTab } from './LeadFinanceTab'
 
 interface Broker {
     id: string
@@ -61,6 +58,7 @@ interface LeadModalProps {
     editingLead?: EditableLead // Para edição
     hasAIAccess: boolean
     onSelectImportPrint?: () => void
+    onMakeProposal?: (contactId: string, leadId: string) => void
 }
 
 export function LeadModal({
@@ -71,7 +69,8 @@ export function LeadModal({
     onSuccess,
     editingLead,
     hasAIAccess,
-    onSelectImportPrint
+    onSelectImportPrint,
+    onMakeProposal
 }: LeadModalProps) {
     const [creationMethod, setCreationMethod] = useState<LeadCreationMethod>(null)
     const [isLoading, setIsLoading] = useState(false)
@@ -102,7 +101,7 @@ export function LeadModal({
         videos: [] as string[],
         documents: [] as { name: string; url: string }[]
     })
-    const [activeTab, setActiveTab] = useState<'info' | 'ai' | 'proposta' | 'documents' | 'financeiro'>('info')
+
 
     // Quando o modal abre para novo lead, reseta o método de criação
     useEffect(() => {
@@ -170,7 +169,7 @@ export function LeadModal({
                 property_interest: editingLead.property_interest || '',
                 selectedProperty: editingLead.property_id ? { id: editingLead.property_id, title: editingLead.interest || '' } : null,
                 date: editingLead.date || new Date().toISOString().split('T')[0],
-                value: editingLead.value?.toString() || '',
+                value: editingLead.value ? formatCurrencyBRL(Math.round(Number(editingLead.value) * 100).toString()) : '',
                 notes: editingLead.notes || '',
                 stage_id: editingLead.status || firstStageId,
                 assigned_to: editingLead.assigned_to || '',
@@ -250,7 +249,7 @@ export function LeadModal({
                 ...leadData,
                 lead_source: finalSource,
                 campaign: finalCampaign,
-                value: leadData.value ? parseFloat(leadData.value) : 0
+                value: leadData.value ? parseCurrencyBRL(leadData.value) : 0
             }
 
             let result;
@@ -297,15 +296,27 @@ export function LeadModal({
                 </div>
             }
             size={showMethodSelection ? 'md' : 'xl'}
+            align="top"
             extraHeaderContent={
                 showMethodSelection ? undefined : (
-                <button
-                    onClick={handleSubmit}
-                    disabled={isLoading}
-                    className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
-                >
-                    {isLoading ? "Processando..." : (editingLead ? "Salvar Alterações" : "Criar Lead")}
-                </button>
+                <div className="flex items-center gap-2">
+                    {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
+                        <button
+                            type="button"
+                            onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
+                            className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                        >
+                            Fazer Proposta
+                        </button>
+                    )}
+                    <button
+                        onClick={handleSubmit}
+                        disabled={isLoading}
+                        className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
+                    >
+                        {isLoading ? "Processando..." : (editingLead ? "Salvar Alterações" : "Criar Lead")}
+                    </button>
+                </div>
                 )
             }
         >
@@ -356,52 +367,7 @@ export function LeadModal({
             ) : (
             <div className="space-y-6">
                 {/* Tabs for IA if editing */}
-                {editingLead?.id && (
-                    <div className="flex items-center gap-1.5 p-1.5 bg-muted/70 rounded-xl mb-6 overflow-x-auto no-scrollbar border border-border/10">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('info')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'info' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
-                        >
-                            <User size={14} />
-                            Informações
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('proposta')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'proposta' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
-                        >
-                            <FileText size={14} />
-                            Proposta
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('documents')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'documents' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
-                        >
-                            <FileText size={14} />
-                            Documentos & Contratos
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('financeiro')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'financeiro' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
-                        >
-                            <DollarSign size={14} />
-                            Financeiro
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('ai')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'ai' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
-                        >
-                            <Sparkles size={14} />
-                            IA Match
-                        </button>
-                    </div>
-                )}
 
-                {activeTab === 'info' ? (
                     <div className="space-y-8">
                     {/* Seção: Dados Pessoais */}
                     <div className="space-y-4">
@@ -410,7 +376,7 @@ export function LeadModal({
                             <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
                                 <div className="flex-1 md:flex-[2]">
                                     <FormInput
-                                        label="Nome completo *"
+                                        label="Nome completo"
                                         value={leadData.name}
                                         onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
                                         placeholder="Ex: João Silva"
@@ -440,7 +406,7 @@ export function LeadModal({
                             </div>
                             <div>
                                 <FormInput
-                                    label="Telefone *"
+                                    label="Telefone"
                                     value={leadData.phone}
                                     onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
                                     placeholder="(48) 99999 9999"
@@ -601,9 +567,8 @@ export function LeadModal({
                             <div>
                                 <FormInput
                                     label="Valor Estimado"
-                                    type="number"
                                     value={leadData.value}
-                                    onChange={(e) => setLeadData({ ...leadData, value: e.target.value })}
+                                    onChange={(e) => setLeadData({ ...leadData, value: formatCurrencyBRL(e.target.value) })}
                                     placeholder="0,00"
                                 />
                             </div>
@@ -633,45 +598,9 @@ export function LeadModal({
                             onRemove={handleMediaRemove}
                         />
                     </div>
-                </div>
-            ) : editingLead?.id ? (
-                <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                    {activeTab === 'proposta' && <LeadProposalTab leadId={editingLead.id} tenantId={tenantId} />}
-                    {activeTab === 'documents' && (
-                        <LeadDocumentsTab 
-                            leadId={editingLead.id} 
-                            tenantId={tenantId} 
-                            leadName={leadData.name} 
-                            propertyInterest={leadData.interest || leadData.property_interest} 
-                            userRole={userRole}
-                        />
-                    )}
-                    {activeTab === 'financeiro' && (
-                        <LeadFinanceTab 
-                            leadId={editingLead.id} 
-                            tenantId={tenantId} 
-                            assignedToId={leadData.assigned_to} 
-                        />
-                    )}
-                    {activeTab === 'ai' && (
-                        <LeadAICard 
-                            leadId={editingLead.id}
-                            tenantId={tenantId}
-                            profileId={editingLead.assigned_to || ''}
-                            leadName={leadData.name}
-                            leadSource={leadData.lead_source}
-                            interactions={((editingLead.whatsapp_chat || []) as ChatMessage[]).map((m) => 
-                                `${m.fromMe ? 'Corretor' : 'Lead'}: ${m.message || m.text || ''}`
-                            )}
-                            hasAIAccess={hasAIAccess}
-                            lastInteractionAt={editingLead.last_interaction_at}
-                        />
-                    )}
-                </div>
-            ) : null}
 
-
-            </div>
+                    </div>
+                </div>
             )}
         </Modal>
     )

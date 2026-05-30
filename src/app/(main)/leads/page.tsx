@@ -9,8 +9,10 @@ import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
 import { Modal } from '@/components/shared/Modal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
 import { LeadImportImageModal } from '@/components/dashboard/leads/LeadImportImageModal'
+import { ClientModal } from '@/components/dashboard/clients/ClientModal'
 import { getProfile, getBrokers } from '@/app/_actions/profile'
 import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
+import { getClientById } from '@/app/_actions/clients'
 import { createStage, deleteStage, duplicateStage, updateStageName, updateStageColor } from '@/app/_actions/stages'
 import { checkPlanFeatureAction } from '@/app/_actions/plan'
 import { toast } from 'sonner'
@@ -56,6 +58,9 @@ export default function LeadsPage() {
     const [editingLead, setEditingLead] = useState<Partial<PipelineLead> | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [hasAIAccess, setHasAIAccess] = useState(false)
+    const [isClientModalOpen, setIsClientModalOpen] = useState(false)
+    const [proposalClient, setProposalClient] = useState<any>(null)
+    const [pendingProposalLeadId, setPendingProposalLeadId] = useState<string | null>(null)
     const searchParams = useSearchParams()
     const leadIdFromUrl = searchParams.get('id')
 
@@ -318,6 +323,18 @@ export default function LeadsPage() {
                         setIsLeadModalOpen(false)
                         setIsLeadImportImageModalOpen(true)
                     }}
+                    onMakeProposal={async (contactId, leadId) => {
+                        setIsLeadModalOpen(false)
+                        setEditingLead(null)
+                        const res = await getClientById(contactId)
+                        if (res.success && res.data) {
+                            setProposalClient(res.data)
+                            setPendingProposalLeadId(leadId)
+                            setIsClientModalOpen(true)
+                        } else {
+                            toast.error('Erro ao buscar cliente vinculado ao lead.')
+                        }
+                    }}
                 />
             )}
 
@@ -331,6 +348,24 @@ export default function LeadsPage() {
                     brokers={brokers}
                     isAdmin={userRole === 'admin' || userRole === 'superadmin'}
                     onImportSuccess={fetchData}
+                />
+            )}
+
+            {/* ClientModal para Proposta via Lead */}
+            {tenantId && (
+                <ClientModal
+                    isOpen={isClientModalOpen}
+                    onClose={() => {
+                        setIsClientModalOpen(false)
+                        setProposalClient(null)
+                        setPendingProposalLeadId(null)
+                    }}
+                    tenantId={tenantId}
+                    profileId=""
+                    editingClient={proposalClient}
+                    onSuccess={fetchData}
+                    initialTab="proposals"
+                    initialProposalLeadId={pendingProposalLeadId}
                 />
             )}
         </div>

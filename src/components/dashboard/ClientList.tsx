@@ -1,20 +1,15 @@
 'use client'
 
-import { useState, useEffect, useRef, useMemo } from 'react'
-import { Search, Plus, Mail, Phone, MapPin, MoreHorizontal, Edit, Trash2, X, ChevronDown, Filter, User, MessageSquare, Loader2, Calendar, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
-import { Modal } from '@/components/shared/Modal'
+import { useState, useEffect, useMemo } from 'react'
+import { Search, Plus, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { ClientFilterModal } from './ClientFilterModal'
-import ClientCard from './ClientCard'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { FormTextarea } from '@/components/shared/forms/FormTextarea'
-import { MediaUpload } from '@/components/shared/MediaUpload'
 import { formatPhone } from '@/lib/utils/phone'
-import { fetchAddressByCep, formatCEP, fetchCepByAddress, ViaCEPResponse } from '@/lib/utils/cep'
-import { createNewClient, updateClient, deleteClient, archiveClient } from '@/app/_actions/clients'
+import { deleteClient, archiveClient } from '@/app/_actions/clients'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
 import { ClientListItem } from './ClientListItem'
+import { ClientModal } from './clients/ClientModal'
 import { PageHeader } from '@/components/shared/PageHeader'
 
 interface ClientListProps {
@@ -25,12 +20,10 @@ interface ClientListProps {
 
 export default function ClientList({ initialClients, tenantId, profileId }: ClientListProps) {
     const [clients, setClients] = useState(initialClients)
-    const [isModalOpen, setIsModalOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedBroker, setSelectedBroker] = useState('all')
     const [brokers, setBrokers] = useState<any[]>([])
     const [userRole, setUserRole] = useState<string>('user')
-    const [expandedId, setExpandedId] = useState<string | null>(null)
     const [showAll, setShowAll] = useState(false)
     const PAGE_SIZE = 25
     const [sortField, setSortField] = useState<'name' | 'created_at' | null>(null)
@@ -46,155 +39,15 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         status: 'active'
     })
 
+    // Modal state
+    const [isClientModalOpen, setIsClientModalOpen] = useState(false)
+    const [selectedClient, setSelectedClient] = useState<any | null>(null)
+
     useEffect(() => {
         if (selectedBroker !== filters.brokerId) {
             setFilters(prev => ({ ...prev, brokerId: selectedBroker }))
         }
     }, [selectedBroker])
-
-    // Form States
-    const [formData, setFormData] = useState({
-        name: '',
-        email: '',
-        phone: '',
-        interest: '',
-        cpf: '',
-        address_street: '',
-        address_number: '',
-        address_complement: '',
-        address_neighborhood: '',
-        address_city: '',
-        address_state: '',
-        address_zip_code: '',
-        marital_status: '',
-        birth_date: '',
-        contact_type: [] as string[],
-        property_regime: '',
-        spouse_name: '',
-        spouse_email: '',
-        spouse_phone: '',
-        spouse_cpf: '',
-        spouse_birth_date: '',
-        notes: '',
-        images: [] as string[],
-        videos: [] as string[],
-        documents: [] as { name: string; url: string }[]
-    })
-
-    const handleMediaUpload = (type: 'images' | 'videos' | 'documents', files: any[]) => {
-        setFormData(prev => ({
-            ...prev,
-            [type]: [...prev[type], ...files]
-        }))
-    }
-
-    const handleMediaRemove = (type: 'images' | 'videos' | 'documents', index: number) => {
-        setFormData(prev => ({
-            ...prev,
-            [type]: prev[type].filter((_, i) => i !== index)
-        }))
-    }
-
-    const [editingClientId, setEditingClientId] = useState<string | null>(null)
-    const [loading, setLoading] = useState(false)
-    const [cepLoading, setCepLoading] = useState(false)
-    const [searchResults, setSearchResults] = useState<ViaCEPResponse[]>([])
-    const [showResults, setShowResults] = useState(false)
-    const resultsRef = useRef<HTMLDivElement>(null)
-
-    useEffect(() => {
-        function handleClickOutside(event: MouseEvent) {
-            if (resultsRef.current && !resultsRef.current.contains(event.target as Node)) {
-                setShowResults(false)
-            }
-        }
-        document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
-
-    const handleSearchAddress = async () => {
-        const { address_street: rua, address_city: cidade, address_state: estado } = formData
-
-        if (!estado || estado.length !== 2) {
-            toast.error('Informe o estado (UF) com 2 letras')
-            return
-        }
-        if (!cidade || cidade.length < 3) {
-            toast.error('Informe a cidade (mínimo 3 letras)')
-            return
-        }
-        if (!rua || rua.length < 3) {
-            toast.error('Informe a rua (mínimo 3 letras)')
-            return
-        }
-
-        setCepLoading(true)
-        try {
-            const results = await fetchCepByAddress(estado, cidade, rua)
-            setSearchResults(results)
-            setShowResults(true)
-            if (results.length === 0) {
-                toast.error('Nenhum CEP encontrado para este endereço')
-            }
-        } catch (error) {
-            console.error('Error searching address:', error)
-            toast.error('Erro ao buscar endereço')
-        } finally {
-            setCepLoading(false)
-        }
-    }
-
-    const selectAddress = (address: ViaCEPResponse) => {
-        setFormData(prev => ({
-            ...prev,
-            address_street: address.logradouro,
-            address_neighborhood: address.bairro,
-            address_city: address.localidade,
-            address_state: address.uf,
-            address_zip_code: formatCEP(address.cep)
-        }))
-        setShowResults(false)
-    }
-
-    const handleCepChange = async (cep: string) => {
-        const formattedCep = formatCEP(cep)
-        const digitsOnly = formattedCep.replace(/\D/g, '')
-
-        // Se o CEP for apagado ou alterado (menos de 8 dígitos), limpa os campos de endereço
-        if (digitsOnly.length < 8) {
-            setFormData(prev => ({
-                ...prev,
-                address_zip_code: formattedCep,
-                address_street: '',
-                address_neighborhood: '',
-                address_city: '',
-                address_state: '',
-                address_complement: '',
-                address_number: ''
-            }))
-        } else {
-            setFormData(prev => ({ ...prev, address_zip_code: formattedCep }))
-        }
-
-        if (digitsOnly.length === 8) {
-            setCepLoading(true)
-            try {
-                const address = await fetchAddressByCep(formattedCep)
-                if (address) {
-                    setFormData(prev => ({
-                        ...prev,
-                        address_street: address.logradouro || prev.address_street,
-                        address_neighborhood: address.bairro || prev.address_neighborhood,
-                        address_city: address.localidade || prev.address_city,
-                        address_state: address.uf || prev.address_state,
-                        address_zip_code: formattedCep
-                    }))
-                }
-            } finally {
-                setCepLoading(false)
-            }
-        }
-    }
 
     useEffect(() => {
         async function fetchBrokers() {
@@ -287,68 +140,14 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             : <ArrowDown size={12} className="text-accent-icon ml-1" />
     }
 
-    const handleEdit = (client: any) => {
-        setFormData({
-            name: client.name,
-            email: client.email,
-            phone: client.phone ? formatPhone(client.phone) : '',
-            interest: client.interest || '',
-            cpf: client.cpf || '',
-            address_street: client.address_street || '',
-            address_number: client.address_number || '',
-            address_complement: client.address_complement || '',
-            address_neighborhood: client.address_neighborhood || '',
-            address_city: client.address_city || '',
-            address_state: client.address_state || '',
-            address_zip_code: client.address_zip_code || '',
-            marital_status: client.marital_status || '',
-            birth_date: client.birth_date || '',
-            contact_type: client.contact_type || [],
-            property_regime: client.property_regime || '',
-            spouse_name: client.spouse_name || '',
-            spouse_email: client.spouse_email || '',
-            spouse_phone: client.spouse_phone ? formatPhone(client.spouse_phone) : '',
-            spouse_cpf: client.spouse_cpf || '',
-            spouse_birth_date: client.spouse_birth_date || '',
-            notes: client.notes || '',
-            images: client.images || [],
-            videos: client.videos || [],
-            documents: client.documents || []
-        })
-        setEditingClientId(client.id)
-        setIsModalOpen(true)
+    const handleOpenClient = (client: any) => {
+        setSelectedClient(client)
+        setIsClientModalOpen(true)
     }
 
     const handleOpenCreate = () => {
-        setFormData({
-            name: '',
-            email: '',
-            phone: '',
-            interest: '',
-            cpf: '',
-            address_street: '',
-            address_number: '',
-            address_complement: '',
-            address_neighborhood: '',
-            address_city: '',
-            address_state: '',
-            address_zip_code: '',
-            marital_status: '',
-            birth_date: '',
-            contact_type: [],
-            property_regime: '',
-            spouse_name: '',
-            spouse_email: '',
-            spouse_phone: '',
-            spouse_cpf: '',
-            spouse_birth_date: '',
-            notes: '',
-            images: [],
-            videos: [],
-            documents: []
-        })
-        setEditingClientId(null)
-        setIsModalOpen(true)
+        setSelectedClient(null)
+        setIsClientModalOpen(true)
     }
 
     const handleDelete = async (id: string) => {
@@ -376,60 +175,6 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             } else {
                 toast.error(`Erro ao ${action} cliente`)
             }
-        }
-    }
-
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault()
-        setLoading(true)
-
-        try {
-            let res;
-            if (editingClientId) {
-                res = await updateClient(editingClientId, formData)
-            } else {
-                res = await createNewClient(tenantId, formData)
-            }
-
-            if (res.success) {
-                toast.success(editingClientId ? 'Cliente atualizado!' : 'Cliente criado com sucesso!')
-                setIsModalOpen(false)
-                setFormData({
-                    name: '',
-                    email: '',
-                    phone: '',
-                    interest: '',
-                    cpf: '',
-                    address_street: '',
-                    address_number: '',
-                    address_complement: '',
-                    address_neighborhood: '',
-                    address_city: '',
-                    address_state: '',
-                    address_zip_code: '',
-                    marital_status: '',
-                    birth_date: '',
-                    contact_type: [],
-                    property_regime: '',
-                    spouse_name: '',
-                    spouse_email: '',
-                    spouse_phone: '',
-                    spouse_cpf: '',
-                    spouse_birth_date: '',
-                    notes: '',
-                    images: [],
-                    videos: [],
-                    documents: []
-                })
-                setEditingClientId(null)
-                window.location.reload()
-            } else {
-                toast.error('Erro: ' + res.error)
-            }
-        } catch (err) {
-            toast.error('Erro inesperado')
-        } finally {
-            setLoading(false)
         }
     }
 
@@ -512,9 +257,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                         client={client}
                                         tenantId={tenantId}
                                         profileId={profileId}
-                                        isExpanded={expandedId === client.id}
-                                        onToggle={() => setExpandedId(expandedId === client.id ? null : client.id)}
-                                        onEdit={() => handleEdit(client)}
+                                        onClickClient={() => handleOpenClient(client)}
+                                        onEdit={() => handleOpenClient(client)}
                                         onDelete={() => handleDelete(client.id)}
                                         onArchive={() => handleArchive(client.id)}
                                     />
@@ -553,302 +297,16 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                 </div>
             )}
 
-            {/* Modal */}
-            <Modal
-                isOpen={isModalOpen}
-                onClose={() => setIsModalOpen(false)}
-                title={
-                    <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
-                        {editingClientId ? "Editar Cliente" : "Novo Cliente"}
-                    </h3>
-                }
-                size="xl"
-                extraHeaderContent={
-                    <button
-                        type="submit"
-                        form="client-form"
-                        disabled={loading}
-                        className="bg-secondary text-secondary-foreground font-bold px-4 py-1.5 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 text-sm shadow-sm whitespace-nowrap"
-                    >
-                        {loading ? 'Salvando...' : (editingClientId ? 'Atualizar Dados' : 'Criar Cliente')}
-                    </button>
-                }
-            >
-                <form id="client-form" onSubmit={handleSubmit} className="space-y-8 px-1 pb-4">
-                    {/* Dados Pessoais */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
-                        
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2 flex flex-col md:flex-row md:items-end gap-4">
-                                <div className="flex-1">
-                                    <FormInput
-                                        label="Nome Completo"
-                                        required
-                                        value={formData.name}
-                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                        placeholder="Ex: João Silva"
-                                    />
-                                </div>
-                                {/* Tipo de Contato */}
-                                <div className="flex items-center gap-3 pb-[10px] shrink-0">
-                                    {[
-                                        { value: 'comprador', label: 'Comprador' },
-                                        { value: 'vendedor', label: 'Vendedor' },
-                                        { value: 'construtora', label: 'Construtora' }
-                                    ].map(option => {
-                                        const isChecked = formData.contact_type.includes(option.value)
-                                        return (
-                                            <label
-                                                key={option.value}
-                                                className="flex items-center gap-1.5 cursor-pointer select-none group"
-                                            >
-                                                <input
-                                                    type="checkbox"
-                                                    checked={isChecked}
-                                                    onChange={() => {
-                                                        const updated = isChecked
-                                                            ? formData.contact_type.filter((t: string) => t !== option.value)
-                                                            : [...formData.contact_type, option.value]
-                                                        setFormData({ ...formData, contact_type: updated })
-                                                    }}
-                                                    className="w-4 h-4 rounded border-muted-foreground/40 bg-foreground/5 text-secondary focus:ring-secondary/30 focus:ring-offset-0 cursor-pointer accent-[#FFE600]"
-                                                />
-                                                <span className={`text-xs font-bold transition-colors ${isChecked ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'}`}>
-                                                    {option.label}
-                                                </span>
-                                            </label>
-                                        )
-                                    })}
-                                </div>
-                            </div>
-                            <FormInput
-                                label="E-mail"
-                                type="email"
-                                required
-                                value={formData.email}
-                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                placeholder="joao@exemplo.com"
-                            />
-                            <div>
-                                <FormInput
-                                    label="Telefone / WhatsApp"
-                                    required
-                                    value={formData.phone}
-                                    onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
-                                    placeholder="(48) 99999 9999"
-                                />
-                                {formData.phone && (
-                                    <a
-                                        href={`https://wa.me/55${formData.phone.replace(/\D/g, '')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors w-fit"
-                                    >
-                                        <MessageSquare size={12} />
-                                        Abrir conversa no WhatsApp
-                                    </a>
-                                )}
-                            </div>
-                            <FormInput
-                                label="CPF"
-                                value={formData.cpf}
-                                onChange={e => setFormData({ ...formData, cpf: e.target.value })}
-                                placeholder="000.000.000-00"
-                            />
-                            <FormInput
-                                label="Data de Nascimento"
-                                type="date"
-                                value={formData.birth_date}
-                                onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
-                            />
-                            <FormSelect
-                                label="Estado Civil"
-                                value={formData.marital_status}
-                                onChange={e => setFormData({ ...formData, marital_status: e.target.value })}
-                                options={[
-                                    { value: '', label: 'Selecione...' },
-                                    { value: 'Solteiro(a)', label: 'Solteiro(a)' },
-                                    { value: 'Casado(a)', label: 'Casado(a)' },
-                                    { value: 'Divorciado(a)', label: 'Divorciado(a)' },
-                                    { value: 'Viúvo(a)', label: 'Viúvo(a)' },
-                                    { value: 'União Estável', label: 'União Estável' }
-                                ]}
-                            />
-                            <FormSelect
-                                label="Regime de Comunhão"
-                                value={formData.property_regime}
-                                onChange={e => setFormData({ ...formData, property_regime: e.target.value })}
-                                options={[
-                                    { value: '', label: 'Selecione...' },
-                                    { value: 'Comunhão Parcial', label: 'Comunhão Parcial' },
-                                    { value: 'Comunhão Universal', label: 'Comunhão Universal' },
-                                    { value: 'Separação Total', label: 'Separação Total' },
-                                    { value: 'Separação Obrigatória', label: 'Separação Obrigatória' },
-                                    { value: 'Participação Final nos Aquestos', label: 'Participação Final nos Aquestos' }
-                                ]}
-                            />
-                        </div>
-                    </div>
+            {/* Client Modal */}
+            <ClientModal
+                isOpen={isClientModalOpen}
+                onClose={() => { setIsClientModalOpen(false); setSelectedClient(null) }}
+                tenantId={tenantId}
+                profileId={profileId}
+                editingClient={selectedClient}
+                onSuccess={() => window.location.reload()}
+            />
 
-                    {/* Cônjuge | Sócio */}
-                    <div className="space-y-4 pt-8 border-t border-border/50">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Cônjuge | Sócio</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="md:col-span-2">
-                                <FormInput
-                                    label="Nome Completo"
-                                    value={formData.spouse_name}
-                                    onChange={e => setFormData({ ...formData, spouse_name: e.target.value })}
-                                    placeholder="Nome do cônjuge ou sócio"
-                                />
-                            </div>
-                            <FormInput
-                                label="E-mail"
-                                type="email"
-                                value={formData.spouse_email}
-                                onChange={e => setFormData({ ...formData, spouse_email: e.target.value })}
-                                placeholder="email@exemplo.com"
-                            />
-                            <FormInput
-                                label="Telefone / WhatsApp"
-                                value={formData.spouse_phone}
-                                onChange={e => setFormData({ ...formData, spouse_phone: formatPhone(e.target.value) })}
-                                placeholder="(48) 99999 9999"
-                            />
-                            <FormInput
-                                label="CPF"
-                                value={formData.spouse_cpf}
-                                onChange={e => setFormData({ ...formData, spouse_cpf: e.target.value })}
-                                placeholder="000.000.000-00"
-                            />
-                            <FormInput
-                                label="Data de Nascimento"
-                                type="date"
-                                value={formData.spouse_birth_date}
-                                onChange={e => setFormData({ ...formData, spouse_birth_date: e.target.value })}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Endereço */}
-                    <div className="space-y-4 pt-8 border-t border-border/50">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Endereço</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                            <FormInput
-                                label={
-                                    <div className="flex items-center gap-1">
-                                        CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
-                                    </div>
-                                }
-                                value={formData.address_zip_code}
-                                onChange={e => handleCepChange(e.target.value)}
-                                placeholder="00000-000"
-                                disabled={cepLoading}
-                            />
-                            <div className="md:col-span-2 relative" ref={resultsRef}>
-                                <FormInput
-                                    label="Rua"
-                                    value={formData.address_street}
-                                    onChange={e => setFormData({ ...formData, address_street: e.target.value })}
-                                    placeholder="Rua / Avenida"
-                                    rightElement={
-                                        <button
-                                            type="button"
-                                            onClick={handleSearchAddress}
-                                            className="p-1 hover:bg-muted rounded-md transition-colors text-foreground"
-                                            title="Buscar CEP por endereço"
-                                            disabled={cepLoading}
-                                        >
-                                            {cepLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-                                        </button>
-                                    }
-                                />
-
-                                {showResults && (
-                                    <div className="absolute z-50 w-full mt-1 bg-card border border-muted-foreground/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                        {searchResults.length > 0 ? (
-                                            searchResults.map((result, index) => (
-                                                <button
-                                                    key={index}
-                                                    type="button"
-                                                    onClick={() => selectAddress(result)}
-                                                    className="w-full text-left px-4 py-2 hover:bg-secondary/10 border-b border-muted-foreground/10 last:border-0 transition-colors"
-                                                >
-                                                    <div className="text-sm font-medium">{result.logradouro}</div>
-                                                    <div className="text-xs text-muted-foreground">
-                                                        {result.bairro}, {result.localidade} - {result.uf} | CEP: {result.cep}
-                                                    </div>
-                                                </button>
-                                            ))
-                                        ) : !cepLoading && (
-                                            <div className="p-4 text-center text-sm text-muted-foreground">
-                                                Nenhum endereço encontrado.
-                                            </div>
-                                        )}
-                                    </div>
-                                )}
-                            </div>
-                            <FormInput
-                                label="Nº"
-                                value={formData.address_number}
-                                onChange={e => setFormData({ ...formData, address_number: e.target.value })}
-                                placeholder="123"
-                            />
-                            <FormInput
-                                label="Complemento"
-                                value={formData.address_complement}
-                                onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
-                                placeholder="Apto, Bloco, etc"
-                            />
-                            <FormInput
-                                label="Bairro"
-                                value={formData.address_neighborhood}
-                                onChange={e => setFormData({ ...formData, address_neighborhood: e.target.value })}
-                                placeholder="Bairro"
-                            />
-                            <div className="md:col-span-2">
-                                <FormInput
-                                    label="Cidade"
-                                    value={formData.address_city}
-                                    onChange={e => setFormData({ ...formData, address_city: e.target.value })}
-                                    placeholder="Cidade"
-                                />
-                            </div>
-                            <FormInput
-                                label="Estado"
-                                value={formData.address_state}
-                                onChange={e => setFormData({ ...formData, address_state: e.target.value })}
-                                maxLength={2}
-                            />
-                        </div>
-                    </div>
-
-                    {/* Notas */}
-                    <div className="space-y-4 pt-8 border-t border-border/50">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
-                        <FormTextarea
-                            value={formData.notes}
-                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                            placeholder="Alguma observação importante sobre o cliente..."
-                            rows={3}
-                        />
-                    </div>
-
-                    {/* Mídias e Docs */}
-                    <div className="space-y-4 pt-8 border-t border-border/50">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Mídias e Docs</h3>
-                        <MediaUpload
-                            pathPrefix={`clients/${tenantId}`}
-                            images={formData.images}
-                            videos={formData.videos}
-                            documents={formData.documents}
-                            onUpload={handleMediaUpload}
-                            onRemove={handleMediaRemove}
-                        />
-                    </div>
-                </form>
-            </Modal>
             <ClientFilterModal
                 isOpen={isFilterModalOpen}
                 onClose={() => setIsFilterModalOpen(false)}

@@ -4,6 +4,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { Switch } from '@/components/ui/Switch'
 import { Building2, Home } from 'lucide-react'
+import { formatCurrencyBRL } from '@/lib/utils/currency'
 
 interface BasicInfoFieldsProps {
     formData: any
@@ -141,22 +142,22 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                 {!isEmpreendimento && (
                     <FormInput
                         label="Preço (R$)"
-                        type="number"
                         value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: e.target.value })}
+                        onChange={(e) => setFormData({ ...formData, price: formatCurrencyBRL(e.target.value) })}
+                        placeholder="0,00"
                     />
                 )}
                 <FormInput
                     label="Condomínio (R$)"
-                    type="number"
                     value={formData.details.valor_condominio}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_condominio: e.target.value } })}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_condominio: formatCurrencyBRL(e.target.value) } })}
+                    placeholder="0,00"
                 />
                 <FormInput
                     label="IPTU (R$)"
-                    type="number"
                     value={formData.details.valor_iptu}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_iptu: e.target.value } })}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_iptu: formatCurrencyBRL(e.target.value) } })}
+                    placeholder="0,00"
                 />
             </div>
 

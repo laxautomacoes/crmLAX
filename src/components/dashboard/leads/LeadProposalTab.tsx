@@ -5,29 +5,42 @@ import { getProposal, saveProposal } from '@/app/_actions/proposals';
 import { createLeadDocument } from '@/app/_actions/documents';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormTextarea } from '@/components/shared/forms/FormTextarea';
-import { FileText, Loader2, Save, FileDown, Eye, Check } from 'lucide-react';
+import { User, Home, FileDown, Eye, Loader2, MapPin, Phone, Mail, CreditCard } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency';
 // @ts-expect-error - lodash/debounce does not have types installed
 import debounce from 'lodash/debounce';
 
 interface LeadProposalTabProps {
     leadId: string;
     tenantId: string;
+    contactId?: string;
+    propertyId?: string;
+    contactName?: string;
+    contactPhone?: string;
+    contactEmail?: string;
+    propertyInterest?: string;
 }
 
-export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
+export function LeadProposalTab({ 
+    leadId, 
+    tenantId, 
+    contactId, 
+    propertyId,
+    contactName,
+    contactPhone,
+    contactEmail,
+    propertyInterest
+}: LeadProposalTabProps) {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
     const [lastSaved, setLastSaved] = useState<string | null>(null);
     const [showPreview, setShowPreview] = useState(false);
+    const [contactData, setContactData] = useState<any>(null);
+    const [propertyData, setPropertyData] = useState<any>(null);
     
     const [formData, setFormData] = useState({
         value: '',
-        buyer_name: '',
-        buyer_cpf: '',
-        buyer_email: '',
-        buyer_phone: '',
-        buyer_address: '',
         down_payment: '',
         financing: '',
         installments: '',
@@ -43,22 +56,18 @@ export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
             const res = await getProposal(leadId);
             if (res.success && res.data) {
                 const p = res.data;
-                const buyer = p.buyer_data || {};
                 const terms = p.payment_terms || {};
                 setFormData({
-                    value: p.value?.toString() || '',
-                    buyer_name: buyer.name || '',
-                    buyer_cpf: buyer.cpf || '',
-                    buyer_email: buyer.email || '',
-                    buyer_phone: buyer.phone || '',
-                    buyer_address: buyer.address || '',
-                    down_payment: terms.down_payment?.toString() || '',
-                    financing: terms.financing?.toString() || '',
+                    value: p.value ? formatCurrencyBRL(Math.round(Number(p.value) * 100).toString()) : '',
+                    down_payment: terms.down_payment ? formatCurrencyBRL(Math.round(Number(terms.down_payment) * 100).toString()) : '',
+                    financing: terms.financing ? formatCurrencyBRL(Math.round(Number(terms.financing) * 100).toString()) : '',
                     installments: terms.installments || '',
                     permutas: terms.permutas || '',
                     notes: terms.notes || '',
                     status: p.status || 'rascunho'
                 });
+                if (p.contact) setContactData(p.contact);
+                if (p.property) setPropertyData(p.property);
                 if (p.updated_at) {
                     setLastSaved(new Date(p.updated_at).toLocaleTimeString('pt-BR'));
                 }
@@ -75,22 +84,17 @@ export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
             setSaving(true);
             
             const payload = {
-                value: currentData.value ? parseFloat(currentData.value) : 0,
-                buyer_data: {
-                    name: currentData.buyer_name,
-                    cpf: currentData.buyer_cpf,
-                    email: currentData.buyer_email,
-                    phone: currentData.buyer_phone,
-                    address: currentData.buyer_address
-                },
+                value: currentData.value ? parseCurrencyBRL(currentData.value) : 0,
                 payment_terms: {
-                    down_payment: currentData.down_payment ? parseFloat(currentData.down_payment) : 0,
-                    financing: currentData.financing ? parseFloat(currentData.financing) : 0,
+                    down_payment: currentData.down_payment ? parseCurrencyBRL(currentData.down_payment) : 0,
+                    financing: currentData.financing ? parseCurrencyBRL(currentData.financing) : 0,
                     installments: currentData.installments,
                     permutas: currentData.permutas,
                     notes: currentData.notes
                 },
-                status: currentData.status
+                status: currentData.status,
+                contact_id: contactId,
+                property_id: propertyId
             };
 
             const res = await saveProposal(leadId, tenantId, payload);
@@ -101,7 +105,7 @@ export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
             }
             setSaving(false);
         }, 1200),
-        [leadId, tenantId]
+        [leadId, tenantId, contactId, propertyId]
     );
 
     const handleInputChange = (field: string, val: string) => {
@@ -114,13 +118,11 @@ export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
     const handleGeneratePDF = async () => {
         setSaving(true);
         try {
-            // Em produção, isso compõe o PDF.
-            // Para simular, geramos o PDF base do HTML de visualização imprimível e salvamos no Storage
             toast.info('Gerando arquivo da proposta...');
             
-            const docName = `Proposta_${formData.buyer_name.replace(/\s+/g, '_') || 'Cliente'}.pdf`;
+            const buyerName = contactData?.name || contactName || 'Cliente';
+            const docName = `Proposta_${buyerName.replace(/\s+/g, '_')}.pdf`;
             
-            // Simular upload de arquivo de proposta
             const res = await createLeadDocument(leadId, tenantId, {
                 name: docName,
                 file_path: `https://mock-storage.crmlax.com/proposals/${leadId}/${docName}`,
@@ -129,7 +131,6 @@ export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
 
             if (res.success) {
                 toast.success('Documento da proposta gerado e salvo nos anexos com sucesso!');
-                // Forçar o status da proposta para "enviada"
                 handleInputChange('status', 'enviada');
             } else {
                 throw new Error(res.error);
@@ -149,121 +150,168 @@ export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
         );
     }
 
+    // Dados do cliente (da proposta salva ou do lead)
+    const displayName = contactData?.name || contactName || '—';
+    const displayPhone = contactData?.phone || contactPhone || '—';
+    const displayEmail = contactData?.email || contactEmail || '—';
+    const displayCpf = contactData?.cpf || '—';
+    const displayAddress = contactData ? [
+        contactData.address_street,
+        contactData.address_number,
+        contactData.address_neighborhood,
+        contactData.address_city && contactData.address_state 
+            ? `${contactData.address_city} - ${contactData.address_state}` 
+            : contactData.address_city
+    ].filter(Boolean).join(', ') || '—' : '—';
+
+    // Dados do imóvel
+    const displayPropertyTitle = propertyData?.title || propertyInterest || '—';
+    const displayPropertyPrice = propertyData?.price 
+        ? `R$ ${parseFloat(propertyData.price).toLocaleString('pt-BR')}` 
+        : '—';
+    const displayPropertyLocation = propertyData 
+        ? [propertyData.address_city, propertyData.address_state].filter(Boolean).join(' - ') 
+        : '—';
+
     return (
         <div className="space-y-5">
-            {/* Indicador de Salvamento */}
-            <div className="flex justify-between items-center bg-gray-50 dark:bg-muted/40 border border-gray-100 dark:border-border rounded-xl px-4 py-2.5">
-                <div className="flex items-center gap-2">
-                    <span className={`w-2 h-2 rounded-full ${saving ? 'bg-amber-400 animate-pulse' : 'bg-emerald-500'}`} />
-                    <span className="text-[10px] font-bold text-gray-500 dark:text-muted-foreground uppercase tracking-wider">
-                        {saving ? 'Salvando alterações...' : 'Sincronizado com o banco'}
-                    </span>
+            {/* Card: Proponente (read-only) */}
+            <div className="bg-card dark:bg-muted/10 p-4 rounded-xl border border-border/40">
+                <div className="flex items-center justify-between mb-3">
+                    <div className="flex items-center gap-2">
+                        <User size={14} className="text-accent-icon" />
+                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Proponente</h4>
+                    </div>
+                    {lastSaved && (
+                        <span className="text-[9px] text-muted-foreground font-bold">
+                            SALVO ÀS {lastSaved}
+                        </span>
+                    )}
                 </div>
-                {lastSaved && (
-                    <span className="text-[9px] text-muted-foreground font-bold">
-                        ÚLTIMO SALVAMENTO ÀS {lastSaved}
-                    </span>
-                )}
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-accent-icon/10 flex items-center justify-center shrink-0">
+                            <User size={14} className="text-accent-icon" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Nome</p>
+                            <p className="text-sm font-bold text-foreground truncate">{displayName}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-accent-icon/10 flex items-center justify-center shrink-0">
+                            <CreditCard size={14} className="text-accent-icon" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">CPF</p>
+                            <p className="text-sm font-bold text-foreground truncate">{displayCpf}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-accent-icon/10 flex items-center justify-center shrink-0">
+                            <Phone size={14} className="text-accent-icon" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Telefone</p>
+                            <p className="text-sm font-bold text-foreground truncate">{displayPhone}</p>
+                        </div>
+                    </div>
+                    <div className="flex items-center gap-2.5">
+                        <div className="w-8 h-8 rounded-full bg-accent-icon/10 flex items-center justify-center shrink-0">
+                            <Mail size={14} className="text-accent-icon" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">E-mail</p>
+                            <p className="text-sm font-bold text-foreground truncate">{displayEmail}</p>
+                        </div>
+                    </div>
+                    {displayAddress !== '—' && (
+                        <div className="md:col-span-2 flex items-center gap-2.5">
+                            <div className="w-8 h-8 rounded-full bg-accent-icon/10 flex items-center justify-center shrink-0">
+                                <MapPin size={14} className="text-accent-icon" />
+                            </div>
+                            <div className="min-w-0">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Endereço</p>
+                                <p className="text-sm font-bold text-foreground truncate">{displayAddress}</p>
+                            </div>
+                        </div>
+                    )}
+                </div>
             </div>
 
-            <div className="space-y-4">
-                {/* Lado Esquerdo: Comprador */}
-                <div className="space-y-4 bg-card dark:bg-muted/10 p-4 rounded-xl border border-border/40">
-                    <h4 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border/40 pb-2">Dados do Proponente</h4>
-                    
-                    <FormInput
-                        label="Nome do Comprador"
-                        value={formData.buyer_name}
-                        onChange={(e) => handleInputChange('buyer_name', e.target.value)}
-                        placeholder="Ex: João da Silva"
-                    />
-
-                    <div className="grid grid-cols-2 gap-3">
-                        <FormInput
-                            label="CPF"
-                            value={formData.buyer_cpf}
-                            onChange={(e) => handleInputChange('buyer_cpf', e.target.value)}
-                            placeholder="000.000.000-00"
-                        />
-                        <FormInput
-                            label="Telefone"
-                            value={formData.buyer_phone}
-                            onChange={(e) => handleInputChange('buyer_phone', e.target.value)}
-                            placeholder="(48) 99999-9999"
-                        />
+            {/* Card: Imóvel Vinculado */}
+            {(propertyData || propertyInterest) && (
+                <div className="bg-card dark:bg-muted/10 p-4 rounded-xl border border-border/40">
+                    <div className="flex items-center gap-2 mb-3">
+                        <Home size={14} className="text-accent-icon" />
+                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Imóvel Vinculado</h4>
                     </div>
-
-                    <FormInput
-                        label="E-mail"
-                        value={formData.buyer_email}
-                        onChange={(e) => handleInputChange('buyer_email', e.target.value)}
-                        placeholder="joao@exemplo.com"
-                    />
-
-                    <FormInput
-                        label="Endereço"
-                        value={formData.buyer_address}
-                        onChange={(e) => handleInputChange('buyer_address', e.target.value)}
-                        placeholder="Rua, Número, Bairro, Cidade - UF"
-                    />
+                    <div className="flex items-center gap-4">
+                        <div className="flex-1 min-w-0">
+                            <p className="text-sm font-bold text-foreground truncate">{displayPropertyTitle}</p>
+                            {displayPropertyLocation !== '—' && (
+                                <p className="text-xs text-muted-foreground mt-0.5">{displayPropertyLocation}</p>
+                            )}
+                        </div>
+                        {displayPropertyPrice !== '—' && (
+                            <span className="text-sm font-bold text-accent-icon whitespace-nowrap">{displayPropertyPrice}</span>
+                        )}
+                    </div>
                 </div>
+            )}
 
-                {/* Lado Direito: Condições */}
-                <div className="space-y-4 bg-card dark:bg-muted/10 p-4 rounded-xl border border-border/40">
-                    <h4 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border/40 pb-2">Condições Comerciais</h4>
+            {/* Condições Comerciais */}
+            <div className="space-y-4 bg-card dark:bg-muted/10 p-4 rounded-xl border border-border/40">
+                <h4 className="text-xs font-bold text-foreground uppercase tracking-wider border-b border-border/40 pb-2">Condições Comerciais</h4>
 
                     <div className="grid grid-cols-3 gap-3">
-                        <div className="col-span-1">
-                            <FormInput
-                                label="Valor Total (R$)"
-                                type="number"
-                                value={formData.value}
-                                onChange={(e) => handleInputChange('value', e.target.value)}
-                                placeholder="0.00"
-                            />
-                        </div>
-                        <div className="col-span-1">
-                            <FormInput
-                                label="Sinal/Entrada"
-                                type="number"
-                                value={formData.down_payment}
-                                onChange={(e) => handleInputChange('down_payment', e.target.value)}
-                                placeholder="0.00"
-                            />
-                        </div>
-                        <div className="col-span-1">
-                            <FormInput
-                                label="Saldo Financiado"
-                                type="number"
-                                value={formData.financing}
-                                onChange={(e) => handleInputChange('financing', e.target.value)}
-                                placeholder="0.00"
-                            />
-                        </div>
+                    <div className="col-span-1">
+                        <FormInput
+                            label="Valor Total (R$)"
+                            value={formData.value}
+                            onChange={(e) => handleInputChange('value', formatCurrencyBRL(e.target.value))}
+                            placeholder="0,00"
+                        />
                     </div>
-
-                    <FormInput
-                        label="Parcelamento Direto"
-                        value={formData.installments}
-                        onChange={(e) => handleInputChange('installments', e.target.value)}
-                        placeholder="Ex: 12 parcelas de R$ 5.000 + 2 reforços semestrais de R$ 20.000"
-                    />
-
-                    <FormInput
-                        label="Permutas / Bens Recebidos"
-                        value={formData.permutas}
-                        onChange={(e) => handleInputChange('permutas', e.target.value)}
-                        placeholder="Ex: Carro Toyota Corolla 2022 avaliado em R$ 120.000"
-                    />
-
-                    <FormTextarea
-                        label="Observações Adicionais"
-                        value={formData.notes}
-                        onChange={(e) => handleInputChange('notes', e.target.value)}
-                        rows={2}
-                        placeholder="Detalhes específicos acordados..."
-                    />
+                    <div className="col-span-1">
+                        <FormInput
+                            label="Sinal/Entrada"
+                            value={formData.down_payment}
+                            onChange={(e) => handleInputChange('down_payment', formatCurrencyBRL(e.target.value))}
+                            placeholder="0,00"
+                        />
+                    </div>
+                    <div className="col-span-1">
+                        <FormInput
+                            label="Saldo Financiado"
+                            value={formData.financing}
+                            onChange={(e) => handleInputChange('financing', formatCurrencyBRL(e.target.value))}
+                            placeholder="0,00"
+                        />
+                    </div>
                 </div>
+
+                <FormInput
+                    label="Parcelamento Direto"
+                    value={formData.installments}
+                    onChange={(e) => handleInputChange('installments', e.target.value)}
+                    placeholder="Ex: 12 parcelas de R$ 5.000 + 2 reforços semestrais de R$ 20.000"
+                />
+
+                <FormInput
+                    label="Permutas / Bens Recebidos"
+                    value={formData.permutas}
+                    onChange={(e) => handleInputChange('permutas', e.target.value)}
+                    placeholder="Ex: Carro Toyota Corolla 2022 avaliado em R$ 120.000"
+                />
+
+                <FormTextarea
+                    label="Observações Adicionais"
+                    value={formData.notes}
+                    onChange={(e) => handleInputChange('notes', e.target.value)}
+                    rows={2}
+                    placeholder="Detalhes específicos acordados..."
+                />
             </div>
 
             {/* Ações */}
@@ -277,7 +325,7 @@ export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
                 </button>
                 <button
                     onClick={handleGeneratePDF}
-                    disabled={!formData.buyer_name || !formData.value}
+                    disabled={!formData.value}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all disabled:opacity-50"
                 >
                     <FileDown size={14} />
@@ -305,17 +353,33 @@ export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
                         <div>
                             <h3 className="font-bold text-[#404F4F] border-b border-gray-100 pb-1 mb-2 uppercase">1. Qualificação do Proponente</h3>
                             <div className="grid grid-cols-2 gap-2 text-gray-700">
-                                <p><strong>Nome:</strong> {formData.buyer_name || '—'}</p>
-                                <p><strong>CPF:</strong> {formData.buyer_cpf || '—'}</p>
-                                <p><strong>E-mail:</strong> {formData.buyer_email || '—'}</p>
-                                <p><strong>Telefone:</strong> {formData.buyer_phone || '—'}</p>
-                                <p className="col-span-2"><strong>Endereço:</strong> {formData.buyer_address || '—'}</p>
+                                <p><strong>Nome:</strong> {displayName}</p>
+                                <p><strong>CPF:</strong> {displayCpf}</p>
+                                <p><strong>E-mail:</strong> {displayEmail}</p>
+                                <p><strong>Telefone:</strong> {displayPhone}</p>
+                                {displayAddress !== '—' && (
+                                    <p className="col-span-2"><strong>Endereço:</strong> {displayAddress}</p>
+                                )}
                             </div>
                         </div>
 
+                        {/* Imóvel */}
+                        {(propertyData || propertyInterest) && (
+                            <div>
+                                <h3 className="font-bold text-[#404F4F] border-b border-gray-100 pb-1 mb-2 uppercase">2. Imóvel</h3>
+                                <div className="grid grid-cols-2 gap-2 text-gray-700">
+                                    <p><strong>Imóvel:</strong> {displayPropertyTitle}</p>
+                                    <p><strong>Valor:</strong> {displayPropertyPrice}</p>
+                                    {displayPropertyLocation !== '—' && (
+                                        <p><strong>Localização:</strong> {displayPropertyLocation}</p>
+                                    )}
+                                </div>
+                            </div>
+                        )}
+
                         {/* Condições Financeiras */}
                         <div>
-                            <h3 className="font-bold text-[#404F4F] border-b border-gray-100 pb-1 mb-2 uppercase">2. Condições de Pagamento</h3>
+                            <h3 className="font-bold text-[#404F4F] border-b border-gray-100 pb-1 mb-2 uppercase">{propertyData || propertyInterest ? '3' : '2'}. Condições de Pagamento</h3>
                             <div className="grid grid-cols-3 gap-2 text-gray-700">
                                 <p><strong>Valor Proposto:</strong> R$ {formData.value ? parseFloat(formData.value).toLocaleString('pt-BR') : '0,00'}</p>
                                 <p><strong>Sinal/Entrada:</strong> R$ {formData.down_payment ? parseFloat(formData.down_payment).toLocaleString('pt-BR') : '0,00'}</p>
@@ -328,7 +392,7 @@ export function LeadProposalTab({ leadId, tenantId }: LeadProposalTabProps) {
                         {/* Notas */}
                         {formData.notes && (
                             <div>
-                                <h3 className="font-bold text-[#404F4F] border-b border-gray-100 pb-1 mb-2 uppercase">3. Observações</h3>
+                                <h3 className="font-bold text-[#404F4F] border-b border-gray-100 pb-1 mb-2 uppercase">{propertyData || propertyInterest ? '4' : '3'}. Observações</h3>
                                 <p className="text-gray-700 leading-relaxed italic">{formData.notes}</p>
                             </div>
                         )}

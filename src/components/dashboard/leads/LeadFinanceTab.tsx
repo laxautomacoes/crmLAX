@@ -7,6 +7,7 @@ import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { DollarSign, Loader2, Calendar, Check, AlertTriangle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
 import { toast } from 'sonner';
+import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency';
 
 interface Installment {
     id: string;
@@ -86,14 +87,14 @@ export function LeadFinanceTab({ leadId, tenantId, assignedToId }: LeadFinanceTa
 
     const handleInvoiceSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!saleValue || parseFloat(saleValue) <= 0) {
+        if (!saleValue || parseCurrencyBRL(saleValue) <= 0) {
             toast.error('Informe o valor final de venda.');
             return;
         }
 
         setSaving(true);
         const res = await invoiceLeadCommission(leadId, tenantId, {
-            saleValue: parseFloat(saleValue),
+            saleValue: parseCurrencyBRL(saleValue),
             commissionRate: parseFloat(commissionRate),
             installmentsCount: parseInt(installmentsCount),
             firstDueDate,
@@ -111,7 +112,7 @@ export function LeadFinanceTab({ leadId, tenantId, assignedToId }: LeadFinanceTa
     };
 
     // Cálculos em tempo real
-    const valVenda = parseFloat(saleValue) || 0;
+    const valVenda = parseCurrencyBRL(saleValue);
     const taxaComm = parseFloat(commissionRate) || 0;
     const totalComm = (valVenda * taxaComm) / 100;
     const numParcelas = parseInt(installmentsCount) || 1;
@@ -134,10 +135,9 @@ export function LeadFinanceTab({ leadId, tenantId, assignedToId }: LeadFinanceTa
                         <div className="grid grid-cols-2 gap-3">
                             <FormInput
                                 label="Valor da Venda (R$)"
-                                type="number"
                                 value={saleValue}
-                                onChange={(e) => setSaleValue(e.target.value)}
-                                placeholder="0.00"
+                                onChange={(e) => setSaleValue(formatCurrencyBRL(e.target.value))}
+                                placeholder="0,00"
                                 required
                             />
                             <FormInput

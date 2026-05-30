@@ -9,6 +9,7 @@ import { createEmailBulkCampaign, sendBulkEmailsBatch, getLeadsForEmailBulk } fr
 import { getEmailDomains } from '@/app/_actions/email-domains'
 import { fetchGoogleSheetData, fetchGoogleSheetTabs } from '@/app/_actions/whatsapp-bulk'
 import * as XLSX from 'xlsx'
+import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 
 interface Recipient {
     name: string
@@ -166,8 +167,8 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
         if (filters.nameQuery) apiFilters.nameQuery = filters.nameQuery
         if (filters.propertyName) apiFilters.propertyName = filters.propertyName
         if (filters.propertyType) apiFilters.propertyType = filters.propertyType
-        if (filters.minPrice) apiFilters.minPrice = parseInt(filters.minPrice)
-        if (filters.maxPrice) apiFilters.maxPrice = parseInt(filters.maxPrice)
+        if (filters.minPrice) apiFilters.minPrice = parseCurrencyBRL(filters.minPrice)
+        if (filters.maxPrice) apiFilters.maxPrice = parseCurrencyBRL(filters.maxPrice)
         if (filters.bedrooms && filters.bedrooms !== 'any') apiFilters.bedrooms = filters.bedrooms
 
         const result = await getLeadsForEmailBulk(tenantId, apiFilters)
@@ -360,8 +361,8 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                                     </select>
 
                                     <div className="grid grid-cols-2 gap-2">
-                                        <input type="number" placeholder="Valor Mínimo" value={filters.minPrice} onChange={e => setFilters({...filters, minPrice: e.target.value})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
-                                        <input type="number" placeholder="Valor Máximo" value={filters.maxPrice} onChange={e => setFilters({...filters, maxPrice: e.target.value})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
+                                        <input type="text" placeholder="Valor Mínimo" value={filters.minPrice} onChange={e => setFilters({...filters, minPrice: formatCurrencyBRL(e.target.value)})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
+                                        <input type="text" placeholder="Valor Máximo" value={filters.maxPrice} onChange={e => setFilters({...filters, maxPrice: formatCurrencyBRL(e.target.value)})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
                                     </div>
 
                                     <select value={filters.bedrooms} onChange={e => setFilters({...filters, bedrooms: e.target.value})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs appearance-none">

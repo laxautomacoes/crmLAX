@@ -11,9 +11,10 @@ interface ModalProps {
     size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
     titleClassName?: string;
     extraHeaderContent?: React.ReactNode;
+    align?: 'center' | 'top';
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md', titleClassName, extraHeaderContent }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', titleClassName, extraHeaderContent, align = 'center' }: ModalProps) {
     const sizeClasses = {
         sm: 'max-w-sm',
         md: 'max-w-md',
@@ -41,7 +42,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
     if (!isOpen) return null;
 
     return (
-        <div className="fixed inset-0 z-[100] flex items-center justify-center bg-black/50 backdrop-blur-sm p-4" onClick={onClose}>
+        <div className={`fixed inset-0 z-[100] flex ${align === 'top' ? 'items-start pt-8 md:pt-12' : 'items-center'} justify-center bg-black/50 backdrop-blur-sm p-4`} onClick={onClose}>
             <div onClick={(e) => e.stopPropagation()} className={`bg-card rounded-xl shadow-xl w-full ${sizeClasses[size]} max-h-[95vh] md:max-h-[90vh] flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative`}>
                 {title ? (
                     <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border shrink-0 gap-3 md:gap-4">

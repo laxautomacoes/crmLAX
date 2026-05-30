@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { MapPin, Search } from 'lucide-react';
+import { formatCurrencyBRL } from '@/lib/utils/currency';
 
 interface LocationFiltersProps {
     onSearch: (filters: { uf: string; city: string; neighborhood: string; propertyType?: string; bedrooms?: string; priceMin?: string; priceMax?: string; }) => void;
@@ -89,20 +90,20 @@ export function LocationFilters({ onSearch, loading }: LocationFiltersProps) {
                 <div className="w-full">
                     <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1">Preço Mínimo</label>
                     <input
-                        type="number"
+                        type="text"
                         value={priceMin}
-                        onChange={(e) => setPriceMin(e.target.value)}
-                        placeholder="R$ Mín."
+                        onChange={(e) => setPriceMin(formatCurrencyBRL(e.target.value))}
+                        placeholder="0,00"
                         className="w-full rounded-lg border border-muted-foreground/30 bg-card px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-foreground"
                     />
                 </div>
                 <div className="w-full">
                     <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1">Preço Máximo</label>
                     <input
-                        type="number"
+                        type="text"
                         value={priceMax}
-                        onChange={(e) => setPriceMax(e.target.value)}
-                        placeholder="R$ Máx."
+                        onChange={(e) => setPriceMax(formatCurrencyBRL(e.target.value))}
+                        placeholder="0,00"
                         className="w-full rounded-lg border border-muted-foreground/30 bg-card px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-foreground"
                     />
                 </div>

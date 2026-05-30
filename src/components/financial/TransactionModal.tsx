@@ -6,6 +6,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import type { Transaction, FinancialCategory } from '@/app/_actions/financial'
+import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 
 interface TransactionModalProps {
     isOpen: boolean
@@ -32,7 +33,7 @@ export function TransactionModal({
     useEffect(() => {
         if (editingTransaction) {
             setTipo(editingTransaction.tipo)
-            setValor(String(editingTransaction.valor))
+            setValor(editingTransaction.valor ? formatCurrencyBRL(Math.round(Number(editingTransaction.valor) * 100).toString()) : '')
             setCategoria(editingTransaction.categoria || '')
             setDescricao(editingTransaction.descricao || '')
             setDataTransacao(editingTransaction.data_transacao?.split('T')[0] || '')
@@ -54,12 +55,12 @@ export function TransactionModal({
     }
 
     const handleSubmit = async () => {
-        if (!valor || Number(valor) <= 0) return
+        if (!valor || parseCurrencyBRL(valor) <= 0) return
         setLoading(true)
 
         try {
             await onSubmit({
-                valor: Number(valor),
+                valor: parseCurrencyBRL(valor),
                 tipo,
                 categoria: categoria || null,
                 descricao: descricao || null,
@@ -118,9 +119,8 @@ export function TransactionModal({
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <FormInput
                         label="Valor (R$)"
-                        type="number"
                         value={valor}
-                        onChange={(e) => setValor(e.target.value)}
+                        onChange={(e) => setValor(formatCurrencyBRL(e.target.value))}
                         placeholder="0,00"
                         required
                     />
@@ -186,7 +186,7 @@ export function TransactionModal({
                 {/* Botão Submit */}
                 <button
                     onClick={handleSubmit}
-                    disabled={loading || !valor || Number(valor) <= 0}
+                    disabled={loading || !valor || parseCurrencyBRL(valor) <= 0}
                     className="w-full py-3 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 transition-all active:scale-[0.99] disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {loading ? 'Salvando...' : isEditing ? 'Atualizar Transação' : 'Registrar Transação'}
