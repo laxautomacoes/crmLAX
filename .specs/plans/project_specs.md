@@ -70,6 +70,15 @@ Regra de Contraste: Amarelo (#FFE600) nunca deve ser usado para texto/ícones so
 Padrões Mobile:
 - Espaçamento entre Título e Subtítulo: Sempre utilizar `mt-4` no mobile para garantir legibilidade e respiro visual (Padrão de Sistema).
 
+Padrões de Modais (Separadores de Seção):
+- Container principal do formulário: `space-y-8` (32px de gap entre seções filhas).
+- Primeira seção (sem separador): `space-y-4` (16px entre título e conteúdo interno).
+- Demais seções (com separador): `space-y-4 pt-8 border-t border-border/50` (32px padding-top acima do conteúdo + linha separadora).
+- Distância total entre seções: 64px (32px do space-y-8 + 32px do pt-8).
+- Títulos de seção: `<h3 className="text-sm font-bold text-foreground uppercase tracking-widest">`.
+- NÃO usar `<hr>` com `py-3` como separadores. Usar sempre `border-t` no div da seção.
+- Cada seção deve ser filha direta do container `space-y-8` (não aninhar seções dentro de outras).
+
 Interface CRM: Sidebar colapsável, Kanban com Drag & Drop (Touch-friendly).
 
 Interface Site: Galeria de fotos otimizada, busca com filtros (Tipo, Quartos, Preço).

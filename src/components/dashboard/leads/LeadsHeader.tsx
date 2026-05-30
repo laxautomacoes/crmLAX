@@ -6,6 +6,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 interface Broker {
     id: string
     full_name: string
+    role?: string
 }
 
 interface LeadsHeaderProps {
@@ -31,7 +32,7 @@ export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin }: Lead
                         className="appearance-none pl-10 pr-4 py-2 bg-card border border-muted-foreground/30 rounded-lg text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-primary/20 transition-all cursor-pointer hover:bg-muted/10"
                     >
                         <option value="all">Todos corretores</option>
-                        {brokers.map((broker) => (
+                        {brokers.filter((broker) => broker.role !== 'admin' && broker.role !== 'superadmin').map((broker) => (
                             <option key={broker.id} value={broker.id}>
                                 {broker.full_name}
                             </option>

@@ -24,8 +24,8 @@ function SortIcon({ column, activeColumn, direction }: { column: string, activeC
         return <ArrowUpDown size={12} className="text-muted-foreground/50" />
     }
     return direction === 'asc'
-        ? <ChevronUp size={12} className="text-secondary" />
-        : <ChevronDown size={12} className="text-secondary" />
+        ? <ChevronUp size={12} className="text-accent-icon" />
+        : <ChevronDown size={12} className="text-accent-icon" />
 }
 
 export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onApprove, onArchive, onTogglePublish, userRole, userId, sortColumn, sortDirection, onSort }: PropertyListProps) {

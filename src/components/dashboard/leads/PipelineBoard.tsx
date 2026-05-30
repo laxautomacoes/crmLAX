@@ -108,7 +108,7 @@ function SortableStageColumn({
     }
 
     return (
-        <div ref={setNodeRef} style={style} className="group/stage relative">
+        <div ref={setNodeRef} style={style} className="group/stage relative h-full">
             {/* Drag handle - barra sutil no topo */}
             <div
                 {...attributes}
@@ -252,6 +252,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
     const stageIds = stages.map(s => `stage-${s.id}`)
 
     return (
+        <div className="flex-1 min-h-0 flex flex-col">
         <DndContext
             sensors={sensors}
             collisionDetection={closestCorners}
@@ -259,7 +260,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
             onDragEnd={handleDragEnd}
         >
             <SortableContext items={stageIds} strategy={horizontalListSortingStrategy}>
-                <div className="flex gap-4 md:gap-6 overflow-x-auto pb-6 -mx-4 md:-mx-8 px-4 md:px-8 custom-scrollbar h-[calc(100vh-280px)] md:h-[calc(100vh-220px)]">
+                <div className="flex gap-4 md:gap-6 overflow-x-auto pb-6 -mx-4 md:-mx-8 px-4 md:px-8 custom-scrollbar flex-1 min-h-0">
                     {stages.map((stage) => (
                         <SortableStageColumn
                             key={stage.id}
@@ -279,7 +280,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
                         <div className="shrink-0 w-[40px]">
                             <button
                                 onClick={onAddStage}
-                                className="w-full h-full flex items-center justify-center border border-secondary/20 hover:border-secondary/40 rounded-lg bg-secondary/10 hover:bg-secondary/20 transition-all group"
+                                className="w-full h-full flex items-center justify-center border border-muted-foreground/30 hover:border-muted-foreground/50 rounded-xl bg-card hover:bg-card transition-all group"
                                 title="Novo Estágio"
                             >
                                 <Plus size={22} className="text-muted-foreground group-hover:text-foreground transition-colors" />
@@ -323,5 +324,6 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
                 ) : null}
             </DragOverlay>
         </DndContext>
+        </div>
     )
 }

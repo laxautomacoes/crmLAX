@@ -153,14 +153,10 @@ export function ClientListItem({
                         />
                     </div>
                 </td>
-                <td className="px-4 py-5 text-center w-16">
-                    <button className={`p-2 rounded-lg bg-card border border-border group-hover:border-border/80 transition-all ${isExpanded ? 'rotate-180 shadow-sm' : ''}`}>
-                        <ChevronDown size={18} className="text-muted-foreground" />
-                    </button>
-                </td>
+
             </tr>
             <tr>
-                <td colSpan={7} className="p-0 border-none">
+                <td colSpan={6} className="p-0 border-none">
                     <AnimatePresence>
                         {isExpanded && (
                             <motion.div

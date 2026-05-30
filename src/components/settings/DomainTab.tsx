@@ -157,7 +157,7 @@ export function DomainTab() {
     return (
         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             {!isPro ? (
-                <div className="bg-card border border-border rounded-2xl p-8 flex flex-col items-center text-center space-y-6">
+                <div className="bg-card border border-border rounded-xl p-8 flex flex-col items-center text-center space-y-6">
                     <div className="w-16 h-16 bg-secondary/10 rounded-full flex items-center justify-center text-secondary">
                         <Globe size={32} />
                     </div>
@@ -172,15 +172,11 @@ export function DomainTab() {
                     </button>
                 </div>
             ) : (
-                <div className="bg-card border border-border rounded-2xl p-6">
-                    <div className="mb-6">
-                        <h3 className="text-lg font-bold text-foreground">Domínio Customizado</h3>
-                        <p className="text-sm text-muted-foreground">Configure um domínio oficial para seu site vitrine.</p>
-                    </div>
+                <div className="bg-card border border-border rounded-xl p-6">
 
                     <div className="space-y-6">
                         <div className="max-w-xl">
-                            <label className="text-sm font-bold text-gray-800 ml-1 mb-2 block uppercase tracking-wider">Seu Domínio</label>
+                            <label className="text-sm font-bold text-muted-foreground ml-1 mb-2 block uppercase tracking-wider">Seu Domínio</label>
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
                                     <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
@@ -329,20 +325,20 @@ export function DomainTab() {
                                 </div>
 
                                 {/* CRM WHITE-LABEL SECTION */}
-                                <div className="bg-gradient-to-br from-[#404F4F]/5 to-transparent border border-[#404F4F]/10 rounded-2xl p-6 relative overflow-hidden group">
+                                <div className="bg-card border border-border rounded-xl p-6 relative overflow-hidden group">
                                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
-                                        <LayoutDashboard size={80} className="text-[#404F4F]" />
+                                        <LayoutDashboard size={80} className="text-muted-foreground" />
                                     </div>
                                     
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-2 mb-4">
-                                            <div className="p-2 bg-[#404F4F]/10 rounded-lg text-[#404F4F]">
+                                            <div className="p-2 bg-foreground/10 rounded-lg text-foreground">
                                                 <ShieldCheck size={20} />
                                             </div>
                                             <div className="flex-1 flex items-center justify-between">
-                                                <h3 className="text-lg font-bold text-[#404F4F]">CRM White-label</h3>
+                                                <h3 className="text-lg font-bold text-foreground">CRM White-label</h3>
                                                 {tenant?.custom_domain_crm_verified ? (
-                                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-green-100 text-green-700 rounded-full text-[10px] font-bold border border-green-200">
+                                                    <div className="flex items-center gap-1.5 px-3 py-1 bg-green-500/10 text-green-500 rounded-full text-[10px] font-bold border border-green-500/20">
                                                         <CheckCircle2 size={12} />
                                                         VERIFICADO
                                                     </div>
@@ -350,7 +346,7 @@ export function DomainTab() {
                                                     <button 
                                                         onClick={handleVerifyCRM}
                                                         disabled={verifyingCRM}
-                                                        className="px-4 py-1.5 bg-[#404F4F] text-white rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
+                                                        className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
                                                     >
                                                         {verifyingCRM ? <Loader2 size={14} className="animate-spin" /> : <ShieldCheck size={14} />}
                                                         Verificar Subdomínio
@@ -365,38 +361,38 @@ export function DomainTab() {
                                         </p>
 
                                         <div className="space-y-4">
-                                            <div className="p-4 border border-[#404F4F]/10 bg-white/50 rounded-xl">
+                                            <div className="p-4 border border-border bg-foreground/5 rounded-xl">
                                                 <div className="flex items-center justify-between mb-2">
                                                     <span className="text-[10px] font-bold text-muted-foreground uppercase">Endereço de Acesso</span>
                                                 </div>
                                                 <div className="flex items-center justify-between">
-                                                    <code className="text-sm font-bold text-[#404F4F]">crm.{tenant.custom_domain}</code>
+                                                    <code className="text-sm font-bold text-foreground">crm.{tenant.custom_domain}</code>
                                                     <button 
                                                         onClick={() => copyToClipboard(`crm.${tenant.custom_domain}`, 'URL do CRM')}
-                                                        className="text-[#404F4F] hover:text-[#404F4F]/70 transition-colors"
+                                                        className="text-muted-foreground hover:text-foreground transition-colors"
                                                     >
                                                         <Copy size={14} />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div className="p-4 border border-amber-100 bg-amber-50/30 rounded-xl">
-                                                <div className="flex items-center gap-2 mb-2 text-amber-700">
+                                            <div className="p-4 border border-amber-500/20 bg-amber-500/10 rounded-xl">
+                                                <div className="flex items-center gap-2 mb-2 text-amber-500">
                                                     <AlertCircle size={14} />
                                                     <span className="text-[10px] font-bold uppercase">Configuração Necessária</span>
                                                 </div>
                                                 <div className="grid grid-cols-3 gap-2 text-[10px]">
                                                     <div>
                                                         <p className="text-muted-foreground mb-1">TIPO</p>
-                                                        <p className="font-bold text-amber-900">CNAME</p>
+                                                        <p className="font-bold text-amber-500">CNAME</p>
                                                     </div>
                                                     <div>
                                                         <p className="text-muted-foreground mb-1">HOST</p>
-                                                        <p className="font-bold text-amber-900">crm</p>
+                                                        <p className="font-bold text-amber-500">crm</p>
                                                     </div>
                                                     <div>
                                                         <p className="text-muted-foreground mb-1">VALOR</p>
-                                                        <p className="font-bold text-amber-900">cname.vercel-dns.com</p>
+                                                        <p className="font-bold text-amber-500">cname.vercel-dns.com</p>
                                                     </div>
                                                 </div>
                                             </div>

@@ -4,10 +4,11 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ProfileTab } from '@/components/settings/ProfileTab';
 import { BrandingTab } from '@/components/settings/BrandingTab';
-import { DomainTab } from '@/components/settings/DomainTab';
-import { EmailSettingsForm } from '@/components/settings/emails/EmailSettingsForm';
+
+
 import { TemplatesTab } from '@/components/settings/TemplatesTab';
 import { SourcesTab } from '@/components/settings/SourcesTab';
+import { EmailDomainsTab } from '@/components/settings/EmailDomainsTab';
 import { getProfile } from '@/app/_actions/profile';
 import { PageHeader } from '@/components/shared/PageHeader';
 
@@ -45,10 +46,11 @@ export default function SettingsPage() {
 
     if (hasBrandingAccess) {
         tabs.push({ id: 'identity', label: 'Identidade' });
-        tabs.push({ id: 'emails', label: 'E-mails' });
-        tabs.push({ id: 'domain', label: 'Domínio' });
+
+
         tabs.push({ id: 'sources', label: 'Origens' });
         tabs.push({ id: 'templates', label: 'Templates' });
+        tabs.push({ id: 'email-domains', label: 'Domínios de E-mail' });
     }
 
     if (loading) return null;
@@ -57,8 +59,8 @@ export default function SettingsPage() {
         switch (activeTab) {
             case 'profile': return 'Meu Perfil';
             case 'identity': return 'Identidade da Empresa';
-            case 'emails': return 'Configurações de E-mail';
-            case 'domain': return 'Domínio Personalizado';
+
+
             case 'templates': return 'Templates de Proposta';
             case 'sources': return 'Origens de Leads';
             default: return 'Configurações';
@@ -92,10 +94,11 @@ export default function SettingsPage() {
             <div>
                 {activeTab === 'profile' && <ProfileTab />}
                 {activeTab === 'identity' && <BrandingTab />}
-                {activeTab === 'emails' && <EmailSettingsForm />}
-                {activeTab === 'domain' && <DomainTab />}
+
+
                 {activeTab === 'templates' && tenantId && <TemplatesTab tenantId={tenantId} />}
                 {activeTab === 'sources' && tenantId && <SourcesTab tenantId={tenantId} />}
+                {activeTab === 'email-domains' && tenantId && <EmailDomainsTab tenantId={tenantId} />}
             </div>
         </div>
     );

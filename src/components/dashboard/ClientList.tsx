@@ -283,8 +283,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     const SortIcon = ({ field }: { field: 'name' | 'created_at' }) => {
         if (sortField !== field) return <ArrowUpDown size={12} className="opacity-40 ml-1" />
         return sortDirection === 'asc'
-            ? <ArrowUp size={12} className="text-secondary ml-1" />
-            : <ArrowDown size={12} className="text-secondary ml-1" />
+            ? <ArrowUp size={12} className="text-accent-icon ml-1" />
+            : <ArrowDown size={12} className="text-accent-icon ml-1" />
     }
 
     const handleEdit = (client: any) => {
@@ -503,7 +503,6 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                         </span>
                                     </th>
                                     <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '10%' }}>Ações</th>
-                                    <th className="px-4 py-4 text-xs font-bold text-muted-foreground uppercase tracking-wider text-center" style={{ width: '5%' }}></th>
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-muted-foreground/30">
@@ -690,45 +689,45 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                 ]}
                             />
                         </div>
+                    </div>
 
-                        {/* Cônjuge | Sócio */}
-                        <div className="mt-8 pt-8 border-t border-border/50 space-y-4">
-                            <h4 className="text-sm font-bold text-foreground uppercase tracking-widest">Cônjuge | Sócio</h4>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="md:col-span-2">
-                                    <FormInput
-                                        label="Nome Completo"
-                                        value={formData.spouse_name}
-                                        onChange={e => setFormData({ ...formData, spouse_name: e.target.value })}
-                                        placeholder="Nome do cônjuge ou sócio"
-                                    />
-                                </div>
+                    {/* Cônjuge | Sócio */}
+                    <div className="space-y-4 pt-8 border-t border-border/50">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Cônjuge | Sócio</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div className="md:col-span-2">
                                 <FormInput
-                                    label="E-mail"
-                                    type="email"
-                                    value={formData.spouse_email}
-                                    onChange={e => setFormData({ ...formData, spouse_email: e.target.value })}
-                                    placeholder="email@exemplo.com"
-                                />
-                                <FormInput
-                                    label="Telefone / WhatsApp"
-                                    value={formData.spouse_phone}
-                                    onChange={e => setFormData({ ...formData, spouse_phone: formatPhone(e.target.value) })}
-                                    placeholder="(48) 99999 9999"
-                                />
-                                <FormInput
-                                    label="CPF"
-                                    value={formData.spouse_cpf}
-                                    onChange={e => setFormData({ ...formData, spouse_cpf: e.target.value })}
-                                    placeholder="000.000.000-00"
-                                />
-                                <FormInput
-                                    label="Data de Nascimento"
-                                    type="date"
-                                    value={formData.spouse_birth_date}
-                                    onChange={e => setFormData({ ...formData, spouse_birth_date: e.target.value })}
+                                    label="Nome Completo"
+                                    value={formData.spouse_name}
+                                    onChange={e => setFormData({ ...formData, spouse_name: e.target.value })}
+                                    placeholder="Nome do cônjuge ou sócio"
                                 />
                             </div>
+                            <FormInput
+                                label="E-mail"
+                                type="email"
+                                value={formData.spouse_email}
+                                onChange={e => setFormData({ ...formData, spouse_email: e.target.value })}
+                                placeholder="email@exemplo.com"
+                            />
+                            <FormInput
+                                label="Telefone / WhatsApp"
+                                value={formData.spouse_phone}
+                                onChange={e => setFormData({ ...formData, spouse_phone: formatPhone(e.target.value) })}
+                                placeholder="(48) 99999 9999"
+                            />
+                            <FormInput
+                                label="CPF"
+                                value={formData.spouse_cpf}
+                                onChange={e => setFormData({ ...formData, spouse_cpf: e.target.value })}
+                                placeholder="000.000.000-00"
+                            />
+                            <FormInput
+                                label="Data de Nascimento"
+                                type="date"
+                                value={formData.spouse_birth_date}
+                                onChange={e => setFormData({ ...formData, spouse_birth_date: e.target.value })}
+                            />
                         </div>
                     </div>
 
@@ -829,7 +828,6 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     <div className="space-y-4 pt-8 border-t border-border/50">
                         <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
                         <FormTextarea
-                            label="Notas/Observações"
                             value={formData.notes}
                             onChange={e => setFormData({ ...formData, notes: e.target.value })}
                             placeholder="Alguma observação importante sobre o cliente..."

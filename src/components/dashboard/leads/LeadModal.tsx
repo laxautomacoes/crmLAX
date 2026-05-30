@@ -21,6 +21,7 @@ import { LeadFinanceTab } from './LeadFinanceTab'
 interface Broker {
     id: string
     full_name: string
+    role?: string
 }
 
 interface NamedOption {
@@ -401,199 +402,218 @@ export function LeadModal({
                 )}
 
                 {activeTab === 'info' ? (
+                    <div className="space-y-8">
+                    {/* Seção: Dados Pessoais */}
                     <div className="space-y-4">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    {/* Linha 1: Nome e Data */}
-                    <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
-                        <div className="flex-1 md:flex-[2]">
-                            <FormInput
-                                label="Nome completo *"
-                                value={leadData.name}
-                                onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
-                                placeholder="Ex: João Silva"
-                            />
+                            <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
+                                <div className="flex-1 md:flex-[2]">
+                                    <FormInput
+                                        label="Nome completo *"
+                                        value={leadData.name}
+                                        onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
+                                        placeholder="Ex: João Silva"
+                                    />
+                                </div>
+                                <div className="w-full md:w-[130px]">
+                                    <FormInput
+                                        label="Criado em"
+                                        type="date"
+                                        value={leadData.date}
+                                        onChange={(e) => setLeadData({ ...leadData, date: e.target.value })}
+                                    />
+                                </div>
+                                {(userRole === 'admin' || userRole === 'superadmin') && (
+                                    <div className="w-full md:w-[200px]">
+                                        <FormSelect
+                                            label="Responsável"
+                                            value={leadData.assigned_to}
+                                            onChange={(e) => setLeadData({ ...leadData, assigned_to: e.target.value })}
+                                            options={[
+                                                { value: '', label: 'Não atribuído' },
+                                                ...brokers.filter(b => b.role !== 'admin' && b.role !== 'superadmin').map(b => ({ value: b.id, label: b.full_name }))
+                                            ]}
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                            <div>
+                                <FormInput
+                                    label="Telefone *"
+                                    value={leadData.phone}
+                                    onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
+                                    placeholder="(48) 99999 9999"
+                                />
+                                {leadData.phone && (
+                                    <a
+                                        href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors w-fit"
+                                    >
+                                        <MessageSquare size={12} />
+                                        Abrir conversa no WhatsApp
+                                    </a>
+                                )}
+                            </div>
+                            <div>
+                                <FormInput
+                                    label="E-mail"
+                                    type="email"
+                                    value={leadData.email}
+                                    onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
+                                    placeholder="joao@email.com"
+                                />
+                            </div>
                         </div>
-                        <div className="w-full md:w-[160px]">
-                            <FormInput
-                                label="Data"
-                                type="date"
-                                value={leadData.date}
-                                onChange={(e) => setLeadData({ ...leadData, date: e.target.value })}
-                            />
-                        </div>
                     </div>
-                    <div>
-                        <FormInput
-                            label="Telefone *"
-                            value={leadData.phone}
-                            onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
-                            placeholder="(48) 99999 9999"
-                        />
-                        {leadData.phone && (
-                            <a
-                                href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors w-fit"
-                            >
-                                <MessageSquare size={12} />
-                                Abrir conversa no WhatsApp
-                            </a>
-                        )}
-                    </div>
-                    <div>
-                        <FormInput
-                            label="E-mail"
-                            type="email"
-                            value={leadData.email}
-                            onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
-                            placeholder="joao@email.com"
-                        />
-                    </div>
-                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            {!isAddingSource ? (
-                                <FormSelect
-                                    label="Origem"
-                                    value={leadData.lead_source}
-                                    onChange={(e) => {
-                                        if (e.target.value === 'ADD_NEW') {
-                                            setIsAddingSource(true)
-                                        } else {
-                                            setLeadData({ ...leadData, lead_source: e.target.value })
+
+                    {/* Seção: Captação */}
+                    <div className="space-y-4 pt-8 border-t border-border/50">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Captação</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                {!isAddingSource ? (
+                                    <FormSelect
+                                        label="Origem"
+                                        value={leadData.lead_source}
+                                        onChange={(e) => {
+                                            if (e.target.value === 'ADD_NEW') {
+                                                setIsAddingSource(true)
+                                            } else {
+                                                setLeadData({ ...leadData, lead_source: e.target.value })
+                                            }
+                                        }}
+                                        options={[
+                                            { value: '', label: 'Selecione a origem' },
+                                            ...sources.map(s => ({ value: s, label: s })),
+                                            { value: 'ADD_NEW', label: 'Outra' }
+                                        ]}
+                                    />
+                                ) : (
+                                    <FormInput
+                                        label="Origem (Nova)"
+                                        value={newSource}
+                                        onChange={(e) => setNewSource(e.target.value)}
+                                        placeholder="Ex: WhatsApp"
+                                        rightElement={
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsAddingSource(false)
+                                                    setNewSource('')
+                                                }}
+                                                className="text-muted-foreground hover:text-foreground p-1"
+                                                title="Cancelar"
+                                            >
+                                                <X size={14} />
+                                            </button>
                                         }
-                                    }}
+                                    />
+                                )}
+                            </div>
+                            <div>
+                                {!isAddingCampaign ? (
+                                    <FormSelect
+                                        label="Campanha"
+                                        value={leadData.campaign}
+                                        disabled={!leadData.lead_source}
+                                        onChange={(e) => {
+                                            if (e.target.value === 'ADD_NEW') {
+                                                setIsAddingCampaign(true)
+                                            } else {
+                                                setLeadData({ ...leadData, campaign: e.target.value })
+                                            }
+                                        }}
+                                        options={[
+                                            { value: '', label: leadData.lead_source ? 'Selecione a campanha' : 'Selecione uma origem primeiro' },
+                                            ...campaigns.map(c => ({ value: c, label: c })),
+                                            { value: 'ADD_NEW', label: 'Outra' }
+                                        ]}
+                                    />
+                                ) : (
+                                    <FormInput
+                                        label="Campanha (Nova)"
+                                        value={newCampaign}
+                                        onChange={(e) => setNewCampaign(e.target.value)}
+                                        placeholder="Ex: Verão 2026"
+                                        rightElement={
+                                            <button 
+                                                type="button"
+                                                onClick={() => {
+                                                    setIsAddingCampaign(false)
+                                                    setNewCampaign('')
+                                                }}
+                                                className="text-muted-foreground hover:text-foreground p-1"
+                                                title="Cancelar"
+                                            >
+                                                <X size={14} />
+                                            </button>
+                                        }
+                                    />
+                                )}
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Seção: Interesse */}
+                    <div className="space-y-4 pt-8 border-t border-border/50">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Interesse</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <PropertyAutocomplete
+                                    tenantId={tenantId}
+                                    label="Imóvel Cadastrado"
+                                    placeholder="Digite o nome do imóvel"
+                                    showIcon={false}
+                                    selectedItem={leadData.selectedProperty}
+                                    onSelect={(property) => setLeadData({ ...leadData, interest: property.title, property_id: property.id, property_interest: property.title, selectedProperty: property })}
+                                    onClear={() => setLeadData({ ...leadData, interest: '', property_id: '', property_interest: '', selectedProperty: null })}
+                                />
+                            </div>
+                            <div>
+                                <FormInput
+                                    label="Imóvel de Interesse (texto livre)"
+                                    value={leadData.property_interest}
+                                    onChange={(e) => setLeadData({ ...leadData, property_interest: e.target.value })}
+                                    placeholder="Ex: Apto 3 quartos na praia..."
+                                />
+                            </div>
+                        </div>
+                    </div>
+
+                    {/* Seção: Negociação */}
+                    <div className="space-y-4 pt-8 border-t border-border/50">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Negociação</h3>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <FormSelect
+                                    label="Estágio Inicial *"
+                                    value={leadData.stage_id}
+                                    onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
                                     options={[
-                                        { value: '', label: 'Selecione a origem' },
-                                        ...sources.map(s => ({ value: s, label: s })),
-                                        { value: 'ADD_NEW', label: 'Outra' }
+                                        { value: '', label: 'Selecione um estágio' },
+                                        ...stages.map(s => ({ value: s.id, label: s.name }))
                                     ]}
                                 />
-                            ) : (
+                            </div>
+                            <div>
                                 <FormInput
-                                    label="Origem (Nova)"
-                                    value={newSource}
-                                    onChange={(e) => setNewSource(e.target.value)}
-                                    placeholder="Ex: WhatsApp"
-                                    rightElement={
-                                        <button 
-                                            type="button"
-                                            onClick={() => {
-                                                setIsAddingSource(false)
-                                                setNewSource('')
-                                            }}
-                                            className="text-muted-foreground hover:text-foreground p-1"
-                                            title="Cancelar"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    }
+                                    label="Valor Estimado"
+                                    type="number"
+                                    value={leadData.value}
+                                    onChange={(e) => setLeadData({ ...leadData, value: e.target.value })}
+                                    placeholder="0,00"
                                 />
-                            )}
-                        </div>
-                        <div>
-                            {!isAddingCampaign ? (
-                                <FormSelect
-                                    label="Campanha"
-                                    value={leadData.campaign}
-                                    disabled={!leadData.lead_source}
-                                    onChange={(e) => {
-                                        if (e.target.value === 'ADD_NEW') {
-                                            setIsAddingCampaign(true)
-                                        } else {
-                                            setLeadData({ ...leadData, campaign: e.target.value })
-                                        }
-                                    }}
-                                    options={[
-                                        { value: '', label: leadData.lead_source ? 'Selecione a campanha' : 'Selecione uma origem primeiro' },
-                                        ...campaigns.map(c => ({ value: c, label: c })),
-                                        { value: 'ADD_NEW', label: 'Outra' }
-                                    ]}
-                                />
-                            ) : (
-                                <FormInput
-                                    label="Campanha (Nova)"
-                                    value={newCampaign}
-                                    onChange={(e) => setNewCampaign(e.target.value)}
-                                    placeholder="Ex: Verão 2026"
-                                    rightElement={
-                                        <button 
-                                            type="button"
-                                            onClick={() => {
-                                                setIsAddingCampaign(false)
-                                                setNewCampaign('')
-                                            }}
-                                            className="text-muted-foreground hover:text-foreground p-1"
-                                            title="Cancelar"
-                                        >
-                                            <X size={14} />
-                                        </button>
-                                    }
-                                />
-                            )}
+                            </div>
                         </div>
                     </div>
 
-                    <div className="col-span-1 md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div>
-                            <PropertyAutocomplete
-                                tenantId={tenantId}
-                                label="Imóvel Cadastrado"
-                                placeholder="Buscar imóvel no sistema..."
-                                icon={() => null}
-                                selectedItem={leadData.selectedProperty}
-                                onSelect={(property) => setLeadData({ ...leadData, interest: property.title, property_id: property.id, property_interest: property.title, selectedProperty: property })}
-                                onClear={() => setLeadData({ ...leadData, interest: '', property_id: '', property_interest: '', selectedProperty: null })}
-                            />
-                        </div>
-                        <div>
-                            <FormInput
-                                label="Imóvel de Interesse (texto livre)"
-                                value={leadData.property_interest}
-                                onChange={(e) => setLeadData({ ...leadData, property_interest: e.target.value })}
-                                placeholder="Ex: Apto 3 quartos na praia..."
-                            />
-                        </div>
-                    </div>
-
-                    {(userRole === 'admin' || userRole === 'superadmin') && (
-                        <div className="col-span-1 md:col-span-2">
-                            <FormSelect
-                                label="Corretor Responsável"
-                                value={leadData.assigned_to}
-                                onChange={(e) => setLeadData({ ...leadData, assigned_to: e.target.value })}
-                                options={[
-                                    { value: '', label: 'Não atribuído' },
-                                    ...brokers.map(b => ({ value: b.id, label: b.full_name }))
-                                ]}
-                            />
-                        </div>
-                    )}
-
-                    <div>
-                        <FormSelect
-                            label="Estágio Inicial *"
-                            value={leadData.stage_id}
-                            onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
-                            options={[
-                                { value: '', label: 'Selecione um estágio' },
-                                ...stages.map(s => ({ value: s.id, label: s.name }))
-                            ]}
-                        />
-                    </div>
-
-                    <div>
-                        <FormInput
-                            label="Valor Estimado"
-                            type="number"
-                            value={leadData.value}
-                            onChange={(e) => setLeadData({ ...leadData, value: e.target.value })}
-                            placeholder="0,00"
-                        />
-                    </div>
-                    <div className="col-span-1 md:col-span-2">
+                    {/* Seção: Notas */}
+                    <div className="space-y-4 pt-8 border-t border-border/50">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
                         <FormTextarea
-                            label="Notas/Observações"
                             value={leadData.notes}
                             onChange={(e) => setLeadData({ ...leadData, notes: e.target.value })}
                             rows={3}
@@ -601,8 +621,9 @@ export function LeadModal({
                         />
                     </div>
 
-                    <div className="col-span-1 md:col-span-2">
-                        <h3 className="text-sm font-bold text-gray-800 dark:text-foreground/80 ml-1 mb-3">Anexos</h3>
+                    {/* Seção: Mídias e Docs */}
+                    <div className="space-y-4 pt-8 border-t border-border/50">
+                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Mídias e Docs</h3>
                         <MediaUpload
                             pathPrefix={`leads/${tenantId}`}
                             images={leadData.images}
@@ -613,7 +634,6 @@ export function LeadModal({
                         />
                     </div>
                 </div>
-            </div>
             ) : editingLead?.id ? (
                 <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
                     {activeTab === 'proposta' && <LeadProposalTab leadId={editingLead.id} tenantId={tenantId} />}
