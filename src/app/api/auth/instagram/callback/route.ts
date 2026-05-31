@@ -39,6 +39,8 @@ export async function GET(req: NextRequest) {
         const tokenResponse = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&client_secret=${appSecret}&code=${code}`);
         const tokenData = await tokenResponse.json();
 
+        console.log('[Instagram Callback] Token Exchange:', JSON.stringify(tokenData).substring(0, 200));
+
         if (tokenData.error) throw new Error(tokenData.error.message);
 
         const shortLivedToken = tokenData.access_token;
@@ -47,14 +49,18 @@ export async function GET(req: NextRequest) {
         const llTokenResponse = await fetch(`https://graph.facebook.com/v21.0/oauth/access_token?grant_type=fb_exchange_token&client_id=${appId}&client_secret=${appSecret}&fb_exchange_token=${shortLivedToken}`);
         const llTokenData = await llTokenResponse.json();
         
+        console.log('[Instagram Callback] Long-lived Token:', JSON.stringify(llTokenData).substring(0, 200));
+
         const longLivedToken = llTokenData.access_token;
 
         // 3. Buscar Páginas e Contas do Instagram vinculadas
         const pagesResponse = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=name,access_token,instagram_business_account&access_token=${longLivedToken}`);
         const pagesData = await pagesResponse.json();
 
+        console.log('[Instagram Callback] Pages Response:', JSON.stringify(pagesData));
+
         if (!pagesData.data || pagesData.data.length === 0) {
-            throw new Error('Nenhuma página do Facebook encontrada.');
+            throw new Error(`Nenhuma página do Facebook encontrada. API response: ${JSON.stringify(pagesData)}`);
         }
 
         // 4. Encontrar a primeira página com Instagram Business Account
