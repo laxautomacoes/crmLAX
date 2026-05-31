@@ -371,7 +371,7 @@ export async function getLeadsForEmailBulk(tenantId: string, filters?: AdvancedE
             property: l.properties || null
         }))
         // Só aceita quem tem email válido e não está na blacklist
-        .filter(r => r.email && r.email.includes('@') && !blacklisted.includes(r.email.toLowerCase()))
+        .filter((r: { lead_id: string; name: string; email: string; property: any }) => r.email && r.email.includes('@') && !blacklisted.includes(r.email.toLowerCase()))
 
     // Aplicar filtros avançados de Imóvel na memória
     if (filters?.propertyName) {
