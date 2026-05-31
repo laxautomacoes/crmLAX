@@ -1191,8 +1191,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             ))}
                         </div>
                         <p className="text-xs text-muted-foreground flex items-center gap-1 italic">
-                            <Info size={12} />
-                            Mantenha esta aba aberta até o fim do processo.
+                            <CheckCircle2 size={12} className="text-green-500" />
+                            Você pode fechar esta página. Será notificado ao concluir.
                         </p>
                     </div>
                 </div>

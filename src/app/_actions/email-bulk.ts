@@ -359,7 +359,7 @@ export async function getLeadsForEmailBulk(tenantId: string, filters?: AdvancedE
         .select('email')
         .eq('tenant_id', tenantId)
 
-    const blacklisted = (unsubscribed || []).map(u => u.email.toLowerCase())
+    const blacklisted = (unsubscribed || []).map((u: { email: string }) => u.email.toLowerCase())
 
     // Processamento em Memória dos Filtros de Imóvel e formatação
     let recipients = (leads || [])

@@ -247,6 +247,18 @@ Deno.serve(async (req: Request) => {
           completed_at: new Date().toISOString()
         }).eq('id', campaign_id);
 
+        // Notificar cancelamento
+        const cancelTitle = campaign.title || 'Disparo em Massa';
+        await supabase.from('notifications').insert({
+          user_id: campaign.profile_id,
+          tenant_id: campaign.tenant_id,
+          title: `⛔ Disparo interrompido: ${cancelTitle}`,
+          message: `${totalSuccess} enviadas, ${totalErrors} com erro. Interrompido em ${i}/${recipients.length}.`,
+          type: 'warning',
+          read: false,
+          created_at: new Date().toISOString()
+        });
+
         return new Response(JSON.stringify({ status: 'cancelled', processed: i }), {
           headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
@@ -373,6 +385,18 @@ Deno.serve(async (req: Request) => {
       current_index: recipients.length,
       completed_at: new Date().toISOString()
     }).eq('id', campaign_id);
+
+    // 7. Notificar o usuário que disparou
+    const campaignTitle = campaign.title || 'Disparo em Massa';
+    await supabase.from('notifications').insert({
+      user_id: campaign.profile_id,
+      tenant_id: campaign.tenant_id,
+      title: `✅ Disparo concluído: ${campaignTitle}`,
+      message: `${totalSuccess} enviadas com sucesso, ${totalErrors} com erro (de ${recipients.length} total).`,
+      type: 'success',
+      read: false,
+      created_at: new Date().toISOString()
+    });
 
     return new Response(JSON.stringify({
       status: 'completed',
