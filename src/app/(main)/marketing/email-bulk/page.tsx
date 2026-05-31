@@ -5,7 +5,7 @@ import { redirect } from 'next/navigation'
 import { EmailBulkSenderForm } from '@/components/dashboard/tools/EmailBulkSenderForm'
 
 export const metadata: Metadata = {
-    title: 'Disparador de E-mail | CRM LAX',
+    title: 'Disparador Email | CRM LAX',
     description: 'Envie e-mails em massa para seus leads e contatos.',
 }
 
@@ -23,7 +23,7 @@ export default async function EmailBulkPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader 
-                title="Disparador de E-mail"
+                title="Disparador Email"
                 subtitle="Crie campanhas, gerencie leads e acompanhe os relatórios de envio."
             />
 

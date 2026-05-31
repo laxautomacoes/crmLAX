@@ -122,7 +122,8 @@ export async function sendBulkEmailsBatch(params: {
     contentHtml: string,
     senderName: string,
     senderEmail: string,
-    recipients: { email: string, name: string, lead_id?: string }[]
+    recipients: { email: string, name: string, lead_id?: string }[],
+    attachment?: { url: string, name: string, type: string } | null
 }) {
     const resend = getResendClient()
     if (!resend) return { success: false, error: 'API do Resend não configurada.' }
@@ -149,24 +150,45 @@ export async function sendBulkEmailsBatch(params: {
     let totalSuccess = 0;
     let totalErrors = 0;
 
+    // Preparar anexo se existir
+    let attachmentData: { filename: string, content: Buffer } | null = null
+    if (params.attachment?.url) {
+        try {
+            const response = await fetch(params.attachment.url)
+            const arrayBuffer = await response.arrayBuffer()
+            attachmentData = {
+                filename: params.attachment.name,
+                content: Buffer.from(arrayBuffer)
+            }
+        } catch (err) {
+            console.error('Erro ao baixar anexo:', err)
+        }
+    }
+
     for (let i = 0; i < validRecipients.length; i += CHUNK_SIZE) {
         const chunk = validRecipients.slice(i, i + CHUNK_SIZE);
         
         // Criar payload de batch para o chunk atual
         // Note: react-email template rendering needs to be done beforehand if we want personalization like {nome}
         // For simplicity in HTML string, we'll replace {nome} with the actual name
-        const batchPayload = chunk.map(r => ({
-            from: from,
-            to: [r.email],
-            subject: params.subject,
-            html: params.contentHtml
-                .replace(/{nome}/gi, r.name || 'Cliente')
-                .replace(/{primeiro_nome}/gi, (r.name || 'Cliente').split(' ')[0]),
-            tags: [
-                { name: 'campaign_id', value: params.campaignId },
-                { name: 'tenant_id', value: params.tenantId }
-            ]
-        }));
+        const batchPayload = chunk.map(r => {
+            const emailPayload: any = {
+                from: from,
+                to: [r.email],
+                subject: params.subject,
+                html: params.contentHtml
+                    .replace(/{nome}/gi, r.name || 'Cliente')
+                    .replace(/{primeiro_nome}/gi, (r.name || 'Cliente').split(' ')[0]),
+                tags: [
+                    { name: 'campaign_id', value: params.campaignId },
+                    { name: 'tenant_id', value: params.tenantId }
+                ]
+            }
+            if (attachmentData) {
+                emailPayload.attachments = [attachmentData]
+            }
+            return emailPayload
+        });
 
         try {
             const { data, error } = await resend.batch.send(batchPayload);

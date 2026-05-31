@@ -14,6 +14,7 @@ import { getBulkFilterSuggestions } from '@/app/_actions/bulk-filter-suggestions
 import { AutocompleteInput } from '@/components/shared/forms/AutocompleteInput'
 import * as XLSX from 'xlsx'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
+import { createClient } from '@/lib/supabase/client'
 
 interface Recipient {
     name: string
@@ -141,7 +142,12 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
         docs: false
     })
 
+    // Mídia anexa
+    const [emailMedia, setEmailMedia] = useState<{ url: string; type: 'image' | 'video' | 'document'; name: string } | null>(null)
+    const [isMediaUploading, setIsMediaUploading] = useState(false)
+
     const fileInputRef = useRef<HTMLInputElement>(null)
+    const mediaInputRef = useRef<HTMLInputElement>(null)
     const propertyDropdownRef = useRef<HTMLDivElement>(null)
 
     useEffect(() => {
@@ -364,6 +370,42 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
         }
     }
 
+    const handleEmailMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0]
+        if (!file) return
+
+        setIsMediaUploading(true)
+        try {
+            const supabase = createClient()
+            const fileExt = file.name.split('.').pop()
+            const fileName = `${Math.random()}.${fileExt}`
+            const filePath = `bulk-media/${fileName}`
+
+            const { error: uploadError } = await supabase.storage
+                .from('crm-attachments')
+                .upload(filePath, file, {
+                    contentType: file.type,
+                })
+
+            if (uploadError) throw uploadError
+
+            const { data: { publicUrl } } = supabase.storage
+                .from('crm-attachments')
+                .getPublicUrl(filePath)
+
+            let type: 'image' | 'video' | 'document' = 'document'
+            if (file.type.startsWith('image/')) type = 'image'
+            else if (file.type.startsWith('video/')) type = 'video'
+
+            setEmailMedia({ url: publicUrl, type, name: file.name })
+            toast.success('Arquivo anexado com sucesso!')
+        } catch (error: any) {
+            toast.error('Erro no upload: ' + error.message)
+        } finally {
+            setIsMediaUploading(false)
+        }
+    }
+
     const handleFetchLeads = async () => {
         setIsFetchingLeads(true)
         
@@ -464,7 +506,8 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
             const campaignId = campaignRes.data.id
 
             const batchRes = await sendBulkEmailsBatch({
-                campaignId, tenantId, subject, contentHtml: finalContentHtml, senderName, senderEmail, recipients
+                campaignId, tenantId, subject, contentHtml: finalContentHtml, senderName, senderEmail, recipients,
+                attachment: emailMedia ? { url: emailMedia.url, name: emailMedia.name, type: emailMedia.type } : null
             })
 
             if (batchRes.success && batchRes.data) {
@@ -494,7 +537,7 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                 <div className="space-y-6">
                     <div className="space-y-2">
                         <div className="min-h-[32px] flex items-center">
-                            <label className="text-sm font-bold text-foreground ml-1">Título Interno da Campanha</label>
+                            <label className="text-sm font-bold text-foreground ml-1">Título Campanha</label>
                         </div>
                         <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Newsletter Janeiro" className="w-full h-10 px-3 text-sm font-medium bg-background border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50" />
                     </div>
@@ -502,13 +545,13 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <div className="space-y-2">
                             <div className="min-h-[32px] flex items-center">
-                                <label className="text-sm font-bold text-foreground ml-1">Nome do Remetente</label>
+                                <label className="text-sm font-bold text-foreground ml-1">Nome Remetente</label>
                             </div>
                             <input type="text" value={senderName} onChange={e => setSenderName(e.target.value)} placeholder="Ex: João - CRM LAX" className="w-full h-10 px-3 text-sm font-medium bg-background border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50" />
                         </div>
                         <div className="space-y-2">
                             <div className="min-h-[32px] flex items-center">
-                                <label className="text-sm font-bold text-foreground ml-1">E-mail do Remetente</label>
+                                <label className="text-sm font-bold text-foreground ml-1">E-mail Remetente</label>
                             </div>
                             <input type="email" value={senderEmail} onChange={e => setSenderEmail(e.target.value)} placeholder="contato@seusite.com.br" className="w-full h-10 px-3 text-sm font-medium bg-background border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50" />
                             {!loadingDomains && verifiedDomains.length > 0 && (
@@ -519,7 +562,7 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
 
                     <div className="space-y-2">
                         <div className="min-h-[32px] flex items-center">
-                            <label className="text-sm font-bold text-foreground ml-1">Assunto do E-mail</label>
+                            <label className="text-sm font-bold text-foreground ml-1">Assunto E-mail</label>
                         </div>
                         <input type="text" value={subject} onChange={e => setSubject(e.target.value)} placeholder="Ex: Nova oportunidade no litoral!" className="w-full h-10 px-3 text-sm font-medium bg-background border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50" />
                     </div>
@@ -903,7 +946,7 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                     {!selectedProperty && (
                         <div className="space-y-2">
                             <div className="min-h-[32px] flex items-center">
-                                <label className="text-sm font-bold text-foreground ml-1">Corpo do E-mail (HTML permitido)</label>
+                                <label className="text-sm font-bold text-foreground ml-1">Mensagem</label>
                             </div>
                             <FormRichTextarea 
                                 value={contentHtml} 
@@ -1069,6 +1112,85 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                                 </div>
                             </div>
                         )}
+                    </div>
+
+                    {/* Anexar Mídia ou Documento */}
+                    <div className="space-y-2">
+                        <div className="min-h-[32px] flex items-center">
+                            <label className="text-sm font-bold text-foreground ml-1">Anexar Mídia ou Documento</label>
+                        </div>
+                        <div className="flex flex-wrap gap-2">
+                            <input 
+                                type="file" 
+                                ref={mediaInputRef} 
+                                className="hidden" 
+                                onChange={handleEmailMediaUpload}
+                                accept="image/*,video/*,application/pdf,.doc,.docx,.xls,.xlsx"
+                            />
+                            {emailMedia ? (
+                                <div className="relative group w-full">
+                                    {emailMedia.type === 'image' ? (
+                                        <div className="relative max-h-[180px] rounded-lg overflow-hidden border border-border/40 shadow-sm bg-foreground/5 flex items-center justify-center">
+                                            <img src={emailMedia.url} alt="Preview" className="max-h-[180px] w-auto object-contain" />
+                                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                                <p className="text-white text-xs font-bold">{emailMedia.name}</p>
+                                            </div>
+                                        </div>
+                                    ) : emailMedia.type === 'video' ? (
+                                        <div className="relative max-h-[180px] rounded-lg overflow-hidden border border-border/40 shadow-sm bg-black flex items-center justify-center">
+                                            <video 
+                                                src={emailMedia.url} 
+                                                className="max-h-[180px] w-auto object-contain opacity-80"
+                                                controls={false}
+                                                muted
+                                            />
+                                            <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+                                                <div className="w-12 h-12 rounded-full bg-white/20 backdrop-blur-sm flex items-center justify-center text-white">
+                                                    <Video size={24} />
+                                                </div>
+                                            </div>
+                                            <div className="absolute bottom-3 left-3">
+                                                <p className="text-white text-[10px] font-bold bg-black/40 px-2 py-1 rounded backdrop-blur-sm truncate max-w-[200px]">{emailMedia.name}</p>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex items-center gap-4 p-5 bg-foreground/5 rounded-lg border-2 border-dashed border-border/40 w-full group-hover:bg-foreground/10 transition-colors">
+                                            <div className="w-14 h-14 rounded-lg bg-card shadow-sm flex items-center justify-center text-foreground border border-border/40">
+                                                <FileText size={32} strokeWidth={1.5} />
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="text-sm font-bold text-foreground truncate">{emailMedia.name}</p>
+                                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest mt-0.5">Documento • PDF/Excel</p>
+                                            </div>
+                                        </div>
+                                    )}
+                                    <button 
+                                        onClick={() => setEmailMedia(null)}
+                                        className="absolute -top-2 -right-2 p-1.5 bg-red-500 text-white rounded-full shadow-lg hover:bg-red-600 transition-all hover:scale-110 z-10"
+                                        title="Remover anexo"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                </div>
+                            ) : (
+                                <button 
+                                    onClick={() => mediaInputRef.current?.click()}
+                                    disabled={isMediaUploading}
+                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 bg-background border border-muted-foreground/30 rounded-lg hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground group"
+                                >
+                                    {isMediaUploading ? (
+                                        <Loader2 className="animate-spin text-foreground" size={24} />
+                                    ) : (
+                                        <>
+                                            <div className="w-10 h-10 rounded-full bg-foreground/5 flex items-center justify-center group-hover:bg-accent-icon/20 transition-colors">
+                                                <ImageIcon size={20} />
+                                            </div>
+                                            <span className="text-xs font-bold">Adicionar Foto, Vídeo ou PDF</span>
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

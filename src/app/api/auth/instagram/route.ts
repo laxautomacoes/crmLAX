@@ -18,7 +18,10 @@ export async function GET(req: NextRequest) {
 
     // Configurações do Meta
     const appId = process.env.META_APP_ID;
-    const redirectUri = `${process.env.NEXT_PUBLIC_ROOT_DOMAIN === 'localhost' ? 'http://localhost:3000' : `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`}/api/auth/instagram/callback`;
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost';
+    const isLocal = rootDomain.startsWith('localhost');
+    const baseUrl = isLocal ? `http://${rootDomain}` : `https://${rootDomain}`;
+    const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
     
     // Scopes necessários para o Instagram Graph API (Publishing) e Facebook Pages
     const scopes = [

@@ -55,7 +55,7 @@ export const menuItems = [
         subItems: [
             { name: 'Estúdio de Criação', href: '/marketing/studio' },
             { name: 'Disparador WhatsApp', href: '/marketing/bulk-sender' },
-            { name: 'Disparador de E-mail', href: '/marketing/email-bulk' },
+            { name: 'Disparador Email', href: '/marketing/email-bulk' },
             { name: 'Follow-Up', href: '/marketing/follow-up' },
         ]
     },

@@ -903,6 +903,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                 </div>
 
                 {/* Destinatários */}
+                <div className="space-y-6">
                 <div className="space-y-2">
                     <div className="min-h-[32px] flex items-center justify-between">
                         <label className="text-sm font-bold text-foreground ml-1">Destinatários ({recipients.length})</label>
@@ -1161,8 +1162,10 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         </div>
                     )}
 
+                    </div>
+
                     {/* Seletor de Velocidade */}
-                    <div className="space-y-2 pt-4 border-t border-border/40 mt-4">
+                    <div className="space-y-2">
                         <div className="min-h-[32px] flex items-center">
                             <label className="text-sm font-bold text-foreground ml-1">Velocidade do Disparo</label>
                         </div>

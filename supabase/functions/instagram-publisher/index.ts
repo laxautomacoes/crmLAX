@@ -34,10 +34,9 @@ Deno.serve(async (req: Request) => {
       .single();
 
     if (intError || !integration) {
-      throw new Error("Integração com Instagram não encontrada ou inativa para este tenant.");
+      throw new Error("Integração com Instagram não encontrada ou inativa para este tenant. Conecte sua conta na aba Marketing.");
     }
 
-    // Acessando via credentials JSONB
     const credentials = integration.credentials || {};
     const accessToken = credentials.access_token;
     const igAccountId = credentials.account_id;

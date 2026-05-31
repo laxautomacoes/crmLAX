@@ -56,7 +56,7 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
                 },
                 body: JSON.stringify({
                     tenant_id: tenantId,
-                    property_id: prop.id,
+                    asset_id: prop.id,
                     profile_id: profileId,
                     image_url: prop.images[0], // Foto principal
                     custom_caption: caption || undefined

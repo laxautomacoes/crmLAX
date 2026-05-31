@@ -12,7 +12,10 @@ export async function GET(req: NextRequest) {
 
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
-    const redirectUri = `${process.env.NEXT_PUBLIC_ROOT_DOMAIN === 'localhost' ? 'http://localhost:3000' : `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`}/api/auth/instagram/callback`;
+    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost';
+    const isLocal = rootDomain.startsWith('localhost');
+    const baseUrl = isLocal ? `http://${rootDomain}` : `https://${rootDomain}`;
+    const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
 
     try {
         // 1. Trocar code pelo Token de Usuário (Short-lived)
@@ -69,10 +72,10 @@ export async function GET(req: NextRequest) {
 
         if (upsertError) throw upsertError;
 
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_ROOT_DOMAIN === 'localhost' ? 'http://localhost:3000' : `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`}/marketing?success=instagram_connected`);
+        return NextResponse.redirect(`${baseUrl}/marketing?success=instagram_connected`);
 
     } catch (error: any) {
         console.error('Instagram Callback Error:', error.message);
-        return NextResponse.redirect(`${process.env.NEXT_PUBLIC_ROOT_DOMAIN === 'localhost' ? 'http://localhost:3000' : `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`}/marketing?error=${encodeURIComponent(error.message)}`);
+        return NextResponse.redirect(`${baseUrl}/marketing?error=${encodeURIComponent(error.message)}`);
     }
 }
