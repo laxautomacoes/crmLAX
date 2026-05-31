@@ -53,14 +53,21 @@ export async function GET(req: NextRequest) {
 
         const longLivedToken = llTokenData.access_token;
 
-        // 3. Buscar Páginas e Contas do Instagram vinculadas
+        // 3. Verificar permissões concedidas
+        const permResponse = await fetch(`https://graph.facebook.com/v21.0/me/permissions?access_token=${longLivedToken}`);
+        const permData = await permResponse.json();
+        console.log('[Instagram Callback] Permissions:', JSON.stringify(permData));
+
+        // 4. Buscar Páginas e Contas do Instagram vinculadas
         const pagesResponse = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=name,access_token,instagram_business_account&access_token=${longLivedToken}`);
         const pagesData = await pagesResponse.json();
 
         console.log('[Instagram Callback] Pages Response:', JSON.stringify(pagesData));
 
         if (!pagesData.data || pagesData.data.length === 0) {
-            throw new Error(`Nenhuma página do Facebook encontrada. API response: ${JSON.stringify(pagesData)}`);
+            const grantedPerms = permData.data?.filter((p: any) => p.status === 'granted').map((p: any) => p.permission).join(', ') || 'nenhuma';
+            const declinedPerms = permData.data?.filter((p: any) => p.status === 'declined').map((p: any) => p.permission).join(', ') || 'nenhuma';
+            throw new Error(`Nenhuma página encontrada. Permissões concedidas: [${grantedPerms}]. Recusadas: [${declinedPerms}].`);
         }
 
         // 4. Encontrar a primeira página com Instagram Business Account
