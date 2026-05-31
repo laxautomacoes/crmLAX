@@ -362,7 +362,14 @@ export async function getLeadsForEmailBulk(tenantId: string, filters?: AdvancedE
     const blacklisted = (unsubscribed || []).map((u: { email: string }) => u.email.toLowerCase())
 
     // Processamento em Memória dos Filtros de Imóvel e formatação
-    let recipients = (leads || [])
+    interface RecipientWithProperty {
+        lead_id: string;
+        name: string;
+        email: string;
+        property: any;
+    }
+
+    let recipients: RecipientWithProperty[] = (leads || [])
         // O Supabase às vezes retorna array ou null em relacionamentos 1:1 dependendo da schema (contacts é array no types? não, deve ser obj)
         .map((l: any) => ({
             lead_id: l.id,
@@ -371,7 +378,7 @@ export async function getLeadsForEmailBulk(tenantId: string, filters?: AdvancedE
             property: l.properties || null
         }))
         // Só aceita quem tem email válido e não está na blacklist
-        .filter((r: { lead_id: string; name: string; email: string; property: any }) => r.email && r.email.includes('@') && !blacklisted.includes(r.email.toLowerCase()))
+        .filter(r => r.email && r.email.includes('@') && !blacklisted.includes(r.email.toLowerCase()))
 
     // Aplicar filtros avançados de Imóvel na memória
     if (filters?.propertyName) {
