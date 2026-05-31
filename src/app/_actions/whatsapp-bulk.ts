@@ -360,6 +360,9 @@ export async function createBulkCampaign(data: {
     totalRecipients: number;
     filtersApplied?: Record<string, any>;
     sourceType: 'system' | 'file';
+    recipientsData?: { name: string; phone: string; lead_id?: string }[];
+    speedSetting?: string;
+    instanceName?: string;
 }) {
     const supabase = await createClient()
 
@@ -378,7 +381,12 @@ export async function createBulkCampaign(data: {
             total_errors: 0,
             status: 'sending',
             filters_applied: data.filtersApplied || {},
-            source_type: data.sourceType
+            source_type: data.sourceType,
+            recipients_data: data.recipientsData || null,
+            speed_setting: data.speedSetting || 'normal',
+            instance_name: data.instanceName || null,
+            current_index: 0,
+            cancel_requested: false
         })
         .select()
         .single()
@@ -389,6 +397,122 @@ export async function createBulkCampaign(data: {
     }
 
     return { success: true, data: campaign }
+}
+
+// ─── Iniciar Disparo (Cria campanha + dispara Edge Function) ───────────────
+
+export async function startBulkCampaign(data: {
+    tenantId: string;
+    profileId: string;
+    title: string;
+    message: string;
+    mediaUrl?: string;
+    mediaType?: string;
+    mediaName?: string;
+    recipients: { name: string; phone: string; lead_id?: string }[];
+    speedSetting: string;
+    instanceName: string;
+    filtersApplied?: Record<string, any>;
+    sourceType: 'system' | 'file';
+}) {
+    // 1. Criar campanha com todos os dados
+    const campaignResult = await createBulkCampaign({
+        tenantId: data.tenantId,
+        profileId: data.profileId,
+        title: data.title,
+        message: data.message,
+        mediaUrl: data.mediaUrl,
+        mediaType: data.mediaType,
+        mediaName: data.mediaName,
+        totalRecipients: data.recipients.length,
+        filtersApplied: data.filtersApplied,
+        sourceType: data.sourceType,
+        recipientsData: data.recipients,
+        speedSetting: data.speedSetting,
+        instanceName: data.instanceName
+    })
+
+    if (!campaignResult.success || !campaignResult.data) {
+        return campaignResult
+    }
+
+    const campaignId = campaignResult.data.id
+
+    // 2. Disparar Edge Function (fire-and-forget)
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (supabaseUrl && serviceRoleKey) {
+        fetch(`${supabaseUrl}/functions/v1/bulk-sender`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${serviceRoleKey}`
+            },
+            body: JSON.stringify({ campaign_id: campaignId })
+        }).catch(err => {
+            console.error('Error invoking bulk-sender edge function:', err)
+        })
+    }
+
+    return { success: true, data: campaignResult.data }
+}
+
+// ─── Cancelar Disparo em Andamento ─────────────────────────────────────────
+
+export async function cancelBulkCampaign(campaignId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile) return { success: false, error: 'Perfil não encontrado.' }
+
+    const { error } = await supabase
+        .from('bulk_campaigns')
+        .update({ cancel_requested: true })
+        .eq('id', campaignId)
+        .eq('tenant_id', profile.tenant_id)
+
+    if (error) {
+        console.error('Error cancelling bulk campaign:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
+}
+
+// ─── Verificar Campanha Ativa ──────────────────────────────────────────────
+
+export async function checkActiveCampaign(tenantId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return null
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || profile.tenant_id !== tenantId) return null
+
+    const { data: campaign } = await supabase
+        .from('bulk_campaigns')
+        .select('id, current_index, total_recipients, total_success, total_errors, status, title, cancel_requested')
+        .eq('tenant_id', tenantId)
+        .eq('status', 'sending')
+        .eq('cancel_requested', false)
+        .order('created_at', { ascending: false })
+        .limit(1)
+        .maybeSingle()
+
+    return campaign
 }
 
 export async function updateBulkCampaign(campaignId: string, data: {

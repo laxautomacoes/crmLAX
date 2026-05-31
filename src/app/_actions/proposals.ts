@@ -58,7 +58,7 @@ export async function saveProposal(
         const payload = {
             value: proposalData.value,
             payment_terms: proposalData.payment_terms,
-            status: proposalData.status || 'rascunho',
+            status: proposalData.status || 'criada',
             contact_id: proposalData.contact_id || null,
             property_id: proposalData.property_id || null,
             updated_at: new Date().toISOString()
@@ -150,18 +150,24 @@ async function enrichProposals(supabase: any, proposals: any[]) {
 }
 
 // ─── Buscar todas as propostas do tenant (página centralizada) ───
-export async function getAllProposals(tenantId: string) {
+export async function getAllProposals(tenantId: string, includeArchived = false) {
     const supabase = await createClient()
     const { profile } = await getProfile()
 
     if (!profile) return { success: false, error: 'Usuário não autenticado.' }
 
     try {
-        const { data, error } = await supabase
+        let query = supabase
             .from('proposals')
             .select('*')
             .eq('tenant_id', tenantId)
             .order('updated_at', { ascending: false })
+
+        if (!includeArchived) {
+            query = query.eq('is_archived', false)
+        }
+
+        const { data, error } = await query
 
         if (error) throw error
 
@@ -208,9 +214,62 @@ export async function updateProposalStatus(proposalId: string, status: string) {
 
         revalidatePath('/proposals')
         revalidatePath('/leads')
+        revalidatePath('/clients')
         return { success: true }
     } catch (error: any) {
         console.error('Error updating proposal status:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+// ─── Arquivar/Desarquivar proposta ───
+export async function archiveProposal(proposalId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { data: proposal } = await supabase
+            .from('proposals')
+            .select('is_archived')
+            .eq('id', proposalId)
+            .single()
+
+        const newState = !(proposal?.is_archived ?? false)
+
+        const { error } = await supabase
+            .from('proposals')
+            .update({ is_archived: newState, updated_at: new Date().toISOString() })
+            .eq('id', proposalId)
+
+        if (error) throw error
+
+        revalidatePath('/proposals')
+        revalidatePath('/leads')
+        revalidatePath('/clients')
+        return { success: true, archived: newState }
+    } catch (error: any) {
+        console.error('Error archiving proposal:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+// ─── Excluir proposta permanentemente ───
+export async function deleteProposal(proposalId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { error } = await supabase
+            .from('proposals')
+            .delete()
+            .eq('id', proposalId)
+
+        if (error) throw error
+
+        revalidatePath('/proposals')
+        revalidatePath('/leads')
+        revalidatePath('/clients')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error deleting proposal:', error)
         return { success: false, error: error.message }
     }
 }

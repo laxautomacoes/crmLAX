@@ -557,22 +557,27 @@ export function ClientModal({
 
                                     {/* Endereço */}
                                     <div className="space-y-4 pt-8 border-t border-border/50">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Endereço</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                            <FormInput
-                                                label={
-                                                    <div className="flex items-center gap-1">
-                                                        CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
-                                                    </div>
-                                                }
-                                                value={formData.address_zip_code}
-                                                onChange={e => handleCepChange(e.target.value)}
-                                                placeholder="00000-000"
-                                                disabled={cepLoading}
-                                            />
-                                            <div className="md:col-span-2 relative" ref={resultsRef}>
+                                        <h4 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-2">
+                                            <MapPin size={14} className="text-foreground" />
+                                            Endereço
+                                        </h4>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-6">
+                                            <div className="sm:col-span-1 lg:col-span-3">
                                                 <FormInput
-                                                    label="Rua"
+                                                    label={
+                                                        <div className="flex items-center gap-1">
+                                                            CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
+                                                        </div>
+                                                    }
+                                                    value={formData.address_zip_code}
+                                                    onChange={e => handleCepChange(e.target.value)}
+                                                    placeholder="00000-000"
+                                                    disabled={cepLoading}
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-2 lg:col-span-7 relative" ref={resultsRef}>
+                                                <FormInput
+                                                    label="Avenida | Rua"
                                                     value={formData.address_street}
                                                     onChange={e => setFormData({ ...formData, address_street: e.target.value })}
                                                     placeholder="Rua / Avenida"
@@ -613,25 +618,31 @@ export function ClientModal({
                                                     </div>
                                                 )}
                                             </div>
-                                            <FormInput
-                                                label="Nº"
-                                                value={formData.address_number}
-                                                onChange={e => setFormData({ ...formData, address_number: e.target.value })}
-                                                placeholder="123"
-                                            />
-                                            <FormInput
-                                                label="Complemento"
-                                                value={formData.address_complement}
-                                                onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
-                                                placeholder="Apto, Bloco, etc"
-                                            />
-                                            <FormInput
-                                                label="Bairro"
-                                                value={formData.address_neighborhood}
-                                                onChange={e => setFormData({ ...formData, address_neighborhood: e.target.value })}
-                                                placeholder="Bairro"
-                                            />
-                                            <div className="md:col-span-2">
+                                            <div className="sm:col-span-1 lg:col-span-2">
+                                                <FormInput
+                                                    label="Nº"
+                                                    value={formData.address_number}
+                                                    onChange={e => setFormData({ ...formData, address_number: e.target.value })}
+                                                    placeholder="123"
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-1 lg:col-span-3">
+                                                <FormInput
+                                                    label="Complemento"
+                                                    value={formData.address_complement}
+                                                    onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
+                                                    placeholder="Apto, Bloco, etc"
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-1 lg:col-span-2">
+                                                <FormInput
+                                                    label="Bairro"
+                                                    value={formData.address_neighborhood}
+                                                    onChange={e => setFormData({ ...formData, address_neighborhood: e.target.value })}
+                                                    placeholder="Bairro"
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-1 lg:col-span-5">
                                                 <FormInput
                                                     label="Cidade"
                                                     value={formData.address_city}
@@ -639,12 +650,14 @@ export function ClientModal({
                                                     placeholder="Cidade"
                                                 />
                                             </div>
-                                            <FormInput
-                                                label="Estado"
-                                                value={formData.address_state}
-                                                onChange={e => setFormData({ ...formData, address_state: e.target.value })}
-                                                maxLength={2}
-                                            />
+                                            <div className="sm:col-span-1 lg:col-span-2">
+                                                <FormInput
+                                                    label="Estado"
+                                                    value={formData.address_state}
+                                                    onChange={e => setFormData({ ...formData, address_state: e.target.value })}
+                                                    maxLength={2}
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -863,6 +876,15 @@ function LeadCardDropdown({ lead, onMakeProposal }: { lead: any; onMakeProposal?
                     </span>
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
+                    {lead.has_proposal && (
+                        <span
+                            className="w-5 h-5 flex items-center justify-center text-[10px] font-black rounded-full uppercase shrink-0"
+                            style={{ backgroundColor: '#FFE600', color: '#1a1a1a' }}
+                            title="Lead com proposta"
+                        >
+                            P
+                        </span>
+                    )}
                     {(() => {
                         const c = lead.status_color
                         const isLight = c && ['#FFFFFF', '#FACC15', '#FDE047', '#FEF08A', '#FCD34D'].includes(c.toUpperCase())

@@ -5,17 +5,18 @@ import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { 
     Send, Users, FileSpreadsheet, Image as ImageIcon, Video, FileText, X, Loader2, 
     CheckCircle2, AlertCircle, Info, HelpCircle, Filter, History, ChevronDown, ChevronUp, Clock, Ban,
-    Link, Unlink, Trash2, Globe, ExternalLink, BookOpen, Save, Type
+    Link, Unlink, Trash2, Globe, ExternalLink, BookOpen, Save, Type, Shield, Timer
 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
 import { 
-    checkWhatsAppStatus, sendSingleBulkMessage, validateBulkAccess, 
-    getLeadsForBulk, getBulkFilterOptions, createBulkCampaign, updateBulkCampaign, getBulkCampaigns,
+    checkWhatsAppStatus, validateBulkAccess, 
+    getLeadsForBulk, getBulkFilterOptions, getBulkCampaigns,
     matchRecipientsWithLeads, fetchGoogleSheetData, fetchGoogleSheetTabs,
     saveBulkTemplate, getBulkTemplates, deleteBulkTemplate,
-    logBulkRecipientResult, getBulkCampaignRecipients,
-    deleteBulkCampaign, deleteAllBulkCampaigns
+    getBulkCampaignRecipients,
+    deleteBulkCampaign, deleteAllBulkCampaigns,
+    startBulkCampaign, cancelBulkCampaign, checkActiveCampaign
 } from '@/app/_actions/whatsapp-bulk'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone } from '@/lib/utils/phone'
@@ -139,9 +140,14 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     const [showSaveTemplate, setShowSaveTemplate] = useState(false)
     const [templateName, setTemplateName] = useState('')
     const [isSavingTemplate, setIsSavingTemplate] = useState(false)
+    // Velocidade do disparo
+    const [sendSpeed, setSendSpeed] = useState<'fast' | 'normal' | 'safe' | 'ultra' | null>(null)
+    const [pendingSpeed, setPendingSpeed] = useState<'fast' | 'normal' | 'safe' | 'ultra' | null>(null)
+    const [showSpeedWarning, setShowSpeedWarning] = useState(false)
     
     const fileInputRef = useRef<HTMLInputElement>(null)
     const mediaInputRef = useRef<HTMLInputElement>(null)
+    const stopRef = useRef(false)
 
     // Carregar opções de filtro ao montar
     useEffect(() => {
@@ -151,6 +157,56 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         }
         loadFilters()
     }, [tenantId])
+
+    // Detectar disparo ativo ao montar (caso tenha voltado à página)
+    useEffect(() => {
+        const checkActive = async () => {
+            const campaign = await checkActiveCampaign(tenantId)
+            if (campaign) {
+                setCurrentCampaignId(campaign.id)
+                setIsSending(true)
+                setProgress({ current: campaign.current_index, total: campaign.total_recipients })
+                setResults({ success: campaign.total_success, error: campaign.total_errors })
+                setCampaignTitle(campaign.title || '')
+            }
+        }
+        checkActive()
+    }, [tenantId])
+
+    // Supabase Realtime: progresso da campanha
+    useEffect(() => {
+        if (!currentCampaignId || !isSending) return
+
+        const supabase = createClient()
+        const channel = supabase
+            .channel(`campaign-progress-${currentCampaignId}`)
+            .on('postgres_changes', {
+                event: 'UPDATE',
+                schema: 'public',
+                table: 'bulk_campaigns',
+                filter: `id=eq.${currentCampaignId}`
+            }, (payload: any) => {
+                const d = payload.new
+                setProgress({ current: d.current_index || 0, total: d.total_recipients || 0 })
+                setResults({ success: d.total_success || 0, error: d.total_errors || 0 })
+
+                if (d.status === 'completed' || d.status === 'cancelled') {
+                    setIsSending(false)
+                    setIsFinished(true)
+                    setStopRequested(false)
+                    if (d.status === 'completed') {
+                        toast.success('Processo de disparo concluído!')
+                    } else {
+                        toast.warning('Disparo interrompido.')
+                    }
+                }
+            })
+            .subscribe()
+
+        return () => {
+            supabase.removeChannel(channel)
+        }
+    }, [currentCampaignId, isSending])
 
     // Proteção contra fechar aba durante envio
     useEffect(() => {
@@ -394,6 +450,32 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         }
     }
 
+    // Corrigir orientação EXIF de imagens usando Canvas
+    const fixImageOrientation = (file: File): Promise<Blob> => {
+        return new Promise((resolve, reject) => {
+            const img = new window.Image()
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                canvas.width = img.naturalWidth
+                canvas.height = img.naturalHeight
+                const ctx = canvas.getContext('2d')
+                if (!ctx) { resolve(file); return }
+                ctx.drawImage(img, 0, 0)
+                canvas.toBlob(
+                    (blob) => {
+                        if (blob) resolve(blob)
+                        else resolve(file)
+                    },
+                    file.type || 'image/jpeg',
+                    0.92
+                )
+                URL.revokeObjectURL(img.src)
+            }
+            img.onerror = () => { resolve(file) }
+            img.src = URL.createObjectURL(file)
+        })
+    }
+
     const handleMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
         if (!file) return
@@ -405,9 +487,17 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             const fileName = `${Math.random()}.${fileExt}`
             const filePath = `bulk-media/${fileName}`
 
+            // Se for imagem, corrigir orientação EXIF via Canvas antes do upload
+            let fileToUpload: File | Blob = file
+            if (file.type.startsWith('image/')) {
+                fileToUpload = await fixImageOrientation(file)
+            }
+
             const { error: uploadError } = await supabase.storage
                 .from('crm-attachments')
-                .upload(filePath, file)
+                .upload(filePath, fileToUpload, {
+                    contentType: file.type,
+                })
 
             if (uploadError) throw uploadError
 
@@ -428,16 +518,19 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         }
     }
 
-    const stopRef = useRef(false)
-    const handleStop = () => {
+    const handleStop = async () => {
         stopRef.current = true
         setStopRequested(true)
+        if (currentCampaignId) {
+            await cancelBulkCampaign(currentCampaignId)
+        }
     }
 
     const handleSend = async () => {
         if (!campaignTitle.trim()) return toast.error('Dê um título para esta campanha.')
         if (recipients.length === 0) return toast.error('Selecione os destinatários.')
         if (!message && !media) return toast.error('Escreva uma mensagem ou anexe um arquivo.')
+        if (!sendSpeed) return toast.error('Selecione a velocidade do disparo.')
 
         // Validar plano
         const access = await validateBulkAccess()
@@ -452,17 +545,26 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             return toast.error(status.error)
         }
 
-        // Criar registro da campanha
-        const campaignResult = await createBulkCampaign({
-            tenantId, profileId, title: campaignTitle.trim(), message,
-            mediaUrl: media?.url, mediaType: media?.type, mediaName: media?.name,
-            totalRecipients: recipients.length,
+        // Criar campanha e disparar Edge Function no backend
+        const result = await startBulkCampaign({
+            tenantId, profileId,
+            title: campaignTitle.trim(),
+            message,
+            mediaUrl: media?.url,
+            mediaType: media?.type,
+            mediaName: media?.name,
+            recipients: recipients.map(r => ({ name: r.name, phone: r.phone, lead_id: r.lead_id })),
+            speedSetting: sendSpeed,
+            instanceName: status.instanceName,
             filtersApplied: { stages: selectedStages, source: selectedSource, campaign: selectedCampaign, broker: selectedBroker },
             sourceType: sourceType || 'system'
         })
-        const campId = campaignResult.data?.id || null
-        setCurrentCampaignId(campId)
 
+        if (!result.success || !result.data) {
+            return toast.error(result.error || 'Erro ao iniciar disparo.')
+        }
+
+        setCurrentCampaignId(result.data.id)
         setIsSending(true)
         stopRef.current = false
         setStopRequested(false)
@@ -470,54 +572,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         setResults({ success: 0, error: 0 })
         setProgress({ current: 0, total: recipients.length })
 
-        const total = recipients.length
-        let currentSuccess = 0
-        let currentError = 0
-
-        for (let i = 0; i < total; i++) {
-            if (stopRef.current) break
-            const recipient = recipients[i]
-            let sendStatus: 'success' | 'error' = 'error'
-            let errorMsg = ''
-            try {
-                const res = await sendSingleBulkMessage({
-                    recipient, message,
-                    mediaUrl: media?.url, mediaType: media?.type, fileName: media?.name,
-                    instanceName: status.instanceName
-                })
-                if (res.success) { currentSuccess++; sendStatus = 'success' }
-                else { currentError++; errorMsg = res.error || 'Erro desconhecido' }
-            } catch (err: any) { currentError++; errorMsg = err?.message || 'Erro de conexão' }
-
-            // Gravar resultado individual
-            if (campId) {
-                logBulkRecipientResult({
-                    campaignId: campId, tenantId,
-                    recipientName: recipient.name, recipientPhone: recipient.phone,
-                    leadId: recipient.lead_id,
-                    status: sendStatus, errorMessage: errorMsg || undefined
-                })
-            }
-
-            setResults({ success: currentSuccess, error: currentError })
-            setProgress({ current: i + 1, total })
-
-            if (i + 1 < total && !stopRef.current) {
-                await new Promise(resolve => setTimeout(resolve, 1500 + Math.random() * 1500))
-            }
-        }
-
-        setIsSending(false)
-        setIsFinished(true)
-
-        // Atualizar campanha no banco
-        const finalStatus = stopRef.current ? 'cancelled' : 'completed'
-        if (campId) {
-            await updateBulkCampaign(campId, { totalSuccess: currentSuccess, totalErrors: currentError, status: finalStatus as any })
-        }
-
-        if (stopRef.current) toast.warning('Disparo interrompido pelo usuário.')
-        else toast.success('Processo de disparo concluído!')
+        toast.success('Disparo iniciado! Você pode navegar para outras páginas sem interromper o envio.')
     }
 
     const handleLoadHistory = async () => {
@@ -632,21 +687,23 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     }
 
     return (
-        <div className="bg-card p-6 rounded-2xl border border-muted-foreground/30 shadow-sm space-y-6">
+        <div className="bg-card p-6 rounded-lg border border-muted-foreground/30 shadow-sm space-y-6">
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
                 {/* Composição */}
                 <div className="space-y-6">
                     {/* Título da Campanha */}
-                    <div className="space-y-1">
-                        <label className="text-sm font-bold text-foreground ml-1">
-                            Título da Campanha
-                        </label>
+                    <div className="space-y-2">
+                        <div className="min-h-[32px] flex items-center">
+                            <label className="text-sm font-bold text-foreground ml-1">
+                                Título da Campanha
+                            </label>
+                        </div>
                         <input
                             type="text"
                             value={campaignTitle}
                             onChange={(e) => setCampaignTitle(e.target.value)}
                             placeholder="Ex: Lançamento Residencial Park Sul"
-                            className="w-full h-10 px-3 text-sm font-medium bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50"
+                            className="w-full h-10 px-3 text-sm font-medium bg-input border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50"
                         />
                     </div>
 
@@ -680,7 +737,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                         {/* Lista de Templates */}
                         {showTemplates && (
-                            <div className="p-3 bg-foreground/5 rounded-xl border border-border/40 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="p-3 bg-foreground/5 rounded-lg border border-border/40 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Templates Salvos</p>
                                 {isLoadingTemplates ? (
                                     <div className="flex items-center justify-center py-4"><Loader2 className="animate-spin text-muted-foreground" size={16} /></div>
@@ -735,8 +792,10 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         </p>
                     </div>
 
-                    <div className="space-y-3">
-                        <label className="text-sm font-bold text-foreground ml-1">Anexar Mídia ou Documento</label>
+                    <div className="space-y-2">
+                        <div className="min-h-[32px] flex items-center">
+                            <label className="text-sm font-bold text-foreground ml-1">Anexar Mídia ou Documento</label>
+                        </div>
                         <div className="flex flex-wrap gap-2">
                             <input 
                                 type="file" 
@@ -748,14 +807,14 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             {media ? (
                                 <div className="relative group w-full">
                                     {media.type === 'image' ? (
-                                        <div className="relative max-h-[180px] rounded-2xl overflow-hidden border border-border/40 shadow-sm bg-foreground/5 flex items-center justify-center">
+                                        <div className="relative max-h-[180px] rounded-lg overflow-hidden border border-border/40 shadow-sm bg-foreground/5 flex items-center justify-center">
                                             <img src={media.url} alt="Preview" className="max-h-[180px] w-auto object-contain" />
                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                                                 <p className="text-white text-xs font-bold">{media.name}</p>
                                             </div>
                                         </div>
                                     ) : media.type === 'video' ? (
-                                        <div className="relative max-h-[180px] rounded-2xl overflow-hidden border border-border/40 shadow-sm bg-black flex items-center justify-center">
+                                        <div className="relative max-h-[180px] rounded-lg overflow-hidden border border-border/40 shadow-sm bg-black flex items-center justify-center">
                                             <video 
                                                 src={media.url} 
                                                 className="max-h-[180px] w-auto object-contain opacity-80"
@@ -772,8 +831,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                             </div>
                                         </div>
                                     ) : (
-                                        <div className="flex items-center gap-4 p-5 bg-foreground/5 rounded-2xl border-2 border-dashed border-border/40 w-full group-hover:bg-foreground/10 transition-colors">
-                                            <div className="w-14 h-14 rounded-xl bg-card shadow-sm flex items-center justify-center text-foreground border border-border/40">
+                                        <div className="flex items-center gap-4 p-5 bg-foreground/5 rounded-lg border-2 border-dashed border-border/40 w-full group-hover:bg-foreground/10 transition-colors">
+                                            <div className="w-14 h-14 rounded-lg bg-card shadow-sm flex items-center justify-center text-foreground border border-border/40">
                                                 <FileText size={32} strokeWidth={1.5} />
                                             </div>
                                             <div className="flex-1 min-w-0">
@@ -794,7 +853,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 <button 
                                     onClick={() => mediaInputRef.current?.click()}
                                     disabled={isMediaUploading}
-                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 border border-dashed border-border/40 rounded-lg hover:border-solid hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground group"
+                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 bg-input border border-muted-foreground/30 rounded-lg hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground group"
                                 >
                                     {isMediaUploading ? (
                                         <Loader2 className="animate-spin text-foreground" size={24} />
@@ -813,7 +872,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                 </div>
 
                 {/* Destinatários */}
-                <div className="space-y-6">
+                <div className="space-y-2">
                     <div className="flex items-center justify-between">
                         <label className="text-sm font-bold text-foreground ml-1">Destinatários ({recipients.length})</label>
                         <button
@@ -829,7 +888,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                     {recipients.length === 0 ? (
                         <div className="space-y-4">
                             {showFilters && filterOptions && (
-                                <div className="space-y-3 p-4 bg-foreground/5 rounded-xl border border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="space-y-3 p-4 bg-foreground/5 rounded-lg border border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
                                     {/* Estágios */}
                                     <div>
                                         <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Estágio do Funil</label>
@@ -897,7 +956,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             <button 
                                 onClick={handleFetchSystemLeads}
                                 disabled={isSelectingLeads}
-                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-foreground/5 rounded-lg border border-border/40 hover:border-border hover:bg-foreground/10 transition-all text-muted-foreground group text-center"
+                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-input rounded-lg border border-muted-foreground/30 hover:border-muted-foreground/50 transition-all text-muted-foreground group text-center"
                             >
                                 <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                                     {isSelectingLeads ? <Loader2 className="animate-spin" size={20} /> : <Users className="text-foreground" size={20} />}
@@ -910,7 +969,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-foreground/5 rounded-lg border border-border/40 hover:border-border hover:bg-foreground/10 transition-all text-muted-foreground group text-center"
+                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-input rounded-lg border border-muted-foreground/30 hover:border-muted-foreground/50 transition-all text-muted-foreground group text-center"
                             >
                                 <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                                     <FileSpreadsheet className="text-foreground" size={20} />
@@ -932,8 +991,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 onClick={() => setShowGoogleSheet(!showGoogleSheet)}
                                 className={`flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 rounded-lg border transition-all text-muted-foreground group text-center ${
                                     showGoogleSheet 
-                                        ? 'bg-foreground/10 border-border' 
-                                        : 'bg-foreground/5 border-border/40 hover:border-border hover:bg-foreground/10'
+                                        ? 'bg-input border-muted-foreground/50' 
+                                        : 'bg-input border-muted-foreground/30 hover:border-muted-foreground/50'
                                 }`}
                             >
                                 <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
@@ -948,7 +1007,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                         {/* Google Sheets URL Input */}
                         {showGoogleSheet && (
-                            <div className="p-4 bg-foreground/5 rounded-xl border border-border/40 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="p-4 bg-foreground/5 rounded-lg border border-border/40 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <div className="flex items-center gap-2">
                                     <Globe size={14} className="text-[#0F9D58] shrink-0" />
                                     <p className="text-[10px] font-bold text-foreground">Cole o link de compartilhamento da planilha</p>
@@ -1035,7 +1094,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                             {/* Lista de duplicados removidos */}
                             {showDuplicates && importStats && importStats.duplicateList.length > 0 && (
-                                <div className="p-3 bg-amber-50/50 rounded-xl border border-amber-100 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="p-3 bg-amber-50/50 rounded-lg border border-amber-100 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                     <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Duplicados Removidos</p>
                                     <div className="max-h-[120px] overflow-y-auto space-y-1 custom-scrollbar">
                                         {importStats.duplicateList.map((d, i) => (
@@ -1050,7 +1109,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                             {/* Lista de inválidos */}
                             {showInvalids && importStats && importStats.invalid > 0 && (
-                                <div className="p-3 bg-red-50/50 rounded-xl border border-red-100 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="p-3 bg-red-50/50 rounded-lg border border-red-100 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                     <div className="flex items-center justify-between">
                                         <p className="text-[10px] font-bold text-red-800 uppercase tracking-wider">Números Inválidos</p>
                                         <button
@@ -1076,7 +1135,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             {/* Lista principal de destinatários */}
                             <div className="max-h-[300px] overflow-y-auto space-y-2 pr-2 custom-scrollbar">
                                 {recipients.map((r, i) => (
-                                    <div key={i} className={`flex items-center justify-between p-3 rounded-xl border transition-colors ${
+                                    <div key={i} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
                                         r.isInvalid 
                                             ? 'bg-red-50/50 border-red-100' 
                                             : 'bg-foreground/5 border-border/40'
@@ -1101,18 +1160,95 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         </div>
                     )}
 
-                    <div className="bg-blue-500/10 p-4 rounded-lg border border-blue-500/20 flex gap-3">
-                        <div className="space-y-1">
-                            <p className="text-xs font-bold text-blue-400">Como funciona o disparo?</p>
-                            <p className="text-[10px] text-blue-400/80 leading-relaxed text-pretty">
-                                O sistema enviará as mensagens uma por uma, com um intervalo aleatório entre 1.5s e 3s para simular comportamento humano e reduzir o risco de bloqueio. 
-                                <br/><br/>
-                                <strong className="text-blue-400">Importante:</strong> Mantenha esta aba aberta até o fim do processo.
-                            </p>
+                    {/* Seletor de Velocidade */}
+                    <div className="space-y-2 pt-4 border-t border-border/40 mt-4">
+                        <div className="min-h-[32px] flex items-center">
+                            <label className="text-sm font-bold text-foreground ml-1">Velocidade do Disparo</label>
                         </div>
+                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                            {[
+                                { key: 'normal' as const, label: '20 – 30s', time: '~21 min para 50 msgs', risk: 'Alto', color: 'text-red-500' },
+                                { key: 'safe' as const, label: '30 – 60s', time: '~37 min para 50 msgs', risk: 'Moderado', color: 'text-amber-500' },
+                                { key: 'ultra' as const, label: '60 – 120s', time: '~1h15 para 50 msgs', risk: 'Baixo', color: 'text-green-500' },
+                            ].map(opt => (
+                                <button
+                                    key={opt.key}
+                                    onClick={() => { setPendingSpeed(opt.key); setShowSpeedWarning(true) }}
+                                    disabled={isSending}
+                                    className={`relative p-3.5 rounded-lg border text-center md:text-left transition-all ${
+                                        sendSpeed === opt.key
+                                            ? 'border-foreground/30 bg-input ring-1 ring-foreground/20'
+                                            : 'border-muted-foreground/30 bg-input hover:border-muted-foreground/50'
+                                    } ${isSending ? 'opacity-50 cursor-not-allowed' : ''}`}
+                                >
+                                    {sendSpeed === opt.key && (
+                                        <div className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-foreground animate-in fade-in zoom-in duration-200" />
+                                    )}
+                                    <p className="text-sm font-bold text-foreground">{opt.label} <span className="font-normal text-muted-foreground">entre mensagens</span></p>
+                                    <p className={`text-xs font-bold ${opt.color} mt-1`}>Risco {opt.risk}</p>
+                                    <p className="text-xs text-muted-foreground mt-0.5">{opt.time}</p>
+                                </button>
+                            ))}
+                        </div>
+                        <p className="text-xs text-muted-foreground flex items-center gap-1 italic">
+                            <Info size={12} />
+                            Mantenha esta aba aberta até o fim do processo.
+                        </p>
                     </div>
                 </div>
             </div>
+
+            {/* Modal de Aviso de Velocidade */}
+            {showSpeedWarning && (
+                <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
+                    <div className="bg-card rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300 border border-border">
+                        <div className="px-6 py-5 border-b border-border">
+                            <div className="flex items-center justify-between">
+                                <div className="flex items-center gap-3">
+                                    <div className="w-11 h-11 rounded-lg bg-secondary flex items-center justify-center">
+                                        <AlertCircle className="text-secondary-foreground" size={22} />
+                                    </div>
+                                    <div>
+                                        <h3 className="text-base font-black text-foreground">Atenção</h3>
+                                        <p className="text-xs font-bold text-red-500">Aviso sobre possível bloqueio do WhatsApp</p>
+                                    </div>
+                                </div>
+                                <button
+                                    onClick={() => { setPendingSpeed(null); setShowSpeedWarning(false) }}
+                                    className="w-8 h-8 rounded-full bg-muted hover:bg-muted/80 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                                >
+                                    <X size={16} />
+                                </button>
+                            </div>
+                        </div>
+                        <div className="px-6 py-6 space-y-3">
+                            <p className="text-sm text-foreground leading-relaxed">
+                                Você escolheu o intervalo de <strong className="text-accent-icon">{pendingSpeed === 'fast' ? '10 – 20s' : pendingSpeed === 'normal' ? '20 – 30s' : pendingSpeed === 'safe' ? '30 – 60s' : '60 – 120s'}</strong> entre as mensagens.
+                            </p>
+                            <p className="text-sm text-foreground leading-relaxed">
+                                Nenhum intervalo de tempo garante que o número de WhatsApp utilizado não possa ser bloqueado.
+                            </p>
+                            <p className="text-sm font-bold text-foreground">
+                                Deseja prosseguir mesmo assim?
+                            </p>
+                            <div className="flex items-center gap-2 pt-2">
+                                <button
+                                    onClick={() => { if (pendingSpeed) setSendSpeed(pendingSpeed); setPendingSpeed(null); setShowSpeedWarning(false) }}
+                                    className="flex-1 h-12 text-sm font-bold bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/90 transition-colors"
+                                >
+                                    Sim, prosseguir
+                                </button>
+                                <button
+                                    onClick={() => { setPendingSpeed(null); setShowSpeedWarning(false) }}
+                                    className="flex-1 h-12 text-sm font-bold text-foreground bg-muted rounded-lg hover:bg-muted/80 transition-colors"
+                                >
+                                    Cancelar
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
 
             {/* Ações e Progresso */}
             <div className="pt-6 border-t border-border/40 flex flex-col gap-4">
@@ -1139,7 +1275,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                 )}
 
                 {isFinished && !isSending && (
-                    <div className="p-4 bg-foreground/5 rounded-xl border border-border/40 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
+                    <div className="p-4 bg-foreground/5 rounded-lg border border-border/40 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
                                 <CheckCircle2 size={20} />
@@ -1162,7 +1298,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                     {isSending ? (
                         <button 
                             onClick={handleStop}
-                            className="w-full h-12 text-sm font-bold bg-card border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2"
+                            className="w-full h-12 text-sm font-bold bg-card border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all transform active:scale-[0.99] rounded-lg shadow-sm flex items-center justify-center gap-2"
                         >
                             <X size={20} />
                             Interromper Disparo
@@ -1171,7 +1307,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         <button 
                             onClick={handleSend}
                             disabled={isSending || recipients.length === 0 || (!message && !media)}
-                            className={`w-full h-12 text-sm font-bold bg-secondary border-none text-secondary-foreground hover:bg-secondary/90 transition-all transform active:scale-[0.99] rounded-xl shadow-sm flex items-center justify-center gap-2 ${(recipients.length === 0 || (!message && !media)) ? 'opacity-50 cursor-not-allowed' : ''}`}
+                            className={`w-full h-12 text-sm font-bold bg-secondary border-none text-secondary-foreground hover:bg-secondary/90 transition-all transform active:scale-[0.99] rounded-lg shadow-sm flex items-center justify-center gap-2 ${(recipients.length === 0 || (!message && !media)) ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
                             Iniciar Disparo para {recipients.length} Contatos
                         </button>
@@ -1182,58 +1318,60 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
             {/* Histórico de Campanhas */}
             <div className="pt-4 border-t border-border/40">
-                <div className="flex items-center justify-between">
-                    <button
-                        onClick={handleLoadHistory}
-                        className="flex items-center gap-2 text-sm font-bold text-foreground hover:text-foreground/80 transition-colors"
-                    >
-                        <span>Histórico de Disparos</span>
-                        {showHistory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                    </button>
-                    {showHistory && campaignHistory.length > 0 && (
-                        <div className="flex items-center gap-1">
-                            {confirmDeleteAll ? (
-                                <>
-                                    <span className="text-[10px] text-red-500 font-bold">Apagar tudo?</span>
+                <div className="bg-input rounded-lg border border-muted-foreground/30 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3">
+                        <button
+                            onClick={handleLoadHistory}
+                            className="flex items-center gap-2 text-sm font-bold text-foreground hover:text-foreground/80 transition-colors"
+                        >
+                            <span>Histórico de Disparos</span>
+                            {showHistory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
+                        </button>
+                        {showHistory && campaignHistory.length > 0 && (
+                            <div className="flex items-center gap-1">
+                                {confirmDeleteAll ? (
+                                    <>
+                                        <span className="text-[10px] text-red-500 font-bold">Apagar tudo?</span>
+                                        <button
+                                            onClick={handleDeleteAllCampaigns}
+                                            className="text-[10px] font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
+                                        >
+                                            Sim
+                                        </button>
+                                        <button
+                                            onClick={() => setConfirmDeleteAll(false)}
+                                            className="text-[10px] font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-foreground/5 transition-colors"
+                                        >
+                                            Não
+                                        </button>
+                                    </>
+                                ) : (
                                     <button
-                                        onClick={handleDeleteAllCampaigns}
-                                        className="text-[10px] font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
+                                        onClick={() => setConfirmDeleteAll(true)}
+                                        className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10"
                                     >
-                                        Sim
+                                        <Trash2 size={10} />
+                                        Limpar Tudo
                                     </button>
-                                    <button
-                                        onClick={() => setConfirmDeleteAll(false)}
-                                        className="text-[10px] font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-foreground/5 transition-colors"
-                                    >
-                                        Não
-                                    </button>
-                                </>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                    {showHistory && (
+                        <div className="border-t border-muted-foreground/20 animate-in fade-in slide-in-from-top-2 duration-200">
+                            {isLoadingHistory ? (
+                                <div className="flex items-center justify-center py-8"><Loader2 className="animate-spin text-muted-foreground" size={20} /></div>
+                            ) : campaignHistory.length === 0 ? (
+                                <p className="text-xs text-muted-foreground text-center py-6">Nenhum disparo realizado ainda.</p>
                             ) : (
-                                <button
-                                    onClick={() => setConfirmDeleteAll(true)}
-                                    className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10"
-                                >
-                                    <Trash2 size={10} />
-                                    Limpar Tudo
-                                </button>
-                            )}
-                        </div>
-                    )}
-                </div>
-                {showHistory && (
-                    <div className="mt-3 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                        {isLoadingHistory ? (
-                            <div className="flex items-center justify-center py-8"><Loader2 className="animate-spin text-muted-foreground" size={20} /></div>
-                        ) : campaignHistory.length === 0 ? (
-                            <p className="text-xs text-muted-foreground text-center py-6">Nenhum disparo realizado ainda.</p>
-                        ) : (
-                            campaignHistory.map(c => (
+                                <div className="divide-y divide-muted-foreground/20">
+                                {campaignHistory.map(c => (
                                 <div key={c.id} className="space-y-0">
                                     <button
                                         onClick={() => c.total_errors > 0 ? handleExpandCampaign(c.id) : null}
-                                        className={`w-full flex items-center justify-between p-3 bg-foreground/5 rounded-xl border border-border/40 text-left transition-colors group/card ${
-                                            c.total_errors > 0 ? 'hover:bg-foreground/10 cursor-pointer' : 'cursor-default'
-                                        } ${expandedCampaignId === c.id ? 'rounded-b-none border-b-0' : ''}`}
+                                        className={`w-full flex items-center justify-between p-3 text-left transition-colors group/card ${
+                                            c.total_errors > 0 ? 'hover:bg-foreground/5 cursor-pointer' : 'cursor-default'
+                                        } ${expandedCampaignId === c.id ? 'bg-foreground/5' : ''}`}
                                     >
                                         <div className="min-w-0 flex-1">
                                             <div className="flex items-center gap-2 mb-0.5">
@@ -1255,8 +1393,10 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                             }`}>
                                                 {c.status === 'completed' ? 'Concluído' : c.status === 'cancelled' ? 'Cancelado' : 'Enviando'}
                                             </span>
-                                            {c.total_errors > 0 && (
+                                            {c.total_errors > 0 ? (
                                                 expandedCampaignId === c.id ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />
+                                            ) : (
+                                                <span className="w-[14px]" />
                                             )}
                                             <button
                                                 onClick={(e) => { e.stopPropagation(); handleDeleteCampaign(c.id); }}
@@ -1299,20 +1439,22 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                         </div>
                                     )}
                                 </div>
-                            ))
+                            ))}
+                            </div>
                         )}
                     </div>
                 )}
+                </div>
             </div>
 
             {/* Modal de Salvar Template */}
             {showSaveTemplate && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-card rounded-2xl shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+                    <div className="bg-card rounded-lg shadow-2xl w-full max-w-sm overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                         <div className="px-6 py-5 border-b border-border/40">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-green-50 flex items-center justify-center">
+                                    <div className="w-10 h-10 rounded-lg bg-green-50 flex items-center justify-center">
                                         <Save className="text-green-600" size={20} />
                                     </div>
                                     <div>
@@ -1375,12 +1517,12 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             {/* Modal de Seleção de Aba da Planilha */}
             {showSheetPicker && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-card rounded-2xl shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
+                    <div className="bg-card rounded-lg shadow-2xl w-full max-w-md overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4 duration-300">
                         {/* Header */}
                         <div className="px-6 py-5 border-b border-border/40">
                             <div className="flex items-center justify-between">
                                 <div className="flex items-center gap-3">
-                                    <div className="w-10 h-10 rounded-xl bg-foreground/10 flex items-center justify-center">
+                                    <div className="w-10 h-10 rounded-lg bg-foreground/10 flex items-center justify-center">
                                         <FileSpreadsheet className="text-foreground" size={20} />
                                     </div>
                                     <div>
@@ -1405,7 +1547,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     <button
                                         key={idx}
                                         onClick={() => handleSheetSelection(name)}
-                                        className="w-full flex items-center gap-3 p-3.5 rounded-xl border border-border/40 bg-foreground/5 hover:bg-foreground/10 hover:border-border transition-all group text-left"
+                                        className="w-full flex items-center gap-3 p-3.5 rounded-lg border border-border/40 bg-foreground/5 hover:bg-foreground/10 hover:border-border transition-all group text-left"
                                     >
                                         <div className="w-8 h-8 rounded-lg bg-card border border-border/40 flex items-center justify-center text-[10px] font-black text-foreground group-hover:bg-muted group-hover:text-foreground group-hover:border-muted transition-all shrink-0">
                                             {idx + 1}

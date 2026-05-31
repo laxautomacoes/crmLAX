@@ -7,12 +7,30 @@ import { getPropertyUrl } from '@/lib/utils/url'
 import { getPropertyEmail } from '@/lib/emails/templates'
 
 export async function sendPropertyEmail(leadId: string, leadEmail: string, propertyData: Record<string, any>, config?: any) {
-    const tenant = await getTenantFromHeaders()
-    if (!tenant) return { success: false, error: 'Tenant not found' }
-
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     const brokerId = user?.id
+
+    // Tentar obter tenant via headers (proxy), com fallback via profile do usuário
+    let tenant = await getTenantFromHeaders()
+    if (!tenant && user) {
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('tenant_id')
+            .eq('id', user.id)
+            .single()
+
+        if (profile?.tenant_id) {
+            const { data: tenantData } = await supabase
+                .from('tenants')
+                .select('id, slug, name, custom_domain, custom_domain_verified, branding')
+                .eq('id', profile.tenant_id)
+                .single()
+
+            tenant = tenantData
+        }
+    }
+    if (!tenant) return { success: false, error: 'Tenant not found' }
     
     // Build config query params for the URL
     const queryParams = new URLSearchParams()

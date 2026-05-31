@@ -83,7 +83,8 @@ export async function getPipelineData(tenantId: string) {
             ),
             profiles:assigned_to (
                 full_name
-            )
+            ),
+            proposals ( id )
         `)
         .eq('tenant_id', tenantId)
         .eq('is_archived', false)
@@ -120,7 +121,8 @@ export async function getPipelineData(tenantId: string) {
         videos: lead.videos || [],
         documents: lead.documents || [],
         whatsapp_chat: lead.whatsapp_chat || [],
-        last_interaction_at: lead.last_interaction_at || lead.created_at || null
+        last_interaction_at: lead.last_interaction_at || lead.created_at || null,
+        has_proposal: ((lead as any).proposals && (lead as any).proposals.length > 0)
     })) as PipelineLead[]
 
     return {

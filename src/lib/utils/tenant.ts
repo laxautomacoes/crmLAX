@@ -17,7 +17,7 @@ export async function getTenantFromHeaders(): Promise<TenantInfo | null> {
     const supabase = await createClient();
     const { data: tenant } = await supabase
         .from('tenants')
-        .select('id, slug, name, custom_domain, branding')
+        .select('id, slug, name, custom_domain, custom_domain_verified, branding')
         .eq('id', tenantId)
         .single();
 

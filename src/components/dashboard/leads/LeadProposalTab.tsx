@@ -46,7 +46,7 @@ export function LeadProposalTab({
         installments: '',
         permutas: '',
         notes: '',
-        status: 'rascunho'
+        status: 'criada'
     });
 
     // 1. Carregar proposta existente
@@ -64,7 +64,7 @@ export function LeadProposalTab({
                     installments: terms.installments || '',
                     permutas: terms.permutas || '',
                     notes: terms.notes || '',
-                    status: p.status || 'rascunho'
+                    status: p.status || 'criada'
                 });
                 if (p.contact) setContactData(p.contact);
                 if (p.property) setPropertyData(p.property);

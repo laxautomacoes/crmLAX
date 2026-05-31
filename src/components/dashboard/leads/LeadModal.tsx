@@ -301,13 +301,27 @@ export function LeadModal({
                 showMethodSelection ? undefined : (
                 <div className="flex items-center gap-2">
                     {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
-                        <button
-                            type="button"
-                            onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
-                            className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
-                        >
-                            Fazer Proposta
-                        </button>
+                        editingLead.has_proposal ? (
+                            <span
+                                className="px-4 py-1.5 border border-foreground/30 text-foreground/70 rounded-lg font-bold text-sm whitespace-nowrap flex items-center gap-1.5"
+                            >
+                                <span
+                                    className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded-full shrink-0"
+                                    style={{ backgroundColor: '#FFE600', color: '#1a1a1a' }}
+                                >
+                                    P
+                                </span>
+                                Em Proposta
+                            </span>
+                        ) : (
+                            <button
+                                type="button"
+                                onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
+                                className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                            >
+                                Fazer Proposta
+                            </button>
+                        )
                     )}
                     <button
                         onClick={handleSubmit}

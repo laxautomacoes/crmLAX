@@ -65,6 +65,15 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
                 </div>
 
                 <div className="flex items-center gap-1.5">
+                    {lead.has_proposal && (
+                        <span
+                            className="w-5 h-5 flex items-center justify-center text-[10px] font-black rounded-full shrink-0"
+                            style={{ backgroundColor: '#FFE600', color: '#1a1a1a' }}
+                            title="Lead com proposta"
+                        >
+                            P
+                        </span>
+                    )}
                     <LeadTemperatureBadge lastInteractionAt={lead.last_interaction_at} />
                     <div className="relative" ref={dropdownRef} onClick={(e) => e.stopPropagation()}>
                         <button

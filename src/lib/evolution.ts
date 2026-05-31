@@ -150,34 +150,23 @@ export const evolutionService = {
     },
 
     async sendMedia(instanceName: string, number: string, mediaUrl: string, mediaType: 'image' | 'video', caption?: string) {
-        // Tenta enviar no formato V2 primeiro (sendMedia com mediatype)
+        // Detectar mimetype com base no mediaType
+        const mimetypeMap: Record<string, string> = {
+            image: 'image/png',
+            video: 'video/mp4',
+        };
+        const mimetype = mimetypeMap[mediaType] || 'application/octet-stream';
+
         return evolutionFetch(`/message/sendMedia/${instanceName}`, {
             method: 'POST',
             body: JSON.stringify({
                 number,
                 options: { delay: 1200, presence: 'composing' },
-                mediatype: mediaType, // Evolution V2
+                mediatype: mediaType,
+                mimetype,
                 media: mediaUrl,
                 caption: caption || '',
-                // Fallback structure in case it's an older v2
-                mediaMessage: {
-                    mediatype: mediaType,
-                    media: mediaUrl,
-                    caption: caption || ''
-                }
             }),
-        }).catch(() => {
-            // Fallback para V1 se o endpoint V2 não existir
-            const endpoint = mediaType === 'image' ? `/message/sendImage/${instanceName}` : `/message/sendVideo/${instanceName}`;
-            return evolutionFetch(endpoint, {
-                method: 'POST',
-                body: JSON.stringify({
-                    number,
-                    options: { delay: 1200, presence: 'composing' },
-                    media: mediaUrl,
-                    caption: caption || ''
-                }),
-            });
         });
     },
 
@@ -187,30 +176,12 @@ export const evolutionService = {
             body: JSON.stringify({
                 number,
                 options: { delay: 1200, presence: 'composing' },
-                mediatype: 'document', // Evolution V2
+                mediatype: 'document',
+                mimetype: 'application/pdf',
                 media: documentUrl,
                 fileName,
                 caption: caption || '',
-                // Fallback structure
-                mediaMessage: {
-                    mediatype: 'document',
-                    media: documentUrl,
-                    fileName,
-                    caption: caption || ''
-                }
             }),
-        }).catch(() => {
-            // Fallback para V1
-            return evolutionFetch(`/message/sendDocument/${instanceName}`, {
-                method: 'POST',
-                body: JSON.stringify({
-                    number,
-                    options: { delay: 1200, presence: 'composing' },
-                    document: documentUrl,
-                    fileName,
-                    caption: caption || ''
-                }),
-            });
         });
     },
 

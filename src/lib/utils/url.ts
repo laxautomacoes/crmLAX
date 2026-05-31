@@ -10,11 +10,11 @@ export function getTenantBaseUrl(tenant: {
 }): string {
     const isDev = checkIsDev();
     const rootDomain = getRootDomain();
-    const protocol = isDev ? 'http' : 'https';
+    const isRealDomain = !rootDomain.includes('localhost') && !rootDomain.includes('127.0.0.1') && !rootDomain.includes('.local');
+    const protocol = isDev && !isRealDomain ? 'http' : 'https';
 
-    // Se estiver em dev, usa sempre o localhost com slug se for necessário, 
-    // mas para links externos simulamos o domínio
-    if (isDev) {
+    // Em dev local (localhost), retorna localhost diretamente
+    if (isDev && !isRealDomain) {
         return `${protocol}://${rootDomain}`;
     }
 
@@ -23,7 +23,7 @@ export function getTenantBaseUrl(tenant: {
         return `${protocol}://${tenant.custom_domain}`;
     }
 
-    // Fallback para subdomínio
+    // Fallback para subdomínio (funciona tanto em prod quanto em dev com domínio real)
     return `${protocol}://${tenant.slug}.${rootDomain}`;
 }
 

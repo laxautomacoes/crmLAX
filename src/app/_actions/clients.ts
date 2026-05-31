@@ -47,7 +47,8 @@ export async function getClientById(contactId: string) {
                 profiles:assigned_to ( full_name ),
                 properties ( id, title, price ),
                 lead_stages ( name, color ),
-                interactions ( content, type, created_at )
+                interactions ( content, type, created_at ),
+                proposals ( id )
             )
         `)
         .eq('id', contactId)
@@ -101,7 +102,8 @@ export async function getClientById(contactId: string) {
             .map((l) => ({
                 ...l,
                 status_name: l.lead_stages?.name || l.status,
-                status_color: l.lead_stages?.color || null
+                status_color: l.lead_stages?.color || null,
+                has_proposal: (l.proposals && l.proposals.length > 0)
             }))
     }
 
@@ -152,7 +154,8 @@ export async function getClients(tenantId: string, includeArchived = false) {
             content,
             type,
             created_at
-        )
+        ),
+        proposals ( id )
       )
     `)
         .eq('tenant_id', tenantId)
@@ -223,7 +226,8 @@ export async function getClients(tenantId: string, includeArchived = false) {
                 .map((l) => ({
                 ...l,
                 status_name: l.lead_stages?.name || l.status,
-                status_color: l.lead_stages?.color || null
+                status_color: l.lead_stages?.color || null,
+                has_proposal: (l.proposals && l.proposals.length > 0)
             }))
         }
     })

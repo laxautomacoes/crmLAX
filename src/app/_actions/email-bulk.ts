@@ -3,6 +3,8 @@
 import { createClient } from '@/lib/supabase/server'
 import { getProfile } from './profile'
 import { getResendClient, getCleanEmailAddress } from '@/lib/emails/client'
+import { getPropertyEmail } from '@/lib/emails/templates'
+import { getPropertyUrl } from '@/lib/utils/url'
 
 // Criar campanha de email em massa
 export async function createEmailBulkCampaign(params: {
@@ -425,6 +427,90 @@ export async function getEmailCampaignReport(campaignId: string) {
         return { success: true, data }
     } catch (error: any) {
         console.error('Error fetching email campaign report:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+// Gerar HTML de e-mail com dados de um imóvel (reutiliza template profissional)
+export async function generatePropertyEmailHtml(params: {
+    tenantId: string,
+    propertyId: string,
+    config: {
+        title?: boolean,
+        price?: boolean,
+        showCondo?: boolean,
+        showIptu?: boolean,
+        description?: 'full' | 'none',
+        location?: 'exact' | 'approximate' | 'none',
+        showBedrooms?: boolean,
+        showSuites?: boolean,
+        showArea?: boolean,
+        showType?: boolean,
+        showAmenities?: boolean,
+        showSacada?: boolean,
+        showEscritorio?: boolean,
+        showDependencia?: boolean,
+        showObservations?: boolean,
+        selectedImages?: string[],
+        selectedVideos?: string[],
+        selectedDocs?: { name?: string, url: string }[],
+    }
+}) {
+    const supabase = await createClient()
+
+    try {
+        // Buscar dados completos do imóvel
+        const { data: property, error: propError } = await supabase
+            .from('properties')
+            .select('*')
+            .eq('id', params.propertyId)
+            .eq('tenant_id', params.tenantId)
+            .single()
+
+        if (propError || !property) throw new Error('Imóvel não encontrado')
+
+        // Buscar dados do tenant para gerar URL
+        const { data: tenant, error: tenantError } = await supabase
+            .from('tenants')
+            .select('slug, custom_domain, custom_domain_verified')
+            .eq('id', params.tenantId)
+            .single()
+
+        if (tenantError || !tenant) throw new Error('Tenant não encontrado')
+
+        // Buscar configurações de e-mail (branding)
+        const { data: emailSettings } = await supabase
+            .from('email_settings')
+            .select('*')
+            .eq('tenant_id', params.tenantId)
+            .single()
+
+        // Gerar URL pública do imóvel
+        const propertyUrl = getPropertyUrl(
+            tenant,
+            property.id,
+            property.slug,
+            property.type
+        )
+
+        // Montar config no formato esperado pelo getPropertyEmail
+        const emailConfig = {
+            ...params.config,
+            images: params.config.selectedImages || property.images || [],
+            videos: params.config.selectedVideos || property.videos || [],
+            documents: params.config.selectedDocs || property.documents || [],
+        }
+
+        const { subject, html } = getPropertyEmail(
+            property,
+            propertyUrl,
+            emailConfig,
+            emailSettings || {}
+        )
+
+        return { success: true, html, subject }
+    } catch (error: any) {
+        console.error('Error generating property email HTML:', error)
         return { success: false, error: error.message }
     }
 }

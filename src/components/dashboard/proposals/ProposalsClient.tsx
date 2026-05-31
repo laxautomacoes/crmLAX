@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { getAllProposals, updateProposalStatus } from '@/app/_actions/proposals'
+import { useState, useEffect, useRef } from 'react'
+import { getAllProposals, updateProposalStatus, archiveProposal, deleteProposal } from '@/app/_actions/proposals'
 import { getProfile } from '@/app/_actions/profile'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { FileText, Search, Filter, Loader2, Eye, ChevronDown, List, Columns3 } from 'lucide-react'
+import { FileText, Search, Filter, Loader2, Eye, ChevronDown, List, Columns3, Archive, Trash2, MoreVertical } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import {
@@ -38,14 +38,14 @@ interface Proposal {
 
 const STATUS_OPTIONS = [
     { value: 'all', label: 'Todos', color: '' },
-    { value: 'rascunho', label: 'Rascunho', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
+    { value: 'criada', label: 'Criada', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800 dark:text-gray-300' },
     { value: 'enviada', label: 'Enviada', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400' },
     { value: 'aceita', label: 'Aceita', color: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
     { value: 'recusada', label: 'Recusada', color: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400' },
 ]
 
 const STATUS_PIPELINE_COLORS: Record<string, string> = {
-    rascunho: '#6B7280',
+    criada: '#6B7280',
     enviada: '#3B82F6',
     aceita: '#22C55E',
     recusada: '#EF4444',
@@ -62,7 +62,7 @@ function getStatusLabel(status: string) {
 }
 
 /* ── Sortable Card ── */
-function SortableProposalCard({ proposal, onClick }: { proposal: Proposal; onClick: () => void }) {
+function SortableProposalCard({ proposal, onClick, onArchive, onDelete }: { proposal: Proposal; onClick: () => void; onArchive?: (id: string) => void; onDelete?: (id: string) => void }) {
     const { attributes, listeners, setNodeRef, transform, transition, isDragging } = useSortable({ id: proposal.id })
     const style = {
         transform: CSS.Transform.toString(transform),
@@ -101,14 +101,36 @@ function SortableProposalCard({ proposal, onClick }: { proposal: Proposal; onCli
                         </p>
                     )}
                 </div>
-                {/* Valor + Data */}
+                {/* Valor + Data + Ações */}
                 <div className="flex items-center justify-between pt-2 border-t border-border/30">
                     <span className="text-xs font-bold text-foreground">
                         R$ {proposal.value ? parseFloat(proposal.value.toString()).toLocaleString('pt-BR') : '0'}
                     </span>
-                    <span className="text-[10px] text-muted-foreground">
-                        {new Date(proposal.updated_at).toLocaleDateString('pt-BR')}
-                    </span>
+                    <div className="flex items-center gap-1.5">
+                        <span className="text-[10px] text-muted-foreground">
+                            {new Date(proposal.updated_at).toLocaleDateString('pt-BR')}
+                        </span>
+                        <div className="hidden group-hover:flex items-center gap-0.5" onClick={e => e.stopPropagation()}>
+                            {onArchive && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onArchive(proposal.id) }}
+                                    className="p-1 text-muted-foreground hover:text-foreground rounded transition-colors"
+                                    title="Arquivar"
+                                >
+                                    <Archive size={11} />
+                                </button>
+                            )}
+                            {onDelete && (
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); onDelete(proposal.id) }}
+                                    className="p-1 text-muted-foreground hover:text-red-500 rounded transition-colors"
+                                    title="Excluir"
+                                >
+                                    <Trash2 size={11} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -116,12 +138,14 @@ function SortableProposalCard({ proposal, onClick }: { proposal: Proposal; onCli
 }
 
 /* ── Droppable Column ── */
-function DroppableStatusColumn({ statusValue, statusLabel, borderColor, proposals, onCardClick }: {
+function DroppableStatusColumn({ statusValue, statusLabel, borderColor, proposals, onCardClick, onArchive, onDelete }: {
     statusValue: string
     statusLabel: string
     borderColor: string
     proposals: Proposal[]
     onCardClick: (leadId: string) => void
+    onArchive?: (id: string) => void
+    onDelete?: (id: string) => void
 }) {
     const { setNodeRef, isOver } = useDroppable({ id: statusValue })
     return (
@@ -156,6 +180,8 @@ function DroppableStatusColumn({ statusValue, statusLabel, borderColor, proposal
                                 key={proposal.id}
                                 proposal={proposal}
                                 onClick={() => onCardClick(proposal.lead_id)}
+                                onArchive={onArchive}
+                                onDelete={onDelete}
                             />
                         ))
                     )}
@@ -229,6 +255,27 @@ export default function ProposalsClient() {
         router.push(`/leads?id=${leadId}`)
     }
 
+    const handleArchive = async (proposalId: string) => {
+        const res = await archiveProposal(proposalId)
+        if (res.success) {
+            setProposals(prev => prev.filter(p => p.id !== proposalId))
+            toast.success('Proposta arquivada com sucesso')
+        } else {
+            toast.error('Erro ao arquivar proposta')
+        }
+    }
+
+    const handleDelete = async (proposalId: string) => {
+        if (!confirm('Tem certeza que deseja excluir esta proposta permanentemente?')) return
+        const res = await deleteProposal(proposalId)
+        if (res.success) {
+            setProposals(prev => prev.filter(p => p.id !== proposalId))
+            toast.success('Proposta excluída com sucesso')
+        } else {
+            toast.error('Erro ao excluir proposta')
+        }
+    }
+
     const handleDragStart = (event: DragStartEvent) => {
         const draggedId = event.active.id.toString()
         const proposal = proposals.find(p => p.id === draggedId)
@@ -280,7 +327,7 @@ export default function ProposalsClient() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto flex flex-col gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="max-w-[1600px] mx-auto flex flex-col gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300 h-[calc(100vh-120px)] md:h-[calc(100vh-100px)]">
             <PageHeader title="Propostas">
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     {/* Search */}
@@ -340,8 +387,8 @@ export default function ProposalsClient() {
                                 key={status.value}
                                 onClick={() => setStatusFilter(statusFilter === status.value ? 'all' : status.value)}
                                 className={`flex items-center justify-between px-4 py-3 rounded-xl border transition-all ${statusFilter === status.value
-                                        ? 'border-secondary bg-secondary/10'
-                                        : 'border-border/40 bg-card hover:border-border'
+                                    ? 'border-secondary bg-secondary/10'
+                                    : 'border-border/40 bg-card hover:border-border'
                                     }`}
                             >
                                 <span className="text-xs font-bold text-foreground">{status.label}</span>
@@ -370,7 +417,7 @@ export default function ProposalsClient() {
                         </div>
                     </div>
                 ) : (
-                    <div className="bg-card border border-border/40 rounded-xl overflow-hidden shadow-sm">
+                    <div className="flex-1 min-h-0 overflow-auto bg-card border border-border/40 rounded-xl shadow-sm">
                         <div className="overflow-x-auto">
                             <table className="w-full">
                                 <thead>
@@ -416,7 +463,7 @@ export default function ProposalsClient() {
                                                         value={proposal.status}
                                                         onChange={e => handleStatusChange(proposal.id, e.target.value)}
                                                         disabled={updatingId === proposal.id}
-                                                        className={`appearance-none text-[11px] font-bold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-secondary/30 ${getStatusBadge(proposal.status)} ${updatingId === proposal.id ? 'opacity-50' : ''}`}
+                                                        className={`appearance-none text-[11px] font-bold px-4 py-1 rounded-full border-0 cursor-pointer focus:outline-none focus:ring-2 focus:ring-secondary/30 text-center ${getStatusBadge(proposal.status)} ${updatingId === proposal.id ? 'opacity-50' : ''}`}
                                                     >
                                                         {STATUS_OPTIONS.filter(s => s.value !== 'all').map(opt => (
                                                             <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -429,14 +476,14 @@ export default function ProposalsClient() {
                                                     {new Date(proposal.updated_at).toLocaleDateString('pt-BR')}
                                                 </span>
                                             </td>
-                                            <td className="px-4 py-3 text-center">
-                                                <button
-                                                    onClick={() => handleOpenLead(proposal.lead_id)}
-                                                    className="inline-flex items-center gap-1 px-3 py-1.5 text-[11px] font-bold text-foreground border border-border/40 hover:bg-muted/40 rounded-lg transition-all"
-                                                >
-                                                    <Eye size={12} />
-                                                    Ver Lead
-                                                </button>
+                                            <td className="px-4 py-3 text-center" onClick={(e) => e.stopPropagation()}>
+                                                <div className="flex justify-center">
+                                                    <ProposalActionsDropdown
+                                                        onViewLead={() => handleOpenLead(proposal.lead_id)}
+                                                        onArchive={() => handleArchive(proposal.id)}
+                                                        onDelete={() => handleDelete(proposal.id)}
+                                                    />
+                                                </div>
                                             </td>
                                         </tr>
                                     ))}
@@ -453,7 +500,7 @@ export default function ProposalsClient() {
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 min-h-[60vh]">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 md:gap-5 flex-1 min-h-0">
                         {STATUS_OPTIONS.filter(s => s.value !== 'all').map(status => (
                             <DroppableStatusColumn
                                 key={status.value}
@@ -462,6 +509,8 @@ export default function ProposalsClient() {
                                 borderColor={STATUS_PIPELINE_COLORS[status.value] || '#6B7280'}
                                 proposals={filtered.filter(p => p.status === status.value)}
                                 onCardClick={handleOpenLead}
+                                onArchive={handleArchive}
+                                onDelete={handleDelete}
                             />
                         ))}
                     </div>
@@ -502,6 +551,58 @@ export default function ProposalsClient() {
                         ) : null}
                     </DragOverlay>
                 </DndContext>
+            )}
+        </div>
+    )
+}
+
+function ProposalActionsDropdown({ onViewLead, onArchive, onDelete }: { onViewLead: () => void; onArchive: () => void; onDelete: () => void }) {
+    const [isOpen, setIsOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                onClick={(e) => { e.stopPropagation(); setIsOpen(o => !o) }}
+                className="p-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors shadow-sm"
+                title="Ações"
+            >
+                <MoreVertical size={16} />
+            </button>
+            {isOpen && (
+                <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-30">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onViewLead() }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                        <Eye size={14} className="text-blue-500" />
+                        Ver Lead
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onArchive() }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-amber-500/10 transition-colors"
+                    >
+                        <Archive size={14} className="text-amber-500" />
+                        Arquivar
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDelete() }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-red-500/10 transition-colors"
+                    >
+                        <Trash2 size={14} className="text-red-500" />
+                        Excluir
+                    </button>
+                </div>
             )}
         </div>
     )
