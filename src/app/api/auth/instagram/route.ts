@@ -18,10 +18,15 @@ export async function GET(req: NextRequest) {
 
     // Configurações do Meta
     const appId = process.env.META_APP_ID;
-    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost';
-    const isLocal = rootDomain.startsWith('localhost');
-    const baseUrl = isLocal ? `http://${rootDomain}` : `https://${rootDomain}`;
-    const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
+
+    // Domínio fixo da plataforma para o callback do OAuth (cadastrado no Meta App)
+    const platformDomain = process.env.META_OAUTH_DOMAIN || 'crm.laxperience.online';
+    const redirectUri = `https://${platformDomain}/api/auth/instagram/callback`;
+
+    // Salvar o domínio de origem do tenant no state para redirecionar de volta após o OAuth
+    const tenantOrigin = new URL(req.url).origin;
+    const statePayload = JSON.stringify({ tenant_id: tenantId, return_url: tenantOrigin });
+    const stateEncoded = Buffer.from(statePayload).toString('base64url');
     
     // Scopes necessários para o Instagram Graph API (Publishing) e Facebook Pages
     const scopes = [
@@ -33,7 +38,7 @@ export async function GET(req: NextRequest) {
         'public_profile'
     ].join(',');
 
-    const fbAuthUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${tenantId}&response_type=code`;
+    const fbAuthUrl = `https://www.facebook.com/v21.0/dialog/oauth?client_id=${appId}&redirect_uri=${encodeURIComponent(redirectUri)}&scope=${scopes}&state=${stateEncoded}&response_type=code`;
 
     return NextResponse.redirect(fbAuthUrl);
 }

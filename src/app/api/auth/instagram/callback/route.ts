@@ -1,21 +1,38 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { createClient } from '@/lib/supabase/server';
 
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
-    const tenantId = searchParams.get('state'); // O state contém o tenant_id
+    const stateParam = searchParams.get('state');
 
-    if (!code || !tenantId) {
+    if (!code || !stateParam) {
         return NextResponse.redirect('/marketing?error=auth_failed');
+    }
+
+    // Decodificar o state que contém tenant_id e return_url
+    let tenantId: string;
+    let returnUrl: string;
+
+    try {
+        const statePayload = JSON.parse(Buffer.from(stateParam, 'base64url').toString());
+        tenantId = statePayload.tenant_id;
+        returnUrl = statePayload.return_url;
+    } catch {
+        // Fallback: state antigo era apenas o tenant_id
+        tenantId = stateParam;
+        returnUrl = new URL(req.url).origin;
+    }
+
+    if (!tenantId) {
+        return NextResponse.redirect(`${returnUrl}/marketing?error=auth_failed`);
     }
 
     const appId = process.env.META_APP_ID;
     const appSecret = process.env.META_APP_SECRET;
-    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost';
-    const isLocal = rootDomain.startsWith('localhost');
-    const baseUrl = isLocal ? `http://${rootDomain}` : `https://${rootDomain}`;
-    const redirectUri = `${baseUrl}/api/auth/instagram/callback`;
+
+    // Usar o mesmo domínio fixo da plataforma (deve bater com o que foi enviado na rota de auth)
+    const platformDomain = process.env.META_OAUTH_DOMAIN || 'crm.laxperience.online';
+    const redirectUri = `https://${platformDomain}/api/auth/instagram/callback`;
 
     try {
         // 1. Trocar code pelo Token de Usuário (Short-lived)
@@ -64,7 +81,7 @@ export async function GET(req: NextRequest) {
                     account_id: igAccountId,
                     page_id: pageWithIg.id,
                     page_name: pageWithIg.name,
-                    user_ll_token: longLivedToken // Guardamos o do usuário também se precisar no futuro
+                    user_ll_token: longLivedToken
                 },
                 status: 'active',
                 updated_at: new Date().toISOString()
@@ -72,10 +89,11 @@ export async function GET(req: NextRequest) {
 
         if (upsertError) throw upsertError;
 
-        return NextResponse.redirect(`${baseUrl}/marketing?success=instagram_connected`);
+        // Redirecionar de volta para o domínio do tenant
+        return NextResponse.redirect(`${returnUrl}/marketing?success=instagram_connected`);
 
     } catch (error: any) {
         console.error('Instagram Callback Error:', error.message);
-        return NextResponse.redirect(`${baseUrl}/marketing?error=${encodeURIComponent(error.message)}`);
+        return NextResponse.redirect(`${returnUrl}/marketing?error=${encodeURIComponent(error.message)}`);
     }
 }
