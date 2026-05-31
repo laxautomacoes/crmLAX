@@ -1,10 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { getEmailCampaigns, getEmailCampaignReport } from '@/app/_actions/email-bulk'
-import { Loader2, Mail, CheckCircle2, XCircle, MousePointerClick, AlertTriangle, ChevronRight, Ban, Eye } from 'lucide-react'
+import { useState } from 'react'
+import { getEmailCampaigns, getEmailCampaignReport, deleteEmailCampaign, deleteAllEmailCampaigns } from '@/app/_actions/email-bulk'
+import { Loader2, CheckCircle2, XCircle, AlertTriangle, ChevronUp, ChevronDown, Ban, Eye, Trash2, Clock } from 'lucide-react'
 import { format } from 'date-fns'
 import { ptBR } from 'date-fns/locale'
+import { toast } from 'sonner'
 
 interface EmailBulkHistoryProps {
     tenantId: string
@@ -12,169 +13,201 @@ interface EmailBulkHistoryProps {
 
 export function EmailBulkHistory({ tenantId }: EmailBulkHistoryProps) {
     const [campaigns, setCampaigns] = useState<any[]>([])
-    const [loading, setLoading] = useState(true)
-    const [selectedCampaign, setSelectedCampaign] = useState<any | null>(null)
+    const [showHistory, setShowHistory] = useState(false)
+    const [isLoadingHistory, setIsLoadingHistory] = useState(false)
+    const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
+
+    // Relatório expandido
+    const [expandedCampaignId, setExpandedCampaignId] = useState<string | null>(null)
     const [reportLogs, setReportLogs] = useState<any[]>([])
-    const [loadingReport, setLoadingReport] = useState(false)
+    const [isLoadingReport, setIsLoadingReport] = useState(false)
 
-    useEffect(() => {
-        loadCampaigns()
-    }, [tenantId])
-
-    const loadCampaigns = async () => {
-        setLoading(true)
-        const res = await getEmailCampaigns(tenantId)
-        if (res.success && res.data) {
-            setCampaigns(res.data)
+    const handleLoadHistory = async () => {
+        if (!showHistory) {
+            setIsLoadingHistory(true)
+            const res = await getEmailCampaigns(tenantId)
+            if (res.success && res.data) {
+                setCampaigns(res.data)
+            }
+            setIsLoadingHistory(false)
         }
-        setLoading(false)
+        setShowHistory(!showHistory)
     }
 
-    const openReport = async (campaign: any) => {
-        setSelectedCampaign(campaign)
-        setLoadingReport(true)
-        const res = await getEmailCampaignReport(campaign.id)
+    const handleExpandCampaign = async (campaignId: string) => {
+        if (expandedCampaignId === campaignId) {
+            setExpandedCampaignId(null)
+            return
+        }
+        setExpandedCampaignId(campaignId)
+        setIsLoadingReport(true)
+        const res = await getEmailCampaignReport(campaignId)
         if (res.success && res.data) {
             setReportLogs(res.data)
         }
-        setLoadingReport(false)
+        setIsLoadingReport(false)
     }
 
-    if (loading) {
-        return <div className="flex justify-center p-12"><Loader2 className="animate-spin text-muted-foreground" /></div>
+    const handleDeleteCampaign = async (campaignId: string) => {
+        const res = await deleteEmailCampaign(campaignId)
+        if (res.success) {
+            setCampaigns(prev => prev.filter(c => c.id !== campaignId))
+            if (expandedCampaignId === campaignId) setExpandedCampaignId(null)
+            toast.success('Campanha excluída.')
+        } else {
+            toast.error('Erro ao excluir campanha.')
+        }
     }
 
-    if (campaigns.length === 0) {
-        return (
-            <div className="text-center py-16 bg-card rounded-2xl border border-dashed border-border/50">
-                <Mail className="mx-auto h-8 w-8 text-muted-foreground opacity-50 mb-3" />
-                <h3 className="text-sm font-bold text-foreground">Nenhuma campanha enviada</h3>
-                <p className="text-xs text-muted-foreground mt-1">Os envios em massa aparecerão aqui.</p>
-            </div>
-        )
-    }
-
-    if (selectedCampaign) {
-        return (
-            <div className="space-y-6 animate-in slide-in-from-right-4 duration-300">
-                <button 
-                    onClick={() => setSelectedCampaign(null)}
-                    className="text-sm font-bold text-muted-foreground hover:text-foreground flex items-center gap-1"
-                >
-                    <ChevronRight className="rotate-180" size={16} /> Voltar para histórico
-                </button>
-
-                <div className="bg-card p-6 rounded-2xl border border-border/50 shadow-sm space-y-6">
-                    <div>
-                        <h2 className="text-xl font-black text-foreground">{selectedCampaign.title}</h2>
-                        <p className="text-sm text-muted-foreground mt-1">Enviada em {format(new Date(selectedCampaign.created_at), "dd 'de' MMMM 'às' HH:mm", { locale: ptBR })}</p>
-                    </div>
-
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                        <div className="bg-foreground/5 p-4 rounded-xl border border-border/40">
-                            <p className="text-[10px] uppercase font-black tracking-wider text-muted-foreground">Destinatários</p>
-                            <p className="text-2xl font-black text-foreground mt-1">{selectedCampaign.total_recipients}</p>
-                        </div>
-                        <div className="bg-green-500/10 p-4 rounded-xl border border-green-500/20">
-                            <p className="text-[10px] uppercase font-black tracking-wider text-green-600 dark:text-green-400">Taxa Abertura</p>
-                            <p className="text-2xl font-black text-green-600 dark:text-green-400 mt-1">
-                                {selectedCampaign.total_sent > 0 
-                                    ? Math.round((selectedCampaign.total_opened / selectedCampaign.total_sent) * 100) 
-                                    : 0}%
-                            </p>
-                            <p className="text-xs font-bold text-green-600/70 dark:text-green-400/70 mt-1">{selectedCampaign.total_opened} abertos</p>
-                        </div>
-                        <div className="bg-red-500/10 p-4 rounded-xl border border-red-500/20">
-                            <p className="text-[10px] uppercase font-black tracking-wider text-red-600 dark:text-red-400">Erros / Bounce</p>
-                            <p className="text-2xl font-black text-red-600 dark:text-red-400 mt-1">{selectedCampaign.total_bounced}</p>
-                        </div>
-                        <div className="bg-orange-500/10 p-4 rounded-xl border border-orange-500/20">
-                            <p className="text-[10px] uppercase font-black tracking-wider text-orange-600 dark:text-orange-400">Spam Reportado</p>
-                            <p className="text-2xl font-black text-orange-600 dark:text-orange-400 mt-1">{selectedCampaign.total_complained}</p>
-                        </div>
-                    </div>
-
-                    <div className="pt-4">
-                        <h3 className="font-bold text-foreground mb-4">Relatório Detalhado</h3>
-                        
-                        {loadingReport ? (
-                            <div className="flex justify-center p-8"><Loader2 className="animate-spin text-muted-foreground" /></div>
-                        ) : (
-                            <div className="border border-border/40 rounded-xl overflow-hidden">
-                                <table className="w-full text-left text-sm">
-                                    <thead className="bg-foreground/5 text-foreground font-bold uppercase tracking-wider text-[10px]">
-                                        <tr>
-                                            <th className="p-4">Contato</th>
-                                            <th className="p-4">E-mail</th>
-                                            <th className="p-4">Status</th>
-                                            <th className="p-4">Data/Hora</th>
-                                        </tr>
-                                    </thead>
-                                    <tbody className="divide-y divide-border/40">
-                                        {reportLogs.map(log => (
-                                            <tr key={log.id} className="hover:bg-foreground/[0.02]">
-                                                <td className="p-4 font-bold text-foreground">{log.leads?.contacts?.name || '-'}</td>
-                                                <td className="p-4 text-muted-foreground">{log.recipient_email}</td>
-                                                <td className="p-4">
-                                                    {log.status === 'opened' && <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-green-500/10 text-green-600 dark:text-green-400 text-[10px] font-black uppercase tracking-wider"><Eye size={12} /> Aberto</span>}
-                                                    {log.status === 'delivered' && <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-blue-500/10 text-blue-600 dark:text-blue-400 text-[10px] font-black uppercase tracking-wider"><CheckCircle2 size={12} /> Entregue</span>}
-                                                    {log.status === 'pending' && <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-foreground/10 text-muted-foreground text-[10px] font-black uppercase tracking-wider"><Loader2 size={12} className="animate-spin"/> Enviando</span>}
-                                                    {log.status === 'error' && <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-wider"><XCircle size={12} /> Erro API</span>}
-                                                    {log.status === 'bounced' && <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-red-500/10 text-red-600 dark:text-red-400 text-[10px] font-black uppercase tracking-wider"><Ban size={12} /> Bounced</span>}
-                                                    {log.status === 'complained' && <span className="inline-flex items-center gap-1.5 px-2 py-1 rounded-md bg-orange-500/10 text-orange-600 dark:text-orange-400 text-[10px] font-black uppercase tracking-wider"><AlertTriangle size={12} /> Spam</span>}
-                                                </td>
-                                                <td className="p-4 text-xs text-muted-foreground">
-                                                    {format(new Date(log.opened_at || log.sent_at), "dd/MM/yy HH:mm", { locale: ptBR })}
-                                                </td>
-                                            </tr>
-                                        ))}
-                                    </tbody>
-                                </table>
-                            </div>
-                        )}
-                    </div>
-                </div>
-            </div>
-        )
+    const handleDeleteAllCampaigns = async () => {
+        const res = await deleteAllEmailCampaigns(tenantId)
+        if (res.success) {
+            setCampaigns([])
+            setExpandedCampaignId(null)
+            setConfirmDeleteAll(false)
+            toast.success('Todas as campanhas foram excluídas.')
+        } else {
+            toast.error('Erro ao excluir campanhas.')
+        }
     }
 
     return (
-        <div className="space-y-4">
-            {campaigns.map(camp => (
-                <div key={camp.id} onClick={() => openReport(camp)} className="bg-card p-5 rounded-2xl border border-border/50 shadow-sm hover:border-foreground/30 transition-all cursor-pointer flex flex-col md:flex-row gap-6 md:items-center justify-between group">
-                    <div className="space-y-1">
-                        <div className="flex items-center gap-2">
-                            <h3 className="font-bold text-foreground text-lg group-hover:text-secondary-foreground transition-colors">{camp.title}</h3>
-                            <span className={`px-2 py-0.5 text-[10px] font-black uppercase tracking-wider rounded-md ${
-                                camp.status === 'completed' ? 'bg-green-500/10 text-green-600 dark:text-green-400' :
-                                camp.status === 'sending' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400' :
-                                'bg-foreground/10 text-muted-foreground'
-                            }`}>
-                                {camp.status === 'completed' ? 'Finalizada' : camp.status === 'sending' ? 'Processando' : camp.status}
-                            </span>
+        <div className="bg-background rounded-lg border border-muted-foreground/30 overflow-hidden">
+            <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-foreground/5 transition-colors" onClick={handleLoadHistory}>
+                <span className="text-sm font-bold text-foreground">Histórico de Disparos</span>
+                <div className="flex items-center gap-2">
+                    {showHistory && campaigns.length > 0 && (
+                        <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                            {confirmDeleteAll ? (
+                                <>
+                                    <span className="text-[10px] text-red-500 font-bold">Apagar tudo?</span>
+                                    <button
+                                        onClick={handleDeleteAllCampaigns}
+                                        className="text-[10px] font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
+                                    >
+                                        Sim
+                                    </button>
+                                    <button
+                                        onClick={() => setConfirmDeleteAll(false)}
+                                        className="text-[10px] font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-foreground/5 transition-colors"
+                                    >
+                                        Não
+                                    </button>
+                                </>
+                            ) : (
+                                <button
+                                    onClick={() => setConfirmDeleteAll(true)}
+                                    className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10"
+                                >
+                                    <Trash2 size={10} />
+                                    Limpar Tudo
+                                </button>
+                            )}
                         </div>
-                        <p className="text-sm text-muted-foreground line-clamp-1">{camp.subject}</p>
-                        <p className="text-xs font-bold text-muted-foreground">
-                            Enviada em {format(new Date(camp.created_at), "dd 'de' MMM 'às' HH:mm", { locale: ptBR })}
-                            {camp.profiles?.full_name ? ` por ${camp.profiles.full_name}` : ''}
-                        </p>
-                    </div>
-
-                    <div className="flex items-center gap-6 md:gap-8 shrink-0">
-                        <div className="text-center">
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Destinatários</p>
-                            <p className="font-black text-foreground">{camp.total_recipients}</p>
-                        </div>
-                        <div className="text-center">
-                            <p className="text-[10px] uppercase font-bold text-muted-foreground tracking-wider mb-1">Aberturas</p>
-                            <p className="font-black text-green-600 dark:text-green-400">
-                                {camp.total_sent > 0 ? Math.round((camp.total_opened / camp.total_sent) * 100) : 0}%
-                            </p>
-                        </div>
-                        <ChevronRight className="text-muted-foreground group-hover:text-foreground transition-colors" />
-                    </div>
+                    )}
+                    {showHistory ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
                 </div>
-            ))}
+            </div>
+            {showHistory && (
+                <div className="border-t border-muted-foreground/20 animate-in fade-in slide-in-from-top-2 duration-200">
+                    {isLoadingHistory ? (
+                        <div className="flex items-center justify-center py-8"><Loader2 className="animate-spin text-muted-foreground" size={20} /></div>
+                    ) : campaigns.length === 0 ? (
+                        <p className="text-xs text-muted-foreground text-center py-6">Nenhum disparo realizado ainda.</p>
+                    ) : (
+                        <div className="divide-y divide-muted-foreground/20">
+                            {campaigns.map(c => (
+                                <div key={c.id} className="space-y-0">
+                                    <button
+                                        onClick={() => handleExpandCampaign(c.id)}
+                                        className={`w-full flex items-center justify-between p-3 text-left transition-colors group/card hover:bg-foreground/5 cursor-pointer ${expandedCampaignId === c.id ? 'bg-foreground/5' : ''}`}
+                                    >
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex items-center gap-2 mb-0.5">
+                                                {c.status === 'completed' && <CheckCircle2 size={12} className="text-green-500 shrink-0" />}
+                                                {c.status === 'sending' && <Loader2 size={12} className="animate-spin text-amber-500 shrink-0" />}
+                                                {c.status === 'cancelled' && <Ban size={12} className="text-red-500 shrink-0" />}
+                                                <p className="text-xs font-bold text-foreground truncate">{c.title || c.subject || 'Sem título'}</p>
+                                            </div>
+                                            <div className="flex items-center gap-3 text-[10px] text-muted-foreground">
+                                                <span className="flex items-center gap-1"><Clock size={10} />{new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
+                                                <span className="text-green-600 font-bold">{c.total_sent || 0} ✓</span>
+                                                <span className="text-red-500 font-bold">{c.total_bounced || 0} ✗</span>
+                                                {c.profiles && <span className="text-muted-foreground/60">por {c.profiles.full_name}</span>}
+                                            </div>
+                                        </div>
+                                        <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                                            <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
+                                                c.status === 'completed' ? 'bg-green-600 text-white' : c.status === 'cancelled' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
+                                            }`}>
+                                                {c.status === 'completed' ? 'Concluído' : c.status === 'cancelled' ? 'Cancelado' : 'Enviando'}
+                                            </span>
+                                            {expandedCampaignId === c.id ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); handleDeleteCampaign(c.id); }}
+                                                className="p-1.5 text-muted-foreground/50 hover:text-red-500 transition-colors opacity-0 group-hover/card:opacity-100"
+                                                title="Excluir campanha"
+                                            >
+                                                <Trash2 size={12} />
+                                            </button>
+                                        </div>
+                                    </button>
+
+                                    {/* Detalhes expandidos — relatório da campanha */}
+                                    {expandedCampaignId === c.id && (
+                                        <div className="p-3 bg-foreground/5 border border-t-0 border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
+                                            {isLoadingReport ? (
+                                                <div className="flex items-center justify-center py-4"><Loader2 className="animate-spin text-muted-foreground" size={16} /></div>
+                                            ) : reportLogs.length === 0 ? (
+                                                <p className="text-xs text-muted-foreground text-center py-3">Sem detalhes registrados para esta campanha.</p>
+                                            ) : (
+                                                <div className="space-y-1.5">
+                                                    <p className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-2">Relatório de Envio ({reportLogs.length})</p>
+                                                    <div className="max-h-[250px] overflow-y-auto space-y-1 custom-scrollbar">
+                                                        {reportLogs.map(log => (
+                                                            <div key={log.id} className="flex items-center justify-between p-2 bg-card rounded-lg border border-border/40">
+                                                                <div className="min-w-0 flex-1">
+                                                                    <div className="flex items-center gap-2">
+                                                                        {log.status === 'opened' && <Eye size={10} className="text-green-500 shrink-0" />}
+                                                                        {log.status === 'delivered' && <CheckCircle2 size={10} className="text-blue-500 shrink-0" />}
+                                                                        {log.status === 'error' && <XCircle size={10} className="text-red-500 shrink-0" />}
+                                                                        {log.status === 'bounced' && <Ban size={10} className="text-red-500 shrink-0" />}
+                                                                        {log.status === 'complained' && <AlertTriangle size={10} className="text-orange-500 shrink-0" />}
+                                                                        {log.status === 'pending' && <Loader2 size={10} className="animate-spin text-muted-foreground shrink-0" />}
+                                                                        <p className="text-xs font-bold text-foreground truncate">{log.leads?.contacts?.name || log.recipient_email}</p>
+                                                                        <p className="text-[10px] text-muted-foreground truncate">{log.recipient_email}</p>
+                                                                    </div>
+                                                                    {log.error_message && (
+                                                                        <p className="text-[10px] text-red-500 mt-0.5 ml-[18px] truncate">{log.error_message}</p>
+                                                                    )}
+                                                                </div>
+                                                                <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full shrink-0 ml-2 ${
+                                                                    log.status === 'opened' ? 'bg-green-500/20 text-green-400' :
+                                                                    log.status === 'delivered' ? 'bg-blue-500/20 text-blue-400' :
+                                                                    log.status === 'error' || log.status === 'bounced' ? 'bg-red-500/20 text-red-400' :
+                                                                    log.status === 'complained' ? 'bg-orange-500/20 text-orange-400' :
+                                                                    'bg-foreground/10 text-muted-foreground'
+                                                                }`}>
+                                                                    {log.status === 'opened' ? 'Aberto' :
+                                                                     log.status === 'delivered' ? 'Entregue' :
+                                                                     log.status === 'error' ? 'Erro' :
+                                                                     log.status === 'bounced' ? 'Bounced' :
+                                                                     log.status === 'complained' ? 'Spam' :
+                                                                     'Enviando'}
+                                                                </span>
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+            )}
         </div>
     )
 }

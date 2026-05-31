@@ -274,12 +274,14 @@ interface AdvancedEmailFilters {
     leadSource?: string;
     campaign?: string;
     assignedTo?: string;
+    clientName?: string;
     nameQuery?: string;
     propertyName?: string;
     propertyType?: string;
     minPrice?: number;
     maxPrice?: number;
     bedrooms?: string;
+    location?: string;
 }
 
 export async function getLeadsForEmailBulk(tenantId: string, filters?: AdvancedEmailFilters) {
@@ -381,7 +383,13 @@ export async function getLeadsForEmailBulk(tenantId: string, filters?: AdvancedE
     // Só aceita quem tem email válido e não está na blacklist
     let recipients = mapped.filter(r => r.email && r.email.includes('@') && !blacklisted.includes(r.email.toLowerCase()))
 
-    // Aplicar filtros avançados de Imóvel na memória
+    // Aplicar filtros avançados na memória
+    // Filtro por nome do cliente (contacts.name)
+    if (filters?.clientName) {
+        const q = filters.clientName.toLowerCase()
+        recipients = recipients.filter(r => r.name.toLowerCase().includes(q))
+    }
+    // Filtro por nome do imóvel
     if (filters?.propertyName) {
         const query = filters.propertyName.toLowerCase()
         recipients = recipients.filter(r => r.property?.title && r.property.title.toLowerCase().includes(query))
@@ -389,18 +397,38 @@ export async function getLeadsForEmailBulk(tenantId: string, filters?: AdvancedE
     if (filters?.propertyType) {
         recipients = recipients.filter(r => r.property?.type === filters.propertyType)
     }
-    if (filters?.minPrice) {
-        recipients = recipients.filter(r => r.property?.price && r.property.price >= filters.minPrice!)
+    // Filtro de valor: se só minPrice, usar ±50%
+    if (filters?.minPrice && !filters?.maxPrice) {
+        const val = filters.minPrice
+        const min50 = val * 0.5
+        const max50 = val * 1.5
+        recipients = recipients.filter(r => r.property?.price && r.property.price >= min50 && r.property.price <= max50)
+    } else {
+        if (filters?.minPrice) {
+            recipients = recipients.filter(r => r.property?.price && r.property.price >= filters.minPrice!)
+        }
+        if (filters?.maxPrice) {
+            recipients = recipients.filter(r => r.property?.price && r.property.price <= filters.maxPrice!)
+        }
     }
-    if (filters?.maxPrice) {
-        recipients = recipients.filter(r => r.property?.price && r.property.price <= filters.maxPrice!)
-    }
+    // Filtro de dormitórios (campo 'quartos' no details)
     if (filters?.bedrooms && filters.bedrooms !== 'any') {
         const bdReq = parseInt(filters.bedrooms)
         recipients = recipients.filter(r => {
             if (!r.property?.details) return false
-            const propBd = parseInt(r.property.details.bedrooms || '0')
+            const propBd = parseInt(r.property.details.quartos || r.property.details.bedrooms || '0')
             return filters.bedrooms!.includes('+') ? propBd >= bdReq : propBd === bdReq
+        })
+    }
+    // Filtro de localização (bairro ou cidade no endereco)
+    if (filters?.location) {
+        const loc = filters.location.toLowerCase()
+        recipients = recipients.filter(r => {
+            if (!r.property?.details?.endereco) return false
+            const end = r.property.details.endereco
+            const bairro = (end.bairro || '').toLowerCase()
+            const cidade = (end.cidade || '').toLowerCase()
+            return bairro.includes(loc) || cidade.includes(loc)
         })
     }
 
@@ -521,4 +549,83 @@ export async function generatePropertyEmailHtml(params: {
         console.error('Error generating property email HTML:', error)
         return { success: false, error: error.message }
     }
+}
+
+// Excluir uma campanha de email e seus logs
+export async function deleteEmailCampaign(campaignId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile) return { success: false, error: 'Perfil não encontrado.' }
+
+    // Deletar logs primeiro
+    await supabase
+        .from('email_campaign_logs')
+        .delete()
+        .eq('campaign_id', campaignId)
+
+    // Deletar campanha
+    const { error } = await supabase
+        .from('email_campaigns')
+        .delete()
+        .eq('id', campaignId)
+        .eq('tenant_id', profile.tenant_id)
+
+    if (error) {
+        console.error('Error deleting email campaign:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
+}
+
+// Excluir todas as campanhas de email do tenant
+export async function deleteAllEmailCampaigns(tenantId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile || profile.tenant_id !== tenantId) {
+        return { success: false, error: 'Acesso negado.' }
+    }
+
+    // Buscar IDs das campanhas para deletar logs
+    const { data: campaigns } = await supabase
+        .from('email_campaigns')
+        .select('id')
+        .eq('tenant_id', tenantId)
+
+    if (campaigns && campaigns.length > 0) {
+        const campaignIds = campaigns.map((c: any) => c.id)
+        await supabase
+            .from('email_campaign_logs')
+            .delete()
+            .in('campaign_id', campaignIds)
+    }
+
+    // Deletar campanhas
+    const { error } = await supabase
+        .from('email_campaigns')
+        .delete()
+        .eq('tenant_id', tenantId)
+
+    if (error) {
+        console.error('Error deleting all email campaigns:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
 }

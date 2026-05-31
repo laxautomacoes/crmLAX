@@ -567,7 +567,7 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                     className="w-full bg-transparent text-sm p-4 outline-none min-h-[150px] overflow-y-auto rich-text-editor rounded-b-lg"
                 />
                 {!value && placeholder && (
-                    <div className="absolute top-[88px] left-4 text-muted-foreground/50 text-sm pointer-events-none">
+                    <div className="absolute left-4 text-muted-foreground/50 text-sm pointer-events-none" style={{ top: 'calc(2.5rem + 1px + 1rem)' }}>
                         {placeholder}
                     </div>
                 )}

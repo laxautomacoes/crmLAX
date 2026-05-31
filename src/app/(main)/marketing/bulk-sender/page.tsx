@@ -23,7 +23,7 @@ export default async function WhatsAppBulkPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader 
-                title="Disparador em Massa"
+                title="Disparador WhatsApp"
                 subtitle="Envie mensagens e mídias em massa para seus leads e contatos."
             />
 

@@ -9,6 +9,9 @@ import {
 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
+import { formatCurrencyBRL } from '@/lib/utils/currency'
+import { getBulkFilterSuggestions } from '@/app/_actions/bulk-filter-suggestions'
+import { AutocompleteInput } from '@/components/shared/forms/AutocompleteInput'
 import { 
     checkWhatsAppStatus, validateBulkAccess, 
     getLeadsForBulk, getBulkFilterOptions, getBulkCampaigns,
@@ -103,6 +106,16 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     const [selectedCampaign, setSelectedCampaign] = useState('')
     const [selectedBroker, setSelectedBroker] = useState('')
     const [showFilters, setShowFilters] = useState(false)
+    const [nameQuery, setNameQuery] = useState('')
+    const [clientName, setClientName] = useState('')
+    const [propertyName, setPropertyName] = useState('')
+    const [minPrice, setMinPrice] = useState('')
+    const [maxPrice, setMaxPrice] = useState('')
+    const [bedrooms, setBedrooms] = useState('any')
+    const [location, setLocation] = useState('')
+    const [filterSuggestions, setFilterSuggestions] = useState<{
+        clientNames: string[], leadNames: string[], propertyNames: string[], locations: string[], bedroomOptions: string[]
+    }>({ clientNames: [], leadNames: [], propertyNames: [], locations: [], bedroomOptions: [] })
     // Histórico
     const [campaignHistory, setCampaignHistory] = useState<CampaignRecord[]>([])
     const [showHistory, setShowHistory] = useState(false)
@@ -156,6 +169,17 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             if (result.success && result.data) setFilterOptions(result.data)
         }
         loadFilters()
+    }, [tenantId])
+
+    // Carregar sugestões de autocomplete
+    useEffect(() => {
+        async function loadSuggestions() {
+            const res = await getBulkFilterSuggestions(tenantId)
+            if (res.success && res.data) {
+                setFilterSuggestions(res.data)
+            }
+        }
+        loadSuggestions()
     }, [tenantId])
 
     // Detectar disparo ativo ao montar (caso tenha voltado à página)
@@ -434,6 +458,13 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             if (selectedSource) filters.leadSource = selectedSource
             if (selectedCampaign) filters.campaign = selectedCampaign
             if (selectedBroker) filters.assignedTo = selectedBroker
+            if (clientName) filters.clientName = clientName
+            if (nameQuery) filters.nameQuery = nameQuery
+            if (propertyName) filters.propertyName = propertyName
+            if (minPrice) { const num = parseFloat(minPrice.replace(/[^\d,]/g, '').replace(',', '.')); if (!isNaN(num)) filters.minPrice = num }
+            if (maxPrice) { const num = parseFloat(maxPrice.replace(/[^\d,]/g, '').replace(',', '.')); if (!isNaN(num)) filters.maxPrice = num }
+            if (bedrooms && bedrooms !== 'any') filters.bedrooms = bedrooms
+            if (location) filters.location = location
 
             const result = await getLeadsForBulk(tenantId, filters)
             if (result.success && result.data) {
@@ -703,7 +734,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             value={campaignTitle}
                             onChange={(e) => setCampaignTitle(e.target.value)}
                             placeholder="Ex: Lançamento Residencial Park Sul"
-                            className="w-full h-10 px-3 text-sm font-medium bg-input border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50"
+                            className="w-full h-10 px-3 text-sm font-medium bg-background border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50"
                         />
                     </div>
 
@@ -853,7 +884,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 <button 
                                     onClick={() => mediaInputRef.current?.click()}
                                     disabled={isMediaUploading}
-                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 bg-input border border-muted-foreground/30 rounded-lg hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground group"
+                                    className="flex-1 flex flex-col items-center justify-center gap-2 p-6 bg-background border border-muted-foreground/30 rounded-lg hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground group"
                                 >
                                     {isMediaUploading ? (
                                         <Loader2 className="animate-spin text-foreground" size={24} />
@@ -873,103 +904,73 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                 {/* Destinatários */}
                 <div className="space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="min-h-[32px] flex items-center justify-between">
                         <label className="text-sm font-bold text-foreground ml-1">Destinatários ({recipients.length})</label>
-                        <button
-                            onClick={() => setShowFilters(!showFilters)}
-                            className="flex items-center gap-1.5 text-xs font-bold text-foreground hover:text-accent-icon transition-colors"
-                        >
-                            <Filter size={14} />
-                            <span>Filtros</span>
-                            {showFilters ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </button>
+                        {recipients.length > 0 && (
+                            <button onClick={() => { setRecipients([]); setSourceType(null); }} className="text-xs text-red-500 hover:text-red-600 font-bold">
+                                Limpar Lista
+                            </button>
+                        )}
                     </div>
 
                     {recipients.length === 0 ? (
                         <div className="space-y-4">
-                            {showFilters && filterOptions && (
-                                <div className="space-y-3 p-4 bg-foreground/5 rounded-lg border border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    {/* Estágios */}
-                                    <div>
-                                        <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Estágio do Funil</label>
-                                        <select
-                                            value={selectedStages[0] || ''}
-                                            onChange={e => setSelectedStages(e.target.value ? [e.target.value] : [])}
-                                            className="w-full h-9 px-3 text-xs font-bold bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:border-ring text-foreground"
-                                        >
-                                            <option value="">Todos os estágios</option>
-                                            {filterOptions.stages.map(s => (<option key={s.id} value={s.id}>{s.name}</option>))}
+                            {showFilters && (
+                                <div className="bg-card p-4 rounded-lg border border-border shadow-sm space-y-4 mb-4 shrink-0 relative animate-in zoom-in-95 duration-200">
+                                    <button onClick={() => setShowFilters(false)} className="absolute top-2 right-2 p-1 text-muted-foreground hover:text-foreground">
+                                        <X size={16} />
+                                    </button>
+                                    <h4 className="text-xs font-black uppercase tracking-wider text-muted-foreground">Filtros de Leads</h4>
+                                    
+                                    <div className="space-y-3">
+                                        <AutocompleteInput placeholder="Nome do Cliente" value={clientName} onChange={v => setClientName(v)} suggestions={filterSuggestions.clientNames} />
+                                        <AutocompleteInput placeholder="Nome do Lead" value={nameQuery} onChange={v => setNameQuery(v)} suggestions={filterSuggestions.leadNames} />
+                                        <AutocompleteInput placeholder="Nome do Imóvel" value={propertyName} onChange={v => setPropertyName(v)} suggestions={filterSuggestions.propertyNames} />
+                                        <select value={bedrooms} onChange={e => setBedrooms(e.target.value)} className="appearance-none w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs">
+                                            <option value="any">Qualquer dormitório</option>
+                                            {filterSuggestions.bedroomOptions.length > 0 ? (
+                                                filterSuggestions.bedroomOptions.map(b => (
+                                                    <option key={b} value={b}>{b} {parseInt(b) === 1 ? 'Quarto' : 'Quartos'}</option>
+                                                ))
+                                            ) : (
+                                                <>
+                                                    <option value="1">1 Quarto</option>
+                                                    <option value="2">2 Quartos</option>
+                                                    <option value="3">3 Quartos</option>
+                                                    <option value="4+">4+ Quartos</option>
+                                                </>
+                                            )}
                                         </select>
+                                        <div className="grid grid-cols-2 gap-2">
+                                            <input type="text" placeholder="Valor Mínimo" value={minPrice} onChange={e => setMinPrice(formatCurrencyBRL(e.target.value))} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
+                                            <input type="text" placeholder="Valor Máximo" value={maxPrice} onChange={e => setMaxPrice(formatCurrencyBRL(e.target.value))} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
+                                        </div>
+                                        <AutocompleteInput placeholder="Localização" value={location} onChange={v => setLocation(v)} suggestions={filterSuggestions.locations} />
                                     </div>
-                                    {/* Origem */}
-                                    {filterOptions.sources.length > 0 && (
-                                        <div>
-                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Origem</label>
-                                            <select
-                                                value={selectedSource}
-                                                onChange={e => { setSelectedSource(e.target.value); setSelectedCampaign('') }}
-                                                className="w-full h-9 px-3 text-xs font-bold bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:border-ring text-foreground"
-                                            >
-                                                <option value="">Todas as origens</option>
-                                                {filterOptions.sources.map(s => (<option key={s.id} value={s.name}>{s.name}</option>))}
-                                            </select>
-                                        </div>
-                                    )}
-                                    {/* Campanha */}
-                                    {selectedSource && filterOptions.campaigns.filter(c => c.source_name === selectedSource).length > 0 && (
-                                        <div>
-                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Campanha</label>
-                                            <select
-                                                value={selectedCampaign}
-                                                onChange={e => setSelectedCampaign(e.target.value)}
-                                                className="w-full h-9 px-3 text-xs font-bold bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:border-ring text-foreground"
-                                            >
-                                                <option value="">Todas</option>
-                                                {filterOptions.campaigns.filter(c => c.source_name === selectedSource).map(c => (<option key={c.id} value={c.name}>{c.name}</option>))}
-                                            </select>
-                                        </div>
-                                    )}
-                                    {/* Corretor (só admin) */}
-                                    {isAdmin && filterOptions.brokers.length > 0 && (
-                                        <div>
-                                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Corretor</label>
-                                            <select
-                                                value={selectedBroker}
-                                                onChange={e => setSelectedBroker(e.target.value)}
-                                                className="w-full h-9 px-3 text-xs font-bold bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:border-ring text-foreground"
-                                            >
-                                                <option value="">Todos os corretores</option>
-                                                {filterOptions.brokers.map(b => (<option key={b.id} value={b.id}>{b.full_name}</option>))}
-                                            </select>
-                                        </div>
-                                    )}
-                                    {(selectedStages.length > 0 || selectedSource || selectedBroker) && (
-                                        <button
-                                            onClick={() => { setSelectedStages([]); setSelectedSource(''); setSelectedCampaign(''); setSelectedBroker('') }}
-                                            className="text-[10px] font-bold text-red-500 hover:underline"
-                                        >Limpar Filtros</button>
-                                    )}
+
+                                    <button onClick={() => { handleFetchSystemLeads(); setShowFilters(false); }} disabled={isSelectingLeads} className="w-full h-9 bg-secondary text-secondary-foreground font-bold text-xs rounded-lg flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors">
+                                        {isSelectingLeads ? <Loader2 size={14} className="animate-spin" /> : 'Aplicar e Buscar'}
+                                    </button>
                                 </div>
                             )}
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
                             <button 
-                                onClick={handleFetchSystemLeads}
-                                disabled={isSelectingLeads}
-                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-input rounded-lg border border-muted-foreground/30 hover:border-muted-foreground/50 transition-all text-muted-foreground group text-center"
+                                onClick={() => setShowFilters(true)}
+                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-background rounded-lg border border-muted-foreground/30 hover:border-muted-foreground/50 transition-all text-muted-foreground group text-center"
                             >
                                 <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
-                                    {isSelectingLeads ? <Loader2 className="animate-spin" size={20} /> : <Users className="text-foreground" size={20} />}
+                                    <Filter className="text-foreground" size={20} />
                                 </div>
                                 <div>
                                     <p className="text-xs font-bold text-foreground">Leads</p>
-                                    <p className="text-[10px]">{selectedStages.length > 0 || selectedSource ? 'Filtros aplicados' : 'Leads cadastrados'}</p>
+                                    <p className="text-[10px]">Filtrar e selecionar</p>
                                 </div>
                             </button>
 
                             <button 
                                 onClick={() => fileInputRef.current?.click()}
-                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-input rounded-lg border border-muted-foreground/30 hover:border-muted-foreground/50 transition-all text-muted-foreground group text-center"
+                                className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-background rounded-lg border border-muted-foreground/30 hover:border-muted-foreground/50 transition-all text-muted-foreground group text-center"
                             >
                                 <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
                                     <FileSpreadsheet className="text-foreground" size={20} />
@@ -991,8 +992,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 onClick={() => setShowGoogleSheet(!showGoogleSheet)}
                                 className={`flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 rounded-lg border transition-all text-muted-foreground group text-center ${
                                     showGoogleSheet 
-                                        ? 'bg-input border-muted-foreground/50' 
-                                        : 'bg-input border-muted-foreground/30 hover:border-muted-foreground/50'
+                                        ? 'bg-background border-muted-foreground/50' 
+                                        : 'bg-background border-muted-foreground/30 hover:border-muted-foreground/50'
                                 }`}
                             >
                                 <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
@@ -1165,7 +1166,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         <div className="min-h-[32px] flex items-center">
                             <label className="text-sm font-bold text-foreground ml-1">Velocidade do Disparo</label>
                         </div>
-                        <div className="grid grid-cols-1 md:grid-cols-3 gap-2">
+                        <div className="grid grid-cols-1 gap-2">
                             {[
                                 { key: 'normal' as const, label: '20 – 30s', time: '~21 min para 50 msgs', risk: 'Alto', color: 'text-red-500' },
                                 { key: 'safe' as const, label: '30 – 60s', time: '~37 min para 50 msgs', risk: 'Moderado', color: 'text-amber-500' },
@@ -1177,23 +1178,20 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     disabled={isSending}
                                     className={`relative p-3.5 rounded-lg border text-center md:text-left transition-all ${
                                         sendSpeed === opt.key
-                                            ? 'border-foreground/30 bg-input ring-1 ring-foreground/20'
-                                            : 'border-muted-foreground/30 bg-input hover:border-muted-foreground/50'
+                                            ? 'border-foreground/30 bg-background ring-1 ring-foreground/20'
+                                            : 'border-muted-foreground/30 bg-background hover:border-muted-foreground/50'
                                     } ${isSending ? 'opacity-50 cursor-not-allowed' : ''}`}
                                 >
                                     {sendSpeed === opt.key && (
                                         <div className="absolute top-3 right-3 w-2.5 h-2.5 rounded-full bg-foreground animate-in fade-in zoom-in duration-200" />
                                     )}
-                                    <p className="text-sm font-bold text-foreground">{opt.label} <span className="font-normal text-muted-foreground">entre mensagens</span></p>
+                                    <p className="text-sm font-bold text-foreground">{opt.label} <span className="font-normal text-muted-foreground block md:inline">entre mensagens</span></p>
                                     <p className={`text-xs font-bold ${opt.color} mt-1`}>Risco {opt.risk}</p>
                                     <p className="text-xs text-muted-foreground mt-0.5">{opt.time}</p>
                                 </button>
                             ))}
                         </div>
-                        <p className="text-xs text-muted-foreground flex items-center gap-1 italic">
-                            <CheckCircle2 size={12} className="text-green-500" />
-                            Você pode fechar esta página. Será notificado ao concluir.
-                        </p>
+
                     </div>
                 </div>
             </div>
@@ -1318,44 +1316,41 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
             {/* Histórico de Campanhas */}
             <div className="pt-4 border-t border-border/40">
-                <div className="bg-input rounded-lg border border-muted-foreground/30 overflow-hidden">
-                    <div className="flex items-center justify-between px-4 py-3">
-                        <button
-                            onClick={handleLoadHistory}
-                            className="flex items-center gap-2 text-sm font-bold text-foreground hover:text-foreground/80 transition-colors"
-                        >
-                            <span>Histórico de Disparos</span>
-                            {showHistory ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                        </button>
-                        {showHistory && campaignHistory.length > 0 && (
-                            <div className="flex items-center gap-1">
-                                {confirmDeleteAll ? (
-                                    <>
-                                        <span className="text-[10px] text-red-500 font-bold">Apagar tudo?</span>
+                <div className="bg-background rounded-lg border border-muted-foreground/30 overflow-hidden">
+                    <div className="flex items-center justify-between px-4 py-3 cursor-pointer hover:bg-foreground/5 transition-colors" onClick={handleLoadHistory}>
+                        <span className="text-sm font-bold text-foreground">Histórico de Disparos</span>
+                        <div className="flex items-center gap-2">
+                            {showHistory && campaignHistory.length > 0 && (
+                                <div className="flex items-center gap-1" onClick={(e) => e.stopPropagation()}>
+                                    {confirmDeleteAll ? (
+                                        <>
+                                            <span className="text-[10px] text-red-500 font-bold">Apagar tudo?</span>
+                                            <button
+                                                onClick={handleDeleteAllCampaigns}
+                                                className="text-[10px] font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
+                                            >
+                                                Sim
+                                            </button>
+                                            <button
+                                                onClick={() => setConfirmDeleteAll(false)}
+                                                className="text-[10px] font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-foreground/5 transition-colors"
+                                            >
+                                                Não
+                                            </button>
+                                        </>
+                                    ) : (
                                         <button
-                                            onClick={handleDeleteAllCampaigns}
-                                            className="text-[10px] font-bold text-red-600 hover:text-red-700 px-2 py-1 rounded-lg hover:bg-red-500/10 transition-colors"
+                                            onClick={() => setConfirmDeleteAll(true)}
+                                            className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10"
                                         >
-                                            Sim
+                                            <Trash2 size={10} />
+                                            Limpar Tudo
                                         </button>
-                                        <button
-                                            onClick={() => setConfirmDeleteAll(false)}
-                                            className="text-[10px] font-bold text-muted-foreground hover:text-foreground px-2 py-1 rounded-lg hover:bg-foreground/5 transition-colors"
-                                        >
-                                            Não
-                                        </button>
-                                    </>
-                                ) : (
-                                    <button
-                                        onClick={() => setConfirmDeleteAll(true)}
-                                        className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-red-500 transition-colors px-2 py-1 rounded-lg hover:bg-red-500/10"
-                                    >
-                                        <Trash2 size={10} />
-                                        Limpar Tudo
-                                    </button>
-                                )}
-                            </div>
-                        )}
+                                    )}
+                                </div>
+                            )}
+                            {showHistory ? <ChevronUp size={14} className="text-muted-foreground" /> : <ChevronDown size={14} className="text-muted-foreground" />}
+                        </div>
                     </div>
                     {showHistory && (
                         <div className="border-t border-muted-foreground/20 animate-in fade-in slide-in-from-top-2 duration-200">

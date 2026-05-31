@@ -22,6 +22,13 @@ interface BulkFilters {
     leadSource?: string;
     campaign?: string;
     assignedTo?: string;
+    clientName?: string;
+    nameQuery?: string;
+    propertyName?: string;
+    minPrice?: number;
+    maxPrice?: number;
+    bedrooms?: string;
+    location?: string;
 }
 
 // ─── Validação de Acesso e Plano ───────────────────────────────────────────────
@@ -157,8 +164,14 @@ export async function getLeadsForBulk(tenantId: string, filters?: BulkFilters) {
             lead_source,
             campaign,
             assigned_to,
+            property_id,
             contacts (
                 name, phone
+            ),
+            properties (
+                title,
+                price,
+                details
             ),
             profiles:assigned_to (
                 full_name
@@ -189,20 +202,78 @@ export async function getLeadsForBulk(tenantId: string, filters?: BulkFilters) {
         query = query.eq('campaign', filters.campaign)
     }
 
+    // Filtro por nome do lead via query SQL
+    if (filters?.nameQuery) {
+        query = query.ilike('contacts.name', `%${filters.nameQuery}%`)
+    }
+
     const { data: leads, error } = await query
 
     if (error) return { success: false, error: error.message }
 
-    // Filtrar leads sem telefone
-    const recipients = (leads || [])
+    // Mapear com dados de property
+    let recipients = (leads || [])
         .filter((l: any) => l.contacts?.phone)
         .map((l: any) => ({
             name: l.contacts?.name || 'Sem nome',
             phone: l.contacts?.phone || '',
-            lead_id: l.id
+            lead_id: l.id,
+            property: l.properties || null
         }))
 
-    return { success: true, data: recipients }
+    // Filtro por nome do cliente (contacts.name) - client-side
+    if (filters?.clientName) {
+        const q = filters.clientName.toLowerCase()
+        recipients = recipients.filter((r: any) => r.name.toLowerCase().includes(q))
+    }
+    // Filtro por nome do imóvel
+    if (filters?.propertyName) {
+        const q = filters.propertyName.toLowerCase()
+        recipients = recipients.filter((r: any) => r.property?.title && r.property.title.toLowerCase().includes(q))
+    }
+    // Filtro de valor: se só minPrice, usar ±50%
+    if (filters?.minPrice && !filters?.maxPrice) {
+        const val = filters.minPrice
+        const min50 = val * 0.5
+        const max50 = val * 1.5
+        recipients = recipients.filter((r: any) => r.property?.price && r.property.price >= min50 && r.property.price <= max50)
+    } else {
+        if (filters?.minPrice) {
+            recipients = recipients.filter((r: any) => r.property?.price && r.property.price >= filters.minPrice!)
+        }
+        if (filters?.maxPrice) {
+            recipients = recipients.filter((r: any) => r.property?.price && r.property.price <= filters.maxPrice!)
+        }
+    }
+    // Filtro de dormitórios (campo 'quartos' no details)
+    if (filters?.bedrooms && filters.bedrooms !== 'any') {
+        const bdReq = parseInt(filters.bedrooms)
+        recipients = recipients.filter((r: any) => {
+            if (!r.property?.details) return false
+            const propBd = parseInt(r.property.details.quartos || r.property.details.bedrooms || '0')
+            return filters.bedrooms!.includes('+') ? propBd >= bdReq : propBd === bdReq
+        })
+    }
+    // Filtro de localização (bairro ou cidade no endereco)
+    if (filters?.location) {
+        const loc = filters.location.toLowerCase()
+        recipients = recipients.filter((r: any) => {
+            if (!r.property?.details?.endereco) return false
+            const end = r.property.details.endereco
+            const bairro = (end.bairro || '').toLowerCase()
+            const cidade = (end.cidade || '').toLowerCase()
+            return bairro.includes(loc) || cidade.includes(loc)
+        })
+    }
+
+    // Remover property do resultado final
+    const finalData = recipients.map((r: any) => ({
+        name: r.name,
+        phone: r.phone,
+        lead_id: r.lead_id
+    }))
+
+    return { success: true, data: finalData }
 }
 
 // ─── Buscar Opções de Filtro ───────────────────────────────────────────────────

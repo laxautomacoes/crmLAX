@@ -3,12 +3,15 @@
 import { useState, useEffect, useRef, useMemo } from 'react'
 import { FormRichTextarea } from '@/components/shared/forms/FormRichTextarea'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
-import { Send, Users, FileText, CheckCircle2, Loader2, Info, Filter, X, Trash2, Home, Search, Image as ImageIcon, Video, MapPin, ChevronDown, ChevronUp, Building2, Check } from 'lucide-react'
+import { Send, Users, FileText, FileSpreadsheet, CheckCircle2, Loader2, Info, Filter, X, Trash2, Home, Search, Image as ImageIcon, Video, MapPin, ChevronDown, ChevronUp, Building2, Check, Globe } from 'lucide-react'
+import { EmailBulkHistory } from './EmailBulkHistory'
 import { toast } from 'sonner'
 import { createEmailBulkCampaign, sendBulkEmailsBatch, getLeadsForEmailBulk, generatePropertyEmailHtml } from '@/app/_actions/email-bulk'
 import { getEmailDomains } from '@/app/_actions/email-domains'
 import { getProperties } from '@/app/_actions/properties'
 import { fetchGoogleSheetData, fetchGoogleSheetTabs } from '@/app/_actions/whatsapp-bulk'
+import { getBulkFilterSuggestions } from '@/app/_actions/bulk-filter-suggestions'
+import { AutocompleteInput } from '@/components/shared/forms/AutocompleteInput'
 import * as XLSX from 'xlsx'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 
@@ -82,14 +85,19 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
     // Filtros Avançados
     const [showFilters, setShowFilters] = useState(false)
     const [filters, setFilters] = useState({
+        clientName: '',
         nameQuery: '',
         propertyName: '',
         propertyType: '',
         minPrice: '',
         maxPrice: '',
-        bedrooms: 'any'
+        bedrooms: 'any',
+        location: ''
     })
     const [isFetchingLeads, setIsFetchingLeads] = useState(false)
+    const [filterSuggestions, setFilterSuggestions] = useState<{
+        clientNames: string[], leadNames: string[], propertyNames: string[], locations: string[], bedroomOptions: string[]
+    }>({ clientNames: [], leadNames: [], propertyNames: [], locations: [], bedroomOptions: [] })
 
     // Google Sheets States
     const [showGoogleSheet, setShowGoogleSheet] = useState(false)
@@ -145,6 +153,17 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
             setLoadingDomains(false)
         }
         loadDomains()
+    }, [tenantId])
+
+    // Carregar sugestões de autocomplete
+    useEffect(() => {
+        async function loadSuggestions() {
+            const res = await getBulkFilterSuggestions(tenantId)
+            if (res.success && res.data) {
+                setFilterSuggestions(res.data)
+            }
+        }
+        loadSuggestions()
     }, [tenantId])
 
     // Fechar dropdown de imóveis ao clicar fora
@@ -349,12 +368,14 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
         setIsFetchingLeads(true)
         
         const apiFilters: any = {}
+        if (filters.clientName) apiFilters.clientName = filters.clientName
         if (filters.nameQuery) apiFilters.nameQuery = filters.nameQuery
         if (filters.propertyName) apiFilters.propertyName = filters.propertyName
         if (filters.propertyType) apiFilters.propertyType = filters.propertyType
         if (filters.minPrice) apiFilters.minPrice = parseCurrencyBRL(filters.minPrice)
         if (filters.maxPrice) apiFilters.maxPrice = parseCurrencyBRL(filters.maxPrice)
         if (filters.bedrooms && filters.bedrooms !== 'any') apiFilters.bedrooms = filters.bedrooms
+        if (filters.location) apiFilters.location = filters.location
 
         const result = await getLeadsForEmailBulk(tenantId, apiFilters)
         
@@ -467,32 +488,40 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
     }
 
     return (
-        <div className="bg-card p-6 rounded-xl border border-muted-foreground/30 shadow-sm space-y-6 animate-in slide-in-from-left-4 duration-300">
+        <div className="bg-card p-6 rounded-lg border border-muted-foreground/30 shadow-sm space-y-6 animate-in slide-in-from-left-4 duration-300">
             <div className="grid grid-cols-1 xl:grid-cols-[1fr_400px] gap-8">
                 {/* Lado Esquerdo: Composição */}
-                <div className="space-y-4">
-                    <div className="space-y-1">
-                        <label className="text-sm font-bold text-foreground">Título Interno da Campanha</label>
-                        <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Newsletter Janeiro" className="w-full h-10 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 text-sm" />
+                <div className="space-y-6">
+                    <div className="space-y-2">
+                        <div className="min-h-[32px] flex items-center">
+                            <label className="text-sm font-bold text-foreground ml-1">Título Interno da Campanha</label>
+                        </div>
+                        <input type="text" value={title} onChange={e => setTitle(e.target.value)} placeholder="Ex: Newsletter Janeiro" className="w-full h-10 px-3 text-sm font-medium bg-background border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50" />
                     </div>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-sm font-bold text-foreground">Nome do Remetente</label>
-                            <input type="text" value={senderName} onChange={e => setSenderName(e.target.value)} placeholder="Ex: João - CRM LAX" className="w-full h-10 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 text-sm" />
+                        <div className="space-y-2">
+                            <div className="min-h-[32px] flex items-center">
+                                <label className="text-sm font-bold text-foreground ml-1">Nome do Remetente</label>
+                            </div>
+                            <input type="text" value={senderName} onChange={e => setSenderName(e.target.value)} placeholder="Ex: João - CRM LAX" className="w-full h-10 px-3 text-sm font-medium bg-background border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50" />
                         </div>
-                        <div className="space-y-1">
-                            <label className="text-sm font-bold text-foreground">E-mail do Remetente</label>
-                            <input type="email" value={senderEmail} onChange={e => setSenderEmail(e.target.value)} placeholder="contato@seusite.com.br" className="w-full h-10 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 text-sm" />
+                        <div className="space-y-2">
+                            <div className="min-h-[32px] flex items-center">
+                                <label className="text-sm font-bold text-foreground ml-1">E-mail do Remetente</label>
+                            </div>
+                            <input type="email" value={senderEmail} onChange={e => setSenderEmail(e.target.value)} placeholder="contato@seusite.com.br" className="w-full h-10 px-3 text-sm font-medium bg-background border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50" />
                             {!loadingDomains && verifiedDomains.length > 0 && (
                                 <p className="text-[10px] text-green-600 mt-1">Domínios validados: {verifiedDomains.map(d => d.domain).join(', ')}</p>
                             )}
                         </div>
                     </div>
 
-                    <div className="space-y-1">
-                        <label className="text-sm font-bold text-foreground">Assunto do E-mail</label>
-                        <input type="text" value={subject} onChange={e => setSubject(e.target.value)} placeholder="Ex: Nova oportunidade no litoral!" className="w-full h-10 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 text-sm" />
+                    <div className="space-y-2">
+                        <div className="min-h-[32px] flex items-center">
+                            <label className="text-sm font-bold text-foreground ml-1">Assunto do E-mail</label>
+                        </div>
+                        <input type="text" value={subject} onChange={e => setSubject(e.target.value)} placeholder="Ex: Nova oportunidade no litoral!" className="w-full h-10 px-3 text-sm font-medium bg-background border border-muted-foreground/30 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50" />
                     </div>
 
                     {/* === SELETOR DE IMÓVEL === */}
@@ -872,24 +901,25 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
 
                     {/* Editor de HTML (oculto quando imóvel vinculado) */}
                     {!selectedProperty && (
-                        <div className="space-y-1">
-                            <label className="text-sm font-bold text-foreground">Corpo do E-mail (HTML permitido)</label>
+                        <div className="space-y-2">
+                            <div className="min-h-[32px] flex items-center">
+                                <label className="text-sm font-bold text-foreground ml-1">Corpo do E-mail (HTML permitido)</label>
+                            </div>
                             <FormRichTextarea 
                                 value={contentHtml} 
                                 onChange={setContentHtml} 
-                                placeholder="<p>Olá {nome}, temos novidades...</p>" 
+                                placeholder="Olá {nome}, tudo bem? Confira esta oportunidade..." 
                             />
-                            <p className="text-[10px] text-muted-foreground"><Info className="inline w-3 h-3 mr-1"/>Use {'{nome}'} para personalizar. Você pode usar tags HTML básicas (&lt;b&gt;, &lt;p&gt;, &lt;a&gt;, &lt;br&gt;).</p>
+                            <p className="text-[10px] text-muted-foreground flex items-center gap-1 mt-1 italic"><Info className="inline w-3 h-3"/>Use {'{nome}'} ou {'{primeiro_nome}'} para personalizar.</p>
                         </div>
                     )}
                 </div>
 
                 {/* Lado Direito: Destinatários e Envio */}
                 <div className="space-y-6">
-                    <div className="bg-foreground/5 p-4 rounded-xl border border-border/40 flex flex-col h-[500px]">
-                        <div className="flex items-center justify-between mb-4 shrink-0">
-                            <h3 className="text-sm font-bold text-foreground flex items-center gap-2">
-                                <Users size={16} />
+                    <div className="space-y-2">
+                        <div className="min-h-[32px] flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-foreground ml-1">
                                 Destinatários ({recipients.length})
                             </h3>
                             {recipients.length > 0 && (
@@ -900,16 +930,49 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                         </div>
                         
                         {!showFilters && recipients.length === 0 && (
-                            <div className="flex flex-col gap-2 shrink-0">
-                                <button onClick={() => setShowFilters(true)} className="w-full h-10 bg-card border border-border hover:bg-muted text-sm font-bold rounded-lg transition-colors text-foreground flex items-center justify-center gap-2">
-                                    <Filter size={16} /> Filtrar e Puxar Leads
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-3 shrink-0">
+                                <button 
+                                    onClick={() => setShowFilters(true)}
+                                    className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-background rounded-lg border border-muted-foreground/30 hover:border-muted-foreground/50 transition-all text-muted-foreground group text-center"
+                                >
+                                    <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                        <Filter className="text-foreground" size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-foreground">Leads</p>
+                                        <p className="text-[10px]">Filtrar e puxar</p>
+                                    </div>
                                 </button>
-                                <input type="file" accept=".csv,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
-                                <button onClick={() => fileInputRef.current?.click()} className="w-full h-10 bg-card border border-border hover:bg-muted text-sm font-bold rounded-lg transition-colors text-foreground flex items-center justify-center gap-2">
-                                    <FileText size={16} /> Importar Planilha (Excel/CSV)
+
+                                <button 
+                                    onClick={() => fileInputRef.current?.click()}
+                                    className="flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 bg-background rounded-lg border border-muted-foreground/30 hover:border-muted-foreground/50 transition-all text-muted-foreground group text-center"
+                                >
+                                    <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                        <FileSpreadsheet className="text-foreground" size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-foreground">Planilha</p>
+                                        <p className="text-[10px]">Excel ou CSV</p>
+                                    </div>
+                                    <input type="file" accept=".csv,.xlsx" ref={fileInputRef} className="hidden" onChange={handleFileUpload} />
                                 </button>
-                                <button onClick={() => setShowGoogleSheet(true)} className="w-full h-10 bg-card border border-border hover:bg-muted text-sm font-bold rounded-lg transition-colors text-foreground flex items-center justify-center gap-2">
-                                    <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M14.77 5.88l-4.5 7.79 2.27 3.93 6.77-11.72h-4.54zm-9.54 0l-2.27 3.93 6.77 11.72 2.27-3.93-6.77-11.72zm11.81 15.65H3.5l2.27 3.93h13.54l2.27-3.93h-4.54z"/></svg> Importar Google Drive
+
+                                <button 
+                                    onClick={() => setShowGoogleSheet(!showGoogleSheet)}
+                                    className={`flex flex-row md:flex-col items-center justify-center gap-3 p-3 md:p-5 rounded-lg border transition-all text-muted-foreground group text-center ${
+                                        showGoogleSheet 
+                                            ? 'bg-background border-muted-foreground/50' 
+                                            : 'bg-background border-muted-foreground/30 hover:border-muted-foreground/50'
+                                    }`}
+                                >
+                                    <div className="w-10 h-10 md:w-12 md:h-12 shrink-0 rounded-full bg-card flex items-center justify-center shadow-sm group-hover:scale-110 transition-transform">
+                                        <Globe className="text-[#0F9D58]" size={20} />
+                                    </div>
+                                    <div>
+                                        <p className="text-xs font-bold text-foreground">Google Sheets</p>
+                                        <p className="text-[10px]">Colar link</p>
+                                    </div>
                                 </button>
                             </div>
                         )}
@@ -952,31 +1015,32 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                                 <h4 className="text-xs font-black uppercase tracking-wider text-muted-foreground">Filtros de Leads</h4>
                                 
                                 <div className="space-y-3">
-                                    <input type="text" placeholder="Buscar por Nome do Lead" value={filters.nameQuery} onChange={e => setFilters({...filters, nameQuery: e.target.value})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
-                                    <input type="text" placeholder="Buscar por Nome do Imóvel" value={filters.propertyName} onChange={e => setFilters({...filters, propertyName: e.target.value})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
-                                    
-                                    <select value={filters.propertyType} onChange={e => setFilters({...filters, propertyType: e.target.value})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs appearance-none">
-                                        <option value="">Qualquer tipo de imóvel</option>
-                                        <option value="apartment">Apartamento</option>
-                                        <option value="house">Casa</option>
-                                        <option value="land">Terreno / Lote</option>
-                                        <option value="commercial">Comercial</option>
+                                    <AutocompleteInput placeholder="Nome do Cliente" value={filters.clientName} onChange={v => setFilters({...filters, clientName: v})} suggestions={filterSuggestions.clientNames} />
+                                    <AutocompleteInput placeholder="Nome do Lead" value={filters.nameQuery} onChange={v => setFilters({...filters, nameQuery: v})} suggestions={filterSuggestions.leadNames} />
+                                    <AutocompleteInput placeholder="Nome do Imóvel" value={filters.propertyName} onChange={v => setFilters({...filters, propertyName: v})} suggestions={filterSuggestions.propertyNames} />
+                                    <select value={filters.bedrooms} onChange={e => setFilters({...filters, bedrooms: e.target.value})} className="appearance-none w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs">
+                                        <option value="any">Qualquer dormitório</option>
+                                        {filterSuggestions.bedroomOptions.length > 0 ? (
+                                            filterSuggestions.bedroomOptions.map(b => (
+                                                <option key={b} value={b}>{b} {parseInt(b) === 1 ? 'Quarto' : 'Quartos'}</option>
+                                            ))
+                                        ) : (
+                                            <>
+                                                <option value="1">1 Quarto</option>
+                                                <option value="2">2 Quartos</option>
+                                                <option value="3">3 Quartos</option>
+                                                <option value="4+">4+ Quartos</option>
+                                            </>
+                                        )}
                                     </select>
-
                                     <div className="grid grid-cols-2 gap-2">
                                         <input type="text" placeholder="Valor Mínimo" value={filters.minPrice} onChange={e => setFilters({...filters, minPrice: formatCurrencyBRL(e.target.value)})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
                                         <input type="text" placeholder="Valor Máximo" value={filters.maxPrice} onChange={e => setFilters({...filters, maxPrice: formatCurrencyBRL(e.target.value)})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
                                     </div>
-
-                                    <select value={filters.bedrooms} onChange={e => setFilters({...filters, bedrooms: e.target.value})} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs appearance-none">
-                                        <option value="any">Qualquer dormitório</option>
-                                        <option value="1">1 Quarto</option>
-                                        <option value="2">2 Quartos</option>
-                                        <option value="3+">3+ Quartos</option>
-                                    </select>
+                                    <AutocompleteInput placeholder="Localização" value={filters.location} onChange={v => setFilters({...filters, location: v})} suggestions={filterSuggestions.locations} />
                                 </div>
 
-                                <button onClick={handleFetchLeads} disabled={isFetchingLeads} className="w-full h-9 bg-foreground text-background font-bold text-xs rounded-lg flex items-center justify-center gap-2 hover:bg-foreground/90 transition-colors">
+                                <button onClick={handleFetchLeads} disabled={isFetchingLeads} className="w-full h-9 bg-secondary text-secondary-foreground font-bold text-xs rounded-lg flex items-center justify-center gap-2 hover:bg-secondary/90 transition-colors">
                                     {isFetchingLeads ? <Loader2 size={14} className="animate-spin" /> : 'Aplicar e Buscar'}
                                 </button>
                             </div>
@@ -1006,48 +1070,49 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                             </div>
                         )}
                     </div>
-
-                    <div className="bg-foreground/5 p-4 rounded-xl border border-border/40">
-                        {isFinished && results ? (
-                            <div className="space-y-3 animate-in zoom-in-95 duration-300">
-                                <div className="flex items-center gap-2 text-green-600 font-bold">
-                                    <CheckCircle2 size={20} />
-                                    Processo Concluído!
-                                </div>
-                                <div className="grid grid-cols-2 gap-2 text-sm">
-                                    <div className="bg-card p-3 rounded-xl border border-border/40 text-center">
-                                        <p className="text-[10px] uppercase text-muted-foreground font-black tracking-wider mb-1">Tentativas</p>
-                                        <p className="font-black text-foreground text-lg">{results.total}</p>
-                                    </div>
-                                    <div className="bg-card p-3 rounded-xl border border-border/40 text-center">
-                                        <p className="text-[10px] uppercase text-green-600 font-black tracking-wider mb-1">Sucessos</p>
-                                        <p className="font-black text-green-600 text-lg">{results.success}</p>
-                                    </div>
-                                    <div className="bg-card p-3 rounded-xl border border-border/40 text-center">
-                                        <p className="text-[10px] uppercase text-red-500 font-black tracking-wider mb-1">Erros</p>
-                                        <p className="font-black text-red-500 text-lg">{results.error}</p>
-                                    </div>
-                                    <div className="bg-card p-3 rounded-xl border border-border/40 text-center">
-                                        <p className="text-[10px] uppercase text-orange-500 font-black tracking-wider mb-1">Opt-out</p>
-                                        <p className="font-black text-orange-500 text-lg">{results.unsubscribed}</p>
-                                    </div>
-                                </div>
-                            </div>
-                        ) : (
-                            <button
-                                onClick={handleSend}
-                                disabled={isSending || recipients.length === 0}
-                                className="w-full h-12 bg-secondary text-secondary-foreground hover:bg-secondary/90 disabled:opacity-50 font-black rounded-xl shadow-sm flex items-center justify-center gap-2 transition-all"
-                            >
-                                {isSending ? (
-                                    <><Loader2 className="animate-spin" size={20} /> Processando Lote...</>
-                                ) : (
-                                    <><Send size={20} /> Disparar Campanha</>
-                                )}
-                            </button>
-                        )}
-                    </div>
                 </div>
+            </div>
+
+            {/* Ações e Resultados — fora do grid, largura total */}
+            <div className="pt-6 border-t border-border/40 flex flex-col gap-4">
+                {isFinished && results && (
+                    <div className="p-4 bg-foreground/5 rounded-lg border border-border/40 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
+                                <CheckCircle2 size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-foreground">Envio Finalizado</p>
+                                <p className="text-[10px] text-muted-foreground">{results.success} enviados, {results.error} falhas, {results.unsubscribed} opt-out.</p>
+                            </div>
+                        </div>
+                        <button 
+                            onClick={() => setIsFinished(false)}
+                            className="text-[10px] font-bold text-foreground hover:underline"
+                        >
+                            Fechar Resumo
+                        </button>
+                    </div>
+                )}
+
+                <div className="flex gap-3">
+                    <button
+                        onClick={handleSend}
+                        disabled={isSending || recipients.length === 0}
+                        className={`w-full h-12 text-sm font-bold bg-secondary border-none text-secondary-foreground hover:bg-secondary/90 transition-all transform active:scale-[0.99] rounded-lg shadow-sm flex items-center justify-center gap-2 ${recipients.length === 0 ? 'opacity-50 cursor-not-allowed' : ''}`}
+                    >
+                        {isSending ? (
+                            <><Loader2 className="animate-spin" size={20} /> Processando Lote...</>
+                        ) : (
+                            <>Disparar Campanha para {recipients.length} Contatos</>
+                        )}
+                    </button>
+                </div>
+            </div>
+
+            {/* Histórico de Campanhas — dentro do card, igual ao WhatsApp */}
+            <div className="pt-4 border-t border-border/40">
+                <EmailBulkHistory tenantId={tenantId} />
             </div>
         </div>
     )
