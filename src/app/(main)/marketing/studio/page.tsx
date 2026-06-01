@@ -1,11 +1,12 @@
 import { Metadata } from 'next';
 import { getProfile } from '@/app/_actions/profile';
 import { MarketingStudio } from '@/components/marketing/MarketingStudio';
+import { StudioConnections } from '@/components/marketing/StudioConnections';
 import PlanGate from '@/components/ui/PlanGate';
 import { PageHeader } from '@/components/shared/PageHeader';
 
 export const metadata: Metadata = {
-    title: 'Estúdio de Criação | CRM LAX',
+    title: 'Estúdio Criação | CRM LAX',
     description: 'Crie conteúdos incríveis para suas redes sociais com o poder da nossa IA.',
 };
 
@@ -28,20 +29,28 @@ export default async function MarketingStudioPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <PageHeader 
-                title="Estúdio de Criação"
+                title="Estúdio Criação"
                 subtitle="Crie conteúdos incríveis para suas redes sociais com o poder da inteligência artificial."
             />
 
             <div className="grid grid-cols-1">
                 <PlanGate 
                     hasAccess={hasProPlan} 
-                    feature="Estúdio de Criação & IA"
+                    feature="Estúdio Criação & IA"
                 >
-                    <MarketingStudio 
-                        tenantId={profile.tenant_id} 
-                        profileId={profile.id}
-                        variant="default"
-                    />
+                    <div className="space-y-16">
+                        <MarketingStudio 
+                            tenantId={profile.tenant_id} 
+                            profileId={profile.id}
+                            variant="default"
+                        />
+
+                        <StudioConnections 
+                            tenantId={profile.tenant_id}
+                            profileId={profile.id}
+                            hasProPlan={hasProPlan}
+                        />
+                    </div>
                 </PlanGate>
             </div>
         </div>

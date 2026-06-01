@@ -30,7 +30,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
                     <Link
                         href={item.href}
                         onClick={onClose}
-                        className="flex items-center gap-3 flex-1 min-w-0"
+                        className={`flex items-center gap-3 ${isCollapsed ? '' : 'flex-1'} min-w-0`}
                     >
                         <item.icon size={18} className="shrink-0" />
                         {!isCollapsed && (

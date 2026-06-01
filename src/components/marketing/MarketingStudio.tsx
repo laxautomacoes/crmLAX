@@ -1,9 +1,9 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Sparkles, Loader2, Copy, Send, Layout, MessageSquare, BookOpen, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown } from 'lucide-react';
+import { Sparkles, Loader2, Copy, Send, Layout, Grid3X3, Film, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown, ExternalLink, Play } from 'lucide-react';
 import { generateGeneralCopy, generatePropertyCopy } from '@/app/_actions/ai-copy';
-import { publishSocialPost } from '@/app/_actions/social';
+import { publishSocialPost, getInstagramFeed } from '@/app/_actions/social';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
@@ -18,7 +18,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     const [topic, setTopic] = useState('');
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'medium' | 'short' | 'full'>('medium');
+    const [activeTab, setActiveTab] = useState<'medium' | 'ig-feed' | 'ig-reels'>('medium');
     const [copied, setCopied] = useState(false);
 
     // Estados para Imóveis
@@ -31,6 +31,11 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
 
     const supabase = createClient();
     const isMinimal = variant === 'minimal';
+
+    // Instagram Feed & Reels
+    const [igFeed, setIgFeed] = useState<any[]>([]);
+    const [igReels, setIgReels] = useState<any[]>([]);
+    const [igLoading, setIgLoading] = useState(false);
 
     useEffect(() => {
         async function loadProperties() {
@@ -47,6 +52,27 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
         }
         loadProperties();
     }, [tenantId, supabase]);
+
+    // Buscar feed do Instagram ao montar
+    useEffect(() => {
+        async function loadInstagramFeed() {
+            setIgLoading(true);
+            try {
+                const result = await getInstagramFeed(tenantId);
+                if (result.success && result.data) {
+                    const posts = result.data.filter((m: any) => m.media_type === 'IMAGE' || m.media_type === 'CAROUSEL_ALBUM');
+                    const reels = result.data.filter((m: any) => m.media_type === 'VIDEO');
+                    setIgFeed(posts);
+                    setIgReels(reels);
+                }
+            } catch (err) {
+                console.error('Erro ao carregar feed Instagram:', err);
+            } finally {
+                setIgLoading(false);
+            }
+        }
+        loadInstagramFeed();
+    }, [tenantId]);
 
     useEffect(() => {
         if (selectedPropertyId) {
@@ -154,33 +180,36 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
 
     return (
         <section className="space-y-6">
-            {/* Toggle de Modo */}
-            <div className="flex gap-2 p-1 bg-card border border-border/40 rounded-xl w-fit mb-6">
-                <button
-                    onClick={() => setMode('livre')}
-                    className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                        mode === 'livre' 
-                        ? 'bg-secondary text-secondary-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:bg-foreground/5'
-                    }`}
-                >
-                    Post Livre
-                </button>
-                <button
-                    onClick={() => setMode('imovel')}
-                    className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
-                        mode === 'imovel' 
-                        ? 'bg-secondary text-secondary-foreground shadow-sm' 
-                        : 'text-muted-foreground hover:bg-foreground/5'
-                    }`}
-                >
-                    Post de Imóvel
-                </button>
-            </div>
-
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 h-full min-h-[500px]">
+                {/* Toggle de Modo — alinhado com coluna 1 */}
+                <div className="flex justify-center xl:col-span-1">
+                    <div className="flex gap-2 p-1 bg-card border border-border/40 rounded-lg w-fit">
+                        <button
+                            onClick={() => setMode('livre')}
+                            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                                mode === 'livre' 
+                                ? 'bg-secondary text-secondary-foreground shadow-sm' 
+                                : 'text-muted-foreground hover:bg-foreground/5'
+                            }`}
+                        >
+                            Post Livre
+                        </button>
+                        <button
+                            onClick={() => setMode('imovel')}
+                            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                                mode === 'imovel' 
+                                ? 'bg-secondary text-secondary-foreground shadow-sm' 
+                                : 'text-muted-foreground hover:bg-foreground/5'
+                            }`}
+                        >
+                            Post Imóvel
+                        </button>
+                    </div>
+                </div>
+                <div className="hidden xl:block" />
+
                 {/* Lado Esquerdo: Input / Seleção */}
-                <div className="bg-card rounded-[2rem] border border-border/50 shadow-sm p-8 flex flex-col space-y-6 transition-all hover:shadow-md h-full">
+                <div className="bg-card rounded-lg border border-border/50 shadow-sm p-8 flex flex-col space-y-6 transition-all hover:shadow-md h-full">
                     
                     {mode === 'livre' ? (
                         <div className="space-y-4 flex-1">
@@ -199,14 +228,14 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                 value={topic}
                                 onChange={(e) => setTopic(e.target.value)}
                                 placeholder="Ex: Frase motivacional sobre conquista do primeiro imóvel, ou um post sobre as vantagens de morar perto da praia..."
-                                className="w-full h-80 p-6 rounded-2xl bg-foreground/5 border border-border/50 text-base text-foreground focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all placeholder:text-muted-foreground/50 font-medium leading-relaxed"
+                                className="w-full h-80 p-6 rounded-lg bg-foreground/5 border border-border/50 text-base text-foreground focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all placeholder:text-muted-foreground/50 font-medium leading-relaxed"
                             />
                         </div>
                     ) : (
                         <div className="space-y-6 flex-1 flex flex-col">
                             <div className="space-y-2 relative">
                                 <select 
-                                    className="appearance-none w-full h-12 px-4 pr-10 rounded-xl bg-foreground/5 border border-border/50 text-sm text-foreground focus:ring-2 focus:ring-ring/30 outline-none"
+                                    className="appearance-none w-full h-12 px-4 pr-10 rounded-lg bg-foreground/5 border border-border/50 text-sm text-foreground focus:ring-2 focus:ring-ring/30 outline-none"
                                     value={selectedPropertyId}
                                     onChange={(e) => setSelectedPropertyId(e.target.value)}
                                 >
@@ -236,7 +265,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                 <div 
                                                     key={idx}
                                                     onClick={() => toggleMediaSelection(url)}
-                                                    className={`relative pb-[100%] rounded-xl overflow-hidden cursor-pointer border-2 transition-all ${isSelected ? 'border-primary scale-95' : 'border-transparent hover:scale-95 hover:opacity-80'}`}
+                                                    className={`relative pb-[100%] rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${isSelected ? 'border-primary scale-95' : 'border-transparent hover:scale-95 hover:opacity-80'}`}
                                                 >
                                                     <img 
                                                         src={url} 
@@ -292,7 +321,6 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                             <Loader2 className="h-5 w-5 animate-spin" />
                         ) : (
                             <>
-                                <Sparkles className="h-5 w-5" />
                                 {mode === 'imovel' ? 'Gerar Legenda do Imóvel' : 'Gerar conteúdo'}
                             </>
                         )}
@@ -301,13 +329,13 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                 </div>
 
                 {/* Lado Direito: Resultados/Preview */}
-                <div className="bg-gradient-to-br from-[#404F4F] to-[#2d3939] rounded-[2rem] shadow-xl overflow-hidden flex flex-col relative group h-full min-h-[500px]">
+                <div className="bg-gradient-to-br from-[#404F4F] to-[#2d3939] rounded-lg shadow-xl overflow-hidden flex flex-col relative group h-full min-h-[500px]">
                     <div className="p-4 md:p-8 pb-4 border-b border-white/10">
                         <div className="flex items-center gap-1.5 w-full">
                                 {[
-                                    { id: 'medium', label: 'Feed Social', icon: Layout },
-                                    { id: 'short', label: 'WhatsApp', icon: MessageSquare },
-                                    { id: 'full', label: 'Detalhado', icon: BookOpen }
+                                    { id: 'medium', label: 'Legenda IA', icon: Sparkles },
+                                    { id: 'ig-feed', label: 'Feed', icon: Grid3X3 },
+                                    { id: 'ig-reels', label: 'Reels', icon: Film }
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
@@ -325,40 +353,128 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                         </div>
                     </div>
 
-                    <div className="flex-1 p-8 relative overflow-y-auto custom-scrollbar flex flex-col">
-                        {!results ? (
-                            <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-30 flex-1">
-                                <div className="p-6 rounded-full border-2 border-dashed border-white/20">
-                                    <Sparkles className="h-10 w-10 text-white" />
-                                </div>
-                                <div className="space-y-1">
-                                    <p className="text-white font-bold">Aguardando geração...</p>
-                                    <p className="text-white/60 text-xs">A legenda aparecerá aqui em segundos.</p>
-                                </div>
+                    <div className="flex-1 p-4 md:p-8 relative overflow-y-auto custom-scrollbar flex flex-col">
+                        {activeTab === 'medium' && (
+                            <>
+                                {!results ? (
+                                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-30 flex-1">
+                                        <div className="p-6 rounded-full border-2 border-dashed border-white/20">
+                                            <Sparkles className="h-10 w-10 text-white" />
+                                        </div>
+                                        <div className="space-y-1">
+                                            <p className="text-white font-bold">Aguardando geração...</p>
+                                            <p className="text-white/60 text-xs">A legenda aparecerá aqui em segundos.</p>
+                                        </div>
+                                    </div>
+                                ) : (
+                                    <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500 flex-1 flex flex-col">
+                                        <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 relative group/card flex-1 flex flex-col overflow-hidden">
+                                            <textarea 
+                                                className="w-full flex-1 min-h-[250px] p-6 bg-transparent text-white text-sm leading-relaxed font-medium resize-none outline-none custom-scrollbar"
+                                                value={results[activeTab] || results['medium']}
+                                                onChange={(e) => setResults({ ...results, medium: e.target.value })}
+                                                placeholder="Sua legenda aparecerá aqui... Sinta-se livre para editar antes de publicar!"
+                                            />
+                                        </div>
+                                    </div>
+                                )}
+                            </>
+                        )}
+
+                        {activeTab === 'ig-feed' && (
+                            <div className="animate-in fade-in duration-300">
+                                {igLoading ? (
+                                    <div className="grid grid-cols-3 gap-1">
+                                        {[1,2,3,4,5,6].map(n => (
+                                            <div key={n} className="aspect-square rounded bg-white/10 animate-pulse" />
+                                        ))}
+                                    </div>
+                                ) : igFeed.length > 0 ? (
+                                    <div className="grid grid-cols-3 gap-1">
+                                        {igFeed.map((post: any) => (
+                                            <a
+                                                key={post.id}
+                                                href={post.permalink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="group/post relative aspect-square overflow-hidden rounded bg-white/5"
+                                            >
+                                                <img
+                                                    src={post.media_url || post.thumbnail_url}
+                                                    alt={post.caption?.substring(0, 50) || 'Post'}
+                                                    className="w-full h-full object-cover transition-transform group-hover/post:scale-110 duration-300"
+                                                />
+                                                <div className="absolute inset-0 bg-black/0 group-hover/post:bg-black/40 transition-all flex items-center justify-center">
+                                                    <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover/post:opacity-100 transition-opacity" />
+                                                </div>
+                                                {post.media_type === 'CAROUSEL_ALBUM' && (
+                                                    <div className="absolute top-2 right-2">
+                                                        <Grid3X3 className="h-3.5 w-3.5 text-white drop-shadow-lg" />
+                                                    </div>
+                                                )}
+                                            </a>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40 flex-1">
+                                        <Instagram className="h-10 w-10 text-white" />
+                                        <div className="space-y-1">
+                                            <p className="text-white font-bold text-sm">Nenhum post encontrado</p>
+                                            <p className="text-white/60 text-xs">Conecte sua conta Instagram para visualizar seu feed.</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        ) : (
-                            <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500 flex-1 flex flex-col">
-                                <div className="bg-white/5 backdrop-blur-sm rounded-2xl border border-white/10 relative group/card flex-1 flex flex-col overflow-hidden">
-                                    <textarea 
-                                        className="w-full flex-1 min-h-[250px] p-6 bg-transparent text-white text-sm leading-relaxed font-medium resize-none outline-none custom-scrollbar"
-                                        value={results[activeTab]}
-                                        onChange={(e) => setResults({ ...results, [activeTab]: e.target.value })}
-                                        placeholder="Sua legenda aparecerá aqui... Sinta-se livre para editar antes de publicar!"
-                                    />
-                                </div>
+                        )}
+
+                        {activeTab === 'ig-reels' && (
+                            <div className="animate-in fade-in duration-300">
+                                {igLoading ? (
+                                    <div className="grid grid-cols-3 gap-1">
+                                        {[1,2,3].map(n => (
+                                            <div key={n} className="aspect-[9/16] rounded bg-white/10 animate-pulse" />
+                                        ))}
+                                    </div>
+                                ) : igReels.length > 0 ? (
+                                    <div className="grid grid-cols-3 gap-1">
+                                        {igReels.map((reel: any) => (
+                                            <a
+                                                key={reel.id}
+                                                href={reel.permalink}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="group/reel relative aspect-[9/16] overflow-hidden rounded bg-white/5"
+                                            >
+                                                <img
+                                                    src={reel.thumbnail_url || reel.media_url}
+                                                    alt={reel.caption?.substring(0, 50) || 'Reel'}
+                                                    className="w-full h-full object-cover transition-transform group-hover/reel:scale-110 duration-300"
+                                                />
+                                                <div className="absolute inset-0 bg-black/0 group-hover/reel:bg-black/40 transition-all flex items-center justify-center">
+                                                    <Play className="h-8 w-8 text-white opacity-0 group-hover/reel:opacity-100 transition-opacity fill-white" />
+                                                </div>
+                                            </a>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40 flex-1">
+                                        <Film className="h-10 w-10 text-white" />
+                                        <div className="space-y-1">
+                                            <p className="text-white font-bold text-sm">Nenhum reel encontrado</p>
+                                            <p className="text-white/60 text-xs">Conecte sua conta Instagram para visualizar seus reels.</p>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         )}
                     </div>
 
-                    {results && (
+                    {results && activeTab === 'medium' && (
                         <div className="p-6 bg-black/20 backdrop-blur-md border-t border-white/10 flex flex-col gap-4">
-                            
-
-
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <button
-                                    onClick={() => handleCopy(results[activeTab])}
-                                    className="h-12 flex items-center justify-center gap-2 px-6 rounded-xl bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-widest transition-all"
+                                    onClick={() => handleCopy(results['medium'])}
+                                    className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-widest transition-all"
                                 >
                                     {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
                                     Copiar Texto
@@ -368,15 +484,15 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     <button
                                         onClick={handlePublish}
                                         disabled={publishing}
-                                        className="h-12 flex items-center justify-center gap-2 px-6 rounded-xl bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-[0.95] disabled:opacity-50"
+                                        className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-[0.95] disabled:opacity-50"
                                     >
                                         {publishing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
                                         {publishing ? 'Publicando...' : 'Publicar Post'}
                                     </button>
                                 ) : (
                                     <button
-                                        onClick={() => toast.info('A postagem direta livre ainda não suporta upload de mídias. Use o "Post de Imóvel" ou copie o texto.')}
-                                        className="h-12 flex items-center justify-center gap-2 px-6 rounded-xl bg-white/10 text-white/50 font-bold text-xs uppercase tracking-widest cursor-not-allowed"
+                                        onClick={() => toast.info('A postagem direta livre ainda não suporta upload de mídias. Use o "Post Imóvel" ou copie o texto.')}
+                                        className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-white/10 text-white/50 font-bold text-xs uppercase tracking-widest cursor-not-allowed"
                                     >
                                         <Send size={16} />
                                         Postar Agora

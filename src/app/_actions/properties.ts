@@ -21,7 +21,7 @@ function slugify(text: string) {
         .replace(/--+/g, '-')
 }
 
-export async function getProperties(tenantId: string, status?: string, callerUserId?: string, callerRole?: string) {
+export async function getProperties(tenantId: string, status?: string, callerUserId?: string, callerRole?: string, includeUnpublished?: boolean) {
     const supabase = await createClient()
     const { profile } = await getProfile()
 
@@ -50,7 +50,8 @@ export async function getProperties(tenantId: string, status?: string, callerUse
             .eq('is_archived', status === 'archived')
 
         // Restrição de visibilidade: se não for admin, vê apenas publicados ou os criados por si mesmo
-        if (effectiveRole !== 'admin' && effectiveRole !== 'superadmin') {
+        // includeUnpublished pula esse filtro (usado no Marketing Studio)
+        if (!includeUnpublished && effectiveRole !== 'admin' && effectiveRole !== 'superadmin') {
             if (effectiveUserId) {
                 query = query.or(`is_published.eq.true,created_by.eq.${effectiveUserId}`)
             } else {

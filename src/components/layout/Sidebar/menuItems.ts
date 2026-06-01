@@ -50,10 +50,10 @@ export const menuItems = [
     { 
         name: 'Marketing', 
         icon: Megaphone, 
-        href: '/marketing', 
+        href: '/marketing/studio', 
         permission: 'marketing_global',
         subItems: [
-            { name: 'Estúdio de Criação', href: '/marketing/studio' },
+            { name: 'Estúdio Criação', href: '/marketing/studio' },
             { name: 'Disparador WhatsApp', href: '/marketing/bulk-sender' },
             { name: 'Disparador Email', href: '/marketing/email-bulk' },
             { name: 'Follow-Up', href: '/marketing/follow-up' },
