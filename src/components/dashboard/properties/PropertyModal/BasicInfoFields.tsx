@@ -3,7 +3,6 @@
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { Switch } from '@/components/ui/Switch'
-import { Building2, Home } from 'lucide-react'
 import { formatCurrencyBRL } from '@/lib/utils/currency'
 
 interface BasicInfoFieldsProps {
@@ -32,8 +31,7 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
         <div className="space-y-6">
             <div className="space-y-4">
                 <div className="flex items-center justify-between">
-                    <h4 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                        <Home size={14} className="text-foreground" />
+                    <h4 className="text-base font-black text-foreground uppercase tracking-widest">
                         {isEmpreendimento ? 'Empreendimento' : 'Imóvel'}
                     </h4>
                     <div className="flex items-center gap-4">
@@ -98,8 +96,7 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
             {/* Campos extras de empreendimento */}
             {isEmpreendimento && (
                 <div className="space-y-4 p-4 rounded-xl bg-foreground/5 border border-border/40">
-                    <h4 className="text-xs font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                        <Building2 size={12} />
+                    <h4 className="text-xs font-black text-foreground uppercase tracking-widest">
                         Dados do Empreendimento
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-6">

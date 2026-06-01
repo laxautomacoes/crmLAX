@@ -3,7 +3,7 @@
 import type { Dispatch, SetStateAction } from 'react'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { BedDouble, Building2 } from 'lucide-react'
+
 
 /** Campos de `details` usados apenas nestes blocos (o formulário completo pode ter mais chaves). */
 interface RoomsDetailsSlice {
@@ -39,8 +39,7 @@ export function DormitoriosVagasFields<T extends FormWithRoomsDetails>({ formDat
 
     return (
         <div className="space-y-4">
-            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                <BedDouble size={14} className="text-foreground" />
+            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
                 Dormitórios e Vagas
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
@@ -131,8 +130,7 @@ export function DormitoriosVagasFields<T extends FormWithRoomsDetails>({ formDat
 export function EstruturaCustosFields<T extends FormWithRoomsDetails>({ formData, setFormData, isEmpreendimento }: RoomsFieldsProps<T>) {
     return (
         <div className="space-y-4">
-            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                <Building2 size={14} className="text-foreground" />
+            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
                 Estrutura
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-x-3 gap-y-6">

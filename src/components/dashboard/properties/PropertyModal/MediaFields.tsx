@@ -224,8 +224,7 @@ export function MediaFields({
 
     return (
         <div className="col-span-2 space-y-6">
-            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4 flex items-center gap-2">
-                <ImageIcon size={14} className="text-foreground" />
+            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
                 Mídias e Documentos
             </h4>
 

@@ -235,8 +235,7 @@ export function OwnerFields({ formData, setFormData, tenantId }: OwnerFieldsProp
 
     return (
         <div className="space-y-2">
-            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-2 flex items-center gap-2">
-                <User size={14} className="text-foreground" />
+            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-2">
                 Proprietário | Construtora
             </h4>
 

@@ -586,7 +586,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             const tiposComApto = ['apartment', 'penthouse', 'studio']
             const tipo = (formData.type || '').toLowerCase()
             const apto = formData.details?.endereco?.apto?.trim()
-            if (tiposComApto.includes(tipo) && !apto) {
+            if (tiposComApto.includes(tipo) && !apto && !formData.details.is_empreendimento) {
                 toast.error('Informe o número do Apartamento antes de salvar.', {
                     description: 'Imóveis do tipo Apartamento, Cobertura ou Studio precisam do número do apto para evitar títulos duplicados.',
                 })
@@ -672,6 +672,23 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         Como deseja cadastrar?
                     </p>
                     <div className="flex flex-col gap-2">
+                        {/* Preenchimento Manual */}
+                        <button
+                            onClick={() => handleSelectMethod('manual')}
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-emerald-500/30 rounded-xl px-4 py-4 transition-all text-left"
+                        >
+                            <div className="p-2.5 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500/20 transition-colors shrink-0">
+                                <PenLine size={20} className="text-emerald-500" />
+                            </div>
+                            <div className="flex-1 min-w-0">
+                                <p className="text-sm font-bold text-foreground">Preenchimento Manual</p>
+                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                                    Preencha todos os campos do imóvel
+                                </p>
+                            </div>
+                            <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
+                        </button>
+
                         {/* Importar URL */}
                         <button
                             onClick={() => handleSelectMethod('url')}
@@ -727,23 +744,6 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                                 </div>
                                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
                                     Cole texto copiado e a IA estrutura os dados
-                                </p>
-                            </div>
-                            <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
-                        </button>
-
-                        {/* Preenchimento Manual */}
-                        <button
-                            onClick={() => handleSelectMethod('manual')}
-                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-emerald-500/30 rounded-xl px-4 py-4 transition-all text-left"
-                        >
-                            <div className="p-2.5 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500/20 transition-colors shrink-0">
-                                <PenLine size={20} className="text-emerald-500" />
-                            </div>
-                            <div className="flex-1 min-w-0">
-                                <p className="text-sm font-bold text-foreground">Preenchimento Manual</p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                                    Preencha todos os campos do imóvel
                                 </p>
                             </div>
                             <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />

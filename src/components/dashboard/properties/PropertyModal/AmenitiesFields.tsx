@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
-import { Plus, Check, Clock, X, Pencil, Trash2, Trees, Star } from 'lucide-react'
+import { Plus, Check, Clock, X, Pencil, Trash2 } from 'lucide-react'
 import { addTenantCustomAmenity, approveTenantCustomAmenity, editTenantCustomAmenity, deleteTenantCustomAmenity } from '@/app/_actions/tenant'
 import type { CustomAmenity } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
@@ -158,8 +158,7 @@ export function AmenitiesFields({ formData, setFormData, tenantId, isAdmin, cust
     return (
         <div className="space-y-4">
             <div className="flex items-center justify-between">
-                <h4 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                    <Trees size={14} className="text-foreground" />
+                <h4 className="text-base font-black text-foreground uppercase tracking-widest">
                     Área comum | lazer
                 </h4>
                 {!isAddingNew && (
@@ -232,8 +231,7 @@ export function AmenitiesFields({ formData, setFormData, tenantId, isAdmin, cust
             {/* Lista de amenidades customizadas */}
             {visibleCustom.length > 0 && (
                 <div className="space-y-2 pt-2">
-                    <h4 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                        <Star size={14} className="text-foreground" />
+                    <h4 className="text-base font-black text-foreground uppercase tracking-widest">
                         Áreas personalizadas
                     </h4>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">

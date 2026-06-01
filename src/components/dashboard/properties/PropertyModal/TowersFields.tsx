@@ -88,8 +88,7 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
     return (
         <div className="space-y-6">
             <div className="flex items-center justify-between">
-                <h4 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                    <Building2 size={14} />
+                <h4 className="text-base font-black text-foreground uppercase tracking-widest">
                     Torres e Tipologias
                 </h4>
                 <button
