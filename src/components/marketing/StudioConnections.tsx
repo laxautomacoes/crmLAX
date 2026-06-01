@@ -180,7 +180,7 @@ export function StudioConnections({ tenantId, profileId, hasProPlan }: StudioCon
                                     </div>
                                 )}
 
-                                <div className="absolute inset-0 bg-gradient-to-t from-[#404F4F] via-transparent to-transparent flex flex-col justify-end p-6 translate-y-2 group-hover:translate-y-0 transition-transform">
+                                <div className="absolute inset-0 bg-gradient-to-t from-foreground/80 via-transparent to-transparent flex flex-col justify-end p-6 translate-y-2 group-hover:translate-y-0 transition-transform">
                                     <h4 className="text-white font-black text-sm line-clamp-1">{prop.title}</h4>
                                     <div className="flex items-center justify-end mt-3 opacity-0 group-hover:opacity-100 transition-opacity">
                                         <div className="bg-secondary text-secondary-foreground px-3 py-1.5 rounded-lg flex items-center gap-1.5 text-[10px] font-black uppercase tracking-wider shadow-lg">

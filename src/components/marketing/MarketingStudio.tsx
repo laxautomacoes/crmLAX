@@ -329,8 +329,8 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                 </div>
 
                 {/* Lado Direito: Resultados/Preview */}
-                <div className="bg-gradient-to-br from-[#404F4F] to-[#2d3939] rounded-lg shadow-xl overflow-hidden flex flex-col relative group h-full min-h-[500px]">
-                    <div className="p-4 md:p-8 pb-4 border-b border-white/10">
+                <div className="bg-card rounded-lg border border-border/50 shadow-sm overflow-hidden flex flex-col relative group h-full min-h-[500px] transition-all hover:shadow-md">
+                    <div className="p-4 md:p-8 pb-4 border-b border-border/50">
                         <div className="flex items-center gap-1.5 w-full">
                                 {[
                                     { id: 'medium', label: 'Legenda IA', icon: Sparkles },
@@ -342,8 +342,8 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                         onClick={() => setActiveTab(tab.id as any)}
                                         className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
                                             activeTab === tab.id
-                                                ? 'bg-[#FFE600] text-[#404F4F] shadow-lg shadow-black/20'
-                                                : 'text-white/60 hover:text-white hover:bg-white/5'
+                                                ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                                : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
                                         }`}
                                     >
                                         <tab.icon size={13} />
@@ -357,20 +357,20 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                         {activeTab === 'medium' && (
                             <>
                                 {!results ? (
-                                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-30 flex-1">
-                                        <div className="p-6 rounded-full border-2 border-dashed border-white/20">
-                                            <Sparkles className="h-10 w-10 text-white" />
+                                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40 flex-1">
+                                        <div className="p-6 rounded-full border-2 border-dashed border-border/40">
+                                            <Sparkles className="h-10 w-10 text-muted-foreground" />
                                         </div>
                                         <div className="space-y-1">
-                                            <p className="text-white font-bold">Aguardando geração...</p>
-                                            <p className="text-white/60 text-xs">A legenda aparecerá aqui em segundos.</p>
+                                            <p className="text-foreground font-bold">Aguardando geração...</p>
+                                            <p className="text-muted-foreground text-xs">A legenda aparecerá aqui em segundos.</p>
                                         </div>
                                     </div>
                                 ) : (
                                     <div className="space-y-6 animate-in fade-in zoom-in-95 duration-500 flex-1 flex flex-col">
-                                        <div className="bg-white/5 backdrop-blur-sm rounded-lg border border-white/10 relative group/card flex-1 flex flex-col overflow-hidden">
+                                        <div className="bg-foreground/5 rounded-lg border border-border/50 relative group/card flex-1 flex flex-col overflow-hidden">
                                             <textarea 
-                                                className="w-full flex-1 min-h-[250px] p-6 bg-transparent text-white text-sm leading-relaxed font-medium resize-none outline-none custom-scrollbar"
+                                                className="w-full flex-1 min-h-[250px] p-6 bg-transparent text-foreground text-sm leading-relaxed font-medium resize-none outline-none custom-scrollbar"
                                                 value={results[activeTab] || results['medium']}
                                                 onChange={(e) => setResults({ ...results, medium: e.target.value })}
                                                 placeholder="Sua legenda aparecerá aqui... Sinta-se livre para editar antes de publicar!"
@@ -386,7 +386,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                 {igLoading ? (
                                     <div className="grid grid-cols-3 gap-1">
                                         {[1,2,3,4,5,6].map(n => (
-                                            <div key={n} className="aspect-square rounded bg-white/10 animate-pulse" />
+                                            <div key={n} className="aspect-square rounded bg-muted animate-pulse" />
                                         ))}
                                     </div>
                                 ) : igFeed.length > 0 ? (
@@ -397,7 +397,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                 href={post.permalink}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="group/post relative aspect-square overflow-hidden rounded bg-white/5"
+                                                className="group/post relative aspect-square overflow-hidden rounded bg-muted"
                                             >
                                                 <img
                                                     src={post.media_url || post.thumbnail_url}
@@ -405,7 +405,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                     className="w-full h-full object-cover transition-transform group-hover/post:scale-110 duration-300"
                                                 />
                                                 <div className="absolute inset-0 bg-black/0 group-hover/post:bg-black/40 transition-all flex items-center justify-center">
-                                                    <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover/post:opacity-100 transition-opacity" />
+                                                    <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover/post:opacity-100 transition-opacity drop-shadow-md" />
                                                 </div>
                                                 {post.media_type === 'CAROUSEL_ALBUM' && (
                                                     <div className="absolute top-2 right-2">
@@ -417,10 +417,10 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     </div>
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40 flex-1">
-                                        <Instagram className="h-10 w-10 text-white" />
+                                        <Instagram className="h-10 w-10 text-muted-foreground" />
                                         <div className="space-y-1">
-                                            <p className="text-white font-bold text-sm">Nenhum post encontrado</p>
-                                            <p className="text-white/60 text-xs">Conecte sua conta Instagram para visualizar seu feed.</p>
+                                            <p className="text-foreground font-bold text-sm">Nenhum post encontrado</p>
+                                            <p className="text-muted-foreground text-xs">Conecte sua conta Instagram para visualizar seu feed.</p>
                                         </div>
                                     </div>
                                 )}
@@ -432,7 +432,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                 {igLoading ? (
                                     <div className="grid grid-cols-3 gap-1">
                                         {[1,2,3].map(n => (
-                                            <div key={n} className="aspect-[9/16] rounded bg-white/10 animate-pulse" />
+                                            <div key={n} className="aspect-[9/16] rounded bg-muted animate-pulse" />
                                         ))}
                                     </div>
                                 ) : igReels.length > 0 ? (
@@ -443,7 +443,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                 href={reel.permalink}
                                                 target="_blank"
                                                 rel="noopener noreferrer"
-                                                className="group/reel relative aspect-[9/16] overflow-hidden rounded bg-white/5"
+                                                className="group/reel relative aspect-[9/16] overflow-hidden rounded bg-muted"
                                             >
                                                 <img
                                                     src={reel.thumbnail_url || reel.media_url}
@@ -451,17 +451,17 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                     className="w-full h-full object-cover transition-transform group-hover/reel:scale-110 duration-300"
                                                 />
                                                 <div className="absolute inset-0 bg-black/0 group-hover/reel:bg-black/40 transition-all flex items-center justify-center">
-                                                    <Play className="h-8 w-8 text-white opacity-0 group-hover/reel:opacity-100 transition-opacity fill-white" />
+                                                    <Play className="h-8 w-8 text-white opacity-0 group-hover/reel:opacity-100 transition-opacity fill-white drop-shadow-md" />
                                                 </div>
                                             </a>
                                         ))}
                                     </div>
                                 ) : (
                                     <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40 flex-1">
-                                        <Film className="h-10 w-10 text-white" />
+                                        <Film className="h-10 w-10 text-muted-foreground" />
                                         <div className="space-y-1">
-                                            <p className="text-white font-bold text-sm">Nenhum reel encontrado</p>
-                                            <p className="text-white/60 text-xs">Conecte sua conta Instagram para visualizar seus reels.</p>
+                                            <p className="text-foreground font-bold text-sm">Nenhum reel encontrado</p>
+                                            <p className="text-muted-foreground text-xs">Conecte sua conta Instagram para visualizar seus reels.</p>
                                         </div>
                                     </div>
                                 )}
@@ -470,11 +470,11 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                     </div>
 
                     {results && activeTab === 'medium' && (
-                        <div className="p-6 bg-black/20 backdrop-blur-md border-t border-white/10 flex flex-col gap-4">
+                        <div className="p-6 bg-muted/50 border-t border-border/50 flex flex-col gap-4">
                             <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                                 <button
                                     onClick={() => handleCopy(results['medium'])}
-                                    className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-white/10 hover:bg-white/20 text-white font-bold text-xs uppercase tracking-widest transition-all"
+                                    className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-foreground/5 hover:bg-foreground/10 text-foreground font-bold text-xs uppercase tracking-widest transition-all border border-border/50"
                                 >
                                     {copied ? <Check size={16} className="text-green-400" /> : <Copy size={16} />}
                                     Copiar Texto
@@ -492,7 +492,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                 ) : (
                                     <button
                                         onClick={() => toast.info('A postagem direta livre ainda não suporta upload de mídias. Use o "Post Imóvel" ou copie o texto.')}
-                                        className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-white/10 text-white/50 font-bold text-xs uppercase tracking-widest cursor-not-allowed"
+                                        className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-foreground/5 text-muted-foreground font-bold text-xs uppercase tracking-widest cursor-not-allowed border border-border/50"
                                     >
                                         <Send size={16} />
                                         Postar Agora
