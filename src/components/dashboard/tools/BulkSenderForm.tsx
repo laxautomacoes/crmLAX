@@ -19,7 +19,8 @@ import {
     saveBulkTemplate, getBulkTemplates, deleteBulkTemplate,
     getBulkCampaignRecipients,
     deleteBulkCampaign, deleteAllBulkCampaigns,
-    startBulkCampaign, cancelBulkCampaign, checkActiveCampaign, resumeBulkCampaign
+    startBulkCampaign, cancelBulkCampaign, checkActiveCampaign, resumeBulkCampaign,
+    forceCancelCampaign, checkStalledCampaign
 } from '@/app/_actions/whatsapp-bulk'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone } from '@/lib/utils/phone'
@@ -235,6 +236,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     const fileInputRef = useRef<HTMLInputElement>(null)
     const mediaInputRef = useRef<HTMLInputElement>(null)
     const stopRef = useRef(false)
+    const cancelTimerRef = useRef<NodeJS.Timeout | null>(null)
+    const [stalledDetected, setStalledDetected] = useState(false)
 
     // Carregar opções de filtro ao montar
     useEffect(() => {
@@ -262,10 +265,17 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             const campaign = await checkActiveCampaign(tenantId)
             if (campaign) {
                 setCurrentCampaignId(campaign.id)
-                setIsSending(true)
                 setProgress({ current: campaign.current_index, total: campaign.total_recipients })
                 setResults({ success: campaign.total_success, error: campaign.total_errors })
                 setCampaignTitle(campaign.title || '')
+                
+                if (campaign.status === 'stalled') {
+                    // Campanha travada — mostrar alerta
+                    setStalledDetected(true)
+                    setIsSending(false)
+                } else {
+                    setIsSending(true)
+                }
             }
         }
         checkActive()
@@ -288,15 +298,32 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                 setProgress({ current: d.current_index || 0, total: d.total_recipients || 0 })
                 setResults({ success: d.total_success || 0, error: d.total_errors || 0 })
 
+                // Resetar detecção de stalled quando há atividade
+                if (d.last_activity_at) {
+                    setStalledDetected(false)
+                }
+
                 if (d.status === 'completed' || d.status === 'cancelled') {
                     setIsSending(false)
                     setIsFinished(true)
                     setStopRequested(false)
+                    setStalledDetected(false)
+                    // Limpar timer de cancelamento forçado se existir
+                    if (cancelTimerRef.current) {
+                        clearTimeout(cancelTimerRef.current)
+                        cancelTimerRef.current = null
+                    }
                     if (d.status === 'completed') {
                         toast.success('Processo de disparo concluído!')
                     } else {
                         toast.warning('Disparo interrompido.')
                     }
+                } else if (d.status === 'stalled') {
+                    // Edge Function marcou como stalled — mostrar alerta
+                    setStalledDetected(true)
+                    setIsSending(false)
+                    setStopRequested(false)
+                    toast.warning('O servidor de disparo pausou. Você pode retomar ou cancelar.')
                 }
             })
             .subscribe()
@@ -314,6 +341,24 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         window.addEventListener('beforeunload', handler)
         return () => window.removeEventListener('beforeunload', handler)
     }, [isSending])
+
+    // Watchdog: detectar campanhas travadas (sem progresso por 3 minutos)
+    useEffect(() => {
+        if (!currentCampaignId || !isSending) return
+
+        const watchdogInterval = setInterval(async () => {
+            const result = await checkStalledCampaign(currentCampaignId)
+            if (result.stalled) {
+                setStalledDetected(true)
+                setIsSending(false)
+                setStopRequested(false)
+                toast.warning('O disparo parece ter travado. Sem atividade nos últimos 3 minutos.')
+                clearInterval(watchdogInterval)
+            }
+        }, 60000) // Verificar a cada 60 segundos
+
+        return () => clearInterval(watchdogInterval)
+    }, [currentCampaignId, isSending])
 
     const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0]
@@ -697,6 +742,54 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         setStopRequested(true)
         if (currentCampaignId) {
             await cancelBulkCampaign(currentCampaignId)
+            
+            // Timer de segurança: se após 30s o status não mudou, forçar cancelamento
+            cancelTimerRef.current = setTimeout(async () => {
+                toast.warning('O servidor não respondeu. Forçando cancelamento...')
+                const result = await forceCancelCampaign(currentCampaignId)
+                if (result.success) {
+                    setIsSending(false)
+                    setIsFinished(true)
+                    setStopRequested(false)
+                    setStalledDetected(false)
+                    toast.success('Disparo cancelado com sucesso.')
+                } else {
+                    toast.error('Erro ao forçar cancelamento: ' + (result.error || 'desconhecido'))
+                    setStopRequested(false)
+                }
+                cancelTimerRef.current = null
+            }, 30000)
+        }
+    }
+
+    const handleForceCancel = async () => {
+        if (!currentCampaignId) return
+        const result = await forceCancelCampaign(currentCampaignId)
+        if (result.success) {
+            setIsSending(false)
+            setIsFinished(true)
+            setStopRequested(false)
+            setStalledDetected(false)
+            if (cancelTimerRef.current) {
+                clearTimeout(cancelTimerRef.current)
+                cancelTimerRef.current = null
+            }
+            toast.success('Disparo cancelado com sucesso.')
+        } else {
+            toast.error('Erro ao forçar cancelamento.')
+        }
+    }
+
+    const handleResumeStalled = async () => {
+        if (!currentCampaignId) return
+        const result = await resumeBulkCampaign(currentCampaignId)
+        if (result.success) {
+            setStalledDetected(false)
+            setIsSending(true)
+            setStopRequested(false)
+            toast.success(`Retomando envio: ${result.remaining} contatos restantes.`)
+        } else {
+            toast.error(result.error || 'Erro ao retomar disparo.')
         }
     }
 
@@ -1485,12 +1578,12 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 <Loader2 className="animate-spin text-accent-icon" size={14} />
                                 <span>Enviando mensagens ({progress.current}/{progress.total})</span>
                             </div>
-                            <span>{Math.round((progress.current / progress.total) * 100)}%</span>
+                            <span>{progress.total > 0 ? Math.round((progress.current / progress.total) * 100) : 0}%</span>
                         </div>
                         <div className="h-2 w-full bg-muted rounded-full overflow-hidden">
                             <div 
                                 className="h-full bg-accent-icon transition-all duration-500"
-                                style={{ width: `${(progress.current / progress.total) * 100}%` }}
+                                style={{ width: `${progress.total > 0 ? (progress.current / progress.total) * 100 : 0}%` }}
                             />
                         </div>
                         <div className="flex justify-between text-[10px] font-bold">
@@ -1500,7 +1593,40 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                     </div>
                 )}
 
-                {isFinished && !isSending && (
+                {/* Alerta de campanha travada (stalled) */}
+                {stalledDetected && !isSending && !isFinished && currentCampaignId && (
+                    <div className="p-4 bg-amber-500/10 rounded-xl border border-amber-500/30 space-y-3 animate-in fade-in slide-in-from-bottom-2">
+                        <div className="flex items-center gap-3">
+                            <div className="w-10 h-10 rounded-full bg-amber-100 flex items-center justify-center text-amber-600 shrink-0">
+                                <AlertCircle size={20} />
+                            </div>
+                            <div>
+                                <p className="text-xs font-bold text-foreground">Disparo Travado</p>
+                                <p className="text-[10px] text-muted-foreground">
+                                    O servidor de disparo parou de responder. {progress.current}/{progress.total} mensagens foram processadas ({results.success} sucessos, {results.error} falhas).
+                                </p>
+                            </div>
+                        </div>
+                        <div className="flex gap-2">
+                            <button
+                                onClick={handleResumeStalled}
+                                className="flex-1 h-10 text-xs font-bold bg-amber-500 text-white hover:bg-amber-600 transition-all rounded-lg flex items-center justify-center gap-2"
+                            >
+                                <Play size={14} />
+                                Retomar Disparo
+                            </button>
+                            <button
+                                onClick={handleForceCancel}
+                                className="flex-1 h-10 text-xs font-bold bg-card border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all rounded-lg flex items-center justify-center gap-2"
+                            >
+                                <X size={14} />
+                                Cancelar
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {isFinished && !isSending && !stalledDetected && (
                     <div className="p-4 bg-foreground/5 rounded-lg border border-border/40 flex items-center justify-between animate-in fade-in slide-in-from-bottom-2">
                         <div className="flex items-center gap-3">
                             <div className="w-10 h-10 rounded-full bg-green-100 flex items-center justify-center text-green-600">
@@ -1512,7 +1638,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             </div>
                         </div>
                         <button 
-                            onClick={() => setIsFinished(false)}
+                            onClick={() => { setIsFinished(false); setStalledDetected(false); setCurrentCampaignId(null); }}
                             className="text-[10px] font-bold text-foreground hover:underline"
                         >
                             Fechar Resumo
@@ -1524,10 +1650,24 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                     {isSending ? (
                         <button 
                             onClick={handleStop}
-                            className="w-full h-12 text-sm font-bold bg-card border border-red-500/30 text-red-500 hover:bg-red-500/10 transition-all transform active:scale-[0.99] rounded-lg shadow-sm flex items-center justify-center gap-2"
+                            disabled={stopRequested}
+                            className={`w-full h-12 text-sm font-bold transition-all transform active:scale-[0.99] rounded-lg shadow-sm flex items-center justify-center gap-2 ${
+                                stopRequested 
+                                    ? 'bg-card border border-amber-500/30 text-amber-500 cursor-wait' 
+                                    : 'bg-card border border-red-500/30 text-red-500 hover:bg-red-500/10'
+                            }`}
                         >
-                            <X size={20} />
-                            Interromper Disparo
+                            {stopRequested ? (
+                                <>
+                                    <Loader2 size={18} className="animate-spin" />
+                                    Solicitando cancelamento...
+                                </>
+                            ) : (
+                                <>
+                                    <X size={20} />
+                                    Interromper Disparo
+                                </>
+                            )}
                         </button>
                     ) : (
                         <button 

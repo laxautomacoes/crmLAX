@@ -218,6 +218,11 @@ Deno.serve(async (req: Request) => {
       });
     }
 
+    // Marcar atividade inicial
+    await supabase.from('bulk_campaigns').update({
+      last_activity_at: new Date().toISOString()
+    }).eq('id', campaign_id);
+
     // 4. Processar lote
     const endIndex = Math.min(startIndex + BATCH_SIZE, recipients.length);
     let totalSuccess = campaign.total_success || 0;
@@ -244,7 +249,8 @@ Deno.serve(async (req: Request) => {
           total_success: totalSuccess,
           total_errors: totalErrors,
           current_index: i,
-          completed_at: new Date().toISOString()
+          completed_at: new Date().toISOString(),
+          last_activity_at: new Date().toISOString()
         }).eq('id', campaign_id);
 
         // Notificar cancelamento
@@ -332,11 +338,12 @@ Deno.serve(async (req: Request) => {
         }
       }
 
-      // Atualizar progresso na campanha
+      // Atualizar progresso na campanha + last_activity_at
       await supabase.from('bulk_campaigns').update({
         current_index: i + 1,
         total_success: totalSuccess,
-        total_errors: totalErrors
+        total_errors: totalErrors,
+        last_activity_at: new Date().toISOString()
       }).eq('id', campaign_id);
 
       // Aguardar intervalo (exceto última mensagem do lote)
@@ -351,18 +358,59 @@ Deno.serve(async (req: Request) => {
     if (endIndex < recipients.length) {
       console.log(`[bulk-sender] Lote concluído (${startIndex}-${endIndex - 1}). Encadeando próximo lote...`);
 
-      // Self-invocation: chamar a si mesma para o próximo lote (fire-and-forget)
+      // Self-invocation: chamar a si mesma para o próximo lote
       const selfUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/bulk-sender`;
-      fetch(selfUrl, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-        },
-        body: JSON.stringify({ campaign_id })
-      }).catch(err => {
+      try {
+        const selfResponse = await fetch(selfUrl, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+          },
+          body: JSON.stringify({ campaign_id })
+        });
+
+        if (!selfResponse.ok) {
+          const errText = await selfResponse.text();
+          console.error(`[bulk-sender] Self-invocation falhou (HTTP ${selfResponse.status}): ${errText}`);
+          
+          // Marcar como stalled para que o frontend detecte e possa retomar
+          await supabase.from('bulk_campaigns').update({
+            status: 'stalled',
+            last_activity_at: new Date().toISOString()
+          }).eq('id', campaign_id);
+
+          // Notificar o usuário
+          await supabase.from('notifications').insert({
+            user_id: campaign.profile_id,
+            tenant_id: campaign.tenant_id,
+            title: `⚠️ Disparo pausado: ${campaign.title || 'Disparo em Massa'}`,
+            message: `O servidor de disparo pausou após ${endIndex}/${recipients.length} mensagens. Você pode retomar pela página de disparos.`,
+            type: 'warning',
+            read: false,
+            created_at: new Date().toISOString()
+          });
+        }
+      } catch (err: any) {
         console.error('[bulk-sender] Erro na self-invocation:', err.message);
-      });
+        
+        // Marcar como stalled
+        await supabase.from('bulk_campaigns').update({
+          status: 'stalled',
+          last_activity_at: new Date().toISOString()
+        }).eq('id', campaign_id);
+
+        // Notificar o usuário
+        await supabase.from('notifications').insert({
+          user_id: campaign.profile_id,
+          tenant_id: campaign.tenant_id,
+          title: `⚠️ Disparo pausado: ${campaign.title || 'Disparo em Massa'}`,
+          message: `O servidor de disparo encontrou um erro e pausou após ${endIndex}/${recipients.length} mensagens. Você pode retomar pela página de disparos.`,
+          type: 'warning',
+          read: false,
+          created_at: new Date().toISOString()
+        });
+      }
 
       return new Response(JSON.stringify({
         status: 'batch_complete',
@@ -383,7 +431,8 @@ Deno.serve(async (req: Request) => {
       total_success: totalSuccess,
       total_errors: totalErrors,
       current_index: recipients.length,
-      completed_at: new Date().toISOString()
+      completed_at: new Date().toISOString(),
+      last_activity_at: new Date().toISOString()
     }).eq('id', campaign_id);
 
     // 7. Notificar o usuário que disparou

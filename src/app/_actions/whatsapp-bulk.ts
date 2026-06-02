@@ -558,6 +558,92 @@ export async function cancelBulkCampaign(campaignId: string) {
     return { success: true }
 }
 
+// ─── Cancelamento Forçado (quando Edge Function não responde) ──────────────
+
+export async function forceCancelCampaign(campaignId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile) return { success: false, error: 'Perfil não encontrado.' }
+
+    // Forçar status para 'cancelled' diretamente, independente do Edge Function
+    const { error } = await supabase
+        .from('bulk_campaigns')
+        .update({
+            status: 'cancelled',
+            cancel_requested: true,
+            completed_at: new Date().toISOString()
+        })
+        .eq('id', campaignId)
+        .eq('tenant_id', profile.tenant_id)
+        .in('status', ['sending', 'stalled'])
+
+    if (error) {
+        console.error('Error force-cancelling bulk campaign:', error)
+        return { success: false, error: error.message }
+    }
+
+    return { success: true }
+}
+
+// ─── Verificar Campanha Travada (Stale Detection) ──────────────────────────
+
+export async function checkStalledCampaign(campaignId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { stalled: false }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile) return { stalled: false }
+
+    const { data: campaign } = await supabase
+        .from('bulk_campaigns')
+        .select('id, status, last_activity_at, current_index, total_recipients')
+        .eq('id', campaignId)
+        .eq('tenant_id', profile.tenant_id)
+        .single()
+
+    if (!campaign) return { stalled: false }
+
+    // Se status já é stalled, é stalled
+    if (campaign.status === 'stalled') {
+        return {
+            stalled: true,
+            currentIndex: campaign.current_index,
+            totalRecipients: campaign.total_recipients
+        }
+    }
+
+    // Se status é sending, checar last_activity_at
+    if (campaign.status === 'sending' && campaign.last_activity_at) {
+        const lastActivity = new Date(campaign.last_activity_at).getTime()
+        const now = Date.now()
+        const STALE_THRESHOLD_MS = 3 * 60 * 1000 // 3 minutos
+
+        if (now - lastActivity > STALE_THRESHOLD_MS) {
+            return {
+                stalled: true,
+                currentIndex: campaign.current_index,
+                totalRecipients: campaign.total_recipients
+            }
+        }
+    }
+
+    return { stalled: false }
+}
+
 // ─── Retomar Disparo (Continuar de onde parou) ─────────────────────────────
 
 export async function resumeBulkCampaign(campaignId: string) {
@@ -648,11 +734,12 @@ export async function checkActiveCampaign(tenantId: string) {
 
     if (!profile || profile.tenant_id !== tenantId) return null
 
+    // Buscar campanha em sending OU stalled (para detectar campanhas travadas)
     const { data: campaign } = await supabase
         .from('bulk_campaigns')
-        .select('id, current_index, total_recipients, total_success, total_errors, status, title, cancel_requested')
+        .select('id, current_index, total_recipients, total_success, total_errors, status, title, cancel_requested, last_activity_at')
         .eq('tenant_id', tenantId)
-        .eq('status', 'sending')
+        .in('status', ['sending', 'stalled'])
         .eq('cancel_requested', false)
         .order('created_at', { ascending: false })
         .limit(1)
