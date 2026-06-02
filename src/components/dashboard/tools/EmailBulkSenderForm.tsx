@@ -9,7 +9,7 @@ import { toast } from 'sonner'
 import { createEmailBulkCampaign, sendBulkEmailsBatch, getLeadsForEmailBulk, generatePropertyEmailHtml } from '@/app/_actions/email-bulk'
 import { getEmailDomains } from '@/app/_actions/email-domains'
 import { getProperties } from '@/app/_actions/properties'
-import { fetchGoogleSheetData, fetchGoogleSheetTabs } from '@/app/_actions/whatsapp-bulk'
+import { fetchGoogleSheetAsXlsx } from '@/app/_actions/whatsapp-bulk'
 import { getBulkFilterSuggestions } from '@/app/_actions/bulk-filter-suggestions'
 import { AutocompleteInput } from '@/components/shared/forms/AutocompleteInput'
 import * as XLSX from 'xlsx'
@@ -100,12 +100,12 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
         clientNames: string[], leadNames: string[], propertyNames: string[], locations: string[], bedroomOptions: string[]
     }>({ clientNames: [], leadNames: [], propertyNames: [], locations: [], bedroomOptions: [] })
 
-    // Google Sheets States
     const [showGoogleSheet, setShowGoogleSheet] = useState(false)
     const [googleSheetUrl, setGoogleSheetUrl] = useState('')
     const [isLoadingSheet, setIsLoadingSheet] = useState(false)
-    const [googleSheetTabs, setGoogleSheetTabs] = useState<{name: string, gid: string}[]>([])
-    const [pendingGoogleSheetId, setPendingGoogleSheetId] = useState('')
+    const [showSheetPicker, setShowSheetPicker] = useState(false)
+    const [availableSheetNames, setAvailableSheetNames] = useState<string[]>([])
+    const [pendingWorkbook, setPendingWorkbook] = useState<XLSX.WorkBook | null>(null)
 
     // === SELETOR DE IMÓVEL ===
     const [showPropertySelector, setShowPropertySelector] = useState(false)
@@ -321,7 +321,20 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
         if (fileInputRef.current) fileInputRef.current.value = ''
     }
 
-    const handleGoogleSheetImport = async (gid?: string) => {
+    const handleGoogleSheetImport = async (selectedSheetName?: string) => {
+        // Se veio de uma seleção do modal de abas
+        if (selectedSheetName && pendingWorkbook) {
+            const ws = pendingWorkbook.Sheets[selectedSheetName]
+            const data = XLSX.utils.sheet_to_json(ws) as any[]
+            processImportedData(data)
+            setShowSheetPicker(false)
+            setPendingWorkbook(null)
+            setAvailableSheetNames([])
+            setShowGoogleSheet(false)
+            setGoogleSheetUrl('')
+            return
+        }
+
         if (!googleSheetUrl.trim()) {
             toast.error('Cole o link da planilha do Google Sheets.')
             return
@@ -329,40 +342,25 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
 
         setIsLoadingSheet(true)
         try {
-            const sheetIdMatch = googleSheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
-            const sheetId = sheetIdMatch?.[1] || ''
-
-            if (!gid && sheetId) {
-                try {
-                    const tabsResult = await fetchGoogleSheetTabs(googleSheetUrl.trim())
-                    if (tabsResult.success && tabsResult.tabs && tabsResult.tabs.length > 1) {
-                        setGoogleSheetTabs(tabsResult.tabs)
-                        setPendingGoogleSheetId(sheetId)
-                        setIsLoadingSheet(false)
-                        return
-                    }
-                } catch {}
-            }
-
-            const fetchUrl = gid && pendingGoogleSheetId 
-                ? `https://docs.google.com/spreadsheets/d/${pendingGoogleSheetId}/edit#gid=${gid}`
-                : googleSheetUrl.trim();
-
-            const result = await fetchGoogleSheetData(fetchUrl)
-            if (!result.success || !result.csvData) {
+            const result = await fetchGoogleSheetAsXlsx(googleSheetUrl.trim())
+            if (!result.success || !result.xlsxBase64) {
                 toast.error(result.error || 'Erro ao acessar a planilha.')
                 return
             }
 
-            const wb = XLSX.read(result.csvData, { type: 'string' })
-            const ws = wb.Sheets[wb.SheetNames[0]]
-            const data = XLSX.utils.sheet_to_json(ws) as any[]
+            const wb = XLSX.read(result.xlsxBase64, { type: 'base64' })
 
-            processImportedData(data)
-            setShowGoogleSheet(false)
-            setGoogleSheetUrl('')
-            setGoogleSheetTabs([])
-            setPendingGoogleSheetId('')
+            if (wb.SheetNames.length > 1) {
+                setAvailableSheetNames(wb.SheetNames)
+                setPendingWorkbook(wb)
+                setShowSheetPicker(true)
+            } else {
+                const ws = wb.Sheets[wb.SheetNames[0]]
+                const data = XLSX.utils.sheet_to_json(ws) as any[]
+                processImportedData(data)
+                setShowGoogleSheet(false)
+                setGoogleSheetUrl('')
+            }
         } catch (error: any) {
             toast.error('Erro ao processar planilha: ' + error.message)
         } finally {
@@ -1027,26 +1025,62 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                                 </button>
                                 <h4 className="text-xs font-black uppercase tracking-wider text-muted-foreground">Importar Google Sheets</h4>
                                 
-                                {googleSheetTabs.length > 0 ? (
-                                    <div className="space-y-3">
-                                        <p className="text-xs text-muted-foreground">Encontramos várias abas na planilha. Selecione uma para importar:</p>
-                                        <div className="flex flex-col gap-2 max-h-[150px] overflow-y-auto">
-                                            {googleSheetTabs.map((tab, i) => (
-                                                <button key={i} onClick={() => handleGoogleSheetImport(tab.gid)} disabled={isLoadingSheet} className="w-full h-9 bg-foreground/5 border border-border/40 hover:bg-muted text-xs font-bold rounded-lg transition-colors text-left px-3">
-                                                    {isLoadingSheet ? <Loader2 size={14} className="animate-spin inline mr-2" /> : <FileText size={14} className="inline mr-2" />}
-                                                    {tab.name}
-                                                </button>
-                                            ))}
+                                <div className="space-y-3">
+                                    <input type="text" placeholder="Cole o link da planilha aqui..." value={googleSheetUrl} onChange={e => setGoogleSheetUrl(e.target.value)} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
+                                    <button onClick={() => handleGoogleSheetImport()} disabled={isLoadingSheet} className="w-full h-9 bg-foreground text-background font-bold text-xs rounded-lg flex items-center justify-center gap-2 hover:bg-foreground/90 transition-colors">
+                                        {isLoadingSheet ? <Loader2 size={14} className="animate-spin" /> : 'Importar Dados'}
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Modal de seleção de aba */}
+                        {showSheetPicker && availableSheetNames.length > 0 && (
+                            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 animate-in fade-in duration-200">
+                                <div className="bg-card w-[400px] max-h-[500px] rounded-xl border border-border shadow-2xl overflow-hidden animate-in zoom-in-95 duration-200">
+                                    <div className="p-4 border-b border-border flex items-center justify-between">
+                                        <div className="flex items-center gap-3">
+                                            <div className="w-10 h-10 rounded-lg bg-foreground/5 flex items-center justify-center">
+                                                <FileSpreadsheet size={20} className="text-foreground" />
+                                            </div>
+                                            <div>
+                                                <h3 className="text-sm font-black text-foreground">Selecionar Aba</h3>
+                                                <p className="text-[10px] text-muted-foreground">Planilha com {availableSheetNames.length} abas detectadas</p>
+                                            </div>
                                         </div>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-3">
-                                        <input type="text" placeholder="Cole o link da planilha aqui..." value={googleSheetUrl} onChange={e => setGoogleSheetUrl(e.target.value)} className="w-full h-9 px-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs" />
-                                        <button onClick={() => handleGoogleSheetImport()} disabled={isLoadingSheet} className="w-full h-9 bg-foreground text-background font-bold text-xs rounded-lg flex items-center justify-center gap-2 hover:bg-foreground/90 transition-colors">
-                                            {isLoadingSheet ? <Loader2 size={14} className="animate-spin" /> : 'Importar Dados'}
+                                        <button
+                                            onClick={() => { setShowSheetPicker(false); setPendingWorkbook(null); setAvailableSheetNames([]); }}
+                                            className="w-8 h-8 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
+                                        >
+                                            <X size={16} />
                                         </button>
                                     </div>
-                                )}
+                                    <div className="p-4 space-y-2 max-h-[350px] overflow-y-auto custom-scrollbar">
+                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Escolha a aba para importar</p>
+                                        {availableSheetNames.map((name, i) => (
+                                            <button
+                                                key={i}
+                                                onClick={() => handleGoogleSheetImport(name)}
+                                                className="w-full flex items-center gap-3 p-3 bg-foreground/5 border border-border/40 rounded-lg hover:bg-foreground/10 transition-colors group text-left"
+                                            >
+                                                <div className="w-8 h-8 rounded-lg bg-foreground/10 flex items-center justify-center text-xs font-bold text-muted-foreground group-hover:text-foreground transition-colors">
+                                                    {i + 1}
+                                                </div>
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="text-xs font-bold text-foreground truncate">{name}</p>
+                                                    <p className="text-[10px] text-muted-foreground">Aba {i + 1} de {availableSheetNames.length}</p>
+                                                </div>
+                                                <ChevronDown size={14} className="text-muted-foreground -rotate-90" />
+                                            </button>
+                                        ))}
+                                    </div>
+                                    <div className="p-3 border-t border-border">
+                                        <p className="text-[10px] text-muted-foreground flex items-center gap-1">
+                                            <Info size={10} />
+                                            Clique na aba desejada para importar os contatos
+                                        </p>
+                                    </div>
+                                </div>
                             </div>
                         )}
 

@@ -65,7 +65,12 @@ Cores:
 - Primária: #404F4F (Cinza Petrol).
 - Secundária: #FFE600 (Amarelo).
 
-Regra de Contraste: Amarelo (#FFE600) nunca deve ser usado para texto/ícones sobre fundos claros no modo claro. Usar a variável `accent-icon` (Petrol no light, Amarelo no dark). Amarelo direto só em botões preenchidos e páginas com fundo escuro.
+Regra de Contraste (OBRIGATÓRIA):
+- `text-secondary` (#FFE600 - Amarelo) é PROIBIDO como cor de texto sobre fundos claros (branco, bg-card, bg-muted, bg-background no modo claro). O contraste é insuficiente e o texto fica ilegível.
+- Para textos informativos, labels, badges e valores: usar SEMPRE `text-foreground` ou `text-muted-foreground`.
+- `text-secondary` só é permitido em: (1) botões preenchidos com `bg-secondary` usando `text-secondary-foreground`, (2) hovers em modo escuro, (3) bordas e fundos (`border-secondary`, `bg-secondary/10`).
+- Para ícones de destaque no modo claro, usar `accent-icon` (#404F4F no light, #FFE600 no dark).
+- Na dúvida, usar `text-foreground`. Nunca sacrificar legibilidade por estética.
 
 Padrões Mobile:
 - Espaçamento entre Título e Subtítulo: Sempre utilizar `mt-4` no mobile para garantir legibilidade e respiro visual (Padrão de Sistema).

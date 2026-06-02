@@ -62,10 +62,12 @@ export async function analyzeMarketValue(filters: SearchFilters) {
         const serperKey = process.env.SERPER_API_KEY;
         if (!serperKey) throw new Error("Chave de API do Serper não configurada no servidor.");
 
-        // 1. Construir query de busca avançada (sem usar operador site: pois o plano free bloqueia)
-        const searchQuery = `vivareal comprar ${filters.propertyType || 'imóvel'} ${filters.bedrooms ? `${filters.bedrooms} quartos` : ''} ${filters.neighborhood} ${filters.city} ${filters.uf}`;
+        // 1. Construir query de busca com localidade explícita para forçar relevância geográfica
+        const locationStr = `${filters.neighborhood}, ${filters.city} - ${filters.uf}`;
+        const bedroomsStr = filters.bedrooms ? `${filters.bedrooms} quartos` : '';
+        const searchQuery = `${filters.neighborhood} ${filters.city} ${filters.uf} comprar ${filters.propertyType || 'imóvel'} ${bedroomsStr} venda valor m2`.trim().replace(/\s+/g, ' ');
         
-        // 2. Chamar API Serper.dev
+        // 2. Chamar API Serper.dev com mais resultados para compensar filtros rigorosos
         const serperRes = await fetch("https://google.serper.dev/search", {
             method: "POST",
             headers: {
@@ -76,7 +78,7 @@ export async function analyzeMarketValue(filters: SearchFilters) {
                 q: searchQuery,
                 gl: "br",
                 hl: "pt-br",
-                num: 15
+                num: 20
             })
         });
 
@@ -94,7 +96,12 @@ export async function analyzeMarketValue(filters: SearchFilters) {
 
         // 3. Montar Prompt passando os dados REAIS para a IA apenas parsear
         const prompt = `Você é um analista de dados imobiliários e extração estruturada.
-Recebemos os seguintes resultados brutos de busca (snippets do Google) de anúncios REAIS do portal VivaReal.
+Recebemos os seguintes resultados brutos de busca (snippets do Google) de anúncios de imóveis.
+
+LOCALIZAÇÃO OBRIGATÓRIA: ${locationStr}
+- BAIRRO: ${filters.neighborhood}
+- CIDADE: ${filters.city}
+- ESTADO: ${filters.uf}
 
 RESULTADOS REAIS ENCONTRADOS:
 ${JSON.stringify(searchResults.map((r: any) => ({ title: r.title, link: r.link, snippet: r.snippet })), null, 2)}
@@ -103,21 +110,33 @@ ${typeCondition}
 ${bedroomsCondition}
 ${priceCondition}
 
-REGRAS ESTritas:
-1. Leia o 'title' e o 'snippet' de cada resultado e extraia: Preço total, Área útil (m²) e Quartos. 
+REGRAS ESTRITAS (OBEDEÇA TODAS SEM EXCEÇÃO):
+1. Leia o 'title' e o 'snippet' de cada resultado e extraia: Preço total, Área (m²) e Quartos.
+   - Se o anúncio exibir DUAS medidas de m² (ex: área privativa e área total), use sempre o MENOR valor.
+   - Se o anúncio exibir apenas UMA medida de m², use esse valor.
 2. Se a string contiver "R$ 500.000", extraia o number 500000.
 3. A "url" DEVE SER EXATAMENTE a string "link" fornecida no resultado. NÃO invente URLs.
 4. Só inclua o imóvel se o preço for plausível e legível no texto.
 5. Se o resultado não bater com os filtros estritos acima (ex: é de aluguel em vez de venda, ou valor totalmente fora da faixa estipulada), ignore-o.
 
+⚠️ REGRA CRÍTICA DE LOCALIZAÇÃO (PRIORIDADE MÁXIMA):
+6. SOMENTE inclua imóveis que estejam EXPLICITAMENTE localizados em "${filters.neighborhood}", na cidade de "${filters.city}" - ${filters.uf}.
+7. Se o snippet ou title mencionar QUALQUER OUTRA CIDADE ou ESTADO diferente de "${filters.city}/${filters.uf}", IGNORE o resultado completamente. Exemplo: se o filtro é "Florianópolis/SC" e o resultado menciona "Mauá/SP", descarte-o.
+8. Na dúvida sobre a localização, DESCARTE o resultado. É melhor retornar menos imóveis do que retornar imóveis de localidade errada.
+
+⚠️ REGRA CRÍTICA DE ZERO RESULTADOS:
+9. Se algum snippet ou title contiver frases como "0 imóveis", "0 Apartamentos", "Nenhum resultado", "nenhum imóvel encontrado", "sem resultados", ou indicar que NÃO existem imóveis para aquele bairro/filtro, retorne "noResults": true e "properties": [].
+10. Se os resultados forem TODOS de "bairros próximos", "imóveis similares" ou regiões diferentes da solicitada, retorne "noResults": true e "properties": []. NÃO inclua imóveis de bairros vizinhos.
+
 Retorne EXATAMENTE um objeto JSON (e nada mais) com a seguinte estrutura:
 {
+  "noResults": boolean, // true se não há imóveis reais para o filtro, false se há
   "properties": [
     {
       "price": number, // Preço total do imóvel
-      "area": number,  // Área em m²
+      "area": number,  // Área PRIVATIVA/ÚTIL em m² (não a área total)
       "bedrooms": number, // Número de quartos (se não tiver, use 0 ou null, mas prefira inferir do texto)
-      "title": "string", // Título resumido 
+      "title": "string", // Título resumido
       "url": "string"    // LINK REAL extraído
     }
   ]
@@ -131,14 +150,32 @@ NÃO adicione formatações markdown (\`\`\`json) se puder evitar. Retorne apena
         // Limpeza simples de blocos de código se houver
         const cleanJson = text.replace(/```json|```/g, '').trim();
         const data = JSON.parse(cleanJson);
-        const properties: MarketProperty[] = data.properties;
 
-        if (!properties || properties.length === 0) {
-            throw new Error("Não foi possível encontrar dados para esta região no momento.");
+        // Verificar flag de zero resultados
+        if (data.noResults === true || !data.properties || data.properties.length === 0) {
+            throw new Error(`Não encontramos imóveis à venda em ${filters.neighborhood}, ${filters.city}/${filters.uf} com os filtros selecionados. Tente ajustar o tipo de imóvel ou número de quartos.`);
         }
 
-        // Cálculos estatísticos
-        const valuesPerM2 = properties.map((p: MarketProperty) => p.price / p.area);
+        const properties: MarketProperty[] = data.properties;
+
+        // Filtrar propriedades com dados válidos (area > 0, price > 0)
+        const validProperties = properties.filter((p: MarketProperty) => 
+            p.area > 0 && p.price > 0 && isFinite(p.price) && isFinite(p.area)
+        );
+
+        if (validProperties.length === 0) {
+            throw new Error("Não foi possível extrair dados válidos de preço/área para esta região.");
+        }
+
+        // Cálculos estatísticos (apenas com propriedades válidas)
+        const valuesPerM2 = validProperties
+            .map((p: MarketProperty) => p.price / p.area)
+            .filter((v: number) => isFinite(v) && v > 0);
+
+        if (valuesPerM2.length === 0) {
+            throw new Error("Não foi possível calcular valores de m² para esta região.");
+        }
+
         const averageValue = valuesPerM2.reduce((a, b) => a + b, 0) / valuesPerM2.length;
         
         const sortedValues = [...valuesPerM2].sort((a, b) => a - b);
@@ -149,9 +186,11 @@ NÃO adicione formatações markdown (\`\`\`json) se puder evitar. Retorne apena
 
         // Agrupamento para o gráfico por número de quartos
         const bedroomGroups: Record<number, number[]> = {};
-        properties.forEach((p: MarketProperty) => {
+        validProperties.forEach((p: MarketProperty) => {
+            const val = p.price / p.area;
+            if (!isFinite(val) || val <= 0) return;
             if (!bedroomGroups[p.bedrooms]) bedroomGroups[p.bedrooms] = [];
-            bedroomGroups[p.bedrooms].push(p.price / p.area);
+            bedroomGroups[p.bedrooms].push(val);
         });
 
         const chartData = Object.entries(bedroomGroups).map(([bedrooms, values]) => ({
@@ -175,7 +214,7 @@ NÃO adicione formatações markdown (\`\`\`json) se puder evitar. Retorne apena
                 medianValue: Math.round(medianValue),
                 minPrice: Math.round(minPrice),
                 maxPrice: Math.round(maxPrice),
-                properties,
+                properties: validProperties,
                 chartData
             } as MarketAnalysisResult
         };

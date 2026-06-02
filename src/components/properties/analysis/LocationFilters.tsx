@@ -5,7 +5,7 @@ import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { Plus, X } from 'lucide-react';
 
 export const NEIGHBORHOOD_COLORS = [
-    { name: 'Bairro 1', color: 'var(--secondary)', tailwind: 'bg-secondary', text: 'text-secondary' },
+    { name: 'Bairro 1', color: '#D97706', tailwind: 'bg-amber-600', text: 'text-amber-600' },
     { name: 'Bairro 2', color: '#6366f1', tailwind: 'bg-indigo-500', text: 'text-indigo-500' },
     { name: 'Bairro 3', color: '#f97316', tailwind: 'bg-orange-500', text: 'text-orange-500' },
 ];
@@ -171,34 +171,33 @@ export function LocationFilters({ onSearch, loading, children }: LocationFilters
                     ))}
                 </div>
 
-                {/* Adicionar Bairro + Consultar Valor */}
-                <div className="flex items-center gap-3">
-                    {neighborhoods.length < 3 && (
-                        <button
-                            type="button"
-                            onClick={addNeighborhood}
-                            className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-muted-foreground/30 bg-muted/30 text-foreground hover:bg-secondary/20 hover:border-secondary hover:text-secondary transition-all text-xs font-bold"
-                        >
-                            <Plus size={14} />
-                            Adicionar Bairro
-                        </button>
-                    )}
-                    <div className="flex-1" />
+                {/* Adicionar Bairro */}
+                {neighborhoods.length < 3 && (
                     <button
-                        onClick={handleSearch}
-                        disabled={loading || !canSearch}
-                        className="h-[38px] px-8 bg-secondary text-secondary-foreground font-black rounded-lg hover:bg-secondary/90 transition-all shadow-lg hover:shadow-secondary/20 flex items-center justify-center gap-2 disabled:opacity-50 uppercase text-xs tracking-wider whitespace-nowrap"
+                        type="button"
+                        onClick={addNeighborhood}
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-muted-foreground/30 bg-muted/30 text-foreground hover:bg-foreground/10 hover:border-foreground/40 transition-all text-xs font-bold"
                     >
-                        {loading ? (
-                            <div className="flex items-center gap-2">
-                                <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
-                                Analisando...
-                            </div>
-                        ) : (
-                            'Consultar Valor'
-                        )}
+                        <Plus size={14} />
+                        Adicionar Bairro
                     </button>
-                </div>
+                )}
+
+                {/* Consultar Valor */}
+                <button
+                    onClick={handleSearch}
+                    disabled={loading || !canSearch}
+                    className="w-full h-[42px] bg-secondary text-secondary-foreground font-black rounded-lg hover:bg-secondary/90 transition-all shadow-lg hover:shadow-secondary/20 flex items-center justify-center gap-2 disabled:opacity-50 uppercase text-xs tracking-wider"
+                >
+                    {loading ? (
+                        <div className="flex items-center gap-2">
+                            <div className="h-4 w-4 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                            Analisando...
+                        </div>
+                    ) : (
+                        'Consultar Valor'
+                    )}
+                </button>
             </div>
 
             {/* Conteúdo filho (resultados + histórico) */}

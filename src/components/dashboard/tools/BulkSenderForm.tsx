@@ -5,7 +5,7 @@ import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { 
     Send, Users, FileSpreadsheet, Image as ImageIcon, Video, FileText, X, Loader2, 
     CheckCircle2, AlertCircle, Info, HelpCircle, Filter, History, ChevronDown, ChevronUp, Clock, Ban,
-    Link, Unlink, Trash2, Globe, ExternalLink, BookOpen, Save, Type, Shield, Timer
+    Link, Unlink, Trash2, Globe, ExternalLink, BookOpen, Save, Type, Shield, Timer, Play
 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
@@ -15,11 +15,11 @@ import { AutocompleteInput } from '@/components/shared/forms/AutocompleteInput'
 import { 
     checkWhatsAppStatus, validateBulkAccess, 
     getLeadsForBulk, getBulkFilterOptions, getBulkCampaigns,
-    matchRecipientsWithLeads, fetchGoogleSheetData, fetchGoogleSheetTabs,
+    matchRecipientsWithLeads, fetchGoogleSheetAsXlsx,
     saveBulkTemplate, getBulkTemplates, deleteBulkTemplate,
     getBulkCampaignRecipients,
     deleteBulkCampaign, deleteAllBulkCampaigns,
-    startBulkCampaign, cancelBulkCampaign, checkActiveCampaign
+    startBulkCampaign, cancelBulkCampaign, checkActiveCampaign, resumeBulkCampaign
 } from '@/app/_actions/whatsapp-bulk'
 import { createClient } from '@/lib/supabase/client'
 import { formatPhone } from '@/lib/utils/phone'
@@ -28,12 +28,83 @@ import { normalizeWhatsAppNumber, isValidWhatsAppNumber } from '@/lib/utils/what
 // ─── Aliases de colunas para detecção flexível ─────────────────────────────────
 
 const NAME_ALIASES = ['nome', 'name', 'cliente', 'contato', 'razao social', 'razao_social', 'empresa']
-const PHONE_ALIASES = ['telefone', 'phone', 'celular', 'whatsapp', 'tel', 'fone', 'mobile', 'numero', 'número', 'contato_telefone']
+const PHONE_ALIASES = ['telefone', 'phone', 'celular', 'whatsapp', 'tel', 'fone', 'mobile', 'numero', 'número', 'contato_telefone', 'cel']
+const ALL_ALIASES = [...NAME_ALIASES, ...PHONE_ALIASES]
+
+/**
+ * Lê um worksheet do SheetJS de forma inteligente:
+ * 1. Lê como arrays brutos (raw: true) para preservar dígitos de telefone
+ * 2. Auto-detecta a linha do cabeçalho procurando aliases conhecidos
+ * 3. Retorna objetos com chaves nomeadas e valores brutos
+ */
+function smartParseWorksheet(ws: XLSX.WorkSheet): Record<string, any>[] {
+    // Ler como array de arrays com valores brutos (sem formatação de célula)
+    const rawRows = XLSX.utils.sheet_to_json(ws, { header: 1, raw: true }) as any[][]
+    
+    if (rawRows.length < 2) return []
+    
+    // Encontrar a linha do cabeçalho (primeiras 15 linhas)
+    let headerRowIndex = 0
+    for (let i = 0; i < Math.min(rawRows.length, 15); i++) {
+        const row = rawRows[i]
+        if (!Array.isArray(row) || row.length === 0) continue
+        
+        const cellTexts = row.map(cell => String(cell || '').toLowerCase().trim())
+        const hasAlias = cellTexts.some(val => 
+            val.length > 0 && ALL_ALIASES.some(alias => val.includes(alias) || alias.includes(val))
+        )
+        if (hasAlias) {
+            headerRowIndex = i
+            break
+        }
+    }
+    
+    // Montar headers a partir da linha detectada
+    const headerRow = rawRows[headerRowIndex]
+    const headers = headerRow.map((h: any, i: number) => {
+        const val = String(h || '').trim()
+        return val || `col_${i}`
+    })
+    
+    console.log(`[Import Debug] Header na linha ${headerRowIndex + 1}:`, headers)
+    
+    // Mapear dados a partir da linha seguinte ao cabeçalho
+    const dataRows = rawRows.slice(headerRowIndex + 1)
+    return dataRows
+        .filter(row => Array.isArray(row) && row.some(cell => cell !== null && cell !== undefined && String(cell).trim() !== ''))
+        .map(row => {
+            const obj: Record<string, any> = {}
+            headers.forEach((h: string, i: number) => {
+                // Converter valores numéricos para string preservando todos os dígitos
+                const val = row[i]
+                if (val === undefined || val === null) {
+                    obj[h] = ''
+                } else if (typeof val === 'number') {
+                    // Números inteiros: converter sem notação científica
+                    obj[h] = Number.isInteger(val) ? val.toString() : String(val)
+                } else {
+                    obj[h] = String(val)
+                }
+            })
+            return obj
+        })
+}
 
 function findColumnValue(row: Record<string, any>, aliases: string[]): string | undefined {
     const keys = Object.keys(row)
+    // 1. Tentativa exata
     for (const alias of aliases) {
         const match = keys.find(k => k.toLowerCase().trim() === alias)
+        if (match && row[match] !== undefined && row[match] !== null) return String(row[match])
+    }
+    // 2. Tentativa parcial (coluna "contém" o alias) — ex: "Telefone 1", "Nome Completo"
+    for (const alias of aliases) {
+        const match = keys.find(k => k.toLowerCase().trim().includes(alias))
+        if (match && row[match] !== undefined && row[match] !== null) return String(row[match])
+    }
+    // 3. Alias "contém" a chave — ex: coluna "tel" matchando alias "telefone"
+    for (const alias of aliases) {
+        const match = keys.find(k => alias.includes(k.toLowerCase().trim()) && k.trim().length >= 3)
         if (match && row[match] !== undefined && row[match] !== null) return String(row[match])
     }
     return undefined
@@ -77,6 +148,7 @@ interface RecipientResult {
 interface CampaignRecord {
     id: string; title: string | null; message: string; total_recipients: number; total_success: number; total_errors: number;
     status: string; source_type: string; created_at: string; completed_at: string | null;
+    current_index?: number; cancel_requested?: boolean;
     profiles: { full_name: string } | null;
 }
 
@@ -135,6 +207,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     const [showDuplicates, setShowDuplicates] = useState(false)
     const [showInvalids, setShowInvalids] = useState(false)
     const [isLinking, setIsLinking] = useState(false)
+    // DDD padrão para números sem DDD
+    const [defaultDDD, setDefaultDDD] = useState('48')
     // Google Sheets
     const [showGoogleSheet, setShowGoogleSheet] = useState(false)
     const [googleSheetUrl, setGoogleSheetUrl] = useState('')
@@ -144,8 +218,6 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     const [availableSheets, setAvailableSheets] = useState<string[]>([])
     const [pendingWorkbook, setPendingWorkbook] = useState<XLSX.WorkBook | null>(null)
     const [sheetPickerSource, setSheetPickerSource] = useState<'file' | 'google'>('file')
-    const [googleSheetTabs, setGoogleSheetTabs] = useState<{ name: string; gid: string }[]>([])
-    const [pendingGoogleSheetId, setPendingGoogleSheetId] = useState<string>('')
     // Templates
     const [templates, setTemplates] = useState<BulkTemplate[]>([])
     const [showTemplates, setShowTemplates] = useState(false)
@@ -153,6 +225,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     const [showSaveTemplate, setShowSaveTemplate] = useState(false)
     const [templateName, setTemplateName] = useState('')
     const [isSavingTemplate, setIsSavingTemplate] = useState(false)
+    // Limite de envios
+    const [sendLimit, setSendLimit] = useState<string>('')
     // Velocidade do disparo
     const [sendSpeed, setSendSpeed] = useState<'fast' | 'normal' | 'safe' | 'ultra' | null>(null)
     const [pendingSpeed, setPendingSpeed] = useState<'fast' | 'normal' | 'safe' | 'ultra' | null>(null)
@@ -259,7 +333,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             } else {
                 // Apenas uma aba: processar direto
                 const ws = wb.Sheets[wb.SheetNames[0]]
-                const data = XLSX.utils.sheet_to_json(ws) as any[]
+                const data = smartParseWorksheet(ws)
                 await processImportedData(data)
             }
         }
@@ -271,38 +345,17 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     const handleSheetSelection = async (sheetName: string) => {
         setShowSheetPicker(false)
 
-        if (sheetPickerSource === 'file' && pendingWorkbook) {
+        if (pendingWorkbook) {
             const ws = pendingWorkbook.Sheets[sheetName]
-            const data = XLSX.utils.sheet_to_json(ws) as any[]
+            const data = smartParseWorksheet(ws)
             setPendingWorkbook(null)
             setAvailableSheets([])
             await processImportedData(data)
-        } else if (sheetPickerSource === 'google') {
-            // Buscar dados da aba selecionada do Google Sheets
-            const selectedTab = googleSheetTabs.find(t => t.name === sheetName)
-            if (!selectedTab || !pendingGoogleSheetId) return
 
-            setIsLoadingSheet(true)
-            try {
-                const result = await fetchGoogleSheetData(
-                    `https://docs.google.com/spreadsheets/d/${pendingGoogleSheetId}/edit#gid=${selectedTab.gid}`
-                )
-                if (!result.success || !result.csvData) {
-                    toast.error(result.error || 'Erro ao acessar a aba.')
-                    return
-                }
-                const wb = XLSX.read(result.csvData, { type: 'string' })
-                const ws = wb.Sheets[wb.SheetNames[0]]
-                const data = XLSX.utils.sheet_to_json(ws) as any[]
-                await processImportedData(data)
+            // Limpar estado do Google Sheets se veio de lá
+            if (sheetPickerSource === 'google') {
                 setShowGoogleSheet(false)
                 setGoogleSheetUrl('')
-                setGoogleSheetTabs([])
-                setPendingGoogleSheetId('')
-            } catch (error: any) {
-                toast.error('Erro ao processar aba: ' + error.message)
-            } finally {
-                setIsLoadingSheet(false)
             }
         }
     }
@@ -320,18 +373,121 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
     // Pipeline reutilizável de processamento de dados importados
     const processImportedData = async (data: Record<string, any>[]) => {
+        if (data.length === 0) {
+            toast.error('A aba selecionada está vazia.')
+            return
+        }
+
+        // Debug: mostrar as colunas encontradas na primeira linha
+        const firstRow = data[0]
+        const columnKeys = Object.keys(firstRow)
+        console.log('[Import Debug] Colunas encontradas:', columnKeys)
+        console.log('[Import Debug] Primeira linha:', firstRow)
+
         // 1. Detecção flexível de colunas
+        const ddd = defaultDDD.replace(/\D/g, '')
         const mapped = data.map(row => {
-            const name = findColumnValue(row, NAME_ALIASES) || 'Cliente'
-            const rawPhone = findColumnValue(row, PHONE_ALIASES) || ''
-            const phone = rawPhone.replace(/\D/g, '')
+            const rawName = String(findColumnValue(row, NAME_ALIASES) || 'Cliente')
+            // Pega apenas o primeiro nome (ex: "Luiz Durli / Matheus" → "Luiz")
+            const name = rawName.split(/[\/,;|]+/)[0].trim().split(/\s+/)[0].trim() || 'Cliente'
+            const rawPhone = String(findColumnValue(row, PHONE_ALIASES) || '')
+            
+            // Se a célula contém múltiplos números separados por / , ; ou |, pega apenas o primeiro
+            const phoneParts = rawPhone.split(/[\/,;|]+/)
+            let phone = ''
+            for (const part of phoneParts) {
+                const cleaned = part.replace(/\D/g, '')
+                if (cleaned.length >= 8 && cleaned.length <= 15) {
+                    phone = cleaned
+                    break
+                }
+            }
+            // Fallback: se nenhuma parte isolada funcionou, tenta o rawPhone inteiro
+            if (!phone) {
+                phone = rawPhone.replace(/\D/g, '')
+            }
+
+            // Se o número tem 8 ou 9 dígitos (sem DDD), adiciona o DDD padrão
+            if (phone.length === 8 || phone.length === 9) {
+                phone = `${ddd}${phone}`
+            }
+            
             return { name, phone }
         }).filter(r => r.phone.length >= 8)
 
-        if (mapped.length === 0) {
-            toast.error('Nenhum contato válido encontrado. Verifique se a planilha tem colunas de Nome e Telefone.')
+        // Fallback: Se nenhum contato foi encontrado via aliases, tentar detectar automaticamente
+        // procurando colunas com valores que parecem telefones
+        if (mapped.length === 0 && data.length > 0) {
+            console.log('[Import Debug] Nenhum match via aliases. Tentando detecção automática...')
+            
+            let phoneKey = ''
+            let nameKey = ''
+            
+            // Encontrar coluna de telefone: procurar por valores que parecem números de telefone
+            for (const key of columnKeys) {
+                const sampleValues = data.slice(0, 5).map(r => String(r[key] || ''))
+                const hasPhoneValues = sampleValues.some(v => {
+                    const digits = v.replace(/\D/g, '')
+                    return digits.length >= 8 && digits.length <= 15
+                })
+                if (hasPhoneValues) {
+                    phoneKey = key
+                    break
+                }
+            }
+            
+            // Encontrar coluna de nome: primeira coluna de texto que NÃO é o telefone
+            if (phoneKey) {
+                for (const key of columnKeys) {
+                    if (key === phoneKey) continue
+                    const sampleValues = data.slice(0, 5).map(r => String(r[key] || ''))
+                    const hasTextValues = sampleValues.some(v => v.length > 1 && !/^\d+$/.test(v.replace(/\D/g, '')))
+                    if (hasTextValues) {
+                        nameKey = key
+                        break
+                    }
+                }
+            }
+            
+            if (phoneKey) {
+                console.log(`[Import Debug] Detecção automática: nome="${nameKey}", telefone="${phoneKey}"`)
+                const autoMapped = data.map(row => {
+                    const rawName = nameKey ? String(row[nameKey] || 'Cliente') : 'Cliente'
+                    const name = rawName.split(/[\/,;|]+/)[0].trim().split(/\s+/)[0].trim() || 'Cliente'
+                    const rawPhone = String(row[phoneKey] || '')
+                    const phoneParts = rawPhone.split(/[\/,;|]+/)
+                    let phone = ''
+                    for (const part of phoneParts) {
+                        const cleaned = part.replace(/\D/g, '')
+                        if (cleaned.length >= 8 && cleaned.length <= 15) {
+                            phone = cleaned
+                            break
+                        }
+                    }
+                    if (!phone) phone = rawPhone.replace(/\D/g, '')
+                    // Se sem DDD, adiciona o padrão
+                    if (phone.length === 8 || phone.length === 9) {
+                        phone = `${ddd}${phone}`
+                    }
+                    return { name, phone }
+                }).filter(r => r.phone.length >= 8)
+                
+                if (autoMapped.length > 0) {
+                    toast.info(`Colunas detectadas automaticamente: "${nameKey || 'N/A'}" (nome) e "${phoneKey}" (telefone).`)
+                    // Continuar com autoMapped ao invés de mapped
+                    return processValidatedData(autoMapped)
+                }
+            }
+            
+            toast.error(`Nenhum contato válido encontrado. Colunas da planilha: ${columnKeys.join(', ')}`)
             return
         }
+
+        await processValidatedData(mapped)
+    }
+
+    // Sub-função para processar dados já mapeados (deduplicação + validação + vinculação)
+    const processValidatedData = async (mapped: { name: string; phone: string }[]) => {
 
         // 2. Deduplicação por telefone normalizado
         const seen = new Map<string, typeof mapped[0]>()
@@ -406,43 +562,30 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
         setIsLoadingSheet(true)
         try {
-            // Extrair o sheet ID da URL
-            const sheetIdMatch = googleSheetUrl.match(/\/spreadsheets\/d\/([a-zA-Z0-9-_]+)/)
-            const sheetId = sheetIdMatch?.[1] || ''
-
-            // Tentar buscar a lista de abas da planilha via server action
-            if (sheetId) {
-                try {
-                    const tabsResult = await fetchGoogleSheetTabs(googleSheetUrl.trim())
-                    if (tabsResult.success && tabsResult.tabs && tabsResult.tabs.length > 1) {
-                        setGoogleSheetTabs(tabsResult.tabs)
-                        setPendingGoogleSheetId(sheetId)
-                        setSheetPickerSource('google')
-                        setAvailableSheets(tabsResult.tabs.map(t => t.name))
-                        setShowSheetPicker(true)
-                        setIsLoadingSheet(false)
-                        return
-                    }
-                } catch {
-                    // Se não conseguir detectar abas, prossegue normalmente
-                }
-            }
-
-            // Se só tem uma aba ou não conseguiu detectar, importar direto
-            const result = await fetchGoogleSheetData(googleSheetUrl.trim())
-            if (!result.success || !result.csvData) {
+            // Baixar a planilha inteira como XLSX via server action
+            const result = await fetchGoogleSheetAsXlsx(googleSheetUrl.trim())
+            if (!result.success || !result.xlsxBase64) {
                 toast.error(result.error || 'Erro ao acessar a planilha.')
                 return
             }
 
-            // Parsear CSV com SheetJS
-            const wb = XLSX.read(result.csvData, { type: 'string' })
-            const ws = wb.Sheets[wb.SheetNames[0]]
-            const data = XLSX.utils.sheet_to_json(ws) as any[]
+            // Parsear XLSX diretamente do base64 com SheetJS
+            const wb = XLSX.read(result.xlsxBase64, { type: 'base64' })
 
-            await processImportedData(data)
-            setShowGoogleSheet(false)
-            setGoogleSheetUrl('')
+            if (wb.SheetNames.length > 1) {
+                // Múltiplas abas: abrir modal para o usuário escolher (mesmo UX do upload local)
+                setAvailableSheets(wb.SheetNames)
+                setPendingWorkbook(wb)
+                setSheetPickerSource('google')
+                setShowSheetPicker(true)
+            } else {
+                // Apenas uma aba: processar direto
+                const ws = wb.Sheets[wb.SheetNames[0]]
+                const data = smartParseWorksheet(ws)
+                await processImportedData(data)
+                setShowGoogleSheet(false)
+                setGoogleSheetUrl('')
+            }
         } catch (error: any) {
             toast.error('Erro ao processar planilha: ' + error.message)
         } finally {
@@ -557,16 +700,30 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         }
     }
 
+    // Calcula o número efetivo de envios considerando o limite
+    const effectiveRecipientCount = (() => {
+        const limit = parseInt(sendLimit)
+        if (sendLimit && !isNaN(limit) && limit > 0 && limit < recipients.length) {
+            return limit
+        }
+        return recipients.length
+    })()
+
     const handleSend = async () => {
         if (!campaignTitle.trim()) return toast.error('Dê um título para esta campanha.')
         if (recipients.length === 0) return toast.error('Selecione os destinatários.')
         if (!message && !media) return toast.error('Escreva uma mensagem ou anexe um arquivo.')
         if (!sendSpeed) return toast.error('Selecione a velocidade do disparo.')
 
+        // Aplicar limite de envios
+        const limit = parseInt(sendLimit)
+        const hasLimit = sendLimit && !isNaN(limit) && limit > 0 && limit < recipients.length
+        const effectiveRecipients = hasLimit ? recipients.slice(0, limit) : recipients
+
         // Validar plano
         const access = await validateBulkAccess()
         if (!access.allowed) return toast.error(access.error)
-        if (access.remaining !== null && access.remaining !== undefined && recipients.length > access.remaining) {
+        if (access.remaining !== null && access.remaining !== undefined && effectiveRecipients.length > access.remaining) {
             return toast.error(`Você só pode enviar mais ${access.remaining} mensagens este mês. Reduza a lista ou faça upgrade.`)
         }
         setPlanRemaining(access.remaining ?? null)
@@ -584,7 +741,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             mediaUrl: media?.url,
             mediaType: media?.type,
             mediaName: media?.name,
-            recipients: recipients.map(r => ({ name: r.name, phone: r.phone, lead_id: r.lead_id })),
+            recipients: effectiveRecipients.map(r => ({ name: r.name, phone: r.phone, lead_id: r.lead_id })),
             speedSetting: sendSpeed,
             instanceName: status.instanceName,
             filtersApplied: { stages: selectedStages, source: selectedSource, campaign: selectedCampaign, broker: selectedBroker },
@@ -601,7 +758,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
         setStopRequested(false)
         setIsFinished(false)
         setResults({ success: 0, error: 0 })
-        setProgress({ current: 0, total: recipients.length })
+        setProgress({ current: 0, total: effectiveRecipients.length })
 
         toast.success('Disparo iniciado! Você pode navegar para outras páginas sem interromper o envio.')
     }
@@ -653,6 +810,19 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
             toast.success('Histórico limpo com sucesso.')
         } else {
             toast.error(result.error || 'Erro ao limpar histórico.')
+        }
+    }
+
+    const handleResumeCampaign = async (campaignId: string) => {
+        const result = await resumeBulkCampaign(campaignId)
+        if (result.success) {
+            toast.success(`Retomando envio: ${result.remaining} contatos restantes (de ${result.total}).`)
+            // Atualizar o status na lista local
+            setCampaignHistory(prev => prev.map(c => 
+                c.id === campaignId ? { ...c, status: 'sending', cancel_requested: false } : c
+            ))
+        } else {
+            toast.error(result.error || 'Erro ao retomar campanha.')
         }
     }
 
@@ -907,11 +1077,6 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                 <div className="space-y-2">
                     <div className="min-h-[32px] flex items-center justify-between">
                         <label className="text-sm font-bold text-foreground ml-1">Destinatários ({recipients.length})</label>
-                        {recipients.length > 0 && (
-                            <button onClick={() => { setRecipients([]); setSourceType(null); }} className="text-xs text-red-500 hover:text-red-600 font-bold">
-                                Limpar Lista
-                            </button>
-                        )}
                     </div>
 
                     {recipients.length === 0 ? (
@@ -1007,9 +1172,24 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             </button>
                         </div>
 
+                        {/* DDD padrão para importação */}
+                        <div className="flex items-center gap-2">
+                            <p className="text-[10px] text-muted-foreground italic flex items-center gap-1">
+                                <Info size={10} className="shrink-0" />
+                                Números sem DDD receberão o código
+                            </p>
+                            <input
+                                type="text"
+                                value={defaultDDD}
+                                onChange={(e) => setDefaultDDD(e.target.value.replace(/\D/g, '').slice(0, 2))}
+                                maxLength={2}
+                                className="w-12 h-6 px-1.5 text-[10px] text-center font-bold bg-foreground/5 border border-border/40 rounded-md focus:outline-none focus:border-ring focus:ring-1 focus:ring-ring/50 text-foreground"
+                            />
+                        </div>
+
                         {/* Google Sheets URL Input */}
                         {showGoogleSheet && (
-                            <div className="p-4 bg-foreground/5 rounded-lg border border-border/40 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
+                            <div className="p-4 bg-background rounded-lg border border-muted-foreground/30 space-y-3 animate-in fade-in slide-in-from-top-2 duration-200">
                                 <div className="flex items-center gap-2">
                                     <Globe size={14} className="text-[#0F9D58] shrink-0" />
                                     <p className="text-[10px] font-bold text-foreground">Cole o link de compartilhamento da planilha</p>
@@ -1042,7 +1222,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 </div>
                                 <p className="text-[10px] text-muted-foreground italic flex items-center gap-1">
                                     <Info size={10} />
-                                    A planilha deve estar compartilhada como "Qualquer pessoa com o link"
+                                    A planilha deve estar compartilhada como &quot;Qualquer pessoa com o link&quot;. Planilhas com múltiplas abas serão detectadas automaticamente.
                                 </p>
                             </div>
                         )}
@@ -1062,28 +1242,28 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             {/* Badge resumo da importação */}
                             {importStats && sourceType === 'file' && (
                                 <div className="flex flex-wrap gap-2 text-[10px] font-bold">
-                                    <span className="px-2.5 py-1 rounded-lg bg-green-50 text-green-700 border border-green-100">
-                                        ✅ {importStats.valid} válidos
+                                    <span className="px-2.5 py-1 rounded-lg bg-green-500/15 text-green-700 dark:text-green-400 border border-green-500/25">
+                                        {importStats.valid} válidos
                                     </span>
                                     {importStats.linked > 0 && (
-                                        <span className="px-2.5 py-1 rounded-lg bg-blue-50 text-blue-700 border border-blue-100">
-                                            🔗 {importStats.linked} vinculados ao CRM
+                                        <span className="px-2.5 py-1 rounded-lg bg-blue-500/15 text-blue-700 dark:text-blue-400 border border-blue-500/25">
+                                            {importStats.linked} vinculados ao CRM
                                         </span>
                                     )}
                                     {importStats.invalid > 0 && (
                                         <button
                                             onClick={() => setShowInvalids(!showInvalids)}
-                                            className="px-2.5 py-1 rounded-lg bg-red-50 text-red-600 border border-red-100 hover:bg-red-100 transition-colors"
+                                            className="px-2.5 py-1 rounded-lg bg-red-500/15 text-red-700 dark:text-red-400 border border-red-500/25 hover:bg-red-500/25 transition-colors"
                                         >
-                                            ⚠️ {importStats.invalid} inválidos {showInvalids ? '▲' : '▼'}
+                                            {importStats.invalid} inválidos {showInvalids ? '▲' : '▼'}
                                         </button>
                                     )}
                                     {importStats.duplicates > 0 && (
                                         <button
                                             onClick={() => setShowDuplicates(!showDuplicates)}
-                                            className="px-2.5 py-1 rounded-lg bg-amber-50 text-amber-700 border border-amber-100 hover:bg-amber-100 transition-colors"
+                                            className="px-2.5 py-1 rounded-lg bg-amber-500/15 text-amber-700 dark:text-amber-400 border border-amber-500/25 hover:bg-amber-500/25 transition-colors"
                                         >
-                                            🔁 {importStats.duplicates} duplicados removidos {showDuplicates ? '▲' : '▼'}
+                                            {importStats.duplicates} duplicados removidos {showDuplicates ? '▲' : '▼'}
                                         </button>
                                     )}
                                     {isLinking && (
@@ -1096,13 +1276,13 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                             {/* Lista de duplicados removidos */}
                             {showDuplicates && importStats && importStats.duplicateList.length > 0 && (
-                                <div className="p-3 bg-amber-50/50 rounded-lg border border-amber-100 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
-                                    <p className="text-[10px] font-bold text-amber-800 uppercase tracking-wider">Duplicados Removidos</p>
+                                <div className="p-3 bg-amber-500/10 rounded-lg border border-amber-500/20 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                    <p className="text-[10px] font-bold text-amber-600 dark:text-amber-400 uppercase tracking-wider">Duplicados Removidos</p>
                                     <div className="max-h-[120px] overflow-y-auto space-y-1 custom-scrollbar">
                                         {importStats.duplicateList.map((d, i) => (
-                                            <div key={i} className="flex items-center gap-2 text-[10px] text-amber-700">
+                                            <div key={i} className="flex items-center gap-2 text-[10px] text-amber-600 dark:text-amber-400">
                                                 <span className="font-bold truncate max-w-[120px]">{d.name}</span>
-                                                <span className="text-amber-500">{formatPhone(d.phone)}</span>
+                                                <span className="text-amber-500/70">{formatPhone(d.phone)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1111,12 +1291,12 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
 
                             {/* Lista de inválidos */}
                             {showInvalids && importStats && importStats.invalid > 0 && (
-                                <div className="p-3 bg-red-50/50 rounded-lg border border-red-100 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
+                                <div className="p-3 bg-red-500/10 rounded-lg border border-red-500/20 space-y-2 animate-in fade-in slide-in-from-top-2 duration-200">
                                     <div className="flex items-center justify-between">
-                                        <p className="text-[10px] font-bold text-red-800 uppercase tracking-wider">Números Inválidos</p>
+                                        <p className="text-[10px] font-bold text-red-600 dark:text-red-400 uppercase tracking-wider">Números Inválidos</p>
                                         <button
                                             onClick={handleRemoveInvalids}
-                                            className="text-[10px] font-bold text-red-600 hover:text-red-800 flex items-center gap-1 transition-colors"
+                                            className="text-[10px] font-bold text-red-500 hover:text-red-600 dark:hover:text-red-300 flex items-center gap-1 transition-colors"
                                         >
                                             <Trash2 size={10} />
                                             Remover Todos
@@ -1124,10 +1304,10 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     </div>
                                     <div className="max-h-[120px] overflow-y-auto space-y-1 custom-scrollbar">
                                         {recipients.filter(r => r.isInvalid).map((r, i) => (
-                                            <div key={i} className="flex items-center gap-2 text-[10px] text-red-600">
+                                            <div key={i} className="flex items-center gap-2 text-[10px] text-red-600 dark:text-red-400">
                                                 <AlertCircle size={10} className="shrink-0" />
                                                 <span className="font-bold truncate max-w-[120px]">{r.name}</span>
-                                                <span className="text-red-400">{formatPhone(r.phone)}</span>
+                                                <span className="text-red-500/70">{formatPhone(r.phone)}</span>
                                             </div>
                                         ))}
                                     </div>
@@ -1139,7 +1319,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                 {recipients.map((r, i) => (
                                     <div key={i} className={`flex items-center justify-between p-3 rounded-lg border transition-colors ${
                                         r.isInvalid 
-                                            ? 'bg-red-50/50 border-red-100' 
+                                            ? 'bg-red-500/10 border-red-500/20' 
                                             : 'bg-foreground/5 border-border/40'
                                     }`}>
                                         <div className="min-w-0 flex-1">
@@ -1163,6 +1343,51 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                     )}
 
                     </div>
+
+                    {/* Limite de Envios */}
+                    {recipients.length > 0 && (
+                        <div className="space-y-2">
+                            <div className="min-h-[32px] flex items-center">
+                                <label className="text-sm font-bold text-foreground ml-1">Limite de Envios</label>
+                            </div>
+                            <div className="flex items-center gap-3 p-3.5 bg-background rounded-lg border border-muted-foreground/30">
+                                <div className="flex-1 min-w-0">
+                                    <input
+                                        type="number"
+                                        min="1"
+                                        max={recipients.length}
+                                        value={sendLimit}
+                                        onChange={(e) => {
+                                            const val = e.target.value
+                                            if (val === '' || (parseInt(val) >= 1 && parseInt(val) <= recipients.length)) {
+                                                setSendLimit(val)
+                                            }
+                                        }}
+                                        placeholder={`Todos (${recipients.length})`}
+                                        className="w-full h-10 px-3 text-sm font-medium bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring text-foreground placeholder:text-muted-foreground/50 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                        disabled={isSending}
+                                    />
+                                </div>
+                                <div className="text-right shrink-0">
+                                    <p className="text-xs font-bold text-foreground">
+                                        {effectiveRecipientCount} de {recipients.length}
+                                    </p>
+                                    <p className="text-[10px] text-muted-foreground">
+                                        {sendLimit && parseInt(sendLimit) > 0 && parseInt(sendLimit) < recipients.length
+                                            ? 'Primeiros da lista'
+                                            : 'Sem limite'
+                                        }
+                                    </p>
+                                </div>
+                            </div>
+                            {sendLimit && parseInt(sendLimit) > 0 && parseInt(sendLimit) < recipients.length && (
+                                <p className="text-[10px] text-muted-foreground flex items-center gap-1 ml-1 italic">
+                                    <Info size={12} />
+                                    Serão enviadas mensagens apenas para os primeiros {sendLimit} contatos da lista.
+                                </p>
+                            )}
+                        </div>
+                    )}
 
                     {/* Seletor de Velocidade */}
                     <div className="space-y-2">
@@ -1310,7 +1535,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                             disabled={isSending || recipients.length === 0 || (!message && !media)}
                             className={`w-full h-12 text-sm font-bold bg-secondary border-none text-secondary-foreground hover:bg-secondary/90 transition-all transform active:scale-[0.99] rounded-lg shadow-sm flex items-center justify-center gap-2 ${(recipients.length === 0 || (!message && !media)) ? 'opacity-50 cursor-not-allowed' : ''}`}
                         >
-                            Iniciar Disparo para {recipients.length} Contatos
+                            Iniciar Disparo para {effectiveRecipientCount} Contato{effectiveRecipientCount !== 1 ? 's' : ''}
                         </button>
                     )}
                 </div>
@@ -1382,10 +1607,24 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                                 <span className="flex items-center gap-1"><Clock size={10} />{new Date(c.created_at).toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', hour: '2-digit', minute: '2-digit' })}</span>
                                                 <span className="text-green-600 font-bold">{c.total_success} ✓</span>
                                                 <span className="text-red-500 font-bold">{c.total_errors} ✗</span>
+                                                {c.current_index !== undefined && c.current_index < c.total_recipients && c.status !== 'sending' && (
+                                                    <span className="text-amber-500 font-bold">{c.current_index}/{c.total_recipients} enviados</span>
+                                                )}
                                                 {c.profiles && <span className="text-muted-foreground/60">por {c.profiles.full_name}</span>}
                                             </div>
                                         </div>
                                         <div className="flex items-center gap-1.5 shrink-0 ml-3">
+                                            {/* Botão Continuar — para campanhas canceladas ou incompletas */}
+                                            {c.status !== 'sending' && c.current_index !== undefined && c.current_index < c.total_recipients && (
+                                                <button
+                                                    onClick={(e) => { e.stopPropagation(); handleResumeCampaign(c.id); }}
+                                                    className="flex items-center gap-1 text-[10px] font-bold text-amber-500 hover:text-amber-400 px-2 py-1 rounded-lg hover:bg-amber-500/10 transition-colors"
+                                                    title={`Continuar de ${c.current_index}/${c.total_recipients}`}
+                                                >
+                                                    <Play size={10} />
+                                                    Continuar
+                                                </button>
+                                            )}
                                             <span className={`text-[10px] font-black uppercase tracking-wider px-2 py-0.5 rounded-full ${
                                                 c.status === 'completed' ? 'bg-green-600 text-white' : c.status === 'cancelled' ? 'bg-red-500/20 text-red-400' : 'bg-amber-500/20 text-amber-400'
                                             }`}>
@@ -1529,7 +1768,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                                     </div>
                                 </div>
                                 <button
-                                    onClick={() => { setShowSheetPicker(false); setPendingWorkbook(null); setAvailableSheets([]); setGoogleSheetTabs([]); setPendingGoogleSheetId(''); }}
+                                    onClick={() => { setShowSheetPicker(false); setPendingWorkbook(null); setAvailableSheets([]); }}
                                     className="w-8 h-8 rounded-full bg-foreground/5 hover:bg-foreground/10 flex items-center justify-center text-muted-foreground hover:text-foreground transition-colors"
                                 >
                                     <X size={16} />

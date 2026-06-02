@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { 
     getMarketAnalysisHistory, 
     deleteMarketAnalysisHistory, 
@@ -13,14 +13,31 @@ import { NEIGHBORHOOD_COLORS } from './LocationFilters'
 
 interface AnalysisHistoryProps {
     onLoadResults?: (results: any[]) => void
+    refreshKey?: number
 }
 
-export function AnalysisHistory({ onLoadResults }: AnalysisHistoryProps) {
+export function AnalysisHistory({ onLoadResults, refreshKey }: AnalysisHistoryProps) {
     const [records, setRecords] = useState<MarketAnalysisHistoryRecord[]>([])
     const [showHistory, setShowHistory] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [confirmDeleteAll, setConfirmDeleteAll] = useState(false)
     const [expandedId, setExpandedId] = useState<string | null>(null)
+
+    // Recarregar automaticamente quando refreshKey muda (nova pesquisa salva)
+    useEffect(() => {
+        if (refreshKey && refreshKey > 0) {
+            const reload = async () => {
+                setIsLoading(true)
+                const res = await getMarketAnalysisHistory()
+                if (res.success && res.data) {
+                    setRecords(res.data)
+                }
+                setIsLoading(false)
+                if (!showHistory) setShowHistory(true)
+            }
+            reload()
+        }
+    }, [refreshKey])
 
     const handleToggleHistory = async () => {
         if (!showHistory) {

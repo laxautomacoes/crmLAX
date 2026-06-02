@@ -25,6 +25,7 @@ export default function AnalysisPage() {
     const [loading, setLoading] = useState(false);
     const [entries, setEntries] = useState<ComparisonEntry[]>([]);
     const [lastQuery, setLastQuery] = useState<MultiSearchFilters | null>(null);
+    const [historyRefresh, setHistoryRefresh] = useState(0);
 
     const handleSearch = async (filters: MultiSearchFilters) => {
         setLoading(true);
@@ -81,7 +82,7 @@ export default function AnalysisPage() {
                     priceMax: filters.priceMax,
                     results: successEntries.map(e => ({ neighborhood: e.neighborhood, data: e.data })),
                     status: historyStatus,
-                }).catch(console.error);
+                }).catch(console.error).then(() => setHistoryRefresh(prev => prev + 1));
 
                 if (errors.length > 0) {
                     toast.warning(`Análise parcial. Falha em: ${errors.join('; ')}`);
@@ -104,7 +105,7 @@ export default function AnalysisPage() {
                     priceMax: filters.priceMax,
                     results: [],
                     status: 'failed',
-                }).catch(console.error);
+                }).catch(console.error).then(() => setHistoryRefresh(prev => prev + 1));
 
                 toast.error(`Falha em todos os bairros: ${errors.join('; ')}`);
             }
@@ -191,7 +192,7 @@ export default function AnalysisPage() {
                 </div>
 
                 {/* Histórico de Pesquisas */}
-                <AnalysisHistory onLoadResults={handleLoadFromHistory} />
+                <AnalysisHistory onLoadResults={handleLoadFromHistory} refreshKey={historyRefresh} />
             </LocationFilters>
 
             {/* Footer / Info */}

@@ -558,6 +558,81 @@ export async function cancelBulkCampaign(campaignId: string) {
     return { success: true }
 }
 
+// ─── Retomar Disparo (Continuar de onde parou) ─────────────────────────────
+
+export async function resumeBulkCampaign(campaignId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autenticado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id')
+        .eq('id', user.id)
+        .single()
+
+    if (!profile) return { success: false, error: 'Perfil não encontrado.' }
+
+    // Buscar campanha
+    const { data: campaign, error: fetchError } = await supabase
+        .from('bulk_campaigns')
+        .select('*')
+        .eq('id', campaignId)
+        .eq('tenant_id', profile.tenant_id)
+        .single()
+
+    if (fetchError || !campaign) {
+        return { success: false, error: 'Campanha não encontrada.' }
+    }
+
+    // Verificar se a campanha pode ser retomada
+    const recipients = campaign.recipients_data || []
+    const currentIndex = campaign.current_index || 0
+
+    if (currentIndex >= recipients.length) {
+        return { success: false, error: 'Todos os destinatários já foram processados.' }
+    }
+
+    // Atualizar status para 'sending' e resetar cancel_requested
+    const { error: updateError } = await supabase
+        .from('bulk_campaigns')
+        .update({ 
+            status: 'sending', 
+            cancel_requested: false,
+            completed_at: null
+        })
+        .eq('id', campaignId)
+        .eq('tenant_id', profile.tenant_id)
+
+    if (updateError) {
+        return { success: false, error: updateError.message }
+    }
+
+    // Disparar Edge Function (fire-and-forget) — ela vai retomar do current_index
+    const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+    const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+    if (supabaseUrl && serviceRoleKey) {
+        fetch(`${supabaseUrl}/functions/v1/bulk-sender`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${serviceRoleKey}`
+            },
+            body: JSON.stringify({ campaign_id: campaignId })
+        }).catch(err => {
+            console.error('Error invoking bulk-sender edge function:', err)
+        })
+    }
+
+    return { 
+        success: true, 
+        remaining: recipients.length - currentIndex,
+        total: recipients.length,
+        currentIndex 
+    }
+}
+
 // ─── Verificar Campanha Ativa ──────────────────────────────────────────────
 
 export async function checkActiveCampaign(tenantId: string) {
@@ -790,7 +865,7 @@ export async function matchRecipientsWithLeads(
 
 // ─── Importação via Google Sheets ──────────────────────────────────────────────
 
-export async function fetchGoogleSheetTabs(sheetUrl: string): Promise<{ success: boolean; tabs?: { name: string; gid: string }[]; error?: string }> {
+export async function fetchGoogleSheetAsXlsx(sheetUrl: string): Promise<{ success: boolean; xlsxBase64?: string; error?: string }> {
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'Não autenticado.' }
@@ -801,30 +876,35 @@ export async function fetchGoogleSheetTabs(sheetUrl: string): Promise<{ success:
     }
 
     const sheetId = match[1]
+    const browserHeaders = {
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+        'Accept': '*/*',
+    }
 
     try {
-        const response = await fetch(`https://docs.google.com/spreadsheets/d/${sheetId}/htmlview`, {
-            redirect: 'follow'
-        })
+        // Baixar a planilha inteira como XLSX — o SheetJS no frontend detecta as abas nativamente
+        const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=xlsx`
+        const response = await fetch(exportUrl, { headers: browserHeaders, redirect: 'follow' })
 
         if (!response.ok) {
-            return { success: false, error: 'Não foi possível acessar a planilha.' }
+            if (response.status === 403 || response.status === 401) {
+                return { success: false, error: 'Acesso negado. Certifique-se de que a planilha está compartilhada como "Qualquer pessoa com o link".' }
+            }
+            return { success: false, error: `Erro ao acessar a planilha (HTTP ${response.status}).` }
         }
 
-        const html = await response.text()
+        const arrayBuffer = await response.arrayBuffer()
+        const base64 = Buffer.from(arrayBuffer).toString('base64')
 
-        // Extrair nomes e IDs das abas do HTML
-        const tabMatches = [...html.matchAll(/id="sheet-button-(\d+)"[^>]*>([^<]+)</g)]
-        
-        if (tabMatches.length <= 1) {
-            return { success: true, tabs: [] } // Apenas uma aba ou não detectou
+        // Verificar se é realmente um arquivo xlsx (não uma página HTML de erro)
+        if (base64.length < 100) {
+            return { success: false, error: 'A planilha está vazia ou inacessível.' }
         }
 
-        const tabs = tabMatches.map(m => ({ name: m[2].trim(), gid: m[1] }))
-        return { success: true, tabs }
+        return { success: true, xlsxBase64: base64 }
     } catch (error: any) {
-        console.error('Erro ao buscar abas do Google Sheets:', error)
-        return { success: false, error: 'Falha ao detectar abas da planilha.' }
+        console.error('Erro ao baixar Google Sheet como XLSX:', error)
+        return { success: false, error: 'Falha na conexão com o Google Sheets. Tente novamente.' }
     }
 }
 
@@ -849,13 +929,30 @@ export async function fetchGoogleSheetData(sheetUrl: string): Promise<{ success:
     const gidMatch = sheetUrl.match(/[#&?]gid=(\d+)/)
     const gid = gidMatch ? gidMatch[1] : '0'
 
+    // Headers que simulam um navegador para evitar bloqueio do Google (HTTP 400)
+    const browserHeaders = {
+        'Accept': 'text/csv,text/plain,*/*',
+        'Accept-Language': 'pt-BR,pt;q=0.9,en-US;q=0.8,en;q=0.7',
+        'User-Agent': 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+    }
+
+    // Tentar via /export (método principal)
     const exportUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv&gid=${gid}`
 
     try {
-        const response = await fetch(exportUrl, {
-            headers: { 'Accept': 'text/csv' },
+        let response = await fetch(exportUrl, {
+            headers: browserHeaders,
             redirect: 'follow'
         })
+
+        // Fallback: se /export falhar, tentar via /gviz/tq (API de consulta pública)
+        if (!response.ok) {
+            const gvizUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/gviz/tq?tqx=out:csv&gid=${gid}`
+            response = await fetch(gvizUrl, {
+                headers: browserHeaders,
+                redirect: 'follow'
+            })
+        }
 
         if (!response.ok) {
             if (response.status === 404) {
@@ -864,10 +961,15 @@ export async function fetchGoogleSheetData(sheetUrl: string): Promise<{ success:
             if (response.status === 403 || response.status === 401) {
                 return { success: false, error: 'Acesso negado. Certifique-se de que a planilha está compartilhada como "Qualquer pessoa com o link".' }
             }
-            return { success: false, error: `Erro ao acessar a planilha (HTTP ${response.status}).` }
+            return { success: false, error: `Erro ao acessar a planilha (HTTP ${response.status}). Certifique-se de que a planilha está compartilhada publicamente.` }
         }
 
         const csvData = await response.text()
+
+        // Verificar se o Google retornou uma página HTML (login/consentimento) ao invés de CSV
+        if (csvData.trim().startsWith('<!DOCTYPE') || csvData.trim().startsWith('<html')) {
+            return { success: false, error: 'Acesso negado. Certifique-se de que a planilha está compartilhada como "Qualquer pessoa com o link".' }
+        }
 
         if (!csvData || csvData.trim().length === 0) {
             return { success: false, error: 'A planilha está vazia.' }

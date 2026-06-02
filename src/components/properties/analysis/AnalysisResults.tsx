@@ -36,8 +36,10 @@ interface AnalysisResultsProps {
 }
 
 export function AnalysisResults({ entries }: AnalysisResultsProps) {
-    const formatCurrency = (val: number) => 
-        new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
+    const formatCurrency = (val: number) => {
+        if (!isFinite(val) || isNaN(val)) return 'N/D';
+        return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(val);
+    };
 
     const isComparison = entries.length > 1;
 
@@ -53,7 +55,7 @@ export function AnalysisResults({ entries }: AnalysisResultsProps) {
    ======================================== */
 function SingleResult({ data, neighborhood, formatCurrency }: { data: MarketAnalysisResult; neighborhood: string; formatCurrency: (val: number) => string }) {
     const kpis = [
-        { label: 'Média m²', value: formatCurrency(data.averageValue), icon: TrendingUp, color: 'text-secondary', bg: 'bg-secondary/10' },
+        { label: 'Média m²', value: formatCurrency(data.averageValue), icon: TrendingUp, color: 'text-foreground', bg: 'bg-secondary/10' },
         { label: 'Mediana', value: formatCurrency(data.medianValue), icon: Home, color: 'text-orange-500', bg: 'bg-orange-500/10' },
         { label: 'Mínimo m²', value: formatCurrency(data.minPrice), icon: ArrowDownRight, color: 'text-emerald-500', bg: 'bg-emerald-500/10' },
         { label: 'Máximo m²', value: formatCurrency(data.maxPrice), icon: ArrowUpRight, color: 'text-red-500', bg: 'bg-red-500/10' },
@@ -112,7 +114,7 @@ function SingleResult({ data, neighborhood, formatCurrency }: { data: MarketAnal
                                         fontWeight: 'bold',
                                         color: 'var(--foreground)'
                                     }}
-                                    itemStyle={{ color: 'var(--secondary)' }}
+                                    itemStyle={{ color: 'var(--foreground)' }}
                                     formatter={(value: any) => [formatCurrency(Number(value) || 0), 'Valor Médio/m²']}
                                     labelFormatter={(label) => `${label} Quarto(s)`}
                                 />
@@ -125,7 +127,7 @@ function SingleResult({ data, neighborhood, formatCurrency }: { data: MarketAnal
                                     {data.chartData.map((entry, index) => (
                                         <Cell 
                                             key={`cell-${index}`} 
-                                            fill="var(--secondary)" 
+                                            fill="#D97706" 
                                             fillOpacity={index % 2 === 0 ? 1 : 0.7} 
                                         />
                                     ))}
@@ -155,12 +157,12 @@ function SingleResult({ data, neighborhood, formatCurrency }: { data: MarketAnal
                                 className="block p-3 rounded-xl border border-border bg-muted/20 hover:bg-muted/40 transition-all group"
                             >
                                 <div className="flex justify-between items-start mb-1">
-                                    <p className="text-[10px] font-black text-secondary uppercase tracking-wider">
+                                    <p className="text-[10px] font-black text-foreground uppercase tracking-wider">
                                         {prop.bedrooms} Quartos • {prop.area}m²
                                     </p>
-                                    <ArrowUpRight size={12} className="text-muted-foreground group-hover:text-secondary opacity-0 group-hover:opacity-100 transition-all" />
+                                    <ArrowUpRight size={12} className="text-muted-foreground group-hover:text-foreground opacity-0 group-hover:opacity-100 transition-all" />
                                 </div>
-                                <p className="text-xs font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
+                                <p className="text-xs font-bold text-foreground line-clamp-1">
                                     {prop.title}
                                 </p>
                                 <div className="flex items-center justify-between mt-2">
@@ -412,7 +414,7 @@ function ComparisonResults({ entries, formatCurrency }: { entries: ComparisonEnt
                                     </p>
                                     <ArrowUpRight size={12} className="text-muted-foreground group-hover:opacity-100 opacity-0 transition-all" />
                                 </div>
-                                <p className="text-xs font-bold text-foreground line-clamp-1 group-hover:text-secondary transition-colors">
+                                <p className="text-xs font-bold text-foreground line-clamp-1">
                                     {prop.title}
                                 </p>
                                 <div className="flex items-center justify-between mt-2">
