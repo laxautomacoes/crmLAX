@@ -17,6 +17,8 @@ interface PropertyImportPDFModalProps {
     tenantId: string | null
     onImportSuccess: () => void
     properties?: { id: string; title: string }[]
+    initialMode?: ImportMode
+    initialPropertyId?: string
 }
 
 const OCR_MODELS = {
@@ -89,16 +91,24 @@ export function PropertyImportPDFModal({
     onClose,
     tenantId,
     onImportSuccess,
-    properties = []
+    properties = [],
+    initialMode,
+    initialPropertyId
 }: PropertyImportPDFModalProps) {
-    const [mode, setMode] = useState<ImportMode>('cadastro')
+    const [mode, setMode] = useState<ImportMode>(initialMode || 'cadastro')
     const [isProcessing, setIsProcessing] = useState(false)
     const [processingStep, setProcessingStep] = useState('')
     const [file, setFile] = useState<File | null>(null)
     const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openai'>('gemini')
     const [selectedModel, setSelectedModel] = useState('gemini-3-flash')
-    const [selectedPropertyId, setSelectedPropertyId] = useState('')
-    const [propertySearch, setPropertySearch] = useState('')
+    const [selectedPropertyId, setSelectedPropertyId] = useState(initialPropertyId || '')
+    const [propertySearch, setPropertySearch] = useState(() => {
+        if (initialPropertyId && properties.length > 0) {
+            const prop = properties.find(p => p.id === initialPropertyId)
+            return prop?.title || ''
+        }
+        return ''
+    })
     const [referenceMonth, setReferenceMonth] = useState(() => {
         const now = new Date()
         return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
@@ -159,7 +169,7 @@ export function PropertyImportPDFModal({
             }
 
             // Para Book ou OpenAI: renderizar páginas como imagens para viabilizar multimodal
-            if (mode === 'book' || selectedProvider === 'openai') {
+            if (mode === 'book' || mode === 'tabela' || selectedProvider === 'openai') {
                 setProcessingStep('Renderizando páginas do PDF...')
                 const pageImages = await renderPDFPages(file)
                 formData.append('page_images', JSON.stringify(pageImages))
@@ -200,8 +210,16 @@ export function PropertyImportPDFModal({
 
     const handleClose = () => {
         setFile(null)
-        setSelectedPropertyId('')
-        setPropertySearch('')
+        // Restaurar para valores iniciais ao fechar
+        if (initialPropertyId) {
+            setSelectedPropertyId(initialPropertyId)
+            const prop = properties.find(p => p.id === initialPropertyId)
+            setPropertySearch(prop?.title || '')
+        } else {
+            setSelectedPropertyId('')
+            setPropertySearch('')
+        }
+        if (initialMode) setMode(initialMode)
         if (fileInputRef.current) fileInputRef.current.value = ''
         onClose()
     }

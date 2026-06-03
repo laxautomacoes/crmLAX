@@ -146,13 +146,13 @@ export function PropertyDetailsContent({
 
                 {/* ── Navegação de Abas (Empreendimento) ── */}
                 {details.is_empreendimento && (
-                    <div className="flex items-center gap-1 p-1 bg-foreground/5 rounded-lg border border-border/40 mb-4">
+                    <div className="flex items-center gap-1 p-1 bg-card border border-border/40 rounded-lg mb-4">
                         <button
                             onClick={() => setActiveTab('details')}
                             className={`flex-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-md transition-all ${
                                 activeTab === 'details'
-                                    ? 'bg-card text-foreground shadow-sm border border-border/50'
-                                    : 'text-muted-foreground hover:text-foreground/70'
+                                    ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:bg-muted/50'
                             }`}
                         >
                             Detalhes
@@ -161,8 +161,8 @@ export function PropertyDetailsContent({
                             onClick={() => setActiveTab('price_table')}
                             className={`flex-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-md transition-all ${
                                 activeTab === 'price_table'
-                                    ? 'bg-card text-foreground shadow-sm border border-border/50'
-                                    : 'text-muted-foreground hover:text-foreground/70'
+                                    ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:bg-muted/50'
                             }`}
                         >
                             Tabela de Preços
@@ -214,8 +214,7 @@ export function PropertyDetailsContent({
                                                     )}
                                                 </div>
                                             </div>
-                                            <h4 className="text-sm font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                <Home size={14} className="text-foreground" />
+                                            <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
                                                 {details.is_empreendimento ? 'Empreendimento' : 'Imóvel'}
                                             </h4>
                                             <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
@@ -248,8 +247,7 @@ export function PropertyDetailsContent({
                                 <div className="border-t border-border/60 my-8" />
 
                                 <div className="space-y-4">
-                                    <h4 className="text-lg font-black uppercase tracking-widest flex items-center gap-2 text-foreground">
-                                        <MapPin size={14} className="text-foreground" />
+                                    <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
                                         Endereço
                                     </h4>
                                     <div className="flex items-center gap-1.5 text-base font-semibold text-foreground">
@@ -262,8 +260,7 @@ export function PropertyDetailsContent({
 
                             {/* Gallery */}
                             <div className="space-y-4">
-                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                    <ImageIcon size={14} className="text-foreground" />
+                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                     Imagens
                                 </h4>
                                 <div className="relative group w-full aspect-video rounded-xl overflow-hidden bg-black/90 flex items-center justify-center shadow-xl">
@@ -335,8 +332,7 @@ export function PropertyDetailsContent({
                                     <>
                                         <div className="border-t border-border/60 my-8" />
                                         <div className="space-y-4">
-                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                <Video size={14} className="text-foreground" />
+                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                 Vídeos
                                             </h4>
                                             <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
@@ -372,8 +368,7 @@ export function PropertyDetailsContent({
                             <div className="flex flex-col">
                                 <div>
                                     <div className="space-y-4">
-                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                            <Info size={14} className="text-foreground" />
+                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                             Informações
                                         </h4>
                                          <div className="text-foreground bg-muted/20 p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
@@ -432,8 +427,7 @@ export function PropertyDetailsContent({
                                         <>
                                             <div className="border-t border-border/60 my-8" />
                                             <div className="space-y-4">
-                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                    <Building2 size={14} className="text-foreground" />
+                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                     Torres e Tipologias
                                                 </h4>
                                                 <div className="space-y-4">
@@ -503,8 +497,7 @@ export function PropertyDetailsContent({
                                         <>
                                             <div className="border-t border-border/60 my-8" />
                                             <div className="space-y-4">
-                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                    <Trees size={14} className="text-foreground" />
+                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                     Área comum | Lazer
                                                 </h4>
                                                 <div className="flex flex-wrap gap-3">
@@ -533,8 +526,7 @@ export function PropertyDetailsContent({
 
                                 <div>
                                     <div className="space-y-4">
-                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                            <Info size={14} className="text-foreground" />
+                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                             Descrição
                                         </h4>
                                         <div className="text-foreground leading-relaxed bg-muted/20 p-6 rounded-xl border border-border/50">
@@ -551,8 +543,7 @@ export function PropertyDetailsContent({
                                         <>
                                             <div className="border-t border-border/60 my-8" />
                                             <div className="space-y-4">
-                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                    <MapPin size={14} className="text-foreground" />
+                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                     Localização
                                                 </h4>
                                                 <div className="rounded-xl overflow-hidden bg-muted/30 border-2 border-border shadow-inner p-1">
@@ -572,8 +563,7 @@ export function PropertyDetailsContent({
                                         <>
                                             <div className="border-t border-border/60 my-8" />
                                             <div className="space-y-4">
-                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                                    <User size={14} className="text-foreground" />
+                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                     Corretor Responsável
                                                 </h4>
                                                 <div className="flex items-center gap-4 p-4 rounded-xl bg-foreground/5 border border-border/40">
@@ -613,8 +603,7 @@ export function PropertyDetailsContent({
 
                                     {/* Propriedade/Construtora */}
                                     <div className="space-y-4">
-                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                            <User size={14} className="text-foreground" />
+                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                             Proprietário | Construtora
                                         </h4>
                                         <div className="bg-foreground/5 border border-border/40 p-6 rounded-xl space-y-6">
@@ -647,8 +636,7 @@ export function PropertyDetailsContent({
                                 <>
                                     <div className="border-t border-border/60 my-8" />
                                     <div className="space-y-4">
-                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                            <FileText size={14} className="text-foreground" />
+                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                             Documentos
                                         </h4>
                                         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

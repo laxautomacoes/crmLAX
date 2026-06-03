@@ -8,6 +8,17 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
+/** Converte Uint8Array para base64 em chunks para evitar stack overflow */
+function uint8ToBase64(bytes: Uint8Array): string {
+  let binary = '';
+  const chunkSize = 0x8000; // 32KB por chunk
+  for (let i = 0; i < bytes.length; i += chunkSize) {
+    const chunk = bytes.subarray(i, Math.min(i + chunkSize, bytes.length));
+    binary += String.fromCharCode(...chunk);
+  }
+  return btoa(binary);
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -80,66 +91,92 @@ Deno.serve(async (req: Request) => {
     } else if (mode === 'tabela') {
       // Prompt detalhado para extração de tabela de preços
       const templateHint = templateMapping && Object.keys(templateMapping).length > 0
-        ? `\nO mapeamento de colunas deste empreendimento é: ${JSON.stringify(templateMapping)}\nUse este mapeamento como referência para identificar os campos corretamente.`
+        ? `\nMAPEAMENTO ANTERIOR (use como referência): ${JSON.stringify(templateMapping)}`
         : '';
       
       prompt = `
-        Você é um especialista em OCR imobiliário, focado em tabelas de preços de empreendimentos.
-        O nome do empreendimento é "${parentPropertyTitle}".${templateHint}
-        
-        Analise esta tabela de preços e extraia TODOS os dados estruturados.
-        
-        IMPORTANTE: 
-        - Extraia TODAS as unidades/apartamentos da tabela
-        - Para valores monetários, use APENAS números (sem R$, sem pontos de milhar, use ponto como decimal)
-        - Alguns apartamentos podem compartilhar valores de fluxo com outros (agrupados). Neste caso, replique os valores para todas as unidades do grupo.
-        - Identifique a estrutura de pagamento do cabeçalho (percentuais e quantidade de parcelas)
-        
-        Retorne APENAS um JSON válido no formato:
-        {
-          "payment_structure": {
-            "ato": { "pct": 8, "parcelas": 1 },
-            "mensais": { "pct": 12, "parcelas": 29 },
-            "reforcos": { "pct": 10, "parcelas": 2 },
-            "chaves": { "pct": 10, "parcelas": 1 },
-            "financiamento": { "pct": 60, "parcelas": 120 }
-          },
-          "units": [
-            {
-              "unit_number": "601",
-              "block_tower": "Torre 2",
-              "floor": 6,
-              "garage_type": "Coberta",
-              "garage_number": "173",
-              "hobby_box": "G3",
-              "hobby_box_number": "",
-              "area_total": 100.50,
-              "area_privativa": 55.44,
-              "valor_ato": 65250.39,
-              "valor_mensais": 3375.02,
-              "valor_reforcos": 40781.49,
-              "valor_chaves": 81562.99,
-              "soma_poupanca": 326251.95,
-              "valor_financiamento": 489377.92,
-              "valor_total": 815629.86,
-              "extra_data": {}
-            }
-          ]
-        }
-        
-        Regras de extração:
-        1. "unit_number": Número do apartamento (ex: "601", "1005")
-        2. "block_tower": Nome da torre ou bloco (ex: "Torre 2", "Bloco A"). Se não houver, use null.
-        3. "floor": Andar do apartamento. Extraia do número (601 = andar 6, 1005 = andar 10). Se não for claro, use null.
-        4. "garage_type": "Coberta" ou "Descoberta" (pode aparecer como "Cobt." ou "Desct.")
-        5. "garage_number": Número da vaga de garagem
-        6. "hobby_box": Tipo do hobby box (ex: "G1", "G2", "G3", "PII")
-        7. "hobby_box_number": Número do hobby box, se houver
-        8. Todos os valores monetários devem ser números decimais (ex: 65250.39, não "65.250,39")
-        9. Se um apartamento não tem valores de fluxo próprios (célula vazia), verifique se faz parte de um grupo e replique os valores do grupo.
-        10. Se realmente não houver valor, use null.
-        
-        Não inclua textos explicativos fora do JSON.
+Você é um especialista em OCR imobiliário. Analise esta TABELA DE PREÇOS do empreendimento "${parentPropertyTitle}".${templateHint}
+
+## INSTRUÇÕES CRÍTICAS
+
+### ETAPA 1 — Identifique a estrutura da tabela
+Leia CUIDADOSAMENTE o cabeçalho da tabela. Cada tabela de empreendimento tem colunas DIFERENTES.
+Exemplos de colunas reais que você pode encontrar:
+- "Aptos", "Vaga Garagem", "HB", "Área Priv.", "Área Total", "Garagem (m²)"
+- "Entrada", "Ato", "Sinal" → mapear para "valor_ato" 
+- "Mensais", "31 X mensais", "29 X mensais" → mapear para "valor_mensais" (valor de CADA parcela)
+- "Reforços", "Reforço 5X", "Reforço 2X" → mapear para "valor_reforcos" (valor de CADA reforço)
+- "Chaves", "Chaves Dez/2028" → mapear para "valor_chaves"
+- "Soma Poupança", "Saldo p/ FCTO" → mapear para "soma_poupanca"
+- "Financiamento", "60 x mensais", "120 x mensais" → mapear para "valor_financiamento" (valor de CADA parcela de financiamento)
+- "Valor Total", "Total R$" → mapear para "valor_total"
+
+### ETAPA 2 — Identifique seções
+Tabelas podem ter SEÇÕES como:
+- "Apartamentos 1 Dormitório sem Garagem"
+- "Apartamentos 2 Dormitórios com Garagem"
+Se houver seções, use-as para preencher informações ausentes.
+
+### ETAPA 3 — Extraia CADA unidade com valores INDIVIDUAIS
+CADA LINHA da tabela é uma unidade com valores PRÓPRIOS e DIFERENTES.
+NÃO use o mesmo valor para todas as unidades. Leia CADA célula individualmente.
+
+### REGRAS DE AGRUPAMENTO
+Algumas tabelas agrupam 2-4 unidades com o mesmo fluxo de pagamento.
+Neste caso, os valores de pagamento aparecem em uma única célula alinhada ao grupo.
+Você DEVE replicar esses valores para TODAS as unidades do grupo.
+
+### REGRAS DE FORMATAÇÃO
+- Valores monetários: usar PONTO como decimal, SEM separador de milhar (ex: 78473.00, não "78.473,00")
+- Áreas: número decimal com ponto (ex: 34.56)
+- Se uma célula está vazia ou tem "—", use null
+- unit_number: string (ex: "1003", "303 GARDEM")
+- floor: extrair do número do apto (1003 = andar 10, 601 = andar 6)
+- garage_type: "Coberta" ou "Descoberta" ("Cobt." = Coberta, "Desct." = Descoberta)
+- garage_number: número da vaga. Se houver "—" ou vazio, use null
+- hobby_box: tipo ("G1", "G2", "G3", "PII"). Se houver "—" ou vazio, use null
+
+### ESTRUTURA DE PAGAMENTO (payment_structure)
+Extraia do CABEÇALHO da tabela:
+- Identifique percentuais (ex: "8%", "12%", "10%", "60%")
+- Identifique quantidade de parcelas (ex: "31 X", "5 X", "120 X")
+- Mapeie para: ato, mensais, reforcos, chaves, poupanca, financiamento
+
+Retorne APENAS um JSON válido:
+{
+  "payment_structure": {
+    "ato": { "pct": 8, "parcelas": 1, "label": "Entrada" },
+    "mensais": { "pct": 12, "parcelas": 31, "label": "31 X mensais" },
+    "reforcos": { "pct": 10, "parcelas": 5, "label": "Reforço 5X" },
+    "chaves": { "pct": 10, "parcelas": 1, "label": "Chaves Dez/2028" },
+    "poupanca": { "pct": null, "parcelas": null, "label": "Saldo p/ FCTO direto 60 meses" },
+    "financiamento": { "pct": 60, "parcelas": 60, "label": "60 x mensais" }
+  },
+  "units": [
+    {
+      "unit_number": "1003",
+      "block_tower": null,
+      "floor": 10,
+      "garage_type": null,
+      "garage_number": null,
+      "hobby_box": null,
+      "hobby_box_number": null,
+      "area_total": 48.45,
+      "area_privativa": 34.56,
+      "valor_ato": 78473.00,
+      "valor_mensais": 3142.00,
+      "valor_reforcos": 8118.00,
+      "valor_chaves": 54120.00,
+      "soma_poupanca": 405895.00,
+      "valor_financiamento": 6764.92,
+      "valor_total": 676480.00,
+      "extra_data": { "secao": "Apartamentos 1 Dormitório sem Garagem" }
+    }
+  ]
+}
+
+IMPORTANTE: Cada unidade DEVE ter valores DIFERENTES lidos da tabela. NÃO repita o mesmo valor para todas.
+Não inclua texto fora do JSON.
       `;
     } else {
       // Modo Book
@@ -212,7 +249,7 @@ Deno.serve(async (req: Request) => {
         result = await model.generateContent(content);
       } else {
         const arrayBuffer = await pdfFile.arrayBuffer();
-        const base64Data = btoa(String.fromCharCode(...new Uint8Array(arrayBuffer)));
+        const base64Data = uint8ToBase64(new Uint8Array(arrayBuffer));
         result = await model.generateContent([
           prompt,
           {

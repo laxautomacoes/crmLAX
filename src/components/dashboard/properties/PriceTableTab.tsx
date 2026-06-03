@@ -1,14 +1,16 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { createClient } from '@/lib/supabase/client'
 import {
     Building2, Calendar, TrendingUp, Hash, Filter, Search,
     DollarSign, Maximize2, Car, Layers, Send, Eye,
-    ChevronDown, Loader2, AlertCircle, ClipboardList
+    ChevronDown, Loader2, AlertCircle, ClipboardList, Upload, RefreshCw
 } from 'lucide-react'
 import { getPropertyUnits, getPriceTableInfo, updateUnitStatus } from '@/app/_actions/property-units'
 import type { PropertyUnit, PriceTableInfo } from '@/app/_actions/property-units'
 import { UnitPaymentFlowModal } from './UnitPaymentFlowModal'
+import { PropertyImportPDFModal } from './PropertyImportPDFModal'
 import { toast } from 'sonner'
 
 interface PriceTableTabProps {
@@ -45,6 +47,8 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
     const [statusFilter, setStatusFilter] = useState<string>('all')
     const [selectedUnit, setSelectedUnit] = useState<PropertyUnit | null>(null)
     const [isFlowModalOpen, setIsFlowModalOpen] = useState(false)
+    const [isImportOpen, setIsImportOpen] = useState(false)
+    const [propertyMedia, setPropertyMedia] = useState<{ images: string[]; videos: string[]; documents: { url: string; name?: string }[] }>({ images: [], videos: [], documents: [] })
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
 
     useEffect(() => {
@@ -59,6 +63,22 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
         ])
         if (unitsRes.success) setUnits(unitsRes.data as PropertyUnit[])
         if (tableRes.success) setPriceTable(tableRes.data as PriceTableInfo | null)
+
+        // Buscar mídias da propriedade
+        const supabase = createClient()
+        const { data: propData } = await supabase
+            .from('properties')
+            .select('images, videos, documents')
+            .eq('id', propertyId)
+            .single()
+        if (propData) {
+            setPropertyMedia({
+                images: (propData.images as string[]) || [],
+                videos: (propData.videos as string[]) || [],
+                documents: (propData.documents as { url: string; name?: string }[]) || []
+            })
+        }
+
         setIsLoading(false)
     }
 
@@ -120,6 +140,26 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                             : 'Solicite ao administrador o upload da tabela de preços.'}
                     </p>
                 </div>
+                {isAdmin && (
+                    <button
+                        onClick={() => setIsImportOpen(true)}
+                        className="flex items-center gap-2 px-5 py-2.5 bg-secondary text-secondary-foreground rounded-lg text-sm font-bold hover:opacity-90 transition-all active:scale-[0.98] shadow-sm mt-2"
+                    >
+                        <Upload size={16} />
+                        Importar Tabela de Preços
+                    </button>
+                )}
+                {isImportOpen && (
+                    <PropertyImportPDFModal
+                        isOpen={isImportOpen}
+                        onClose={() => setIsImportOpen(false)}
+                        tenantId={tenantId}
+                        onImportSuccess={() => { setIsImportOpen(false); loadData() }}
+                        properties={[{ id: propertyId, title: propertyTitle }]}
+                        initialMode="tabela"
+                        initialPropertyId={propertyId}
+                    />
+                )}
             </div>
         )
     }
@@ -132,17 +172,12 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
             <div className="bg-foreground/5 border border-border/40 rounded-lg p-5 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
                     <div className="space-y-1">
-                        <h4 className="text-sm font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                            <TrendingUp size={14} />
+                        <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
                             Tabela Vigente
                         </h4>
                         <div className="flex items-center gap-4 text-sm text-muted-foreground">
+                            <span className="font-bold text-foreground">{formatMonth(priceTable.reference_month)}</span>
                             <span className="flex items-center gap-1.5">
-                                <Calendar size={12} />
-                                <span className="font-bold text-foreground">{formatMonth(priceTable.reference_month)}</span>
-                            </span>
-                            <span className="flex items-center gap-1.5">
-                                <TrendingUp size={12} />
                                 <span className="font-bold text-foreground">{priceTable.index_type}</span>
                                 {priceTable.index_value && (
                                     <span className="text-xs">({formatBRL(priceTable.index_value)})</span>
@@ -160,6 +195,14 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                             <Eye size={14} />
                             Ver PDF Original
                         </a>
+                    )}
+                    {isAdmin && (
+                        <button
+                            onClick={() => setIsImportOpen(true)}
+                            className="px-3 py-1.5 text-xs font-bold text-secondary-foreground bg-secondary rounded-lg hover:opacity-90 transition-all active:scale-[0.98] shadow-sm"
+                        >
+                            Atualizar Tabela
+                        </button>
                     )}
                 </div>
 
@@ -193,23 +236,22 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                         )}
                     </div>
                 )}
-
                 {/* Stats */}
                 <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-border/30">
-                    <div className="text-center">
+                    <div className="flex flex-col items-center justify-center text-center">
                         <p className="text-2xl font-black text-foreground">{stats.total}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-2xl font-black text-emerald-600">{stats.available}</p>
+                    <div className="flex flex-col items-center justify-center text-center">
+                        <p className="text-2xl font-black text-emerald-500">{stats.available}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Disponíveis</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-2xl font-black text-amber-600">{stats.reserved}</p>
+                    <div className="flex flex-col items-center justify-center text-center">
+                        <p className="text-2xl font-black text-amber-500">{stats.reserved}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Reservados</p>
                     </div>
-                    <div className="text-center">
-                        <p className="text-2xl font-black text-red-600">{stats.sold}</p>
+                    <div className="flex flex-col items-center justify-center text-center">
+                        <p className="text-2xl font-black text-red-500">{stats.sold}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Vendidos</p>
                     </div>
                 </div>
@@ -314,9 +356,8 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                                         <td className="px-3 py-3 text-right">
                                             <button
                                                 onClick={() => handleOpenFlow(unit)}
-                                                className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground bg-secondary hover:bg-secondary/90 rounded-lg transition-all active:scale-[0.97] shadow-sm"
+                                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground bg-secondary hover:bg-secondary/90 rounded-lg transition-all active:scale-[0.97] shadow-sm"
                                             >
-                                                <Send size={12} />
                                                 Fluxo
                                             </button>
                                         </td>
@@ -352,6 +393,22 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                     propertyTitle={propertyTitle}
                     priceTable={priceTable}
                     tenantId={tenantId}
+                    propertyImages={propertyMedia.images}
+                    propertyVideos={propertyMedia.videos}
+                    propertyDocuments={propertyMedia.documents}
+                />
+            )}
+
+            {/* Modal Import PDF (para admin atualizar tabela) */}
+            {isImportOpen && (
+                <PropertyImportPDFModal
+                    isOpen={isImportOpen}
+                    onClose={() => setIsImportOpen(false)}
+                    tenantId={tenantId}
+                    onImportSuccess={() => { setIsImportOpen(false); loadData() }}
+                    properties={[{ id: propertyId, title: propertyTitle }]}
+                    initialMode="tabela"
+                    initialPropertyId={propertyId}
                 />
             )}
         </div>

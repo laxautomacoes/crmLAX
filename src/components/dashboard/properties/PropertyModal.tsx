@@ -11,6 +11,7 @@ import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
 import { AreaFields } from './PropertyModal/AreaFields'
 import { DormitoriosVagasFields, EstruturaCustosFields } from './PropertyModal/RoomsFields'
 import { TowersFields } from './PropertyModal/TowersFields'
+import { PriceTableUploadField } from './PropertyModal/PriceTableUploadField'
 import { AmenitiesFields } from './PropertyModal/AmenitiesFields'
 import { DescriptionField } from './PropertyModal/DescriptionField'
 import { MediaFields } from './PropertyModal/MediaFields'
@@ -858,6 +859,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     {formData.details.is_empreendimento && (
                         <>
                             <TowersFields formData={formData} setFormData={setFormData} />
+                            <div className="border-t border-border/60" />
+                            <PriceTableUploadField 
+                                formData={formData} 
+                                setFormData={setFormData}
+                                tenantId={tenantId}
+                                propertyId={(editingProperty as any)?.id}
+                            />
                             <div className="border-t border-border/60" />
                         </>
                     )}
