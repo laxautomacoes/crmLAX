@@ -122,14 +122,53 @@ export async function checkWhatsAppStatus() {
         return { connected: false, error: 'Perfil não encontrado.' }
     }
 
-    const { data: instance, error } = await getWhatsAppInstance()
-    if (error || !instance || instance.status !== 'connected') {
+    // 1. Tentar buscar instância pelo user_id (padrão)
+    let { data: instance, error } = await getWhatsAppInstance()
+
+    // 2. Fallback: buscar instância do tenant (caso outro usuário tenha criado)
+    if (!instance) {
+        const { data: tenantInstance } = await supabase
+            .from('whatsapp_instances')
+            .select('*')
+            .eq('tenant_id', profile.tenant_id)
+            .maybeSingle()
+
+        if (tenantInstance) {
+            instance = tenantInstance
+        }
+    }
+
+    if (error || !instance) {
         return { connected: false, error: 'WhatsApp não conectado. Verifique suas integrações.' }
     }
 
     // Validar tenant da instância
     if (instance.tenant_id && instance.tenant_id !== profile.tenant_id) {
         return { connected: false, error: 'Instância WhatsApp não pertence a este tenant.' }
+    }
+
+    // 3. Se o status no banco NÃO é 'connected', verificar status real na Evolution API
+    //    (a página de Integrações atualiza em tempo real, mas o banco pode estar desatualizado)
+    if (instance.status !== 'connected') {
+        try {
+            const statusData = await evolutionService.getInstanceStatus(instance.instance_name)
+            const realStatus = statusData?.instance?.state === 'open' ? 'connected' : 'disconnected'
+
+            if (realStatus === 'connected') {
+                // Atualizar banco para refletir status real
+                await supabase
+                    .from('whatsapp_instances')
+                    .update({ status: 'connected' })
+                    .eq('id', instance.id)
+
+                return { connected: true, instanceName: instance.instance_name, tenantId: profile.tenant_id }
+            }
+
+            return { connected: false, error: 'WhatsApp não conectado. Verifique suas integrações.' }
+        } catch (apiErr: any) {
+            console.error('[checkWhatsAppStatus] Erro ao verificar Evolution API:', apiErr.message)
+            return { connected: false, error: 'WhatsApp não conectado. Verifique suas integrações.' }
+        }
     }
 
     return { connected: true, instanceName: instance.instance_name, tenantId: profile.tenant_id }

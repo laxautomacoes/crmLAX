@@ -1,9 +1,12 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-const BATCH_SIZE = 3;
+// Processar 1 contato por invocação para nunca exceder o timeout de 150s
+const BATCH_SIZE = 1;
 const MAX_RETRIES = 2;
-const RETRY_DELAY_MS = 3000;
+const RETRY_DELAY_MS = 2000;
+// Timeout para chamadas à Evolution API (evitar que um número travado derrube a função)
+const EVOLUTION_TIMEOUT_MS = 20000;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -23,27 +26,36 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
   const { url, key } = getEvolutionConfig();
   const fullUrl = `${url}${endpoint}`;
 
-  const response = await fetch(fullUrl, {
-    ...options,
-    headers: {
-      'Content-Type': 'application/json',
-      'apikey': key,
-      'Authorization': `Bearer ${key}`,
-      ...options.headers,
-    },
-  });
+  // Adicionar timeout para evitar que a função trave em chamadas lentas
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), EVOLUTION_TIMEOUT_MS);
 
-  const text = await response.text();
-  let data: any;
-  try { data = JSON.parse(text); } catch { data = { message: text }; }
+  try {
+    const response = await fetch(fullUrl, {
+      ...options,
+      signal: controller.signal,
+      headers: {
+        'Content-Type': 'application/json',
+        'apikey': key,
+        'Authorization': `Bearer ${key}`,
+        ...options.headers,
+      },
+    });
 
-  if (!response.ok) {
-    const msg = data?.response?.message || data?.message || data?.error || `Evolution API error: ${response.statusText}`;
-    const errorMsg = Array.isArray(msg) ? msg.join(', ') : msg;
-    throw new Error(errorMsg);
+    const text = await response.text();
+    let data: any;
+    try { data = JSON.parse(text); } catch { data = { message: text }; }
+
+    if (!response.ok) {
+      const msg = data?.response?.message || data?.message || data?.error || `Evolution API error: ${response.statusText}`;
+      const errorMsg = Array.isArray(msg) ? msg.join(', ') : msg;
+      throw new Error(errorMsg);
+    }
+
+    return data;
+  } finally {
+    clearTimeout(timeoutId);
   }
-
-  return data;
 }
 
 // ─── Normalizar Telefone ────────────────────────────────────────────────────
@@ -74,18 +86,21 @@ async function sendSingleMessage(
 
   for (let attempt = 1; attempt <= MAX_RETRIES; attempt++) {
     try {
-      // Verificar número (não-bloqueante)
-      try {
-        const checkResult = await evolutionFetch(`/chat/whatsappNumbers/${instanceName}`, {
-          method: 'POST',
-          body: JSON.stringify({ numbers: [normalizedNumber] }),
-        });
-        const parsed = Array.isArray(checkResult) ? checkResult[0] : checkResult;
-        if (parsed && parsed.exists === false) {
-          return { success: false, error: 'Número não possui WhatsApp ativo.' };
+      // Verificar número — skip se tem mídia (economia de tempo)
+      if (!mediaUrl) {
+        try {
+          const checkResult = await evolutionFetch(`/chat/whatsappNumbers/${instanceName}`, {
+            method: 'POST',
+            body: JSON.stringify({ numbers: [normalizedNumber] }),
+          });
+          const parsed = Array.isArray(checkResult) ? checkResult[0] : checkResult;
+          if (parsed && parsed.exists === false) {
+            return { success: false, error: 'Número não possui WhatsApp ativo.' };
+          }
+        } catch (_checkErr: any) {
+          // Se verificação falhar (timeout, etc), tentar enviar mesmo assim
+          console.warn(`[bulk-sender] Verificação de número falhou (${_checkErr.message}), tentando envio direto.`);
         }
-      } catch (_checkErr) {
-        // Se verificação falhar, tentar enviar mesmo assim
       }
 
       // Enviar mensagem
@@ -132,16 +147,67 @@ async function sendSingleMessage(
       return { success: true };
 
     } catch (err: any) {
-      console.error(`[bulk-sender] Tentativa ${attempt}/${MAX_RETRIES} falhou para ${recipient.phone}:`, err.message);
+      const isTimeout = err.name === 'AbortError';
+      const errorMsg = isTimeout ? 'Timeout na Evolution API' : err.message;
+      console.error(`[bulk-sender] Tentativa ${attempt}/${MAX_RETRIES} falhou para ${recipient.phone}: ${errorMsg}`);
       if (attempt < MAX_RETRIES) {
         await new Promise(r => setTimeout(r, RETRY_DELAY_MS));
       } else {
-        return { success: false, error: err.message };
+        return { success: false, error: errorMsg };
       }
     }
   }
 
   return { success: false, error: 'Falha após todas as tentativas.' };
+}
+
+// ─── Self-Invocation com retry ─────────────────────────────────────────────
+
+async function selfInvoke(campaignId: string): Promise<boolean> {
+  const selfUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/bulk-sender`;
+  const maxAttempts = 3;
+
+  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
+    try {
+      const controller = new AbortController();
+      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout para self-invoke
+
+      const response = await fetch(selfUrl, {
+        method: 'POST',
+        signal: controller.signal,
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
+        },
+        body: JSON.stringify({ campaign_id: campaignId })
+      });
+
+      clearTimeout(timeoutId);
+
+      if (response.ok) {
+        console.log(`[bulk-sender] Self-invocation OK (tentativa ${attempt}).`);
+        return true;
+      }
+
+      const errText = await response.text();
+      console.error(`[bulk-sender] Self-invocation falhou (HTTP ${response.status}, tentativa ${attempt}): ${errText}`);
+
+    } catch (err: any) {
+      const isTimeout = err.name === 'AbortError';
+      if (isTimeout) {
+        // Timeout na self-invocation é OK — significa que a próxima instância já está rodando
+        console.log(`[bulk-sender] Self-invocation timeout (ok, já está processando).`);
+        return true;
+      }
+      console.error(`[bulk-sender] Self-invocation erro (tentativa ${attempt}):`, err.message);
+    }
+
+    if (attempt < maxAttempts) {
+      await new Promise(r => setTimeout(r, 2000));
+    }
+  }
+
+  return false;
 }
 
 // ─── Handler Principal ─────────────────────────────────────────────────────
@@ -223,16 +289,10 @@ Deno.serve(async (req: Request) => {
       last_activity_at: new Date().toISOString()
     }).eq('id', campaign_id);
 
-    // 4. Processar lote
+    // 4. Processar lote (1 contato por vez para evitar timeout)
     const endIndex = Math.min(startIndex + BATCH_SIZE, recipients.length);
     let totalSuccess = campaign.total_success || 0;
     let totalErrors = campaign.total_errors || 0;
-
-    const speedRanges: Record<string, [number, number]> = {
-      normal: [20000, 30000],
-      safe: [30000, 60000],
-      ultra: [60000, 120000]
-    };
 
     for (let i = startIndex; i < endIndex; i++) {
       // Checar cancelamento a cada mensagem
@@ -345,56 +405,53 @@ Deno.serve(async (req: Request) => {
         total_errors: totalErrors,
         last_activity_at: new Date().toISOString()
       }).eq('id', campaign_id);
-
-      // Aguardar intervalo (exceto última mensagem do lote)
-      if (i + 1 < recipients.length) {
-        const [min, max] = speedRanges[speedSetting] || speedRanges.normal;
-        const delay = min + Math.random() * (max - min);
-        await new Promise(r => setTimeout(r, delay));
-      }
     }
 
     // 5. Verificar se há mais destinatários
     if (endIndex < recipients.length) {
-      console.log(`[bulk-sender] Lote concluído (${startIndex}-${endIndex - 1}). Encadeando próximo lote...`);
+      console.log(`[bulk-sender] Lote concluído (${startIndex}-${endIndex - 1}). Aguardando delay e encadeando próximo lote...`);
 
-      // Self-invocation: chamar a si mesma para o próximo lote
-      const selfUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/bulk-sender`;
-      try {
-        const selfResponse = await fetch(selfUrl, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-          },
-          body: JSON.stringify({ campaign_id })
+      // Aplicar delay entre mensagens ANTES de chamar o próximo lote
+      const speedRanges: Record<string, [number, number]> = {
+        normal: [20000, 30000],
+        safe: [30000, 60000],
+        ultra: [60000, 120000]
+      };
+      const [min, max] = speedRanges[speedSetting] || speedRanges.normal;
+      const delay = min + Math.random() * (max - min);
+      console.log(`[bulk-sender] Aguardando ${Math.round(delay / 1000)}s antes do próximo envio...`);
+      await new Promise(r => setTimeout(r, delay));
+
+      // Re-checar cancelamento após o delay
+      const { data: postDelayCampaign } = await supabase
+        .from('bulk_campaigns')
+        .select('cancel_requested')
+        .eq('id', campaign_id)
+        .single();
+
+      if (postDelayCampaign?.cancel_requested) {
+        console.log(`[bulk-sender] Cancelamento detectado após delay.`);
+        await supabase.from('bulk_campaigns').update({
+          status: 'cancelled',
+          total_success: totalSuccess,
+          total_errors: totalErrors,
+          current_index: endIndex,
+          completed_at: new Date().toISOString(),
+          last_activity_at: new Date().toISOString()
+        }).eq('id', campaign_id);
+
+        return new Response(JSON.stringify({ status: 'cancelled', processed: endIndex }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
         });
+      }
 
-        if (!selfResponse.ok) {
-          const errText = await selfResponse.text();
-          console.error(`[bulk-sender] Self-invocation falhou (HTTP ${selfResponse.status}): ${errText}`);
-          
-          // Marcar como stalled para que o frontend detecte e possa retomar
-          await supabase.from('bulk_campaigns').update({
-            status: 'stalled',
-            last_activity_at: new Date().toISOString()
-          }).eq('id', campaign_id);
+      // Self-invocation com retry
+      const selfOk = await selfInvoke(campaign_id);
 
-          // Notificar o usuário
-          await supabase.from('notifications').insert({
-            user_id: campaign.profile_id,
-            tenant_id: campaign.tenant_id,
-            title: `⚠️ Disparo pausado: ${campaign.title || 'Disparo em Massa'}`,
-            message: `O servidor de disparo pausou após ${endIndex}/${recipients.length} mensagens. Você pode retomar pela página de disparos.`,
-            type: 'warning',
-            read: false,
-            created_at: new Date().toISOString()
-          });
-        }
-      } catch (err: any) {
-        console.error('[bulk-sender] Erro na self-invocation:', err.message);
-        
-        // Marcar como stalled
+      if (!selfOk) {
+        console.error('[bulk-sender] Self-invocation falhou após todas as tentativas.');
+
+        // Marcar como stalled para que o frontend detecte e possa retomar
         await supabase.from('bulk_campaigns').update({
           status: 'stalled',
           last_activity_at: new Date().toISOString()
@@ -405,7 +462,7 @@ Deno.serve(async (req: Request) => {
           user_id: campaign.profile_id,
           tenant_id: campaign.tenant_id,
           title: `⚠️ Disparo pausado: ${campaign.title || 'Disparo em Massa'}`,
-          message: `O servidor de disparo encontrou um erro e pausou após ${endIndex}/${recipients.length} mensagens. Você pode retomar pela página de disparos.`,
+          message: `O servidor de disparo pausou após ${endIndex}/${recipients.length} mensagens. Você pode retomar pela página de disparos.`,
           type: 'warning',
           read: false,
           created_at: new Date().toISOString()
