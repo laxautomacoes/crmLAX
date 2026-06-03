@@ -99,6 +99,12 @@ export function PropertyImportPDFModal({
     const [selectedModel, setSelectedModel] = useState('gemini-3-flash')
     const [selectedPropertyId, setSelectedPropertyId] = useState('')
     const [propertySearch, setPropertySearch] = useState('')
+    const [referenceMonth, setReferenceMonth] = useState(() => {
+        const now = new Date()
+        return `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`
+    })
+    const [indexType, setIndexType] = useState('CUB')
+    const [indexValue, setIndexValue] = useState('')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Carregar config AI do tenant
@@ -147,6 +153,9 @@ export function PropertyImportPDFModal({
 
             if (mode === 'tabela') {
                 formData.append('property_id', selectedPropertyId)
+                formData.append('reference_month', referenceMonth)
+                formData.append('index_type', indexType)
+                if (indexValue) formData.append('index_value', indexValue)
             }
 
             // Para Book ou OpenAI: renderizar páginas como imagens para viabilizar multimodal
@@ -278,6 +287,65 @@ export function PropertyImportPDFModal({
                                     </button>
                                 ))
                             )}
+                        </div>
+                    </div>
+                )}
+
+                {/* ── Campos Mês / Índice / Valor (modo tabela) ── */}
+                {mode === 'tabela' && (
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">
+                            Referência da Tabela
+                        </label>
+                        <div className="grid grid-cols-3 gap-2">
+                            <div>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1 block mb-1">
+                                    Mês Ref.
+                                </span>
+                                <input
+                                    type="month"
+                                    value={referenceMonth}
+                                    onChange={(e) => setReferenceMonth(e.target.value)}
+                                    disabled={isProcessing}
+                                    className="w-full bg-muted/30 border border-border rounded-lg px-3 py-2.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
+                                />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1 block mb-1">
+                                    Índice
+                                </span>
+                                <div className="relative">
+                                    <select
+                                        value={indexType}
+                                        onChange={(e) => setIndexType(e.target.value)}
+                                        disabled={isProcessing}
+                                        className="w-full appearance-none bg-muted/30 border border-border rounded-lg px-3 py-2.5 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all cursor-pointer"
+                                        style={{
+                                            backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7' /%3E%3C/svg%3E")`,
+                                            backgroundRepeat: 'no-repeat', backgroundPosition: 'right 8px center', backgroundSize: '12px'
+                                        }}
+                                    >
+                                        <option value="CUB">CUB</option>
+                                        <option value="INCC">INCC</option>
+                                        <option value="IGP-M">IGP-M</option>
+                                        <option value="IPCA">IPCA</option>
+                                        <option value="Outro">Outro</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1 block mb-1">
+                                    Valor
+                                </span>
+                                <input
+                                    type="text"
+                                    value={indexValue}
+                                    onChange={(e) => setIndexValue(e.target.value)}
+                                    placeholder="3.096,25"
+                                    disabled={isProcessing}
+                                    className="w-full bg-muted/30 border border-border rounded-lg px-3 py-2.5 text-xs font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
+                                />
+                            </div>
                         </div>
                     </div>
                 )}

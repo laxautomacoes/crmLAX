@@ -27,6 +27,11 @@ Deno.serve(async (req: Request) => {
     const ai_model = (formData.get('ai_model') as string) || 'gemini-2.5-flash';
     const property_id = formData.get('property_id') as string;
     const pageImagesJson = formData.get('page_images') as string;
+    
+    // Novos campos para modo tabela
+    const reference_month = formData.get('reference_month') as string;
+    const index_type = (formData.get('index_type') as string) || 'CUB';
+    const index_value = formData.get('index_value') as string;
 
     if (!pdfFile && !pageImagesJson && !tenant_id) {
       throw new Error("Arquivo PDF (ou imagens) e tenant_id são obrigatórios.");
@@ -34,14 +39,16 @@ Deno.serve(async (req: Request) => {
 
     // Obter dados do empreendimento pai se for modo tabela
     let parentPropertyTitle = "";
+    let templateMapping = null;
     if (mode === 'tabela' && property_id) {
       const { data: parentProperty } = await supabaseClient
         .from('properties')
-        .select('title')
+        .select('title, price_table_template_mapping')
         .eq('id', property_id)
         .single();
       if (parentProperty) {
         parentPropertyTitle = parentProperty.title;
+        templateMapping = parentProperty.price_table_template_mapping;
       }
     }
 
@@ -71,25 +78,68 @@ Deno.serve(async (req: Request) => {
         Seja rigoroso com tipos e valores. Não inclua texto explicativo fora do JSON.
       `;
     } else if (mode === 'tabela') {
+      // Prompt detalhado para extração de tabela de preços
+      const templateHint = templateMapping && Object.keys(templateMapping).length > 0
+        ? `\nO mapeamento de colunas deste empreendimento é: ${JSON.stringify(templateMapping)}\nUse este mapeamento como referência para identificar os campos corretamente.`
+        : '';
+      
       prompt = `
-        Você é um especialista em OCR imobiliário. Analise esta tabela de preços de unidades e extraia os dados estruturados de cada apartamento/casa disponível.
-        O nome do empreendimento pai é "${parentPropertyTitle}".
-        Retorne APENAS um JSON válido contendo um array "units" com o seguinte formato:
+        Você é um especialista em OCR imobiliário, focado em tabelas de preços de empreendimentos.
+        O nome do empreendimento é "${parentPropertyTitle}".${templateHint}
+        
+        Analise esta tabela de preços e extraia TODOS os dados estruturados.
+        
+        IMPORTANTE: 
+        - Extraia TODAS as unidades/apartamentos da tabela
+        - Para valores monetários, use APENAS números (sem R$, sem pontos de milhar, use ponto como decimal)
+        - Alguns apartamentos podem compartilhar valores de fluxo com outros (agrupados). Neste caso, replique os valores para todas as unidades do grupo.
+        - Identifique a estrutura de pagamento do cabeçalho (percentuais e quantidade de parcelas)
+        
+        Retorne APENAS um JSON válido no formato:
         {
+          "payment_structure": {
+            "ato": { "pct": 8, "parcelas": 1 },
+            "mensais": { "pct": 12, "parcelas": 29 },
+            "reforcos": { "pct": 10, "parcelas": 2 },
+            "chaves": { "pct": 10, "parcelas": 1 },
+            "financiamento": { "pct": 60, "parcelas": 120 }
+          },
           "units": [
             {
-              "unit_number": "101 (número ou string da unidade)",
-              "block": "Torre A (bloco ou torre, se houver)",
-              "price": 420000 (número),
-              "area": 75.5 (área privativa em m², número),
-              "details": {
-                "vagas": 1 (número),
-                "quartos": 2 (número)
-              }
+              "unit_number": "601",
+              "block_tower": "Torre 2",
+              "floor": 6,
+              "garage_type": "Coberta",
+              "garage_number": "173",
+              "hobby_box": "G3",
+              "hobby_box_number": "",
+              "area_total": 100.50,
+              "area_privativa": 55.44,
+              "valor_ato": 65250.39,
+              "valor_mensais": 3375.02,
+              "valor_reforcos": 40781.49,
+              "valor_chaves": 81562.99,
+              "soma_poupanca": 326251.95,
+              "valor_financiamento": 489377.92,
+              "valor_total": 815629.86,
+              "extra_data": {}
             }
           ]
         }
-        Extraia o máximo de unidades que conseguir identificar na tabela de preços. Não inclua textos explicativos.
+        
+        Regras de extração:
+        1. "unit_number": Número do apartamento (ex: "601", "1005")
+        2. "block_tower": Nome da torre ou bloco (ex: "Torre 2", "Bloco A"). Se não houver, use null.
+        3. "floor": Andar do apartamento. Extraia do número (601 = andar 6, 1005 = andar 10). Se não for claro, use null.
+        4. "garage_type": "Coberta" ou "Descoberta" (pode aparecer como "Cobt." ou "Desct.")
+        5. "garage_number": Número da vaga de garagem
+        6. "hobby_box": Tipo do hobby box (ex: "G1", "G2", "G3", "PII")
+        7. "hobby_box_number": Número do hobby box, se houver
+        8. Todos os valores monetários devem ser números decimais (ex: 65250.39, não "65.250,39")
+        9. Se um apartamento não tem valores de fluxo próprios (célula vazia), verifique se faz parte de um grupo e replique os valores do grupo.
+        10. Se realmente não houver valor, use null.
+        
+        Não inclua textos explicativos fora do JSON.
       `;
     } else {
       // Modo Book
@@ -117,7 +167,6 @@ Deno.serve(async (req: Request) => {
       
       const openai = new OpenAI({ apiKey: openaiApiKey });
 
-      // Preparar payload multimodal para OpenAI (usando as imagens das páginas do PDF renderizadas pelo frontend)
       const images: string[] = pageImagesJson ? JSON.parse(pageImagesJson) : [];
       if (images.length === 0) {
         throw new Error("Imagens das páginas do PDF são necessárias para processamento com a OpenAI.");
@@ -149,7 +198,6 @@ Deno.serve(async (req: Request) => {
       const model = genAI.getGenerativeModel({ model: ai_model || "gemini-2.5-flash" });
 
       let result;
-      // Se tiver imagens base64, usar multimodal. Senão, enviar o arquivo PDF bruto.
       const images: string[] = pageImagesJson ? JSON.parse(pageImagesJson) : [];
       if (images.length > 0) {
         const content = [
@@ -216,30 +264,109 @@ Deno.serve(async (req: Request) => {
 
     } else if (mode === 'tabela' && property_id) {
       const unitsList = extractedData.units || [];
-      for (const unit of unitsList) {
-        const unitTitle = `${parentPropertyTitle} - Apto ${unit.unit_number} ${unit.block ? '- ' + unit.block : ''}`;
-        
+      const paymentStructure = extractedData.payment_structure || {};
+
+      // Upload do PDF para o Storage (se houver arquivo)
+      let fileUrl = null;
+      if (pdfFile) {
+        const fileName = `price-tables/${tenant_id}/${property_id}/${Date.now()}-${pdfFile.name}`;
+        const { data: uploadData } = await supabaseClient.storage
+          .from('documents')
+          .upload(fileName, pdfFile, { contentType: 'application/pdf' });
+        if (uploadData) {
+          const { data: urlData } = supabaseClient.storage.from('documents').getPublicUrl(fileName);
+          fileUrl = urlData?.publicUrl || null;
+        }
+      }
+
+      // Desativar tabelas anteriores
+      await supabaseClient
+        .from('property_price_tables')
+        .update({ is_active: false })
+        .eq('property_id', property_id)
+        .eq('is_active', true);
+
+      // Criar nova tabela de preços
+      const refMonth = reference_month || new Date().toISOString().slice(0, 7);
+      const { data: priceTableData } = await supabaseClient
+        .from('property_price_tables')
+        .insert({
+          property_id: property_id,
+          tenant_id: tenant_id,
+          reference_month: refMonth,
+          index_type: index_type || 'CUB',
+          index_value: index_value ? parseFloat(index_value) : null,
+          payment_structure: paymentStructure,
+          file_url: fileUrl,
+          total_units: unitsList.length,
+          available_units: unitsList.length,
+          is_active: true,
+          uploaded_by: null  // Será resolvido pelo RLS
+        })
+        .select()
+        .single();
+
+      if (!priceTableData) {
+        throw new Error("Erro ao criar registro da tabela de preços.");
+      }
+
+      // Inserir unidades
+      const unitsToInsert = unitsList.map((unit: any) => ({
+        property_id: property_id,
+        tenant_id: tenant_id,
+        price_table_id: priceTableData.id,
+        unit_number: String(unit.unit_number),
+        block_tower: unit.block_tower || null,
+        floor: unit.floor || null,
+        garage_type: unit.garage_type || null,
+        garage_number: unit.garage_number ? String(unit.garage_number) : null,
+        hobby_box: unit.hobby_box || null,
+        hobby_box_number: unit.hobby_box_number ? String(unit.hobby_box_number) : null,
+        area_total: unit.area_total || null,
+        area_privativa: unit.area_privativa || null,
+        valor_ato: unit.valor_ato || null,
+        valor_mensais: unit.valor_mensais || null,
+        valor_reforcos: unit.valor_reforcos || null,
+        valor_chaves: unit.valor_chaves || null,
+        soma_poupanca: unit.soma_poupanca || null,
+        valor_financiamento: unit.valor_financiamento || null,
+        valor_total: unit.valor_total || null,
+        extra_data: unit.extra_data || {},
+        status: 'available'
+      }));
+
+      if (unitsToInsert.length > 0) {
+        await supabaseClient
+          .from('property_units')
+          .insert(unitsToInsert);
+      }
+
+      // Atualizar preço do empreendimento pai com o menor valor total
+      const validPrices = unitsList
+        .filter((u: any) => u.valor_total && u.valor_total > 0)
+        .map((u: any) => u.valor_total);
+      
+      if (validPrices.length > 0) {
+        const minPrice = Math.min(...validPrices);
         await supabaseClient
           .from('properties')
-          .upsert({
-            tenant_id: tenant_id,
-            title: unitTitle,
-            price: unit.price,
-            type: 'apartment',
-            status: 'Disponível',
-            details: {
-              ...unit.details,
-              area: unit.area,
-              parent_property_id: property_id,
-              is_unit: true
-            }
-          }, { onConflict: 'title,tenant_id' });
+          .update({ price: minPrice })
+          .eq('id', property_id);
       }
+
+      // Salvar o template_mapping da IA para uso futuro
+      if (paymentStructure && Object.keys(paymentStructure).length > 0) {
+        await supabaseClient
+          .from('properties')
+          .update({ price_table_template_mapping: paymentStructure })
+          .eq('id', property_id);
+      }
+
       action = "updated";
       title = parentPropertyTitle;
       units_count = unitsList.length;
-      if (unitsList.length > 0) {
-        price_from = Math.min(...unitsList.map((u: any) => u.price || Infinity));
+      if (validPrices.length > 0) {
+        price_from = Math.min(...validPrices);
       }
 
     } else {

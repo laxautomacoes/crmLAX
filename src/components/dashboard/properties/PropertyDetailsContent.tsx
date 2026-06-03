@@ -9,6 +9,7 @@ import { Sparkles, Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Ut
     Instagram, Building2, Layers, Star, Image as ImageIcon
 } from 'lucide-react';
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations';
+import { PriceTableTab } from './PriceTableTab';
 import { PropertyMap } from '@/components/shared/PropertyMap';
 
 import { toast } from 'sonner';
@@ -44,7 +45,7 @@ export function PropertyDetailsContent({
     const [selectedImageIndex, setSelectedImageIndex] = useState(0);
     const [isFullscreenOpen, setIsFullscreenOpen] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<'details' | 'ai_copy'>('details');
+    const [activeTab, setActiveTab] = useState<'details' | 'ai_copy' | 'price_table'>('details');
     const [isInstagramModalOpen, setIsInstagramModalOpen] = useState(false);
     const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const [customAmenities, setCustomAmenities] = useState<CustomAmenity[]>([]);
@@ -143,7 +144,42 @@ export function PropertyDetailsContent({
             <div className={cn("max-w-7xl mx-auto", !isModal && "space-y-8")}>
 
 
-                {activeTab === 'details' ? (
+                {/* ── Navegação de Abas (Empreendimento) ── */}
+                {details.is_empreendimento && (
+                    <div className="flex items-center gap-1 p-1 bg-foreground/5 rounded-lg border border-border/40 mb-4">
+                        <button
+                            onClick={() => setActiveTab('details')}
+                            className={`flex-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-md transition-all ${
+                                activeTab === 'details'
+                                    ? 'bg-card text-foreground shadow-sm border border-border/50'
+                                    : 'text-muted-foreground hover:text-foreground/70'
+                            }`}
+                        >
+                            Detalhes
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('price_table')}
+                            className={`flex-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-md transition-all ${
+                                activeTab === 'price_table'
+                                    ? 'bg-card text-foreground shadow-sm border border-border/50'
+                                    : 'text-muted-foreground hover:text-foreground/70'
+                            }`}
+                        >
+                            Tabela de Preços
+                        </button>
+                    </div>
+                )}
+
+                {activeTab === 'price_table' && details.is_empreendimento ? (
+                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+                        <PriceTableTab
+                            propertyId={prop.id}
+                            propertyTitle={prop.title}
+                            tenantId={tenantId}
+                            userRole={isAdmin ? 'admin' : 'user'}
+                        />
+                    </div>
+                ) : activeTab === 'details' ? (
                     <>
                         {onSend && (
                             <button
