@@ -271,7 +271,14 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const draftTimerRef = useRef<NodeJS.Timeout | null>(null)
     const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
     const isSavingRef = useRef(false)
+    const lastSavedDataRef = useRef<string | null>(null)
     const [creationMethod, setCreationMethod] = useState<CreationMethod>(initialCreationMethod ?? null)
+
+    // Gera um snapshot dos dados relevantes para comparação
+    const getFormSnapshot = useCallback((data: typeof formData) => {
+        const { created_by, ...rest } = data
+        return JSON.stringify(rest)
+    }, [])
 
     // Quando o modal abre para novo imóvel, reseta o método de criação
     useEffect(() => {
@@ -445,6 +452,11 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         longitude: editingProperty.details?.endereco?.longitude || null
                     }
                 }
+            })
+            // Marca como snapshot salvo para evitar autosave desnecessário
+            setFormData((newData: any) => {
+                lastSavedDataRef.current = getFormSnapshot(newData)
+                return newData
             })
             // Load source images from scraping
             setSourceImages((editingProperty.details as any)?._source_images || [])
@@ -629,6 +641,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
 
             const propertyData = preparePropertyData()
             await onSave(propertyData)
+            // Atualiza snapshot após salvar com sucesso
+            lastSavedDataRef.current = getFormSnapshot(formData)
             // Limpa rascunho após salvar com sucesso
             localStorage.removeItem(DRAFT_KEY)
             setHasDraft(false)
@@ -654,10 +668,18 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         // Para novo imóvel, só autosalva se tem título preenchido
         if (!editingProperty && !formData.title?.trim()) return
 
+        // Compara com o último snapshot salvo — se não mudou, não salva
+        const currentSnapshot = getFormSnapshot(formData)
+        if (lastSavedDataRef.current === currentSnapshot) return
+
         if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
 
         autoSaveTimerRef.current = setTimeout(async () => {
             if (isSavingRef.current) return
+            // Revalida snapshot antes de salvar (pode ter mudado durante o debounce)
+            const snapshot = getFormSnapshot(formData)
+            if (lastSavedDataRef.current === snapshot) return
+
             try {
                 setIsSaving(true)
                 isSavingRef.current = true
@@ -678,6 +700,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     _isAutoSave: true
                 }
                 await onSave(propertyData)
+                // Atualiza snapshot após salvar com sucesso
+                lastSavedDataRef.current = snapshot
                 localStorage.removeItem(DRAFT_KEY)
                 setHasDraft(false)
             } catch (error) {
