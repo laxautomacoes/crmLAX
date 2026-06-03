@@ -269,6 +269,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const [hasDraft, setHasDraft] = useState(false)
     const [formData, setFormData] = useState(getEmptyFormData())
     const draftTimerRef = useRef<NodeJS.Timeout | null>(null)
+    const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
+    const isSavingRef = useRef(false)
     const [creationMethod, setCreationMethod] = useState<CreationMethod>(initialCreationMethod ?? null)
 
     // Quando o modal abre para novo imóvel, reseta o método de criação
@@ -466,9 +468,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         }
     }, [editingProperty, isOpen])
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'images' | 'videos' | 'documents') => {
-        const files = e.target.files
-        if (!files || files.length === 0) return
+    const handleFilesUpload = async (files: FileList, type: 'images' | 'videos' | 'documents') => {
+        if (files.length === 0) return
 
         setIsUploading(type)
         const supabase = createClient()
@@ -515,8 +516,14 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             alert(`Erro ao carregar ${type}: ${errorMessage}`)
         } finally {
             setIsUploading(null)
-            e.target.value = ''
         }
+    }
+
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'images' | 'videos' | 'documents') => {
+        const files = e.target.files
+        if (!files || files.length === 0) return
+        await handleFilesUpload(files, type)
+        e.target.value = ''
     }
 
     const removeFile = (index: number, type: 'images' | 'videos' | 'documents') => {
@@ -575,12 +582,37 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         }
     }
 
+    // Prepara os dados do formulário para salvar
+    const preparePropertyData = useCallback(() => {
+        const parsedPrice = parseCurrencyBRL(formData.price || '0')
+        let finalTitle = formData.title?.trim() || ''
+        const { created_by: _omit, ...restData } = formData
+        return {
+            ...restData,
+            title: finalTitle,
+            price: isNaN(parsedPrice) ? 0 : parsedPrice,
+            description: formData.description || '',
+            details: {
+                ...formData.details,
+                valor_condominio: parseCurrencyBRL(formData.details.valor_condominio || '0'),
+                valor_iptu: parseCurrencyBRL(formData.details.valor_iptu || '0'),
+                description: formData.description || ''
+            }
+        }
+    }, [formData])
+
     const handleSaveLocal = async () => {
         if (isSaving) return
         
+        // Cancela autosave pendente ao salvar manualmente
+        if (autoSaveTimerRef.current) {
+            clearTimeout(autoSaveTimerRef.current)
+            autoSaveTimerRef.current = null
+        }
+        
         try {
             setIsSaving(true)
-            const parsedPrice = parseCurrencyBRL(formData.price || '0')
+            isSavingRef.current = true
 
             // Validação: tipo unidade exige campo Apartamento preenchido
             const tiposComApto = ['apartment', 'penthouse', 'studio']
@@ -591,26 +623,11 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     description: 'Imóveis do tipo Apartamento, Cobertura ou Studio precisam do número do apto para evitar títulos duplicados.',
                 })
                 setIsSaving(false)
+                isSavingRef.current = false
                 return
             }
 
-            let finalTitle = formData.title?.trim() || ''
-            
-            // Filtrar campos para evitar enviar dados sujos
-            const { created_by: _omit, ...restData } = formData
-
-            const propertyData = {
-                ...restData,
-                title: finalTitle,
-                price: isNaN(parsedPrice) ? 0 : parsedPrice,
-                description: formData.description || '',
-                details: {
-                    ...formData.details,
-                    valor_condominio: parseCurrencyBRL(formData.details.valor_condominio || '0'),
-                    valor_iptu: parseCurrencyBRL(formData.details.valor_iptu || '0'),
-                    description: formData.description || ''
-                }
-            }
+            const propertyData = preparePropertyData()
             await onSave(propertyData)
             // Limpa rascunho após salvar com sucesso
             localStorage.removeItem(DRAFT_KEY)
@@ -621,8 +638,61 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             alert('Erro ao processar dados: ' + errorMessage)
         } finally {
             setIsSaving(false)
+            isSavingRef.current = false
         }
     }
+
+    // ── Autosave (debounce 3s) ──
+    useEffect(() => {
+        if (!isOpen) return
+        // Não autosalva na tela de seleção de método
+        if (!editingProperty && creationMethod === null) return
+        // Não autosalva durante upload
+        if (isUploading) return
+        // Não autosalva se já está salvando
+        if (isSavingRef.current) return
+        // Para novo imóvel, só autosalva se tem título preenchido
+        if (!editingProperty && !formData.title?.trim()) return
+
+        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+
+        autoSaveTimerRef.current = setTimeout(async () => {
+            if (isSavingRef.current) return
+            try {
+                setIsSaving(true)
+                isSavingRef.current = true
+                const parsedPrice = parseCurrencyBRL(formData.price || '0')
+                let finalTitle = formData.title?.trim() || ''
+                const { created_by: _omit, ...restData } = formData
+                const propertyData = {
+                    ...restData,
+                    title: finalTitle,
+                    price: isNaN(parsedPrice) ? 0 : parsedPrice,
+                    description: formData.description || '',
+                    details: {
+                        ...formData.details,
+                        valor_condominio: parseCurrencyBRL(formData.details.valor_condominio || '0'),
+                        valor_iptu: parseCurrencyBRL(formData.details.valor_iptu || '0'),
+                        description: formData.description || ''
+                    },
+                    _isAutoSave: true
+                }
+                await onSave(propertyData)
+                localStorage.removeItem(DRAFT_KEY)
+                setHasDraft(false)
+            } catch (error) {
+                console.error('Autosave error:', error)
+            } finally {
+                setIsSaving(false)
+                isSavingRef.current = false
+            }
+        }, 3000)
+
+        return () => {
+            if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
+        }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [formData, isOpen, editingProperty, creationMethod, isUploading])
 
     // Determinar se deve mostrar a tela de seleção de método
     const showMethodSelection = !editingProperty && creationMethod === null
@@ -792,12 +862,15 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         formData={formData} 
                         isUploading={isUploading} 
                         handleFileUpload={handleFileUpload} 
+                        handleFilesUpload={handleFilesUpload}
                         removeFile={removeFile}
                         sourceImages={sourceImages}
                         isImportingImages={isImportingImages}
                         onImportImages={handleImportImages}
                         onRemoveSourceImage={(index) => setSourceImages(prev => prev.filter((_, i) => i !== index))}
                         onReorderImages={(newImages) => setFormData(prev => ({ ...prev, images: newImages }))}
+                        onReorderVideos={(newVideos) => setFormData(prev => ({ ...prev, videos: newVideos }))}
+                        onReorderDocuments={(newDocuments) => setFormData(prev => ({ ...prev, documents: newDocuments }))}
                         propertyTitle={formData.title}
                         onRemoveMultipleImages={(urls) => setFormData(prev => ({ ...prev, images: prev.images.filter((img: string) => !urls.includes(img)) }))}
                     />

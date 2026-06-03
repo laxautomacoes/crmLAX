@@ -151,20 +151,25 @@ export default function PropertiesClient({
     }
 
     const handleSave = async (propertyData: any) => {
+        const isAutoSave = propertyData._isAutoSave
+        const { _isAutoSave, ...cleanData } = propertyData
+
         let result
         if (editingProperty?.id) {
-            result = await updateProperty(tenantId, editingProperty.id, propertyData)
+            result = await updateProperty(tenantId, editingProperty.id, cleanData)
         } else {
-            result = await createProperty(tenantId, propertyData)
+            result = await createProperty(tenantId, cleanData)
         }
 
         if (result.success) {
-            toast.success(editingProperty ? 'Imóvel atualizado!' : 'Imóvel cadastrado!')
+            if (!isAutoSave) {
+                toast.success(editingProperty ? 'Imóvel atualizado!' : 'Imóvel cadastrado!')
+            }
             // Atualiza o editingProperty com os dados salvos para manter o modal sincronizado
             if (result.data) {
                 setEditingProperty(result.data)
             } else if (editingProperty?.id) {
-                setEditingProperty({ ...editingProperty, ...propertyData })
+                setEditingProperty({ ...editingProperty, ...cleanData })
             }
             refreshProperties(filters.status)
         } else {

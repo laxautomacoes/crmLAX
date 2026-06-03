@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Image as ImageIcon, Film, FileText, X, Upload, Loader2, Download, Check, Globe, Trash2 } from 'lucide-react'
+import { useState, useCallback, useRef } from 'react'
+import { Image as ImageIcon, Film, FileText, X, Upload, Loader2, Download, Check, Globe, Trash2, GripVertical, Play, Pause } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     DndContext,
@@ -17,6 +17,7 @@ import {
     SortableContext,
     sortableKeyboardCoordinates,
     rectSortingStrategy,
+    verticalListSortingStrategy,
     useSortable,
 } from '@dnd-kit/sortable';
 import { CSS } from '@dnd-kit/utilities';
@@ -56,19 +57,25 @@ function SortableImage({ url, index, onRemove, isSelected, onToggleSelect }: Sor
             <div {...attributes} {...listeners} className="w-full h-full cursor-grab active:cursor-grabbing">
                 <img src={url} alt={`Imóvel ${index}`} className="w-full h-full object-cover pointer-events-none" />
             </div>
-            {/* Selection overlay */}
+            {/* Selected overlay (visual only, no pointer blocking) */}
+            {isSelected && (
+                <div className="absolute inset-0 bg-foreground/20 pointer-events-none z-[4]" />
+            )}
+            {/* Selection checkbox — canto superior esquerdo */}
             {onToggleSelect && (
                 <button
                     type="button"
                     onClick={(e) => { e.stopPropagation(); onToggleSelect(url); }}
-                    className="absolute inset-0 z-[5] cursor-pointer"
+                    className={`absolute top-1 left-1 z-[6] w-5 h-5 rounded-full flex items-center justify-center transition-all ${
+                        isSelected 
+                            ? 'bg-[#FFE600] opacity-100' 
+                            : 'bg-foreground/40 opacity-0 group-hover:opacity-100'
+                    }`}
                 >
-                    {isSelected && (
-                        <div className="absolute inset-0 bg-foreground/20 flex items-center justify-center">
-                            <div className="w-5 h-5 rounded-full bg-[#FFE600] flex items-center justify-center">
-                                <Check className="text-[#404F4F]" size={14} strokeWidth={3.5} />
-                            </div>
-                        </div>
+                    {isSelected ? (
+                        <Check className="text-[#404F4F]" size={12} strokeWidth={3.5} />
+                    ) : (
+                        <div className="w-2.5 h-2.5 rounded-full border-2 border-white/80" />
                     )}
                 </button>
             )}
@@ -83,29 +90,262 @@ function SortableImage({ url, index, onRemove, isSelected, onToggleSelect }: Sor
     );
 }
 
+interface SortableVideoProps {
+    url: string;
+    index: number;
+    onRemove: (index: number) => void;
+}
+
+function SortableVideo({ url, index, onRemove }: SortableVideoProps) {
+    const videoRef = useRef<HTMLVideoElement>(null)
+    const [isPlaying, setIsPlaying] = useState(false)
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: url });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1 : 0,
+    };
+
+    const togglePlay = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!videoRef.current) return
+        if (isPlaying) {
+            videoRef.current.pause()
+            setIsPlaying(false)
+        } else {
+            videoRef.current.play()
+            setIsPlaying(true)
+        }
+    }
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="relative aspect-video rounded-lg overflow-hidden group bg-black flex items-center justify-center border border-muted-foreground/30"
+        >
+            {/* Drag handle — área superior */}
+            <div {...attributes} {...listeners} className="absolute top-0 left-0 right-0 h-8 cursor-grab active:cursor-grabbing z-[3]" />
+            {/* Vídeo com thumbnail */}
+            <video
+                ref={videoRef}
+                src={`${url}#t=0.5`}
+                preload="metadata"
+                muted
+                playsInline
+                onEnded={() => setIsPlaying(false)}
+                className="w-full h-full object-cover"
+            />
+            {/* Play/Pause button */}
+            <button
+                type="button"
+                onClick={togglePlay}
+                className={`absolute inset-0 flex items-center justify-center z-[2] transition-all ${
+                    isPlaying ? 'bg-transparent hover:bg-black/20' : 'bg-black/30 hover:bg-black/40'
+                }`}
+            >
+                {isPlaying ? (
+                    <div className="w-8 h-8 rounded-full bg-black/60 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                        <Pause size={16} className="text-white" fill="white" />
+                    </div>
+                ) : (
+                    <div className="w-10 h-10 rounded-full bg-black/60 flex items-center justify-center">
+                        <Play size={18} className="text-white ml-0.5" fill="white" />
+                    </div>
+                )}
+            </button>
+            {/* Remove button */}
+            <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onRemove(index); }}
+                className="absolute top-1 right-1 p-1 bg-destructive/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity z-10"
+            >
+                <X size={12} />
+            </button>
+        </div>
+    );
+}
+
+interface SortableDocumentProps {
+    doc: { name: string; url: string };
+    index: number;
+    onRemove: (index: number) => void;
+}
+
+function SortableDocument({ doc, index, onRemove }: SortableDocumentProps) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: doc.url });
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.5 : 1,
+        zIndex: isDragging ? 1 : 0,
+    };
+
+    return (
+        <div
+            ref={setNodeRef}
+            style={style}
+            className="flex items-center justify-between p-2 rounded-lg bg-background border border-muted-foreground/30 group"
+        >
+            <div className="flex items-center gap-2 min-w-0 flex-1">
+                <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground hover:text-foreground transition-colors shrink-0">
+                    <GripVertical size={14} />
+                </div>
+                <FileText size={14} className="text-foreground shrink-0" />
+                <span className="text-xs font-medium truncate">{doc.name}</span>
+            </div>
+            <button
+                type="button"
+                onClick={(e) => { e.stopPropagation(); onRemove(index); }}
+                className="p-1 text-foreground hover:text-destructive transition-colors"
+            >
+                <X size={14} />
+            </button>
+        </div>
+    );
+}
+
+// Hook para gerenciar drag & drop de arquivos do computador
+function useFileDrop(
+    onDrop: (files: FileList) => void,
+    acceptPattern: string,
+    disabled: boolean
+) {
+    const [isDragOver, setIsDragOver] = useState(false)
+
+    const handleDragOver = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        if (disabled) return
+        // Verificar se são arquivos (não elementos da página)
+        if (e.dataTransfer.types.includes('Files')) {
+            e.dataTransfer.dropEffect = 'copy'
+            setIsDragOver(true)
+        }
+    }, [disabled])
+
+    const handleDragLeave = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        // Só seta false se estiver saindo do container (não de um filho)
+        const rect = (e.currentTarget as HTMLElement).getBoundingClientRect()
+        const { clientX, clientY } = e
+        if (
+            clientX <= rect.left ||
+            clientX >= rect.right ||
+            clientY <= rect.top ||
+            clientY >= rect.bottom
+        ) {
+            setIsDragOver(false)
+        }
+    }, [])
+
+    const handleDrop = useCallback((e: React.DragEvent) => {
+        e.preventDefault()
+        e.stopPropagation()
+        setIsDragOver(false)
+        if (disabled) return
+
+        const files = e.dataTransfer.files
+        if (!files || files.length === 0) return
+
+        // Filtrar arquivos pelo tipo aceito
+        const acceptTypes = acceptPattern.split(',').map(t => t.trim())
+        const dataTransfer = new DataTransfer()
+
+        for (let i = 0; i < files.length; i++) {
+            const file = files[i]
+            const fileType = file.type
+            const fileExt = '.' + (file.name.split('.').pop()?.toLowerCase() || '')
+
+            const isAccepted = acceptTypes.some(pattern => {
+                if (pattern.endsWith('/*')) {
+                    // Ex: image/*, video/*
+                    const baseType = pattern.replace('/*', '')
+                    return fileType.startsWith(baseType)
+                }
+                // Extensões específicas (ex: .pdf, .doc)
+                return fileExt === pattern.toLowerCase()
+            })
+
+            if (isAccepted) {
+                dataTransfer.items.add(file)
+            }
+        }
+
+        if (dataTransfer.files.length > 0) {
+            onDrop(dataTransfer.files)
+        } else {
+            toast.error('Tipo de arquivo não aceito nesta área.')
+        }
+    }, [disabled, acceptPattern, onDrop])
+
+    return { isDragOver, handleDragOver, handleDragLeave, handleDrop }
+}
+
 interface MediaFieldsProps {
     formData: any
     isUploading: string | null
     handleFileUpload: (e: React.ChangeEvent<HTMLInputElement>, type: 'images' | 'videos' | 'documents') => Promise<void>
+    handleFilesUpload: (files: FileList, type: 'images' | 'videos' | 'documents') => Promise<void>
     removeFile: (index: number, type: 'images' | 'videos' | 'documents') => void
     sourceImages?: string[]
     isImportingImages?: boolean
     onImportImages?: (urls: string[]) => Promise<void>
     onRemoveSourceImage?: (index: number) => void
     onReorderImages?: (newImages: string[]) => void
+    onReorderVideos?: (newVideos: string[]) => void
+    onReorderDocuments?: (newDocuments: { name: string; url: string }[]) => void
     propertyTitle?: string
     onRemoveMultipleImages?: (urls: string[]) => void
 }
 
 export function MediaFields({ 
-    formData, isUploading, handleFileUpload, removeFile,
+    formData, isUploading, handleFileUpload, handleFilesUpload, removeFile,
     sourceImages = [], isImportingImages = false, onImportImages, onRemoveSourceImage, onReorderImages,
+    onReorderVideos, onReorderDocuments,
     propertyTitle, onRemoveMultipleImages
 }: MediaFieldsProps) {
     const [selectedSourceImages, setSelectedSourceImages] = useState<Set<number>>(new Set())
-    const [activeId, setActiveId] = useState<string | null>(null)
+    const [activeImageId, setActiveImageId] = useState<string | null>(null)
+    const [activeVideoId, setActiveVideoId] = useState<string | null>(null)
+    const [activeDocId, setActiveDocId] = useState<string | null>(null)
     const [isDownloading, setIsDownloading] = useState(false)
     const [selectedDownloadImages, setSelectedDownloadImages] = useState<Set<string>>(new Set())
+
+    // Drag & drop hooks para cada tipo de mídia
+    const imagesDrop = useFileDrop(
+        useCallback((files: FileList) => handleFilesUpload(files, 'images'), [handleFilesUpload]),
+        'image/*',
+        !!isUploading
+    )
+    const videosDrop = useFileDrop(
+        useCallback((files: FileList) => handleFilesUpload(files, 'videos'), [handleFilesUpload]),
+        'video/*',
+        !!isUploading
+    )
+    const documentsDrop = useFileDrop(
+        useCallback((files: FileList) => handleFilesUpload(files, 'documents'), [handleFilesUpload]),
+        '.pdf,.doc,.docx,.xls,.xlsx,.txt',
+        !!isUploading
+    )
 
     const toggleDownloadImage = (url: string) => {
         setSelectedDownloadImages(prev => {
@@ -175,28 +415,65 @@ export function MediaFields({
         })
     )
 
-    const handleDragStart = (event: any) => {
-        setActiveId(event.active.id)
+    // ── Image drag handlers ──
+    const handleImageDragStart = (event: any) => {
+        setActiveImageId(event.active.id)
     }
 
-    const handleDragEnd = (event: any) => {
+    const handleImageDragEnd = (event: any) => {
         const { active, over } = event
-        
         if (over && active.id !== over.id) {
             const oldIndex = formData.images.findIndex((img: string) => img === active.id)
             const newIndex = formData.images.findIndex((img: string) => img === over.id)
-            
             if (oldIndex !== -1 && newIndex !== -1 && onReorderImages) {
                 const newImages = arrayMove(formData.images, oldIndex, newIndex) as string[]
                 onReorderImages(newImages)
             }
         }
-        
-        setActiveId(null)
+        setActiveImageId(null)
     }
 
-    // Usaremos as URLs como IDs, então vamos criar um array de IDs para o SortableContext
+    // ── Video drag handlers ──
+    const handleVideoDragStart = (event: any) => {
+        setActiveVideoId(event.active.id)
+    }
+
+    const handleVideoDragEnd = (event: any) => {
+        const { active, over } = event
+        if (over && active.id !== over.id) {
+            const oldIndex = formData.videos.findIndex((v: string) => v === active.id)
+            const newIndex = formData.videos.findIndex((v: string) => v === over.id)
+            if (oldIndex !== -1 && newIndex !== -1 && onReorderVideos) {
+                const newVideos = arrayMove(formData.videos, oldIndex, newIndex) as string[]
+                onReorderVideos(newVideos)
+            }
+        }
+        setActiveVideoId(null)
+    }
+
+    // ── Document drag handlers ──
+    const handleDocDragStart = (event: any) => {
+        setActiveDocId(event.active.id)
+    }
+
+    const handleDocDragEnd = (event: any) => {
+        const { active, over } = event
+        if (over && active.id !== over.id) {
+            const docs = formData.documents as { name: string; url: string }[]
+            const oldIndex = docs.findIndex((d) => d.url === active.id)
+            const newIndex = docs.findIndex((d) => d.url === over.id)
+            if (oldIndex !== -1 && newIndex !== -1 && onReorderDocuments) {
+                const newDocs = arrayMove(docs, oldIndex, newIndex) as { name: string; url: string }[]
+                onReorderDocuments(newDocs)
+            }
+        }
+        setActiveDocId(null)
+    }
+
+    // IDs para SortableContext
     const imageIds = formData.images || []
+    const videoIds = formData.videos || []
+    const documentIds = (formData.documents || []).map((d: any) => d.url)
 
     const toggleSourceImage = (index: number) => {
         setSelectedSourceImages(prev => {
@@ -221,6 +498,9 @@ export function MediaFields({
         await onImportImages(urls)
         setSelectedSourceImages(new Set())
     }
+
+    // Estilos base para zonas de drop
+    const dropZoneActiveClass = 'ring-2 ring-secondary ring-inset bg-secondary/5 border-secondary/50'
 
     return (
         <div className="col-span-2 space-y-6">
@@ -325,10 +605,15 @@ export function MediaFields({
                     <DndContext 
                         sensors={sensors}
                         collisionDetection={closestCenter}
-                        onDragStart={handleDragStart}
-                        onDragEnd={handleDragEnd}
+                        onDragStart={handleImageDragStart}
+                        onDragEnd={handleImageDragEnd}
                     >
-                        <div className="grid grid-cols-4 md:grid-cols-6 gap-3 mb-3">
+                        <div 
+                            className={`grid grid-cols-4 md:grid-cols-6 gap-3 mb-3 rounded-xl p-2 -m-2 transition-all duration-200 ${imagesDrop.isDragOver ? dropZoneActiveClass : ''}`}
+                            onDragOver={imagesDrop.handleDragOver}
+                            onDragLeave={imagesDrop.handleDragLeave}
+                            onDrop={imagesDrop.handleDrop}
+                        >
                             <SortableContext 
                                 items={imageIds}
                                 strategy={rectSortingStrategy}
@@ -344,25 +629,32 @@ export function MediaFields({
                                     />
                                 ))}
                             </SortableContext>
-                            <label className="aspect-square rounded-lg bg-foreground/5 hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
-                            {isUploading === 'images' ? (
-                                <Loader2 className="w-6 h-6 text-foreground animate-spin" />
+                            {imagesDrop.isDragOver ? (
+                                <div className="aspect-square rounded-lg bg-secondary/10 flex flex-col items-center justify-center border-2 border-dashed border-secondary/60 animate-pulse">
+                                    <Upload size={20} className="text-secondary mb-1" />
+                                    <span className="text-[10px] font-bold text-secondary">Soltar aqui</span>
+                                </div>
                             ) : (
-                                <>
-                                    <Upload size={20} className="text-foreground mb-1" />
-                                    <span className="text-[10px] font-bold text-foreground">Carregar Imagem</span>
-                                </>
+                                <label className="aspect-square rounded-lg bg-background hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
+                                    {isUploading === 'images' ? (
+                                        <Loader2 className="w-6 h-6 text-foreground animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Upload size={20} className="text-foreground mb-1" />
+                                            <span className="text-[10px] font-bold text-foreground">Carregar Imagem</span>
+                                        </>
+                                    )}
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="image/*"
+                                        className="hidden"
+                                        onChange={(e) => handleFileUpload(e, 'images')}
+                                        disabled={!!isUploading}
+                                    />
+                                </label>
                             )}
-                            <input
-                                type="file"
-                                multiple
-                                accept="image/*"
-                                className="hidden"
-                                onChange={(e) => handleFileUpload(e, 'images')}
-                                disabled={!!isUploading}
-                            />
-                        </label>
-                    </div>
+                        </div>
                     {selectedDownloadImages.size > 0 && (
                         <button
                             type="button"
@@ -384,9 +676,9 @@ export function MediaFields({
                         </button>
                     )}
                     <DragOverlay>
-                        {activeId ? (
+                        {activeImageId ? (
                             <div className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 cursor-grabbing opacity-80 shadow-2xl scale-105 border border-muted-foreground/30">
-                                <img src={activeId} alt="Arrastando" className="w-full h-full object-cover pointer-events-none" />
+                                <img src={activeImageId} alt="Arrastando" className="w-full h-full object-cover pointer-events-none" />
                             </div>
                         ) : null}
                     </DragOverlay>
@@ -398,38 +690,70 @@ export function MediaFields({
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-muted-foreground tracking-wider">Vídeos</span>
                     </div>
-                    <div className="grid grid-cols-2 md:grid-cols-3 gap-3 mb-3">
-                        {formData.videos.map((url: string, index: number) => (
-                            <div key={index} className="relative aspect-video rounded-lg overflow-hidden group bg-black/5 flex items-center justify-center border border-muted-foreground/30">
-                                <Film size={24} className="text-foreground" />
-                                <button
-                                    type="button"
-                                    onClick={() => removeFile(index, 'videos')}
-                                    className="absolute top-1 right-1 p-1 bg-destructive/80 text-white rounded-full opacity-0 group-hover:opacity-100 transition-opacity"
-                                >
-                                    <X size={12} />
-                                </button>
-                            </div>
-                        ))}
-                        <label className="aspect-video rounded-lg bg-foreground/5 hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
-                            {isUploading === 'videos' ? (
-                                <Loader2 className="w-6 h-6 text-foreground animate-spin" />
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleVideoDragStart}
+                        onDragEnd={handleVideoDragEnd}
+                    >
+                        <div 
+                            className={`grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 rounded-xl p-2 -m-2 transition-all duration-200 ${videosDrop.isDragOver ? dropZoneActiveClass : ''}`}
+                            onDragOver={videosDrop.handleDragOver}
+                            onDragLeave={videosDrop.handleDragLeave}
+                            onDrop={videosDrop.handleDrop}
+                        >
+                            <SortableContext items={videoIds} strategy={rectSortingStrategy}>
+                                {formData.videos.map((url: string, index: number) => (
+                                    <SortableVideo
+                                        key={url}
+                                        url={url}
+                                        index={index}
+                                        onRemove={(i) => removeFile(i, 'videos')}
+                                    />
+                                ))}
+                            </SortableContext>
+                            {videosDrop.isDragOver ? (
+                                <div className="aspect-video rounded-lg bg-secondary/10 flex flex-col items-center justify-center border-2 border-dashed border-secondary/60 animate-pulse">
+                                    <Upload size={20} className="text-secondary mb-1" />
+                                    <span className="text-[10px] font-bold text-secondary">Soltar aqui</span>
+                                </div>
                             ) : (
-                                <>
-                                    <Upload size={20} className="text-foreground mb-1" />
-                                    <span className="text-[10px] font-bold text-foreground">Carregar Vídeo</span>
-                                </>
+                                <label className="aspect-video rounded-lg bg-background hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
+                                    {isUploading === 'videos' ? (
+                                        <Loader2 className="w-6 h-6 text-foreground animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Upload size={20} className="text-foreground mb-1" />
+                                            <span className="text-[10px] font-bold text-foreground">Carregar Vídeo</span>
+                                        </>
+                                    )}
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept="video/*"
+                                        className="hidden"
+                                        onChange={(e) => handleFileUpload(e, 'videos')}
+                                        disabled={!!isUploading}
+                                    />
+                                </label>
                             )}
-                            <input
-                                type="file"
-                                multiple
-                                accept="video/*"
-                                className="hidden"
-                                onChange={(e) => handleFileUpload(e, 'videos')}
-                                disabled={!!isUploading}
-                            />
-                        </label>
-                    </div>
+                        </div>
+                        <DragOverlay>
+                            {activeVideoId ? (
+                                <div className="relative aspect-video rounded-lg overflow-hidden bg-black cursor-grabbing opacity-80 shadow-2xl scale-105 border border-muted-foreground/30">
+                                    <video
+                                        src={`${activeVideoId}#t=0.5`}
+                                        preload="metadata"
+                                        muted
+                                        className="w-full h-full object-cover"
+                                    />
+                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                        <Film size={20} className="text-white" />
+                                    </div>
+                                </div>
+                            ) : null}
+                        </DragOverlay>
+                    </DndContext>
                 </div>
 
                 {/* Documentos */}
@@ -437,41 +761,66 @@ export function MediaFields({
                     <div className="flex items-center gap-2">
                         <span className="text-[10px] font-bold text-muted-foreground tracking-wider">Documentos</span>
                     </div>
-                    <div className="flex flex-col gap-2">
-                        {formData.documents.map((doc: any, index: number) => (
-                            <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-foreground/5 border border-muted-foreground/30 group">
-                                <div className="flex items-center gap-2 min-w-0">
-                                    <FileText size={14} className="text-foreground shrink-0" />
-                                    <span className="text-xs font-medium truncate">{doc.name}</span>
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragStart={handleDocDragStart}
+                        onDragEnd={handleDocDragEnd}
+                    >
+                        <div 
+                            className={`flex flex-col gap-2 rounded-xl p-2 -m-2 transition-all duration-200 ${documentsDrop.isDragOver ? dropZoneActiveClass : ''}`}
+                            onDragOver={documentsDrop.handleDragOver}
+                            onDragLeave={documentsDrop.handleDragLeave}
+                            onDrop={documentsDrop.handleDrop}
+                        >
+                            <SortableContext items={documentIds} strategy={verticalListSortingStrategy}>
+                                {formData.documents.map((doc: any, index: number) => (
+                                    <SortableDocument
+                                        key={doc.url}
+                                        doc={doc}
+                                        index={index}
+                                        onRemove={(i) => removeFile(i, 'documents')}
+                                    />
+                                ))}
+                            </SortableContext>
+                            {documentsDrop.isDragOver ? (
+                                <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/10 border-2 border-dashed border-secondary/60 animate-pulse">
+                                    <Upload size={16} className="text-secondary" />
+                                    <span className="text-sm font-medium text-secondary">Soltar documento aqui</span>
                                 </div>
-                                <button
-                                    type="button"
-                                    onClick={() => removeFile(index, 'documents')}
-                                    className="p-1 text-foreground hover:text-destructive transition-colors"
-                                >
-                                    <X size={14} />
-                                </button>
-                            </div>
-                        ))}
-                        <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-foreground/5 border border-muted-foreground/30 hover:bg-foreground/10 cursor-pointer transition-all">
-                            {isUploading === 'documents' ? (
-                                <Loader2 className="w-5 h-5 text-foreground animate-spin" />
                             ) : (
-                                <>
-                                    <Upload size={16} className="text-foreground" />
-                                    <span className="text-sm font-medium text-foreground">Carregar Documento</span>
-                                </>
+                                <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-background border border-muted-foreground/30 hover:bg-foreground/10 cursor-pointer transition-all">
+                                    {isUploading === 'documents' ? (
+                                        <Loader2 className="w-5 h-5 text-foreground animate-spin" />
+                                    ) : (
+                                        <>
+                                            <Upload size={16} className="text-foreground" />
+                                            <span className="text-sm font-medium text-foreground">Carregar Documento</span>
+                                        </>
+                                    )}
+                                    <input
+                                        type="file"
+                                        multiple
+                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+                                        className="hidden"
+                                        onChange={(e) => handleFileUpload(e, 'documents')}
+                                        disabled={!!isUploading}
+                                    />
+                                </label>
                             )}
-                            <input
-                                type="file"
-                                multiple
-                                accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
-                                className="hidden"
-                                onChange={(e) => handleFileUpload(e, 'documents')}
-                                disabled={!!isUploading}
-                            />
-                        </label>
-                    </div>
+                        </div>
+                        <DragOverlay>
+                            {activeDocId ? (
+                                <div className="flex items-center gap-2 p-2 rounded-lg bg-card border border-muted-foreground/30 shadow-2xl cursor-grabbing opacity-90">
+                                    <GripVertical size={14} className="text-muted-foreground" />
+                                    <FileText size={14} className="text-foreground" />
+                                    <span className="text-xs font-medium">
+                                        {(formData.documents as { name: string; url: string }[]).find((d) => d.url === activeDocId)?.name || 'Documento'}
+                                    </span>
+                                </div>
+                            ) : null}
+                        </DragOverlay>
+                    </DndContext>
                 </div>
             </div>
         </div>
