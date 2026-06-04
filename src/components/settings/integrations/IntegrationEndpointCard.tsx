@@ -1,9 +1,9 @@
+import { ComponentType } from 'react';
 import { useState, useEffect } from 'react';
 import { 
     Copy, 
     Check, 
     ExternalLink, 
-    LucideIcon, 
     Key, 
     BookOpen 
 } from 'lucide-react';
@@ -19,7 +19,7 @@ import { Modal } from '@/components/shared/Modal';
 interface IntegrationEndpointCardProps {
     title: string;
     description: string;
-    icon: LucideIcon;
+    icon: ComponentType<{ size?: number; className?: string }>;
     iconColor: string;
     endpoint: string;
     docsUrl?: string;

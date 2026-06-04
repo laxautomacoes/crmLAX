@@ -6,7 +6,7 @@ import { MarketDataCard } from '@/components/settings/integrations/MarketDataCar
 import { NewsFeedCard } from '@/components/settings/integrations/NewsFeedCard';
 import { GatewayCard } from '@/components/settings/integrations/GatewayCard';
 import { DocuSignCard } from '@/components/settings/integrations/DocuSignCard';
-import { Facebook, Chrome, Building2 } from 'lucide-react';
+import { MetaIcon, GoogleAdsIcon, PortalIcon } from '@/components/icons/BrandIcons';
 
 interface IntegrationsContentProps {
     tenantId: string;
@@ -35,8 +35,8 @@ export function IntegrationsContent({ tenantId, slug, customDomain }: Integratio
                     <IntegrationEndpointCard 
                         title="Facebook & Instagram Ads"
                         description="Capture leads do Facebook e Instagram em tempo real."
-                        icon={Facebook}
-                        iconColor="bg-[#1877F2]/10 text-[#1877F2]"
+                        icon={MetaIcon}
+                        iconColor="bg-[#0081FB]/10 text-[#0081FB]"
                         endpoint="/api/v1/connectors/facebook"
                         tenantId={tenantId}
                         slug={slug}
@@ -45,8 +45,8 @@ export function IntegrationsContent({ tenantId, slug, customDomain }: Integratio
                     <IntegrationEndpointCard 
                         title="Google Ads"
                         description="Integre formulários do Google Search e YouTube."
-                        icon={Chrome}
-                        iconColor="bg-foreground/10 text-foreground"
+                        icon={GoogleAdsIcon}
+                        iconColor="bg-[#4285F4]/10 text-[#4285F4]"
                         endpoint="/api/v1/connectors/google"
                         tenantId={tenantId}
                         slug={slug}
@@ -55,7 +55,7 @@ export function IntegrationsContent({ tenantId, slug, customDomain }: Integratio
                     <IntegrationEndpointCard 
                         title="Portais Imobiliários"
                         description="Receba leads do ZAP, VivaReal, OLX e outros portais."
-                        icon={Building2}
+                        icon={PortalIcon}
                         iconColor="bg-emerald-500/10 text-emerald-500"
                         endpoint="/api/v1/connectors/portals"
                         tenantId={tenantId}

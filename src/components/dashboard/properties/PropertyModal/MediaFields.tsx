@@ -317,6 +317,8 @@ interface MediaFieldsProps {
     onRemoveMultipleImages?: (urls: string[]) => void
     onDragStart?: () => void
     onDragEnd?: () => void
+    showImagesOnly?: boolean
+    showVideosDocsOnly?: boolean
 }
 
 export function MediaFields({ 
@@ -324,7 +326,9 @@ export function MediaFields({
     sourceImages = [], isImportingImages = false, onImportImages, onRemoveSourceImage, onReorderImages,
     onReorderVideos, onReorderDocuments,
     propertyTitle, onRemoveMultipleImages,
-    onDragStart: onDragStartProp, onDragEnd: onDragEndProp
+    onDragStart: onDragStartProp, onDragEnd: onDragEndProp,
+    showImagesOnly = false,
+    showVideosDocsOnly = false
 }: MediaFieldsProps) {
     const [selectedSourceImages, setSelectedSourceImages] = useState<Set<number>>(new Set())
     const [activeImageId, setActiveImageId] = useState<string | null>(null)
@@ -511,326 +515,356 @@ export function MediaFields({
     // Estilos base para zonas de drop
     const dropZoneActiveClass = 'ring-2 ring-secondary ring-inset bg-secondary/5 border-secondary/50'
 
-    return (
-        <div className="col-span-2 space-y-6">
-            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
-                Mídias e Documentos
-            </h4>
-
-            <div className="space-y-8">
-
-                {/* ── Imagens encontradas via Scraping ── */}
-                {sourceImages.length > 0 && (
-                    <div className="space-y-4">
-                        <div className="flex items-center justify-between">
-                            <div className="flex items-center gap-2">
-                                <Globe size={14} className="text-primary" />
-                                <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
-                                    Imagens encontradas na página ({sourceImages.length})
-                                </span>
-                            </div>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={selectAllSourceImages}
-                                    className="text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
-                                >
-                                    {selectedSourceImages.size === sourceImages.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
-                                </button>
-                            </div>
-                        </div>
-
-                        <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
-                            {sourceImages.map((url, index) => (
-                                <SourceImageItem
-                                    key={index}
-                                    url={url}
-                                    index={index}
-                                    isSelected={selectedSourceImages.has(index)}
-                                    onToggle={toggleSourceImage}
-                                    onRemove={(idx) => onRemoveSourceImage?.(idx)}
-                                />
-                            ))}
-                        </div>
-
-                        {/* Import button */}
-                        <button
-                            type="button"
-                            onClick={handleImport}
-                            disabled={isImportingImages || selectedSourceImages.size === 0}
-                            className="w-full flex items-center justify-center gap-2 px-4 py-3 md:py-2.5 rounded-lg font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-sm"
-                        >
-                            {isImportingImages ? (
-                                <>
-                                    <Loader2 size={16} className="animate-spin" />
-                                    Importando imagens...
-                                </>
-                            ) : (
-                                <>
-                                    <Download size={16} />
-                                    Importar {selectedSourceImages.size > 0 ? `${selectedSourceImages.size} imagem(ns)` : 'Imagens Selecionadas'}
-                                </>
-                            )}
-                        </button>
-
-                        <div className="h-px bg-border/40" />
-                    </div>
-                )}
-
-                {/* ── Imagens (já salvas no Storage) ── */}
+    const renderImages = () => (
+        <div className="space-y-8">
+            {/* ── Imagens encontradas via Scraping ── */}
+            {sourceImages.length > 0 && (
                 <div className="space-y-4">
                     <div className="flex items-center justify-between">
                         <div className="flex items-center gap-2">
-                            <span className="text-[10px] font-bold text-muted-foreground tracking-wider">Imagens</span>
+                            <Globe size={14} className="text-primary" />
+                            <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
+                                Imagens encontradas na página ({sourceImages.length})
+                            </span>
                         </div>
-                        {formData.images?.length > 0 && (
-                            <div className="flex items-center gap-3">
-                                {selectedDownloadImages.size >= 2 && (
-                                    <button
-                                        type="button"
-                                        onClick={() => {
-                                            const urls = Array.from(selectedDownloadImages)
-                                            if (onRemoveMultipleImages) {
-                                                onRemoveMultipleImages(urls)
-                                            }
-                                            setSelectedDownloadImages(new Set())
-                                        }}
-                                        className="text-[10px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/40 rounded-md px-2 py-1 transition-all uppercase tracking-wider flex items-center gap-1"
-                                    >
-                                        <Trash2 size={12} />
-                                        Excluir {selectedDownloadImages.size}
-                                    </button>
-                                )}
+                        <div className="flex items-center gap-2">
+                            <button
+                                type="button"
+                                onClick={selectAllSourceImages}
+                                className="text-[10px] font-bold text-muted-foreground hover:text-foreground transition-colors uppercase tracking-wider"
+                            >
+                                {selectedSourceImages.size === sourceImages.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-4 md:grid-cols-6 gap-3">
+                        {sourceImages.map((url, index) => (
+                            <SourceImageItem
+                                key={index}
+                                url={url}
+                                index={index}
+                                isSelected={selectedSourceImages.has(index)}
+                                onToggle={toggleSourceImage}
+                                onRemove={(idx) => onRemoveSourceImage?.(idx)}
+                            />
+                        ))}
+                    </div>
+
+                    {/* Import button */}
+                    <button
+                        type="button"
+                        onClick={handleImport}
+                        disabled={isImportingImages || selectedSourceImages.size === 0}
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 md:py-2.5 rounded-lg font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-sm"
+                    >
+                        {isImportingImages ? (
+                            <>
+                                <Loader2 size={16} className="animate-spin" />
+                                Importando imagens...
+                            </>
+                        ) : (
+                            <>
+                                <Download size={16} />
+                                Importar {selectedSourceImages.size > 0 ? `${selectedSourceImages.size} imagem(ns)` : 'Imagens Selecionadas'}
+                            </>
+                        )}
+                    </button>
+
+                    <div className="h-px bg-border/40" />
+                </div>
+            )}
+
+            <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                        <span className="text-[10px] font-bold text-foreground tracking-wider">Imagens</span>
+                    </div>
+                    {formData.images?.length > 0 && (
+                        <div className="flex items-center gap-3">
+                            {selectedDownloadImages.size >= 2 && (
                                 <button
                                     type="button"
-                                    onClick={selectAllDownloadImages}
-                                    className={`text-[10px] font-bold rounded-md px-2 py-1 transition-all uppercase tracking-wider ${selectedDownloadImages.size > 0 ? 'text-foreground border border-muted-foreground/50 hover:bg-foreground/10' : 'text-muted-foreground/50 border border-border/30 hover:text-muted-foreground hover:border-border/50'}`}
+                                    onClick={() => {
+                                        const urls = Array.from(selectedDownloadImages)
+                                        if (onRemoveMultipleImages) {
+                                            onRemoveMultipleImages(urls)
+                                        }
+                                        setSelectedDownloadImages(new Set())
+                                    }}
+                                    className="text-[10px] font-bold text-red-400 hover:text-red-300 hover:bg-red-500/10 border border-red-500/40 rounded-md px-2 py-1 transition-all uppercase tracking-wider flex items-center gap-1"
                                 >
-                                    {selectedDownloadImages.size === formData.images.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                                    <Trash2 size={12} />
+                                    Excluir {selectedDownloadImages.size}
                                 </button>
+                            )}
+                            <button
+                                type="button"
+                                onClick={selectAllDownloadImages}
+                                className={`text-[10px] font-bold rounded-md px-2 py-1 transition-all uppercase tracking-wider ${selectedDownloadImages.size > 0 ? 'text-foreground border border-muted-foreground/50 hover:bg-foreground/10' : 'text-muted-foreground/50 border border-border/30 hover:text-muted-foreground hover:border-border/50'}`}
+                            >
+                                {selectedDownloadImages.size === formData.images.length ? 'Desmarcar Todas' : 'Selecionar Todas'}
+                            </button>
+                        </div>
+                    )}
+                </div>
+                <DndContext 
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleImageDragStart}
+                    onDragEnd={handleImageDragEnd}
+                >
+                    <div 
+                        className={`grid grid-cols-4 md:grid-cols-6 gap-3 mb-3 rounded-xl p-2 -m-2 transition-all duration-200 ${imagesDrop.isDragOver ? dropZoneActiveClass : ''}`}
+                        onDragOver={imagesDrop.handleDragOver}
+                        onDragLeave={imagesDrop.handleDragLeave}
+                        onDrop={imagesDrop.handleDrop}
+                    >
+                        <SortableContext 
+                            items={imageIds}
+                            strategy={rectSortingStrategy}
+                        >
+                            {formData.images.map((url: string, index: number) => (
+                                <SortableImage 
+                                    key={url} 
+                                    url={url} 
+                                    index={index} 
+                                    onRemove={(i) => removeFile(i, 'images')}
+                                    isSelected={selectedDownloadImages.has(url)}
+                                    onToggleSelect={toggleDownloadImage}
+                                />
+                            ))}
+                        </SortableContext>
+                        {imagesDrop.isDragOver ? (
+                            <div className="aspect-square rounded-lg bg-secondary/10 flex flex-col items-center justify-center border-2 border-dashed border-secondary/60 animate-pulse">
+                                <Upload size={20} className="text-secondary mb-1" />
+                                <span className="text-[10px] font-bold text-secondary">Soltar aqui</span>
                             </div>
+                        ) : (
+                            <label className="aspect-square rounded-lg bg-background hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
+                                {isUploading === 'images' ? (
+                                    <Loader2 className="w-6 h-6 text-foreground animate-spin" />
+                                ) : (
+                                    <>
+                                        <Upload size={20} className="text-foreground mb-1" />
+                                        <span className="text-[10px] font-bold text-foreground">Carregar Imagem</span>
+                                    </>
+                                )}
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="image/*"
+                                    className="hidden"
+                                    onChange={(e) => handleFileUpload(e, 'images')}
+                                    disabled={!!isUploading}
+                                />
+                            </label>
                         )}
                     </div>
-                    <DndContext 
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragStart={handleImageDragStart}
-                        onDragEnd={handleImageDragEnd}
+                {selectedDownloadImages.size > 0 && (
+                    <button
+                        type="button"
+                        onClick={handleDownloadImages}
+                        disabled={isDownloading}
+                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-muted-foreground/30 text-muted-foreground hover:bg-foreground/5 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
-                        <div 
-                            className={`grid grid-cols-4 md:grid-cols-6 gap-3 mb-3 rounded-xl p-2 -m-2 transition-all duration-200 ${imagesDrop.isDragOver ? dropZoneActiveClass : ''}`}
-                            onDragOver={imagesDrop.handleDragOver}
-                            onDragLeave={imagesDrop.handleDragLeave}
-                            onDrop={imagesDrop.handleDrop}
-                        >
-                            <SortableContext 
-                                items={imageIds}
-                                strategy={rectSortingStrategy}
-                            >
-                                {formData.images.map((url: string, index: number) => (
-                                    <SortableImage 
-                                        key={url} 
-                                        url={url} 
-                                        index={index} 
-                                        onRemove={(i) => removeFile(i, 'images')}
-                                        isSelected={selectedDownloadImages.has(url)}
-                                        onToggleSelect={toggleDownloadImage}
-                                    />
-                                ))}
-                            </SortableContext>
-                            {imagesDrop.isDragOver ? (
-                                <div className="aspect-square rounded-lg bg-secondary/10 flex flex-col items-center justify-center border-2 border-dashed border-secondary/60 animate-pulse">
-                                    <Upload size={20} className="text-secondary mb-1" />
-                                    <span className="text-[10px] font-bold text-secondary">Soltar aqui</span>
-                                </div>
-                            ) : (
-                                <label className="aspect-square rounded-lg bg-background hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
-                                    {isUploading === 'images' ? (
-                                        <Loader2 className="w-6 h-6 text-foreground animate-spin" />
-                                    ) : (
-                                        <>
-                                            <Upload size={20} className="text-foreground mb-1" />
-                                            <span className="text-[10px] font-bold text-foreground">Carregar Imagem</span>
-                                        </>
-                                    )}
-                                    <input
-                                        type="file"
-                                        multiple
-                                        accept="image/*"
-                                        className="hidden"
-                                        onChange={(e) => handleFileUpload(e, 'images')}
-                                        disabled={!!isUploading}
-                                    />
-                                </label>
-                            )}
+                        {isDownloading ? (
+                            <>
+                                <Loader2 className="animate-spin" size={14} />
+                                <span>Baixando fotos...</span>
+                            </>
+                        ) : (
+                            <>
+                                <Download size={14} />
+                                <span>Baixar {selectedDownloadImages.size} {selectedDownloadImages.size === 1 ? 'foto selecionada' : 'fotos selecionadas'}</span>
+                            </>
+                        )}
+                    </button>
+                )}
+                <DragOverlay>
+                    {activeImageId ? (
+                        <div className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 cursor-grabbing opacity-80 shadow-2xl scale-105 border border-muted-foreground/30">
+                            <img src={activeImageId} alt="Arrastando" className="w-full h-full object-cover pointer-events-none" />
                         </div>
-                    {selectedDownloadImages.size > 0 && (
-                        <button
-                            type="button"
-                            onClick={handleDownloadImages}
-                            disabled={isDownloading}
-                            className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-muted-foreground/30 text-muted-foreground hover:bg-foreground/5 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
-                        >
-                            {isDownloading ? (
-                                <>
-                                    <Loader2 className="animate-spin" size={14} />
-                                    <span>Baixando fotos...</span>
-                                </>
-                            ) : (
-                                <>
-                                    <Download size={14} />
-                                    <span>Baixar {selectedDownloadImages.size} {selectedDownloadImages.size === 1 ? 'foto selecionada' : 'fotos selecionadas'}</span>
-                                </>
-                            )}
-                        </button>
-                    )}
+                    ) : null}
+                </DragOverlay>
+            </DndContext>
+        </div>
+    </div>
+    )
+
+    const renderVideosDocs = () => (
+        <div className="space-y-8">
+            {/* Vídeos */}
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-foreground tracking-wider">Vídeos</span>
+                </div>
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleVideoDragStart}
+                    onDragEnd={handleVideoDragEnd}
+                >
+                    <div 
+                        className={`grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 rounded-xl p-2 -m-2 transition-all duration-200 ${videosDrop.isDragOver ? dropZoneActiveClass : ''}`}
+                        onDragOver={videosDrop.handleDragOver}
+                        onDragLeave={videosDrop.handleDragLeave}
+                        onDrop={videosDrop.handleDrop}
+                    >
+                        <SortableContext items={videoIds} strategy={rectSortingStrategy}>
+                            {formData.videos.map((url: string, index: number) => (
+                                <SortableVideo
+                                    key={url}
+                                    url={url}
+                                    index={index}
+                                    onRemove={(i) => removeFile(i, 'videos')}
+                                />
+                            ))}
+                        </SortableContext>
+                        {videosDrop.isDragOver ? (
+                            <div className="aspect-video rounded-lg bg-secondary/10 flex flex-col items-center justify-center border-2 border-dashed border-secondary/60 animate-pulse">
+                                <Upload size={20} className="text-secondary mb-1" />
+                                <span className="text-[10px] font-bold text-secondary">Soltar aqui</span>
+                            </div>
+                        ) : (
+                            <label className="aspect-video rounded-lg bg-background hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
+                                {isUploading === 'videos' ? (
+                                    <Loader2 className="w-6 h-6 text-foreground animate-spin" />
+                                ) : (
+                                    <>
+                                        <Upload size={20} className="text-foreground mb-1" />
+                                        <span className="text-[10px] font-bold text-foreground">Carregar Vídeo</span>
+                                    </>
+                                )}
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept="video/*"
+                                    className="hidden"
+                                    onChange={(e) => handleFileUpload(e, 'videos')}
+                                    disabled={!!isUploading}
+                                />
+                            </label>
+                        )}
+                    </div>
                     <DragOverlay>
-                        {activeImageId ? (
-                            <div className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 cursor-grabbing opacity-80 shadow-2xl scale-105 border border-muted-foreground/30">
-                                <img src={activeImageId} alt="Arrastando" className="w-full h-full object-cover pointer-events-none" />
+                        {activeVideoId ? (
+                            <div className="relative aspect-video rounded-lg overflow-hidden bg-black cursor-grabbing opacity-80 shadow-2xl scale-105 border border-muted-foreground/30">
+                                <video
+                                    src={`${activeVideoId}#t=0.5`}
+                                    preload="metadata"
+                                    muted
+                                    className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                                    <Film size={20} className="text-white" />
+                                </div>
                             </div>
                         ) : null}
                     </DragOverlay>
                 </DndContext>
             </div>
 
-                {/* Vídeos */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-muted-foreground tracking-wider">Vídeos</span>
-                    </div>
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragStart={handleVideoDragStart}
-                        onDragEnd={handleVideoDragEnd}
-                    >
-                        <div 
-                            className={`grid grid-cols-2 md:grid-cols-3 gap-3 mb-3 rounded-xl p-2 -m-2 transition-all duration-200 ${videosDrop.isDragOver ? dropZoneActiveClass : ''}`}
-                            onDragOver={videosDrop.handleDragOver}
-                            onDragLeave={videosDrop.handleDragLeave}
-                            onDrop={videosDrop.handleDrop}
-                        >
-                            <SortableContext items={videoIds} strategy={rectSortingStrategy}>
-                                {formData.videos.map((url: string, index: number) => (
-                                    <SortableVideo
-                                        key={url}
-                                        url={url}
-                                        index={index}
-                                        onRemove={(i) => removeFile(i, 'videos')}
-                                    />
-                                ))}
-                            </SortableContext>
-                            {videosDrop.isDragOver ? (
-                                <div className="aspect-video rounded-lg bg-secondary/10 flex flex-col items-center justify-center border-2 border-dashed border-secondary/60 animate-pulse">
-                                    <Upload size={20} className="text-secondary mb-1" />
-                                    <span className="text-[10px] font-bold text-secondary">Soltar aqui</span>
-                                </div>
-                            ) : (
-                                <label className="aspect-video rounded-lg bg-background hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
-                                    {isUploading === 'videos' ? (
-                                        <Loader2 className="w-6 h-6 text-foreground animate-spin" />
-                                    ) : (
-                                        <>
-                                            <Upload size={20} className="text-foreground mb-1" />
-                                            <span className="text-[10px] font-bold text-foreground">Carregar Vídeo</span>
-                                        </>
-                                    )}
-                                    <input
-                                        type="file"
-                                        multiple
-                                        accept="video/*"
-                                        className="hidden"
-                                        onChange={(e) => handleFileUpload(e, 'videos')}
-                                        disabled={!!isUploading}
-                                    />
-                                </label>
-                            )}
-                        </div>
-                        <DragOverlay>
-                            {activeVideoId ? (
-                                <div className="relative aspect-video rounded-lg overflow-hidden bg-black cursor-grabbing opacity-80 shadow-2xl scale-105 border border-muted-foreground/30">
-                                    <video
-                                        src={`${activeVideoId}#t=0.5`}
-                                        preload="metadata"
-                                        muted
-                                        className="w-full h-full object-cover"
-                                    />
-                                    <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                                        <Film size={20} className="text-white" />
-                                    </div>
-                                </div>
-                            ) : null}
-                        </DragOverlay>
-                    </DndContext>
+            {/* Documentos */}
+            <div className="space-y-4">
+                <div className="flex items-center gap-2">
+                    <span className="text-[10px] font-bold text-foreground tracking-wider">Documentos</span>
                 </div>
+                <DndContext
+                    sensors={sensors}
+                    collisionDetection={closestCenter}
+                    onDragStart={handleDocDragStart}
+                    onDragEnd={handleDocDragEnd}
+                >
+                    <div 
+                        className={`flex flex-col gap-2 rounded-xl p-2 -m-2 transition-all duration-200 ${documentsDrop.isDragOver ? dropZoneActiveClass : ''}`}
+                        onDragOver={documentsDrop.handleDragOver}
+                        onDragLeave={documentsDrop.handleDragLeave}
+                        onDrop={documentsDrop.handleDrop}
+                    >
+                        <SortableContext items={documentIds} strategy={verticalListSortingStrategy}>
+                            {formData.documents.map((doc: any, index: number) => (
+                                <SortableDocument
+                                    key={doc.url}
+                                    doc={doc}
+                                    index={index}
+                                    onRemove={(i) => removeFile(i, 'documents')}
+                                />
+                            ))}
+                        </SortableContext>
+                        {documentsDrop.isDragOver ? (
+                            <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/10 border-2 border-dashed border-secondary/60 animate-pulse">
+                                <Upload size={16} className="text-secondary" />
+                                <span className="text-sm font-medium text-secondary">Soltar documento aqui</span>
+                            </div>
+                        ) : (
+                            <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-background border border-muted-foreground/30 hover:bg-foreground/10 cursor-pointer transition-all">
+                                {isUploading === 'documents' ? (
+                                    <Loader2 className="w-5 h-5 text-foreground animate-spin" />
+                                ) : (
+                                    <>
+                                        <Upload size={16} className="text-foreground" />
+                                        <span className="text-sm font-medium text-foreground">Carregar Documento</span>
+                                    </>
+                                )}
+                                <input
+                                    type="file"
+                                    multiple
+                                    accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
+                                    className="hidden"
+                                    onChange={(e) => handleFileUpload(e, 'documents')}
+                                    disabled={!!isUploading}
+                                />
+                            </label>
+                        )}
+                    </div>
+                    <DragOverlay>
+                        {activeDocId ? (
+                            <div className="flex items-center gap-2 p-2 rounded-lg bg-card border border-muted-foreground/30 shadow-2xl cursor-grabbing opacity-90">
+                                <GripVertical size={14} className="text-muted-foreground" />
+                                <FileText size={14} className="text-foreground" />
+                                <span className="text-xs font-medium">
+                                    {(formData.documents as { name: string; url: string }[]).find((d) => d.url === activeDocId)?.name || 'Documento'}
+                                </span>
+                            </div>
+                        ) : null}
+                    </DragOverlay>
+                </DndContext>
+            </div>
+        </div>
+    )
 
-                {/* Documentos */}
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2">
-                        <span className="text-[10px] font-bold text-muted-foreground tracking-wider">Documentos</span>
-                    </div>
-                    <DndContext
-                        sensors={sensors}
-                        collisionDetection={closestCenter}
-                        onDragStart={handleDocDragStart}
-                        onDragEnd={handleDocDragEnd}
-                    >
-                        <div 
-                            className={`flex flex-col gap-2 rounded-xl p-2 -m-2 transition-all duration-200 ${documentsDrop.isDragOver ? dropZoneActiveClass : ''}`}
-                            onDragOver={documentsDrop.handleDragOver}
-                            onDragLeave={documentsDrop.handleDragLeave}
-                            onDrop={documentsDrop.handleDrop}
-                        >
-                            <SortableContext items={documentIds} strategy={verticalListSortingStrategy}>
-                                {formData.documents.map((doc: any, index: number) => (
-                                    <SortableDocument
-                                        key={doc.url}
-                                        doc={doc}
-                                        index={index}
-                                        onRemove={(i) => removeFile(i, 'documents')}
-                                    />
-                                ))}
-                            </SortableContext>
-                            {documentsDrop.isDragOver ? (
-                                <div className="flex items-center justify-center gap-2 p-3 rounded-lg bg-secondary/10 border-2 border-dashed border-secondary/60 animate-pulse">
-                                    <Upload size={16} className="text-secondary" />
-                                    <span className="text-sm font-medium text-secondary">Soltar documento aqui</span>
-                                </div>
-                            ) : (
-                                <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-background border border-muted-foreground/30 hover:bg-foreground/10 cursor-pointer transition-all">
-                                    {isUploading === 'documents' ? (
-                                        <Loader2 className="w-5 h-5 text-foreground animate-spin" />
-                                    ) : (
-                                        <>
-                                            <Upload size={16} className="text-foreground" />
-                                            <span className="text-sm font-medium text-foreground">Carregar Documento</span>
-                                        </>
-                                    )}
-                                    <input
-                                        type="file"
-                                        multiple
-                                        accept=".pdf,.doc,.docx,.xls,.xlsx,.txt"
-                                        className="hidden"
-                                        onChange={(e) => handleFileUpload(e, 'documents')}
-                                        disabled={!!isUploading}
-                                    />
-                                </label>
-                            )}
-                        </div>
-                        <DragOverlay>
-                            {activeDocId ? (
-                                <div className="flex items-center gap-2 p-2 rounded-lg bg-card border border-muted-foreground/30 shadow-2xl cursor-grabbing opacity-90">
-                                    <GripVertical size={14} className="text-muted-foreground" />
-                                    <FileText size={14} className="text-foreground" />
-                                    <span className="text-xs font-medium">
-                                        {(formData.documents as { name: string; url: string }[]).find((d) => d.url === activeDocId)?.name || 'Documento'}
-                                    </span>
-                                </div>
-                            ) : null}
-                        </DragOverlay>
-                    </DndContext>
-                </div>
+    if (showImagesOnly) {
+        return (
+            <div className="col-span-2 space-y-4">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
+                    Imagens
+                </h3>
+                {renderImages()}
+            </div>
+        )
+    }
+
+    if (showVideosDocsOnly) {
+        return (
+            <div className="col-span-2 space-y-4">
+                <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
+                    Vídeos e Documentos
+                </h3>
+                {renderVideosDocs()}
+            </div>
+        )
+    }
+
+    return (
+        <div className="col-span-2 space-y-6">
+            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
+                Mídias e Documentos
+            </h4>
+            <div className="space-y-8">
+                {renderImages()}
+                {renderVideosDocs()}
             </div>
         </div>
     )

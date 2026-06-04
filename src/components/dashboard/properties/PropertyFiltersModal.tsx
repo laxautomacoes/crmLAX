@@ -156,7 +156,7 @@ export function PropertyFiltersModal({
             isOpen={isOpen} 
             onClose={onClose} 
             title={<h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">Filtros e Ações</h3>}
-            size="lg"
+            size="xl"
             extraHeaderContent={
                 <div className="flex items-center gap-2">
                     <button

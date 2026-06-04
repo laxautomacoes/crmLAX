@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { Building2, Plus, Trash2, Layers } from 'lucide-react'
+import { Building2, Plus, Trash2, Layers, ChevronDown, ChevronRight } from 'lucide-react'
 import { formatCurrencyBRL } from '@/lib/utils/currency'
 
 interface TowersFieldsProps {
@@ -31,6 +32,14 @@ function getEmptyTorre(index: number) {
 
 export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
     const torres = formData.details.empreendimento?.torres || []
+    const [expandedTorres, setExpandedTorres] = useState<Record<number, boolean>>({ 0: true })
+
+    const toggleExpand = (index: number) => {
+        setExpandedTorres(prev => ({
+            ...prev,
+            [index]: !prev[index]
+        }))
+    }
 
     const updateTorres = (newTorres: typeof torres) => {
         setFormData({
@@ -46,7 +55,12 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
     }
 
     const addTorre = () => {
-        updateTorres([...torres, getEmptyTorre(torres.length)])
+        const newIndex = torres.length
+        updateTorres([...torres, getEmptyTorre(newIndex)])
+        setExpandedTorres(prev => ({
+            ...prev,
+            [newIndex]: true
+        }))
     }
 
     const removeTorre = (torreIndex: number) => {
@@ -115,9 +129,9 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
             {torres.map((torre: any, torreIndex: number) => (
                 <div key={torreIndex} className="rounded-xl border border-border/60 overflow-hidden">
                     {/* Torre Header */}
-                    <div className="flex items-center justify-between gap-3 p-4 bg-foreground/5 border-b border-border/40">
+                    <div className={`flex items-center justify-between gap-3 p-4 bg-foreground/5 ${expandedTorres[torreIndex] ? 'border-b border-border/40' : ''}`}>
                         <div className="flex items-center gap-3 flex-1">
-                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-secondary-foreground font-black text-sm shadow-sm">
+                            <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-secondary-foreground font-black text-sm shadow-sm shrink-0">
                                 {torreIndex + 1}
                             </div>
                             <FormInput
@@ -126,98 +140,109 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
                                 placeholder="Nome da Torre"
                             />
                         </div>
-                        <button
-                            type="button"
-                            onClick={() => removeTorre(torreIndex)}
-                            className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
-                            title="Remover torre"
-                        >
-                            <Trash2 size={16} />
-                        </button>
+                        <div className="flex items-center gap-1.5 shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => removeTorre(torreIndex)}
+                                className="flex items-center justify-center w-8 h-8 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                                title="Remover torre"
+                            >
+                                <Trash2 size={16} />
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => toggleExpand(torreIndex)}
+                                className="flex items-center justify-center w-8 h-8 rounded-lg hover:bg-foreground/10 text-muted-foreground transition-all"
+                                title={expandedTorres[torreIndex] ? "Recolher torre" : "Expandir torre"}
+                            >
+                                {expandedTorres[torreIndex] ? <ChevronDown size={18} /> : <ChevronRight size={18} />}
+                            </button>
+                        </div>
                     </div>
 
                     {/* Tipologias */}
-                    <div className="p-4 space-y-4">
-                        {torre.tipologias?.map((tip: any, tipIndex: number) => (
-                            <div key={tipIndex} className="space-y-4 p-4 rounded-xl bg-foreground/5 border border-border/30 relative">
-                                <div className="flex items-center justify-between">
-                                    <span className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
-                                        <Layers size={12} />
-                                        Tipologia {tipIndex + 1}
-                                    </span>
-                                    {torre.tipologias.length > 1 && (
-                                        <button
-                                            type="button"
-                                            onClick={() => removeTipologia(torreIndex, tipIndex)}
-                                            className="flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
-                                            title="Remover tipologia"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
-                                    )}
+                    {expandedTorres[torreIndex] && (
+                        <div className="p-4 space-y-4">
+                            {torre.tipologias?.map((tip: any, tipIndex: number) => (
+                                <div key={tipIndex} className="space-y-4 p-4 rounded-xl bg-foreground/5 border border-border/30 relative">
+                                    <div className="flex items-center justify-between">
+                                        <span className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
+                                            Tipologia {tipIndex + 1}
+                                        </span>
+                                        {torre.tipologias.length > 1 && (
+                                            <button
+                                                type="button"
+                                                onClick={() => removeTipologia(torreIndex, tipIndex)}
+                                                className="flex items-center justify-center w-7 h-7 rounded-lg text-muted-foreground hover:text-destructive hover:bg-destructive/10 transition-all"
+                                                title="Remover tipologia"
+                                            >
+                                                <Trash2 size={14} />
+                                            </button>
+                                        )}
+                                    </div>
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-4">
+                                        <FormSelect
+                                            label="Tipo"
+                                            value={tip.tipo}
+                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'tipo', e.target.value)}
+                                            options={[
+                                                { value: 'apartment', label: 'Apartamento' },
+                                                { value: 'penthouse', label: 'Cobertura' },
+                                                { value: 'studio', label: 'Studio' },
+                                                { value: 'house', label: 'Casa' },
+                                                { value: 'commercial', label: 'Comercial' }
+                                            ]}
+                                        />
+                                        <FormInput
+                                            label="Dormitórios"
+                                            type="number"
+                                            value={tip.dormitorios}
+                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'dormitorios', e.target.value)}
+                                        />
+                                        <FormInput
+                                            label="Suítes"
+                                            type="number"
+                                            value={tip.suites}
+                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'suites', e.target.value)}
+                                        />
+                                        <FormInput
+                                            label="Área Priv. (m²)"
+                                            type="number"
+                                            value={tip.area_privativa}
+                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'area_privativa', e.target.value)}
+                                        />
+                                        <FormInput
+                                            label="Vagas"
+                                            type="number"
+                                            value={tip.vagas}
+                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'vagas', e.target.value)}
+                                        />
+                                        <FormInput
+                                            label="Preço a partir (R$)"
+                                            value={tip.preco_a_partir}
+                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'preco_a_partir', formatCurrencyBRL(e.target.value))}
+                                            placeholder="0,00"
+                                        />
+                                        <FormInput
+                                            label="Unidades/Andar"
+                                            type="number"
+                                            value={tip.unidades_por_andar}
+                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'unidades_por_andar', e.target.value)}
+                                        />
+                                    </div>
                                 </div>
-                                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-4">
-                                    <FormSelect
-                                        label="Tipo"
-                                        value={tip.tipo}
-                                        onChange={(e) => updateTipologia(torreIndex, tipIndex, 'tipo', e.target.value)}
-                                        options={[
-                                            { value: 'apartment', label: 'Apartamento' },
-                                            { value: 'penthouse', label: 'Cobertura' },
-                                            { value: 'studio', label: 'Studio' },
-                                            { value: 'house', label: 'Casa' },
-                                            { value: 'commercial', label: 'Comercial' }
-                                        ]}
-                                    />
-                                    <FormInput
-                                        label="Dormitórios"
-                                        type="number"
-                                        value={tip.dormitorios}
-                                        onChange={(e) => updateTipologia(torreIndex, tipIndex, 'dormitorios', e.target.value)}
-                                    />
-                                    <FormInput
-                                        label="Suítes"
-                                        type="number"
-                                        value={tip.suites}
-                                        onChange={(e) => updateTipologia(torreIndex, tipIndex, 'suites', e.target.value)}
-                                    />
-                                    <FormInput
-                                        label="Área Priv. (m²)"
-                                        type="number"
-                                        value={tip.area_privativa}
-                                        onChange={(e) => updateTipologia(torreIndex, tipIndex, 'area_privativa', e.target.value)}
-                                    />
-                                    <FormInput
-                                        label="Vagas"
-                                        type="number"
-                                        value={tip.vagas}
-                                        onChange={(e) => updateTipologia(torreIndex, tipIndex, 'vagas', e.target.value)}
-                                    />
-                                    <FormInput
-                                        label="Preço a partir (R$)"
-                                        value={tip.preco_a_partir}
-                                        onChange={(e) => updateTipologia(torreIndex, tipIndex, 'preco_a_partir', formatCurrencyBRL(e.target.value))}
-                                        placeholder="0,00"
-                                    />
-                                    <FormInput
-                                        label="Unidades/Andar"
-                                        type="number"
-                                        value={tip.unidades_por_andar}
-                                        onChange={(e) => updateTipologia(torreIndex, tipIndex, 'unidades_por_andar', e.target.value)}
-                                    />
-                                </div>
-                            </div>
-                        ))}
+                            ))}
 
-                        <button
-                            type="button"
-                            onClick={() => addTipologia(torreIndex)}
-                            className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-muted-foreground border border-dashed border-border/60 hover:bg-foreground/5 hover:text-foreground transition-all"
-                        >
-                            <Plus size={14} />
-                            Tipologia
-                        </button>
-                    </div>
+                            <button
+                                type="button"
+                                onClick={() => addTipologia(torreIndex)}
+                                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-muted-foreground border border-dashed border-border/60 hover:bg-foreground/5 hover:text-foreground transition-all"
+                            >
+                                <Plus size={14} />
+                                Tipologia
+                            </button>
+                        </div>
+                    )}
                 </div>
             ))}
         </div>

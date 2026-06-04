@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
 import { 
-    CreditCard, 
     ExternalLink, 
     Settings2, 
     ShieldCheck 
 } from 'lucide-react';
+import { StripeIcon, CheckoutIcon } from '@/components/icons/BrandIcons';
 import { Switch } from '@/components/ui/Switch';
 import { 
     getIntegration, 
@@ -48,7 +48,7 @@ export function GatewayCard({
         ? 'Processamento oficial de cartões e recorrência.' 
         : 'Página de checkout otimizada para conversão.';
     
-    const Icon = isStripe ? CreditCard : ShieldCheck;
+    const Icon = isStripe ? StripeIcon : CheckoutIcon;
     const iconColor = isStripe ? 'bg-[#635BFF]/10 text-[#635BFF]' : 'bg-secondary/10 text-secondary';
 
     return (

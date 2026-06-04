@@ -128,6 +128,19 @@ export function PropertyDetailsContent({
     const formattedCondo = details.valor_condominio ? `R$ ${Number(details.valor_condominio).toLocaleString('pt-BR')}` : 'Sob consulta';
     const formattedIptu = details.valor_iptu ? `R$ ${Number(details.valor_iptu).toLocaleString('pt-BR')}` : 'Sob consulta';
 
+    const formatPrevisaoValue = () => {
+        if (!details.is_empreendimento) return '-';
+        const previsao = details.empreendimento?.previsao_entrega;
+        if (!previsao) return '-';
+        const formatted = formatPrevisaoEntrega(previsao);
+        const monthsRemaining = calculateMonthsRemaining(previsao);
+        if (monthsRemaining) {
+            return `${formatted} (${monthsRemaining})`;
+        }
+        return formatted;
+    };
+    const previsaoVal = formatPrevisaoValue();
+
     const endereco = details.endereco || {};
     const fullAddress = [
         endereco.rua,
@@ -139,36 +152,118 @@ export function PropertyDetailsContent({
         endereco.cep
     ].filter(Boolean).join(', ');
 
+    const hasCoordinates = !!(endereco.latitude && endereco.longitude);
+
+    const handleScrollToLocation = () => {
+        if (!hasCoordinates) return;
+        const el = document.getElementById('property-location');
+        if (el) {
+            el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+    };
+
     return (
         <div className={cn("w-full", !isModal && "bg-background min-h-screen p-4 md:p-8")}>
             <div className={cn("max-w-7xl mx-auto", !isModal && "space-y-8")}>
 
 
-                {/* ── Navegação de Abas (Empreendimento) ── */}
-                {details.is_empreendimento && (
-                    <div className="flex items-center gap-1 p-1 bg-card border border-border/40 rounded-lg mb-4">
-                        <button
-                            onClick={() => setActiveTab('details')}
-                            className={`flex-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-md transition-all ${
-                                activeTab === 'details'
-                                    ? 'bg-secondary text-secondary-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:bg-muted/50'
-                            }`}
-                        >
-                            Detalhes
-                        </button>
-                        <button
-                            onClick={() => setActiveTab('price_table')}
-                            className={`flex-1 px-4 py-2 text-xs font-black uppercase tracking-wider rounded-md transition-all ${
-                                activeTab === 'price_table'
-                                    ? 'bg-secondary text-secondary-foreground shadow-sm'
-                                    : 'text-muted-foreground hover:bg-muted/50'
-                            }`}
-                        >
-                            Tabela de Preços
-                        </button>
+                {/* ── Header Info (Persistente para todas as abas) ── */}
+                <div className="mb-6">
+                    <div className="space-y-4">
+                        <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                            <div className="space-y-3 w-full">
+                                <div className="flex items-center gap-4 flex-wrap w-full">
+                                    <div className="flex items-center gap-2 flex-wrap">
+                                        {details.situacao && (
+                                            <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getSituacaoStyles(details.situacao)}`}>
+                                                {details.situacao}
+                                            </span>
+                                        )}
+                                        <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
+                                            {translatePropertyType(prop.type)}
+                                        </span>
+                                        {(isAdmin || prop.status === 'Pending') && (
+                                            <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getStatusStyles(prop.status)}`}>
+                                                {translateStatus(prop.status)}
+                                            </span>
+                                        )}
+                                    </div>
+
+                                    {/* ── Toggle Detalhes / Tabela de Preços (Extrema direita) ── */}
+                                    {details.is_empreendimento && (
+                                        <div className="ml-auto flex items-center gap-1 p-0.5 bg-card border border-border/40 rounded-lg shadow-sm">
+                                            <button
+                                                onClick={() => setActiveTab('details')}
+                                                className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all ${
+                                                    activeTab === 'details'
+                                                        ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                                        : 'text-muted-foreground hover:bg-muted/50'
+                                                }`}
+                                            >
+                                                Detalhes
+                                            </button>
+                                            <button
+                                                onClick={() => setActiveTab('price_table')}
+                                                className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all ${
+                                                    activeTab === 'price_table'
+                                                        ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                                        : 'text-muted-foreground hover:bg-muted/50'
+                                                }`}
+                                            >
+                                                Tabela de Preços
+                                            </button>
+                                        </div>
+                                    )}
+                                </div>
+                                <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
+                                    {details.is_empreendimento ? 'Empreendimento' : 'Imóvel'}
+                                </h4>
+                                <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
+                            </div>
+                            {onSend && (
+                                <div className="flex flex-wrap items-center gap-3">
+                                    {isAdmin && (
+                                        <PlanGate hasAccess={hasMarketingAccess} feature="Módulo de Marketing (Instagram)">
+                                            <button
+                                                onClick={() => setIsInstagramModalOpen(true)}
+                                                className="flex items-center gap-2 px-5 py-2 bg-[#404F4F] text-white rounded-xl font-bold hover:bg-[#2d3939] transition-all shadow-sm border border-border/10 whitespace-nowrap"
+                                            >
+                                                <Instagram size={18} className="text-[#FFE600]" />
+                                                Instagram
+                                            </button>
+                                        </PlanGate>
+                                    )}
+                                    <button
+                                        onClick={() => onSend(prop)}
+                                        className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 whitespace-nowrap"
+                                    >
+                                        <Send size={18} />
+                                        Enviar
+                                    </button>
+                                </div>
+                            )}
+                        </div>
                     </div>
-                )}
+
+                    <div className="border-t border-border/60 my-6" />
+
+                    <div className="space-y-4">
+                         <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
+                             Endereço
+                         </h4>
+                         <div 
+                             onClick={handleScrollToLocation}
+                             className={cn(
+                                 "flex items-center gap-1.5 text-base font-semibold text-foreground",
+                                 hasCoordinates && "cursor-pointer hover:text-accent-icon hover:underline transition-colors"
+                             )}
+                         >
+                             {fullAddress || 'Endereço não informado'}
+                         </div>
+                    </div>
+                </div>
+
+                <div className="border-t border-border/60 my-8" />
 
                 {activeTab === 'price_table' && details.is_empreendimento ? (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
@@ -192,71 +287,6 @@ export function PropertyDetailsContent({
                         )}
 
                         <div className="space-y-8">
-                            {/* Header Info */}
-                            <div>
-                                <div className="space-y-4">
-                                    <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
-                                        <div className="space-y-3">
-                                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                                                <div className="flex items-center gap-2">
-                                                    {details.situacao && (
-                                                        <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getSituacaoStyles(details.situacao)}`}>
-                                                            {details.situacao}
-                                                        </span>
-                                                    )}
-                                                    <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
-                                                        {translatePropertyType(prop.type)}
-                                                    </span>
-                                                    {(isAdmin || prop.status === 'Pending') && (
-                                                        <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getStatusStyles(prop.status)}`}>
-                                                            {translateStatus(prop.status)}
-                                                        </span>
-                                                    )}
-                                                </div>
-                                            </div>
-                                            <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
-                                                {details.is_empreendimento ? 'Empreendimento' : 'Imóvel'}
-                                            </h4>
-                                            <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
-                                        </div>
-                                        {onSend && (
-                                            <div className="flex flex-wrap items-center gap-3">
-                                                {isAdmin && (
-                                                    <PlanGate hasAccess={hasMarketingAccess} feature="Módulo de Marketing (Instagram)">
-                                                        <button
-                                                            onClick={() => setIsInstagramModalOpen(true)}
-                                                            className="flex items-center gap-2 px-5 py-2 bg-[#404F4F] text-white rounded-xl font-bold hover:bg-[#2d3939] transition-all shadow-sm border border-border/10 whitespace-nowrap"
-                                                        >
-                                                            <Instagram size={18} className="text-[#FFE600]" />
-                                                            Instagram
-                                                        </button>
-                                                    </PlanGate>
-                                                )}
-                                                <button
-                                                    onClick={() => onSend(prop)}
-                                                    className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 whitespace-nowrap"
-                                                >
-                                                    <Send size={18} />
-                                                    Enviar
-                                                </button>
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-
-                                <div className="border-t border-border/60 my-8" />
-
-                                <div className="space-y-4">
-                                    <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
-                                        Endereço
-                                    </h4>
-                                    <div className="flex items-center gap-1.5 text-base font-semibold text-foreground">
-                                        {fullAddress || 'Endereço não informado'}
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="border-t border-border/60 my-8" />
 
                             {/* Gallery */}
                             <div className="space-y-4">
@@ -353,8 +383,31 @@ export function PropertyDetailsContent({
                                                                 <Play size={20} className="fill-background ml-0.5" />
                                                             </div>
                                                         </div>
-                                                        <video src={url} className="w-full h-full object-cover opacity-60" />
+                                                        <video src={`${url}#t=0.1`} preload="metadata" className="w-full h-full object-cover opacity-90 group-hover:opacity-100 transition-opacity" />
                                                     </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    </>
+                                )}
+
+                                {/* Documents */}
+                                {prop.documents?.length > 0 && (
+                                    <>
+                                        <div className="border-t border-border/60 my-8" />
+                                        <div className="space-y-4">
+                                            <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
+                                                Documentos
+                                            </h4>
+                                            <div className="flex flex-col gap-3">
+                                                {prop.documents?.map((doc: any, i: number) => (
+                                                    <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between gap-3 p-4 rounded-xl bg-foreground/5 border border-border/40 hover:bg-foreground/10 transition-all group">
+                                                        <div className="flex items-center gap-3 text-foreground min-w-0">
+                                                            <FileText size={20} className="text-white flex-shrink-0" />
+                                                            <span className="text-sm font-bold">{doc.name}</span>
+                                                        </div>
+                                                        <ExternalLink size={14} className="text-muted-foreground group-hover:text-emerald-600 flex-shrink-0" />
+                                                    </a>
                                                 ))}
                                             </div>
                                         </div>
@@ -372,11 +425,13 @@ export function PropertyDetailsContent({
                                             Informações
                                         </h4>
                                          <div className="text-foreground bg-muted/20 p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
-                                            {!details.is_empreendimento && (
-                                                <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
-                                            )}
+                                            <InfoRow icon={<Building2 size={14} />} label="Construtora" value={details.empreendimento?.construtora || details.construtora || '-'} />
+                                            <InfoRow icon={<Calendar size={14} />} label="Previsão Entrega" value={previsaoVal} />
+                                            <InfoRow icon={<Calendar size={14} />} label="Idade" value={formatIdade(details.idade_imovel)} />
+                                            
                                             {!details.is_empreendimento && (
                                                 <>
+                                                    <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
                                                     <InfoRow icon={<BedDouble size={14} />} label="Dormitórios" value={`${details.dormitorios || details.quartos || 0} ${Number(details.suites) > 0 ? `(${details.suites} Suítes)` : ''}`} />
                                                     {details.obs_dormitorios && (
                                                         <InfoRow icon={<BedDouble size={14} />} label="Observações" value={details.obs_dormitorios} />
@@ -413,12 +468,6 @@ export function PropertyDetailsContent({
                                             )}
                                             <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
                                             <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
-                                            {details.is_empreendimento && details.empreendimento?.construtora && (
-                                                <InfoRow icon={<Building2 size={14} />} label="Construtora" value={details.empreendimento.construtora} />
-                                            )}
-                                            {details.is_empreendimento && details.empreendimento?.previsao_entrega && (
-                                                <InfoRow icon={<Calendar size={14} />} label="Previsão Entrega" value={details.empreendimento.previsao_entrega} />
-                                            )}
                                         </div>
                                     </div>
 
@@ -433,7 +482,7 @@ export function PropertyDetailsContent({
                                                 <div className="space-y-4">
                                                     {details.empreendimento.torres.map((torre: any, torreIdx: number) => (
                                                         <div key={torreIdx} className="rounded-lg border border-border/50 overflow-hidden">
-                                                            <div className="flex items-center gap-2 px-4 py-3 bg-foreground/5 border-b border-border/30">
+                                                            <div className="flex items-center gap-2 px-4 py-3 bg-muted/20 border-b border-border/50">
                                                                 <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-secondary text-secondary-foreground font-black text-xs">
                                                                     {torreIdx + 1}
                                                                 </div>
@@ -500,19 +549,19 @@ export function PropertyDetailsContent({
                                                 <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                     Área comum | Lazer
                                                 </h4>
-                                                <div className="flex flex-wrap gap-3">
+                                                <div className="text-foreground bg-muted/20 p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
                                                     {amenities.map(a => (
-                                                        <div key={a.id} className="flex items-center gap-3 p-3 rounded-lg bg-secondary/10 border border-secondary/20 w-fit pr-6">
-                                                            <div className="text-secondary">{a.icon}</div>
-                                                            <span className="text-base font-semibold text-foreground whitespace-nowrap">{a.label}</span>
+                                                        <div key={a.id} className="flex items-center gap-3 py-3">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-foreground flex-shrink-0" />
+                                                            <span className="text-base font-semibold text-foreground">{a.label}</span>
                                                         </div>
                                                     ))}
                                                     {activeCustomAmenities.map(a => (
-                                                        <div key={a.id} className={`flex items-center gap-3 p-3 rounded-lg border w-fit pr-6 ${a.isPending ? 'bg-amber-500/5 border-amber-500/30' : 'bg-secondary/10 border-secondary/20'}`}>
-                                                            <div className="text-secondary">{a.icon}</div>
-                                                            <span className="text-base font-semibold text-foreground whitespace-nowrap">{a.label}</span>
+                                                        <div key={a.id} className="flex items-center gap-3 py-3">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-foreground flex-shrink-0" />
+                                                            <span className="text-base font-semibold text-foreground">{a.label}</span>
                                                             {a.isPending && isAdmin && (
-                                                                <span className="ml-auto text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded-md whitespace-nowrap">Pendente</span>
+                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded-md whitespace-nowrap">Pendente</span>
                                                             )}
                                                         </div>
                                                     ))}
@@ -542,7 +591,7 @@ export function PropertyDetailsContent({
                                     {endereco.latitude && endereco.longitude && (
                                         <>
                                             <div className="border-t border-border/60 my-8" />
-                                            <div className="space-y-4">
+                                            <div id="property-location" className="space-y-4">
                                                 <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                     Localização
                                                 </h4>
@@ -564,9 +613,9 @@ export function PropertyDetailsContent({
                                             <div className="border-t border-border/60 my-8" />
                                             <div className="space-y-4">
                                                 <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
-                                                    Corretor Responsável
+                                                    Responsável
                                                 </h4>
-                                                <div className="flex items-center gap-4 p-4 rounded-xl bg-foreground/5 border border-border/40">
+                                                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/20 border border-border/50">
                                                     {prop.created_by_profile.avatar_url ? (
                                                         <img 
                                                             src={prop.created_by_profile.avatar_url} 
@@ -587,7 +636,7 @@ export function PropertyDetailsContent({
                                                                 href={`https://wa.me/${prop.created_by_profile.whatsapp_number.replace(/\D/g, '')}`}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
-                                                                className="flex items-center gap-1.5 text-sm text-muted-foreground hover:text-foreground transition-colors"
+                                                                className="flex items-center gap-1.5 text-sm text-foreground hover:opacity-80 transition-opacity"
                                                             >
                                                                 <Phone size={14} />
                                                                 {prop.created_by_profile.whatsapp_number}
@@ -606,23 +655,26 @@ export function PropertyDetailsContent({
                                         <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                             Proprietário | Construtora
                                         </h4>
-                                        <div className="bg-foreground/5 border border-border/40 p-6 rounded-xl space-y-6">
+                                        <div className="bg-muted/20 border border-border/50 p-6 rounded-xl space-y-3">
                                             <div className="flex justify-between items-start">
                                                 <div>
-                                                    <h3 className="text-xl font-black text-foreground">{details.proprietario?.nome || prop.owner_name || 'Não informado'}</h3>
+                                                    <div className="flex items-center gap-1.5 text-base font-bold text-foreground">
+                                                        <User size={14} />
+                                                        <span>{details.proprietario?.nome || prop.owner_name || 'Não informado'}</span>
+                                                    </div>
                                                     {details.proprietario?.responsavel && (
-                                                        <p className="text-emerald-600 dark:text-emerald-400 text-sm font-bold">Resp: {details.proprietario.responsavel}</p>
+                                                        <p className="text-emerald-600 dark:text-emerald-400 text-xs font-bold mt-1 ml-[20px]">Resp: {details.proprietario.responsavel}</p>
                                                     )}
                                                 </div>
                                             </div>
                                             
-                                            <div className="grid grid-cols-1 gap-4">
-                                                <div className="flex items-center gap-3 text-sm text-foreground">
-                                                    <div className="p-2 bg-foreground/10 text-muted-foreground rounded-lg"><Phone size={14} /></div>
+                                            <div className="grid grid-cols-1 gap-2">
+                                                <div className="flex items-center gap-1.5 text-sm text-foreground">
+                                                    <Phone size={14} />
                                                     {details.proprietario?.telefone || prop.owner_phone || 'Não informado'}
                                                 </div>
-                                                <div className="flex items-center gap-3 text-sm text-foreground">
-                                                    <div className="p-2 bg-foreground/10 text-muted-foreground rounded-lg"><Mail size={14} /></div>
+                                                <div className="flex items-center gap-1.5 text-sm text-foreground">
+                                                    <Mail size={14} />
                                                     {details.proprietario?.email || prop.owner_email || 'Não informado'}
                                                 </div>
                                             </div>
@@ -631,28 +683,7 @@ export function PropertyDetailsContent({
                                 </div>
                             </div>
 
-                            {/* Documents */}
-                            {prop.documents?.length > 0 && (
-                                <>
-                                    <div className="border-t border-border/60 my-8" />
-                                    <div className="space-y-4">
-                                        <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
-                                            Documentos
-                                        </h4>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                                            {prop.documents?.map((doc: any, i: number) => (
-                                                <a key={i} href={doc.url} target="_blank" className="flex items-center justify-between p-4 rounded-xl bg-white border border-border hover:shadow-md transition-all group">
-                                                    <div className="flex items-center gap-3 text-foreground">
-                                                        <FileText size={20} className="text-emerald-600" />
-                                                        <span className="text-sm font-bold truncate max-w-[200px]">{doc.name}</span>
-                                                    </div>
-                                                    <ExternalLink size={14} className="text-muted-foreground group-hover:text-emerald-600" />
-                                                </a>
-                                            ))}
-                                        </div>
-                                    </div>
-                                </>
-                            )}
+
                         </div>
                     </>
                 ) : (
@@ -696,11 +727,71 @@ export function PropertyDetailsContent({
     );
 }
 
+function calculateMonthsRemaining(previsaoEntrega: string): string {
+    if (!previsaoEntrega) return ''
+    const [year, month] = previsaoEntrega.split('-').map(Number)
+    if (!year || !month) return ''
+    
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+    
+    const totalMonths = (year - currentYear) * 12 + (month - currentMonth)
+    
+    if (totalMonths < 0) {
+        const absMonths = Math.abs(totalMonths)
+        return `Entregue há ${absMonths} ${absMonths === 1 ? 'mês' : 'meses'}`
+    }
+    
+    if (totalMonths === 0) {
+        return 'Entregue este mês'
+    }
+    
+    return `${totalMonths} ${totalMonths === 1 ? 'mês' : 'meses'}`
+}
+
+function formatIdade(idade: any) {
+    if (!idade) return '-';
+    const num = Number(idade);
+    if (isNaN(num)) return idade;
+    return `${num} ${num === 1 ? 'ano' : 'anos'}`;
+}
+
+function formatPrevisaoEntrega(previsao: string): string {
+    if (!previsao) return '-';
+    const parts = previsao.split('-');
+    if (parts.length < 2) return previsao;
+    
+    const year = parts[0];
+    const month = parts[1];
+    
+    const monthsShort: Record<string, string> = {
+        '01': 'Jan',
+        '02': 'Fev',
+        '03': 'Mar',
+        '04': 'Abr',
+        '05': 'Mai',
+        '06': 'Jun',
+        '07': 'Jul',
+        '08': 'Ago',
+        '09': 'Set',
+        '10': 'Out',
+        '11': 'Nov',
+        '12': 'Dez'
+    };
+    
+    const monthName = monthsShort[month];
+    if (!monthName) return previsao;
+    
+    const shortYear = year.slice(-2);
+    return `${monthName}/${shortYear}`;
+}
+
 function InfoRow({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | number }) {
     return (
         <div className="flex items-center justify-between py-3">
-            <div className="flex items-center gap-2 text-foreground font-semibold">
-                <span className="text-muted-foreground">{icon}</span>
+            <div className="flex items-center gap-3 text-foreground font-semibold">
+                <div className="w-1.5 h-1.5 rounded-full bg-foreground flex-shrink-0" />
                 <span className="text-base">{label}</span>
             </div>
             <div className="text-base font-bold text-foreground">

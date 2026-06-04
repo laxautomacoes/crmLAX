@@ -61,6 +61,7 @@ function getEmptyFormData() {
             has_escritorio: false,
             has_dependencia_empregada: false,
             is_empreendimento: false,
+            idade_imovel: '',
             empreendimento: {
                 construtora: '',
                 previsao_entrega: '',
@@ -189,6 +190,7 @@ interface EditingPropertyDetails {
     has_escritorio?: boolean
     has_dependencia_empregada?: boolean
     is_empreendimento?: boolean
+    idade_imovel?: string
     empreendimento?: EmpreendimentoData
     portaria_24h?: boolean
     portaria_virtual?: boolean
@@ -410,6 +412,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     has_escritorio: editingProperty.details?.has_escritorio || false,
                     has_dependencia_empregada: editingProperty.details?.has_dependencia_empregada || false,
                     is_empreendimento: editingProperty.details?.is_empreendimento || false,
+                    idade_imovel: editingProperty.details?.idade_imovel || '',
                     empreendimento: editingProperty.details?.empreendimento || {
                         construtora: '',
                         previsao_entrega: '',
@@ -761,7 +764,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 </div>
                 )
             }
-            size={showMethodSelection ? 'lg' : 'xl'}
+            size={showMethodSelection ? 'xl' : '2xl'}
             align="top"
         >
             {showMethodSelection ? (
@@ -857,29 +860,30 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         userRole={userRole}
                         brokers={brokers}
                         currentProfile={currentProfile}
+                        detailsChildren={
+                            formData.details.is_empreendimento && (
+                                <div className="space-y-8 mt-8 border-t border-border/60 pt-6">
+                                    <TowersFields formData={formData} setFormData={setFormData} />
+                                    <div className="border-t border-border/60" />
+                                    <PriceTableUploadField 
+                                        formData={formData} 
+                                        setFormData={setFormData}
+                                        tenantId={tenantId}
+                                        propertyId={(editingProperty as any)?.id}
+                                    />
+                                </div>
+                            )
+                        }
                     />
-                    <div className="border-t border-border/60" />
-                    {formData.details.is_empreendimento && (
-                        <>
-                            <TowersFields formData={formData} setFormData={setFormData} />
-                            <div className="border-t border-border/60" />
-                            <PriceTableUploadField 
-                                formData={formData} 
-                                setFormData={setFormData}
-                                tenantId={tenantId}
-                                propertyId={(editingProperty as any)?.id}
-                            />
-                            <div className="border-t border-border/60" />
-                        </>
-                    )}
                     {!formData.details.is_empreendimento && (
                         <>
+                            <div className="border-t border-border/60" />
                             <DormitoriosVagasFields formData={formData} setFormData={setFormData} isEmpreendimento={formData.details.is_empreendimento} />
                             <div className="border-t border-border/60" />
                             <AreaFields formData={formData} setFormData={setFormData} />
-                            <div className="border-t border-border/60" />
                         </>
                     )}
+                    <div className="border-t border-border/60" />
                     <EstruturaCustosFields formData={formData} setFormData={setFormData} isEmpreendimento={formData.details.is_empreendimento} />
                     <div className="border-t border-border/60" />
                     <AmenitiesFields 

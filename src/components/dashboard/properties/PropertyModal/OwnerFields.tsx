@@ -128,7 +128,7 @@ export function OwnerFields({ formData, setFormData, tenantId }: OwnerFieldsProp
 
     const handleSearchAddress = async () => {
         const { endereco_rua: rua, endereco_cidade: cidade, endereco_estado: estado } = formData.details.proprietario
-        
+
         if (!estado || estado.length !== 2) {
             toast.error('Informe o estado (UF) com 2 letras')
             return
@@ -313,31 +313,14 @@ export function OwnerFields({ formData, setFormData, tenantId }: OwnerFieldsProp
                     )}
                 </div>
 
-                {/* Responsável + Toggle Construtora */}
+                {/* Responsável + Switch É Cliente? */}
                 <div className="lg:col-span-2">
-                    <div className="grid grid-cols-3 gap-x-3">
+                    <div className="grid grid-cols-2 gap-x-3">
                         <FormInput
                             label="Responsável"
                             value={formData.details.proprietario.responsavel}
                             onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, responsavel: e.target.value } } })}
                         />
-                        <div className="flex flex-col">
-                            <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1 tracking-tight">Construtora</label>
-                            <Switch
-                                checked={isConstrutora}
-                                onChange={(checked) => setFormData({
-                                    ...formData,
-                                    details: {
-                                        ...formData.details,
-                                        proprietario: {
-                                            ...formData.details.proprietario,
-                                            is_construtora: checked
-                                        }
-                                    }
-                                })}
-                                className="mt-1"
-                            />
-                        </div>
                         <div className="flex flex-col">
                             <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1 tracking-tight">É Cliente?</label>
                             <Switch

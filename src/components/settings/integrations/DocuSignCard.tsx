@@ -3,7 +3,8 @@
 import { useState, useEffect } from 'react';
 import { getIntegration, saveIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
 import { toast } from 'sonner';
-import { PenTool, CheckCircle2, Loader2, Save, MessageSquare, ShieldCheck } from 'lucide-react';
+import { CheckCircle2, Loader2, Save, MessageSquare, ShieldCheck } from 'lucide-react';
+import { DocuSignIcon } from '@/components/icons/BrandIcons';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { Switch } from '@/components/ui/Switch';
 import { Modal } from '@/components/shared/Modal';
@@ -119,7 +120,7 @@ export function DocuSignCard() {
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-4">
                             <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
-                                <PenTool size={20} />
+                                <DocuSignIcon size={20} />
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
@@ -142,7 +143,7 @@ export function DocuSignCard() {
                 title={
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-blue-500/10 text-blue-500">
-                            <PenTool size={18} />
+                            <DocuSignIcon size={18} />
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-foreground">Configurar DocuSign</h3>

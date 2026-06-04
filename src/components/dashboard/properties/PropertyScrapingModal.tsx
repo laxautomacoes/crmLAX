@@ -195,7 +195,7 @@ export function PropertyScrapingModal({ isOpen, onClose, tenantId, onScrapingSuc
     const selected = scrapedProperties[selectedIndex]
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Importar via URL" size="md">
+        <Modal isOpen={isOpen} onClose={handleClose} title="Importar via URL" size="lg">
             <div className="space-y-5">
 
                 {/* ── STEP 1: Input ── */}

@@ -47,12 +47,12 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, onEdit, us
                 <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
                     Visualização Imóvel
                 </h3>
-            }            size="xl"
+            }            size="2xl"
             extraHeaderContent={
                 canEdit ? (
                     <button
                         onClick={handleEdit}
-                        className="px-4 py-2 bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] rounded-lg font-bold text-sm shadow-sm transition-all whitespace-nowrap"
+                        className="px-8 py-2 bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] rounded-lg font-bold text-sm shadow-sm transition-all whitespace-nowrap"
                     >
                         Editar
                     </button>

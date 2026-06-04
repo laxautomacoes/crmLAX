@@ -1,6 +1,6 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
+import { WhatsAppIcon } from '@/components/icons/BrandIcons';
 import { 
-    MessageCircle, 
     QrCode, 
     Loader2, 
     CheckCircle2, 
@@ -279,7 +279,7 @@ export function WhatsAppCard() {
                     <div className="flex items-center justify-between gap-4">
                         <div className="flex items-center gap-4 flex-1">
                             <div className="p-2.5 rounded-xl bg-[#25D366]/10 text-[#25D366]">
-                                <MessageCircle size={20} />
+                                <WhatsAppIcon size={20} />
                             </div>
                             <div>
                                 <div className="flex items-center gap-2">
@@ -302,7 +302,7 @@ export function WhatsAppCard() {
                 title={
                     <div className="flex items-center gap-3">
                         <div className="p-2 rounded-lg bg-[#25D366]/10 text-[#25D366]">
-                            <MessageCircle size={18} />
+                            <WhatsAppIcon size={18} />
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-foreground">Configurar WhatsApp</h3>

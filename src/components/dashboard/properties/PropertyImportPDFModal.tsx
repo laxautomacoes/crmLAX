@@ -233,7 +233,7 @@ export function PropertyImportPDFModal({
     )
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Importar PDF (IA)" size="md">
+        <Modal isOpen={isOpen} onClose={handleClose} title="Importar PDF (IA)" size="lg">
             <div className="space-y-5">
 
                 {/* ── Toggle 3 Modos ── */}

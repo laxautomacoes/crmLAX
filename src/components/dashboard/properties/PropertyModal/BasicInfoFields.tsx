@@ -11,9 +11,42 @@ interface BasicInfoFieldsProps {
     userRole?: string
     brokers?: any[]
     currentProfile?: any
+    imagesChildren?: React.ReactNode
+    detailsChildren?: React.ReactNode
 }
 
-export function BasicInfoFields({ formData, setFormData, userRole, brokers = [], currentProfile }: BasicInfoFieldsProps) {
+function calculateMonthsRemaining(previsaoEntrega: string): string {
+    if (!previsaoEntrega) return ''
+    const [year, month] = previsaoEntrega.split('-').map(Number)
+    if (!year || !month) return ''
+    
+    const now = new Date()
+    const currentYear = now.getFullYear()
+    const currentMonth = now.getMonth() + 1
+    
+    const totalMonths = (year - currentYear) * 12 + (month - currentMonth)
+    
+    if (totalMonths < 0) {
+        const absMonths = Math.abs(totalMonths)
+        return `Entregue há ${absMonths} ${absMonths === 1 ? 'mês' : 'meses'}`
+    }
+    
+    if (totalMonths === 0) {
+        return 'Entregue este mês'
+    }
+    
+    return `${totalMonths} ${totalMonths === 1 ? 'mês' : 'meses'}`
+}
+
+export function BasicInfoFields({ 
+    formData, 
+    setFormData, 
+    userRole, 
+    brokers = [], 
+    currentProfile,
+    imagesChildren,
+    detailsChildren
+}: BasicInfoFieldsProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isEmpreendimento = formData.details?.is_empreendimento || false
 
@@ -65,14 +98,16 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                             placeholder={isEmpreendimento ? 'Ex: WOA SKY Towers' : 'Ex: Apartamento 3 suítes Beira Mar'}
                         />
                     </div>
-                    <div className="w-[100px] shrink-0">
-                        <FormInput
-                            label="Apartamento"
-                            value={formData.details?.endereco?.apto || ''}
-                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, apto: e.target.value } } })}
-                            placeholder="Apto"
-                        />
-                    </div>
+                    {!isEmpreendimento && (
+                        <div className="w-[100px] shrink-0">
+                            <FormInput
+                                label="Apartamento"
+                                value={formData.details?.endereco?.apto || ''}
+                                onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, apto: e.target.value } } })}
+                                placeholder="Apto"
+                            />
+                        </div>
+                    )}
                     {isAdmin && brokers.length > 0 ? (
                         <div className="shrink-0 min-w-[180px]">
                             <FormSelect
@@ -98,15 +133,20 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                         )
                     )}
                 </div>
+                {imagesChildren && (
+                    <div className="pt-2">
+                        {imagesChildren}
+                    </div>
+                )}
             </div>
 
             {/* Campos extras de empreendimento */}
             {isEmpreendimento && (
-                <div className="space-y-4 p-4 rounded-xl bg-foreground/5 border border-border/40">
-                    <h4 className="text-xs font-black text-foreground uppercase tracking-widest">
+                <div className="space-y-4 border-t border-border/60 pt-6">
+                    <h4 className="text-base font-black text-foreground uppercase tracking-widest">
                         Dados do Empreendimento
                     </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
                         <FormInput
                             label="Construtora / Incorporadora"
                             value={formData.details.empreendimento?.construtora || ''}
@@ -137,12 +177,21 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                                 }
                             })}
                         />
+                        <FormInput
+                            label="Tempo para Entrega"
+                            value={calculateMonthsRemaining(formData.details.empreendimento?.previsao_entrega || '')}
+                            onChange={() => {}}
+                            readOnly
+                            placeholder="Preencha a previsão"
+                        />
                     </div>
                 </div>
             )}
 
+            {isEmpreendimento && detailsChildren}
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
+
+            <div className={`${isEmpreendimento ? 'border-t border-border/60 pt-6' : ''} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6`}>
                 {!isEmpreendimento && (
                     <FormInput
                         label="Preço (R$)"
@@ -163,6 +212,15 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                     onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_iptu: formatCurrencyBRL(e.target.value) } })}
                     placeholder="0,00"
                 />
+                {!isEmpreendimento && (
+                    <FormInput
+                        label="Idade do Imóvel (anos)"
+                        type="number"
+                        value={formData.details.idade_imovel || ''}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, idade_imovel: e.target.value } })}
+                        placeholder="Ex: 5"
+                    />
+                )}
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">

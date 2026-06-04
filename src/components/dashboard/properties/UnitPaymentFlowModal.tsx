@@ -408,7 +408,7 @@ export function UnitPaymentFlowModal({
                     Imóvel Sugerido
                 </h3>
             }
-            size="lg"
+            size="xl"
         >
             <div className="flex flex-col max-h-[calc(90vh-120px)]">
                 <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-5 min-h-0">

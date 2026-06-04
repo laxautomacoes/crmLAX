@@ -67,7 +67,7 @@ export function PropertyDetailsModal({ isOpen, onClose, property }: { isOpen: bo
                     </div>
                 </div>
             } 
-            size="2xl"
+            size="full"
         >
             <div className="space-y-8">
                 <div className="flex flex-col gap-8">

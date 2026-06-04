@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
     Building2, Calendar, TrendingUp, Hash, Filter, Search,
     DollarSign, Maximize2, Car, Layers, Send, Eye,
-    ChevronDown, Loader2, AlertCircle, ClipboardList, Upload, RefreshCw
+    ChevronDown, ChevronUp, Loader2, AlertCircle, ClipboardList, Upload, RefreshCw, ArrowUpDown
 } from 'lucide-react'
 import { getPropertyUnits, getPriceTableInfo, updateUnitStatus } from '@/app/_actions/property-units'
 import type { PropertyUnit, PriceTableInfo } from '@/app/_actions/property-units'
@@ -82,6 +82,8 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
         setIsLoading(false)
     }
 
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+
     const filteredUnits = useMemo(() => {
         return units.filter(u => {
             const matchSearch = !searchTerm || 
@@ -93,14 +95,32 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
         })
     }, [units, searchTerm, statusFilter])
 
+    const sortedUnits = useMemo(() => {
+        const sorted = [...filteredUnits]
+        sorted.sort((a, b) => {
+            const numA = parseInt(a.unit_number.replace(/\D/g, ''), 10)
+            const numB = parseInt(b.unit_number.replace(/\D/g, ''), 10)
+
+            if (!isNaN(numA) && !isNaN(numB)) {
+                return sortDirection === 'asc' ? numA - numB : numB - numA
+            }
+
+            return sortDirection === 'asc' 
+                ? a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true, sensitivity: 'base' })
+                : b.unit_number.localeCompare(a.unit_number, undefined, { numeric: true, sensitivity: 'base' })
+        })
+        return sorted
+    }, [filteredUnits, sortDirection])
+
     const stats = useMemo(() => {
         const available = units.filter(u => u.status === 'available').length
-        const reserved = units.filter(u => u.status === 'reserved' || u.status === 'proposal').length
+        const reserved = units.filter(u => u.status === 'reserved').length
+        const proposal = units.filter(u => u.status === 'proposal').length
         const sold = units.filter(u => u.status === 'sold').length
         const priceList = units.filter(u => u.valor_total && u.valor_total > 0).map(u => u.valor_total!)
         const minPrice = priceList.length > 0 ? Math.min(...priceList) : 0
         const maxPrice = priceList.length > 0 ? Math.max(...priceList) : 0
-        return { available, reserved, sold, total: units.length, minPrice, maxPrice }
+        return { available, reserved, proposal, sold, total: units.length, minPrice, maxPrice }
     }, [units])
 
     async function handleStatusChange(unitId: string, newStatus: 'available' | 'reserved' | 'sold' | 'proposal') {
@@ -171,73 +191,39 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
             {/* ── Header da Tabela ── */}
             <div className="bg-foreground/5 border border-border/40 rounded-lg p-5 space-y-4">
                 <div className="flex flex-wrap items-center justify-between gap-4">
-                    <div className="space-y-1">
+                    <div className="flex items-center gap-2">
                         <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
                             Tabela Vigente
                         </h4>
-                        <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                            <span className="font-bold text-foreground">{formatMonth(priceTable.reference_month)}</span>
-                            <span className="flex items-center gap-1.5">
-                                <span className="font-bold text-foreground">{priceTable.index_type}</span>
-                                {priceTable.index_value && (
-                                    <span className="text-xs">({formatBRL(priceTable.index_value)})</span>
-                                )}
-                            </span>
-                        </div>
+                        <span className="text-sm font-bold text-muted-foreground">
+                            - {formatMonth(priceTable.reference_month)}
+                        </span>
                     </div>
-                    {priceTable.file_url && (
-                        <a
-                            href={priceTable.file_url}
-                            target="_blank"
-                            rel="noopener noreferrer"
-                            className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-muted-foreground border border-border rounded-lg hover:bg-muted/30 transition-colors"
-                        >
-                            <Eye size={14} />
-                            Ver PDF Original
-                        </a>
-                    )}
-                    {isAdmin && (
-                        <button
-                            onClick={() => setIsImportOpen(true)}
-                            className="px-3 py-1.5 text-xs font-bold text-secondary-foreground bg-secondary rounded-lg hover:opacity-90 transition-all active:scale-[0.98] shadow-sm"
-                        >
-                            Atualizar Tabela
-                        </button>
-                    )}
+                    <div className="flex items-center gap-3">
+                        {priceTable.file_url && (
+                            <a
+                                href={priceTable.file_url}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-muted-foreground border border-border rounded-lg hover:bg-muted/30 transition-colors"
+                            >
+                                <Eye size={14} />
+                                Ver PDF Original
+                            </a>
+                        )}
+                        {isAdmin && (
+                            <button
+                                onClick={() => setIsImportOpen(true)}
+                                className="px-3 py-1.5 text-xs font-bold text-secondary-foreground bg-secondary rounded-lg hover:opacity-90 transition-all active:scale-[0.98] shadow-sm"
+                            >
+                                Atualizar Tabela
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                {/* Estrutura de pagamento */}
-                {Object.keys(paymentStructure).length > 0 && (
-                    <div className="flex flex-wrap gap-3 pt-2 border-t border-border/30">
-                        {paymentStructure.ato && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md">
-                                Ato {paymentStructure.ato.pct}% ({paymentStructure.ato.parcelas}x)
-                            </span>
-                        )}
-                        {paymentStructure.mensais && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md">
-                                Mensais {paymentStructure.mensais.pct}% ({paymentStructure.mensais.parcelas}x)
-                            </span>
-                        )}
-                        {paymentStructure.reforcos && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md">
-                                Reforços {paymentStructure.reforcos.pct}% ({paymentStructure.reforcos.parcelas}x)
-                            </span>
-                        )}
-                        {paymentStructure.chaves && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md">
-                                Chaves {paymentStructure.chaves.pct}% ({paymentStructure.chaves.parcelas}x)
-                            </span>
-                        )}
-                        {paymentStructure.financiamento && (
-                            <span className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground bg-muted/30 px-2.5 py-1 rounded-md">
-                                Financ. {paymentStructure.financiamento.pct}% ({paymentStructure.financiamento.parcelas}x)
-                            </span>
-                        )}
-                    </div>
-                )}
                 {/* Stats */}
-                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-2 border-t border-border/30">
+                <div className="grid grid-cols-2 md:grid-cols-4 gap-3 pt-4 border-t border-border/30">
                     <div className="flex flex-col items-center justify-center text-center">
                         <p className="text-2xl font-black text-foreground">{stats.total}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total</p>
@@ -247,7 +233,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Disponíveis</p>
                     </div>
                     <div className="flex flex-col items-center justify-center text-center">
-                        <p className="text-2xl font-black text-amber-500">{stats.reserved}</p>
+                        <p className="text-2xl font-black text-amber-500">{stats.reserved + stats.proposal}</p>
                         <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Reservados</p>
                     </div>
                     <div className="flex flex-col items-center justify-center text-center">
@@ -258,88 +244,106 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
             </div>
 
             {/* ── Filtros ── */}
-            <div className="flex flex-col md:flex-row gap-3">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
-                    <input
-                        type="text"
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        placeholder="Buscar apto, torre, HB..."
-                        className="w-full bg-foreground/5 border border-border/40 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
-                    />
+            <div className="flex flex-col md:flex-row gap-4 items-end">
+                <div className="flex flex-col gap-1.5 flex-1 w-full">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Buscar Unidade</span>
+                    <div className="relative w-full">
+                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                        <input
+                            type="text"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            placeholder="Buscar apto, torre, HB..."
+                            className="w-full bg-foreground/5 border border-border/40 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
+                        />
+                    </div>
                 </div>
-                <div className="relative">
-                    <select
-                        value={statusFilter}
-                        onChange={(e) => setStatusFilter(e.target.value)}
-                        className="appearance-none bg-foreground/5 border border-border/40 rounded-lg px-4 pr-10 py-2.5 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all cursor-pointer"
-                    >
-                        <option value="all">Todos os Status</option>
-                        <option value="available">Disponíveis</option>
-                        <option value="reserved">Reservados</option>
-                        <option value="proposal">Em Proposta</option>
-                        <option value="sold">Vendidos</option>
-                    </select>
-                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                <div className="flex flex-col gap-1.5 w-full md:w-56">
+                    <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Status</span>
+                    <div className="relative w-full">
+                        <select
+                            value={statusFilter}
+                            onChange={(e) => setStatusFilter(e.target.value)}
+                            className="w-full appearance-none bg-foreground/5 border border-border/40 rounded-lg px-4 pr-10 py-2.5 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all cursor-pointer"
+                        >
+                            <option value="all">Todos ({stats.total})</option>
+                            <option value="available">Disponíveis ({stats.available})</option>
+                            <option value="reserved">Reservados ({stats.reserved})</option>
+                            <option value="proposal">Em Proposta ({stats.proposal})</option>
+                            <option value="sold">Vendidos ({stats.sold})</option>
+                        </select>
+                        <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                    </div>
                 </div>
             </div>
 
             {/* ── Tabela de Unidades ── */}
             <div className="border border-border/40 rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full text-left">
+                    <table className="w-full">
                         <thead>
                             <tr className="bg-foreground/5 border-b border-border/30">
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-4 py-3">Apto</th>
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 hidden md:table-cell">Torre</th>
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 hidden lg:table-cell">Garagem</th>
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 hidden lg:table-cell">HB</th>
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 hidden md:table-cell">Área Priv.</th>
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3">Valor Total</th>
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3">Status</th>
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-right">Ação</th>
+                                <th 
+                                    onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                                    className="text-[10px] font-bold text-foreground uppercase tracking-wider px-4 py-3 text-center cursor-pointer hover:bg-foreground/5 select-none"
+                                >
+                                    <div className="flex items-center justify-center gap-1">
+                                        Apto
+                                        {sortDirection === 'asc' ? (
+                                            <ChevronUp size={12} className="text-muted-foreground" />
+                                        ) : (
+                                            <ChevronDown size={12} className="text-muted-foreground" />
+                                        )}
+                                    </div>
+                                </th>
+                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden md:table-cell">Torre</th>
+                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden lg:table-cell">Garagem</th>
+                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden lg:table-cell">HB</th>
+                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden md:table-cell">Área Priv.</th>
+                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center">Valor Total</th>
+                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center">Status</th>
+                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center">Ação</th>
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-border/20">
-                            {filteredUnits.map((unit) => {
+                            {sortedUnits.map((unit) => {
                                 const statusCfg = STATUS_CONFIG[unit.status] || STATUS_CONFIG.available
                                 return (
                                     <tr key={unit.id} className="hover:bg-foreground/[0.02] transition-colors">
-                                        <td className="px-4 py-3">
+                                        <td className="px-4 py-3 text-center">
                                             <span className="text-sm font-black text-foreground">{unit.unit_number}</span>
                                         </td>
-                                        <td className="px-3 py-3 hidden md:table-cell">
+                                        <td className="px-3 py-3 text-center hidden md:table-cell">
                                             <span className="text-xs font-medium text-foreground">{unit.block_tower || '—'}</span>
                                         </td>
-                                        <td className="px-3 py-3 hidden lg:table-cell">
-                                            <div className="flex flex-col">
+                                        <td className="px-3 py-3 text-center hidden lg:table-cell">
+                                            <div className="flex flex-col items-center">
                                                 <span className="text-xs font-medium text-foreground">{unit.garage_type || '—'}</span>
                                                 {unit.garage_number && (
-                                                    <span className="text-[10px] text-muted-foreground">Nº {unit.garage_number}</span>
+                                                    <span className="text-[10px] text-muted-foreground">{unit.garage_number}</span>
                                                 )}
                                             </div>
                                         </td>
-                                        <td className="px-3 py-3 hidden lg:table-cell">
+                                        <td className="px-3 py-3 text-center hidden lg:table-cell">
                                             <span className="text-xs font-bold text-foreground">{unit.hobby_box || '—'}</span>
                                         </td>
-                                        <td className="px-3 py-3 hidden md:table-cell">
+                                        <td className="px-3 py-3 text-center hidden md:table-cell">
                                             <span className="text-xs font-medium text-foreground">
-                                                {unit.area_privativa ? `${unit.area_privativa}m²` : '—'}
+                                                {unit.area_privativa ? `${Number(unit.area_privativa).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} m²` : '—'}
                                             </span>
                                         </td>
-                                        <td className="px-3 py-3">
+                                        <td className="px-3 py-3 text-center">
                                             <span className="text-sm font-black text-foreground">
                                                 {formatBRL(unit.valor_total)}
                                             </span>
                                         </td>
-                                        <td className="px-3 py-3">
+                                        <td className="px-3 py-3 text-center">
                                             {isAdmin ? (
-                                                <div className="relative">
+                                                <div className="relative inline-block">
                                                     <select
                                                         value={unit.status}
                                                         onChange={(e) => handleStatusChange(unit.id, e.target.value as any)}
-                                                        className={`appearance-none text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border cursor-pointer ${statusCfg.color}`}
+                                                        className={`appearance-none text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded border cursor-pointer text-center ${statusCfg.color}`}
                                                     >
                                                         <option value="available">Disponível</option>
                                                         <option value="reserved">Reservado</option>
@@ -348,15 +352,15 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                                                     </select>
                                                 </div>
                                             ) : (
-                                                <span className={`text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border ${statusCfg.color}`}>
+                                                <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded border text-center ${statusCfg.color}`}>
                                                     {statusCfg.label}
                                                 </span>
                                             )}
                                         </td>
-                                        <td className="px-3 py-3 text-right">
+                                        <td className="px-3 py-3 text-center">
                                             <button
                                                 onClick={() => handleOpenFlow(unit)}
-                                                className="px-3 py-1.5 text-[10px] font-bold uppercase tracking-wider text-secondary-foreground bg-secondary hover:bg-secondary/90 rounded-lg transition-all active:scale-[0.97] shadow-sm"
+                                                className="px-6 py-2 text-xs font-bold uppercase tracking-wider text-secondary-foreground bg-secondary hover:bg-secondary/90 rounded-lg transition-all active:scale-[0.97] shadow-sm"
                                             >
                                                 Fluxo
                                             </button>
@@ -367,7 +371,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                         </tbody>
                     </table>
                 </div>
-                {filteredUnits.length === 0 && (
+                {sortedUnits.length === 0 && (
                     <div className="text-center py-10">
                         <p className="text-sm text-muted-foreground">Nenhuma unidade encontrada com os filtros aplicados.</p>
                     </div>
