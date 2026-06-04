@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { 
     getIntegration, 
@@ -14,10 +12,9 @@ import {
     Info, 
     MapPin, 
     RefreshCw, 
-    BarChart3,
-    ChevronDown
+    BarChart3
 } from 'lucide-react';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Modal } from '@/components/shared/Modal';
 
 interface MarketData {
     name: string;
@@ -47,7 +44,7 @@ export function MarketDataCard({ tenantId }: { tenantId?: string }) {
     const [isActive, setIsActive] = useState(false);
     const [loading, setLoading] = useState(false);
     const [isRefreshing, setIsRefreshing] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
 
     useEffect(() => {
         if (tenantId) {
@@ -88,137 +85,126 @@ export function MarketDataCard({ tenantId }: { tenantId?: string }) {
     ];
 
     return (
-        <div className="bg-card rounded-2xl border border-border overflow-hidden transition-all hover:bg-muted/5">
+        <>
             <div 
-                className="px-6 py-4 border-b border-border bg-muted/30 cursor-pointer select-none"
-                onClick={() => setIsExpanded(!isExpanded)}
+                className="bg-card rounded-xl border border-border overflow-hidden transition-all hover:bg-muted/5 cursor-pointer select-none"
+                onClick={() => setIsModalOpen(true)}
             >
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1">
-                        <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-500">
-                            <BarChart3 size={20} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-base font-bold text-foreground">Dados de Mercado</h3>
-                                <span className={`flex h-1.5 w-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+                <div className="px-6 py-6 bg-muted/30">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 flex-1">
+                            <div className="p-2.5 rounded-xl bg-orange-500/10 text-orange-500">
+                                <BarChart3 size={20} />
                             </div>
-                            <p className="text-xs text-muted-foreground max-w-xl line-clamp-1">
-                                {isExpanded 
-                                    ? 'Acompanhe os principais índices econômicos do setor imobiliário atualizados.' 
-                                    : `Índices ativos para ${selectedUF} • CUB, IGP-M e INCC-M`}
-                            </p>
-                        </div>
-                    </div>
-
-                    <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => handleToggle(!isActive)}>
-                            <span className={`text-[10px] font-black uppercase tracking-wider hidden sm:block ${isActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
-                                {isActive ? 'Ativo' : 'Desativado'}
-                            </span>
-                            <Switch 
-                                checked={isActive} 
-                                onChange={handleToggle}
-                                disabled={loading}
-                                className="scale-75"
-                            />
-                        </div>
-
-                        <div className="h-6 w-px bg-border hidden sm:block" />
-
-                        <button 
-                            className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
-                            onClick={() => setIsExpanded(!isExpanded)}
-                        >
-                            <motion.div
-                                animate={{ rotate: isExpanded ? 180 : 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <ChevronDown size={20} />
-                            </motion.div>
-                        </button>
-                    </div>
-                </div>
-            </div>
- 
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        className="overflow-hidden"
-                    >
-                        <div className="p-6 border-t border-border/50 space-y-6">
-                            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                            <div>
                                 <div className="flex items-center gap-2">
-                                    <MapPin size={14} className="text-secondary" />
-                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Selecionar Estado (UF)</label>
+                                    <h3 className="text-base font-bold text-foreground">Dados de Mercado</h3>
+                                    <span className={`flex h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
                                 </div>
-                                <div className="flex flex-wrap gap-1.5">
-                                    {UFS.map(uf => (
-                                        <button 
-                                            key={uf}
-                                            onClick={() => setSelectedUF(uf)}
-                                            className={`px-3 py-1 text-[11px] font-bold rounded-md transition-all ${
-                                                selectedUF === uf 
-                                                    ? 'bg-secondary text-secondary-foreground' 
-                                                    : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
-                                            }`}
-                                        >
-                                            {uf}
-                                        </button>
-                                    ))}
-                                    <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
-                                    <button 
-                                        onClick={handleRefresh}
-                                        disabled={isRefreshing}
-                                        className="p-1.5 bg-background border border-border rounded-md text-muted-foreground hover:text-secondary hover:border-secondary transition-all disabled:opacity-50"
-                                        title="Atualizar Dados"
-                                    >
-                                        <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
-                                    </button>
-                                </div>
-                            </div>
-
-                            <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-                                {marketData.map((item) => (
-                                    <div key={item.name} className="p-4 rounded-xl bg-muted/20 border border-border group hover:border-secondary/30 transition-all">
-                                        <div className="flex items-center justify-between mb-2">
-                                            <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">{item.name}</span>
-                                            {item.trend === 'up' && <TrendingUp size={14} className="text-red-500" />}
-                                            {item.trend === 'down' && <TrendingDown size={14} className="text-emerald-500" />}
-                                            {item.trend === 'neutral' && <Minus size={14} className="text-muted-foreground" />}
-                                        </div>
-                                        <div className="flex flex-col">
-                                            <span className="text-xl font-black text-foreground">{item.value}</span>
-                                            <div className="flex items-center gap-2 mt-1">
-                                                <span className={`text-xs font-bold ${
-                                                    item.trend === 'up' ? 'text-red-500' : 
-                                                    item.trend === 'down' ? 'text-emerald-500' : 
-                                                    'text-muted-foreground'
-                                                }`}>
-                                                    {item.change}
-                                                </span>
-                                                <span className="text-[10px] text-muted-foreground font-medium uppercase">{item.period}</span>
-                                            </div>
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-            
-                            <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border/50">
-                                <Info size={16} className="text-muted-foreground mt-0.5 shrink-0" />
-                                <p className="text-[11px] text-muted-foreground leading-relaxed">
-                                    Os dados exibidos são coletados de fontes públicas (FGV, IBGE, Sinduscon). 
-                                    A LAX Automacoes não se responsabiliza pela exatidão imediata dos índices.
+                                <p className="text-xs text-muted-foreground max-w-xl line-clamp-1">
+                                    Índices ativos para {selectedUF} • CUB, IGP-M e INCC-M
                                 </p>
                             </div>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+                    </div>
+                </div>
+            </div>
+
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                size="lg"
+                title={
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-orange-500/10 text-orange-500">
+                            <BarChart3 size={18} />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-bold text-foreground">Dados de Mercado</h3>
+                            <p className="text-xs text-muted-foreground">Acompanhe os principais índices econômicos do setor imobiliário.</p>
+                        </div>
+                    </div>
+                }
+            >
+                <div className="space-y-6 py-2">
+                    <div className="flex items-center justify-between pb-4 border-b border-border/50">
+                        <div>
+                            <span className="text-xs font-bold text-foreground">Status da Integração</span>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Ative ou desative os dados de mercado.</p>
+                        </div>
+                        <Switch 
+                            checked={isActive} 
+                            onChange={handleToggle}
+                            disabled={loading}
+                        />
+                    </div>
+
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                        <div className="flex items-center gap-2">
+                            <MapPin size={14} className="text-secondary" />
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-wider">Selecionar Estado (UF)</label>
+                        </div>
+                        <div className="flex flex-wrap gap-1.5">
+                            {UFS.map(uf => (
+                                <button 
+                                    key={uf}
+                                    onClick={() => setSelectedUF(uf)}
+                                    className={`px-3 py-1 text-[11px] font-bold rounded-md transition-all ${
+                                        selectedUF === uf 
+                                            ? 'bg-secondary text-secondary-foreground' 
+                                            : 'bg-muted/50 text-muted-foreground hover:bg-muted hover:text-foreground'
+                                    }`}
+                                >
+                                    {uf}
+                                </button>
+                            ))}
+                            <div className="w-px h-6 bg-border mx-1 hidden sm:block" />
+                            <button 
+                                onClick={handleRefresh}
+                                disabled={isRefreshing}
+                                className="p-1.5 bg-background border border-border rounded-md text-muted-foreground hover:text-secondary hover:border-secondary transition-all disabled:opacity-50"
+                                title="Atualizar Dados"
+                            >
+                                <RefreshCw size={14} className={isRefreshing ? 'animate-spin' : ''} />
+                            </button>
+                        </div>
+                    </div>
+
+                    <div className="grid grid-cols-1 gap-4">
+                        {marketData.map((item) => (
+                            <div key={item.name} className="p-4 rounded-xl bg-muted/20 border border-border group hover:border-secondary/30 transition-all">
+                                <div className="flex items-center justify-between mb-2">
+                                    <span className="text-xs font-black text-muted-foreground uppercase tracking-wider">{item.name}</span>
+                                    {item.trend === 'up' && <TrendingUp size={14} className="text-red-500" />}
+                                    {item.trend === 'down' && <TrendingDown size={14} className="text-emerald-500" />}
+                                    {item.trend === 'neutral' && <Minus size={14} className="text-muted-foreground" />}
+                                </div>
+                                <div className="flex flex-col">
+                                    <span className="text-xl font-black text-foreground">{item.value}</span>
+                                    <div className="flex items-center gap-2 mt-1">
+                                        <span className={`text-xs font-bold ${
+                                            item.trend === 'up' ? 'text-red-500' : 
+                                            item.trend === 'down' ? 'text-emerald-500' : 
+                                            'text-muted-foreground'
+                                        }`}>
+                                            {item.change}
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground font-medium uppercase">{item.period}</span>
+                                    </div>
+                                </div>
+                            </div>
+                        ))}
+                    </div>
+    
+                    <div className="flex items-start gap-3 p-4 bg-muted/30 rounded-xl border border-border/50">
+                        <Info size={16} className="text-muted-foreground mt-0.5 shrink-0" />
+                        <p className="text-[11px] text-muted-foreground leading-relaxed">
+                            Os dados exibidos são coletados de fontes públicas (FGV, IBGE, Sinduscon). 
+                            A LAX Automacoes não se responsabiliza pela exatidão imediata dos índices.
+                        </p>
+                    </div>
+                </div>
+            </Modal>
+        </>
     );
 }

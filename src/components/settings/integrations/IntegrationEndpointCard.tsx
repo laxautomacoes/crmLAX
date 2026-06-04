@@ -1,12 +1,9 @@
-'use client';
-
 import { useState, useEffect } from 'react';
 import { 
     Copy, 
     Check, 
     ExternalLink, 
     LucideIcon, 
-    ChevronDown, 
     Key, 
     BookOpen 
 } from 'lucide-react';
@@ -17,7 +14,7 @@ import {
     updateIntegrationStatus 
 } from '@/app/_actions/integrations';
 import { Switch } from '@/components/ui/Switch';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Modal } from '@/components/shared/Modal';
 
 interface IntegrationEndpointCardProps {
     title: string;
@@ -48,7 +45,7 @@ export function IntegrationEndpointCard({
     const [hasToken, setHasToken] = useState(false);
     const [isActive, setIsActive] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isLoading, setIsLoading] = useState(true);
     const [isTokenFocused, setIsTokenFocused] = useState(false);
     
@@ -143,6 +140,7 @@ export function IntegrationEndpointCard({
         }
 
         const { error } = await saveIntegration(providerName, credentials);
+        setIsSaving(true);
         setIsSaving(false);
         
         if (error) {
@@ -192,7 +190,7 @@ export function IntegrationEndpointCard({
 
     if (isLoading) {
         return (
-            <div className="bg-card rounded-2xl border border-border p-6 flex items-center gap-4 animate-pulse">
+            <div className="bg-card rounded-xl border border-border p-6 flex items-center gap-4 animate-pulse">
                 <div className="p-2.5 rounded-xl bg-muted/50 h-10 w-10" />
                 <div className="flex-1 space-y-2">
                     <div className="h-4 bg-muted/50 rounded w-1/4" />
@@ -203,156 +201,145 @@ export function IntegrationEndpointCard({
     }
 
     return (
-        <div className="group bg-card hover:bg-muted/5 rounded-2xl border border-border overflow-hidden transition-all duration-300">
+        <>
             <div 
-                className="px-6 py-4 border-b border-border bg-muted/30 cursor-pointer select-none"
-                onClick={() => setIsExpanded(!isExpanded)}
+                className="group bg-card hover:bg-muted/5 rounded-xl border border-border overflow-hidden transition-all duration-300 cursor-pointer select-none"
+                onClick={() => setIsModalOpen(true)}
             >
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1">
-                        <div className={`p-2.5 rounded-xl ${iconColor}`}>
-                            <Icon size={20} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-base font-bold text-foreground">{title}</h3>
-                                <span className={`flex h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+                <div className="px-6 py-6 bg-muted/30">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 flex-1">
+                            <div className={`p-2.5 rounded-xl ${iconColor}`}>
+                                <Icon size={20} />
                             </div>
-                            <p className="text-xs text-muted-foreground max-w-xl line-clamp-1">{description}</p>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-base font-bold text-foreground">{title}</h3>
+                                    <span className={`flex h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                </div>
+                                <p className="text-xs text-muted-foreground max-w-xl line-clamp-1">{description}</p>
+                            </div>
                         </div>
-                    </div>
-
-                    <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
-                        <div className="flex items-center gap-2 group cursor-pointer" onClick={() => handleToggleStatus(!isActive)}>
-                            <span className={`text-[10px] font-black uppercase tracking-wider hidden sm:block ${isActive ? 'text-emerald-500' : 'text-muted-foreground/60'}`}>
-                                {isActive ? 'Ativo' : 'Desativado'}
-                            </span>
-                            <Switch 
-                                checked={isActive} 
-                                onChange={handleToggleStatus}
-                                disabled={isUpdatingStatus}
-                                className="scale-75"
-                            />
-                        </div>
-
-                        <div className="h-6 w-px bg-border hidden sm:block" />
-
-                        <button 
-                            className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
-                            onClick={() => setIsExpanded(!isExpanded)}
-                        >
-                            <motion.div
-                                animate={{ rotate: isExpanded ? 180 : 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <ChevronDown size={20} />
-                            </motion.div>
-                        </button>
                     </div>
                 </div>
             </div>
 
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        className="overflow-hidden"
-                    >
-                        <div className="p-6 border-t border-border/50">
-                            <div className="space-y-6">
-                                <div className="space-y-3">
-                                    <div className="flex items-center justify-between px-1">
-                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                            Endpoint de Conexão
-                                        </label>
-                                        {docsUrl && (
-                                            <a 
-                                                href={docsUrl} 
-                                                target="_blank" 
-                                                rel="noopener noreferrer"
-                                                className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] hover:underline flex items-center gap-1"
-                                                onClick={(e) => e.stopPropagation()}
-                                            >
-                                                <BookOpen size={10} />
-                                                Documentação
-                                            </a>
-                                        )}
-                                    </div>
-                                    
-                                    <div className="relative group/url">
-                                        <div className="flex items-center gap-2 p-3.5 bg-muted/50 rounded-xl border border-border group-hover/url:border-secondary/30 transition-colors">
-                                            <code className="text-[13px] text-foreground/80 break-all flex-1 font-mono leading-none truncate">
-                                                {fullUrl}
-                                            </code>
-                                            <button
-                                                onClick={handleCopy}
-                                                className="flex items-center gap-2 px-3 py-1.5 bg-background border border-border hover:border-secondary hover:text-secondary rounded-lg transition-all active:scale-95 shadow-sm"
-                                            >
-                                                {copied ? (
-                                                    <Check size={14} className="text-emerald-500" />
-                                                ) : (
-                                                    <Copy size={14} />
-                                                )}
-                                                <span className="text-[11px] font-bold uppercase">Copiar</span>
-                                            </button>
-                                        </div>
-                                    </div>
-                                </div>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                size="lg"
+                title={
+                    <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-lg ${iconColor}`}>
+                            <Icon size={18} />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-bold text-foreground">Configurar {title}</h3>
+                            <p className="text-xs text-muted-foreground">{description}</p>
+                        </div>
+                    </div>
+                }
+            >
+                <div className="space-y-6 py-2">
+                    <div className="flex items-center justify-between pb-4 border-b border-border/50">
+                        <div>
+                            <span className="text-xs font-bold text-foreground">Status da Integração</span>
+                            <p className="text-[10px] text-muted-foreground mt-0.5">Ative ou desative esta integração.</p>
+                        </div>
+                        <Switch 
+                            checked={isActive} 
+                            onChange={handleToggleStatus}
+                            disabled={isUpdatingStatus}
+                        />
+                    </div>
 
-                                {title.includes('Facebook') && (
-                                    <div className="space-y-3 pt-2">
-                                        <div className="flex items-center justify-between px-1">
-                                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                                Token de Acesso
-                                            </label>
-                                            <div className="flex items-center gap-2">
-                                                {hasToken && (
-                                                    <div className="flex items-center gap-1.5 text-[9px] text-emerald-500 font-bold uppercase tracking-wider">
-                                                        <div className="h-1 w-1 bg-emerald-500 rounded-full animate-pulse" />
-                                                        Configurado
-                                                    </div>
-                                                )}
-                                            </div>
-                                        </div>
-
-                                        <div className="flex gap-2">
-                                            <input 
-                                                type="text"
-                                                placeholder="Cole o Page Access Token aqui..."
-                                                className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-secondary transition-colors"
-                                                value={getDisplayToken()}
-                                                onFocus={() => setIsTokenFocused(true)}
-                                                onBlur={() => setIsTokenFocused(false)}
-                                                onChange={(e) => {
-                                                    if (isTokenFocused || !hasToken) {
-                                                        setAccessToken(e.target.value);
-                                                    }
-                                                }}
-                                            />
-                                            <button 
-                                                disabled={isSaving}
-                                                onClick={handleSaveToken}
-                                                className="bg-secondary text-secondary-foreground px-4 py-2 rounded-lg text-xs font-bold hover:opacity-90 disabled:opacity-50 transition-all active:scale-95"
-                                            >
-                                                {isSaving ? 'Salvando...' : 'Salvar'}
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-
-                                <div className="flex items-center justify-between pt-4 border-t border-border/50">
-                                    <span className="text-[10px] text-muted-foreground/60 font-medium tracking-wider uppercase">
-                                        Webhook v1.0
-                                    </span>
-                                </div>
+                    <div className="space-y-3">
+                        <div className="flex items-center justify-between px-1">
+                            <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                                Endpoint de Conexão
+                            </label>
+                            {docsUrl && (
+                                <a 
+                                    href={docsUrl} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="text-[10px] font-black text-secondary uppercase tracking-[0.2em] hover:underline flex items-center gap-1"
+                                    onClick={(e) => e.stopPropagation()}
+                                >
+                                    <BookOpen size={10} />
+                                    Documentação
+                                </a>
+                            )}
+                        </div>
+                        
+                        <div className="relative group/url w-full">
+                            <div className="flex flex-col gap-3 p-4 bg-muted/50 rounded-xl border border-border group-hover/url:border-secondary/30 transition-colors">
+                                <code className="text-[11px] text-foreground/80 break-all font-mono leading-relaxed max-w-full">
+                                    {fullUrl}
+                                </code>
+                                <button
+                                    onClick={handleCopy}
+                                    className="flex items-center justify-center gap-2 w-full py-2 bg-background border border-border hover:border-secondary hover:text-secondary rounded-lg transition-all active:scale-95 shadow-sm shrink-0 font-bold text-xs"
+                                >
+                                    {copied ? (
+                                        <Check size={14} className="text-emerald-500" />
+                                    ) : (
+                                        <Copy size={14} />
+                                    )}
+                                    <span className="text-[11px] font-bold uppercase">Copiar Endpoint</span>
+                                </button>
                             </div>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+                    </div>
+
+                    {title.includes('Facebook') && (
+                        <div className="space-y-3 pt-2">
+                            <div className="flex items-center justify-between px-1">
+                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                                    Token de Acesso
+                                </label>
+                                <div className="flex items-center gap-2">
+                                    {hasToken && (
+                                        <div className="flex items-center gap-1.5 text-[9px] text-emerald-500 font-bold uppercase tracking-wider">
+                                            <div className="h-1 w-1 bg-emerald-500 rounded-full animate-pulse" />
+                                            Configurado
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="flex gap-2">
+                                <input 
+                                    type="text"
+                                    placeholder="Cole o Page Access Token aqui..."
+                                    className="flex-1 bg-muted/30 border border-border rounded-lg px-3 py-2 text-xs focus:outline-none focus:border-secondary transition-colors"
+                                    value={getDisplayToken()}
+                                    onFocus={() => setIsTokenFocused(true)}
+                                    onBlur={() => setIsTokenFocused(false)}
+                                    onChange={(e) => {
+                                        if (isTokenFocused || !hasToken) {
+                                            setAccessToken(e.target.value);
+                                        }
+                                    }}
+                                />
+                                <button 
+                                    disabled={isSaving}
+                                    onClick={handleSaveToken}
+                                    className="bg-[#FFE600] text-black px-4 py-2 rounded-lg text-xs font-bold hover:bg-[#F2DB00] transition-all active:scale-95 shrink-0"
+                                >
+                                    {isSaving ? 'Salvando...' : 'Salvar'}
+                                </button>
+                            </div>
+                        </div>
+                    )}
+
+                    <div className="flex items-center justify-between pt-4 border-t border-border/50">
+                        <span className="text-[10px] text-muted-foreground/60 font-medium tracking-wider uppercase">
+                            Webhook v1.0
+                        </span>
+                    </div>
+                </div>
+            </Modal>
+        </>
     );
 }

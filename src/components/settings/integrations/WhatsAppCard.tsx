@@ -1,5 +1,3 @@
-'use client';
-
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { 
     MessageCircle, 
@@ -9,7 +7,6 @@ import {
     AlertCircle, 
     RefreshCw, 
     Power,
-    ChevronDown,
     Trash2,
     Send,
     Phone,
@@ -28,7 +25,7 @@ import {
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/Switch';
 import { getIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
-import { motion, AnimatePresence } from 'framer-motion';
+import { Modal } from '@/components/shared/Modal';
 
 /** Formata telefone para exibição: 5548999887766 → (48) 99988-7766 */
 function formatPhoneDisplay(phone: string | null | undefined): string {
@@ -52,7 +49,7 @@ export function WhatsAppCard() {
     const [refreshing, setRefreshing] = useState(false);
     const [isActive, setIsActive] = useState(false);
     const [isUpdatingStatus, setIsUpdatingStatus] = useState(false);
-    const [isExpanded, setIsExpanded] = useState(false);
+    const [isModalOpen, setIsModalOpen] = useState(false);
     const [isTesting, setIsTesting] = useState(false);
     const [liveStatus, setLiveStatus] = useState<'checking' | 'connected' | 'disconnected' | null>(null);
     const [qrError, setQrError] = useState<string | null>(null);
@@ -82,7 +79,7 @@ export function WhatsAppCard() {
         setLoading(false);
     };
 
-    // Verificação em tempo real ao expandir o card
+    // Verificação em tempo real ao abrir o modal
     const checkLiveStatus = useCallback(async () => {
         if (!instance) return;
         setLiveStatus('checking');
@@ -104,17 +101,17 @@ export function WhatsAppCard() {
         }
     }, [instance]);
 
-    // Auto-verificar ao expandir
+    // Auto-verificar ao abrir o modal
     useEffect(() => {
-        if (isExpanded && instance && !loading) {
+        if (isModalOpen && instance && !loading) {
             checkLiveStatus();
         }
-    }, [isExpanded]);
+    }, [isModalOpen]);
 
     // Polling automático: verificar conexão a cada 5s quando QR code está visível
     const pollingRef = useRef<NodeJS.Timeout | null>(null);
     useEffect(() => {
-        const shouldPoll = instance && instance.status === 'disconnected' && isExpanded && !loading;
+        const shouldPoll = instance && instance.status === 'disconnected' && isModalOpen && !loading;
         if (shouldPoll) {
             pollingRef.current = setInterval(async () => {
                 const { status, connectedPhone, error } = await refreshInstanceStatus();
@@ -137,7 +134,7 @@ export function WhatsAppCard() {
                 pollingRef.current = null;
             }
         };
-    }, [instance?.status, isExpanded, loading]);
+    }, [instance?.status, isModalOpen, loading]);
 
     const handleToggleStatus = async (checked: boolean) => {
         setIsUpdatingStatus(true);
@@ -255,9 +252,9 @@ export function WhatsAppCard() {
 
     if (loading) {
         return (
-            <div className="bg-card rounded-2xl border border-border p-8 flex flex-col items-center justify-center min-h-[150px]">
-                <Loader2 className="w-8 h-8 animate-spin text-secondary mb-4" />
-                <p className="text-muted-foreground">Carregando integração...</p>
+            <div className="bg-card rounded-xl border border-border p-8 flex flex-col items-center justify-center min-h-[108px]">
+                <Loader2 className="w-6 h-6 animate-spin text-secondary mb-2" />
+                <p className="text-xs text-muted-foreground">Carregando integração...</p>
             </div>
         );
     }
@@ -269,233 +266,240 @@ export function WhatsAppCard() {
             return `Conectado · ${formatPhoneDisplay(instance.connected_phone)}`;
         }
         if (isConnected) return 'Conectado e pronto para uso';
-        if (instance) return 'Aguardando conexão — escaneie o QR Code';
         return 'Nenhuma instância configurada';
     };
 
     return (
-        <div className="bg-card rounded-2xl border border-border overflow-hidden transition-all hover:bg-muted/5">
+        <>
             <div 
-                className="px-6 py-4 border-b border-border bg-muted/30 cursor-pointer select-none"
-                onClick={() => setIsExpanded(!isExpanded)}
+                className="bg-card rounded-xl border border-border overflow-hidden transition-all hover:bg-muted/5 cursor-pointer select-none"
+                onClick={() => setIsModalOpen(true)}
             >
-                <div className="flex items-center justify-between gap-4">
-                    <div className="flex items-center gap-4 flex-1">
-                        <div className="p-2.5 rounded-xl bg-[#25D366]/10 text-[#25D366]">
-                            <MessageCircle size={20} />
-                        </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <h3 className="text-base font-bold text-foreground">WhatsApp</h3>
-                                <span className={`flex h-2 w-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-muted-foreground/30'}`} />
+                <div className="px-6 py-6 bg-muted/30">
+                    <div className="flex items-center justify-between gap-4">
+                        <div className="flex items-center gap-4 flex-1">
+                            <div className="p-2.5 rounded-xl bg-[#25D366]/10 text-[#25D366]">
+                                <MessageCircle size={20} />
                             </div>
-                            <p className="text-xs text-muted-foreground max-w-xl line-clamp-1">
-                                {headerSubtitle()}
-                            </p>
+                            <div>
+                                <div className="flex items-center gap-2">
+                                    <h3 className="text-base font-bold text-foreground">WhatsApp</h3>
+                                    <span className={`flex h-2 w-2 rounded-full ${isConnected ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                                </div>
+                                <p className="text-xs text-muted-foreground max-w-xl line-clamp-1">
+                                    {headerSubtitle()}
+                                </p>
+                            </div>
                         </div>
-                    </div>
-
-                    <div className="flex items-center gap-4" onClick={(e) => e.stopPropagation()}>
-                        <button 
-                            className="p-2 hover:bg-muted rounded-lg transition-colors text-muted-foreground"
-                            onClick={() => setIsExpanded(!isExpanded)}
-                        >
-                            <motion.div
-                                animate={{ rotate: isExpanded ? 180 : 0 }}
-                                transition={{ duration: 0.3 }}
-                            >
-                                <ChevronDown size={20} />
-                            </motion.div>
-                        </button>
                     </div>
                 </div>
             </div>
 
-            <AnimatePresence>
-                {isExpanded && (
-                    <motion.div
-                        initial={{ height: 0, opacity: 0 }}
-                        animate={{ height: 'auto', opacity: 1 }}
-                        exit={{ height: 0, opacity: 0 }}
-                        transition={{ duration: 0.3, ease: 'easeInOut' }}
-                        className="overflow-hidden"
-                    >
-                        <div className="p-8 flex flex-col items-center justify-center border-t border-border/50">
-                            {!instance ? (
-                                <div className="text-center space-y-6 max-w-sm">
-                                    <div className="p-6 rounded-2xl bg-muted/50 border border-dashed border-border inline-block">
-                                        <QrCode size={48} className="text-muted-foreground mx-auto mb-2 opacity-50" />
-                                        <p className="text-sm text-muted-foreground font-medium">Nenhuma instância configurada</p>
-                                    </div>
-                                    <p className="text-xs text-muted-foreground leading-relaxed px-4">
-                                        Para começar, você precisa criar uma instância de conexão segura com o nosso servidor de mensagens.
-                                    </p>
-                                    <button
-                                        onClick={handleConnect}
-                                        disabled={refreshing}
-                                        className="w-full py-3 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#20BA5A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 active:scale-[0.98]"
-                                    >
-                                        {refreshing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Power size={20} />}
-                                        Configurar Integração
-                                    </button>
-                                </div>
-                            ) : instance.status === 'connected' ? (
-                                <div className="w-full space-y-4">
-                                    <div className="flex flex-col md:flex-row items-stretch md:items-center gap-4">
-                                        {/* Número conectado - esquerda */}
-                                        <div className="flex items-center gap-3 px-5 py-3 bg-card rounded-xl border border-border shrink-0">
-                                            <Phone size={16} className="text-[#25D366] shrink-0" />
-                                            <div className="min-w-0">
-                                                <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Número Conectado</p>
-                                                <p className="text-sm font-bold text-foreground">{instance.connected_phone ? formatPhoneDisplay(instance.connected_phone) : '—'}</p>
-                                            </div>
-                                            <div className="flex items-center gap-1.5 ml-3">
-                                                {liveStatus === 'connected' && (
-                                                    <>
-                                                        <Wifi size={14} className="text-emerald-500" />
-                                                        <span className="text-[10px] font-bold text-emerald-500 uppercase">Online</span>
-                                                    </>
-                                                )}
-                                                {liveStatus === 'disconnected' && (
-                                                    <>
-                                                        <WifiOff size={14} className="text-red-500" />
-                                                        <span className="text-[10px] font-bold text-red-500 uppercase">Offline</span>
-                                                    </>
-                                                )}
-                                                {liveStatus === 'checking' && (
-                                                    <Loader2 size={14} className="text-muted-foreground animate-spin" />
-                                                )}
-                                            </div>
-                                        </div>
+            <Modal
+                isOpen={isModalOpen}
+                onClose={() => setIsModalOpen(false)}
+                size="lg"
+                title={
+                    <div className="flex items-center gap-3">
+                        <div className="p-2 rounded-lg bg-[#25D366]/10 text-[#25D366]">
+                            <MessageCircle size={18} />
+                        </div>
+                        <div>
+                            <h3 className="text-base font-bold text-foreground">Configurar WhatsApp</h3>
+                            <p className="text-xs text-muted-foreground">Gerencie sua instância de conexão e disparos.</p>
+                        </div>
+                    </div>
+                }
+            >
+                <div className="flex items-center justify-between pb-4 border-b border-border/50 mb-4">
+                    <div>
+                        <span className="text-xs font-bold text-foreground">Status da Integração</span>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">Ative ou desative o WhatsApp.</p>
+                    </div>
+                    <Switch 
+                        checked={isActive} 
+                        onChange={handleToggleStatus}
+                        disabled={isUpdatingStatus}
+                    />
+                </div>
 
-                                        {/* Botões - direita */}
-                                        <div className="flex flex-wrap md:flex-nowrap items-center gap-2 md:ml-auto">
-                                            <button
-                                                onClick={handleSendTest}
-                                                disabled={isTesting || !instance.connected_phone}
-                                                className="flex-1 md:flex-none px-4 py-2.5 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#20BA5A] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-xs whitespace-nowrap"
-                                            >
-                                                {isTesting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
-                                                Enviar Teste
-                                            </button>
-                                            <button
-                                                onClick={handleRefresh}
-                                                disabled={refreshing}
-                                                className="flex-1 md:flex-none px-4 py-2.5 bg-card border border-border text-foreground rounded-lg font-bold hover:bg-muted transition-all flex items-center justify-center gap-2 active:scale-95 text-xs whitespace-nowrap"
-                                            >
-                                                <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
-                                                Verificar
-                                            </button>
-                                            <button
-                                                onClick={handleDisconnect}
-                                                disabled={refreshing}
-                                                className="flex-1 md:flex-none px-4 py-2.5 bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded-lg font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 text-xs whitespace-nowrap"
-                                            >
-                                                <Power size={14} />
-                                                Desconectar
-                                            </button>
-                                            <button
-                                                onClick={handleDelete}
-                                                disabled={refreshing}
-                                                className="flex-1 md:flex-none px-4 py-2.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-bold hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 text-xs whitespace-nowrap"
-                                            >
-                                                <Trash2 size={14} />
-                                                Excluir
-                                            </button>
+                <div className="flex flex-col items-center justify-center py-4">
+                    {!instance ? (
+                        <div className="text-center space-y-6 max-w-sm w-full">
+                            <div className="p-6 rounded-xl bg-muted/50 border border-dashed border-border inline-block w-full">
+                                <QrCode size={48} className="text-muted-foreground mx-auto mb-2 opacity-50" />
+                                <p className="text-sm text-muted-foreground font-medium">Nenhuma instância configurada</p>
+                            </div>
+                            <p className="text-xs text-muted-foreground leading-relaxed px-4">
+                                Para começar, você precisa criar uma instância de conexão segura com o nosso servidor de mensagens.
+                            </p>
+                            <button
+                                onClick={handleConnect}
+                                disabled={refreshing}
+                                className="w-full py-3 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#20BA5A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 active:scale-[0.98]"
+                            >
+                                {refreshing ? <Loader2 className="w-5 h-5 animate-spin" /> : <Power size={20} />}
+                                Configurar Integração
+                            </button>
+                        </div>
+                    ) : instance.status === 'connected' ? (
+                        <div className="w-full space-y-4">
+                            <div className="flex flex-col gap-4">
+                                {/* Número conectado */}
+                                <div className="flex items-center justify-between gap-3 px-4 py-3 bg-muted/20 rounded-xl border border-border w-full">
+                                    <div className="flex items-center gap-2.5 min-w-0">
+                                        <Phone size={16} className="text-[#25D366] shrink-0" />
+                                        <div className="min-w-0">
+                                            <p className="text-[10px] font-bold uppercase tracking-wider text-muted-foreground">Número Conectado</p>
+                                            <p className="text-sm font-bold text-foreground">{instance.connected_phone ? formatPhoneDisplay(instance.connected_phone) : '—'}</p>
                                         </div>
+                                    </div>
+                                    <div className="flex items-center gap-1.5 shrink-0">
+                                        {liveStatus === 'connected' && (
+                                            <>
+                                                <Wifi size={14} className="text-emerald-500" />
+                                                <span className="text-[10px] font-bold text-emerald-500 uppercase">Online</span>
+                                            </>
+                                        )}
+                                        {liveStatus === 'disconnected' && (
+                                            <>
+                                                <WifiOff size={14} className="text-red-500" />
+                                                <span className="text-[10px] font-bold text-red-500 uppercase">Offline</span>
+                                            </>
+                                        )}
+                                        {liveStatus === 'checking' && (
+                                            <Loader2 size={14} className="text-muted-foreground animate-spin" />
+                                        )}
                                     </div>
                                 </div>
-                            ) : showQr ? (
-                                <div className="flex flex-col md:flex-row items-center gap-12 max-w-2xl w-full">
-                                    <div className="flex-1 space-y-4 text-center md:text-left">
-                                        <div className="flex items-center justify-center md:justify-start gap-2 text-orange-500">
-                                            <AlertCircle size={20} />
-                                            <span className="font-bold uppercase text-xs tracking-wider">Aguardando Conexão</span>
-                                        </div>
-                                        <h4 className="text-lg font-bold text-foreground">Escaneie o QR Code</h4>
-                                        <ol className="text-sm text-muted-foreground space-y-3 list-decimal list-inside text-left">
-                                            <li>Abra o WhatsApp no seu celular</li>
-                                            <li>Toque em <b>Dispositivos Conectados</b></li>
-                                            <li>Toque em <b>Conectar um dispositivo</b></li>
-                                            <li>Aponte seu celular para esta tela</li>
-                                        </ol>
-                                        <div className="pt-4 flex gap-3 justify-center md:justify-start">
-                                            <button
-                                                onClick={handleRefresh}
-                                                disabled={refreshing}
-                                                className="px-6 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-all flex items-center gap-2"
-                                            >
-                                                <RefreshCw size={18} className={refreshing ? 'animate-spin' : ''} />
-                                                Já escaneei
-                                            </button>
-                                            <button
-                                                onClick={() => { setShowQr(false); setQrCode(null); }}
-                                                className="px-6 py-2 text-muted-foreground hover:text-red-500 transition-colors text-sm font-medium"
-                                            >
-                                                Cancelar
-                                            </button>
-                                        </div>
-                                    </div>
-                                    <div className="relative group">
-                                        <div className="absolute -inset-1 bg-gradient-to-r from-[#25D366] to-[#20BA5A] rounded-2xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
-                                        <div className="relative p-4 bg-white rounded-2xl border border-border shadow-xl">
-                                            {qrCode ? (
-                                                <img src={qrCode} alt="WhatsApp QR Code" className="w-56 h-56" />
-                                            ) : qrError ? (
-                                                <div className="w-56 h-56 flex flex-col items-center justify-center gap-3 p-4">
-                                                    <WifiOff size={32} className="text-red-400" />
-                                                    <p className="text-xs text-center text-red-500 font-medium leading-tight">
-                                                        Servidor indisponível
-                                                    </p>
-                                                    <button
-                                                        onClick={() => instance && fetchQrCode(instance.instance_name)}
-                                                        className="text-xs px-3 py-1.5 bg-secondary/10 text-secondary rounded-md font-bold hover:bg-secondary/20 transition-colors"
-                                                    >
-                                                        Tentar novamente
-                                                    </button>
-                                                </div>
-                                            ) : (
-                                                <div className="w-56 h-56 flex items-center justify-center">
-                                                    <Loader2 className="w-8 h-8 animate-spin text-secondary" />
-                                                </div>
-                                            )}
-                                        </div>
-                                    </div>
-                                </div>
-                            ) : (
-                                /* Estado desconectado — botão para reconectar */
-                                <div className="text-center space-y-6 max-w-sm">
-                                    <div className="p-6 rounded-2xl bg-orange-500/5 border border-orange-500/20 inline-flex flex-col items-center gap-3">
-                                        <WifiOff size={40} className="text-orange-400" />
-                                        <div>
-                                            <h4 className="text-base font-bold text-foreground">Desconectado</h4>
-                                            <p className="text-xs text-muted-foreground mt-1">A sessão do WhatsApp não está ativa.</p>
-                                        </div>
-                                    </div>
+
+                                {/* Botões empilhados verticalmente */}
+                                <div className="flex flex-col gap-2 w-full">
                                     <button
-                                        onClick={async () => {
-                                            setShowQr(true);
-                                            if (instance) await fetchQrCode(instance.instance_name);
-                                        }}
-                                        disabled={refreshing}
-                                        className="w-full py-3 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#20BA5A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 active:scale-[0.98]"
+                                        onClick={handleSendTest}
+                                        disabled={isTesting || !instance.connected_phone}
+                                        className="w-full px-4 py-2.5 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#20BA5A] transition-all flex items-center justify-center gap-2 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed shadow-sm text-xs"
                                     >
-                                        <Power size={20} />
-                                        Reconectar WhatsApp
+                                        {isTesting ? <Loader2 size={14} className="animate-spin" /> : <Send size={14} />}
+                                        Enviar Teste
+                                    </button>
+                                    <button
+                                        onClick={handleRefresh}
+                                        disabled={refreshing}
+                                        className="w-full px-4 py-2.5 bg-card border border-border text-foreground rounded-lg font-bold hover:bg-muted transition-all flex items-center justify-center gap-2 active:scale-95 text-xs"
+                                    >
+                                        <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                                        Verificar Status
+                                    </button>
+                                    <button
+                                        onClick={handleDisconnect}
+                                        disabled={refreshing}
+                                        className="w-full px-4 py-2.5 bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded-lg font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 text-xs"
+                                    >
+                                        <Power size={14} />
+                                        Desconectar
                                     </button>
                                     <button
                                         onClick={handleDelete}
                                         disabled={refreshing}
-                                        className="text-xs text-muted-foreground hover:text-red-500 transition-colors font-medium"
+                                        className="w-full px-4 py-2.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-bold hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 text-xs"
                                     >
-                                        <span className="flex items-center justify-center gap-1.5"><Trash2 size={14} /> Excluir instância</span>
+                                        <Trash2 size={14} />
+                                        Excluir Instância
                                     </button>
                                 </div>
-                            )}
+                            </div>
                         </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+                    ) : showQr ? (
+                        <div className="flex flex-col items-center gap-6 w-full text-center">
+                            <div className="relative group">
+                                <div className="absolute -inset-1 bg-gradient-to-r from-[#25D366] to-[#20BA5A] rounded-xl blur opacity-25 group-hover:opacity-50 transition duration-1000"></div>
+                                <div className="relative p-4 bg-white rounded-xl border border-border shadow-xl">
+                                    {qrCode ? (
+                                        <img src={qrCode} alt="WhatsApp QR Code" className="w-48 h-48 mx-auto" />
+                                    ) : qrError ? (
+                                        <div className="w-48 h-48 flex flex-col items-center justify-center gap-3 p-4">
+                                            <WifiOff size={32} className="text-red-400" />
+                                            <p className="text-xs text-center text-red-500 font-medium leading-tight">
+                                                Servidor indisponível
+                                            </p>
+                                            <button
+                                                onClick={() => instance && fetchQrCode(instance.instance_name)}
+                                                className="text-xs px-3 py-1.5 bg-secondary/10 text-secondary rounded-md font-bold hover:bg-secondary/20 transition-colors"
+                                            >
+                                                Tentar novamente
+                                            </button>
+                                        </div>
+                                    ) : (
+                                        <div className="w-48 h-48 flex items-center justify-center mx-auto">
+                                            <Loader2 className="w-8 h-8 animate-spin text-secondary" />
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className="space-y-4 w-full">
+                                <div className="flex items-center justify-center gap-2 text-orange-500">
+                                    <AlertCircle size={18} />
+                                    <span className="font-bold uppercase text-xs tracking-wider">Aguardando Conexão</span>
+                                </div>
+                                <h4 className="text-base font-bold text-foreground">Escaneie o QR Code</h4>
+                                <ol className="text-xs text-muted-foreground space-y-2 list-decimal list-inside text-left px-2">
+                                    <li>Abra o WhatsApp no celular</li>
+                                    <li>Toque em <b>Dispositivos Conectados</b></li>
+                                    <li>Toque em <b>Conectar dispositivo</b></li>
+                                    <li>Aponte o celular para o QR Code acima</li>
+                                </ol>
+                                <div className="pt-2 flex flex-col gap-2 w-full">
+                                    <button
+                                        onClick={handleRefresh}
+                                        disabled={refreshing}
+                                        className="w-full py-2.5 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 text-xs"
+                                    >
+                                        <RefreshCw size={14} className={refreshing ? 'animate-spin' : ''} />
+                                        Já escaneei
+                                    </button>
+                                    <button
+                                        onClick={() => { setShowQr(false); setQrCode(null); }}
+                                        className="w-full py-2 text-muted-foreground hover:text-red-500 transition-colors text-xs font-medium"
+                                    >
+                                        Cancelar
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        /* Estado desconectado — botão para reconectar */
+                        <div className="text-center space-y-6 max-w-sm w-full">
+                            <div className="p-6 rounded-xl bg-orange-500/5 border border-orange-500/20 inline-flex flex-col items-center gap-3 w-full">
+                                <WifiOff size={40} className="text-orange-400" />
+                                <div>
+                                    <h4 className="text-base font-bold text-foreground">Desconectado</h4>
+                                    <p className="text-xs text-muted-foreground mt-1">A sessão do WhatsApp não está ativa.</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={async () => {
+                                    setShowQr(true);
+                                    if (instance) await fetchQrCode(instance.instance_name);
+                                }}
+                                disabled={refreshing}
+                                className="w-full py-3 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#20BA5A] transition-all flex items-center justify-center gap-2 shadow-lg shadow-[#25D366]/20 active:scale-[0.98]"
+                            >
+                                <Power size={20} />
+                                Reconectar WhatsApp
+                            </button>
+                            <button
+                                onClick={handleDelete}
+                                disabled={refreshing}
+                                className="text-xs text-muted-foreground hover:text-red-500 transition-colors font-medium w-full block text-center"
+                            >
+                                <span className="flex items-center justify-center gap-1.5"><Trash2 size={14} /> Excluir instância</span>
+                            </button>
+                        </div>
+                    )}
+                </div>
+            </Modal>
+        </>
     );
 }
