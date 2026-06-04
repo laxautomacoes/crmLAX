@@ -493,7 +493,7 @@ export async function createBulkCampaign(data: {
             filters_applied: data.filtersApplied || {},
             source_type: data.sourceType,
             recipients_data: data.recipientsData || null,
-            speed_setting: data.speedSetting || 'normal',
+            speed_setting: data.speedSetting || 'safe',
             instance_name: data.instanceName || null,
             current_index: 0,
             cancel_requested: false
@@ -669,7 +669,7 @@ export async function checkStalledCampaign(campaignId: string) {
     if (campaign.status === 'sending' && campaign.last_activity_at) {
         const lastActivity = new Date(campaign.last_activity_at).getTime()
         const now = Date.now()
-        const STALE_THRESHOLD_MS = 3 * 60 * 1000 // 3 minutos
+        const STALE_THRESHOLD_MS = 6 * 60 * 1000 // 6 minutos (delay máximo é 240s)
 
         if (now - lastActivity > STALE_THRESHOLD_MS) {
             return {

@@ -270,7 +270,7 @@ Deno.serve(async (req: Request) => {
     const recipients: any[] = campaign.recipients_data || [];
     const startIndex = campaign.current_index || 0;
     const instanceName = campaign.instance_name;
-    const speedSetting = campaign.speed_setting || 'normal';
+    const speedSetting = campaign.speed_setting || 'safe';
     const message = campaign.message || '';
     const mediaUrl = campaign.media_url;
     const mediaType = campaign.media_type;
@@ -413,11 +413,10 @@ Deno.serve(async (req: Request) => {
 
       // Aplicar delay entre mensagens ANTES de chamar o próximo lote
       const speedRanges: Record<string, [number, number]> = {
-        normal: [20000, 30000],
-        safe: [30000, 60000],
-        ultra: [60000, 120000]
+        safe: [60000, 120000],
+        ultra: [120000, 240000]
       };
-      const [min, max] = speedRanges[speedSetting] || speedRanges.normal;
+      const [min, max] = speedRanges[speedSetting] || speedRanges.safe;
       const delay = min + Math.random() * (max - min);
       console.log(`[bulk-sender] Aguardando ${Math.round(delay / 1000)}s antes do próximo envio...`);
       await new Promise(r => setTimeout(r, delay));

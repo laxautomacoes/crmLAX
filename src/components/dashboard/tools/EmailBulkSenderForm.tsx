@@ -1138,14 +1138,14 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                         )}
 
                         {recipients.length > 0 && !showFilters && (
-                            <div className="flex-1 overflow-hidden flex flex-col min-h-0 bg-card rounded-lg border border-border">
+                            <div className="max-h-[400px] overflow-hidden flex flex-col min-h-0 bg-card rounded-lg border border-border">
                                 <div className="p-2 border-b border-border bg-foreground/5 flex justify-between items-center shrink-0">
                                     <span className="text-xs font-bold text-muted-foreground px-2">Lista Selecionada</span>
                                     <button onClick={() => setShowFilters(true)} className="text-xs font-bold text-foreground hover:text-secondary-foreground transition-colors px-2">
                                         + Adicionar mais
                                     </button>
                                 </div>
-                                <div className="flex-1 overflow-y-auto p-2 space-y-1">
+                                <div className="flex-1 overflow-y-auto p-2 space-y-1 custom-scrollbar">
                                     {recipients.map((r, i) => (
                                         <div key={i} className="flex items-center justify-between p-2 hover:bg-foreground/5 rounded-md group">
                                             <div className="min-w-0">

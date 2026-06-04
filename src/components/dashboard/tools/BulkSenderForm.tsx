@@ -229,8 +229,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
     // Limite de envios
     const [sendLimit, setSendLimit] = useState<string>('')
     // Velocidade do disparo
-    const [sendSpeed, setSendSpeed] = useState<'fast' | 'normal' | 'safe' | 'ultra' | null>(null)
-    const [pendingSpeed, setPendingSpeed] = useState<'fast' | 'normal' | 'safe' | 'ultra' | null>(null)
+    const [sendSpeed, setSendSpeed] = useState<'safe' | 'ultra' | null>(null)
+    const [pendingSpeed, setPendingSpeed] = useState<'safe' | 'ultra' | null>(null)
     const [showSpeedWarning, setShowSpeedWarning] = useState(false)
     
     const fileInputRef = useRef<HTMLInputElement>(null)
@@ -1489,9 +1489,8 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         </div>
                         <div className="grid grid-cols-1 gap-2">
                             {[
-                                { key: 'normal' as const, label: '20 – 30s', time: '~21 min para 50 msgs', risk: 'Alto', color: 'text-red-500' },
-                                { key: 'safe' as const, label: '30 – 60s', time: '~37 min para 50 msgs', risk: 'Moderado', color: 'text-amber-500' },
-                                { key: 'ultra' as const, label: '60 – 120s', time: '~1h15 para 50 msgs', risk: 'Baixo', color: 'text-green-500' },
+                                { key: 'safe' as const, label: '60 – 120s', time: '~1h15 para 50 msgs', risk: 'Padrão', color: 'text-amber-500' },
+                                { key: 'ultra' as const, label: '120 – 240s', time: '~2h30 para 50 msgs', risk: 'Seguro', color: 'text-green-500' },
                             ].map(opt => (
                                 <button
                                     key={opt.key}
@@ -1542,7 +1541,7 @@ export function BulkSenderForm({ tenantId, profileId, isAdmin }: BulkSenderFormP
                         </div>
                         <div className="px-6 py-6 space-y-3">
                             <p className="text-sm text-foreground leading-relaxed">
-                                Você escolheu o intervalo de <strong className="text-accent-icon">{pendingSpeed === 'fast' ? '10 – 20s' : pendingSpeed === 'normal' ? '20 – 30s' : pendingSpeed === 'safe' ? '30 – 60s' : '60 – 120s'}</strong> entre as mensagens.
+                                Você escolheu o intervalo de <strong className="text-accent-icon">{pendingSpeed === 'safe' ? '60 – 120s' : '120 – 240s'}</strong> entre as mensagens.
                             </p>
                             <p className="text-sm text-foreground leading-relaxed">
                                 Nenhum intervalo de tempo garante que o número de WhatsApp utilizado não possa ser bloqueado.
