@@ -14,13 +14,23 @@ import {
     ExternalLink,
     MapPin,
     Share2,
-    Palette
+    Palette,
+    Sun,
+    Moon,
+    Monitor,
+    Type,
+    Circle,
+    Square,
+    RectangleHorizontal,
+    LayoutGrid
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getProfile } from '@/app/_actions/profile'
 import { updateTenantBranding } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
 import { Logo } from '@/components/shared/Logo'
+import { AVAILABLE_FONTS, type SiteTheme } from '@/components/site/SiteThemeProvider'
+import { SectionSettingsPanel } from '@/components/site/settings/SectionSettingsPanel'
 
 interface BrandingData {
     logo_full?: string
@@ -47,10 +57,18 @@ interface BrandingData {
     privacy_policy?: string
     terms_of_service?: string
     site_description?: string
+    site_theme?: SiteTheme
+    site_sections?: any
+    seo?: {
+        meta_title?: string
+        meta_description?: string
+        meta_keywords?: string
+        og_image?: string
+    }
 }
 
 export function SiteSettings() {
-    const [activeTab, setActiveTab] = useState<'branding' | 'footer'>('branding')
+    const [activeTab, setActiveTab] = useState<'branding' | 'appearance' | 'sections' | 'footer'>('branding')
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
     const [isUploading, setIsUploading] = useState<'logo_full' | 'logo_header' | 'logo_icon' | null>(null)
@@ -218,17 +236,31 @@ export function SiteSettings() {
     return (
         <div className="space-y-6">
             {/* Tab Navigation */}
-            <div className="flex items-center border-b border-border">
+            <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar">
                 <button
                     onClick={() => setActiveTab('branding')}
-                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'branding' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'branding' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                     <Palette size={16} />
                     Identidade
                 </button>
                 <button
+                    onClick={() => setActiveTab('appearance')}
+                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'appearance' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    <Sun size={16} />
+                    Aparência
+                </button>
+                <button
+                    onClick={() => setActiveTab('sections')}
+                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'sections' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                >
+                    <LayoutGrid size={16} />
+                    Seções
+                </button>
+                <button
                     onClick={() => setActiveTab('footer')}
-                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 ${activeTab === 'footer' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'footer' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                 >
                     <MapPin size={16} />
                     Rodapé
@@ -379,6 +411,284 @@ export function SiteSettings() {
                                     </div>
                                 </div>
                             </div>
+                        </div>
+                    </div>
+                )}
+
+                {/* APPEARANCE TAB */}
+                {activeTab === 'appearance' && (
+                    <div className="space-y-6">
+                        {/* Cores do Tema */}
+                        <div className="bg-card border border-border rounded-xl p-6">
+                            <div className="mb-6">
+                                <h3 className="text-lg font-bold text-foreground">Cores do Site</h3>
+                                <p className="text-sm text-muted-foreground">Defina as cores que serão usadas em todo o seu site vitrine.</p>
+                            </div>
+
+                            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                                {/* Cor Primária */}
+                                <div className="space-y-3">
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Cor Primária</label>
+                                    <p className="text-xs text-muted-foreground ml-1">Header, textos e elementos principais</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative">
+                                            <input
+                                                type="color"
+                                                value={branding.site_theme?.primary_color || '#404F4F'}
+                                                onChange={(e) => setBranding(prev => ({
+                                                    ...prev,
+                                                    site_theme: { ...(prev.site_theme || {}), primary_color: e.target.value }
+                                                }))}
+                                                className="w-12 h-12 rounded-lg border-2 border-border cursor-pointer appearance-none bg-transparent p-0.5"
+                                            />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={branding.site_theme?.primary_color || '#404F4F'}
+                                            onChange={(e) => setBranding(prev => ({
+                                                ...prev,
+                                                site_theme: { ...(prev.site_theme || {}), primary_color: e.target.value }
+                                            }))}
+                                            placeholder="#404F4F"
+                                            className="flex-1 px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all font-mono uppercase"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Cor Secundária */}
+                                <div className="space-y-3">
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Cor Secundária</label>
+                                    <p className="text-xs text-muted-foreground ml-1">Botões de ação e destaques</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative">
+                                            <input
+                                                type="color"
+                                                value={branding.site_theme?.secondary_color || '#FFE600'}
+                                                onChange={(e) => setBranding(prev => ({
+                                                    ...prev,
+                                                    site_theme: { ...(prev.site_theme || {}), secondary_color: e.target.value }
+                                                }))}
+                                                className="w-12 h-12 rounded-lg border-2 border-border cursor-pointer appearance-none bg-transparent p-0.5"
+                                            />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={branding.site_theme?.secondary_color || '#FFE600'}
+                                            onChange={(e) => setBranding(prev => ({
+                                                ...prev,
+                                                site_theme: { ...(prev.site_theme || {}), secondary_color: e.target.value }
+                                            }))}
+                                            placeholder="#FFE600"
+                                            className="flex-1 px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all font-mono uppercase"
+                                        />
+                                    </div>
+                                </div>
+
+                                {/* Cor Accent */}
+                                <div className="space-y-3">
+                                    <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Cor de Destaque</label>
+                                    <p className="text-xs text-muted-foreground ml-1">Badges, labels e destaques</p>
+                                    <div className="flex items-center gap-3">
+                                        <div className="relative">
+                                            <input
+                                                type="color"
+                                                value={branding.site_theme?.accent_color || '#8B2332'}
+                                                onChange={(e) => setBranding(prev => ({
+                                                    ...prev,
+                                                    site_theme: { ...(prev.site_theme || {}), accent_color: e.target.value }
+                                                }))}
+                                                className="w-12 h-12 rounded-lg border-2 border-border cursor-pointer appearance-none bg-transparent p-0.5"
+                                            />
+                                        </div>
+                                        <input
+                                            type="text"
+                                            value={branding.site_theme?.accent_color || '#8B2332'}
+                                            onChange={(e) => setBranding(prev => ({
+                                                ...prev,
+                                                site_theme: { ...(prev.site_theme || {}), accent_color: e.target.value }
+                                            }))}
+                                            placeholder="#8B2332"
+                                            className="flex-1 px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all font-mono uppercase"
+                                        />
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Preview de cores */}
+                            <div className="mt-6 p-4 rounded-xl border border-border bg-foreground/5">
+                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-3">Preview</p>
+                                <div className="flex items-center gap-3 flex-wrap">
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div
+                                            className="w-16 h-10 rounded-lg shadow-sm border border-border"
+                                            style={{ backgroundColor: branding.site_theme?.primary_color || '#404F4F' }}
+                                        />
+                                        <span className="text-[9px] text-muted-foreground">Primária</span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div
+                                            className="w-16 h-10 rounded-lg shadow-sm border border-border"
+                                            style={{ backgroundColor: branding.site_theme?.secondary_color || '#FFE600' }}
+                                        />
+                                        <span className="text-[9px] text-muted-foreground">Secundária</span>
+                                    </div>
+                                    <div className="flex flex-col items-center gap-1">
+                                        <div
+                                            className="w-16 h-10 rounded-lg shadow-sm border border-border"
+                                            style={{ backgroundColor: branding.site_theme?.accent_color || '#8B2332' }}
+                                        />
+                                        <span className="text-[9px] text-muted-foreground">Destaque</span>
+                                    </div>
+                                    <div className="flex-1 min-w-[200px] ml-4">
+                                        <div className="p-3 rounded-lg border border-border" style={{ backgroundColor: branding.site_theme?.primary_color || '#404F4F' }}>
+                                            <p className="text-xs font-bold" style={{ color: branding.site_theme?.secondary_color || '#FFE600' }}>Texto de destaque</p>
+                                            <p className="text-[10px] mt-0.5" style={{ color: 'rgba(255,255,255,0.7)' }}>Texto secundário no site</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Fonte */}
+                        <div className="bg-card border border-border rounded-xl p-6">
+                            <div className="mb-6">
+                                <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                    <Type size={20} />
+                                    Tipografia
+                                </h3>
+                                <p className="text-sm text-muted-foreground">Escolha a fonte principal do site.</p>
+                            </div>
+
+                            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+                                {AVAILABLE_FONTS.map(font => (
+                                    <button
+                                        key={font}
+                                        onClick={() => setBranding(prev => ({
+                                            ...prev,
+                                            site_theme: { ...(prev.site_theme || {}), font_family: font }
+                                        }))}
+                                        className={`p-4 rounded-xl border-2 transition-all text-center ${
+                                            (branding.site_theme?.font_family || 'Inter') === font
+                                                ? 'border-secondary bg-secondary/10 shadow-sm'
+                                                : 'border-border hover:border-foreground/30 bg-foreground/5'
+                                        }`}
+                                    >
+                                        <span
+                                            className="text-lg font-bold text-foreground block mb-1"
+                                            style={{ fontFamily: `'${font}', sans-serif` }}
+                                        >
+                                            Aa
+                                        </span>
+                                        <span className="text-[10px] text-muted-foreground font-medium">{font}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Modo Claro/Escuro */}
+                        <div className="bg-card border border-border rounded-xl p-6">
+                            <div className="mb-6">
+                                <h3 className="text-lg font-bold text-foreground">Modo de Exibição</h3>
+                                <p className="text-sm text-muted-foreground">Defina o tema visual padrão do site.</p>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                                {[
+                                    { value: 'auto', icon: Monitor, label: 'Automático', desc: 'Segue o sistema' },
+                                    { value: 'light', icon: Sun, label: 'Claro', desc: 'Sempre claro' },
+                                    { value: 'dark', icon: Moon, label: 'Escuro', desc: 'Sempre escuro' },
+                                ].map(mode => (
+                                    <button
+                                        key={mode.value}
+                                        onClick={() => setBranding(prev => ({
+                                            ...prev,
+                                            site_theme: { ...(prev.site_theme || {}), dark_mode: mode.value as SiteTheme['dark_mode'] }
+                                        }))}
+                                        className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-2 ${
+                                            (branding.site_theme?.dark_mode || 'auto') === mode.value
+                                                ? 'border-secondary bg-secondary/10 shadow-sm'
+                                                : 'border-border hover:border-foreground/30 bg-foreground/5'
+                                        }`}
+                                    >
+                                        <mode.icon size={24} className={`${
+                                            (branding.site_theme?.dark_mode || 'auto') === mode.value
+                                                ? 'text-secondary'
+                                                : 'text-muted-foreground'
+                                        }`} />
+                                        <span className="text-sm font-bold text-foreground">{mode.label}</span>
+                                        <span className="text-[10px] text-muted-foreground">{mode.desc}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        {/* Estilo de Bordas */}
+                        <div className="bg-card border border-border rounded-xl p-6">
+                            <div className="mb-6">
+                                <h3 className="text-lg font-bold text-foreground">Estilo de Bordas</h3>
+                                <p className="text-sm text-muted-foreground">Defina o arredondamento dos cards e botões.</p>
+                            </div>
+
+                            <div className="grid grid-cols-3 gap-3">
+                                {[
+                                    { value: 'rounded', icon: RectangleHorizontal, label: 'Arredondado', preview: 'rounded-xl' },
+                                    { value: 'sharp', icon: Square, label: 'Reto', preview: 'rounded-none' },
+                                    { value: 'pill', icon: Circle, label: 'Pílula', preview: 'rounded-full' },
+                                ].map(style => (
+                                    <button
+                                        key={style.value}
+                                        onClick={() => setBranding(prev => ({
+                                            ...prev,
+                                            site_theme: { ...(prev.site_theme || {}), border_radius: style.value as SiteTheme['border_radius'] }
+                                        }))}
+                                        className={`p-4 rounded-xl border-2 transition-all flex flex-col items-center gap-3 ${
+                                            (branding.site_theme?.border_radius || 'rounded') === style.value
+                                                ? 'border-secondary bg-secondary/10 shadow-sm'
+                                                : 'border-border hover:border-foreground/30 bg-foreground/5'
+                                        }`}
+                                    >
+                                        <div
+                                            className={`w-16 h-10 border-2 border-muted-foreground/40 ${style.preview}`}
+                                            style={{ backgroundColor: branding.site_theme?.primary_color || '#404F4F' }}
+                                        />
+                                        <span className="text-sm font-bold text-foreground">{style.label}</span>
+                                    </button>
+                                ))}
+                            </div>
+                        </div>
+
+                        <div className="mt-8 pt-6 flex justify-end">
+                            <button
+                                onClick={handleSaveMain}
+                                disabled={saving}
+                                className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+                            >
+                                Salvar Aparência
+                            </button>
+                        </div>
+                    </div>
+                )}
+
+                {/* SECTIONS TAB */}
+                {activeTab === 'sections' && (
+                    <div className="space-y-6">
+                        <SectionSettingsPanel
+                            sections={(branding as any)?.site_sections || {}}
+                            onSectionsChange={(newSections: any) => setBranding(prev => ({
+                                ...prev,
+                                site_sections: newSections
+                            } as any))}
+                            tenantId={tenant?.id || ''}
+                        />
+
+                        <div className="mt-8 pt-6 flex justify-end">
+                            <button
+                                onClick={handleSaveMain}
+                                disabled={saving}
+                                className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+                            >
+                                Salvar Seções
+                            </button>
                         </div>
                     </div>
                 )}

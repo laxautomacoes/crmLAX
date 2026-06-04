@@ -47,6 +47,13 @@ export function BasicInfoFields({ formData, setFormData, userRole, brokers = [],
                                 label="SITE"
                             />
                         )}
+                        {isAdmin && formData.is_published && (
+                            <Switch
+                                checked={formData.is_featured || false}
+                                onChange={(checked) => setFormData({ ...formData, is_featured: checked })}
+                                label="DESTAQUE"
+                            />
+                        )}
                     </div>
                 </div>
                 <div className="flex gap-3 items-end">

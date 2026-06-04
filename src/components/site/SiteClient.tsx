@@ -5,18 +5,21 @@ import { PropertyFilters } from './PropertyFilters';
 import { PropertiesGrid } from './PropertiesGrid';
 import { PropertiesList } from './PropertiesList';
 import { WhatsAppButton } from './WhatsAppButton';
+import { SiteSectionRenderer } from './SiteSectionRenderer';
+import { BackToTop } from './BackToTop';
 import { Instagram, Facebook, Linkedin, Youtube, MapPin } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
 
 interface SiteClientProps {
     properties: any[];
+    featuredProperties?: any[];
     tenantName: string;
     tenantSlug: string;
     whatsappNumber?: string | null;
     branding?: any;
 }
 
-export function SiteClient({ properties, tenantName, tenantSlug, whatsappNumber, branding }: SiteClientProps) {
+export function SiteClient({ properties, featuredProperties, tenantName, tenantSlug, whatsappNumber, branding }: SiteClientProps) {
     const [viewMode, setViewMode] = useState<'gallery' | 'list' | 'map'>('gallery');
     const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
     const [isTermsOpen, setIsTermsOpen] = useState(false);
@@ -68,6 +71,17 @@ export function SiteClient({ properties, tenantName, tenantSlug, whatsappNumber,
     });
     return (
         <>
+            {/* Seções configuráveis do site */}
+            <SiteSectionRenderer
+                sections={branding?.site_sections}
+                featuredProperties={featuredProperties}
+                tenantName={tenantName}
+                tenantSlug={tenantSlug}
+                whatsappNumber={whatsappNumber}
+                branding={branding}
+            />
+
+            <div id="imoveis">
             <PropertyFilters
                 filters={filters}
                 onFilterChange={setFilters}
@@ -97,6 +111,7 @@ export function SiteClient({ properties, tenantName, tenantSlug, whatsappNumber,
                     )}
                 </>
             )}
+            </div>
             {whatsappNumber && <WhatsAppButton phone={whatsappNumber} />}
 
             {/* Footer */}
@@ -208,6 +223,7 @@ export function SiteClient({ properties, tenantName, tenantSlug, whatsappNumber,
                     </p>
                 </div>
             </Modal>
+            <BackToTop />
         </>
     );
 }

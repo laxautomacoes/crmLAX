@@ -315,13 +315,16 @@ interface MediaFieldsProps {
     onReorderDocuments?: (newDocuments: { name: string; url: string }[]) => void
     propertyTitle?: string
     onRemoveMultipleImages?: (urls: string[]) => void
+    onDragStart?: () => void
+    onDragEnd?: () => void
 }
 
 export function MediaFields({ 
     formData, isUploading, handleFileUpload, handleFilesUpload, removeFile,
     sourceImages = [], isImportingImages = false, onImportImages, onRemoveSourceImage, onReorderImages,
     onReorderVideos, onReorderDocuments,
-    propertyTitle, onRemoveMultipleImages
+    propertyTitle, onRemoveMultipleImages,
+    onDragStart: onDragStartProp, onDragEnd: onDragEndProp
 }: MediaFieldsProps) {
     const [selectedSourceImages, setSelectedSourceImages] = useState<Set<number>>(new Set())
     const [activeImageId, setActiveImageId] = useState<string | null>(null)
@@ -418,6 +421,7 @@ export function MediaFields({
     // ── Image drag handlers ──
     const handleImageDragStart = (event: any) => {
         setActiveImageId(event.active.id)
+        onDragStartProp?.()
     }
 
     const handleImageDragEnd = (event: any) => {
@@ -431,11 +435,13 @@ export function MediaFields({
             }
         }
         setActiveImageId(null)
+        onDragEndProp?.()
     }
 
     // ── Video drag handlers ──
     const handleVideoDragStart = (event: any) => {
         setActiveVideoId(event.active.id)
+        onDragStartProp?.()
     }
 
     const handleVideoDragEnd = (event: any) => {
@@ -449,11 +455,13 @@ export function MediaFields({
             }
         }
         setActiveVideoId(null)
+        onDragEndProp?.()
     }
 
     // ── Document drag handlers ──
     const handleDocDragStart = (event: any) => {
         setActiveDocId(event.active.id)
+        onDragStartProp?.()
     }
 
     const handleDocDragEnd = (event: any) => {
@@ -468,6 +476,7 @@ export function MediaFields({
             }
         }
         setActiveDocId(null)
+        onDragEndProp?.()
     }
 
     // IDs para SortableContext

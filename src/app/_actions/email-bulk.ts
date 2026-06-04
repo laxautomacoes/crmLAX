@@ -132,21 +132,37 @@ export async function sendBulkEmailsBatch(params: {
     const unsubscribedResult = await getUnsubscribedEmails(params.tenantId)
     const unsubscribedEmails = unsubscribedResult.success ? unsubscribedResult.data : []
 
-    // Filtrar validos
-    const validRecipients = params.recipients.filter(r => 
-        r.email && 
-        r.email.includes('@') && 
-        !unsubscribedEmails?.includes(r.email.toLowerCase())
-    )
+    // Sanitizar e filtrar destinatários válidos
+    // Emails importados de planilhas podem conter: "email@gmail.com; email@gmail.com;", espaços, etc.
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    
+    const validRecipients = params.recipients
+        .map(r => {
+            // Limpar o email: remover espaços, pegar apenas o primeiro email se houver separadores
+            let cleanEmail = (r.email || '').trim()
+            
+            // Se contém ; ou , (separadores comuns em planilhas), pegar apenas o primeiro email válido
+            if (cleanEmail.includes(';') || cleanEmail.includes(',')) {
+                const parts = cleanEmail.split(/[;,]/).map(p => p.trim()).filter(Boolean)
+                cleanEmail = parts.find(p => emailRegex.test(p)) || ''
+            }
+            
+            // Remover caracteres invisíveis e espaços extras
+            cleanEmail = cleanEmail.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '').trim().toLowerCase()
+            
+            return { ...r, email: cleanEmail }
+        })
+        .filter(r => 
+            r.email && 
+            emailRegex.test(r.email) && 
+            !unsubscribedEmails?.includes(r.email)
+        )
 
     const totalValid = validRecipients.length
     if (totalValid === 0) return { success: false, error: 'Nenhum destinatário válido após filtragem de opt-out.' }
 
     const from = `"${params.senderName}" <${params.senderEmail}>`
 
-    // O Resend permite mandar até 100 emails por requisição no Batch.
-    // Precisamos dividir a lista de destinatários em chunks de 100.
-    const CHUNK_SIZE = 100;
     let totalSuccess = 0;
     let totalErrors = 0;
 
@@ -165,15 +181,72 @@ export async function sendBulkEmailsBatch(params: {
         }
     }
 
-    for (let i = 0; i < validRecipients.length; i += CHUNK_SIZE) {
-        const chunk = validRecipients.slice(i, i + CHUNK_SIZE);
-        
-        // Criar payload de batch para o chunk atual
-        // Note: react-email template rendering needs to be done beforehand if we want personalization like {nome}
-        // For simplicity in HTML string, we'll replace {nome} with the actual name
-        const batchPayload = chunk.map(r => {
-            const emailPayload: any = {
-                from: from,
+    // O Resend batch endpoint NÃO suporta attachments.
+    // Se houver anexo, enviamos individualmente; caso contrário, usamos batch.
+    const hasAttachment = !!attachmentData
+
+    if (hasAttachment) {
+        // === ENVIO INDIVIDUAL (com anexo) ===
+        for (let i = 0; i < validRecipients.length; i++) {
+            const r = validRecipients[i]
+            try {
+                const personalizedHtml = params.contentHtml
+                    .replace(/{nome}/gi, r.name || 'Cliente')
+                    .replace(/{primeiro_nome}/gi, (r.name || 'Cliente').split(' ')[0])
+
+                const { data, error } = await resend.emails.send({
+                    from,
+                    to: [r.email],
+                    subject: params.subject,
+                    html: personalizedHtml,
+                    attachments: attachmentData ? [attachmentData] : [],
+                    tags: [
+                        { name: 'campaign_id', value: params.campaignId },
+                        { name: 'tenant_id', value: params.tenantId }
+                    ]
+                })
+
+                if (error) {
+                    totalErrors++
+                    await logEmailRecipientResult({
+                        campaignId: params.campaignId,
+                        tenantId: params.tenantId,
+                        leadId: r.lead_id,
+                        recipientEmail: r.email,
+                        status: 'error',
+                        errorMessage: error.message
+                    })
+                } else if (data && data.id) {
+                    totalSuccess++
+                    await logEmailRecipientResult({
+                        campaignId: params.campaignId,
+                        tenantId: params.tenantId,
+                        leadId: r.lead_id,
+                        recipientEmail: r.email,
+                        status: 'delivered',
+                        resendEmailId: data.id
+                    })
+                }
+            } catch (err: any) {
+                totalErrors++
+                console.error(`Exception sending email to ${r.email}:`, err)
+            }
+
+            // Pequena pausa entre envios individuais para não exceder rate limit
+            if (i < validRecipients.length - 1) {
+                await new Promise(resolve => setTimeout(resolve, 100))
+            }
+        }
+    } else {
+        // === ENVIO EM BATCH (sem anexo) ===
+        // O Resend permite mandar até 100 emails por requisição no Batch.
+        const CHUNK_SIZE = 100;
+
+        for (let i = 0; i < validRecipients.length; i += CHUNK_SIZE) {
+            const chunk = validRecipients.slice(i, i + CHUNK_SIZE);
+            
+            const batchPayload = chunk.map(r => ({
+                from,
                 to: [r.email],
                 subject: params.subject,
                 html: params.contentHtml
@@ -183,69 +256,70 @@ export async function sendBulkEmailsBatch(params: {
                     { name: 'campaign_id', value: params.campaignId },
                     { name: 'tenant_id', value: params.tenantId }
                 ]
-            }
-            if (attachmentData) {
-                emailPayload.attachments = [attachmentData]
-            }
-            return emailPayload
-        });
+            }));
 
-        try {
-            const { data, error } = await resend.batch.send(batchPayload);
+            try {
+                const { data, error } = await resend.batch.send(batchPayload);
 
-            if (error) {
-                console.error(`Error sending batch chunk ${i}:`, error);
-                totalErrors += chunk.length;
-                
-                // Log all as error
-                for (const r of chunk) {
-                    await logEmailRecipientResult({
-                        campaignId: params.campaignId,
-                        tenantId: params.tenantId,
-                        leadId: r.lead_id,
-                        recipientEmail: r.email,
-                        status: 'error',
-                        errorMessage: error.message
-                    });
-                }
-            } else if (data && data.data) {
-                totalSuccess += data.data.length;
-                
-                // data.data é um array com os IDs dos emails (na mesma ordem do payload)
-                for (let j = 0; j < chunk.length; j++) {
-                    const r = chunk[j];
-                    const resendResponse = data.data[j] as any;
+                if (error) {
+                    console.error(`Error sending batch chunk ${i}:`, error);
+                    totalErrors += chunk.length;
                     
-                    if (resendResponse && resendResponse.id) {
-                        await logEmailRecipientResult({
-                            campaignId: params.campaignId,
-                            tenantId: params.tenantId,
-                            leadId: r.lead_id,
-                            recipientEmail: r.email,
-                            status: 'delivered',
-                            resendEmailId: resendResponse.id
-                        });
-                    } else {
-                        totalErrors++;
+                    for (const r of chunk) {
                         await logEmailRecipientResult({
                             campaignId: params.campaignId,
                             tenantId: params.tenantId,
                             leadId: r.lead_id,
                             recipientEmail: r.email,
                             status: 'error',
-                            errorMessage: resendResponse?.error?.message || 'Erro desconhecido na Resend'
+                            errorMessage: error.message
                         });
                     }
+                } else if (data && Array.isArray(data)) {
+                    // Resend batch.send retorna { data: [{id: "..."}, ...] }
+                    // O SDK destructura para data = [{id: "..."}, ...]
+                    totalSuccess += data.length;
+                    
+                    for (let j = 0; j < chunk.length; j++) {
+                        const r = chunk[j];
+                        const resendResponse = data[j] as any;
+                        
+                        if (resendResponse && resendResponse.id) {
+                            await logEmailRecipientResult({
+                                campaignId: params.campaignId,
+                                tenantId: params.tenantId,
+                                leadId: r.lead_id,
+                                recipientEmail: r.email,
+                                status: 'delivered',
+                                resendEmailId: resendResponse.id
+                            });
+                        } else {
+                            totalErrors++;
+                            totalSuccess--; // Corrigir contagem
+                            await logEmailRecipientResult({
+                                campaignId: params.campaignId,
+                                tenantId: params.tenantId,
+                                leadId: r.lead_id,
+                                recipientEmail: r.email,
+                                status: 'error',
+                                errorMessage: resendResponse?.error?.message || 'Erro desconhecido na Resend'
+                            });
+                        }
+                    }
+                } else {
+                    // Fallback: data existe mas não é array (formato inesperado)
+                    console.error(`Unexpected batch response format:`, JSON.stringify(data));
+                    totalErrors += chunk.length;
                 }
+            } catch (err: any) {
+                console.error(`Exception sending batch chunk ${i}:`, err);
+                totalErrors += chunk.length;
             }
-        } catch (err: any) {
-            console.error(`Exception sending batch chunk ${i}:`, err);
-            totalErrors += chunk.length;
-        }
 
-        // Se tiver mais chunks, dar uma pequena pausa
-        if (i + CHUNK_SIZE < validRecipients.length) {
-            await new Promise(resolve => setTimeout(resolve, 1000));
+            // Se tiver mais chunks, dar uma pequena pausa
+            if (i + CHUNK_SIZE < validRecipients.length) {
+                await new Promise(resolve => setTimeout(resolve, 1000));
+            }
         }
     }
 

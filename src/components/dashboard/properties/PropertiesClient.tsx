@@ -168,10 +168,20 @@ export default function PropertiesClient({
             // Atualiza o editingProperty com os dados salvos para manter o modal sincronizado
             if (result.data) {
                 setEditingProperty(result.data)
+                // Autosave: atualiza apenas o item local sem recarregar a lista toda
+                if (isAutoSave && editingProperty?.id) {
+                    setProperties(prev => prev.map(p => p.id === editingProperty.id ? { ...p, ...result.data } : p))
+                }
             } else if (editingProperty?.id) {
                 setEditingProperty({ ...editingProperty, ...cleanData })
+                if (isAutoSave) {
+                    setProperties(prev => prev.map(p => p.id === editingProperty.id ? { ...p, ...cleanData } : p))
+                }
             }
-            refreshProperties(filters.status)
+            // Só recarrega a lista inteira no save manual (não no autosave)
+            if (!isAutoSave) {
+                refreshProperties(filters.status)
+            }
         } else {
             toast.error('Erro ao salvar imóvel: ' + result.error)
         }

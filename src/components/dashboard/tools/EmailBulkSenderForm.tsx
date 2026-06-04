@@ -282,16 +282,30 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
     }
 
     const processImportedData = (data: any[]) => {
+        const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+        
         const mapped = data.map(row => {
             const keys = Object.keys(row)
             const emailKey = keys.find(k => k.toLowerCase().includes('email') || k.toLowerCase().includes('e-mail'))
             const nameKey = keys.find(k => k.toLowerCase().includes('nome') || k.toLowerCase().includes('name'))
             
-            return {
-                name: nameKey ? row[nameKey] : 'Cliente',
-                email: emailKey ? String(row[emailKey]).trim().toLowerCase() : ''
+            // Sanitizar email: limpar separadores, duplicatas, caracteres invisíveis
+            let rawEmail = emailKey ? String(row[emailKey]).trim() : ''
+            
+            // Se contém ; ou , (separadores comuns em planilhas), pegar apenas o primeiro email válido
+            if (rawEmail.includes(';') || rawEmail.includes(',')) {
+                const parts = rawEmail.split(/[;,]/).map(p => p.trim()).filter(Boolean)
+                rawEmail = parts.find(p => emailRegex.test(p.toLowerCase())) || ''
             }
-        }).filter(r => r.email && r.email.includes('@'))
+            
+            // Remover caracteres invisíveis e normalizar
+            const cleanEmail = rawEmail.replace(/[\u200B-\u200D\uFEFF\u00A0]/g, '').trim().toLowerCase()
+            
+            return {
+                name: nameKey ? String(row[nameKey]).trim() : 'Cliente',
+                email: cleanEmail
+            }
+        }).filter(r => r.email && emailRegex.test(r.email))
 
         setRecipients(prev => {
             const newRecipients = [...prev]

@@ -36,6 +36,7 @@ function getEmptyFormData() {
         videos: [] as string[],
         documents: [] as { name: string, url: string }[],
         is_published: false,
+        is_featured: false,
         details: {
             situacao: 'lançamento',
             area_privativa: '',
@@ -247,6 +248,7 @@ interface EditingProperty {
     videos?: string[]
     documents?: PropertyDocument[]
     is_published?: boolean
+    is_featured?: boolean
     details?: EditingPropertyDetails
 }
 
@@ -274,6 +276,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const isSavingRef = useRef(false)
     const lastSavedDataRef = useRef<string | null>(null)
     const [creationMethod, setCreationMethod] = useState<CreationMethod>(initialCreationMethod ?? null)
+    const isDraggingRef = useRef(false)
+    const [isDragging, setIsDragging] = useState(false)
 
     // Gera um snapshot dos dados relevantes para comparação
     const getFormSnapshot = useCallback((data: typeof formData) => {
@@ -312,11 +316,12 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         } catch { /* quota exceeded - ignore */ }
     }, [editingProperty])
 
-    // Auto-save com debounce de 500ms
+    // Auto-save rascunho com debounce de 1.5s
     useEffect(() => {
         if (!isOpen || editingProperty) return
+        if (isDraggingRef.current) return
         if (draftTimerRef.current) clearTimeout(draftTimerRef.current)
-        draftTimerRef.current = setTimeout(() => saveDraft(formData), 500)
+        draftTimerRef.current = setTimeout(() => saveDraft(formData), 1500)
         return () => { if (draftTimerRef.current) clearTimeout(draftTimerRef.current) }
     }, [formData, isOpen, editingProperty, saveDraft])
 
@@ -380,6 +385,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 videos: editingProperty.videos || [],
                 documents: editingProperty.documents || [],
                 is_published: editingProperty.is_published || false,
+                is_featured: (editingProperty as any).is_featured || false,
                 details: {
                     situacao: editingProperty.details?.situacao || 'lançamento',
                     area_privativa: editingProperty.details?.area_privativa || '',
@@ -657,27 +663,24 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         }
     }
 
-    // ── Autosave (debounce 3s) ──
+    // ── Autosave (debounce 5s) ──
     useEffect(() => {
         if (!isOpen) return
         // Não autosalva na tela de seleção de método
         if (!editingProperty && creationMethod === null) return
-        // Não autosalva durante upload
+        // Não autosalva durante upload ou drag & drop
         if (isUploading) return
+        if (isDragging) return
         // Não autosalva se já está salvando
         if (isSavingRef.current) return
         // Para novo imóvel, só autosalva se tem título preenchido
         if (!editingProperty && !formData.title?.trim()) return
 
-        // Compara com o último snapshot salvo — se não mudou, não salva
-        const currentSnapshot = getFormSnapshot(formData)
-        if (lastSavedDataRef.current === currentSnapshot) return
-
         if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
 
         autoSaveTimerRef.current = setTimeout(async () => {
             if (isSavingRef.current) return
-            // Revalida snapshot antes de salvar (pode ter mudado durante o debounce)
+            // Compara snapshot apenas no momento de salvar (evita JSON.stringify a cada keystroke)
             const snapshot = getFormSnapshot(formData)
             if (lastSavedDataRef.current === snapshot) return
 
@@ -711,13 +714,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 setIsSaving(false)
                 isSavingRef.current = false
             }
-        }, 3000)
+        }, 5000)
 
         return () => {
             if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
         }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData, isOpen, editingProperty, creationMethod, isUploading])
+    }, [formData, isOpen, editingProperty, creationMethod, isUploading, isDragging])
 
     // Determinar se deve mostrar a tela de seleção de método
     const showMethodSelection = !editingProperty && creationMethod === null
@@ -903,6 +906,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         onReorderImages={(newImages) => setFormData(prev => ({ ...prev, images: newImages }))}
                         onReorderVideos={(newVideos) => setFormData(prev => ({ ...prev, videos: newVideos }))}
                         onReorderDocuments={(newDocuments) => setFormData(prev => ({ ...prev, documents: newDocuments }))}
+                        onDragStart={() => { isDraggingRef.current = true; setIsDragging(true) }}
+                        onDragEnd={() => { isDraggingRef.current = false; setIsDragging(false) }}
                         propertyTitle={formData.title}
                         onRemoveMultipleImages={(urls) => setFormData(prev => ({ ...prev, images: prev.images.filter((img: string) => !urls.includes(img)) }))}
                     />
