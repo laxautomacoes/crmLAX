@@ -115,6 +115,7 @@ export function PropertyImportPDFModal({
     })
     const [indexType, setIndexType] = useState('CUB')
     const [indexValue, setIndexValue] = useState('')
+    const [blockTower, setBlockTower] = useState('')
     const fileInputRef = useRef<HTMLInputElement>(null)
 
     // Carregar config AI do tenant
@@ -166,6 +167,7 @@ export function PropertyImportPDFModal({
                 formData.append('reference_month', referenceMonth)
                 formData.append('index_type', indexType)
                 if (indexValue) formData.append('index_value', indexValue)
+                if (blockTower) formData.append('block_tower', blockTower)
             }
 
             // Para Book ou OpenAI: renderizar páginas como imagens para viabilizar multimodal
@@ -210,6 +212,7 @@ export function PropertyImportPDFModal({
 
     const handleClose = () => {
         setFile(null)
+        setBlockTower('')
         // Restaurar para valores iniciais ao fechar
         if (initialPropertyId) {
             setSelectedPropertyId(initialPropertyId)
@@ -315,7 +318,7 @@ export function PropertyImportPDFModal({
                         <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">
                             Referência da Tabela
                         </label>
-                        <div className="grid grid-cols-3 gap-2">
+                        <div className="grid grid-cols-2 md:grid-cols-4 gap-2">
                             <div>
                                 <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1 block mb-1">
                                     Mês Ref.
@@ -360,6 +363,19 @@ export function PropertyImportPDFModal({
                                     value={indexValue}
                                     onChange={(e) => setIndexValue(e.target.value)}
                                     placeholder="3.096,25"
+                                    disabled={isProcessing}
+                                    className="w-full bg-muted/30 border border-border rounded-lg px-3 py-2.5 text-xs font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
+                                />
+                            </div>
+                            <div>
+                                <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider ml-1 block mb-1">
+                                    Torre / Bloco
+                                </span>
+                                <input
+                                    type="text"
+                                    value={blockTower}
+                                    onChange={(e) => setBlockTower(e.target.value)}
+                                    placeholder="Ex: Torre A"
                                     disabled={isProcessing}
                                     className="w-full bg-muted/30 border border-border rounded-lg px-3 py-2.5 text-xs font-bold text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                                 />

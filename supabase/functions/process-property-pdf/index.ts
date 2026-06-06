@@ -38,6 +38,7 @@ Deno.serve(async (req: Request) => {
     const ai_model = (formData.get('ai_model') as string) || 'gemini-2.5-flash';
     const property_id = formData.get('property_id') as string;
     const pageImagesJson = formData.get('page_images') as string;
+    const block_tower = formData.get('block_tower') as string;
     
     // Novos campos para modo tabela
     const reference_month = formData.get('reference_month') as string;
@@ -317,11 +318,19 @@ Não inclua texto fora do JSON.
       }
 
       // Desativar tabelas anteriores
-      await supabaseClient
+      let deactivateQuery = supabaseClient
         .from('property_price_tables')
         .update({ is_active: false })
         .eq('property_id', property_id)
         .eq('is_active', true);
+
+      if (block_tower) {
+        deactivateQuery = deactivateQuery.eq('block_tower', block_tower);
+      } else {
+        deactivateQuery = deactivateQuery.is('block_tower', null);
+      }
+
+      await deactivateQuery;
 
       // Criar nova tabela de preços
       const refMonth = reference_month || new Date().toISOString().slice(0, 7);
@@ -338,7 +347,8 @@ Não inclua texto fora do JSON.
           total_units: unitsList.length,
           available_units: unitsList.length,
           is_active: true,
-          uploaded_by: null  // Será resolvido pelo RLS
+          uploaded_by: null,  // Será resolvido pelo RLS
+          block_tower: block_tower || null
         })
         .select()
         .single();
@@ -353,7 +363,7 @@ Não inclua texto fora do JSON.
         tenant_id: tenant_id,
         price_table_id: priceTableData.id,
         unit_number: String(unit.unit_number),
-        block_tower: unit.block_tower || null,
+        block_tower: unit.block_tower || block_tower || null,
         floor: unit.floor || null,
         garage_type: unit.garage_type || null,
         garage_number: unit.garage_number ? String(unit.garage_number) : null,

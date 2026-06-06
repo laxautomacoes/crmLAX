@@ -109,7 +109,7 @@ export function PriceTableUploadField({ formData, setFormData, tenantId, propert
 
             {currentUrl ? (
                 /* ── Tabela-modelo já enviada ── */
-                <div className="flex items-center gap-3 p-4 rounded-xl bg-foreground/5 border border-border/40">
+                <div className="flex items-center gap-3 p-4 rounded-xl bg-background border border-muted-foreground/30">
                     <div className="p-2.5 bg-emerald-500/10 rounded-xl shrink-0">
                         <CheckCircle2 size={20} className="text-emerald-500" />
                     </div>
@@ -147,7 +147,7 @@ export function PriceTableUploadField({ formData, setFormData, tenantId, propert
                     type="button"
                     onClick={() => fileInputRef.current?.click()}
                     disabled={isUploading}
-                    className="w-full flex flex-col items-center justify-center gap-3 p-8 rounded-xl bg-foreground/5 border border-dashed border-border/60 hover:bg-foreground/10 hover:border-border transition-all cursor-pointer text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full flex flex-col items-center justify-center gap-3 p-8 rounded-xl bg-background border border-muted-foreground/30 hover:bg-foreground/5 transition-all cursor-pointer text-muted-foreground disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     {isUploading ? (
                         <>

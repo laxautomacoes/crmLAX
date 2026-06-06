@@ -18,7 +18,6 @@ function getEmptyTipologia() {
         suites: '',
         area_privativa: '',
         vagas: '',
-        preco_a_partir: '',
         unidades_por_andar: ''
     }
 }
@@ -119,7 +118,7 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
                 <button
                     type="button"
                     onClick={addTorre}
-                    className="w-full flex flex-col items-center justify-center gap-2 p-8 rounded-xl bg-foreground/5 border border-dashed border-border/60 hover:bg-foreground/10 transition-all cursor-pointer text-muted-foreground"
+                    className="w-full flex flex-col items-center justify-center gap-2 p-8 rounded-xl bg-background border border-muted-foreground/30 hover:bg-foreground/5 transition-all cursor-pointer text-muted-foreground"
                 >
                     <Building2 size={24} />
                     <span className="text-sm font-medium">Clique para adicionar a primeira torre</span>
@@ -129,7 +128,7 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
             {torres.map((torre: any, torreIndex: number) => (
                 <div key={torreIndex} className="rounded-xl border border-border/60 overflow-hidden">
                     {/* Torre Header */}
-                    <div className={`flex items-center justify-between gap-3 p-4 bg-foreground/5 ${expandedTorres[torreIndex] ? 'border-b border-border/40' : ''}`}>
+                    <div className={`flex items-center justify-between gap-3 p-4 bg-background ${expandedTorres[torreIndex] ? 'border-b border-muted-foreground/30' : ''}`}>
                         <div className="flex items-center gap-3 flex-1">
                             <div className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-secondary-foreground font-black text-sm shadow-sm shrink-0">
                                 {torreIndex + 1}
@@ -164,7 +163,7 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
                     {expandedTorres[torreIndex] && (
                         <div className="p-4 space-y-4">
                             {torre.tipologias?.map((tip: any, tipIndex: number) => (
-                                <div key={tipIndex} className="space-y-4 p-4 rounded-xl bg-foreground/5 border border-border/30 relative">
+                                <div key={tipIndex} className="space-y-4 p-4 rounded-xl bg-background border border-muted-foreground/30 relative">
                                     <div className="flex items-center justify-between">
                                         <span className="text-xs font-black text-muted-foreground uppercase tracking-widest flex items-center gap-1.5">
                                             Tipologia {tipIndex + 1}
@@ -180,7 +179,7 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
                                             </button>
                                         )}
                                     </div>
-                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-x-3 gap-y-4">
+                                    <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-3 gap-x-3 gap-y-4">
                                         <FormSelect
                                             label="Tipo"
                                             value={tip.tipo}
@@ -206,22 +205,16 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
                                             onChange={(e) => updateTipologia(torreIndex, tipIndex, 'suites', e.target.value)}
                                         />
                                         <FormInput
-                                            label="Área Priv. (m²)"
-                                            type="number"
-                                            value={tip.area_privativa}
-                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'area_privativa', e.target.value)}
-                                        />
-                                        <FormInput
                                             label="Vagas"
                                             type="number"
                                             value={tip.vagas}
                                             onChange={(e) => updateTipologia(torreIndex, tipIndex, 'vagas', e.target.value)}
                                         />
                                         <FormInput
-                                            label="Preço a partir (R$)"
-                                            value={tip.preco_a_partir}
-                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'preco_a_partir', formatCurrencyBRL(e.target.value))}
-                                            placeholder="0,00"
+                                            label="Área Priv. (m²)"
+                                            type="number"
+                                            value={tip.area_privativa}
+                                            onChange={(e) => updateTipologia(torreIndex, tipIndex, 'area_privativa', e.target.value)}
                                         />
                                         <FormInput
                                             label="Unidades/Andar"
@@ -236,7 +229,7 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
                             <button
                                 type="button"
                                 onClick={() => addTipologia(torreIndex)}
-                                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-muted-foreground border border-dashed border-border/60 hover:bg-foreground/5 hover:text-foreground transition-all"
+                                className="w-full flex items-center justify-center gap-1.5 py-2.5 rounded-lg text-xs font-bold uppercase tracking-widest text-muted-foreground border border-muted-foreground/30 hover:bg-foreground/5 hover:text-foreground transition-all"
                             >
                                 <Plus size={14} />
                                 Tipologia

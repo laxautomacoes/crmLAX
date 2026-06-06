@@ -240,171 +240,178 @@ export function OwnerFields({ formData, setFormData, tenantId }: OwnerFieldsProp
             </h4>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-5">
-                {/* Nome — com busca integrada */}
-                <div className="sm:col-span-2 lg:col-span-2 relative" ref={contactSearchRef}>
-                    <FormInput
-                        label="Nome"
-                        value={formData.details.proprietario.nome}
-                        onChange={(e) => {
-                            const value = e.target.value
-                            setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, nome: value, _contact_id: null } } })
-                            if (tenantId) handleContactSearch(value)
-                        }}
-                        placeholder="Digite nome, CPF ou telefone para buscar"
-                        rightElement={
-                            linkedContactId ? (
-                                <button
-                                    type="button"
-                                    onClick={clearLinkedContact}
-                                    className="p-1 hover:bg-red-500/10 rounded-md transition-colors text-amber-500"
-                                    title="Desvincular contato"
-                                >
-                                    <X size={14} />
-                                </button>
-                            ) : contactSearching ? (
-                                <Loader2 size={14} className="animate-spin text-muted-foreground" />
-                            ) : (
-                                <Search size={14} className="text-muted-foreground" />
-                            )
-                        }
-                    />
+                {/* Nome, Responsável, É Cliente? (sub-grid de 3 colunas em largura total) */}
+                <div className="col-span-full grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-5">
+                    {/* Nome — com busca integrada */}
+                    <div className="relative" ref={contactSearchRef}>
+                        <FormInput
+                            label="Nome"
+                            value={formData.details.proprietario.nome}
+                            onChange={(e) => {
+                                const value = e.target.value
+                                setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, nome: value, _contact_id: null } } })
+                                if (tenantId) handleContactSearch(value)
+                            }}
+                            placeholder="Digite nome, CPF ou telefone para buscar"
+                            rightElement={
+                                linkedContactId ? (
+                                    <button
+                                        type="button"
+                                        onClick={clearLinkedContact}
+                                        className="p-1 hover:bg-red-500/10 rounded-md transition-colors text-amber-500"
+                                        title="Desvincular contato"
+                                    >
+                                        <X size={14} />
+                                    </button>
+                                ) : contactSearching ? (
+                                    <Loader2 size={14} className="animate-spin text-muted-foreground" />
+                                ) : (
+                                    <Search size={14} className="text-muted-foreground" />
+                                )
+                            }
+                        />
 
-                    {linkedContactId && (
-                        <div className="mt-1 flex items-center gap-1.5 text-[10px] font-medium text-green-600 dark:text-green-400">
-                            <User size={10} />
-                            <span>Vinculado — dados serão sincronizados ao salvar</span>
-                        </div>
-                    )}
+                        {linkedContactId && (
+                            <div className="mt-1 flex items-center gap-1.5 text-[10px] font-medium text-green-600 dark:text-green-400">
+                                <User size={10} />
+                                <span>Vinculado — dados serão sincronizados ao salvar</span>
+                            </div>
+                        )}
 
-                    {showContactResults && contactResults.length > 0 && (
-                        <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                            {contactResults.map((contact) => (
-                                <button
-                                    key={contact.id}
-                                    type="button"
-                                    onClick={() => selectContact(contact)}
-                                    className="w-full text-left px-4 py-3 hover:bg-muted/50 border-b border-border/50 last:border-0 transition-colors"
-                                >
-                                    <div className="flex items-center justify-between gap-2">
-                                        <span className="text-sm font-bold text-foreground truncate">{contact.name}</span>
-                                        <div className="flex gap-1 shrink-0">
-                                            {contact.contact_type?.map((type: string) => {
-                                                const c: Record<string, string> = {
-                                                    comprador: 'bg-green-500/10 text-green-600 border-green-500/20',
-                                                    vendedor: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
-                                                    construtora: 'bg-blue-500/10 text-blue-600 border-blue-500/20'
-                                                }
-                                                return (
-                                                    <span key={type} className={`px-1.5 py-0.5 text-[9px] font-bold rounded border uppercase ${c[type] || ''}`}>
-                                                        {type}
-                                                    </span>
-                                                )
-                                            })}
+                        {showContactResults && contactResults.length > 0 && (
+                            <div className="absolute z-50 w-full mt-1 bg-card border border-border rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                {contactResults.map((contact) => (
+                                    <button
+                                        key={contact.id}
+                                        type="button"
+                                        onClick={() => selectContact(contact)}
+                                        className="w-full text-left px-4 py-3 hover:bg-muted/50 border-b border-border/50 last:border-0 transition-colors"
+                                    >
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-sm font-bold text-foreground truncate">{contact.name}</span>
+                                            <div className="flex gap-1 shrink-0">
+                                                {contact.contact_type?.map((type: string) => {
+                                                    const c: Record<string, string> = {
+                                                        comprador: 'bg-green-500/10 text-green-600 border-green-500/20',
+                                                        vendedor: 'bg-amber-500/10 text-amber-600 border-amber-500/20',
+                                                        construtora: 'bg-blue-500/10 text-blue-600 border-blue-500/20'
+                                                    }
+                                                    return (
+                                                        <span key={type} className={`px-1.5 py-0.5 text-[9px] font-bold rounded border uppercase ${c[type] || ''}`}>
+                                                            {type}
+                                                        </span>
+                                                    )
+                                                })}
+                                            </div>
                                         </div>
-                                    </div>
-                                    <div className="text-xs text-muted-foreground mt-0.5">
-                                        {contact.phone && <span>{formatPhone(contact.phone)}</span>}
-                                        {contact.phone && contact.email && <span> · </span>}
-                                        {contact.email && <span>{contact.email}</span>}
-                                    </div>
-                                </button>
-                            ))}
-                        </div>
-                    )}
-                </div>
+                                        <div className="text-xs text-muted-foreground mt-0.5">
+                                            {contact.phone && <span>{formatPhone(contact.phone)}</span>}
+                                            {contact.phone && contact.email && <span> · </span>}
+                                            {contact.email && <span>{contact.email}</span>}
+                                        </div>
+                                    </button>
+                                ))}
+                            </div>
+                        )}
+                    </div>
 
-                {/* Responsável + Switch É Cliente? */}
-                <div className="lg:col-span-2">
-                    <div className="grid grid-cols-2 gap-x-3">
+                    {/* Responsável */}
+                    <div>
                         <FormInput
                             label="Responsável"
                             value={formData.details.proprietario.responsavel}
                             onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, responsavel: e.target.value } } })}
                         />
-                        <div className="flex flex-col">
-                            <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1 tracking-tight">É Cliente?</label>
-                            <Switch
-                                checked={formData.details.proprietario.tambem_cliente || false}
-                                onChange={(checked) => setFormData({
-                                    ...formData,
-                                    details: {
-                                        ...formData.details,
-                                        proprietario: {
-                                            ...formData.details.proprietario,
-                                            tambem_cliente: checked
-                                        }
+                    </div>
+
+                    {/* É Cliente? */}
+                    <div className="flex flex-col">
+                        <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1 tracking-tight">É Cliente?</label>
+                        <Switch
+                            checked={formData.details.proprietario.tambem_cliente || false}
+                            onChange={(checked) => setFormData({
+                                ...formData,
+                                details: {
+                                    ...formData.details,
+                                    proprietario: {
+                                        ...formData.details.proprietario,
+                                        tambem_cliente: checked
                                     }
-                                })}
-                                className="mt-1"
-                            />
-                            <span className="text-[9px] text-muted-foreground mt-1 ml-1">
-                                {formData.details.proprietario.tambem_cliente ? 'Visível em Clientes' : 'Apenas proprietário'}
-                            </span>
-                        </div>
+                                }
+                            })}
+                            className="mt-1"
+                        />
+                        <span className="text-[9px] text-muted-foreground mt-1 ml-1">
+                            {formData.details.proprietario.tambem_cliente ? 'Visível em Clientes' : 'Apenas proprietário'}
+                        </span>
                     </div>
                 </div>
 
-                {/* Telefone, Email, CPF */}
-                <div>
-                    <FormInput
-                        label="Telefone | WhatsApp"
-                        value={formData.details.proprietario.telefone}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, telefone: e.target.value } } })}
-                    />
-                </div>
-                <div>
-                    <FormInput
-                        label="Email"
-                        type="email"
-                        value={formData.details.proprietario.email}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, email: e.target.value } } })}
-                    />
-                </div>
-                <div>
-                    <FormInput
-                        label="CPF"
-                        value={formData.details.proprietario.cpf}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, cpf: e.target.value } } })}
-                    />
+                {/* Telefone, Email, CPF (sub-grid de 3 colunas em largura total) */}
+                <div className="col-span-full grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-5">
+                    <div>
+                        <FormInput
+                            label="Telefone | WhatsApp"
+                            value={formData.details.proprietario.telefone}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, telefone: e.target.value } } })}
+                        />
+                    </div>
+                    <div>
+                        <FormInput
+                            label="Email"
+                            type="email"
+                            value={formData.details.proprietario.email}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, email: e.target.value } } })}
+                        />
+                    </div>
+                    <div>
+                        <FormInput
+                            label="CPF"
+                            value={formData.details.proprietario.cpf}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, cpf: e.target.value } } })}
+                        />
+                    </div>
                 </div>
 
-                {/* Data Nascimento, Estado Civil, Regime Comunhão */}
-                <div className="lg:col-start-1">
-                    <FormInput
-                        label="Data Nascimento"
-                        type="date"
-                        value={formData.details.proprietario.data_nascimento}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, data_nascimento: e.target.value } } })}
-                    />
-                </div>
-                <div>
-                    <FormSelect
-                        label="Estado Civil"
-                        value={formData.details.proprietario.estado_civil}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, estado_civil: e.target.value } } })}
-                        options={[
-                            { value: '', label: 'Selecione...' },
-                            { value: 'solteiro', label: 'Solteiro(a)' },
-                            { value: 'casado', label: 'Casado(a)' },
-                            { value: 'divorciado', label: 'Divorciado(a)' },
-                            { value: 'viuvo', label: 'Viúvo(a)' },
-                            { value: 'uniao_estavel', label: 'União Estável' }
-                        ]}
-                    />
-                </div>
-                <div>
-                    <FormSelect
-                        label="Regime Comunhão"
-                        value={formData.details.proprietario.regime_comunhao}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, regime_comunhao: e.target.value } } })}
-                        options={[
-                            { value: '', label: 'Selecione...' },
-                            { value: 'comunhao_parcial', label: 'Comunhão Parcial' },
-                            { value: 'comunhao_universal', label: 'Comunhão Universal' },
-                            { value: 'separacao_total', label: 'Separação Total' },
-                            { value: 'participacao_final', label: 'Participação Final nos Aquestos' }
-                        ]}
-                    />
+                {/* Data Nascimento, Estado Civil, Regime Comunhão (sub-grid de 3 colunas em largura total) */}
+                <div className="col-span-full grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-5">
+                    <div>
+                        <FormInput
+                            label="Data Nascimento"
+                            type="date"
+                            value={formData.details.proprietario.data_nascimento}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, data_nascimento: e.target.value } } })}
+                        />
+                    </div>
+                    <div>
+                        <FormSelect
+                            label="Estado Civil"
+                            value={formData.details.proprietario.estado_civil}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, estado_civil: e.target.value } } })}
+                            options={[
+                                { value: '', label: 'Selecione...' },
+                                { value: 'solteiro', label: 'Solteiro(a)' },
+                                { value: 'casado', label: 'Casado(a)' },
+                                { value: 'divorciado', label: 'Divorciado(a)' },
+                                { value: 'viuvo', label: 'Viúvo(a)' },
+                                { value: 'uniao_estavel', label: 'União Estável' }
+                            ]}
+                        />
+                    </div>
+                    <div>
+                        <FormSelect
+                            label="Regime Comunhão"
+                            value={formData.details.proprietario.regime_comunhao}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, regime_comunhao: e.target.value } } })}
+                            options={[
+                                { value: '', label: 'Selecione...' },
+                                { value: 'comunhao_parcial', label: 'Comunhão Parcial' },
+                                { value: 'comunhao_universal', label: 'Comunhão Universal' },
+                                { value: 'separacao_total', label: 'Separação Total' },
+                                { value: 'participacao_final', label: 'Participação Final nos Aquestos' }
+                            ]}
+                        />
+                    </div>
                 </div>
 
                 {/* CEP, Rua, nº */}

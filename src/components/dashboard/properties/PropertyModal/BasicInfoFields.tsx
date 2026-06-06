@@ -185,90 +185,147 @@ export function BasicInfoFields({
                             placeholder="Preencha a previsão"
                         />
                     </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-6">
+                        <FormInput
+                            label="Condomínio (R$)"
+                            value={formData.details.valor_condominio}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_condominio: formatCurrencyBRL(e.target.value) } })}
+                            placeholder="0,00"
+                        />
+                        <FormInput
+                            label="IPTU (R$)"
+                            value={formData.details.valor_iptu}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_iptu: formatCurrencyBRL(e.target.value) } })}
+                            placeholder="0,00"
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
+                        <FormSelect
+                            label="Tipo"
+                            value={formData.type}
+                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            options={[
+                                { value: 'house', label: 'Casa' },
+                                { value: 'apartment', label: 'Apartamento' },
+                                { value: 'land', label: 'Terreno' },
+                                { value: 'commercial', label: 'Comercial' },
+                                { value: 'penthouse', label: 'Cobertura' },
+                                { value: 'studio', label: 'Studio' },
+                                { value: 'rural', label: 'Rural' },
+                                { value: 'warehouse', label: 'Galpão' },
+                                { value: 'office', label: 'Sala/Escritório' },
+                                { value: 'store', label: 'Loja' }
+                            ]}
+                        />
+                        <FormSelect
+                            label="Situação"
+                            value={formData.details.situacao}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, situacao: e.target.value } })}
+                            options={[
+                                { value: 'lançamento', label: 'Lançamento' },
+                                { value: 'em construção', label: 'Em construção' },
+                                { value: 'novo', label: 'Novo' },
+                                { value: 'revenda', label: 'Revenda' }
+                            ]}
+                        />
+                        {isAdmin && (
+                            <FormSelect
+                                label="Status"
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                options={[
+                                    { value: 'Pending', label: 'Pendente' },
+                                    { value: 'Available', label: 'Disponível' },
+                                    { value: 'Vendido', label: 'Vendido' },
+                                    { value: 'Reservado', label: 'Reservado' },
+                                    { value: 'Suspenso', label: 'Suspenso' }
+                                ]}
+                            />
+                        )}
+                    </div>
                 </div>
             )}
 
             {isEmpreendimento && detailsChildren}
 
+            {!isEmpreendimento && (
+                <>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6">
+                        <FormInput
+                            label="Preço (R$)"
+                            value={formData.price}
+                            onChange={(e) => setFormData({ ...formData, price: formatCurrencyBRL(e.target.value) })}
+                            placeholder="0,00"
+                        />
+                        <FormInput
+                            label="Condomínio (R$)"
+                            value={formData.details.valor_condominio}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_condominio: formatCurrencyBRL(e.target.value) } })}
+                            placeholder="0,00"
+                        />
+                        <FormInput
+                            label="IPTU (R$)"
+                            value={formData.details.valor_iptu}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_iptu: formatCurrencyBRL(e.target.value) } })}
+                            placeholder="0,00"
+                        />
+                        <FormInput
+                            label="Idade do Imóvel (anos)"
+                            type="number"
+                            value={formData.details.idade_imovel || ''}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, idade_imovel: e.target.value } })}
+                            placeholder="Ex: 5"
+                        />
+                    </div>
 
-            <div className={`${isEmpreendimento ? 'border-t border-border/60 pt-6' : ''} grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6`}>
-                {!isEmpreendimento && (
-                    <FormInput
-                        label="Preço (R$)"
-                        value={formData.price}
-                        onChange={(e) => setFormData({ ...formData, price: formatCurrencyBRL(e.target.value) })}
-                        placeholder="0,00"
-                    />
-                )}
-                <FormInput
-                    label="Condomínio (R$)"
-                    value={formData.details.valor_condominio}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_condominio: formatCurrencyBRL(e.target.value) } })}
-                    placeholder="0,00"
-                />
-                <FormInput
-                    label="IPTU (R$)"
-                    value={formData.details.valor_iptu}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_iptu: formatCurrencyBRL(e.target.value) } })}
-                    placeholder="0,00"
-                />
-                {!isEmpreendimento && (
-                    <FormInput
-                        label="Idade do Imóvel (anos)"
-                        type="number"
-                        value={formData.details.idade_imovel || ''}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, idade_imovel: e.target.value } })}
-                        placeholder="Ex: 5"
-                    />
-                )}
-            </div>
-
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
-                <FormSelect
-                    label="Tipo"
-                    value={formData.type}
-                    onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                    options={[
-                        { value: 'house', label: 'Casa' },
-                        { value: 'apartment', label: 'Apartamento' },
-                        { value: 'land', label: 'Terreno' },
-                        { value: 'commercial', label: 'Comercial' },
-                        { value: 'penthouse', label: 'Cobertura' },
-                        { value: 'studio', label: 'Studio' },
-                        { value: 'rural', label: 'Rural' },
-                        { value: 'warehouse', label: 'Galpão' },
-                        { value: 'office', label: 'Sala/Escritório' },
-                        { value: 'store', label: 'Loja' }
-                    ]}
-                />
-
-                <FormSelect
-                    label="Situação"
-                    value={formData.details.situacao}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, situacao: e.target.value } })}
-                    options={[
-                        { value: 'lançamento', label: 'Lançamento' },
-                        { value: 'em construção', label: 'Em construção' },
-                        { value: 'novo', label: 'Novo' },
-                        { value: 'revenda', label: 'Revenda' }
-                    ]}
-                />
-
-                {isAdmin && (
-                    <FormSelect
-                        label="Status"
-                        value={formData.status}
-                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
-                        options={[
-                            { value: 'Pending', label: 'Pendente' },
-                            { value: 'Available', label: 'Disponível' },
-                            { value: 'Vendido', label: 'Vendido' },
-                            { value: 'Reservado', label: 'Reservado' },
-                            { value: 'Suspenso', label: 'Suspenso' }
-                        ]}
-                    />
-                )}
-            </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
+                        <FormSelect
+                            label="Tipo"
+                            value={formData.type}
+                            onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+                            options={[
+                                { value: 'house', label: 'Casa' },
+                                { value: 'apartment', label: 'Apartamento' },
+                                { value: 'land', label: 'Terreno' },
+                                { value: 'commercial', label: 'Comercial' },
+                                { value: 'penthouse', label: 'Cobertura' },
+                                { value: 'studio', label: 'Studio' },
+                                { value: 'rural', label: 'Rural' },
+                                { value: 'warehouse', label: 'Galpão' },
+                                { value: 'office', label: 'Sala/Escritório' },
+                                { value: 'store', label: 'Loja' }
+                            ]}
+                        />
+                        <FormSelect
+                            label="Situação"
+                            value={formData.details.situacao}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, situacao: e.target.value } })}
+                            options={[
+                                { value: 'lançamento', label: 'Lançamento' },
+                                { value: 'em construção', label: 'Em construção' },
+                                { value: 'novo', label: 'Novo' },
+                                { value: 'revenda', label: 'Revenda' }
+                            ]}
+                        />
+                        {isAdmin && (
+                            <FormSelect
+                                label="Status"
+                                value={formData.status}
+                                onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                options={[
+                                    { value: 'Pending', label: 'Pendente' },
+                                    { value: 'Available', label: 'Disponível' },
+                                    { value: 'Vendido', label: 'Vendido' },
+                                    { value: 'Reservado', label: 'Reservado' },
+                                    { value: 'Suspenso', label: 'Suspenso' }
+                                ]}
+                            />
+                        )}
+                    </div>
+                </>
+            )}
         </div>
     )
 }

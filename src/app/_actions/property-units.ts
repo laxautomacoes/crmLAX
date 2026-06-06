@@ -45,6 +45,7 @@ export interface PriceTableInfo {
     is_active: boolean
     created_at: string
     uploaded_by: string | null
+    block_tower: string | null
 }
 
 // ─── Buscar unidades de um empreendimento ─────────────────────
@@ -52,25 +53,26 @@ export async function getPropertyUnits(propertyId: string) {
     const supabase = await createClient()
 
     try {
-        // Buscar a tabela de preços ativa
-        const { data: priceTable } = await supabase
+        // Buscar todas as tabelas de preços ativas (ex: uma para cada torre)
+        const { data: priceTables, error: tablesError } = await supabase
             .from('property_price_tables')
             .select('id')
             .eq('property_id', propertyId)
             .eq('is_active', true)
-            .order('created_at', { ascending: false })
-            .limit(1)
-            .single()
 
-        if (!priceTable) {
+        if (tablesError) throw tablesError
+
+        if (!priceTables || priceTables.length === 0) {
             return { success: true, data: [] }
         }
+
+        const activeTableIds = priceTables.map((t: any) => t.id)
 
         const { data, error } = await supabase
             .from('property_units')
             .select('*')
             .eq('property_id', propertyId)
-            .eq('price_table_id', priceTable.id)
+            .in('price_table_id', activeTableIds)
             .order('unit_number', { ascending: true })
 
         if (error) throw error
@@ -93,15 +95,13 @@ export async function getPriceTableInfo(propertyId: string) {
             .eq('property_id', propertyId)
             .eq('is_active', true)
             .order('created_at', { ascending: false })
-            .limit(1)
-            .single()
 
-        if (error && error.code !== 'PGRST116') throw error
+        if (error) throw error
 
-        return { success: true, data: data || null }
+        return { success: true, data: data || [] }
     } catch (error: any) {
         console.error('Error fetching price table info:', error)
-        return { success: false, error: error.message, data: null }
+        return { success: false, error: error.message, data: [] }
     }
 }
 

@@ -41,7 +41,8 @@ function formatMonth(month: string) {
 
 export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }: PriceTableTabProps) {
     const [units, setUnits] = useState<PropertyUnit[]>([])
-    const [priceTable, setPriceTable] = useState<PriceTableInfo | null>(null)
+    const [priceTables, setPriceTables] = useState<PriceTableInfo[]>([])
+    const [selectedTower, setSelectedTower] = useState<string>('all')
     const [isLoading, setIsLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -62,7 +63,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
             getPriceTableInfo(propertyId)
         ])
         if (unitsRes.success) setUnits(unitsRes.data as PropertyUnit[])
-        if (tableRes.success) setPriceTable(tableRes.data as PriceTableInfo | null)
+        if (tableRes.success) setPriceTables((tableRes.data || []) as PriceTableInfo[])
 
         // Buscar mídias da propriedade
         const supabase = createClient()
@@ -84,6 +85,21 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
 
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
 
+    const towers = useMemo(() => {
+        const list = priceTables
+            .map(t => t.block_tower)
+            .filter((t): t is string => !!t)
+        return Array.from(new Set(list)).sort()
+    }, [priceTables])
+
+    const activePriceTable = useMemo(() => {
+        if (priceTables.length === 0) return null
+        if (selectedTower === 'all') {
+            return priceTables[0]
+        }
+        return priceTables.find(t => t.block_tower === selectedTower) || priceTables[0]
+    }, [priceTables, selectedTower])
+
     const filteredUnits = useMemo(() => {
         return units.filter(u => {
             const matchSearch = !searchTerm || 
@@ -91,9 +107,10 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                 (u.block_tower || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
                 (u.hobby_box || '').toLowerCase().includes(searchTerm.toLowerCase())
             const matchStatus = statusFilter === 'all' || u.status === statusFilter
-            return matchSearch && matchStatus
+            const matchTower = selectedTower === 'all' || u.block_tower === selectedTower
+            return matchSearch && matchStatus && matchTower
         })
-    }, [units, searchTerm, statusFilter])
+    }, [units, searchTerm, statusFilter, selectedTower])
 
     const sortedUnits = useMemo(() => {
         const sorted = [...filteredUnits]
@@ -113,15 +130,19 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
     }, [filteredUnits, sortDirection])
 
     const stats = useMemo(() => {
-        const available = units.filter(u => u.status === 'available').length
-        const reserved = units.filter(u => u.status === 'reserved').length
-        const proposal = units.filter(u => u.status === 'proposal').length
-        const sold = units.filter(u => u.status === 'sold').length
-        const priceList = units.filter(u => u.valor_total && u.valor_total > 0).map(u => u.valor_total!)
+        const towerUnits = selectedTower === 'all' 
+            ? units 
+            : units.filter(u => u.block_tower === selectedTower)
+
+        const available = towerUnits.filter(u => u.status === 'available').length
+        const reserved = towerUnits.filter(u => u.status === 'reserved').length
+        const proposal = towerUnits.filter(u => u.status === 'proposal').length
+        const sold = towerUnits.filter(u => u.status === 'sold').length
+        const priceList = towerUnits.filter(u => u.valor_total && u.valor_total > 0).map(u => u.valor_total!)
         const minPrice = priceList.length > 0 ? Math.min(...priceList) : 0
         const maxPrice = priceList.length > 0 ? Math.max(...priceList) : 0
-        return { available, reserved, proposal, sold, total: units.length, minPrice, maxPrice }
-    }, [units])
+        return { available, reserved, proposal, sold, total: towerUnits.length, minPrice, maxPrice }
+    }, [units, selectedTower])
 
     async function handleStatusChange(unitId: string, newStatus: 'available' | 'reserved' | 'sold' | 'proposal') {
         const result = await updateUnitStatus(unitId, newStatus)
@@ -146,7 +167,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
         )
     }
 
-    if (!priceTable || units.length === 0) {
+    if (priceTables.length === 0 || units.length === 0) {
         return (
             <div className="flex flex-col items-center justify-center py-20 space-y-4">
                 <div className="p-4 bg-muted/30 rounded-full">
@@ -184,7 +205,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
         )
     }
 
-    const paymentStructure = priceTable.payment_structure || {}
+    const paymentStructure = activePriceTable?.payment_structure || {}
 
     return (
         <div className="space-y-6">
@@ -196,13 +217,13 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                             Tabela Vigente
                         </h4>
                         <span className="text-sm font-bold text-muted-foreground">
-                            - {formatMonth(priceTable.reference_month)}
+                            - {activePriceTable ? formatMonth(activePriceTable.reference_month) : '—'}
                         </span>
                     </div>
                     <div className="flex items-center gap-3">
-                        {priceTable.file_url && (
+                        {activePriceTable?.file_url && (
                             <a
-                                href={priceTable.file_url}
+                                href={activePriceTable.file_url}
                                 target="_blank"
                                 rel="noopener noreferrer"
                                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold text-muted-foreground border border-border rounded-lg hover:bg-muted/30 transition-colors"
@@ -258,6 +279,24 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                         />
                     </div>
                 </div>
+                {towers.length > 0 && (
+                    <div className="flex flex-col gap-1.5 w-full md:w-56">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Torre</span>
+                        <div className="relative w-full">
+                            <select
+                                value={selectedTower}
+                                onChange={(e) => setSelectedTower(e.target.value)}
+                                className="w-full appearance-none bg-foreground/5 border border-border/40 rounded-lg px-4 pr-10 py-2.5 text-sm font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all cursor-pointer"
+                            >
+                                <option value="all">Todas as Torres</option>
+                                {towers.map(t => (
+                                    <option key={t} value={t}>{t}</option>
+                                ))}
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                        </div>
+                    </div>
+                )}
                 <div className="flex flex-col gap-1.5 w-full md:w-56">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Status</span>
                     <div className="relative w-full">
@@ -395,7 +434,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                     onClose={() => { setIsFlowModalOpen(false); setSelectedUnit(null) }}
                     unit={selectedUnit}
                     propertyTitle={propertyTitle}
-                    priceTable={priceTable}
+                    priceTable={activePriceTable}
                     tenantId={tenantId}
                     propertyImages={propertyMedia.images}
                     propertyVideos={propertyMedia.videos}

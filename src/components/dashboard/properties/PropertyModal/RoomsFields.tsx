@@ -24,6 +24,8 @@ interface RoomsDetailsSlice {
     has_dependencia_empregada: boolean
     has_elevadores: boolean
     numero_elevadores: string
+    hobby_box?: string
+    hobby_box_numeracao?: string
 }
 
 type FormWithRoomsDetails = { details: RoomsDetailsSlice }
@@ -95,7 +97,7 @@ export function DormitoriosVagasFields<T extends FormWithRoomsDetails>({ formDat
                 />
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-5 gap-x-3 gap-y-6 pt-2">
+            <div className="grid grid-cols-1 sm:grid-cols-8 gap-x-3 gap-y-6 pt-2">
                 <div className="sm:col-span-1">
                     <FormInput
                         label="Vagas"
@@ -106,14 +108,31 @@ export function DormitoriosVagasFields<T extends FormWithRoomsDetails>({ formDat
                 </div>
                 <div className="sm:col-span-1">
                     <FormInput
-                        label="Numeração Vagas"
+                        label="Numeração"
                         type="text"
                         value={formData.details.vagas_numeracao}
                         onChange={(e) => setFormData({ ...formData, details: { ...formData.details, vagas_numeracao: e.target.value } })}
                         placeholder="Ex: 12A, 12B"
                     />
                 </div>
-                <div className="sm:col-span-3">
+                <div className="sm:col-span-1">
+                    <FormInput
+                        label="Hobby box"
+                        type="number"
+                        value={formData.details.hobby_box || ''}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, hobby_box: e.target.value } })}
+                    />
+                </div>
+                <div className="sm:col-span-1">
+                    <FormInput
+                        label="Numeração"
+                        type="text"
+                        value={formData.details.hobby_box_numeracao || ''}
+                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, hobby_box_numeracao: e.target.value } })}
+                        placeholder="Ex: 01, 02"
+                    />
+                </div>
+                <div className="sm:col-span-4">
                     <FormInput
                         label="Observações"
                         type="text"
@@ -123,54 +142,20 @@ export function DormitoriosVagasFields<T extends FormWithRoomsDetails>({ formDat
                     />
                 </div>
             </div>
-        </div>
-    )
-}
 
-export function EstruturaCustosFields<T extends FormWithRoomsDetails>({ formData, setFormData, isEmpreendimento }: RoomsFieldsProps<T>) {
-    return (
-        <div className="space-y-4">
-            <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
-                Estrutura
-            </h4>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-7 gap-x-3 gap-y-6">
-                {!isEmpreendimento && (
-                    <>
-                        <div className="lg:col-span-2">
-                            <FormInput
-                                label="Número de Torre | Bloco"
-                                type="text"
-                                value={formData.details.torre_bloco}
-                                onChange={(e) => setFormData({ ...formData, details: { ...formData.details, torre_bloco: e.target.value } })}
-                            />
-                        </div>
-                        <div className="lg:col-span-2">
-                            <FormInput
-                                label="Nome Torre | Bloco"
-                                type="text"
-                                value={formData.details.nome_torre_bloco}
-                                onChange={(e) => setFormData({ ...formData, details: { ...formData.details, nome_torre_bloco: e.target.value } })}
-                            />
-                        </div>
-                    </>
-                )}
-
-                <div className="flex items-center justify-center pt-6 ml-1">
-                    <FormCheckbox
-                        label="Elevadores"
-                        checked={formData.details.has_elevadores}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_elevadores: e.target.checked } })}
-                    />
-                </div>
-                <div className="lg:col-span-2">
-                    <FormInput
-                        label="Número de elevadores"
-                        type="number"
-                        disabled={!formData.details.has_elevadores}
-                        value={formData.details.numero_elevadores}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, numero_elevadores: e.target.value } })}
-                    />
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-6 pt-2">
+                <FormInput
+                    label="Número de Torre | Bloco"
+                    type="text"
+                    value={formData.details.torre_bloco}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, torre_bloco: e.target.value } })}
+                />
+                <FormInput
+                    label="Nome Torre | Bloco"
+                    type="text"
+                    value={formData.details.nome_torre_bloco}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, nome_torre_bloco: e.target.value } })}
+                />
             </div>
         </div>
     )

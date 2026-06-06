@@ -192,7 +192,7 @@ export function PropertyDetailsContent({
 
                                     {/* ── Toggle Detalhes / Tabela de Preços (Extrema direita) ── */}
                                     {details.is_empreendimento && (
-                                        <div className="ml-auto flex items-center gap-1 p-0.5 !bg-white dark:bg-card border border-border/40 rounded-lg shadow-sm">
+                                        <div className="ml-auto flex items-center gap-1 p-0.5 bg-white dark:bg-background border border-border/40 rounded-lg shadow-sm">
                                             <button
                                                 onClick={() => setActiveTab('details')}
                                                 className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all ${activeTab === 'details'
@@ -465,7 +465,7 @@ export function PropertyDetailsContent({
                                                         <InfoRow icon={<Home size={14} />} label="Nome Torre | Bloco" value={details.nome_torre_bloco} />
                                                     )}
                                                     {details.has_elevadores && (
-                                                        <InfoRow icon={<Layers size={14} />} label="Elevadores" value={details.numero_elevadores ? `Sim (${details.numero_elevadores} elevadores)` : 'Sim'} />
+                                                        <InfoRow icon={<Layers size={14} />} label="Elevador" value={details.numero_elevadores ? `Sim (${details.numero_elevadores} elevadores)` : 'Sim'} />
                                                     )}
                                                 </>
                                             )}

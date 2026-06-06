@@ -9,7 +9,7 @@ import { getTenantCustomAmenities } from '@/app/_actions/tenant'
 import type { CustomAmenity } from '@/app/_actions/tenant'
 import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
 import { AreaFields } from './PropertyModal/AreaFields'
-import { DormitoriosVagasFields, EstruturaCustosFields } from './PropertyModal/RoomsFields'
+import { DormitoriosVagasFields } from './PropertyModal/RoomsFields'
 import { TowersFields } from './PropertyModal/TowersFields'
 import { PriceTableUploadField } from './PropertyModal/PriceTableUploadField'
 import { AmenitiesFields } from './PropertyModal/AmenitiesFields'
@@ -883,8 +883,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                             <AreaFields formData={formData} setFormData={setFormData} />
                         </>
                     )}
-                    <div className="border-t border-border/60" />
-                    <EstruturaCustosFields formData={formData} setFormData={setFormData} isEmpreendimento={formData.details.is_empreendimento} />
+
                     <div className="border-t border-border/60" />
                     <AmenitiesFields 
                         formData={formData} 

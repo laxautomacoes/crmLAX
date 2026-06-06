@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
+import { FormInput } from '@/components/shared/forms/FormInput'
 import { Plus, Check, Clock, X, Pencil, Trash2 } from 'lucide-react'
 import { addTenantCustomAmenity, approveTenantCustomAmenity, editTenantCustomAmenity, deleteTenantCustomAmenity } from '@/app/_actions/tenant'
 import type { CustomAmenity } from '@/app/_actions/tenant'
@@ -226,7 +227,34 @@ export function AmenitiesFields({ formData, setFormData, tenantId, isAdmin, cust
                         })}
                     />
                 ))}
+                <FormCheckbox
+                    label="Elevador"
+                    checked={formData.details.has_elevadores || false}
+                    onChange={(e) => setFormData({
+                        ...formData,
+                        details: { 
+                            ...formData.details, 
+                            has_elevadores: e.target.checked,
+                            numero_elevadores: e.target.checked ? formData.details.numero_elevadores : ''
+                        }
+                    })}
+                />
             </div>
+
+            {formData.details.has_elevadores && (
+                <div className="w-full sm:w-1/3 pt-2 animate-in fade-in duration-200">
+                    <FormInput
+                        label="Número de elevadores"
+                        type="number"
+                        value={formData.details.numero_elevadores || ''}
+                        onChange={(e) => setFormData({ 
+                            ...formData, 
+                            details: { ...formData.details, numero_elevadores: e.target.value } 
+                        })}
+                        placeholder="Ex: 2"
+                    />
+                </div>
+            )}
 
             {/* Lista de amenidades customizadas */}
             {visibleCustom.length > 0 && (
