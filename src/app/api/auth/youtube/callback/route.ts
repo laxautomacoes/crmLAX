@@ -7,7 +7,7 @@ export async function GET(req: NextRequest) {
     const tenantId = searchParams.get('state'); // O state contém o tenant_id
 
     if (!code || !tenantId) {
-        return NextResponse.redirect('/marketing?error=auth_failed');
+        return NextResponse.redirect('/marketing/studio?error=auth_failed');
     }
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -70,7 +70,7 @@ export async function GET(req: NextRequest) {
             ? 'http://localhost:3000' 
             : `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`;
 
-        return NextResponse.redirect(`${baseUrl}/marketing?success=youtube_connected`);
+        return NextResponse.redirect(`${baseUrl}/marketing/studio?success=youtube_connected`);
 
     } catch (error: any) {
         console.error('YouTube Callback Error:', error.message);
@@ -78,6 +78,6 @@ export async function GET(req: NextRequest) {
             ? 'http://localhost:3000' 
             : `https://${process.env.NEXT_PUBLIC_ROOT_DOMAIN}`;
             
-        return NextResponse.redirect(`${baseUrl}/marketing?error=${encodeURIComponent(error.message)}`);
+        return NextResponse.redirect(`${baseUrl}/marketing/studio?error=${encodeURIComponent(error.message)}`);
     }
 }

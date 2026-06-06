@@ -6,7 +6,7 @@ export async function GET(req: NextRequest) {
     const stateParam = searchParams.get('state');
 
     if (!code || !stateParam) {
-        return NextResponse.redirect('/marketing?error=auth_failed');
+        return NextResponse.redirect('/marketing/studio?error=auth_failed');
     }
 
     // Decodificar o state que contém tenant_id e return_url
@@ -24,7 +24,7 @@ export async function GET(req: NextRequest) {
     }
 
     if (!tenantId) {
-        return NextResponse.redirect(`${returnUrl}/marketing?error=auth_failed`);
+        return NextResponse.redirect(`${returnUrl}/marketing/studio?error=auth_failed`);
     }
 
     const appId = process.env.META_APP_ID;
@@ -103,10 +103,10 @@ export async function GET(req: NextRequest) {
         if (upsertError) throw upsertError;
 
         // Redirecionar de volta para o domínio do tenant
-        return NextResponse.redirect(`${returnUrl}/marketing?success=instagram_connected`);
+        return NextResponse.redirect(`${returnUrl}/marketing/studio?success=instagram_connected`);
 
     } catch (error: any) {
         console.error('Instagram Callback Error:', error.message);
-        return NextResponse.redirect(`${returnUrl}/marketing?error=${encodeURIComponent(error.message)}`);
+        return NextResponse.redirect(`${returnUrl}/marketing/studio?error=${encodeURIComponent(error.message)}`);
     }
 }
