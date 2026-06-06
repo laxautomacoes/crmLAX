@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 
 interface Props {
-    searchParams: Promise<{ [key: string]: string | string[] | undefined }> | { [key: string]: string | string[] | undefined };
+    searchParams: Promise<{ [key: string]: string | string[] | undefined }>;
 }
 
 export default async function MarketingPage({ searchParams }: Props) {
