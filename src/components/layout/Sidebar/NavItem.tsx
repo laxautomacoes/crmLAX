@@ -40,7 +40,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
                     {!isCollapsed && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onToggleExpand(item.name); }}
-                            className="p-1 rounded hover:bg-white/10 transition-colors"
+                            className="p-1 transition-colors"
                         >
                             {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
                         </button>

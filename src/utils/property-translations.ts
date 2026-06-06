@@ -60,6 +60,7 @@ export function getSituacaoStyles(situacao: string): string {
         case 'pronto': return 'bg-blue-500/10 text-blue-600';
         case 'em obras': return 'bg-orange-500/10 text-orange-600';
         case 'na planta': return 'bg-purple-500/10 text-purple-600';
+        case 'revenda': return 'bg-orange-500/10 text-orange-600';
         default: return 'bg-foreground/10 text-foreground';
     }
 }

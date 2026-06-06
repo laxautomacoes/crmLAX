@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useRef } from 'react';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Sparkles, Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils, 
-    PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, 
+import {
+    Sparkles, Home, MapPin, BedDouble, Bath, Square, Car, Shield, Waves, Utensils,
+    PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby,
     Video, FileText, ExternalLink, Calendar, User, Mail, Phone, Info, Send,
     ChevronLeft, ChevronRight, Maximize2, Map as MapIcon, DollarSign, Trees,
     Instagram, Building2, Layers, Star, Image as ImageIcon
@@ -32,12 +33,12 @@ interface PropertyDetailsContentProps {
     isModal?: boolean;
 }
 
-export function PropertyDetailsContent({ 
-    prop, 
-    onSend, 
-    userRole, 
-    hasAIAccess, 
-    hasMarketingAccess, 
+export function PropertyDetailsContent({
+    prop,
+    onSend,
+    userRole,
+    hasAIAccess,
+    hasMarketingAccess,
     tenantId,
     isModal = false
 }: PropertyDetailsContentProps) {
@@ -94,7 +95,7 @@ export function PropertyDetailsContent({
     ];
 
     const details = prop.details || {};
-    
+
     const amenities = [
         { id: 'portaria_24h', icon: <Shield size={16} />, label: 'Portaria 24h' },
         { id: 'portaria_virtual', icon: <Shield size={16} />, label: 'Portaria Virtual' },
@@ -191,34 +192,34 @@ export function PropertyDetailsContent({
 
                                     {/* ── Toggle Detalhes / Tabela de Preços (Extrema direita) ── */}
                                     {details.is_empreendimento && (
-                                        <div className="ml-auto flex items-center gap-1 p-0.5 bg-card border border-border/40 rounded-lg shadow-sm">
+                                        <div className="ml-auto flex items-center gap-1 p-0.5 !bg-white dark:bg-card border border-border/40 rounded-lg shadow-sm">
                                             <button
                                                 onClick={() => setActiveTab('details')}
-                                                className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all ${
-                                                    activeTab === 'details'
+                                                className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all ${activeTab === 'details'
                                                         ? 'bg-secondary text-secondary-foreground shadow-sm'
                                                         : 'text-muted-foreground hover:bg-muted/50'
-                                                }`}
+                                                    }`}
                                             >
                                                 Detalhes
                                             </button>
                                             <button
                                                 onClick={() => setActiveTab('price_table')}
-                                                className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all ${
-                                                    activeTab === 'price_table'
+                                                className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all ${activeTab === 'price_table'
                                                         ? 'bg-secondary text-secondary-foreground shadow-sm'
                                                         : 'text-muted-foreground hover:bg-muted/50'
-                                                }`}
+                                                    }`}
                                             >
                                                 Tabela de Preços
                                             </button>
                                         </div>
                                     )}
                                 </div>
-                                <h4 className="text-sm font-black text-foreground uppercase tracking-widest">
+                                <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-2">
                                     {details.is_empreendimento ? 'Empreendimento' : 'Imóvel'}
                                 </h4>
-                                <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
+                                <div className="bg-background border border-border/50 p-6 rounded-xl">
+                                    <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
+                                </div>
                             </div>
                             {onSend && (
                                 <div className="flex flex-wrap items-center gap-3">
@@ -248,18 +249,20 @@ export function PropertyDetailsContent({
                     <div className="border-t border-border/60 my-6" />
 
                     <div className="space-y-4">
-                         <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
-                             Endereço
-                         </h4>
-                         <div 
-                             onClick={handleScrollToLocation}
-                             className={cn(
-                                 "flex items-center gap-1.5 text-base font-semibold text-foreground",
-                                 hasCoordinates && "cursor-pointer hover:text-accent-icon hover:underline transition-colors"
-                             )}
-                         >
-                             {fullAddress || 'Endereço não informado'}
-                         </div>
+                        <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
+                            Endereço
+                        </h4>
+                        <div className="bg-background border border-border/50 p-6 rounded-xl">
+                            <div
+                                onClick={handleScrollToLocation}
+                                className={cn(
+                                    "flex items-center gap-1.5 text-base font-semibold text-foreground",
+                                    hasCoordinates && "cursor-pointer hover:text-accent-icon hover:underline transition-colors"
+                                )}
+                            >
+                                {fullAddress || 'Endereço não informado'}
+                            </div>
+                        </div>
                     </div>
                 </div>
 
@@ -295,14 +298,14 @@ export function PropertyDetailsContent({
                                 </h4>
                                 <div className="relative group w-full aspect-video rounded-xl overflow-hidden bg-black/90 flex items-center justify-center shadow-xl">
                                     {allMedia[selectedImageIndex]?.type === 'image' ? (
-                                        <div 
+                                        <div
                                             onClick={() => setIsFullscreenOpen(true)}
                                             className="w-full h-full flex items-center justify-center cursor-zoom-in"
                                         >
-                                            <img 
-                                                src={allMedia[selectedImageIndex].url} 
-                                                className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]" 
-                                                alt="" 
+                                            <img
+                                                src={allMedia[selectedImageIndex].url}
+                                                className="max-w-full max-h-full object-contain transition-transform duration-500 group-hover:scale-[1.02]"
+                                                alt=""
                                             />
                                             <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center pointer-events-none">
                                                 <div className="p-3 rounded-full bg-white/10 backdrop-blur-md text-white">
@@ -311,9 +314,9 @@ export function PropertyDetailsContent({
                                             </div>
                                         </div>
                                     ) : allMedia[selectedImageIndex]?.type === 'video' ? (
-                                        <video 
-                                            src={allMedia[selectedImageIndex].url} 
-                                            controls 
+                                        <video
+                                            src={allMedia[selectedImageIndex].url}
+                                            controls
                                             className="w-full h-full object-contain"
                                         />
                                     ) : (
@@ -324,13 +327,13 @@ export function PropertyDetailsContent({
 
                                     {allMedia.length > 1 && (
                                         <>
-                                            <button 
+                                            <button
                                                 onClick={(e) => { e.stopPropagation(); handlePrev(); }}
                                                 className="absolute left-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-black/40 transition-all z-10"
                                             >
                                                 <ChevronLeft size={24} />
                                             </button>
-                                            <button 
+                                            <button
                                                 onClick={(e) => { e.stopPropagation(); handleNext(); }}
                                                 className="absolute right-4 top-1/2 -translate-y-1/2 p-2 rounded-full bg-black/20 text-white backdrop-blur-sm opacity-0 group-hover:opacity-100 hover:bg-black/40 transition-all z-10"
                                             >
@@ -339,12 +342,12 @@ export function PropertyDetailsContent({
                                         </>
                                     )}
                                 </div>
-                                
+
                                 {prop.images?.length > 1 && (
                                     <div className="flex gap-3 overflow-x-auto pb-4 custom-scrollbar snap-x">
                                         {prop.images.map((url: string, i: number) => (
-                                            <button 
-                                                key={i} 
+                                            <button
+                                                key={i}
                                                 ref={el => { thumbnailRefs.current[i] = el; }}
                                                 onClick={() => setSelectedImageIndex(i)}
                                                 className={cn(
@@ -367,8 +370,8 @@ export function PropertyDetailsContent({
                                             </h4>
                                             <div className="flex gap-3 overflow-x-auto pb-2 custom-scrollbar snap-x">
                                                 {prop.videos.map((url: string, i: number) => (
-                                                    <button 
-                                                        key={i} 
+                                                    <button
+                                                        key={i}
                                                         onClick={() => {
                                                             const videoIndex = (prop.images?.length || 0) + i;
                                                             setSelectedImageIndex(videoIndex);
@@ -424,11 +427,11 @@ export function PropertyDetailsContent({
                                         <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                             Informações
                                         </h4>
-                                         <div className="text-foreground bg-muted/20 p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
+                                        <div className="text-foreground bg-background p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
                                             <InfoRow icon={<Building2 size={14} />} label="Construtora" value={details.empreendimento?.construtora || details.construtora || '-'} />
                                             <InfoRow icon={<Calendar size={14} />} label="Previsão Entrega" value={previsaoVal} />
                                             <InfoRow icon={<Calendar size={14} />} label="Idade" value={formatIdade(details.idade_imovel)} />
-                                            
+
                                             {!details.is_empreendimento && (
                                                 <>
                                                     <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
@@ -481,8 +484,8 @@ export function PropertyDetailsContent({
                                                 </h4>
                                                 <div className="space-y-4">
                                                     {details.empreendimento.torres.map((torre: any, torreIdx: number) => (
-                                                        <div key={torreIdx} className="rounded-lg border border-border/50 overflow-hidden">
-                                                            <div className="flex items-center gap-2 px-4 py-3 bg-muted/20 border-b border-border/50">
+                                                        <div key={torreIdx} className="rounded-lg border border-border/50 overflow-hidden bg-background">
+                                                            <div className="flex items-center gap-2 px-4 py-3 bg-background border-b border-border/50">
                                                                 <div className="flex items-center justify-center w-7 h-7 rounded-lg bg-secondary text-secondary-foreground font-black text-xs">
                                                                     {torreIdx + 1}
                                                                 </div>
@@ -490,7 +493,7 @@ export function PropertyDetailsContent({
                                                             </div>
                                                             <div className="p-4 space-y-3">
                                                                 {torre.tipologias?.map((tip: any, tipIdx: number) => (
-                                                                    <div key={tipIdx} className="flex flex-wrap items-center gap-x-6 gap-y-2 p-3 rounded-lg bg-muted/30 border border-border/30">
+                                                                    <div key={tipIdx} className="flex flex-wrap items-center gap-x-6 gap-y-2 p-3 rounded-lg bg-slate-50 dark:bg-muted/30 border border-border/30">
                                                                         <div className="flex items-center gap-1.5">
                                                                             <Layers size={12} className="text-muted-foreground" />
                                                                             <span className="text-xs font-bold text-foreground uppercase">
@@ -549,7 +552,7 @@ export function PropertyDetailsContent({
                                                 <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                     Área comum | Lazer
                                                 </h4>
-                                                <div className="text-foreground bg-muted/20 p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
+                                                <div className="text-foreground bg-background p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
                                                     {amenities.map(a => (
                                                         <div key={a.id} className="flex items-center gap-3 py-3">
                                                             <div className="w-1.5 h-1.5 rounded-full bg-foreground flex-shrink-0" />
@@ -578,7 +581,7 @@ export function PropertyDetailsContent({
                                         <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                             Descrição
                                         </h4>
-                                        <div className="text-foreground leading-relaxed bg-muted/20 p-6 rounded-xl border border-border/50">
+                                        <div className="text-foreground leading-relaxed bg-background p-6 rounded-xl border border-border/50">
                                             {prop.description ? (
                                                 <SafeMarkdownRenderer content={prop.description} className="text-base [&>p]:text-base [&>p]:leading-relaxed" />
                                             ) : (
@@ -595,10 +598,10 @@ export function PropertyDetailsContent({
                                                 <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                     Localização
                                                 </h4>
-                                                <div className="rounded-xl overflow-hidden bg-muted/30 border-2 border-border shadow-inner p-1">
-                                                    <PropertyMap 
-                                                        lat={endereco.latitude} 
-                                                        lng={endereco.longitude} 
+                                                <div className="rounded-xl overflow-hidden bg-background border-2 border-border shadow-inner p-1">
+                                                    <PropertyMap
+                                                        lat={endereco.latitude}
+                                                        lng={endereco.longitude}
                                                         readOnly={true}
                                                         zoom={16}
                                                     />
@@ -615,11 +618,11 @@ export function PropertyDetailsContent({
                                                 <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                                     Responsável
                                                 </h4>
-                                                <div className="flex items-center gap-4 p-4 rounded-xl bg-muted/20 border border-border/50">
+                                                <div className="flex items-center gap-4 p-4 rounded-xl bg-background border border-border/50">
                                                     {prop.created_by_profile.avatar_url ? (
-                                                        <img 
-                                                            src={prop.created_by_profile.avatar_url} 
-                                                            alt={prop.created_by_profile.full_name} 
+                                                        <img
+                                                            src={prop.created_by_profile.avatar_url}
+                                                            alt={prop.created_by_profile.full_name}
                                                             className="w-12 h-12 rounded-full object-cover border-2 border-secondary/30 flex-shrink-0"
                                                         />
                                                     ) : (
@@ -632,7 +635,7 @@ export function PropertyDetailsContent({
                                                             {prop.created_by_profile.full_name || 'Não informado'}
                                                         </span>
                                                         {prop.created_by_profile.whatsapp_number && (
-                                                            <a 
+                                                            <a
                                                                 href={`https://wa.me/${prop.created_by_profile.whatsapp_number.replace(/\D/g, '')}`}
                                                                 target="_blank"
                                                                 rel="noopener noreferrer"
@@ -655,7 +658,7 @@ export function PropertyDetailsContent({
                                         <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
                                             Proprietário | Construtora
                                         </h4>
-                                        <div className="bg-muted/20 border border-border/50 p-6 rounded-xl space-y-3">
+                                        <div className="bg-background border border-border/50 p-6 rounded-xl space-y-3">
                                             <div className="flex justify-between items-start">
                                                 <div>
                                                     <div className="flex items-center gap-1.5 text-base font-bold text-foreground">
@@ -667,7 +670,7 @@ export function PropertyDetailsContent({
                                                     )}
                                                 </div>
                                             </div>
-                                            
+
                                             <div className="grid grid-cols-1 gap-2">
                                                 <div className="flex items-center gap-1.5 text-sm text-foreground">
                                                     <Phone size={14} />
@@ -689,7 +692,7 @@ export function PropertyDetailsContent({
                 ) : (
                     <div className="animate-in fade-in slide-in-from-right-4 duration-300">
                         <div className="mb-4">
-                            <button 
+                            <button
                                 onClick={() => setActiveTab('details')}
                                 className="flex items-center gap-2 px-3 py-1.5 text-xs font-bold uppercase tracking-widest text-muted-foreground hover:text-foreground transition-colors"
                             >
@@ -697,9 +700,9 @@ export function PropertyDetailsContent({
                                 Voltar para o Imóvel
                             </button>
                         </div>
-                        <div className="bg-white rounded-xl border border-border shadow-sm p-6">
-                            <PropertyCopyCard 
-                                propertyId={prop.id} 
+                        <div className="bg-background rounded-xl border border-border shadow-sm p-6">
+                            <PropertyCopyCard
+                                propertyId={prop.id}
                                 tenantId={tenantId}
                                 profileId={prop.profile_id || ''}
                                 hasAIAccess={hasAIAccess}
@@ -709,14 +712,14 @@ export function PropertyDetailsContent({
                 )}
             </div>
 
-            <FullscreenMediaViewer 
+            <FullscreenMediaViewer
                 isOpen={isFullscreenOpen}
                 onClose={() => setIsFullscreenOpen(false)}
                 media={allMedia}
                 initialIndex={selectedImageIndex}
             />
 
-            <InstagramPostModal 
+            <InstagramPostModal
                 isOpen={isInstagramModalOpen}
                 onClose={() => setIsInstagramModalOpen(false)}
                 prop={prop}
@@ -731,22 +734,22 @@ function calculateMonthsRemaining(previsaoEntrega: string): string {
     if (!previsaoEntrega) return ''
     const [year, month] = previsaoEntrega.split('-').map(Number)
     if (!year || !month) return ''
-    
+
     const now = new Date()
     const currentYear = now.getFullYear()
     const currentMonth = now.getMonth() + 1
-    
+
     const totalMonths = (year - currentYear) * 12 + (month - currentMonth)
-    
+
     if (totalMonths < 0) {
         const absMonths = Math.abs(totalMonths)
         return `Entregue há ${absMonths} ${absMonths === 1 ? 'mês' : 'meses'}`
     }
-    
+
     if (totalMonths === 0) {
         return 'Entregue este mês'
     }
-    
+
     return `${totalMonths} ${totalMonths === 1 ? 'mês' : 'meses'}`
 }
 
@@ -761,10 +764,10 @@ function formatPrevisaoEntrega(previsao: string): string {
     if (!previsao) return '-';
     const parts = previsao.split('-');
     if (parts.length < 2) return previsao;
-    
+
     const year = parts[0];
     const month = parts[1];
-    
+
     const monthsShort: Record<string, string> = {
         '01': 'Jan',
         '02': 'Fev',
@@ -779,10 +782,10 @@ function formatPrevisaoEntrega(previsao: string): string {
         '11': 'Nov',
         '12': 'Dez'
     };
-    
+
     const monthName = monthsShort[month];
     if (!monthName) return previsao;
-    
+
     const shortYear = year.slice(-2);
     return `${monthName}/${shortYear}`;
 }
