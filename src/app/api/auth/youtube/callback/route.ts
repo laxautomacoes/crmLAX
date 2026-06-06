@@ -4,10 +4,21 @@ import { createClient } from '@/lib/supabase/server';
 export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const code = searchParams.get('code');
-    const tenantId = searchParams.get('state'); // O state contém o tenant_id
+    const stateParam = searchParams.get('state');
 
-    if (!code || !tenantId) {
+    if (!code || !stateParam) {
         return NextResponse.redirect('/marketing/studio?error=auth_failed');
+    }
+
+    let tenantId: string;
+    let profileId: string | undefined;
+
+    try {
+        const statePayload = JSON.parse(Buffer.from(stateParam, 'base64url').toString());
+        tenantId = statePayload.tenant_id;
+        profileId = statePayload.profile_id;
+    } catch {
+        tenantId = stateParam;
     }
 
     const clientId = process.env.GOOGLE_CLIENT_ID;
@@ -51,6 +62,7 @@ export async function GET(req: NextRequest) {
             .from('integrations')
             .upsert({
                 tenant_id: tenantId,
+                profile_id: profileId || null,
                 provider: 'youtube',
                 credentials: {
                     access_token: tokenData.access_token,
@@ -62,7 +74,7 @@ export async function GET(req: NextRequest) {
                 },
                 status: 'active',
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'tenant_id,provider' });
+            }, { onConflict: 'tenant_id,provider,profile_id' });
 
         if (upsertError) throw upsertError;
 

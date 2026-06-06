@@ -1,6 +1,6 @@
 'use server'
 
-import { getAIModel } from '@/lib/ai/gemini';
+import { runAI } from '@/lib/ai/factory';
 import { createClient } from '@/lib/supabase/server';
 import { requirePlanFeature } from '@/lib/utils/plan-guard';
 import { getReportMetrics } from './reports';
@@ -79,9 +79,8 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
 }`;
 
     try {
-        const model = getAIModel();
-        const result = await model.generateContent(prompt);
-        const rawText = result.response.text().trim();
+        const result = await runAI(tenantId, prompt);
+        const rawText = result.text.trim();
 
         const jsonStart = rawText.indexOf('{');
         const jsonEnd = rawText.lastIndexOf('}');
@@ -91,8 +90,8 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
         await supabase.from('ai_usage').insert({
             tenant_id: tenantId,
             profile_id: profileId,
-            model: 'gemini-2.5-flash',
-            total_tokens: result.response.usageMetadata?.totalTokenCount || 0,
+            model: result.model,
+            total_tokens: result.usage.total_tokens,
             feature_context: 'report_analysis'
         });
 

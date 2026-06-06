@@ -179,7 +179,9 @@ body {
   letter-spacing: 0.02em;
 }
 
-/* Customizing native date/time picker */
+/* Customizing native pickers and inputs */
+input[type="checkbox"],
+input[type="radio"],
 input[type="date"],
 input[type="datetime-local"],
 input[type="time"] {

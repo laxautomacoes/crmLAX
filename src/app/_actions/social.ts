@@ -34,7 +34,7 @@ export async function getInstagramFeed(tenantId: string) {
 
         const url = `https://graph.facebook.com/v21.0/${account_id}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&access_token=${access_token}&limit=12`;
         
-        const response = await fetch(url, { next: { revalidate: 3600 } });
+        const response = await fetch(url, { cache: 'no-store' });
         const data = await response.json();
 
         if (data.error) {
@@ -49,6 +49,13 @@ export async function getInstagramFeed(tenantId: string) {
     }
 }
 
+/**
+ * Detecta se a URL fornecida aponta para um arquivo de vídeo
+ */
+function isVideoUrl(url: string): boolean {
+    return /\.(mp4|webm|mov|m4v|3gp|avi|mkv)(\?.*)?$/i.test(url) || url.includes('/videos/');
+}
+
 interface PublishOptions {
     tenantId: string;
     mediaUrls: string[]; // URLs das imagens/vídeo
@@ -60,7 +67,7 @@ interface PublishOptions {
 }
 
 /**
- * Publica um post (Feed Único, Carrossel) no Instagram e/ou Página do Facebook
+ * Publica um post (Feed Único, Carrossel, Reels) no Instagram e/ou Página do Facebook
  */
 export async function publishSocialPost({ tenantId, mediaUrls, caption, networks }: PublishOptions) {
     if (!mediaUrls || mediaUrls.length === 0) {
@@ -76,25 +83,65 @@ export async function publishSocialPost({ tenantId, mediaUrls, caption, networks
         if (networks.instagram) {
             try {
                 if (mediaUrls.length === 1) {
-                    // POST ÚNICO (Imagem)
-                    // TODO: Suportar vídeo (Reels) checando a extensão da URL
-                    const createRes = await fetch(`https://graph.facebook.com/v21.0/${account_id}/media`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            image_url: mediaUrls[0],
-                            caption: caption,
-                            access_token
-                        })
-                    });
-                    const createData = await createRes.json();
-                    if (createData.error) throw new Error(`IG Create: ${createData.error.message}`);
+                    const isVideo = isVideoUrl(mediaUrls[0]);
+                    let containerId = '';
+
+                    if (isVideo) {
+                        // POST ÚNICO (Vídeo - Reels)
+                        const createRes = await fetch(`https://graph.facebook.com/v21.0/${account_id}/media`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                media_type: 'REELS',
+                                video_url: mediaUrls[0],
+                                caption: caption,
+                                access_token
+                            })
+                        });
+                        const createData = await createRes.json();
+                        if (createData.error) throw new Error(`IG Reels Create: ${createData.error.message}`);
+                        containerId = createData.id;
+
+                        // Polling para o status do Reels
+                        let status = 'IN_PROGRESS';
+                        let attempts = 0;
+                        const maxAttempts = 10;
+                        while (status === 'IN_PROGRESS' && attempts < maxAttempts) {
+                            await new Promise(resolve => setTimeout(resolve, 3000));
+                            attempts++;
+                            const statusRes = await fetch(`https://graph.facebook.com/v21.0/${containerId}?fields=status_code&access_token=${access_token}`);
+                            const statusData = await statusRes.json();
+                            if (statusData.error) {
+                                console.error(`Error checking container status: ${statusData.error.message}`);
+                                break;
+                            }
+                            status = statusData.status_code;
+                        }
+
+                        if (status !== 'FINISHED') {
+                            throw new Error(`Processamento do vídeo no Instagram demorou muito ou falhou (status: ${status}).`);
+                        }
+                    } else {
+                        // POST ÚNICO (Imagem)
+                        const createRes = await fetch(`https://graph.facebook.com/v21.0/${account_id}/media`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                image_url: mediaUrls[0],
+                                caption: caption,
+                                access_token
+                            })
+                        });
+                        const createData = await createRes.json();
+                        if (createData.error) throw new Error(`IG Create: ${createData.error.message}`);
+                        containerId = createData.id;
+                    }
                     
                     const publishRes = await fetch(`https://graph.facebook.com/v21.0/${account_id}/media_publish`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
                         body: JSON.stringify({
-                            creation_id: createData.id,
+                            creation_id: containerId,
                             access_token
                         })
                     });
@@ -108,18 +155,46 @@ export async function publishSocialPost({ tenantId, mediaUrls, caption, networks
                     const childIds = [];
                     
                     for (const url of carouselUrls) {
+                        const isVideo = isVideoUrl(url);
+                        const bodyParams: any = {
+                            is_carousel_item: true,
+                            access_token
+                        };
+
+                        if (isVideo) {
+                            bodyParams.media_type = 'VIDEO';
+                            bodyParams.video_url = url;
+                        } else {
+                            bodyParams.image_url = url;
+                        }
+
                         const childRes = await fetch(`https://graph.facebook.com/v21.0/${account_id}/media`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({
-                                image_url: url,
-                                is_carousel_item: true,
-                                access_token
-                            })
+                            body: JSON.stringify(bodyParams)
                         });
                         const childData = await childRes.json();
                         if (childData.error) throw new Error(`IG Child Create: ${childData.error.message}`);
-                        childIds.push(childData.id);
+                        const childId = childData.id;
+
+                        if (isVideo) {
+                            // Polling para o vídeo filho
+                            let status = 'IN_PROGRESS';
+                            let attempts = 0;
+                            const maxAttempts = 10;
+                            while (status === 'IN_PROGRESS' && attempts < maxAttempts) {
+                                await new Promise(resolve => setTimeout(resolve, 3000));
+                                attempts++;
+                                const statusRes = await fetch(`https://graph.facebook.com/v21.0/${childId}?fields=status_code&access_token=${access_token}`);
+                                const statusData = await statusRes.json();
+                                if (statusData.error) break;
+                                status = statusData.status_code;
+                            }
+                            if (status !== 'FINISHED') {
+                                throw new Error(`Processamento do vídeo no carrossel falhou ou demorou muito.`);
+                            }
+                        }
+                        childIds.push(childId);
                     }
                     
                     const carouselRes = await fetch(`https://graph.facebook.com/v21.0/${account_id}/media`, {
@@ -158,36 +233,68 @@ export async function publishSocialPost({ tenantId, mediaUrls, caption, networks
         if (networks.facebook && page_id) {
             try {
                 if (mediaUrls.length === 1) {
-                    // POST ÚNICO
-                    const fbRes = await fetch(`https://graph.facebook.com/v21.0/${page_id}/photos`, {
-                        method: 'POST',
-                        headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({
-                            url: mediaUrls[0],
-                            message: caption,
-                            access_token
-                        })
-                    });
-                    const fbData = await fbRes.json();
-                    if (fbData.error) throw new Error(`FB Publish: ${fbData.error.message}`);
-                    results.facebook = true;
-                } else {
-                    // MÚLTIPLAS FOTOS NO FACEBOOK (Post com fotos anexadas)
-                    // Facebook permite fazer upload das fotos não publicadas e depois anexar a um post no feed.
-                    const attachedMedia = [];
-                    for (const url of mediaUrls) {
-                        const photoRes = await fetch(`https://graph.facebook.com/v21.0/${page_id}/photos`, {
+                    const isVideo = isVideoUrl(mediaUrls[0]);
+                    if (isVideo) {
+                        // POST ÚNICO (Vídeo)
+                        const fbRes = await fetch(`https://graph.facebook.com/v21.0/${page_id}/videos`, {
                             method: 'POST',
                             headers: { 'Content-Type': 'application/json' },
                             body: JSON.stringify({
-                                url: url,
-                                published: false,
+                                file_url: mediaUrls[0],
+                                description: caption,
                                 access_token
                             })
                         });
-                        const photoData = await photoRes.json();
-                        if (photoData.error) throw new Error(`FB Photo Upload: ${photoData.error.message}`);
-                        attachedMedia.push({ media_fbid: photoData.id });
+                        const fbData = await fbRes.json();
+                        if (fbData.error) throw new Error(`FB Video Publish: ${fbData.error.message}`);
+                        results.facebook = true;
+                    } else {
+                        // POST ÚNICO (Foto)
+                        const fbRes = await fetch(`https://graph.facebook.com/v21.0/${page_id}/photos`, {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({
+                                url: mediaUrls[0],
+                                message: caption,
+                                access_token
+                            })
+                        });
+                        const fbData = await fbRes.json();
+                        if (fbData.error) throw new Error(`FB Publish: ${fbData.error.message}`);
+                        results.facebook = true;
+                    }
+                } else {
+                    // MÚLTIPLAS MÍDIAS NO FACEBOOK (Post com mídias anexadas)
+                    const attachedMedia = [];
+                    for (const url of mediaUrls) {
+                        const isVideo = isVideoUrl(url);
+                        if (isVideo) {
+                            const videoRes = await fetch(`https://graph.facebook.com/v21.0/${page_id}/videos`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    file_url: url,
+                                    published: false,
+                                    access_token
+                                })
+                            });
+                            const videoData = await videoRes.json();
+                            if (videoData.error) throw new Error(`FB Video Upload: ${videoData.error.message}`);
+                            attachedMedia.push({ media_fbid: videoData.id });
+                        } else {
+                            const photoRes = await fetch(`https://graph.facebook.com/v21.0/${page_id}/photos`, {
+                                method: 'POST',
+                                headers: { 'Content-Type': 'application/json' },
+                                body: JSON.stringify({
+                                    url: url,
+                                    published: false,
+                                    access_token
+                                })
+                            });
+                            const photoData = await photoRes.json();
+                            if (photoData.error) throw new Error(`FB Photo Upload: ${photoData.error.message}`);
+                            attachedMedia.push({ media_fbid: photoData.id });
+                        }
                     }
                     
                     const postRes = await fetch(`https://graph.facebook.com/v21.0/${page_id}/feed`, {

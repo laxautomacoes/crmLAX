@@ -45,13 +45,44 @@ export async function getAIConfig(tenantId: string): Promise<{ provider: AIProvi
     };
 }
 
-export async function runAI(tenantId: string, prompt: string): Promise<AIResult> {
+async function fetchImageAsInlinePart(url: string) {
+    try {
+        const response = await fetch(url);
+        const arrayBuffer = await response.arrayBuffer();
+        const base64 = Buffer.from(arrayBuffer).toString('base64');
+        const contentType = response.headers.get('content-type') || 'image/jpeg';
+        return {
+            inlineData: {
+                data: base64,
+                mimeType: contentType
+            }
+        };
+    } catch (error) {
+        console.error('Erro ao converter imagem para base64 para o Gemini:', error);
+        return null;
+    }
+}
+
+export async function runAI(tenantId: string, prompt: string, imageUrls?: string[]): Promise<AIResult> {
     const { provider, model: modelName } = await getAIConfig(tenantId);
 
     if (provider === 'openai') {
+        const content: any[] = [{ type: 'text', text: prompt }];
+        if (imageUrls && imageUrls.length > 0) {
+            imageUrls.forEach(url => {
+                const isImage = /\.(jpg|jpeg|png|webp|gif|heic|heif)(\?.*)?$/i.test(url) || url.includes('/images/') || url.includes('marketing-studio') || url.includes('crm-attachments');
+                if (isImage) {
+                    content.push({
+                        type: 'image_url',
+                        image_url: { url }
+                    });
+                }
+            });
+        }
+
         const response = await openai.chat.completions.create({
             model: modelName,
-            messages: [{ role: 'user', content: prompt }],
+            messages: [{ role: 'user', content }],
             temperature: 0.7,
         });
 
@@ -64,7 +95,19 @@ export async function runAI(tenantId: string, prompt: string): Promise<AIResult>
         };
     } else {
         const model = getAIModel(modelName);
-        const result = await model.generateContent(prompt);
+        const parts: any[] = [prompt];
+
+        if (imageUrls && imageUrls.length > 0) {
+            for (const url of imageUrls) {
+                const isImage = /\.(jpg|jpeg|png|webp|gif|heic|heif)(\?.*)?$/i.test(url) || url.includes('/images/') || url.includes('marketing-studio') || url.includes('crm-attachments');
+                if (isImage) {
+                    const part = await fetchImageAsInlinePart(url);
+                    if (part) parts.push(part);
+                }
+            }
+        }
+
+        const result = await model.generateContent(parts);
         const response = await result.response;
         
         return {

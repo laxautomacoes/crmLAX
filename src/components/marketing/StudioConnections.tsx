@@ -72,8 +72,14 @@ export function StudioConnections({ tenantId, profileId, hasProPlan }: StudioCon
 
         if (success === 'instagram_connected') {
             toast.success('Instagram conectado com sucesso!');
+            const url = new URL(window.location.href);
+            url.searchParams.delete('success');
+            window.history.replaceState({}, '', url.pathname + url.search);
         } else if (error) {
             toast.error(`Erro na conexão: ${error}`);
+            const url = new URL(window.location.href);
+            url.searchParams.delete('error');
+            window.history.replaceState({}, '', url.pathname + url.search);
         }
     }, [searchParams]);
 

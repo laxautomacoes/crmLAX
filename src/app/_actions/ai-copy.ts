@@ -106,20 +106,28 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
 export async function generateGeneralCopy(
     topic: string,
     tenantId: string,
-    profileId: string
+    profileId: string,
+    mediaUrls?: string[]
 ): Promise<{ success: boolean; data?: CopyVariants; error?: string }> {
     await requirePlanFeature(tenantId, 'ai');
 
     const supabase = await createClient();
 
-    const prompt = `Você é um copywriter especialista em marketing brasileiro. Crie copies persuasivos, com linguagem natural e emojis estratégicos.
-    
-TÓPICO DO POST: ${topic}
+    const hasMedia = mediaUrls && mediaUrls.length > 0;
+    const topicSection = topic ? `TÓPICO DO POST / INSTRUÇÕES DO USUÁRIO:\n"${topic}"` : '';
+    const mediaSection = hasMedia 
+        ? `O usuário anexou ${mediaUrls.length} arquivo(s) de mídia. ANALISE visualmente o conteúdo de cada imagem/vídeo fornecido e crie copies que descrevam, combinem ou se baseiem no conteúdo visual presente nelas de forma criativa, perspicaz e altamente contextualizada. Se houver instruções ou tópicos textuais fornecidos acima, use-os como direção complementar.`
+        : 'Crie copies persuasivos com base estritamente no tópico/sugestão fornecido.';
+
+    const prompt = `Você é um copywriter especialista em marketing brasileiro de alto nível. Crie copies persuasivos, com linguagem natural e emojis estratégicos.
+
+${topicSection}
+${mediaSection}
 
 TAREFA:
-Crie 3 versões de copy para o tópico acima:
+Crie 3 versões de copy para a publicação:
 1. CURTA (max 300 caracteres): Para WhatsApp e Stories. Direta e impactante.
-2. MÉDIA (max 600 caracteres): Para Facebook e Instagram. Tom envolvente, com storytelling se apropriado, e CTA claro.
+2. MÉDIA (max 600 caracteres): Para Facebook e Instagram. Tom envolvente, contextualizado ao conteúdo visual se houver, com storytelling se apropriado, e CTA claro.
 3. COMPLETA (sem limite): Post detalhado para Blog ou LinkedIn.
 
 Retorne APENAS um JSON válido com este formato exato, sem markdown:
@@ -130,7 +138,7 @@ Retorne APENAS um JSON válido com este formato exato, sem markdown:
 }`;
 
     try {
-        const result = await runAI(tenantId, prompt);
+        const result = await runAI(tenantId, prompt, mediaUrls);
         const rawText = result.text.trim();
 
         const jsonStart = rawText.indexOf('{');

@@ -1,7 +1,7 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Sparkles, Loader2, Copy, Send, Layout, Grid3X3, Film, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown, ExternalLink, Play } from 'lucide-react';
+import { useState, useEffect, useRef } from 'react';
+import { Sparkles, Loader2, Copy, Send, Layout, Grid3X3, Film, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown, ExternalLink, Play, Plus, X } from 'lucide-react';
 import { generateGeneralCopy, generatePropertyCopy } from '@/app/_actions/ai-copy';
 import { publishSocialPost, getInstagramFeed } from '@/app/_actions/social';
 import { createClient } from '@/lib/supabase/client';
@@ -28,6 +28,11 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
     const [networks, setNetworks] = useState({ instagram: true, facebook: true });
     const [publishing, setPublishing] = useState(false);
+
+    // Estados para Post Livre
+    const [freePostMedia, setFreePostMedia] = useState<string[]>([]);
+    const [uploadingFreeMedia, setUploadingFreeMedia] = useState(false);
+    const freeMediaInputRef = useRef<HTMLInputElement>(null);
 
     const supabase = createClient();
     const isMinimal = variant === 'minimal';
@@ -60,7 +65,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
             try {
                 const result = await getInstagramFeed(tenantId);
                 if (result.success && result.data) {
-                    const posts = result.data.filter((m: any) => m.media_type === 'IMAGE' || m.media_type === 'CAROUSEL_ALBUM');
+                    const posts = result.data; // Exibe todo o feed (imagens, carrosséis e vídeos/reels)
                     const reels = result.data.filter((m: any) => m.media_type === 'VIDEO');
                     setIgFeed(posts);
                     setIgReels(reels);
@@ -89,9 +94,58 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
         }
     }, [selectedPropertyId, properties]);
 
+    const triggerFreeMediaSelect = () => {
+        freeMediaInputRef.current?.click();
+    };
+
+    const handleFreeMediaUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const files = e.target.files;
+        if (!files || files.length === 0) return;
+
+        if (freePostMedia.length + files.length > 10) {
+            toast.error('Limite máximo de 10 mídias por post (Carrossel).');
+            return;
+        }
+
+        setUploadingFreeMedia(true);
+        const uploadedUrls: string[] = [];
+
+        try {
+            for (let i = 0; i < files.length; i++) {
+                const file = files[i];
+                const fileExt = file.name.split('.').pop();
+                const fileName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${fileExt}`;
+                const filePath = `marketing-studio/${tenantId}/${fileName}`;
+
+                const { error: uploadError } = await supabase.storage.from('crm-attachments').upload(filePath, file);
+                if (uploadError) throw uploadError;
+
+                const { data: { publicUrl } } = supabase.storage.from('crm-attachments').getPublicUrl(filePath);
+                uploadedUrls.push(publicUrl);
+            }
+
+            setFreePostMedia(prev => [...prev, ...uploadedUrls]);
+            toast.success(`${files.length} mídia(s) carregada(s) com sucesso!`);
+        } catch (error: any) {
+            console.error('Erro no upload das mídias:', error);
+            toast.error('Erro no upload: ' + error.message);
+        } finally {
+            setUploadingFreeMedia(false);
+            if (freeMediaInputRef.current) freeMediaInputRef.current.value = '';
+        }
+    };
+
+    const handleRemoveFreeMedia = (index: number) => {
+        setFreePostMedia(prev => prev.filter((_, idx) => idx !== index));
+    };
+
+    const isVideoUrl = (url: string) => {
+        return /\.(mp4|webm|mov|m4v|3gp|avi|mkv)(\?.*)?$/i.test(url) || url.includes('/videos/');
+    };
+
     const handleGenerate = async () => {
-        if (mode === 'livre' && !topic.trim()) {
-            toast.error('O que você quer postar? Digite um assunto acima.');
+        if (mode === 'livre' && !topic.trim() && freePostMedia.length === 0) {
+            toast.error('O que você quer postar? Digite um assunto ou carregue uma mídia acima.');
             return;
         }
         if (mode === 'imovel' && !selectedPropertyId) {
@@ -102,7 +156,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
         setLoading(true);
         try {
             if (mode === 'livre') {
-                const result = await generateGeneralCopy(topic, tenantId, profileId);
+                const result = await generateGeneralCopy(topic, tenantId, profileId, freePostMedia);
                 if (result.success) setResults(result.data);
             } else {
                 const result = await generatePropertyCopy(selectedPropertyId, tenantId, profileId);
@@ -121,8 +175,11 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
             toast.error('Gere ou digite um conteúdo antes de publicar.');
             return;
         }
-        if (mode === 'imovel' && selectedMedia.length === 0) {
-            toast.error('Selecione pelo menos uma imagem do imóvel para publicar.');
+
+        const mediaUrls = mode === 'imovel' ? selectedMedia : freePostMedia;
+
+        if (networks.instagram && mediaUrls.length === 0) {
+            toast.error('Selecione ou carregue pelo menos uma mídia para publicar no Instagram.');
             return;
         }
         if (!networks.instagram && !networks.facebook) {
@@ -134,7 +191,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
         try {
             const res = await publishSocialPost({
                 tenantId,
-                mediaUrls: mode === 'imovel' ? selectedMedia : [],
+                mediaUrls,
                 caption: results[activeTab],
                 networks
             });
@@ -209,27 +266,94 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                 <div className="hidden xl:block" />
 
                 {/* Lado Esquerdo: Input / Seleção */}
-                <div className="bg-card rounded-lg border border-border/50 shadow-sm p-8 flex flex-col space-y-6 transition-all hover:shadow-md h-full">
+                <div className="bg-card rounded-lg border border-border/50 shadow-sm p-8 flex flex-col space-y-6 transition-all hover:shadow-md h-auto xl:h-[620px]">
                     
                     {mode === 'livre' ? (
-                        <div className="space-y-4 flex-1">
-                            <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">O que vamos postar hoje?</label>
-                                {topic && (
-                                    <button 
-                                        onClick={() => setTopic('')}
-                                        className="text-[10px] font-bold text-red-500/70 hover:text-red-600 transition-colors uppercase tracking-widest"
-                                    >
-                                        Limpar
-                                    </button>
-                                )}
-                            </div>
-                            <textarea
-                                value={topic}
-                                onChange={(e) => setTopic(e.target.value)}
-                                placeholder="Ex: Frase motivacional sobre conquista do primeiro imóvel, ou um post sobre as vantagens de morar perto da praia..."
-                                className="w-full h-80 p-6 rounded-lg bg-foreground/5 border border-border/50 text-base text-foreground focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all placeholder:text-muted-foreground/50 font-medium leading-relaxed"
+                        <div className="space-y-6 flex-1 flex flex-col min-h-0">
+                            <input 
+                                type="file" 
+                                ref={freeMediaInputRef} 
+                                className="hidden" 
+                                onChange={handleFreeMediaUpload}
+                                multiple
+                                accept="image/*,video/*" 
                             />
+                            <div className="space-y-4 flex-1">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">O que vamos postar hoje?</label>
+                                    {topic && (
+                                        <button 
+                                            onClick={() => setTopic('')}
+                                            className="text-[10px] font-bold text-red-500/70 hover:text-red-600 transition-colors uppercase tracking-widest"
+                                        >
+                                            Limpar
+                                        </button>
+                                    )}
+                                </div>
+                                <textarea
+                                    value={topic}
+                                    onChange={(e) => setTopic(e.target.value)}
+                                    placeholder="Ex: Frase motivacional sobre conquista do primeiro imóvel, ou um post sobre as vantagens de morar perto da praia..."
+                                    className="w-full h-48 p-6 rounded-lg bg-foreground/5 border border-border/50 text-base text-foreground focus:ring-2 focus:ring-ring/30 outline-none resize-none transition-all placeholder:text-muted-foreground/50 font-medium leading-relaxed"
+                                />
+                            </div>
+
+                            <div className="space-y-3 flex-1 flex flex-col min-h-0">
+                                <div className="flex items-center justify-between">
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                                        Fotos | Videos ({freePostMedia.length}/10)
+                                    </label>
+                                    <span className="text-[10px] text-muted-foreground">Adicione fotos ou vídeos</span>
+                                </div>
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 overflow-y-auto pr-2 custom-scrollbar max-h-[300px]">
+                                    {freePostMedia.map((url, idx) => {
+                                        const isVideo = isVideoUrl(url);
+                                        return (
+                                            <div 
+                                                key={idx}
+                                                className="relative pb-[100%] rounded-lg overflow-hidden border border-border/40 group"
+                                            >
+                                                {isVideo ? (
+                                                    <div className="absolute inset-0 bg-foreground/5 flex items-center justify-center">
+                                                        <Film className="h-6 w-6 text-muted-foreground" />
+                                                        <video src={url} className="absolute inset-0 w-full h-full object-cover opacity-60" muted />
+                                                    </div>
+                                                ) : (
+                                                    <img 
+                                                        src={url} 
+                                                        alt={`Mídia ${idx}`}
+                                                        className="absolute inset-0 w-full h-full object-cover"
+                                                    />
+                                                )}
+                                                <button 
+                                                    onClick={() => handleRemoveFreeMedia(idx)}
+                                                    className="absolute top-1 right-1 p-1 bg-red-500 hover:bg-red-600 text-white rounded-full shadow-md transition-colors z-10"
+                                                >
+                                                    <X size={10} />
+                                                </button>
+                                            </div>
+                                        );
+                                    })}
+                                    {freePostMedia.length < 10 && (
+                                        <button 
+                                            onClick={triggerFreeMediaSelect}
+                                            disabled={uploadingFreeMedia}
+                                            className="relative pb-[100%] rounded-lg border border-muted-foreground/30 hover:border-accent-icon hover:bg-foreground/5 transition-all flex flex-col items-center justify-center text-muted-foreground hover:text-foreground cursor-pointer"
+                                        >
+                                            <div className="absolute inset-0 flex flex-col items-center justify-center gap-1.5 p-2">
+                                                {uploadingFreeMedia ? (
+                                                    <Loader2 size={16} className="animate-spin text-foreground" />
+                                                ) : (
+                                                    <>
+                                                        <Plus size={16} />
+                                                        <span className="text-[9px] font-bold text-center leading-tight">Carregar mídia</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </button>
+                                    )}
+                                </div>
+                            </div>
                         </div>
                     ) : (
                         <div className="space-y-6 flex-1 flex flex-col">
@@ -254,7 +378,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                 <div className="space-y-3 flex-1 flex flex-col min-h-0">
                                     <div className="flex items-center justify-between">
                                         <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
-                                            Fotos / Vídeos ({selectedMedia.length}/10)
+                                            Fotos | Videos ({selectedMedia.length}/10)
                                         </label>
                                         <span className="text-[10px] text-muted-foreground">Selecione para Feed ou Carrossel</span>
                                     </div>
@@ -287,34 +411,32 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                     )}
 
                         <div className="space-y-4 mt-auto pt-6 border-t border-border/50">
-                            {mode === 'imovel' && (
-                                <div className="flex items-center justify-center gap-6 py-2">
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={networks.instagram}
-                                            onChange={(e) => setNetworks({...networks, instagram: e.target.checked})}
-                                            className="w-4 h-4 rounded border-border bg-foreground/5 text-pink-500 focus:ring-pink-500"
-                                        />
-                                        <Instagram size={18} className="text-muted-foreground group-hover:text-pink-500 transition-colors" />
-                                        <span className="text-xs font-bold text-foreground/90">Instagram</span>
-                                    </label>
-                                    <label className="flex items-center gap-2 cursor-pointer group">
-                                        <input 
-                                            type="checkbox" 
-                                            checked={networks.facebook}
-                                            onChange={(e) => setNetworks({...networks, facebook: e.target.checked})}
-                                            className="w-4 h-4 rounded border-border bg-foreground/5 text-blue-500 focus:ring-blue-500"
-                                        />
-                                        <Facebook size={18} className="text-muted-foreground group-hover:text-blue-500 transition-colors" />
-                                        <span className="text-xs font-bold text-foreground/90">Página FB</span>
-                                    </label>
-                                </div>
-                            )}
+                            <div className="flex items-center justify-center gap-6 py-2">
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={networks.instagram}
+                                        onChange={(e) => setNetworks({...networks, instagram: e.target.checked})}
+                                        className="w-4 h-4 rounded border-border bg-foreground/5 text-secondary focus:ring-secondary accent-secondary"
+                                    />
+                                    <Instagram size={18} className="text-muted-foreground group-hover:text-pink-500 transition-colors" />
+                                    <span className="text-xs font-bold text-foreground/90">Instagram</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={networks.facebook}
+                                        onChange={(e) => setNetworks({...networks, facebook: e.target.checked})}
+                                        className="w-4 h-4 rounded border-border bg-foreground/5 text-secondary focus:ring-secondary accent-secondary"
+                                    />
+                                    <Facebook size={18} className="text-muted-foreground group-hover:text-blue-500 transition-colors" />
+                                    <span className="text-xs font-bold text-foreground/90">Página FB</span>
+                                </label>
+                            </div>
 
                             <button
                                 onClick={handleGenerate}
-                                disabled={loading || (mode === 'livre' ? !topic.trim() : !selectedPropertyId)}
+                                disabled={loading || (mode === 'livre' ? (!topic.trim() && freePostMedia.length === 0) : !selectedPropertyId)}
                                 className="w-full h-14 bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-lg font-black text-sm uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] disabled:opacity-50"
                             >
                         {loading ? (
@@ -329,7 +451,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                 </div>
 
                 {/* Lado Direito: Resultados/Preview */}
-                <div className="bg-card rounded-lg border border-border/50 shadow-sm overflow-hidden flex flex-col relative group h-full min-h-[500px] transition-all hover:shadow-md">
+                <div className="bg-card rounded-lg border border-border/50 shadow-sm overflow-hidden flex flex-col relative group h-auto xl:h-[620px] min-h-[500px] transition-all hover:shadow-md">
                     <div className="p-4 md:p-8 pb-4 border-b border-border/50">
                         <div className="flex items-center gap-1.5 w-full">
                                 {[
@@ -400,7 +522,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                 className="group/post relative aspect-square overflow-hidden rounded bg-muted"
                                             >
                                                 <img
-                                                    src={post.media_url || post.thumbnail_url}
+                                                    src={post.media_type === 'VIDEO' ? post.thumbnail_url : (post.media_url || post.thumbnail_url)}
                                                     alt={post.caption?.substring(0, 50) || 'Post'}
                                                     className="w-full h-full object-cover transition-transform group-hover/post:scale-110 duration-300"
                                                 />
@@ -410,6 +532,11 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                 {post.media_type === 'CAROUSEL_ALBUM' && (
                                                     <div className="absolute top-2 right-2">
                                                         <Grid3X3 className="h-3.5 w-3.5 text-white drop-shadow-lg" />
+                                                    </div>
+                                                )}
+                                                {post.media_type === 'VIDEO' && (
+                                                    <div className="absolute top-2 right-2">
+                                                        <Play className="h-3.5 w-3.5 text-white drop-shadow-lg fill-white" size={12} />
                                                     </div>
                                                 )}
                                             </a>
@@ -480,24 +607,14 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     Copiar Texto
                                 </button>
                                 
-                                {mode === 'imovel' ? (
-                                    <button
-                                        onClick={handlePublish}
-                                        disabled={publishing}
-                                        className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-[0.95] disabled:opacity-50"
-                                    >
-                                        {publishing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
-                                        {publishing ? 'Publicando...' : 'Publicar Post'}
-                                    </button>
-                                ) : (
-                                    <button
-                                        onClick={() => toast.info('A postagem direta livre ainda não suporta upload de mídias. Use o "Post Imóvel" ou copie o texto.')}
-                                        className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-foreground/5 text-muted-foreground font-bold text-xs uppercase tracking-widest cursor-not-allowed border border-border/50"
-                                    >
-                                        <Send size={16} />
-                                        Postar Agora
-                                    </button>
-                                )}
+                                <button
+                                    onClick={handlePublish}
+                                    disabled={publishing}
+                                    className="h-12 flex items-center justify-center gap-2 px-6 rounded-lg bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold text-xs uppercase tracking-widest transition-all shadow-lg active:scale-[0.95] disabled:opacity-50"
+                                >
+                                    {publishing ? <Loader2 size={16} className="animate-spin" /> : <Send size={16} />}
+                                    {publishing ? 'Publicando...' : 'Publicar Post'}
+                                </button>
                             </div>
                         </div>
                     )}

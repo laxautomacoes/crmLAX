@@ -9,13 +9,15 @@ export async function GET(req: NextRequest) {
         return NextResponse.redirect('/marketing/studio?error=auth_failed');
     }
 
-    // Decodificar o state que contém tenant_id e return_url
+    // Decodificar o state que contém tenant_id, profile_id e return_url
     let tenantId: string;
+    let profileId: string | undefined;
     let returnUrl: string;
 
     try {
         const statePayload = JSON.parse(Buffer.from(stateParam, 'base64url').toString());
         tenantId = statePayload.tenant_id;
+        profileId = statePayload.profile_id;
         returnUrl = statePayload.return_url;
     } catch {
         // Fallback: state antigo era apenas o tenant_id
@@ -32,7 +34,8 @@ export async function GET(req: NextRequest) {
 
     // Usar o mesmo domínio fixo da plataforma (deve bater com o que foi enviado na rota de auth)
     const platformDomain = process.env.META_OAUTH_DOMAIN || 'crm.laxperience.online';
-    const redirectUri = `https://${platformDomain}/api/auth/instagram/callback`;
+    const protocol = platformDomain.includes('localhost') ? 'http' : 'https';
+    const redirectUri = `${protocol}://${platformDomain}/api/auth/instagram/callback`;
 
     try {
         // 1. Trocar code pelo Token de Usuário (Short-lived)
@@ -64,10 +67,14 @@ export async function GET(req: NextRequest) {
 
         console.log('[Instagram Callback] Pages Response:', JSON.stringify(pagesData));
 
+        if (pagesData.error) {
+            throw new Error(`Erro da API da Meta: ${pagesData.error.message} (Código: ${pagesData.error.code})`);
+        }
+
         if (!pagesData.data || pagesData.data.length === 0) {
             const grantedPerms = permData.data?.filter((p: any) => p.status === 'granted').map((p: any) => p.permission).join(', ') || 'nenhuma';
             const declinedPerms = permData.data?.filter((p: any) => p.status === 'declined').map((p: any) => p.permission).join(', ') || 'nenhuma';
-            throw new Error(`Nenhuma página encontrada. Permissões concedidas: [${grantedPerms}]. Recusadas: [${declinedPerms}].`);
+            throw new Error(`Nenhuma página encontrada. Resposta bruta da Meta: ${JSON.stringify(pagesData)}. Permissões concedidas: [${grantedPerms}].`);
         }
 
         // 4. Encontrar a primeira página com Instagram Business Account
@@ -88,6 +95,7 @@ export async function GET(req: NextRequest) {
             .from('integrations')
             .upsert({
                 tenant_id: tenantId,
+                profile_id: profileId || null,
                 provider: 'instagram',
                 credentials: {
                     access_token: pageAccessToken,
@@ -98,7 +106,7 @@ export async function GET(req: NextRequest) {
                 },
                 status: 'active',
                 updated_at: new Date().toISOString()
-            }, { onConflict: 'tenant_id,provider' });
+            }, { onConflict: 'tenant_id,provider,profile_id' });
 
         if (upsertError) throw upsertError;
 

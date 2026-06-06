@@ -21,11 +21,12 @@ export async function GET(req: NextRequest) {
 
     // Domínio fixo da plataforma para o callback do OAuth (cadastrado no Meta App)
     const platformDomain = process.env.META_OAUTH_DOMAIN || 'crm.laxperience.online';
-    const redirectUri = `https://${platformDomain}/api/auth/instagram/callback`;
+    const protocol = platformDomain.includes('localhost') ? 'http' : 'https';
+    const redirectUri = `${protocol}://${platformDomain}/api/auth/instagram/callback`;
 
     // Salvar o domínio de origem do tenant no state para redirecionar de volta após o OAuth
     const tenantOrigin = new URL(req.url).origin;
-    const statePayload = JSON.stringify({ tenant_id: tenantId, return_url: tenantOrigin });
+    const statePayload = JSON.stringify({ tenant_id: tenantId, profile_id: user.id, return_url: tenantOrigin });
     const stateEncoded = Buffer.from(statePayload).toString('base64url');
     
     // Scopes necessários para o Instagram Graph API (Publishing) e Facebook Pages
@@ -35,6 +36,7 @@ export async function GET(req: NextRequest) {
         'pages_show_list',
         'pages_read_engagement',
         'pages_manage_posts',
+        'business_management',
         'public_profile'
     ].join(',');
 

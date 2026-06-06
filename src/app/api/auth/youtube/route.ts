@@ -33,7 +33,9 @@ export async function GET(req: NextRequest) {
     googleAuthUrl.searchParams.set('scope', scopes);
     googleAuthUrl.searchParams.set('access_type', 'offline'); // Para obter refresh_token
     googleAuthUrl.searchParams.set('prompt', 'consent'); // Garante que o refresh_token venha sempre que conectar
-    googleAuthUrl.searchParams.set('state', tenantId);
+    const statePayload = JSON.stringify({ tenant_id: tenantId, profile_id: user.id });
+    const stateEncoded = Buffer.from(statePayload).toString('base64url');
+    googleAuthUrl.searchParams.set('state', stateEncoded);
 
     return NextResponse.redirect(googleAuthUrl.toString());
 }
