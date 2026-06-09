@@ -294,10 +294,11 @@ export async function createProperty(tenantId: string, propertyData: unknown) {
             owner_contact_id: ownerContactId
         }
 
-        // Se não for admin, o status é sempre Pendente
+        // Se não for admin, o status é sempre Pendente e is_published=false
         const userRoleUpdate = profile?.role?.toLowerCase()
         if (userRoleUpdate !== 'admin' && userRoleUpdate !== 'superadmin') {
             insertData.status = 'Pending'
+            insertData.is_published = false
         }
 
         const { data, error } = await supabase
@@ -351,11 +352,12 @@ export async function updateProperty(tenantId: string, propertyId: string, prope
             if (contactId) updateData.owner_contact_id = contactId
         }
         
-        // Se não for admin, permitimos a edição mas forçamos o status para Pendente
+        // Se não for admin, permitimos a edição mas forçamos o status para Pendente e is_published=false
         const userRoleUpdate = profile?.role?.toLowerCase()
         if (userRoleUpdate !== 'admin' && userRoleUpdate !== 'superadmin') {
             console.log(`[updateProperty] Usuário não é admin (${userRoleUpdate}), forçando status Pendente`)
             updateData.status = 'Pending'
+            updateData.is_published = false
         }
 
         let query = supabase
@@ -589,9 +591,17 @@ export async function approveProperty(tenantId: string, propertyId: string) {
     }
 
     try {
+        // Buscar dados do imóvel para notificar o criador
+        const { data: propData } = await supabase
+            .from('properties')
+            .select('title, created_by')
+            .eq('id', propertyId)
+            .eq('tenant_id', tenantId)
+            .single()
+
         const { data, error } = await supabase
             .from('properties')
-            .update({ status: 'Available' })
+            .update({ status: 'Available', rejection_note: null })
             .eq('id', propertyId)
             .eq('tenant_id', tenantId)
             .select()
@@ -609,10 +619,116 @@ export async function approveProperty(tenantId: string, propertyId: string) {
             details: { previousStatus: 'Pending', newStatus: 'Available', approvedBy: profile?.id }
         })
 
+        // Notificar o criador do imóvel sobre a aprovação
+        if (propData?.created_by && propData.created_by !== profile?.id) {
+            try {
+                await notificationService.create({
+                    user_id: propData.created_by,
+                    tenant_id: tenantId,
+                    title: '✅ Imóvel Aprovado',
+                    message: `O imóvel "${propData.title}" foi aprovado e está disponível.`,
+                    type: 'success',
+                    metadata: { property_id: propertyId, action: 'approved' }
+                })
+            } catch (e) {
+                console.error('Erro ao notificar aprovação:', e)
+            }
+        }
+
         return { success: true, data }
     } catch (error: any) {
         console.error('Error approving property:', error)
         return { success: false, error: error.message || 'Erro ao aprovar imóvel' }
+    }
+}
+
+export async function rejectProperty(tenantId: string, propertyId: string, note: string) {
+    const supabase = await createClient()
+    const { profile } = await getProfile()
+    const userRole = profile?.role?.toLowerCase()
+
+    if (userRole !== 'admin' && userRole !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem reprovar imóveis.' }
+    }
+
+    if (!note?.trim()) {
+        return { success: false, error: 'O motivo da reprovação é obrigatório.' }
+    }
+
+    try {
+        // Buscar dados do imóvel e do criador
+        const { data: propData } = await supabase
+            .from('properties')
+            .select('title, created_by, created_by_profile:profiles!created_by(full_name, whatsapp_number)')
+            .eq('id', propertyId)
+            .eq('tenant_id', tenantId)
+            .single()
+
+        const { data, error } = await supabase
+            .from('properties')
+            .update({ status: 'Pending', is_published: false, rejection_note: note.trim() })
+            .eq('id', propertyId)
+            .eq('tenant_id', tenantId)
+            .select()
+            .single()
+
+        if (error) throw error
+
+        revalidatePath('/properties')
+
+        await createLog({
+            action: 'update_property',
+            entityType: 'property',
+            entityId: propertyId,
+            details: { action: 'rejected', note: note.trim(), rejectedBy: profile?.id }
+        })
+
+        // Notificação interna ao criador
+        if (propData?.created_by && propData.created_by !== profile?.id) {
+            try {
+                await notificationService.create({
+                    user_id: propData.created_by,
+                    tenant_id: tenantId,
+                    title: '❌ Imóvel Reprovado',
+                    message: `O imóvel "${propData.title}" precisa de correções: ${note.trim()}`,
+                    type: 'error',
+                    metadata: { property_id: propertyId, action: 'rejected', note: note.trim() }
+                })
+            } catch (e) {
+                console.error('Erro ao criar notificação de reprovação:', e)
+            }
+
+            // WhatsApp (bônus): tenta enviar via instância do admin se disponível
+            try {
+                const creatorProfile = Array.isArray((propData as any).created_by_profile)
+                    ? (propData as any).created_by_profile[0]
+                    : (propData as any).created_by_profile
+
+                const creatorPhone = creatorProfile?.whatsapp_number?.replace(/\D/g, '')
+
+                if (creatorPhone) {
+                    const { data: adminInstance } = await supabase
+                        .from('whatsapp_instances')
+                        .select('instance_name, status')
+                        .eq('user_id', profile?.id)
+                        .eq('status', 'connected')
+                        .maybeSingle()
+
+                    if (adminInstance?.instance_name) {
+                        const { evolutionService } = await import('@/lib/evolution')
+                        const msg = `❌ *Imóvel Reprovado – CRM LAX*\n\n📋 *${propData.title}*\n\n📝 *Motivo:* ${note.trim()}\n\n_Acesse o CRM para corrigir e reenviar para aprovação._`
+                        await evolutionService.sendMessage(adminInstance.instance_name, creatorPhone, msg)
+                    }
+                }
+            } catch (e) {
+                console.error('WhatsApp (opcional) falhou ao notificar reprovação:', e)
+            }
+        }
+
+        return { success: true, data }
+    } catch (error: any) {
+        console.error('Error rejecting property:', error)
+        return { success: false, error: error.message || 'Erro ao reprovar imóvel' }
     }
 }
 

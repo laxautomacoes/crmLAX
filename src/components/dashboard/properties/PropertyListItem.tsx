@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, MoreVertical, Archive, Globe } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, MoreVertical, Archive, Globe, XCircle, AlertTriangle } from 'lucide-react'
 import { translatePropertyType, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
@@ -11,13 +11,14 @@ interface PropertyListItemProps {
     onView: (prop: any) => void
     onSend: (prop: any) => void
     onApprove?: (id: string) => void
+    onReject?: (prop: any) => void
     onArchive?: (id: string) => void
     onTogglePublish?: (id: string, isPublished: boolean) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApprove, onArchive, onTogglePublish, userRole, userId }: PropertyListItemProps) {
+export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApprove, onReject, onArchive, onTogglePublish, userRole, userId }: PropertyListItemProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId && prop.created_by && (
         userId === prop.created_by || 
@@ -212,6 +213,13 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                             {translateStatus(prop.status)}
                         </span>
                     )}
+                    {/* Badge de rejeição visível para o corretor dono do imóvel */}
+                    {!isAdmin && isOwner && prop.rejection_note && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-red-500/10 border border-red-500/30 rounded-full" title={prop.rejection_note}>
+                            <AlertTriangle size={9} className="text-red-500 shrink-0" />
+                            <span className="text-[9px] font-bold text-red-500 uppercase tracking-wider">Ver motivo</span>
+                        </div>
+                    )}
                     {isAdmin && onTogglePublish && (
                         <button
                             onClick={(e) => {
@@ -236,10 +244,19 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                     {isAdmin && prop.status === 'Pending' && onApprove && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onApprove(prop.id) }}
-                            className="p-2 mr-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
+                            className="p-2 mr-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
                             title="Autorizar Imóvel"
                         >
                             <FileText size={16} />
+                        </button>
+                    )}
+                    {isAdmin && prop.status === 'Pending' && onReject && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); onReject(prop) }}
+                            className="p-2 mr-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
+                            title="Reprovar Imóvel"
+                        >
+                            <XCircle size={16} />
                         </button>
                     )}
                     <button

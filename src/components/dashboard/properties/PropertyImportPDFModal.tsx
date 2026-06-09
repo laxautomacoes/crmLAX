@@ -100,7 +100,7 @@ export function PropertyImportPDFModal({
     const [processingStep, setProcessingStep] = useState('')
     const [file, setFile] = useState<File | null>(null)
     const [selectedProvider, setSelectedProvider] = useState<'gemini' | 'openai'>('gemini')
-    const [selectedModel, setSelectedModel] = useState('gemini-3-flash')
+    const [selectedModel, setSelectedModel] = useState('gemini-2.5-flash')
     const [selectedPropertyId, setSelectedPropertyId] = useState(initialPropertyId || '')
     const [propertySearch, setPropertySearch] = useState(() => {
         if (initialPropertyId && properties.length > 0) {

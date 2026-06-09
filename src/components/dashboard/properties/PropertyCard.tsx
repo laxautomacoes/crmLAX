@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2, MoreVertical, Archive, Globe } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2, MoreVertical, Archive, Globe, XCircle, AlertTriangle } from 'lucide-react'
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyCardProps {
@@ -11,13 +11,14 @@ interface PropertyCardProps {
     onView: (prop: any) => void
     onSend: (prop: any) => void
     onApprove?: (id: string) => void
+    onReject?: (prop: any) => void
     onArchive?: (id: string) => void
     onTogglePublish?: (id: string, isPublished: boolean) => void
     userRole?: string
     userId?: string | null
 }
 
-export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove, onArchive, onTogglePublish, userRole, userId }: PropertyCardProps) {
+export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove, onReject, onArchive, onTogglePublish, userRole, userId }: PropertyCardProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId && prop.created_by && (
         userId === prop.created_by || 
@@ -53,22 +54,51 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                     </div>
                 )}
                 
-                {prop.status === 'Pending' && (
-                    <div className="absolute inset-0 bg-black/40 flex flex-col items-center justify-center gap-3">
+                {/* Overlay: Pendente — visível para o admin E para o criador do imóvel */}
+                {prop.status === 'Pending' && (isAdmin || isOwner) && (
+                    <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-3 p-3">
                         <div className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">
                             Pendente de Aprovação
                         </div>
-                        {isAdmin && onApprove && (
-                            <button
-                                onClick={(e) => {
-                                    e.stopPropagation()
-                                    onApprove(prop.id)
-                                }}
-                                className="flex items-center gap-2 px-4 py-2 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-all shadow-lg active:scale-95"
-                            >
-                                <FileText size={14} />
-                                Autorizar agora
-                            </button>
+
+                        {/* Botões para admin */}
+                        {isAdmin && (
+                            <div className="flex gap-2">
+                                {onApprove && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onApprove(prop.id)
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-all shadow-lg active:scale-95"
+                                    >
+                                        <FileText size={12} />
+                                        Autorizar
+                                    </button>
+                                )}
+                                {onReject && (
+                                    <button
+                                        onClick={(e) => {
+                                            e.stopPropagation()
+                                            onReject(prop)
+                                        }}
+                                        className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-all shadow-lg active:scale-95"
+                                    >
+                                        <XCircle size={12} />
+                                        Reprovar
+                                    </button>
+                                )}
+                            </div>
+                        )}
+
+                        {/* Badge de rejeição para o corretor (não-admin dono do imóvel) */}
+                        {!isAdmin && isOwner && prop.rejection_note && (
+                            <div className="flex items-start gap-2 bg-red-900/70 border border-red-500/40 rounded-lg px-3 py-2 max-w-[90%]">
+                                <AlertTriangle size={14} className="text-red-400 shrink-0 mt-0.5" />
+                                <p className="text-[11px] text-red-200 leading-snug line-clamp-3">
+                                    {prop.rejection_note}
+                                </p>
+                            </div>
                         )}
                     </div>
                 )}

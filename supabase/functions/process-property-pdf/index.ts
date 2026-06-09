@@ -19,6 +19,17 @@ function uint8ToBase64(bytes: Uint8Array): string {
   return btoa(binary);
 }
 
+function deduplicateUnits(unitsList: any[]): any[] {
+  const uniqueUnitsMap = new Map();
+  for (const unit of unitsList) {
+    const key = `${unit.block_tower}-${unit.unit_number}`;
+    if (!uniqueUnitsMap.has(key)) {
+      uniqueUnitsMap.set(key, unit);
+    }
+  }
+  return Array.from(uniqueUnitsMap.values());
+}
+
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
     return new Response('ok', { headers: corsHeaders });
@@ -90,95 +101,57 @@ Deno.serve(async (req: Request) => {
         Seja rigoroso com tipos e valores. Não inclua texto explicativo fora do JSON.
       `;
     } else if (mode === 'tabela') {
-      // Prompt detalhado para extração de tabela de preços
       const templateHint = templateMapping && Object.keys(templateMapping).length > 0
         ? `\nMAPEAMENTO ANTERIOR (use como referência): ${JSON.stringify(templateMapping)}`
         : '';
-      
-      prompt = `
-Você é um especialista em OCR imobiliário. Analise esta TABELA DE PREÇOS do empreendimento "${parentPropertyTitle}".${templateHint}
+      prompt = `Você é um especialista em OCR imobiliário e extração de dados estruturados. Sua missão é ler as tabelas de preços da imagem com **EXTREMA CONSTÂNCIA E PRECISÃO**. Analise a TABELA DE PREÇOS do empreendimento "${parentPropertyTitle}".${templateHint}
 
-## INSTRUÇÕES CRÍTICAS
+Para garantir que você não omita apartamentos devido ao layout confuso ou buracos na tabela, você aplicará o método **Chain-of-Thought (Checklist CoT)** em 2 passos obrigatórios.
 
-### ETAPA 1 — Identifique a estrutura da tabela
-Leia CUIDADOSAMENTE o cabeçalho da tabela. Cada tabela de empreendimento tem colunas DIFERENTES.
-Exemplos de colunas reais que você pode encontrar:
-- "Aptos", "Vaga Garagem", "HB", "Área Priv.", "Área Total", "Garagem (m²)"
-- "Entrada", "Ato", "Sinal" → mapear para "valor_ato" 
-- "Mensais", "31 X mensais", "29 X mensais" → mapear para "valor_mensais" (valor de CADA parcela)
-- "Reforços", "Reforço 5X", "Reforço 2X" → mapear para "valor_reforcos" (valor de CADA reforço)
-- "Chaves", "Chaves Dez/2028" → mapear para "valor_chaves"
-- "Soma Poupança", "Saldo p/ FCTO" → mapear para "soma_poupanca"
-- "Financiamento", "60 x mensais", "120 x mensais" → mapear para "valor_financiamento" (valor de CADA parcela de financiamento)
-- "Valor Total", "Total R$" → mapear para "valor_total"
+## PASSO 1: O Checklist das Torres
+Faça uma varredura estritamente VERTICAL de cima a baixo nas colunas da tabela que contém a palavra "Torre" (ex: "Torre 01", "Torre 02"). 
+Liste exaustivamente **TODOS os números de apartamentos visíveis** embaixo de cada torre na imagem, não importa a linha. Se houver células mescladas como "301 401 402", adicione "301", "401" e "402" na lista daquela torre.
+Isso formará o "passo1_checklist_torres_e_apartamentos".
 
-### ETAPA 2 — Identifique seções
-Tabelas podem ter SEÇÕES como:
-- "Apartamentos 1 Dormitório sem Garagem"
-- "Apartamentos 2 Dormitórios com Garagem"
-Se houver seções, use-as para preencher informações ausentes.
+## PASSO 2: A Extração Baseada no Checklist
+Agora, você usará o array gerado no PASSO 1 como seu guia. **Para CADA apartamento listado no seu checklist**, você vai olhar a linha horizontal a que ele pertence e extrair os detalhes (vagas e preços).
+- Nunca omita um apartamento listado no checklist. Se você listou 20 apartamentos no passo 1, o array "passo2_unidades_detalhadas" DEVE conter exatamente 20 objetos.
+- \`unit_number\`: O número do apartamento extraído do checklist (ex: "402").
+- \`block_tower\`: A torre correspondente (ex: "Torre 02").
+- \`floor\`: Inferido pelo apartamento (ex: "402" -> 4).
+- \`garage_number\`: O número da vaga na mesma linha. Atenção aos emparelhamentos (ex: se o apartamento é o segundo do agrupamento "401 402", pegue a segunda vaga do agrupamento correspondente "84/85L - 82/83L" -> "82/83L").
+- \`garage_type\`: "Coberta" ou "Descoberta" (Preencha apenas se a classificação estiver explicitamente escrita na tabela, caso contrário deixe null).
+- \`area_privativa\` e \`area_total\`: Valores com ponto flutuante.
+- \`valor_ato\`, \`valor_mensais\`, etc: Valores financeiros.
+- \`valor_total\`: O preço total.
+- \`extra_data.secao\`: O título da tipologia.
 
-### ETAPA 3 — Extraia CADA unidade com valores INDIVIDUAIS
-CADA LINHA da tabela é uma unidade com valores PRÓPRIOS e DIFERENTES.
-NÃO use o mesmo valor para todas as unidades. Leia CADA célula individualmente.
-
-### REGRAS DE AGRUPAMENTO
-Algumas tabelas agrupam 2-4 unidades com o mesmo fluxo de pagamento.
-Neste caso, os valores de pagamento aparecem em uma única célula alinhada ao grupo.
-Você DEVE replicar esses valores para TODAS as unidades do grupo.
-
-### REGRAS DE FORMATAÇÃO
-- Valores monetários: usar PONTO como decimal, SEM separador de milhar (ex: 78473.00, não "78.473,00")
-- Áreas: número decimal com ponto (ex: 34.56)
-- Se uma célula está vazia ou tem "—", use null
-- unit_number: string (ex: "1003", "303 GARDEM")
-- floor: extrair do número do apto (1003 = andar 10, 601 = andar 6)
-- garage_type: "Coberta" ou "Descoberta" ("Cobt." = Coberta, "Desct." = Descoberta)
-- garage_number: número da vaga. Se houver "—" ou vazio, use null
-- hobby_box: tipo ("G1", "G2", "G3", "PII"). Se houver "—" ou vazio, use null
-
-### ESTRUTURA DE PAGAMENTO (payment_structure)
-Extraia do CABEÇALHO da tabela:
-- Identifique percentuais (ex: "8%", "12%", "10%", "60%")
-- Identifique quantidade de parcelas (ex: "31 X", "5 X", "120 X")
-- Mapeie para: ato, mensais, reforcos, chaves, poupanca, financiamento
-
-Retorne APENAS um JSON válido:
+Retorne APENAS um JSON válido seguindo a estrutura:
 {
   "payment_structure": {
-    "ato": { "pct": 8, "parcelas": 1, "label": "Entrada" },
-    "mensais": { "pct": 12, "parcelas": 31, "label": "31 X mensais" },
-    "reforcos": { "pct": 10, "parcelas": 5, "label": "Reforço 5X" },
-    "chaves": { "pct": 10, "parcelas": 1, "label": "Chaves Dez/2028" },
-    "poupanca": { "pct": null, "parcelas": null, "label": "Saldo p/ FCTO direto 60 meses" },
-    "financiamento": { "pct": 60, "parcelas": 60, "label": "60 x mensais" }
+    "ato": { "pct": null, "parcelas": null, "label": "Ato/Entrada" }
   },
-  "units": [
-    {
-      "unit_number": "1003",
-      "block_tower": null,
-      "floor": 10,
-      "garage_type": null,
-      "garage_number": null,
-      "hobby_box": null,
-      "hobby_box_number": null,
-      "area_total": 48.45,
-      "area_privativa": 34.56,
-      "valor_ato": 78473.00,
-      "valor_mensais": 3142.00,
-      "valor_reforcos": 8118.00,
-      "valor_chaves": 54120.00,
-      "soma_poupanca": 405895.00,
-      "valor_financiamento": 6764.92,
-      "valor_total": 676480.00,
-      "extra_data": { "secao": "Apartamentos 1 Dormitório sem Garagem" }
-    }
+  "passo1_checklist_torres_e_apartamentos": [
+     { "torre": "Torre 01", "apartamentos": ["301", "501", "502", "701", "702", "801", "1001", "1002"] },
+     { "torre": "Torre 02", "apartamentos": ["201", "202", "301", "401", "402", "601", "602", "801", "802", "901", "1001", "1002"] }
+  ],
+  "passo2_unidades_detalhadas": [
+     {
+        "unit_number": "301",
+        "block_tower": "Torre 01",
+        "floor": 3,
+        "garage_number": "67/118L",
+        "garage_type": null,
+        "area_privativa": 122.42,
+        "area_total": 223.48,
+        "valor_ato": 120000.00,
+        "valor_total": 1613753.44,
+        "extra_data": { "secao": "3 Dormitórios (2 Suítes) + Dependência" }
+     }
   ]
 }
 
-IMPORTANTE: Cada unidade DEVE ter valores DIFERENTES lidos da tabela. NÃO repita o mesmo valor para todas.
-Não inclua texto fora do JSON.
-      `;
+Seja metódico. Não engula nenhum apartamento.`;
     } else {
       // Modo Book
       prompt = `
@@ -195,80 +168,145 @@ Não inclua texto fora do JSON.
       `;
     }
 
-    let responseText = "";
     let totalTokens = 0;
+    const images: string[] = pageImagesJson ? JSON.parse(pageImagesJson) : [];
 
-    // 2. Chamar IA (Gemini ou OpenAI)
-    if (ai_provider === 'openai') {
-      const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || "";
-      if (!openaiApiKey) throw new Error("Chave de API da OpenAI não configurada.");
-      
-      const openai = new OpenAI({ apiKey: openaiApiKey });
+    // Objeto que guardará os resultados consolidados
+    let extractedData: any = null;
 
-      const images: string[] = pageImagesJson ? JSON.parse(pageImagesJson) : [];
-      if (images.length === 0) {
-        throw new Error("Imagens das páginas do PDF são necessárias para processamento com a OpenAI.");
-      }
-
-      const content = [
-        { type: "text", text: prompt },
-        ...images.map(img => ({
-          type: "image_url",
-          image_url: { url: `data:image/jpeg;base64,${img}` }
-        }))
-      ];
-
-      const response = await openai.chat.completions.create({
-        model: ai_model || "gpt-4o",
-        messages: [{ role: "user", content: content as any }],
-        temperature: 0.2,
-      });
-
-      responseText = response.choices[0].message.content || "";
-      totalTokens = response.usage?.total_tokens || 0;
-
+    if (mode === 'tabela') {
+      extractedData = { payment_structure: {}, units: [] };
+    } else if (mode === 'cadastro') {
+      extractedData = { properties: [] };
     } else {
-      // Gemini
+      extractedData = { title: "", type: "apartment", description: "", amenities: [], price_indicator: null };
+    }
+
+    if (images.length > 0) {
+      console.log(`Iniciando processamento sequencial de ${images.length} páginas...`);
+      for (let idx = 0; idx < images.length; idx++) {
+        const img = images[idx];
+        let pageResponseText = "";
+        console.log(`Processando página ${idx + 1}/${images.length}...`);
+
+        if (ai_provider === 'openai') {
+          const openaiApiKey = Deno.env.get('OPENAI_API_KEY') || "";
+          if (!openaiApiKey) throw new Error("Chave de API da OpenAI não configurada.");
+          const openai = new OpenAI({ apiKey: openaiApiKey });
+
+          const content = [
+            { type: "text", text: `${prompt}\n\nATENÇÃO: Você está processando a imagem da PÁGINA ${idx + 1} de um total de ${images.length} páginas.` },
+            {
+              type: "image_url",
+              image_url: { url: `data:image/jpeg;base64,${img}` }
+            }
+          ];
+
+          const response = await openai.chat.completions.create({
+            model: ai_model || "gpt-4o",
+            messages: [{ role: "user", content: content as any }],
+            temperature: 0.1,
+          });
+
+          pageResponseText = response.choices[0].message.content || "";
+          totalTokens += response.usage?.total_tokens || 0;
+
+        } else {
+          // Gemini
+          const geminiApiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_GEMINI_API_KEY') || "";
+          if (!geminiApiKey) throw new Error("Chave de API do Gemini não configurada.");
+          const genAI = new GoogleGenerativeAI(geminiApiKey);
+          const model = genAI.getGenerativeModel({ model: ai_model || "gemini-2.5-flash" });
+
+          const content = [
+            `${prompt}\n\nATENÇÃO: Você está processando a imagem da PÁGINA ${idx + 1} de um total de ${images.length} páginas.`,
+            {
+              inlineData: {
+                data: img,
+                mimeType: "image/jpeg"
+              }
+            }
+          ];
+          const result = await model.generateContent(content);
+          pageResponseText = result.response.text();
+          totalTokens += result.response.usageMetadata?.totalTokenCount || 0;
+        }
+
+        // Processar resposta JSON da página
+        try {
+          const cleanJson = pageResponseText.replace(/```json|```/g, "").trim();
+          const pageData = JSON.parse(cleanJson);
+
+          if (mode === 'tabela') {
+            if (pageData.passo2_unidades_detalhadas && Array.isArray(pageData.passo2_unidades_detalhadas)) {
+              extractedData.units.push(...pageData.passo2_unidades_detalhadas);
+              console.log(`Página ${idx + 1} processada com sucesso via CoT. Unidades: ${pageData.passo2_unidades_detalhadas.length}`);
+            } else {
+              console.warn(`Página ${idx + 1} não retornou a estrutura CoT esperada. Tentando fallback para estrutura antiga...`);
+              if (pageData.units && Array.isArray(pageData.units)) {
+                extractedData.units.push(...pageData.units);
+              }
+            }
+            if (pageData.payment_structure && Object.keys(extractedData.payment_structure).length === 0) {
+              extractedData.payment_structure = pageData.payment_structure;
+            }
+          } else if (mode === 'cadastro') {
+            if (pageData.properties && Array.isArray(pageData.properties)) {
+              extractedData.properties.push(...pageData.properties);
+            }
+            console.log(`Página ${idx + 1} processada com sucesso. Imóveis extraídos: ${pageData.properties?.length || 0}`);
+          } else {
+            extractedData.title = pageData.title || extractedData.title;
+            extractedData.type = pageData.type || extractedData.type;
+            if (pageData.description) {
+              extractedData.description += (extractedData.description ? "\n" : "") + pageData.description;
+            }
+            if (pageData.amenities && Array.isArray(pageData.amenities)) {
+              extractedData.amenities = Array.from(new Set([...extractedData.amenities, ...pageData.amenities]));
+            }
+            extractedData.price_indicator = pageData.price_indicator || extractedData.price_indicator;
+            console.log(`Página ${idx + 1} processada com sucesso (modo book).`);
+          }
+        } catch (err) {
+          console.error(`Erro ao processar/parsear JSON da página ${idx + 1}:`, err.message);
+          console.error("Resposta crua da IA:", pageResponseText);
+        }
+      }
+    } else {
+      // PDF direto para Gemini (sem imagens renderizadas)
+      console.log("Processando PDF diretamente via Gemini...");
       const geminiApiKey = Deno.env.get('GEMINI_API_KEY') || Deno.env.get('GOOGLE_GEMINI_API_KEY') || "";
       if (!geminiApiKey) throw new Error("Chave de API do Gemini não configurada.");
-
       const genAI = new GoogleGenerativeAI(geminiApiKey);
       const model = genAI.getGenerativeModel({ model: ai_model || "gemini-2.5-flash" });
 
-      let result;
-      const images: string[] = pageImagesJson ? JSON.parse(pageImagesJson) : [];
-      if (images.length > 0) {
-        const content = [
-          prompt,
-          ...images.map(img => ({
-            inlineData: {
-              data: img,
-              mimeType: "image/jpeg"
-            }
-          }))
-        ];
-        result = await model.generateContent(content);
-      } else {
-        const arrayBuffer = await pdfFile.arrayBuffer();
-        const base64Data = uint8ToBase64(new Uint8Array(arrayBuffer));
-        result = await model.generateContent([
-          prompt,
-          {
-            inlineData: {
-              data: base64Data,
-              mimeType: "application/pdf"
-            }
+      const arrayBuffer = await pdfFile.arrayBuffer();
+      const base64Data = uint8ToBase64(new Uint8Array(arrayBuffer));
+      const result = await model.generateContent([
+        prompt,
+        {
+          inlineData: {
+            data: base64Data,
+            mimeType: "application/pdf"
           }
-        ]);
-      }
-
-      responseText = result.response.text();
+        }
+      ]);
+      const responseText = result.response.text();
       totalTokens = result.response.usageMetadata?.totalTokenCount || 0;
+
+      const cleanJson = responseText.replace(/```json|```/g, "").trim();
+      extractedData = JSON.parse(cleanJson);
     }
 
-    // 3. Processar resposta JSON
-    const cleanJson = responseText.replace(/```json|```/g, "").trim();
-    const extractedData = JSON.parse(cleanJson);
+    // Converter e deduplicar
+    if (mode === 'tabela') {
+      if (extractedData.passo2_unidades_detalhadas && Array.isArray(extractedData.passo2_unidades_detalhadas)) {
+        extractedData.units = extractedData.passo2_unidades_detalhadas;
+      }
+      if (extractedData.units && Array.isArray(extractedData.units)) {
+        extractedData.units = deduplicateUnits(extractedData.units);
+      }
+    }
 
     let action = "";
     let title = "";

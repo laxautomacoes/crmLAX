@@ -43,6 +43,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
     const [units, setUnits] = useState<PropertyUnit[]>([])
     const [priceTables, setPriceTables] = useState<PriceTableInfo[]>([])
     const [selectedTower, setSelectedTower] = useState<string>('all')
+    const [selectedTipologia, setSelectedTipologia] = useState<string>('all')
     const [isLoading, setIsLoading] = useState(true)
     const [searchTerm, setSearchTerm] = useState('')
     const [statusFilter, setStatusFilter] = useState<string>('all')
@@ -53,6 +54,8 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
 
     useEffect(() => {
+        setSelectedTower('all')
+        setSelectedTipologia('all')
         loadData()
     }, [propertyId])
 
@@ -84,6 +87,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
     }
 
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+    const [sortColumn, setSortColumn] = useState<'apto' | 'torre'>('apto')
 
     const towers = useMemo(() => {
         const list = priceTables
@@ -91,6 +95,13 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
             .filter((t): t is string => !!t)
         return Array.from(new Set(list)).sort()
     }, [priceTables])
+
+    const tipologias = useMemo(() => {
+        const list = units
+            .map(u => u.extra_data?.tipologia || u.extra_data?.secao)
+            .filter((t): t is string => !!t)
+        return Array.from(new Set(list)).sort()
+    }, [units])
 
     const activePriceTable = useMemo(() => {
         if (priceTables.length === 0) return null
@@ -108,26 +119,45 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                 (u.hobby_box || '').toLowerCase().includes(searchTerm.toLowerCase())
             const matchStatus = statusFilter === 'all' || u.status === statusFilter
             const matchTower = selectedTower === 'all' || u.block_tower === selectedTower
-            return matchSearch && matchStatus && matchTower
+            const uTipologia = u.extra_data?.tipologia || u.extra_data?.secao || ''
+            const matchTipologia = selectedTipologia === 'all' || uTipologia === selectedTipologia
+            return matchSearch && matchStatus && matchTower && matchTipologia
         })
-    }, [units, searchTerm, statusFilter, selectedTower])
+    }, [units, searchTerm, statusFilter, selectedTower, selectedTipologia])
 
     const sortedUnits = useMemo(() => {
         const sorted = [...filteredUnits]
         sorted.sort((a, b) => {
-            const numA = parseInt(a.unit_number.replace(/\D/g, ''), 10)
-            const numB = parseInt(b.unit_number.replace(/\D/g, ''), 10)
+            if (sortColumn === 'torre') {
+                const towerA = a.block_tower || ''
+                const towerB = b.block_tower || ''
+                if (towerA !== towerB) {
+                    return sortDirection === 'asc' 
+                        ? towerA.localeCompare(towerB)
+                        : towerB.localeCompare(towerA)
+                }
+                // Fallback para apto se mesma torre
+                const numA = parseInt(a.unit_number.replace(/\D/g, ''), 10)
+                const numB = parseInt(b.unit_number.replace(/\D/g, ''), 10)
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return numA - numB
+                }
+                return a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true, sensitivity: 'base' })
+            } else {
+                const numA = parseInt(a.unit_number.replace(/\D/g, ''), 10)
+                const numB = parseInt(b.unit_number.replace(/\D/g, ''), 10)
 
-            if (!isNaN(numA) && !isNaN(numB)) {
-                return sortDirection === 'asc' ? numA - numB : numB - numA
+                if (!isNaN(numA) && !isNaN(numB)) {
+                    return sortDirection === 'asc' ? numA - numB : numB - numA
+                }
+
+                return sortDirection === 'asc' 
+                    ? a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true, sensitivity: 'base' })
+                    : b.unit_number.localeCompare(a.unit_number, undefined, { numeric: true, sensitivity: 'base' })
             }
-
-            return sortDirection === 'asc' 
-                ? a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true, sensitivity: 'base' })
-                : b.unit_number.localeCompare(a.unit_number, undefined, { numeric: true, sensitivity: 'base' })
         })
         return sorted
-    }, [filteredUnits, sortDirection])
+    }, [filteredUnits, sortDirection, sortColumn])
 
     const stats = useMemo(() => {
         const towerUnits = selectedTower === 'all' 
@@ -264,6 +294,43 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                 </div>
             </div>
 
+            {/* ── Abas de Tipologia (Plantas) ── */}
+            {tipologias.length > 0 && (
+                <div className="flex flex-col gap-2">
+                    <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
+                        Selecione a Planta / Tipologia
+                    </span>
+                    <div className="flex flex-wrap gap-1.5 p-1 bg-foreground/5 border border-border/40 rounded-xl max-w-max shadow-sm">
+                        <button
+                            onClick={() => setSelectedTipologia('all')}
+                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                                selectedTipologia === 'all'
+                                    ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                    : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
+                            }`}
+                        >
+                            Todas ({units.length})
+                        </button>
+                        {tipologias.map(t => {
+                            const count = units.filter(u => (u.extra_data?.tipologia || u.extra_data?.secao) === t).length
+                            return (
+                                <button
+                                    key={t}
+                                    onClick={() => setSelectedTipologia(t)}
+                                    className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                                        selectedTipologia === t
+                                            ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                            : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
+                                    }`}
+                                >
+                                    {t} ({count})
+                                </button>
+                            )
+                        })}
+                    </div>
+                </div>
+            )}
+
             {/* ── Filtros ── */}
             <div className="flex flex-col md:flex-row gap-4 items-end">
                 <div className="flex flex-col gap-1.5 flex-1 w-full">
@@ -323,19 +390,49 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                         <thead>
                             <tr className="bg-foreground/5 border-b border-border/30">
                                 <th 
-                                    onClick={() => setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')}
+                                    onClick={() => {
+                                        if (sortColumn === 'apto') {
+                                            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+                                        } else {
+                                            setSortColumn('apto')
+                                            setSortDirection('asc')
+                                        }
+                                    }}
                                     className="text-[10px] font-bold text-foreground uppercase tracking-wider px-4 py-3 text-center cursor-pointer hover:bg-foreground/5 select-none"
                                 >
                                     <div className="flex items-center justify-center gap-1">
                                         Apto
-                                        {sortDirection === 'asc' ? (
-                                            <ChevronUp size={12} className="text-muted-foreground" />
-                                        ) : (
-                                            <ChevronDown size={12} className="text-muted-foreground" />
+                                        {sortColumn === 'apto' && (
+                                            sortDirection === 'asc' ? (
+                                                <ChevronUp size={12} className="text-muted-foreground" />
+                                            ) : (
+                                                <ChevronDown size={12} className="text-muted-foreground" />
+                                            )
                                         )}
                                     </div>
                                 </th>
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden md:table-cell">Torre</th>
+                                <th 
+                                    onClick={() => {
+                                        if (sortColumn === 'torre') {
+                                            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+                                        } else {
+                                            setSortColumn('torre')
+                                            setSortDirection('asc')
+                                        }
+                                    }}
+                                    className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden md:table-cell cursor-pointer hover:bg-foreground/5 select-none"
+                                >
+                                    <div className="flex items-center justify-center gap-1">
+                                        Torre
+                                        {sortColumn === 'torre' && (
+                                            sortDirection === 'asc' ? (
+                                                <ChevronUp size={12} className="text-muted-foreground" />
+                                            ) : (
+                                                <ChevronDown size={12} className="text-muted-foreground" />
+                                            )
+                                        )}
+                                    </div>
+                                </th>
                                 <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden lg:table-cell">Garagem</th>
                                 <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden lg:table-cell">HB</th>
                                 <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden md:table-cell">Área Priv.</th>
@@ -350,7 +447,14 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                                 return (
                                     <tr key={unit.id} className="hover:bg-foreground/[0.02] transition-colors">
                                         <td className="px-4 py-3 text-center">
-                                            <span className="text-sm font-black text-foreground">{unit.unit_number}</span>
+                                            <div className="flex flex-col items-center">
+                                                <span className="text-sm font-black text-foreground">{unit.unit_number}</span>
+                                                {(unit.extra_data?.tipologia || unit.extra_data?.secao) && (
+                                                    <span className="text-[9px] text-muted-foreground font-medium mt-0.5 max-w-[150px] truncate" title={unit.extra_data.tipologia || unit.extra_data.secao}>
+                                                        {unit.extra_data.tipologia || unit.extra_data.secao}
+                                                    </span>
+                                                )}
+                                            </div>
                                         </td>
                                         <td className="px-3 py-3 text-center hidden md:table-cell">
                                             <span className="text-xs font-medium text-foreground">{unit.block_tower || '—'}</span>

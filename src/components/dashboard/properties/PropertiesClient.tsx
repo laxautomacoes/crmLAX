@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Search, LayoutGrid, List, Map, Filter, WifiOff, Archive, Trash2 } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty, archiveProperty, togglePublishProperty } from '@/app/_actions/properties'
+import { getProperties, createProperty, updateProperty, deleteProperty, approveProperty, rejectProperty, archiveProperty, togglePublishProperty } from '@/app/_actions/properties'
 import { toast } from 'sonner'
 import { parseCurrencyBRL } from '@/lib/utils/currency'
 import { PropertyGallery } from '@/components/dashboard/properties/PropertyGallery'
@@ -15,6 +15,7 @@ import { SendToLeadModal } from '@/components/dashboard/properties/SendToLeadMod
 import { PropertyFiltersModal } from '@/components/dashboard/properties/PropertyFiltersModal'
 import { PropertyImportPDFModal } from '@/components/dashboard/properties/PropertyImportPDFModal'
 import { PropertyScrapingModal } from '@/components/dashboard/properties/PropertyScrapingModal'
+import { PropertyRejectModal } from '@/components/dashboard/properties/PropertyRejectModal'
 import type { CreationMethod } from '@/components/dashboard/properties/PropertyModal'
 import { useOfflineSync } from '@/hooks/use-offline-sync'
 import { getOfflineProperties } from '@/services/db'
@@ -60,6 +61,7 @@ export default function PropertiesClient({
     const [searchTerm, setSearchTerm] = useState('')
     const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null)
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
+    const [rejectingProperty, setRejectingProperty] = useState<any | null>(null)
     const [columnSort, setColumnSort] = useState<{ column: 'title' | 'type' | 'price' | null, direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' })
 
     const [filters, setFilters] = useState({
@@ -192,10 +194,22 @@ export default function PropertiesClient({
 
         const result = await approveProperty(tenantId, id)
         if (result.success) {
-            toast.success('Imóvel autorizado com sucesso!')
+            toast.success('Imóvel autorizado! O responsável foi notificado.')
             refreshProperties()
         } else {
             toast.error('Erro ao autorizar imóvel: ' + result.error)
+        }
+    }
+
+    const handleReject = async (note: string) => {
+        if (!rejectingProperty) return
+        const result = await rejectProperty(tenantId, rejectingProperty.id, note)
+        if (result.success) {
+            toast.success('Imóvel reprovado! O responsável foi notificado.')
+            setRejectingProperty(null)
+            refreshProperties()
+        } else {
+            toast.error('Erro ao reprovar imóvel: ' + result.error)
         }
     }
 
@@ -499,6 +513,7 @@ export default function PropertiesClient({
                     onView={handleView}
                     onSend={handleSend}
                     onApprove={handleApprove}
+                    onReject={(prop) => setRejectingProperty(prop)}
                     onArchive={(id) => setConfirmArchiveId(id)}
                     onTogglePublish={handleTogglePublish}
                     userRole={userRole}
@@ -512,6 +527,7 @@ export default function PropertiesClient({
                     onView={handleView}
                     onSend={handleSend}
                     onApprove={handleApprove}
+                    onReject={(prop) => setRejectingProperty(prop)}
                     onArchive={(id) => setConfirmArchiveId(id)}
                     onTogglePublish={handleTogglePublish}
                     userRole={userRole}
@@ -618,6 +634,14 @@ export default function PropertiesClient({
                     toast.success('Dados importados! Revise e salve o imóvel.')
                 }}
             />
+            {/* Modal de reprovação */}
+            <PropertyRejectModal
+                isOpen={!!rejectingProperty}
+                propertyTitle={rejectingProperty?.title || ''}
+                onConfirm={handleReject}
+                onClose={() => setRejectingProperty(null)}
+            />
+
             {/* Modal de confirmação de arquivamento */}
             {confirmArchiveId && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm">

@@ -10,6 +10,7 @@ interface PropertyListProps {
     onView: (prop: any) => void
     onSend: (prop: any) => void
     onApprove?: (id: string) => void
+    onReject?: (prop: any) => void
     onArchive?: (id: string) => void
     onTogglePublish?: (id: string, isPublished: boolean) => void
     userRole?: string
@@ -28,7 +29,7 @@ function SortIcon({ column, activeColumn, direction }: { column: string, activeC
         : <ChevronDown size={12} className="text-accent-icon" />
 }
 
-export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onApprove, onArchive, onTogglePublish, userRole, userId, sortColumn, sortDirection, onSort }: PropertyListProps) {
+export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onApprove, onReject, onArchive, onTogglePublish, userRole, userId, sortColumn, sortDirection, onSort }: PropertyListProps) {
     if (properties.length === 0) {
         return (
             <div className="text-center py-20 bg-card rounded-2xl">
@@ -89,6 +90,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onA
                                 onView={onView}
                                 onSend={onSend}
                                 onApprove={onApprove}
+                                onReject={onReject}
                                 onArchive={onArchive}
                                 onTogglePublish={onTogglePublish}
                                 userRole={userRole}
