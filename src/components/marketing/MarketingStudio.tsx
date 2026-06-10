@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Sparkles, Loader2, Copy, Send, Layout, Grid3X3, Film, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown, ExternalLink, Play, Plus, X } from 'lucide-react';
 import { generateGeneralCopy, generatePropertyCopy } from '@/app/_actions/ai-copy';
-import { publishSocialPost, getInstagramFeed } from '@/app/_actions/social';
+import { publishSocialPost, getInstagramFeed, getInstagramStories } from '@/app/_actions/social';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
 
@@ -18,7 +18,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     const [topic, setTopic] = useState('');
     const [loading, setLoading] = useState(false);
     const [results, setResults] = useState<any>(null);
-    const [activeTab, setActiveTab] = useState<'medium' | 'ig-feed' | 'ig-reels'>('medium');
+    const [activeTab, setActiveTab] = useState<'medium' | 'ig-feed' | 'ig-reels' | 'ig-stories'>('medium');
     const [copied, setCopied] = useState(false);
 
     // Estados para Imóveis
@@ -26,7 +26,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
     const [propertyMedia, setPropertyMedia] = useState<string[]>([]);
     const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
-    const [networks, setNetworks] = useState({ instagram: true, facebook: true });
+    const [networks, setNetworks] = useState({ instagram_feed: true, instagram_story: false, facebook: true });
     const [publishing, setPublishing] = useState(false);
 
     // Estados para Post Livre
@@ -40,7 +40,9 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     // Instagram Feed & Reels
     const [igFeed, setIgFeed] = useState<any[]>([]);
     const [igReels, setIgReels] = useState<any[]>([]);
+    const [igStories, setIgStories] = useState<any[]>([]);
     const [igLoading, setIgLoading] = useState(false);
+    const [selectedPost, setSelectedPost] = useState<any>(null);
 
     useEffect(() => {
         async function loadProperties() {
@@ -63,15 +65,23 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
         async function loadInstagramFeed() {
             setIgLoading(true);
             try {
-                const result = await getInstagramFeed(tenantId);
-                if (result.success && result.data) {
-                    const posts = result.data; // Exibe todo o feed (imagens, carrosséis e vídeos/reels)
-                    const reels = result.data.filter((m: any) => m.media_type === 'VIDEO');
+                const [feedResult, storiesResult] = await Promise.all([
+                    getInstagramFeed(tenantId),
+                    getInstagramStories(tenantId)
+                ]);
+
+                if (feedResult.success && feedResult.data) {
+                    const posts = feedResult.data;
+                    const reels = feedResult.data.filter((m: any) => m.media_type === 'VIDEO');
                     setIgFeed(posts);
                     setIgReels(reels);
                 }
+
+                if (storiesResult.success && storiesResult.data) {
+                    setIgStories(storiesResult.data);
+                }
             } catch (err) {
-                console.error('Erro ao carregar feed Instagram:', err);
+                console.error('Erro ao carregar Instagram data:', err);
             } finally {
                 setIgLoading(false);
             }
@@ -170,19 +180,23 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
         }
     };
 
+    const isOnlyStory = networks.instagram_story && !networks.instagram_feed && !networks.facebook;
+
     const handlePublish = async () => {
-        if (!results || !results[activeTab]) {
-            toast.error('Gere ou digite um conteúdo antes de publicar.');
-            return;
+        if (!isOnlyStory) {
+            if (!results || !results[activeTab]) {
+                toast.error('Gere ou digite um conteúdo antes de publicar.');
+                return;
+            }
         }
 
         const mediaUrls = mode === 'imovel' ? selectedMedia : freePostMedia;
 
-        if (networks.instagram && mediaUrls.length === 0) {
+        if ((networks.instagram_feed || networks.instagram_story) && mediaUrls.length === 0) {
             toast.error('Selecione ou carregue pelo menos uma mídia para publicar no Instagram.');
             return;
         }
-        if (!networks.instagram && !networks.facebook) {
+        if (!networks.instagram_feed && !networks.instagram_story && !networks.facebook) {
             toast.error('Selecione pelo menos uma rede social para publicar.');
             return;
         }
@@ -192,7 +206,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
             const res = await publishSocialPost({
                 tenantId,
                 mediaUrls,
-                caption: results[activeTab],
+                caption: results ? results[activeTab] : '',
                 networks
             });
 
@@ -411,16 +425,26 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                     )}
 
                         <div className="space-y-4 mt-auto pt-6 border-t border-border/50">
-                            <div className="flex items-center justify-center gap-6 py-2">
+                            <div className="flex items-center justify-center gap-4 py-2 flex-wrap">
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <input 
                                         type="checkbox" 
-                                        checked={networks.instagram}
-                                        onChange={(e) => setNetworks({...networks, instagram: e.target.checked})}
+                                        checked={networks.instagram_feed}
+                                        onChange={(e) => setNetworks({...networks, instagram_feed: e.target.checked})}
                                         className="w-4 h-4 rounded border-border bg-foreground/5 text-secondary focus:ring-secondary accent-secondary"
                                     />
-                                    <Instagram size={18} className="text-muted-foreground group-hover:text-pink-500 transition-colors" />
-                                    <span className="text-xs font-bold text-foreground/90">Instagram</span>
+                                    <Instagram size={16} className="text-muted-foreground group-hover:text-pink-500 transition-colors" />
+                                    <span className="text-xs font-bold text-foreground/90">Feed/Reels</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={networks.instagram_story}
+                                        onChange={(e) => setNetworks({...networks, instagram_story: e.target.checked})}
+                                        className="w-4 h-4 rounded border-border bg-foreground/5 text-secondary focus:ring-secondary accent-secondary"
+                                    />
+                                    <Instagram size={16} className="text-muted-foreground group-hover:text-pink-500 transition-colors" />
+                                    <span className="text-xs font-bold text-foreground/90">Story</span>
                                 </label>
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <input 
@@ -429,22 +453,26 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                         onChange={(e) => setNetworks({...networks, facebook: e.target.checked})}
                                         className="w-4 h-4 rounded border-border bg-foreground/5 text-secondary focus:ring-secondary accent-secondary"
                                     />
-                                    <Facebook size={18} className="text-muted-foreground group-hover:text-blue-500 transition-colors" />
+                                    <Facebook size={16} className="text-muted-foreground group-hover:text-blue-500 transition-colors" />
                                     <span className="text-xs font-bold text-foreground/90">Página FB</span>
                                 </label>
                             </div>
 
                             <button
-                                onClick={handleGenerate}
-                                disabled={loading || (mode === 'livre' ? (!topic.trim() && freePostMedia.length === 0) : !selectedPropertyId)}
+                                onClick={isOnlyStory ? handlePublish : handleGenerate}
+                                disabled={(isOnlyStory ? publishing : loading) || (mode === 'livre' ? (!topic.trim() && freePostMedia.length === 0 && !isOnlyStory) : !selectedPropertyId) || (isOnlyStory && mode === 'livre' && freePostMedia.length === 0)}
                                 className="w-full h-14 bg-secondary hover:bg-secondary/90 text-secondary-foreground rounded-lg font-black text-sm uppercase tracking-[0.15em] transition-all flex items-center justify-center gap-3 shadow-lg active:scale-[0.98] disabled:opacity-50"
                             >
-                        {loading ? (
-                            <Loader2 className="h-5 w-5 animate-spin" />
+                        {isOnlyStory ? (
+                            publishing ? <Loader2 className="h-5 w-5 animate-spin" /> : <><Send size={18} /> Publicar no Story</>
                         ) : (
-                            <>
-                                {mode === 'imovel' ? 'Gerar Legenda do Imóvel' : 'Gerar conteúdo'}
-                            </>
+                            loading ? (
+                                <Loader2 className="h-5 w-5 animate-spin" />
+                            ) : (
+                                <>
+                                    {mode === 'imovel' ? 'Gerar Legenda do Imóvel' : 'Gerar conteúdo'}
+                                </>
+                            )
                         )}
                     </button>
                     </div>
@@ -457,7 +485,8 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                 {[
                                     { id: 'medium', label: 'Legenda IA', icon: Sparkles },
                                     { id: 'ig-feed', label: 'Feed', icon: Grid3X3 },
-                                    { id: 'ig-reels', label: 'Reels', icon: Film }
+                                    { id: 'ig-reels', label: 'Reels', icon: Film },
+                                    { id: 'ig-stories', label: 'Stories', icon: Play }
                                 ].map((tab) => (
                                     <button
                                         key={tab.id}
@@ -514,12 +543,10 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                 ) : igFeed.length > 0 ? (
                                     <div className="grid grid-cols-3 gap-1">
                                         {igFeed.map((post: any) => (
-                                            <a
+                                            <button
                                                 key={post.id}
-                                                href={post.permalink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="group/post relative aspect-square overflow-hidden rounded bg-muted"
+                                                onClick={() => setSelectedPost(post)}
+                                                className="group/post relative aspect-square overflow-hidden rounded bg-muted w-full"
                                             >
                                                 <img
                                                     src={post.media_type === 'VIDEO' ? post.thumbnail_url : (post.media_url || post.thumbnail_url)}
@@ -539,7 +566,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                         <Play className="h-3.5 w-3.5 text-white drop-shadow-lg fill-white" size={12} />
                                                     </div>
                                                 )}
-                                            </a>
+                                            </button>
                                         ))}
                                     </div>
                                 ) : (
@@ -565,12 +592,10 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                 ) : igReels.length > 0 ? (
                                     <div className="grid grid-cols-3 gap-1">
                                         {igReels.map((reel: any) => (
-                                            <a
+                                            <button
                                                 key={reel.id}
-                                                href={reel.permalink}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="group/reel relative aspect-[9/16] overflow-hidden rounded bg-muted"
+                                                onClick={() => setSelectedPost(reel)}
+                                                className="group/reel relative aspect-[9/16] overflow-hidden rounded bg-muted w-full"
                                             >
                                                 <img
                                                     src={reel.thumbnail_url || reel.media_url}
@@ -580,7 +605,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                 <div className="absolute inset-0 bg-black/0 group-hover/reel:bg-black/40 transition-all flex items-center justify-center">
                                                     <Play className="h-8 w-8 text-white opacity-0 group-hover/reel:opacity-100 transition-opacity fill-white drop-shadow-md" />
                                                 </div>
-                                            </a>
+                                            </button>
                                         ))}
                                     </div>
                                 ) : (
@@ -589,6 +614,57 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                         <div className="space-y-1">
                                             <p className="text-foreground font-bold text-sm">Nenhum reel encontrado</p>
                                             <p className="text-muted-foreground text-xs">Conecte sua conta Instagram para visualizar seus reels.</p>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                        )}
+
+                        {activeTab === 'ig-stories' && (
+                            <div className="animate-in fade-in duration-300">
+                                {igLoading ? (
+                                    <div className="grid grid-cols-3 gap-1">
+                                        {[1,2,3].map(n => (
+                                            <div key={n} className="aspect-[9/16] rounded-xl bg-muted animate-pulse" />
+                                        ))}
+                                    </div>
+                                ) : igStories.length > 0 ? (
+                                    <div className="grid grid-cols-3 gap-2">
+                                        {igStories.map((story: any) => (
+                                            <button
+                                                key={story.id}
+                                                onClick={() => setSelectedPost(story)}
+                                                className="group/story relative aspect-[9/16] overflow-hidden rounded-xl border border-border bg-muted shadow-sm w-full"
+                                            >
+                                                <img
+                                                    src={story.thumbnail_url || story.media_url}
+                                                    alt="Story"
+                                                    className="w-full h-full object-cover transition-transform group-hover/story:scale-110 duration-300"
+                                                />
+                                                <div className="absolute inset-0 bg-black/0 group-hover/story:bg-black/40 transition-all flex items-center justify-center">
+                                                    <ExternalLink className="h-8 w-8 text-white opacity-0 group-hover/story:opacity-100 transition-opacity drop-shadow-md" />
+                                                </div>
+                                                {story.media_type === 'VIDEO' && (
+                                                    <div className="absolute top-2 right-2">
+                                                        <Play className="h-3.5 w-3.5 text-white drop-shadow-lg fill-white" size={12} />
+                                                    </div>
+                                                )}
+                                                <div className="absolute bottom-2 left-2 right-2">
+                                                    <div className="bg-black/50 backdrop-blur-sm rounded px-1.5 py-0.5 w-fit">
+                                                        <span className="text-[9px] text-white font-medium">
+                                                            {new Date(story.timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                                        </span>
+                                                    </div>
+                                                </div>
+                                            </button>
+                                        ))}
+                                    </div>
+                                ) : (
+                                    <div className="h-full flex flex-col items-center justify-center text-center space-y-4 opacity-40 flex-1">
+                                        <Instagram className="h-10 w-10 text-muted-foreground" />
+                                        <div className="space-y-1">
+                                            <p className="text-foreground font-bold text-sm">Nenhum story ativo</p>
+                                            <p className="text-muted-foreground text-xs">Stories expiram após 24 horas.</p>
                                         </div>
                                     </div>
                                 )}
@@ -620,6 +696,79 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                     )}
                 </div>
             </div>
+
+            {/* Modal de Visualização do Post */}
+            {selectedPost && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedPost(null)}>
+                    <div 
+                        className="bg-card w-full max-w-4xl max-h-[90vh] rounded-xl shadow-2xl overflow-hidden flex flex-col md:flex-row relative"
+                        onClick={e => e.stopPropagation()}
+                    >
+                        <button 
+                            onClick={() => setSelectedPost(null)}
+                            className="absolute top-4 right-4 z-10 p-2 bg-black/50 hover:bg-black/80 text-white rounded-full transition-colors"
+                        >
+                            <X size={20} />
+                        </button>
+
+                        {/* Área da Mídia */}
+                        <div className="w-full md:w-[55%] bg-black flex items-center justify-center min-h-[300px] md:min-h-[500px]">
+                            {selectedPost.media_type === 'VIDEO' ? (
+                                <video 
+                                    src={selectedPost.media_url} 
+                                    controls 
+                                    autoPlay 
+                                    loop 
+                                    className="max-w-full max-h-[90vh] object-contain"
+                                />
+                            ) : (
+                                <img 
+                                    src={selectedPost.media_url || selectedPost.thumbnail_url} 
+                                    alt="Post media" 
+                                    className="max-w-full max-h-[90vh] object-contain"
+                                />
+                            )}
+                        </div>
+
+                        {/* Área da Legenda e Ações */}
+                        <div className="w-full md:w-[45%] flex flex-col h-full max-h-[50vh] md:max-h-[90vh]">
+                            <div className="p-4 border-b border-border/50 flex items-center gap-3">
+                                <Instagram className="text-pink-500" size={24} />
+                                <div>
+                                    <h3 className="font-bold text-sm text-foreground">Visualização do Post</h3>
+                                    <p className="text-xs text-muted-foreground">
+                                        {new Date(selectedPost.timestamp).toLocaleString('pt-BR')}
+                                    </p>
+                                </div>
+                            </div>
+                            
+                            <div className="p-4 flex-1 overflow-y-auto custom-scrollbar">
+                                {selectedPost.caption ? (
+                                    <p className="text-sm text-foreground/90 whitespace-pre-wrap">
+                                        {selectedPost.caption}
+                                    </p>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground italic">
+                                        Nenhuma legenda fornecida.
+                                    </p>
+                                )}
+                            </div>
+
+                            <div className="p-4 border-t border-border/50 bg-muted/20">
+                                <a 
+                                    href={selectedPost.permalink || `https://instagram.com/`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer"
+                                    className="w-full h-12 flex items-center justify-center gap-2 bg-secondary hover:bg-secondary/90 text-secondary-foreground font-bold rounded-lg transition-colors text-sm"
+                                >
+                                    <ExternalLink size={18} />
+                                    Ver no Instagram
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            )}
         </section>
     );
 }

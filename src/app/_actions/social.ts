@@ -50,6 +50,30 @@ export async function getInstagramFeed(tenantId: string) {
 }
 
 /**
+ * Busca os stories ativos do Instagram (últimas 24h)
+ */
+export async function getInstagramStories(tenantId: string) {
+    try {
+        const { access_token, account_id } = await getMetaCredentials(tenantId);
+
+        const url = `https://graph.facebook.com/v21.0/${account_id}/stories?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&access_token=${access_token}`;
+        
+        const response = await fetch(url, { cache: 'no-store' });
+        const data = await response.json();
+
+        if (data.error) {
+            console.error('Meta API Error (Stories):', data.error);
+            return { success: false, error: data.error.message };
+        }
+
+        return { success: true, data: data.data || [] };
+    } catch (error: any) {
+        console.error('Fetch Instagram Stories Error:', error);
+        return { success: false, error: error.message || 'Falha ao conectar com Instagram.' };
+    }
+}
+
+/**
  * Detecta se a URL fornecida aponta para um arquivo de vídeo
  */
 function isVideoUrl(url: string): boolean {
@@ -61,8 +85,10 @@ interface PublishOptions {
     mediaUrls: string[]; // URLs das imagens/vídeo
     caption: string;
     networks: {
-        instagram: boolean;
-        facebook: boolean;
+        instagram?: boolean; // legacy
+        instagram_feed?: boolean;
+        instagram_story?: boolean;
+        facebook?: boolean;
     };
 }
 
@@ -78,9 +104,11 @@ export async function publishSocialPost({ tenantId, mediaUrls, caption, networks
         const { access_token, account_id, page_id } = await getMetaCredentials(tenantId);
         
         const results = { instagram: false, facebook: false, errors: [] as string[] };
+        const networkInstagramFeed = networks.instagram_feed || networks.instagram;
+        const networkInstagramStory = networks.instagram_story;
 
-        // 1. PUBLICAR NO INSTAGRAM
-        if (networks.instagram) {
+        // 1. PUBLICAR NO INSTAGRAM FEED/REELS
+        if (networkInstagramFeed) {
             try {
                 if (mediaUrls.length === 1) {
                     const isVideo = isVideoUrl(mediaUrls[0]);
@@ -226,6 +254,64 @@ export async function publishSocialPost({ tenantId, mediaUrls, caption, networks
             } catch (igError: any) {
                 console.error('Instagram Publish Error:', igError);
                 results.errors.push(`Instagram: ${igError.message}`);
+            }
+        }
+
+        // 1.5 PUBLICAR NO INSTAGRAM STORIES
+        if (networkInstagramStory) {
+            try {
+                for (const url of mediaUrls) {
+                    const isVideo = isVideoUrl(url);
+                    
+                    const createParams: any = {
+                        media_type: 'STORIES',
+                        access_token
+                    };
+                    if (isVideo) {
+                        createParams.video_url = url;
+                    } else {
+                        createParams.image_url = url;
+                    }
+
+                    const createRes = await fetch(`https://graph.facebook.com/v21.0/${account_id}/media`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(createParams)
+                    });
+                    const createData = await createRes.json();
+                    if (createData.error) throw new Error(`IG Story Create: ${createData.error.message}`);
+                    const containerId = createData.id;
+
+                    if (isVideo) {
+                        // Polling para o vídeo
+                        let status = 'IN_PROGRESS';
+                        let attempts = 0;
+                        const maxAttempts = 15;
+                        while (status === 'IN_PROGRESS' && attempts < maxAttempts) {
+                            await new Promise(resolve => setTimeout(resolve, 3000));
+                            attempts++;
+                            const statusRes = await fetch(`https://graph.facebook.com/v21.0/${containerId}?fields=status_code&access_token=${access_token}`);
+                            const statusData = await statusRes.json();
+                            if (statusData.error) break;
+                            status = statusData.status_code;
+                        }
+                    }
+
+                    const publishRes = await fetch(`https://graph.facebook.com/v21.0/${account_id}/media_publish`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({
+                            creation_id: containerId,
+                            access_token
+                        })
+                    });
+                    const publishData = await publishRes.json();
+                    if (publishData.error) throw new Error(`IG Story Publish: ${publishData.error.message}`);
+                }
+                results.instagram = true;
+            } catch (igError: any) {
+                console.error('Instagram Story Publish Error:', igError);
+                results.errors.push(`Instagram Story: ${igError.message}`);
             }
         }
 

@@ -70,6 +70,9 @@ export async function runAI(tenantId: string, prompt: string, imageUrls?: string
         const content: any[] = [{ type: 'text', text: prompt }];
         if (imageUrls && imageUrls.length > 0) {
             imageUrls.forEach(url => {
+                const isVideo = /\.(mp4|webm|mov|m4v|3gp|avi|mkv)(\?.*)?$/i.test(url) || url.includes('/videos/');
+                if (isVideo) return; // Ignore video formats
+                
                 const isImage = /\.(jpg|jpeg|png|webp|gif|heic|heif)(\?.*)?$/i.test(url) || url.includes('/images/') || url.includes('marketing-studio') || url.includes('crm-attachments');
                 if (isImage) {
                     content.push({
@@ -99,6 +102,9 @@ export async function runAI(tenantId: string, prompt: string, imageUrls?: string
 
         if (imageUrls && imageUrls.length > 0) {
             for (const url of imageUrls) {
+                const isVideo = /\.(mp4|webm|mov|m4v|3gp|avi|mkv)(\?.*)?$/i.test(url) || url.includes('/videos/');
+                if (isVideo) continue; // Ignore video formats
+                
                 const isImage = /\.(jpg|jpeg|png|webp|gif|heic|heif)(\?.*)?$/i.test(url) || url.includes('/images/') || url.includes('marketing-studio') || url.includes('crm-attachments');
                 if (isImage) {
                     const part = await fetchImageAsInlinePart(url);
