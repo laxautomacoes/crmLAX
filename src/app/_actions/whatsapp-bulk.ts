@@ -147,31 +147,34 @@ export async function checkWhatsAppStatus() {
         return { connected: false, error: 'Instância WhatsApp não pertence a este tenant.' }
     }
 
-    // 3. Se o status no banco NÃO é 'connected', verificar status real na Evolution API
-    //    (a página de Integrações atualiza em tempo real, mas o banco pode estar desatualizado)
-    if (instance.status !== 'connected') {
-        try {
-            const statusData = await evolutionService.getInstanceStatus(instance.instance_name)
-            const realStatus = statusData?.instance?.state === 'open' ? 'connected' : 'disconnected'
+    // 3. Sempre verificar o status real na Evolution API para garantir que o socket com o WhatsApp está ativo
+    try {
+        const statusData = await evolutionService.getInstanceStatus(instance.instance_name)
+        const realStatus = statusData?.instance?.state === 'open' ? 'connected' : 'disconnected'
 
-            if (realStatus === 'connected') {
-                // Atualizar banco para refletir status real
-                await supabase
-                    .from('whatsapp_instances')
-                    .update({ status: 'connected' })
-                    .eq('id', instance.id)
+        // Sincronizar o banco se houver divergência
+        if (instance.status !== realStatus) {
+            await supabase
+                .from('whatsapp_instances')
+                .update({ status: realStatus })
+                .eq('id', instance.id)
+        }
 
-                return { connected: true, instanceName: instance.instance_name, tenantId: profile.tenant_id }
-            }
+        if (realStatus === 'connected') {
+            return { connected: true, instanceName: instance.instance_name, tenantId: profile.tenant_id }
+        }
 
-            return { connected: false, error: 'WhatsApp não conectado. Verifique suas integrações.' }
-        } catch (apiErr: any) {
-            console.error('[checkWhatsAppStatus] Erro ao verificar Evolution API:', apiErr.message)
-            return { connected: false, error: 'WhatsApp não conectado. Verifique suas integrações.' }
+        return { 
+            connected: false, 
+            error: 'WhatsApp desconectado ou inativo. Por favor, acesse Configurações > Integrações, desconecte e leia o QR Code novamente para restabelecer a conexão.' 
+        }
+    } catch (apiErr: any) {
+        console.error('[checkWhatsAppStatus] Erro ao verificar Evolution API:', apiErr.message)
+        return { 
+            connected: false, 
+            error: 'Não foi possível verificar o status da API do WhatsApp. Verifique se o servidor de WhatsApp está online.' 
         }
     }
-
-    return { connected: true, instanceName: instance.instance_name, tenantId: profile.tenant_id }
 }
 
 // ─── Buscar Leads com Filtros ──────────────────────────────────────────────────

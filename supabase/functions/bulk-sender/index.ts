@@ -1,12 +1,13 @@
 import "jsr:@supabase/functions-js/edge-runtime.d.ts";
 import { createClient } from "npm:@supabase/supabase-js@2";
 
-// Processar 1 contato por invocação para nunca exceder o timeout de 150s
+// Processar 1 contato por invocação para segurança anti-ban
 const BATCH_SIZE = 1;
 const MAX_RETRIES = 2;
 const RETRY_DELAY_MS = 2000;
 // Timeout para chamadas à Evolution API (evitar que um número travado derrube a função)
-const EVOLUTION_TIMEOUT_MS = 20000;
+// 60s é suficiente — vídeos são enviados por URL, a Evolution baixa em background
+const EVOLUTION_TIMEOUT_MS = 60000;
 
 const corsHeaders = {
   'Access-Control-Allow-Origin': '*',
@@ -26,7 +27,6 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
   const { url, key } = getEvolutionConfig();
   const fullUrl = `${url}${endpoint}`;
 
-  // Adicionar timeout para evitar que a função trave em chamadas lentas
   const controller = new AbortController();
   const timeoutId = setTimeout(() => controller.abort(), EVOLUTION_TIMEOUT_MS);
 
@@ -93,8 +93,14 @@ async function sendSingleMessage(
             method: 'POST',
             body: JSON.stringify({ numbers: [normalizedNumber] }),
           });
-          const parsed = Array.isArray(checkResult) ? checkResult[0] : checkResult;
-          if (parsed && parsed.exists === false) {
+
+          // Parse robusto: a API pode retornar array, objeto, ou string JSON
+          let checkParsed = checkResult;
+          if (typeof checkResult === 'string') {
+            try { checkParsed = JSON.parse(checkResult); } catch { /* ignore */ }
+          }
+          const checkItem = Array.isArray(checkParsed) ? checkParsed[0] : checkParsed;
+          if (checkItem && checkItem.exists === false) {
             return { success: false, error: 'Número não possui WhatsApp ativo.' };
           }
         } catch (_checkErr: any) {
@@ -159,55 +165,6 @@ async function sendSingleMessage(
   }
 
   return { success: false, error: 'Falha após todas as tentativas.' };
-}
-
-// ─── Self-Invocation com retry ─────────────────────────────────────────────
-
-async function selfInvoke(campaignId: string): Promise<boolean> {
-  const selfUrl = `${Deno.env.get('SUPABASE_URL')}/functions/v1/bulk-sender`;
-  const maxAttempts = 3;
-
-  for (let attempt = 1; attempt <= maxAttempts; attempt++) {
-    try {
-      const controller = new AbortController();
-      const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout para self-invoke
-
-      const response = await fetch(selfUrl, {
-        method: 'POST',
-        signal: controller.signal,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')}`
-        },
-        body: JSON.stringify({ campaign_id: campaignId })
-      });
-
-      clearTimeout(timeoutId);
-
-      if (response.ok) {
-        console.log(`[bulk-sender] Self-invocation OK (tentativa ${attempt}).`);
-        return true;
-      }
-
-      const errText = await response.text();
-      console.error(`[bulk-sender] Self-invocation falhou (HTTP ${response.status}, tentativa ${attempt}): ${errText}`);
-
-    } catch (err: any) {
-      const isTimeout = err.name === 'AbortError';
-      if (isTimeout) {
-        // Timeout na self-invocation é OK — significa que a próxima instância já está rodando
-        console.log(`[bulk-sender] Self-invocation timeout (ok, já está processando).`);
-        return true;
-      }
-      console.error(`[bulk-sender] Self-invocation erro (tentativa ${attempt}):`, err.message);
-    }
-
-    if (attempt < maxAttempts) {
-      await new Promise(r => setTimeout(r, 2000));
-    }
-  }
-
-  return false;
 }
 
 // ─── Handler Principal ─────────────────────────────────────────────────────
@@ -284,12 +241,42 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // Marcar atividade inicial
-    await supabase.from('bulk_campaigns').update({
-      last_activity_at: new Date().toISOString()
-    }).eq('id', campaign_id);
+    // 4. Verificar delay mínimo entre mensagens
+    // O delay entre mensagens é controlado aqui: se a última atividade foi muito recente,
+    // respondemos 200 sem enviar — o cron job re-disparará quando o tempo passar
+    if (startIndex > 0 && campaign.last_activity_at) {
+      const lastActivity = new Date(campaign.last_activity_at).getTime();
+      const now = Date.now();
+      const speedRanges: Record<string, [number, number]> = {
+        safe: [60000, 120000],
+        ultra: [120000, 240000]
+      };
+      const [minDelay] = speedRanges[speedSetting] || speedRanges.safe;
+      const elapsed = now - lastActivity;
 
-    // 4. Processar lote (1 contato por vez para evitar timeout)
+      if (elapsed < minDelay) {
+        const remaining = Math.round((minDelay - elapsed) / 1000);
+        console.log(`[bulk-sender] Delay não cumprido (${Math.round(elapsed / 1000)}s/${Math.round(minDelay / 1000)}s). Aguardando ${remaining}s. Cron re-disparará.`);
+
+        // Agendar próxima invocação via pg_net para não depender apenas do cron
+        try {
+          await supabase.rpc('schedule_next_bulk_send', { p_campaign_id: campaign_id });
+          console.log('[bulk-sender] Próxima invocação agendada via pg_net.');
+        } catch (schedErr: any) {
+          console.warn('[bulk-sender] Falha ao agendar via pg_net (cron cuidará):', schedErr.message);
+        }
+
+        return new Response(JSON.stringify({
+          status: 'waiting_delay',
+          elapsed_seconds: Math.round(elapsed / 1000),
+          min_delay_seconds: Math.round(minDelay / 1000)
+        }), {
+          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
+        });
+      }
+    }
+
+    // 5. Processar lote (1 contato por vez)
     const endIndex = Math.min(startIndex + BATCH_SIZE, recipients.length);
     let totalSuccess = campaign.total_success || 0;
     let totalErrors = campaign.total_errors || 0;
@@ -407,62 +394,28 @@ Deno.serve(async (req: Request) => {
       }).eq('id', campaign_id);
     }
 
-    // 5. Verificar se há mais destinatários
+    // 6. Verificar se há mais destinatários
     if (endIndex < recipients.length) {
-      console.log(`[bulk-sender] Lote concluído (${startIndex}-${endIndex - 1}). Aguardando delay e encadeando próximo lote...`);
+      console.log(`[bulk-sender] Lote concluído (${startIndex}-${endIndex - 1}). Agendando próximo envio via pg_net...`);
 
-      // Aplicar delay entre mensagens ANTES de chamar o próximo lote
-      const speedRanges: Record<string, [number, number]> = {
-        safe: [60000, 120000],
-        ultra: [120000, 240000]
-      };
-      const [min, max] = speedRanges[speedSetting] || speedRanges.safe;
-      const delay = min + Math.random() * (max - min);
-      console.log(`[bulk-sender] Aguardando ${Math.round(delay / 1000)}s antes do próximo envio...`);
-      await new Promise(r => setTimeout(r, delay));
+      // Agendar próxima invocação via pg_net (sem delay interno!)
+      // O delay será verificado no início da próxima invocação (passo 4)
+      try {
+        await supabase.rpc('schedule_next_bulk_send', { p_campaign_id: campaign_id });
+        console.log('[bulk-sender] Próxima invocação agendada com sucesso via pg_net.');
+      } catch (schedErr: any) {
+        console.error('[bulk-sender] Falha ao agendar via pg_net:', schedErr.message);
 
-      // Re-checar cancelamento após o delay
-      const { data: postDelayCampaign } = await supabase
-        .from('bulk_campaigns')
-        .select('cancel_requested')
-        .eq('id', campaign_id)
-        .single();
+        // Fallback: marcar como stalled — o cron job de safety net irá detectar e re-disparar
+        console.log('[bulk-sender] Cron job watchdog irá re-disparar em até 2 minutos.');
 
-      if (postDelayCampaign?.cancel_requested) {
-        console.log(`[bulk-sender] Cancelamento detectado após delay.`);
-        await supabase.from('bulk_campaigns').update({
-          status: 'cancelled',
-          total_success: totalSuccess,
-          total_errors: totalErrors,
-          current_index: endIndex,
-          completed_at: new Date().toISOString(),
-          last_activity_at: new Date().toISOString()
-        }).eq('id', campaign_id);
-
-        return new Response(JSON.stringify({ status: 'cancelled', processed: endIndex }), {
-          headers: { ...corsHeaders, 'Content-Type': 'application/json' }
-        });
-      }
-
-      // Self-invocation com retry
-      const selfOk = await selfInvoke(campaign_id);
-
-      if (!selfOk) {
-        console.error('[bulk-sender] Self-invocation falhou após todas as tentativas.');
-
-        // Marcar como stalled para que o frontend detecte e possa retomar
-        await supabase.from('bulk_campaigns').update({
-          status: 'stalled',
-          last_activity_at: new Date().toISOString()
-        }).eq('id', campaign_id);
-
-        // Notificar o usuário
+        // Notificar o usuário apenas se for improvável que o cron resolva
         await supabase.from('notifications').insert({
           user_id: campaign.profile_id,
           tenant_id: campaign.tenant_id,
-          title: `⚠️ Disparo pausado: ${campaign.title || 'Disparo em Massa'}`,
-          message: `O servidor de disparo pausou após ${endIndex}/${recipients.length} mensagens. Você pode retomar pela página de disparos.`,
-          type: 'warning',
+          title: `⚠️ Disparo em andamento: ${campaign.title || 'Disparo em Massa'}`,
+          message: `Enviadas ${endIndex}/${recipients.length}. O sistema irá continuar automaticamente.`,
+          type: 'info',
           read: false,
           created_at: new Date().toISOString()
         });
@@ -479,7 +432,7 @@ Deno.serve(async (req: Request) => {
       });
     }
 
-    // 6. Todos processados — marcar como concluído
+    // 7. Todos processados — marcar como concluído
     console.log(`[bulk-sender] Campanha ${campaign_id} concluída! Success: ${totalSuccess}, Errors: ${totalErrors}`);
 
     await supabase.from('bulk_campaigns').update({
@@ -491,7 +444,7 @@ Deno.serve(async (req: Request) => {
       last_activity_at: new Date().toISOString()
     }).eq('id', campaign_id);
 
-    // 7. Notificar o usuário que disparou
+    // 8. Notificar o usuário que disparou
     const campaignTitle = campaign.title || 'Disparo em Massa';
     await supabase.from('notifications').insert({
       user_id: campaign.profile_id,

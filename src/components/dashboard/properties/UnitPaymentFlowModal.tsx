@@ -413,10 +413,10 @@ export function UnitPaymentFlowModal({
             <div className="flex flex-col max-h-[calc(90vh-120px)]">
                 <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-5 min-h-0">
                     {/* ── Preview do Fluxo ── */}
-                    <div ref={flowRef} className="bg-white rounded-lg border border-border/30 overflow-hidden">
+                    <div ref={flowRef} className="bg-card text-card-foreground rounded-lg border border-border/30 overflow-hidden">
                         {/* Header */}
-                        <div className="bg-[#404F4F] text-white p-5 space-y-2">
-                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-white/60">Imóvel Sugerido</p>
+                        <div className="bg-muted text-foreground p-5 space-y-2 border-b border-border/30">
+                            <p className="text-[10px] font-bold uppercase tracking-[0.2em] text-muted-foreground">Imóvel Sugerido</p>
                             <h2 className="text-lg font-black">{propertyTitle}</h2>
                             <div className="space-y-1">
                                 {/* Apto */}
@@ -462,7 +462,7 @@ export function UnitPaymentFlowModal({
 
                         {/* Fluxo de Pagamento */}
                         <div className="p-5 space-y-3">
-                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-gray-500">Fluxo de Pagamento</p>
+                            <p className="text-[10px] font-black uppercase tracking-[0.15em] text-muted-foreground">Fluxo de Pagamento</p>
                             <div className="space-y-1">
                                 {/* Ato */}
                                 {unit.valor_ato != null && unit.valor_ato > 0 && (
@@ -513,10 +513,10 @@ export function UnitPaymentFlowModal({
                                     <CheckRow checked={fields.poupanca} onChange={() => toggleField('poupanca')}>
                                         <div className="flex justify-between items-center flex-1">
                                             <div>
-                                                <span className="text-xs font-bold text-gray-700">Poupança{pctTotal > 0 ? ` (${pctTotal}%)` : ''}</span>
-                                                <span className="text-[10px] text-gray-400 ml-1.5">durante a obra</span>
+                                                <span className="text-xs font-bold text-foreground">Poupança{pctTotal > 0 ? ` (${pctTotal}%)` : ''}</span>
+                                                <span className="text-[10px] text-muted-foreground ml-1.5">durante a obra</span>
                                             </div>
-                                            <span className="text-sm font-black text-gray-900">{formatBRL(somaPoupancaCalc)}</span>
+                                            <span className="text-sm font-black text-foreground">{formatBRL(somaPoupancaCalc)}</span>
                                         </div>
                                     </CheckRow>
                                 )}
@@ -527,19 +527,19 @@ export function UnitPaymentFlowModal({
                                         <div className="flex-1">
                                             <div className="flex justify-between items-center">
                                                 <div>
-                                                    <span className="text-xs font-bold text-gray-700">
+                                                    <span className="text-xs font-bold text-foreground">
                                                         {ps.financiamento ? `Financiamento (${ps.financiamento.pct}%)` : 'Financiamento'}
                                                     </span>
-                                                    <span className="text-[10px] text-gray-400 ml-1.5">pós entrega</span>
+                                                    <span className="text-[10px] text-muted-foreground ml-1.5">pós entrega</span>
                                                 </div>
-                                                <span className="text-sm font-black text-gray-900">{formatBRL(totalFinanciamento)}</span>
+                                                <span className="text-sm font-black text-foreground">{formatBRL(totalFinanciamento)}</span>
                                             </div>
                                             {finParcelas > 1 && (
-                                                <p className="text-[10px] text-gray-400 mt-0.5 text-right">
+                                                <p className="text-[10px] text-muted-foreground mt-0.5 text-right">
                                                     {finParcelas}x de {formatBRL(finParcela)}
                                                 </p>
                                             )}
-                                            <p className="text-[10px] text-gray-400 mt-0.5 text-right">
+                                            <p className="text-[10px] text-muted-foreground mt-0.5 text-right">
                                                 ou financiamento bancário
                                             </p>
                                         </div>
@@ -547,8 +547,8 @@ export function UnitPaymentFlowModal({
                                         <div className="flex-1">
                                             <div className="flex justify-between items-center">
                                                 <div>
-                                                    <span className="text-xs font-bold text-gray-700">Financiamento bancário</span>
-                                                    <span className="text-[10px] text-gray-400 ml-1.5">pós entrega</span>
+                                                    <span className="text-xs font-bold text-foreground">Financiamento bancário</span>
+                                                    <span className="text-[10px] text-muted-foreground ml-1.5">pós entrega</span>
                                                 </div>
                                             </div>
                                         </div>
@@ -558,16 +558,16 @@ export function UnitPaymentFlowModal({
 
                             {/* Total */}
                             <CheckRow checked={fields.valor_total} onChange={() => toggleField('valor_total')}>
-                                <div className="flex justify-between items-center py-2 px-4 bg-[#404F4F] rounded-lg flex-1">
-                                    <span className="text-xs font-black text-white/70 uppercase tracking-wider">Valor Total</span>
-                                    <span className="text-lg font-black text-[#FFE600]">{formatBRL(unit.valor_total)}</span>
+                                <div className="flex justify-between items-center py-2 px-4 bg-primary text-primary-foreground rounded-lg flex-1">
+                                    <span className="text-xs font-black uppercase tracking-wider">Valor Total</span>
+                                    <span className="text-lg font-black">{formatBRL(unit.valor_total)}</span>
                                 </div>
                             </CheckRow>
                         </div>
 
                         {/* Rodapé */}
                         {priceTable && (
-                            <div className="px-5 py-3 bg-gray-50 border-t border-gray-100 text-[10px] text-gray-500 italic space-y-1">
+                            <div className="px-5 py-3 bg-muted/30 border-t border-border/30 text-[10px] text-muted-foreground italic space-y-1">
                                 <CheckRow checked={fields.tabela_vigente} onChange={() => toggleField('tabela_vigente')} small>
                                     <span>Valores válidos para {formatMonth(priceTable.reference_month)}</span>
                                 </CheckRow>
@@ -819,13 +819,9 @@ function CheckRow({
                 onChange={onChange}
                 className={`mt-0.5 flex-shrink-0 rounded border-2 cursor-pointer transition-colors ${
                     small ? 'w-3 h-3' : 'w-3.5 h-3.5'
-                } ${
-                    dark
-                        ? 'border-white/40 accent-white bg-transparent checked:bg-white checked:border-white'
-                        : 'border-gray-300 accent-[#404F4F] checked:bg-[#404F4F] checked:border-[#404F4F]'
-                }`}
+                } border-muted-foreground/30 accent-primary checked:bg-primary checked:border-primary`}
             />
-            <div className={`flex-1 min-w-0 ${sub ? 'text-xs text-white/70' : ''}`}>
+            <div className={`flex-1 min-w-0 ${sub ? 'text-xs text-muted-foreground' : ''}`}>
                 {children}
             </div>
         </label>
@@ -837,12 +833,12 @@ function FlowContent({ label, parcelas, valor }: { label: string; parcelas?: num
     return (
         <div className="flex justify-between items-center flex-1">
             <div>
-                <span className="text-xs font-bold text-gray-700">{label}</span>
+                <span className="text-xs font-bold text-foreground">{label}</span>
                 {parcelas && (
-                    <span className="text-[10px] text-gray-400 ml-1.5">{parcelas}x</span>
+                    <span className="text-[10px] text-muted-foreground ml-1.5">{parcelas}x</span>
                 )}
             </div>
-            <span className="text-sm font-black text-gray-900">{formatBRL(valor)}</span>
+            <span className="text-sm font-black text-foreground">{formatBRL(valor)}</span>
         </div>
     )
 }

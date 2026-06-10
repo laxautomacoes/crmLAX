@@ -33,11 +33,13 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
 
         if (!response.ok) {
             const nestedMessage = data?.response?.message;
-            const errorMessage = Array.isArray(nestedMessage)
-                ? nestedMessage.join(', ')
-                : Array.isArray(data?.message)
-                    ? data.message.join(', ')
-                    : nestedMessage || data?.message || data?.error || `Evolution API error: ${response.statusText}`;
+            let rawError = nestedMessage || data?.message || data?.error;
+            if (rawError && typeof rawError === 'object') {
+                rawError = rawError.message || JSON.stringify(rawError);
+            }
+            const errorMessage = Array.isArray(rawError)
+                ? rawError.join(', ')
+                : rawError || `Evolution API error: ${response.statusText}`;
             
             console.error('Evolution API Error Details:', {
                 status: response.status,

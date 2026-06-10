@@ -111,6 +111,7 @@ Para garantir que você não omita apartamentos devido ao layout confuso ou bura
 ## PASSO 1: O Checklist das Torres
 Faça uma varredura estritamente VERTICAL de cima a baixo nas colunas da tabela que contém a palavra "Torre" (ex: "Torre 01", "Torre 02"). 
 Liste exaustivamente **TODOS os números de apartamentos visíveis** embaixo de cada torre na imagem, não importa a linha. Se houver células mescladas como "301 401 402", adicione "301", "401" e "402" na lista daquela torre.
+**REGRA DE OURO:** NUNCA confunda vagas de garagem (que frequentemente possuem barras ou letras, como "99/99V", "101/101L") com números de apartamentos. Liste no checklist APENAS os números que representam genuinamente os apartamentos reais (números puros).
 Isso formará o "passo1_checklist_torres_e_apartamentos".
 
 ## PASSO 2: A Extração Baseada no Checklist
@@ -122,8 +123,7 @@ Agora, você usará o array gerado no PASSO 1 como seu guia. **Para CADA apartam
 - \`garage_number\`: O número da vaga na mesma linha. Atenção aos emparelhamentos (ex: se o apartamento é o segundo do agrupamento "401 402", pegue a segunda vaga do agrupamento correspondente "84/85L - 82/83L" -> "82/83L").
 - \`garage_type\`: "Coberta" ou "Descoberta" (Preencha apenas se a classificação estiver explicitamente escrita na tabela, caso contrário deixe null).
 - \`area_privativa\` e \`area_total\`: Valores com ponto flutuante.
-- \`valor_ato\`, \`valor_mensais\`, etc: Valores financeiros.
-- \`valor_total\`: O preço total.
+- Valores Financeiros: Extraia APENAS os valores explicitamente presentes na tabela. Se o empreendimento não possuir "Ato", "Mensais" ou "Chaves" (por exemplo, se estiver pronto e tiver apenas "Valor Total"), preencha esses campos ausentes com null. NUNCA invente ou deduza valores. (Porém, lembre-se: se vários apartamentos estiverem agrupados na mesma célula compartilhando os preços à direita, você DEVE repetir o exato mesmo valor para TODOS os apartamentos desse grupo, não deixando nulo por estarem agrupados).
 - \`extra_data.secao\`: O título da tipologia.
 
 Retorne APENAS um JSON válido seguindo a estrutura:

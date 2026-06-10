@@ -87,7 +87,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
     }
 
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
-    const [sortColumn, setSortColumn] = useState<'apto' | 'torre'>('apto')
+    const [sortColumn, setSortColumn] = useState<'apto' | 'torre' | 'valor'>('apto')
 
     const towers = useMemo(() => {
         const list = priceTables
@@ -128,7 +128,17 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
     const sortedUnits = useMemo(() => {
         const sorted = [...filteredUnits]
         sorted.sort((a, b) => {
-            if (sortColumn === 'torre') {
+            if (sortColumn === 'valor') {
+                const valA = a.valor_total || 0;
+                const valB = b.valor_total || 0;
+                if (valA !== valB) {
+                    return sortDirection === 'asc' ? valA - valB : valB - valA;
+                }
+                const numA = parseInt(a.unit_number.replace(/\D/g, ''), 10);
+                const numB = parseInt(b.unit_number.replace(/\D/g, ''), 10);
+                if (!isNaN(numA) && !isNaN(numB)) return numA - numB;
+                return a.unit_number.localeCompare(b.unit_number, undefined, { numeric: true, sensitivity: 'base' });
+            } else if (sortColumn === 'torre') {
                 const towerA = a.block_tower || ''
                 const towerB = b.block_tower || ''
                 if (towerA !== towerB) {
@@ -402,12 +412,10 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                                 >
                                     <div className="flex items-center justify-center gap-1">
                                         Apto
-                                        {sortColumn === 'apto' && (
-                                            sortDirection === 'asc' ? (
-                                                <ChevronUp size={12} className="text-muted-foreground" />
-                                            ) : (
-                                                <ChevronDown size={12} className="text-muted-foreground" />
-                                            )
+                                        {sortColumn === 'apto' ? (
+                                            sortDirection === 'asc' ? <ChevronUp size={12} className="text-foreground" /> : <ChevronDown size={12} className="text-foreground" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="text-muted-foreground/40" />
                                         )}
                                     </div>
                                 </th>
@@ -424,19 +432,36 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                                 >
                                     <div className="flex items-center justify-center gap-1">
                                         Torre
-                                        {sortColumn === 'torre' && (
-                                            sortDirection === 'asc' ? (
-                                                <ChevronUp size={12} className="text-muted-foreground" />
-                                            ) : (
-                                                <ChevronDown size={12} className="text-muted-foreground" />
-                                            )
+                                        {sortColumn === 'torre' ? (
+                                            sortDirection === 'asc' ? <ChevronUp size={12} className="text-foreground" /> : <ChevronDown size={12} className="text-foreground" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="text-muted-foreground/40" />
                                         )}
                                     </div>
                                 </th>
                                 <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden lg:table-cell">Garagem</th>
                                 <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden lg:table-cell">HB</th>
                                 <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center hidden md:table-cell">Área Priv.</th>
-                                <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center">Valor Total</th>
+                                <th 
+                                    onClick={() => {
+                                        if (sortColumn === 'valor') {
+                                            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+                                        } else {
+                                            setSortColumn('valor')
+                                            setSortDirection('asc')
+                                        }
+                                    }}
+                                    className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center cursor-pointer hover:bg-foreground/5 select-none"
+                                >
+                                    <div className="flex items-center justify-center gap-1">
+                                        Valor Total
+                                        {sortColumn === 'valor' ? (
+                                            sortDirection === 'asc' ? <ChevronUp size={12} className="text-foreground" /> : <ChevronDown size={12} className="text-foreground" />
+                                        ) : (
+                                            <ArrowUpDown size={12} className="text-muted-foreground/40" />
+                                        )}
+                                    </div>
+                                </th>
                                 <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center">Status</th>
                                 <th className="text-[10px] font-bold text-foreground uppercase tracking-wider px-3 py-3 text-center">Ação</th>
                             </tr>
@@ -461,9 +486,17 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                                         </td>
                                         <td className="px-3 py-3 text-center hidden lg:table-cell">
                                             <div className="flex flex-col items-center">
-                                                <span className="text-xs font-medium text-foreground">{unit.garage_type || '—'}</span>
-                                                {unit.garage_number && (
-                                                    <span className="text-[10px] text-muted-foreground">{unit.garage_number}</span>
+                                                {!unit.garage_type && !unit.garage_number ? (
+                                                    <span className="text-xs font-medium text-foreground">—</span>
+                                                ) : (
+                                                    <>
+                                                        {unit.garage_type && (
+                                                            <span className="text-xs font-medium text-foreground">{unit.garage_type}</span>
+                                                        )}
+                                                        {unit.garage_number && (
+                                                            <span className="text-xs font-medium text-foreground">{unit.garage_number}</span>
+                                                        )}
+                                                    </>
                                                 )}
                                             </div>
                                         </td>
