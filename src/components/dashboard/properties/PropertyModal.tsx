@@ -666,64 +666,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         }
     }
 
-    // ── Autosave (debounce 5s) ──
-    useEffect(() => {
-        if (!isOpen) return
-        // Não autosalva na tela de seleção de método
-        if (!editingProperty && creationMethod === null) return
-        // Não autosalva durante upload ou drag & drop
-        if (isUploading) return
-        if (isDragging) return
-        // Não autosalva se já está salvando
-        if (isSavingRef.current) return
-        // Para novo imóvel, só autosalva se tem título preenchido
-        if (!editingProperty && !formData.title?.trim()) return
 
-        if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-
-        autoSaveTimerRef.current = setTimeout(async () => {
-            if (isSavingRef.current) return
-            // Compara snapshot apenas no momento de salvar (evita JSON.stringify a cada keystroke)
-            const snapshot = getFormSnapshot(formData)
-            if (lastSavedDataRef.current === snapshot) return
-
-            try {
-                setIsSaving(true)
-                isSavingRef.current = true
-                const parsedPrice = parseCurrencyBRL(formData.price || '0')
-                let finalTitle = formData.title?.trim() || ''
-                const { created_by: _omit, ...restData } = formData
-                const propertyData = {
-                    ...restData,
-                    title: finalTitle,
-                    price: isNaN(parsedPrice) ? 0 : parsedPrice,
-                    description: formData.description || '',
-                    details: {
-                        ...formData.details,
-                        valor_condominio: parseCurrencyBRL(formData.details.valor_condominio || '0'),
-                        valor_iptu: parseCurrencyBRL(formData.details.valor_iptu || '0'),
-                        description: formData.description || ''
-                    },
-                    _isAutoSave: true
-                }
-                await onSave(propertyData)
-                // Atualiza snapshot após salvar com sucesso
-                lastSavedDataRef.current = snapshot
-                localStorage.removeItem(DRAFT_KEY)
-                setHasDraft(false)
-            } catch (error) {
-                console.error('Autosave error:', error)
-            } finally {
-                setIsSaving(false)
-                isSavingRef.current = false
-            }
-        }, 5000)
-
-        return () => {
-            if (autoSaveTimerRef.current) clearTimeout(autoSaveTimerRef.current)
-        }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [formData, isOpen, editingProperty, creationMethod, isUploading, isDragging])
 
     // Determinar se deve mostrar a tela de seleção de método
     const showMethodSelection = !editingProperty && creationMethod === null

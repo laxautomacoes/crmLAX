@@ -1,11 +1,12 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, Loader2, Copy, Send, Layout, Grid3X3, Film, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown, ExternalLink, Play, Plus, X } from 'lucide-react';
+import { Sparkles, Loader2, Copy, Send, Layout, Grid3X3, Film, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown, ExternalLink, Play, Plus, X, Wand2 } from 'lucide-react';
 import { generateGeneralCopy, generatePropertyCopy } from '@/app/_actions/ai-copy';
 import { publishSocialPost, getInstagramFeed, getInstagramStories } from '@/app/_actions/social';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
+import { ImageEditor } from './ImageEditor';
 
 interface MarketingStudioProps {
     tenantId: string;
@@ -26,7 +27,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
     const [propertyMedia, setPropertyMedia] = useState<string[]>([]);
     const [selectedMedia, setSelectedMedia] = useState<string[]>([]);
-    const [networks, setNetworks] = useState({ instagram_feed: true, instagram_story: false, facebook: true });
+    const [networks, setNetworks] = useState({ instagram_feed: true, instagram_story: false, facebook: true, facebook_story: false });
     const [publishing, setPublishing] = useState(false);
 
     // Estados para Post Livre
@@ -43,6 +44,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     const [igStories, setIgStories] = useState<any[]>([]);
     const [igLoading, setIgLoading] = useState(false);
     const [selectedPost, setSelectedPost] = useState<any>(null);
+    const [editingMedia, setEditingMedia] = useState<{ type: 'free' | 'property', index: number, url: string } | null>(null);
 
     useEffect(() => {
         async function loadProperties() {
@@ -180,7 +182,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
         }
     };
 
-    const isOnlyStory = networks.instagram_story && !networks.instagram_feed && !networks.facebook;
+    const isOnlyStory = (networks.instagram_story || networks.facebook_story) && !networks.instagram_feed && !networks.facebook;
 
     const handlePublish = async () => {
         if (!isOnlyStory) {
@@ -192,11 +194,11 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
 
         const mediaUrls = mode === 'imovel' ? selectedMedia : freePostMedia;
 
-        if ((networks.instagram_feed || networks.instagram_story) && mediaUrls.length === 0) {
-            toast.error('Selecione ou carregue pelo menos uma mídia para publicar no Instagram.');
+        if ((networks.instagram_feed || networks.instagram_story || networks.facebook_story) && mediaUrls.length === 0) {
+            toast.error('Selecione ou carregue pelo menos uma mídia para publicar.');
             return;
         }
-        if (!networks.instagram_feed && !networks.instagram_story && !networks.facebook) {
+        if (!networks.instagram_feed && !networks.instagram_story && !networks.facebook && !networks.facebook_story) {
             toast.error('Selecione pelo menos uma rede social para publicar.');
             return;
         }
@@ -333,11 +335,20 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                         <video src={url} className="absolute inset-0 w-full h-full object-cover opacity-60" muted />
                                                     </div>
                                                 ) : (
-                                                    <img 
-                                                        src={url} 
-                                                        alt={`Mídia ${idx}`}
-                                                        className="absolute inset-0 w-full h-full object-cover"
-                                                    />
+                                                    <>
+                                                        <img 
+                                                            src={url} 
+                                                            alt={`Mídia ${idx}`}
+                                                            className="absolute inset-0 w-full h-full object-cover"
+                                                        />
+                                                        <button
+                                                            onClick={() => setEditingMedia({ type: 'free', index: idx, url })}
+                                                            className="absolute top-1 left-1 p-1 bg-black/60 hover:bg-black text-white rounded shadow-md transition-colors z-10"
+                                                            title="Editar imagem"
+                                                        >
+                                                            <Wand2 size={12} />
+                                                        </button>
+                                                    </>
                                                 )}
                                                 <button 
                                                     onClick={() => handleRemoveFreeMedia(idx)}
@@ -402,16 +413,27 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                             return (
                                                 <div 
                                                     key={idx}
-                                                    onClick={() => toggleMediaSelection(url)}
-                                                    className={`relative pb-[100%] rounded-lg overflow-hidden cursor-pointer border-2 transition-all ${isSelected ? 'border-primary scale-95' : 'border-transparent hover:scale-95 hover:opacity-80'}`}
+                                                    className={`relative pb-[100%] rounded-lg overflow-hidden border-2 transition-all group ${isSelected ? 'border-primary scale-95' : 'border-transparent hover:scale-95 hover:opacity-80'}`}
                                                 >
                                                     <img 
                                                         src={url} 
                                                         alt={`Media ${idx}`}
-                                                        className="absolute inset-0 w-full h-full object-cover"
+                                                        onClick={() => toggleMediaSelection(url)}
+                                                        className="absolute inset-0 w-full h-full object-cover cursor-pointer"
                                                     />
+                                                    
+                                                    {!isVideoUrl(url) && (
+                                                        <button
+                                                            onClick={(e) => { e.stopPropagation(); setEditingMedia({ type: 'property', index: idx, url }); }}
+                                                            className="absolute top-1 left-1 p-1 bg-black/60 hover:bg-black text-white rounded shadow-md transition-colors z-10"
+                                                            title="Editar imagem"
+                                                        >
+                                                            <Wand2 size={12} />
+                                                        </button>
+                                                    )}
+
                                                     {isSelected && (
-                                                        <div className="absolute top-1 right-1 bg-secondary rounded-full p-1 shadow-md">
+                                                        <div className="absolute top-1 right-1 bg-secondary rounded-full p-1 shadow-md pointer-events-none">
                                                             <Check size={12} className="text-secondary-foreground" />
                                                         </div>
                                                     )}
@@ -440,7 +462,11 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     <input 
                                         type="checkbox" 
                                         checked={networks.instagram_story}
-                                        onChange={(e) => setNetworks({...networks, instagram_story: e.target.checked})}
+                                        onChange={(e) => setNetworks({
+                                            ...networks, 
+                                            instagram_story: e.target.checked,
+                                            ...(e.target.checked ? { instagram_feed: false, facebook: false } : {})
+                                        })}
                                         className="w-4 h-4 rounded border-border bg-foreground/5 text-secondary focus:ring-secondary accent-secondary"
                                     />
                                     <Instagram size={16} className="text-muted-foreground group-hover:text-pink-500 transition-colors" />
@@ -455,6 +481,20 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     />
                                     <Facebook size={16} className="text-muted-foreground group-hover:text-blue-500 transition-colors" />
                                     <span className="text-xs font-bold text-foreground/90">Página FB</span>
+                                </label>
+                                <label className="flex items-center gap-2 cursor-pointer group">
+                                    <input 
+                                        type="checkbox" 
+                                        checked={networks.facebook_story}
+                                        onChange={(e) => setNetworks({
+                                            ...networks, 
+                                            facebook_story: e.target.checked,
+                                            ...(e.target.checked ? { instagram_feed: false, facebook: false } : {})
+                                        })}
+                                        className="w-4 h-4 rounded border-border bg-foreground/5 text-secondary focus:ring-secondary accent-secondary"
+                                    />
+                                    <Facebook size={16} className="text-muted-foreground group-hover:text-blue-500 transition-colors" />
+                                    <span className="text-xs font-bold text-foreground/90">FB Story</span>
                                 </label>
                             </div>
 
@@ -768,6 +808,35 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                         </div>
                     </div>
                 </div>
+            )}
+            {/* Editor de Imagem Interno */}
+            {editingMedia && (
+                <ImageEditor 
+                    imageUrl={editingMedia.url}
+                    tenantId={tenantId}
+                    onClose={() => setEditingMedia(null)}
+                    onSave={(newUrl) => {
+                        if (editingMedia.type === 'free') {
+                            setFreePostMedia(prev => {
+                                const newArray = [...prev];
+                                newArray[editingMedia.index] = newUrl;
+                                return newArray;
+                            });
+                        } else {
+                            // Se editou a media da prop, atualizamos propertyMedia.
+                            setPropertyMedia(prev => {
+                                const newArray = [...prev];
+                                newArray[editingMedia.index] = newUrl;
+                                return newArray;
+                            });
+                            // Se estava em selectedMedia, atualiza também
+                            if (selectedMedia.includes(editingMedia.url)) {
+                                setSelectedMedia(prev => prev.map(m => m === editingMedia.url ? newUrl : m));
+                            }
+                        }
+                        setEditingMedia(null);
+                    }}
+                />
             )}
         </section>
     );

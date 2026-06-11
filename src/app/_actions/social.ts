@@ -89,6 +89,7 @@ interface PublishOptions {
         instagram_feed?: boolean;
         instagram_story?: boolean;
         facebook?: boolean;
+        facebook_story?: boolean;
     };
 }
 
@@ -403,6 +404,39 @@ export async function publishSocialPost({ tenantId, mediaUrls, caption, networks
             }
         } else if (networks.facebook && !page_id) {
             results.errors.push(`Facebook: Page ID não encontrado na integração.`);
+        }
+
+        // 3. PUBLICAR NO FACEBOOK STORIES
+        if (networks.facebook_story && page_id) {
+            try {
+                for (const url of mediaUrls) {
+                    const isVideo = isVideoUrl(url);
+                    const endpoint = isVideo ? 'video_stories' : 'photo_stories';
+                    const payload: any = {
+                        access_token
+                    };
+                    
+                    if (isVideo) {
+                        payload.video_url = url;
+                    } else {
+                        payload.url = url;
+                    }
+
+                    const storyRes = await fetch(`https://graph.facebook.com/v21.0/${page_id}/${endpoint}`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify(payload)
+                    });
+                    
+                    const storyData = await storyRes.json();
+                    if (storyData.error) throw new Error(`FB Story Publish: ${storyData.error.message}`);
+                }
+                // Definimos como facebook=true para considerar como sucesso da rede facebook
+                results.facebook = true;
+            } catch (fbStoryError: any) {
+                console.error('Facebook Story Publish Error:', fbStoryError);
+                results.errors.push(`Facebook Story: ${fbStoryError.message}`);
+            }
         }
 
         if (!results.instagram && !results.facebook) {
