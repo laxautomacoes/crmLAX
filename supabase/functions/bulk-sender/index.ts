@@ -47,9 +47,15 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
     try { data = JSON.parse(text); } catch { data = { message: text }; }
 
     if (!response.ok) {
-      const msg = data?.response?.message || data?.message || data?.error || `Evolution API error: ${response.statusText}`;
-      const errorMsg = Array.isArray(msg) ? msg.join(', ') : msg;
-      throw new Error(errorMsg);
+      let msg = data?.response?.message || data?.message || data?.error || `Evolution API error: ${response.statusText}`;
+      if (typeof msg === 'object') {
+        try {
+          msg = JSON.stringify(msg);
+        } catch (e) {
+          msg = String(msg);
+        }
+      }
+      throw new Error(msg);
     }
 
     return data;
@@ -63,8 +69,19 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
 function normalizeWhatsAppNumber(phone: string): string {
   let cleaned = phone.replace(/\D/g, '');
   if (cleaned.startsWith('0')) cleaned = cleaned.slice(1);
-  if (cleaned.startsWith('55') && (cleaned.length === 12 || cleaned.length === 13)) return cleaned;
-  if (cleaned.length === 10 || cleaned.length === 11) return `55${cleaned}`;
+  if (cleaned.startsWith('55') && (cleaned.length === 12 || cleaned.length === 13)) {
+    if (cleaned.length === 12 && ['6', '7', '8', '9'].includes(cleaned[4])) {
+      return cleaned.substring(0, 4) + '9' + cleaned.substring(4);
+    }
+    return cleaned;
+  }
+  if (cleaned.length === 10 || cleaned.length === 11) {
+    cleaned = `55${cleaned}`;
+    if (cleaned.length === 12 && ['6', '7', '8', '9'].includes(cleaned[4])) {
+      cleaned = cleaned.substring(0, 4) + '9' + cleaned.substring(4);
+    }
+    return cleaned;
+  }
   return cleaned;
 }
 

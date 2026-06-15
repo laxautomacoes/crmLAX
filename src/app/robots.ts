@@ -15,6 +15,9 @@ export default function robots(): MetadataRoute.Robots {
                 allow: [
                     '/site/',        // Páginas do site vitrine
                     '/imovel/',      // Rotas de imóveis com domínio customizado (rewrite)
+                    '/privacidade',  // Política de Privacidade (exigido pela Meta App Review)
+                    '/termos',       // Termos de Serviço
+                    '/conheca',      // Landing page pública
                 ],
                 disallow: [
                     '/dashboard',    // CRM Dashboard

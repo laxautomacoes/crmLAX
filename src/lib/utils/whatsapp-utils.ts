@@ -18,12 +18,15 @@ export function normalizeWhatsAppNumber(phone: string): string {
 
     // Se tiver 10 ou 11 dígitos, adiciona o DDI 55
     if (cleaned.length === 10 || cleaned.length === 11) {
-        return `55${cleaned}`;
+        cleaned = `55${cleaned}`;
     }
 
-    // Se tiver 8 ou 9 dígitos (sem DDD), não temos como saber o DDD, então retornamos como está 
-    // (o ideal é que o sistema sempre capture o DDD)
-    
+    // Se após adicionar 55, o número tiver 12 dígitos (55 + DDD + 8 dígitos)
+    // E o primeiro dígito do número (posição 4) for 6, 7, 8 ou 9, significa que é um celular sem o 9º dígito
+    if (cleaned.length === 12 && ['6', '7', '8', '9'].includes(cleaned[4])) {
+        cleaned = cleaned.substring(0, 4) + '9' + cleaned.substring(4);
+    }
+
     return cleaned;
 }
 

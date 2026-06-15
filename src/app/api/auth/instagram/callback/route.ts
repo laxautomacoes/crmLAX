@@ -61,8 +61,8 @@ export async function GET(req: NextRequest) {
         const permData = await permResponse.json();
         console.log('[Instagram Callback] Permissions:', JSON.stringify(permData));
 
-        // 4. Buscar Páginas e Contas do Instagram vinculadas
-        const pagesResponse = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=name,access_token,instagram_business_account&access_token=${longLivedToken}`);
+        // 4. Buscar TODAS as Páginas do usuário
+        const pagesResponse = await fetch(`https://graph.facebook.com/v21.0/me/accounts?fields=name,id,access_token,instagram_business_account,picture{url}&access_token=${longLivedToken}`);
         const pagesData = await pagesResponse.json();
 
         console.log('[Instagram Callback] Pages Response:', JSON.stringify(pagesData));
@@ -73,24 +73,22 @@ export async function GET(req: NextRequest) {
 
         if (!pagesData.data || pagesData.data.length === 0) {
             const grantedPerms = permData.data?.filter((p: any) => p.status === 'granted').map((p: any) => p.permission).join(', ') || 'nenhuma';
-            const declinedPerms = permData.data?.filter((p: any) => p.status === 'declined').map((p: any) => p.permission).join(', ') || 'nenhuma';
-            throw new Error(`Nenhuma página encontrada. Resposta bruta da Meta: ${JSON.stringify(pagesData)}. Permissões concedidas: [${grantedPerms}].`);
+            throw new Error(`Nenhuma página encontrada. Permissões concedidas: [${grantedPerms}].`);
         }
 
-        // 4. Encontrar a primeira página com Instagram Business Account
-        const pageWithIg = pagesData.data.find((p: any) => p.instagram_business_account);
-
-        if (!pageWithIg) {
-            throw new Error('Nenhuma conta do Instagram Business vinculada às suas páginas do Facebook.');
-        }
-
-        const igAccountId = pageWithIg.instagram_business_account.id;
-        const pageAccessToken = pageWithIg.access_token;
-
-        // 5. Salvar na tabela integrations via Admin Client (bypass RLS se necessário)
+        // 5. Salvar dados das páginas temporariamente para o frontend exibir o seletor
         const { createAdminClient } = await import('@/lib/supabase/admin');
         const supabaseAdmin = createAdminClient();
 
+        const pagesForSelection = pagesData.data.map((p: any) => ({
+            id: p.id,
+            name: p.name,
+            picture: p.picture?.data?.url || null,
+            has_instagram: !!p.instagram_business_account,
+            instagram_id: p.instagram_business_account?.id || null,
+        }));
+
+        // Salvar temporariamente na tabela integrations com status 'pending_selection'
         const { error: upsertError } = await supabaseAdmin
             .from('integrations')
             .upsert({
@@ -98,20 +96,18 @@ export async function GET(req: NextRequest) {
                 profile_id: profileId || null,
                 provider: 'instagram',
                 credentials: {
-                    access_token: pageAccessToken,
-                    account_id: igAccountId,
-                    page_id: pageWithIg.id,
-                    page_name: pageWithIg.name,
-                    user_ll_token: longLivedToken
+                    user_ll_token: longLivedToken,
+                    pending_pages: pagesForSelection,
+                    pages_raw: pagesData.data,
                 },
-                status: 'active',
+                status: 'pending_selection',
                 updated_at: new Date().toISOString()
             }, { onConflict: 'tenant_id,provider,profile_id' });
 
         if (upsertError) throw upsertError;
 
-        // Redirecionar de volta para o domínio do tenant
-        return NextResponse.redirect(`${returnUrl}/marketing/studio?success=instagram_connected`);
+        // Redirecionar de volta para o studio com flag de seleção de página
+        return NextResponse.redirect(`${returnUrl}/marketing/studio?select_page=true`);
 
     } catch (error: any) {
         console.error('Instagram Callback Error:', error.message);

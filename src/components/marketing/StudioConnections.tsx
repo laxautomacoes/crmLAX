@@ -10,6 +10,7 @@ import { getProperties } from '@/app/_actions/properties';
 import { toast } from 'sonner';
 import { useSearchParams } from 'next/navigation';
 import { QuickPublishModal } from './QuickPublishModal';
+import { PageSelectorModal } from './PageSelectorModal';
 
 const MetaIcon = (props: any) => (
     <svg viewBox="0 0 80 80" xmlns="http://www.w3.org/2000/svg" {...props}>
@@ -21,15 +22,6 @@ const MetaIcon = (props: any) => (
             </linearGradient>
         </defs>
         <path d="M26.9 16C22.5 16 19 19.8 16.7 24.2C13.5 30.4 12.8 37.4 15 43.3C17 48.2 21.1 51.2 25.8 51.2C29 51.2 31.8 49.6 33.8 47.2L35.3 45.3L36.9 47.4C39.8 51 43.7 52 47.1 52C52.6 52 57.8 49.2 60.8 44.5C63.8 39.8 64.3 33.5 62.3 28.4C60.5 23.7 56.4 20.7 52 20.7C48 20.7 44.6 22.2 42 25L40.7 26.4L39.3 24.8C36.5 21.5 33.1 16 26.9 16ZM47.5 44.8C45.3 44.8 43.2 44 41.8 42.2L37.8 37.3C36.7 35.9 34.7 35.9 33.6 37.3L29.6 42.2C28.2 44 26 44.8 23.8 44.8C21.6 44.8 19.6 44 18 42.2C16.4 40.5 15.4 38 15.1 35.4C14.8 32.7 15.1 30 16.1 27.6C17.7 24 20.5 21.8 23.6 21.8C25.8 21.8 27.9 22.6 29.5 24.4L33.5 29.3C33.9 29.9 34.6 30.2 35.3 30.2C36 30.2 36.7 29.9 37.1 29.3L40.7 25.1C42.3 23.2 44.4 22.2 46.8 22.2C49 22.2 51.1 23 52.7 24.8C54.3 26.5 55.3 29 55.6 31.6C55.9 34.3 55.6 37 54.6 39.4C53 43 50.2 44.8 47.1 44.8H47.5Z" fill="url(#meta-grad)" />
-    </svg>
-);
-
-const GoogleAdsIcon = (props: any) => (
-    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" {...props}>
-        <path d="M3.29 17.1L10.29 5.1C10.59 4.58 11.11 4.25 11.69 4.11L15.5 3.5L4.5 20.5H11.5L14.88 15.11" fill="#FBBC04" />
-        <path d="M15.5 3.5L4.5 20.5H11.5L22.5 3.5H15.5Z" fill="#FBBC04" />
-        <path d="M7 11.5L1.5 20.5H8.5L14 11.5H7Z" fill="#4285F4" />
-        <path d="M11.5 20.5C13.433 20.5 15 18.933 15 17C15 15.067 13.433 13.5 11.5 13.5C9.567 13.5 8 15.067 8 17C8 18.933 9.567 20.5 11.5 20.5Z" fill="#34A853" />
     </svg>
 );
 
@@ -58,6 +50,10 @@ export function StudioConnections({ tenantId, profileId, hasProPlan }: StudioCon
     const [selectedProp, setSelectedProp] = useState<any>(null);
     const [isPublishModalOpen, setIsPublishModalOpen] = useState(false);
 
+    // Estado do seletor de páginas
+    const [isPageSelectorOpen, setIsPageSelectorOpen] = useState(false);
+    const [pendingPages, setPendingPages] = useState<any[]>([]);
+
     useEffect(() => {
         const init = async () => {
             await Promise.all([
@@ -69,8 +65,15 @@ export function StudioConnections({ tenantId, profileId, hasProPlan }: StudioCon
 
         const success = searchParams.get('success');
         const error = searchParams.get('error');
+        const selectPage = searchParams.get('select_page');
 
-        if (success === 'instagram_connected') {
+        if (selectPage === 'true') {
+            // Abrir o modal de seleção de página após o OAuth
+            handleOpenPageSelector();
+            const url = new URL(window.location.href);
+            url.searchParams.delete('select_page');
+            window.history.replaceState({}, '', url.pathname + url.search);
+        } else if (success === 'instagram_connected') {
             toast.success('Instagram conectado com sucesso!');
             const url = new URL(window.location.href);
             url.searchParams.delete('success');
@@ -88,8 +91,10 @@ export function StudioConnections({ tenantId, profileId, hasProPlan }: StudioCon
         try {
             const { integrations } = await getMarketingIntegrations(tenantId);
             setActiveIntegrations(integrations || []);
+            return integrations || [];
         } catch (error) {
             console.error('Fetch Integrations Error:', error);
+            return [];
         } finally {
             setIsLoading(false);
         }
@@ -107,6 +112,28 @@ export function StudioConnections({ tenantId, profileId, hasProPlan }: StudioCon
         } finally {
             setIsLoadingProps(false);
         }
+    };
+
+    const handleOpenPageSelector = async () => {
+        // Buscar integração pendente para pegar as páginas
+        const integrations = await fetchIntegrations();
+        const pendingIntegration = integrations.find(
+            (i: any) => i.provider === 'instagram' && i.status === 'pending_selection'
+        );
+
+        if (pendingIntegration?.credentials?.pending_pages) {
+            setPendingPages(pendingIntegration.credentials.pending_pages);
+            setIsPageSelectorOpen(true);
+        } else {
+            toast.error('Nenhuma página pendente de seleção encontrada.');
+        }
+    };
+
+    const handlePageSelected = async () => {
+        // Recarregar integrações após seleção da página
+        await fetchIntegrations();
+        setIsPageSelectorOpen(false);
+        setPendingPages([]);
     };
 
     const handleConnect = (id: string) => {
@@ -262,6 +289,18 @@ export function StudioConnections({ tenantId, profileId, hasProPlan }: StudioCon
                     ))}
                 </div>
             </section>
+
+            {/* Modal de Seleção de Página (Meta) */}
+            <PageSelectorModal
+                isOpen={isPageSelectorOpen}
+                onClose={() => {
+                    setIsPageSelectorOpen(false);
+                    setPendingPages([]);
+                }}
+                pages={pendingPages}
+                tenantId={tenantId}
+                onPageSelected={handlePageSelected}
+            />
 
             {/* Modal de Publicação Unificado */}
             {selectedProp && (
