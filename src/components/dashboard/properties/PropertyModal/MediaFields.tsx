@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { Image as ImageIcon, Film, FileText, X, Upload, Loader2, Download, Check, Globe, Trash2, GripVertical, Play, Pause } from 'lucide-react'
+import { Image as ImageIcon, Film, FileText, X, Upload, Loader2, Download, Check, Globe, Trash2, GripVertical, Play, Pause, ZoomIn } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     DndContext,
@@ -29,9 +29,10 @@ interface SortableImageProps {
     onRemove: (index: number) => void;
     isSelected?: boolean;
     onToggleSelect?: (url: string) => void;
+    onPreview?: (url: string) => void;
 }
 
-function SortableImage({ url, index, onRemove, isSelected, onToggleSelect }: SortableImageProps) {
+function SortableImage({ url, index, onRemove, isSelected, onToggleSelect, onPreview }: SortableImageProps) {
     const {
         attributes,
         listeners,
@@ -53,6 +54,7 @@ function SortableImage({ url, index, onRemove, isSelected, onToggleSelect }: Sor
             ref={setNodeRef} 
             style={style} 
             className={`relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 border ${isSelected ? 'ring-2 ring-[#FFE600] ring-inset border-[#FFE600]/50' : 'border-muted-foreground/30'} transition-all`}
+            onDoubleClick={(e) => { e.stopPropagation(); onPreview?.(url); }}
         >
             <div {...attributes} {...listeners} className="w-full h-full cursor-grab active:cursor-grabbing">
                 <img src={url} alt={`Imóvel ${index}`} className="w-full h-full object-cover pointer-events-none" />
@@ -86,6 +88,15 @@ function SortableImage({ url, index, onRemove, isSelected, onToggleSelect }: Sor
             >
                 <X size={12} />
             </button>
+            {/* Ícone de zoom clicável */}
+            {onPreview && (
+                <div
+                    onClick={(e) => { e.stopPropagation(); onPreview(url); }}
+                    className="absolute bottom-1 right-1 w-6 h-6 bg-black/60 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/80 z-[6]"
+                >
+                    <ZoomIn size={12} className="text-white" />
+                </div>
+            )}
         </div>
     );
 }
@@ -94,9 +105,10 @@ interface SortableVideoProps {
     url: string;
     index: number;
     onRemove: (index: number) => void;
+    onPreview?: (url: string) => void;
 }
 
-function SortableVideo({ url, index, onRemove }: SortableVideoProps) {
+function SortableVideo({ url, index, onRemove, onPreview }: SortableVideoProps) {
     const videoRef = useRef<HTMLVideoElement>(null)
     const [isPlaying, setIsPlaying] = useState(false)
     const {
@@ -132,6 +144,7 @@ function SortableVideo({ url, index, onRemove }: SortableVideoProps) {
             ref={setNodeRef}
             style={style}
             className="relative aspect-video rounded-lg overflow-hidden group bg-black flex items-center justify-center border border-muted-foreground/30"
+            onDoubleClick={(e) => { e.stopPropagation(); onPreview?.(url); }}
         >
             {/* Drag handle — área superior */}
             <div {...attributes} {...listeners} className="absolute top-0 left-0 right-0 h-8 cursor-grab active:cursor-grabbing z-[3]" />
@@ -171,6 +184,15 @@ function SortableVideo({ url, index, onRemove }: SortableVideoProps) {
             >
                 <X size={12} />
             </button>
+            {/* Ícone de zoom clicável */}
+            {onPreview && (
+                <div
+                    onClick={(e) => { e.stopPropagation(); onPreview(url); }}
+                    className="absolute bottom-1 right-1 w-6 h-6 bg-black/60 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/80 z-[6]"
+                >
+                    <ZoomIn size={12} className="text-white" />
+                </div>
+            )}
         </div>
     );
 }
@@ -179,9 +201,10 @@ interface SortableDocumentProps {
     doc: { name: string; url: string };
     index: number;
     onRemove: (index: number) => void;
+    onPreview?: (url: string) => void;
 }
 
-function SortableDocument({ doc, index, onRemove }: SortableDocumentProps) {
+function SortableDocument({ doc, index, onRemove, onPreview }: SortableDocumentProps) {
     const {
         attributes,
         listeners,
@@ -203,6 +226,7 @@ function SortableDocument({ doc, index, onRemove }: SortableDocumentProps) {
             ref={setNodeRef}
             style={style}
             className="flex items-center justify-between p-2 rounded-lg bg-background border border-muted-foreground/30 group"
+            onDoubleClick={(e) => { e.stopPropagation(); onPreview?.(doc.url); }}
         >
             <div className="flex items-center gap-2 min-w-0 flex-1">
                 <div {...attributes} {...listeners} className="cursor-grab active:cursor-grabbing p-0.5 text-muted-foreground hover:text-foreground transition-colors shrink-0">
@@ -211,13 +235,25 @@ function SortableDocument({ doc, index, onRemove }: SortableDocumentProps) {
                 <FileText size={14} className="text-foreground shrink-0" />
                 <span className="text-xs font-medium truncate">{doc.name}</span>
             </div>
-            <button
-                type="button"
-                onClick={(e) => { e.stopPropagation(); onRemove(index); }}
-                className="p-1 text-foreground hover:text-destructive transition-colors"
-            >
-                <X size={14} />
-            </button>
+            <div className="flex items-center gap-1">
+                {onPreview && (
+                    <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onPreview(doc.url); }}
+                        className="p-1 text-muted-foreground hover:text-foreground transition-colors opacity-0 group-hover:opacity-100"
+                        title="Abrir documento"
+                    >
+                        <ZoomIn size={14} />
+                    </button>
+                )}
+                <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onRemove(index); }}
+                    className="p-1 text-foreground hover:text-destructive transition-colors"
+                >
+                    <X size={14} />
+                </button>
+            </div>
         </div>
     );
 }
@@ -336,6 +372,7 @@ export function MediaFields({
     const [activeDocId, setActiveDocId] = useState<string | null>(null)
     const [isDownloading, setIsDownloading] = useState(false)
     const [selectedDownloadImages, setSelectedDownloadImages] = useState<Set<string>>(new Set())
+    const [previewMedia, setPreviewMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null)
 
     // Drag & drop hooks para cada tipo de mídia
     const imagesDrop = useFileDrop(
@@ -632,6 +669,7 @@ export function MediaFields({
                                     onRemove={(i) => removeFile(i, 'images')}
                                     isSelected={selectedDownloadImages.has(url)}
                                     onToggleSelect={toggleDownloadImage}
+                                    onPreview={(u) => setPreviewMedia({ url: u, type: 'image' })}
                                 />
                             ))}
                         </SortableContext>
@@ -719,6 +757,7 @@ export function MediaFields({
                                     url={url}
                                     index={index}
                                     onRemove={(i) => removeFile(i, 'videos')}
+                                    onPreview={(u) => setPreviewMedia({ url: u, type: 'video' })}
                                 />
                             ))}
                         </SortableContext>
@@ -790,6 +829,7 @@ export function MediaFields({
                                     doc={doc}
                                     index={index}
                                     onRemove={(i) => removeFile(i, 'documents')}
+                                    onPreview={(url) => window.open(url, '_blank')}
                                 />
                             ))}
                         </SortableContext>
@@ -835,6 +875,45 @@ export function MediaFields({
         </div>
     )
 
+    const renderPreviewLightbox = () => {
+        if (!previewMedia) return null
+        return (
+            <div
+                className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                onClick={() => setPreviewMedia(null)}
+            >
+                <div
+                    className="relative max-w-[85vw] max-h-[85vh] animate-in zoom-in-95 duration-200"
+                    onClick={(e) => e.stopPropagation()}
+                >
+                    {previewMedia.type === 'image' ? (
+                        <img
+                            src={previewMedia.url}
+                            alt="Preview ampliada"
+                            className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+                        />
+                    ) : (
+                        <video
+                            src={previewMedia.url}
+                            controls
+                            autoPlay
+                            className="max-w-full max-h-[85vh] rounded-xl shadow-2xl"
+                        />
+                    )}
+                    <button
+                        onClick={() => setPreviewMedia(null)}
+                        className="absolute -top-3 -right-3 w-8 h-8 bg-card border border-border rounded-full flex items-center justify-center text-foreground hover:bg-muted transition-all shadow-lg z-10"
+                    >
+                        <X size={16} />
+                    </button>
+                    <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 backdrop-blur-sm rounded-lg">
+                        <p className="text-white text-[11px] font-medium">Clique fora ou no ✕ para fechar</p>
+                    </div>
+                </div>
+            </div>
+        )
+    }
+
     if (showImagesOnly) {
         return (
             <div className="col-span-2 space-y-4">
@@ -842,6 +921,7 @@ export function MediaFields({
                     Imagens
                 </h3>
                 {renderImages()}
+                {renderPreviewLightbox()}
             </div>
         )
     }
@@ -853,6 +933,7 @@ export function MediaFields({
                     Vídeos e Documentos
                 </h3>
                 {renderVideosDocs()}
+                {renderPreviewLightbox()}
             </div>
         )
     }
@@ -866,6 +947,7 @@ export function MediaFields({
                 {renderImages()}
                 {renderVideosDocs()}
             </div>
+            {renderPreviewLightbox()}
         </div>
     )
 }

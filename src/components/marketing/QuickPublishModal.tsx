@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
     Image as ImageIcon,
     Layers,
@@ -13,6 +13,8 @@ import {
     CheckCircle2,
     Play,
     AlertCircle,
+    X,
+    ZoomIn,
 } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
 import { toast } from 'sonner';
@@ -38,6 +40,7 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
     const [isPublishing, setIsPublishing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
     const [copied, setCopied] = useState(false);
+    const [previewMedia, setPreviewMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
 
     const images: string[] = prop?.images || [];
     const videos: string[] = prop?.videos || [];
@@ -51,6 +54,7 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
             setCaption('');
             setIsSuccess(false);
             setCopied(false);
+            setPreviewMedia(null);
         }
     }, [isOpen]);
 
@@ -220,11 +224,25 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                                                     <button
                                                         key={i}
                                                         onClick={() => setSelectedVideo(v)}
-                                                        className={`relative w-20 aspect-[9/16] rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
+                                                        onDoubleClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setPreviewMedia({ url: v, type: 'video' });
+                                                        }}
+                                                        className={`group relative w-20 aspect-[9/16] rounded-lg overflow-hidden shrink-0 border-2 transition-all ${
                                                             selectedVideo === v ? 'border-secondary scale-105 shadow-lg' : 'border-transparent opacity-60 hover:opacity-100'
                                                         }`}
                                                     >
                                                         <video src={v} className="w-full h-full object-cover" />
+                                                        {/* Ícone de zoom clicável */}
+                                                        <div
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setPreviewMedia({ url: v, type: 'video' });
+                                                            }}
+                                                            className="absolute bottom-1 right-1 w-5 h-5 bg-black/60 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/80"
+                                                        >
+                                                            <ZoomIn size={10} className="text-white" />
+                                                        </div>
                                                     </button>
                                                 ))}
                                             </div>
@@ -300,7 +318,11 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                                                     <button
                                                         key={idx}
                                                         onClick={() => handleImageToggle(url)}
-                                                        className={`relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
+                                                        onDoubleClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setPreviewMedia({ url, type: 'image' });
+                                                        }}
+                                                        className={`group relative aspect-square rounded-lg overflow-hidden border-2 transition-all ${
                                                             isSelected
                                                                 ? 'border-secondary shadow-lg scale-[0.97]'
                                                                 : 'border-transparent hover:border-border hover:scale-[0.97]'
@@ -318,6 +340,16 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                                                                 </div>
                                                             </div>
                                                         )}
+                                                        {/* Indicador de zoom no hover - clicável */}
+                                                        <div
+                                                            onClick={(e) => {
+                                                                e.stopPropagation();
+                                                                setPreviewMedia({ url, type: 'image' });
+                                                            }}
+                                                            className="absolute bottom-1 right-1 w-6 h-6 bg-black/60 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/80"
+                                                        >
+                                                            <ZoomIn size={12} className="text-white" />
+                                                        </div>
                                                     </button>
                                                 );
                                             })}
@@ -406,6 +438,43 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                     </>
                 )}
             </div>
+
+            {/* Lightbox de Preview - Duplo clique ou lupa */}
+            {previewMedia && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setPreviewMedia(null)}
+                >
+                    <div
+                        className="relative max-w-[85vw] max-h-[85vh] animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {previewMedia.type === 'image' ? (
+                            <img
+                                src={previewMedia.url}
+                                alt="Preview ampliada"
+                                className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+                            />
+                        ) : (
+                            <video
+                                src={previewMedia.url}
+                                controls
+                                autoPlay
+                                className="max-w-full max-h-[85vh] rounded-xl shadow-2xl"
+                            />
+                        )}
+                        <button
+                            onClick={() => setPreviewMedia(null)}
+                            className="absolute -top-3 -right-3 w-8 h-8 bg-card border border-border rounded-full flex items-center justify-center text-foreground hover:bg-muted transition-all shadow-lg"
+                        >
+                            <X size={16} />
+                        </button>
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 backdrop-blur-sm rounded-lg">
+                            <p className="text-white text-[11px] font-medium">Clique fora ou no ✕ para fechar</p>
+                        </div>
+                    </div>
+                </div>
+            )}
         </Modal>
     );
 }
