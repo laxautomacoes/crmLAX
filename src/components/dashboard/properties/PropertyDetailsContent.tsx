@@ -214,7 +214,7 @@ export function PropertyDetailsContent({
                                         </div>
                                     )}
                                 </div>
-                                <h4 className="text-sm font-black text-foreground uppercase tracking-widest mb-2">
+                                <h4 className="text-lg font-black uppercase tracking-widest text-foreground pt-4">
                                     {details.is_empreendimento ? 'Empreendimento' : 'Imóvel'}
                                 </h4>
                                 <div className="bg-background border border-border/50 p-6 rounded-xl">

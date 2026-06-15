@@ -86,6 +86,9 @@ function getEmptyFormData() {
                 telefone: '',
                 email: '',
                 cpf: '',
+                instagram: '',
+                linkedin: '',
+                site: '',
                 estado_civil: '',
                 data_nascimento: '',
                 endereco_rua: '',
@@ -211,6 +214,9 @@ interface EditingPropertyDetails {
         telefone: string
         email: string
         cpf: string
+        instagram?: string
+        linkedin?: string
+        site?: string
         estado_civil: string
         data_nascimento: string
         endereco_rua: string
@@ -437,6 +443,9 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         telefone: editingProperty.details?.proprietario?.telefone || '',
                         email: editingProperty.details?.proprietario?.email || '',
                         cpf: editingProperty.details?.proprietario?.cpf || '',
+                        instagram: editingProperty.details?.proprietario?.instagram || '',
+                        linkedin: editingProperty.details?.proprietario?.linkedin || '',
+                        site: editingProperty.details?.proprietario?.site || '',
                         estado_civil: editingProperty.details?.proprietario?.estado_civil || '',
                         data_nascimento: editingProperty.details?.proprietario?.data_nascimento || '',
                         endereco_rua: editingProperty.details?.proprietario?.endereco_rua || '',

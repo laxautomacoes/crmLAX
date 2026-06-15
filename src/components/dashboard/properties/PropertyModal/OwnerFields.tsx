@@ -2,7 +2,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { fetchAddressByCep, formatCEP, fetchCepByAddress, ViaCEPResponse } from '@/lib/utils/cep'
 import { useState, useEffect, useRef, useCallback } from 'react'
-import { User, Search, X, Loader2 } from 'lucide-react'
+import { User, Search, X, Loader2, ExternalLink } from 'lucide-react'
 import { toast } from 'sonner'
 import { searchContacts } from '@/app/_actions/properties'
 
@@ -369,6 +369,70 @@ export function OwnerFields({ formData, setFormData, tenantId }: OwnerFieldsProp
                             label="CPF"
                             value={formData.details.proprietario.cpf}
                             onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, cpf: e.target.value } } })}
+                        />
+                    </div>
+                </div>
+
+                {/* Redes Sociais e Site (sub-grid de 3 colunas em largura total) */}
+                <div className="col-span-full grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-5">
+                    <div>
+                        <FormInput
+                            label="Instagram"
+                            value={formData.details.proprietario.instagram || ''}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, instagram: e.target.value } } })}
+                            rightElement={
+                                formData.details.proprietario.instagram ? (
+                                    <a 
+                                        href={formData.details.proprietario.instagram.startsWith('http') ? formData.details.proprietario.instagram : `https://instagram.com/${formData.details.proprietario.instagram.replace('@', '')}`}
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-emerald-500"
+                                        title="Acessar Instagram"
+                                    >
+                                        <ExternalLink size={14} />
+                                    </a>
+                                ) : undefined
+                            }
+                        />
+                    </div>
+                    <div>
+                        <FormInput
+                            label="LinkedIn"
+                            value={formData.details.proprietario.linkedin || ''}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, linkedin: e.target.value } } })}
+                            rightElement={
+                                formData.details.proprietario.linkedin ? (
+                                    <a 
+                                        href={formData.details.proprietario.linkedin.startsWith('http') ? formData.details.proprietario.linkedin : `https://linkedin.com/in/${formData.details.proprietario.linkedin}`}
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-emerald-500"
+                                        title="Acessar LinkedIn"
+                                    >
+                                        <ExternalLink size={14} />
+                                    </a>
+                                ) : undefined
+                            }
+                        />
+                    </div>
+                    <div>
+                        <FormInput
+                            label="Site"
+                            value={formData.details.proprietario.site || ''}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, proprietario: { ...formData.details.proprietario, site: e.target.value } } })}
+                            rightElement={
+                                formData.details.proprietario.site ? (
+                                    <a 
+                                        href={formData.details.proprietario.site.startsWith('http') ? formData.details.proprietario.site : `https://${formData.details.proprietario.site}`}
+                                        target="_blank" 
+                                        rel="noreferrer" 
+                                        className="p-1 hover:bg-muted rounded-md transition-colors text-muted-foreground hover:text-emerald-500"
+                                        title="Acessar Site"
+                                    >
+                                        <ExternalLink size={14} />
+                                    </a>
+                                ) : undefined
+                            }
                         />
                     </div>
                 </div>
