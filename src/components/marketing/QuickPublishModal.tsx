@@ -194,6 +194,27 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                             ))}
                         </div>
 
+                        {/* Card Explicativo da Aba Ativa */}
+                        {activeTab !== 'reels' && (
+                            <div className="p-3 bg-muted rounded-lg border border-border flex items-center gap-3 animate-in fade-in duration-200">
+                                {activeTab === 'feed' ? (
+                                    <>
+                                        <ImageIcon size={16} className="text-secondary shrink-0" />
+                                        <p className="text-[11px] text-muted-foreground">
+                                            <strong className="text-foreground">Post único</strong> — A imagem selecionada será publicada no Feed do Instagram.
+                                        </p>
+                                    </>
+                                ) : (
+                                    <>
+                                        <Layers size={16} className="text-secondary shrink-0" />
+                                        <p className="text-[11px] text-muted-foreground">
+                                            <strong className="text-foreground">Carrossel</strong> — Selecione de 2 a 10 imagens. A ordem de seleção será a ordem do carrossel.
+                                        </p>
+                                    </>
+                                )}
+                            </div>
+                        )}
+
                         {/* Conteúdo das Abas */}
                         {activeTab === 'reels' ? (
                             /* === ABA REELS === */
@@ -246,6 +267,20 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                                                     </button>
                                                 ))}
                                             </div>
+
+                                            {prop?.description && (
+                                                <div className="space-y-3 mt-6 pt-5 border-t border-border/30">
+                                                    <div className="flex items-center justify-between h-[28px]">
+                                                        <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                                            Descrição
+                                                        </label>
+                                                    </div>
+                                                    <div className="max-h-[350px] overflow-y-auto custom-scrollbar rounded-lg bg-foreground/5 border border-border/40 p-3">
+                                                        <p className="text-[11px] text-foreground/80 leading-relaxed whitespace-pre-wrap">{prop.description}</p>
+                                                    </div>
+                                                    <p className="text-[9px] text-muted-foreground/60 italic">Use como referência ou copie trechos para a legenda.</p>
+                                                </div>
+                                            )}
 
                                             {/* Editor de legenda */}
                                             <div className="space-y-3">
@@ -310,7 +345,7 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                                     </div>
 
                                     {images.length > 0 ? (
-                                        <div className="grid grid-cols-3 gap-2 max-h-[400px] overflow-y-auto no-scrollbar pr-1">
+                                        <div className="grid grid-cols-3 gap-2 pr-1">
                                             {images.map((url: string, idx: number) => {
                                                 const isSelected = selectedImages.includes(url);
                                                 const selectionIndex = selectedImages.indexOf(url);
@@ -364,6 +399,21 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
 
                                 {/* Lado Direito: Editor de legenda + ações */}
                                 <div className="space-y-4 flex flex-col">
+                                    {/* Descrição do Imóvel como referência */}
+                                    {prop?.description && (
+                                        <div className="space-y-3">
+                                            <div className="flex items-center justify-between h-[28px]">
+                                                <label className="text-[10px] font-black text-muted-foreground uppercase tracking-widest">
+                                                    Descrição
+                                                </label>
+                                            </div>
+                                            <div className="max-h-[350px] overflow-y-auto custom-scrollbar rounded-lg bg-foreground/5 border border-border/40 p-3">
+                                                <p className="text-[11px] text-foreground/80 leading-relaxed whitespace-pre-wrap">{prop.description}</p>
+                                            </div>
+                                            <p className="text-[9px] text-muted-foreground/60 italic">Use como referência ou copie trechos para a legenda.</p>
+                                        </div>
+                                    )}
+
                                     {/* Editor de legenda */}
                                     <div className="space-y-3 flex-1">
                                         <div className="flex items-center justify-between">
@@ -383,25 +433,6 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                                             placeholder="Escreva a legenda ou gere automaticamente com IA..."
                                             className="w-full h-48 p-4 rounded-lg border border-border bg-foreground/5 text-sm focus:ring-2 focus:ring-ring/50 outline-none resize-none transition-all leading-relaxed text-foreground placeholder:text-muted-foreground/50"
                                         />
-                                    </div>
-
-                                    {/* Info do tipo */}
-                                    <div className="p-3 bg-muted rounded-lg border border-border flex items-center gap-3">
-                                        {activeTab === 'feed' ? (
-                                            <>
-                                                <ImageIcon size={16} className="text-secondary shrink-0" />
-                                                <p className="text-[11px] text-muted-foreground">
-                                                    <strong className="text-foreground">Post único</strong> — A imagem selecionada será publicada no Feed do Instagram.
-                                                </p>
-                                            </>
-                                        ) : (
-                                            <>
-                                                <Layers size={16} className="text-secondary shrink-0" />
-                                                <p className="text-[11px] text-muted-foreground">
-                                                    <strong className="text-foreground">Carrossel</strong> — Selecione de 2 a 10 imagens. A ordem de seleção será a ordem do carrossel.
-                                                </p>
-                                            </>
-                                        )}
                                     </div>
 
                                     {/* Botões de ação */}

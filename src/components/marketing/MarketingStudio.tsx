@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Sparkles, Loader2, Copy, Send, Layout, Grid3X3, Film, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown, ExternalLink, Play, Plus, X, Wand2 } from 'lucide-react';
+import { Sparkles, Loader2, Copy, Send, Layout, Grid3X3, Film, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown, ExternalLink, Play, Plus, X, Wand2, ZoomIn, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { generateGeneralCopy, generatePropertyCopy } from '@/app/_actions/ai-copy';
 import { publishSocialPost, getInstagramFeed, getInstagramStories } from '@/app/_actions/social';
 import { createClient } from '@/lib/supabase/client';
@@ -45,12 +45,18 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     const [igLoading, setIgLoading] = useState(false);
     const [selectedPost, setSelectedPost] = useState<any>(null);
     const [editingMedia, setEditingMedia] = useState<{ type: 'free' | 'property', index: number, url: string } | null>(null);
+    const [previewMedia, setPreviewMedia] = useState<{ url: string; type: 'image' | 'video' } | null>(null);
+    const [currentCarouselIndex, setCurrentCarouselIndex] = useState<number>(0);
+
+    useEffect(() => {
+        setCurrentCarouselIndex(0);
+    }, [selectedPost]);
 
     useEffect(() => {
         async function loadProperties() {
             const { data, error } = await supabase
                 .from('properties')
-                .select('id, title, images')
+                .select('id, title, images, description')
                 .eq('tenant_id', tenantId)
                 .order('created_at', { ascending: false });
             
@@ -77,6 +83,12 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                     const reels = feedResult.data.filter((m: any) => m.media_type === 'VIDEO');
                     setIgFeed(posts);
                     setIgReels(reels);
+                } else if (!feedResult.success && feedResult.error) {
+                    console.error('Erro no feed do Instagram:', feedResult.error);
+                    // Apenas exibe o erro se não for o caso padrão de estar inativa/não configurada
+                    if (!feedResult.error.includes('não configurada') && !feedResult.error.includes('inativa')) {
+                        toast.error(`Instagram: ${feedResult.error}`);
+                    }
                 }
 
                 if (storiesResult.success && storiesResult.data) {
@@ -282,7 +294,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                 <div className="hidden xl:block" />
 
                 {/* Lado Esquerdo: Input / Seleção */}
-                <div className="bg-card rounded-lg border border-border/50 shadow-sm p-8 flex flex-col space-y-6 transition-all hover:shadow-md h-auto xl:h-[620px]">
+                <div className="bg-card rounded-lg border border-border/50 shadow-sm p-8 flex flex-col space-y-6 transition-all hover:shadow-md h-auto xl:h-[620px] overflow-hidden">
                     
                     {mode === 'livre' ? (
                         <div className="space-y-6 flex-1 flex flex-col min-h-0">
@@ -321,7 +333,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     </label>
                                     <span className="text-[10px] text-muted-foreground">Adicione fotos ou vídeos</span>
                                 </div>
-                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 overflow-y-auto pr-2 custom-scrollbar max-h-[300px]">
+                                <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pr-2">
                                     {freePostMedia.map((url, idx) => {
                                         const isVideo = isVideoUrl(url);
                                         return (
@@ -381,7 +393,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                             </div>
                         </div>
                     ) : (
-                        <div className="space-y-6 flex-1 flex flex-col">
+                        <div className="space-y-6 flex-1 flex flex-col min-h-0 overflow-y-auto custom-scrollbar">
                             <div className="space-y-2 relative">
                                 <select 
                                     className="appearance-none w-full h-12 px-4 pr-10 rounded-lg bg-foreground/5 border border-border/50 text-sm text-foreground focus:ring-2 focus:ring-ring/30 outline-none"
@@ -407,22 +419,32 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                         </label>
                                         <span className="text-[10px] text-muted-foreground">Selecione para Feed ou Carrossel</span>
                                     </div>
-                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 overflow-y-auto pr-2 custom-scrollbar max-h-[300px]">
+                                    <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 pr-2">
                                         {propertyMedia.map((url, idx) => {
                                             const isSelected = selectedMedia.includes(url);
+                                            const isVideo = isVideoUrl(url);
                                             return (
                                                 <div 
                                                     key={idx}
                                                     className={`relative pb-[100%] rounded-lg overflow-hidden border-2 transition-all group ${isSelected ? 'border-primary scale-95' : 'border-transparent hover:scale-95 hover:opacity-80'}`}
                                                 >
-                                                    <img 
-                                                        src={url} 
-                                                        alt={`Media ${idx}`}
-                                                        onClick={() => toggleMediaSelection(url)}
-                                                        className="absolute inset-0 w-full h-full object-cover cursor-pointer"
-                                                    />
+                                                    {isVideo ? (
+                                                        <>
+                                                            <video src={url} className="absolute inset-0 w-full h-full object-cover" muted onClick={() => toggleMediaSelection(url)} style={{ cursor: 'pointer' }} />
+                                                            <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none">
+                                                                <Play size={20} className="text-white drop-shadow-lg fill-white" />
+                                                            </div>
+                                                        </>
+                                                    ) : (
+                                                        <img 
+                                                            src={url} 
+                                                            alt={`Media ${idx}`}
+                                                            onClick={() => toggleMediaSelection(url)}
+                                                            className="absolute inset-0 w-full h-full object-cover cursor-pointer"
+                                                        />
+                                                    )}
                                                     
-                                                    {!isVideoUrl(url) && (
+                                                    {!isVideo && (
                                                         <button
                                                             onClick={(e) => { e.stopPropagation(); setEditingMedia({ type: 'property', index: idx, url }); }}
                                                             className="absolute top-1 left-1 p-1 bg-black/60 hover:bg-black text-white rounded shadow-md transition-colors z-10"
@@ -431,6 +453,17 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                             <Wand2 size={12} />
                                                         </button>
                                                     )}
+
+                                                    {/* Botão de ampliar */}
+                                                    <div
+                                                        onClick={(e) => {
+                                                            e.stopPropagation();
+                                                            setPreviewMedia({ url, type: isVideo ? 'video' : 'image' });
+                                                        }}
+                                                        className="absolute bottom-1 right-1 w-6 h-6 bg-black/60 rounded-md flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer hover:bg-black/80 z-10"
+                                                    >
+                                                        <ZoomIn size={12} className="text-white" />
+                                                    </div>
 
                                                     {isSelected && (
                                                         <div className="absolute top-1 right-1 bg-secondary rounded-full p-1 shadow-md pointer-events-none">
@@ -441,6 +474,24 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                             );
                                         })}
                                     </div>
+
+                                    {/* Descrição do Imóvel como referência */}
+                                    {(() => {
+                                        const selectedProp = properties.find(p => p.id === selectedPropertyId);
+                                        return selectedProp?.description ? (
+                                            <div className="space-y-3 mt-6 pt-5 border-t border-border/30">
+                                                <div className="flex items-center justify-between h-[28px]">
+                                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em]">
+                                                        Descrição
+                                                    </label>
+                                                </div>
+                                                <div className="max-h-[350px] overflow-y-auto custom-scrollbar rounded-lg bg-foreground/5 border border-border/40 p-3">
+                                                    <p className="text-xs text-foreground/80 leading-relaxed whitespace-pre-wrap">{selectedProp.description}</p>
+                                                </div>
+                                                <p className="text-[9px] text-muted-foreground/60 italic">Use como referência ou copie trechos para a legenda.</p>
+                                            </div>
+                                        ) : null;
+                                    })()}
                                 </div>
                             )}
                         </div>
@@ -594,7 +645,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                     className="w-full h-full object-cover transition-transform group-hover/post:scale-110 duration-300"
                                                 />
                                                 <div className="absolute inset-0 bg-black/0 group-hover/post:bg-black/40 transition-all flex items-center justify-center">
-                                                    <ExternalLink className="h-5 w-5 text-white opacity-0 group-hover/post:opacity-100 transition-opacity drop-shadow-md" />
+                                                    <Eye className="h-5 w-5 text-white opacity-0 group-hover/post:opacity-100 transition-opacity drop-shadow-md" />
                                                 </div>
                                                 {post.media_type === 'CAROUSEL_ALBUM' && (
                                                     <div className="absolute top-2 right-2">
@@ -643,7 +694,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                     className="w-full h-full object-cover transition-transform group-hover/reel:scale-110 duration-300"
                                                 />
                                                 <div className="absolute inset-0 bg-black/0 group-hover/reel:bg-black/40 transition-all flex items-center justify-center">
-                                                    <Play className="h-8 w-8 text-white opacity-0 group-hover/reel:opacity-100 transition-opacity fill-white drop-shadow-md" />
+                                                    <Eye className="h-8 w-8 text-white opacity-0 group-hover/reel:opacity-100 transition-opacity drop-shadow-md" />
                                                 </div>
                                             </button>
                                         ))}
@@ -682,7 +733,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                                     className="w-full h-full object-cover transition-transform group-hover/story:scale-110 duration-300"
                                                 />
                                                 <div className="absolute inset-0 bg-black/0 group-hover/story:bg-black/40 transition-all flex items-center justify-center">
-                                                    <ExternalLink className="h-8 w-8 text-white opacity-0 group-hover/story:opacity-100 transition-opacity drop-shadow-md" />
+                                                    <Eye className="h-8 w-8 text-white opacity-0 group-hover/story:opacity-100 transition-opacity drop-shadow-md" />
                                                 </div>
                                                 {story.media_type === 'VIDEO' && (
                                                     <div className="absolute top-2 right-2">
@@ -752,22 +803,86 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                         </button>
 
                         {/* Área da Mídia */}
-                        <div className="w-full md:w-[55%] bg-black flex items-center justify-center min-h-[300px] md:min-h-[500px]">
-                            {selectedPost.media_type === 'VIDEO' ? (
-                                <video 
-                                    src={selectedPost.media_url} 
-                                    controls 
-                                    autoPlay 
-                                    loop 
-                                    className="max-w-full max-h-[90vh] object-contain"
-                                />
-                            ) : (
-                                <img 
-                                    src={selectedPost.media_url || selectedPost.thumbnail_url} 
-                                    alt="Post media" 
-                                    className="max-w-full max-h-[90vh] object-contain"
-                                />
-                            )}
+                        <div className="w-full md:w-[55%] bg-black flex items-center justify-center min-h-[300px] md:min-h-[500px] relative group/carousel">
+                            {(() => {
+                                const carouselItems = selectedPost.children?.data || [];
+                                const hasCarousel = carouselItems.length > 0;
+
+                                if (hasCarousel) {
+                                    const activeItem = carouselItems[currentCarouselIndex];
+                                    const isVideo = activeItem.media_type === 'VIDEO';
+                                    
+                                    return (
+                                        <>
+                                            {isVideo ? (
+                                                <video 
+                                                    key={activeItem.id}
+                                                    src={activeItem.media_url} 
+                                                    controls 
+                                                    autoPlay 
+                                                    loop 
+                                                    className="max-w-full max-h-[90vh] object-contain"
+                                                />
+                                            ) : (
+                                                <img 
+                                                    key={activeItem.id}
+                                                    src={activeItem.media_url || activeItem.thumbnail_url} 
+                                                    alt="Post media item" 
+                                                    className="max-w-full max-h-[90vh] object-contain animate-in fade-in duration-200"
+                                                />
+                                            )}
+
+                                            {/* Navegação do Carrossel */}
+                                            {currentCarouselIndex > 0 && (
+                                                <button
+                                                    onClick={() => setCurrentCarouselIndex(prev => prev - 1)}
+                                                    className="absolute left-4 top-1/2 -translate-y-1/2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all z-20"
+                                                >
+                                                    <ChevronLeft size={20} />
+                                                </button>
+                                            )}
+                                            {currentCarouselIndex < carouselItems.length - 1 && (
+                                                <button
+                                                    onClick={() => setCurrentCarouselIndex(prev => prev + 1)}
+                                                    className="absolute right-4 top-1/2 -translate-y-1/2 p-2 bg-black/60 hover:bg-black/80 text-white rounded-full transition-all z-20"
+                                                >
+                                                    <ChevronRight size={20} />
+                                                </button>
+                                            )}
+
+                                            {/* Indicadores de bolinha */}
+                                            <div className="absolute bottom-4 left-1/2 -translate-x-1/2 flex gap-1.5 z-20">
+                                                {carouselItems.map((_: any, idx: number) => (
+                                                    <button
+                                                        key={idx}
+                                                        onClick={() => setCurrentCarouselIndex(idx)}
+                                                        className={`w-1.5 h-1.5 rounded-full transition-all ${
+                                                            currentCarouselIndex === idx ? 'bg-secondary w-3' : 'bg-white/40'
+                                                        }`}
+                                                    />
+                                                ))}
+                                            </div>
+                                        </>
+                                    );
+                                }
+
+                                // Caso não seja carrossel (post comum de imagem ou vídeo)
+                                return selectedPost.media_type === 'VIDEO' ? (
+                                    <video 
+                                        src={selectedPost.media_url} 
+                                        controls 
+                                        autoPlay 
+                                        loop 
+                                        className="max-w-full max-h-[90vh] object-contain"
+                                    />
+                                ) : (
+                                    <img 
+                                        src={selectedPost.media_url || selectedPost.thumbnail_url} 
+                                        alt="Post media" 
+                                        className="max-w-full max-h-[90vh] object-contain"
+                                    />
+                                );
+                            })()}
                         </div>
 
                         {/* Área da Legenda e Ações */}
@@ -805,6 +920,42 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     Ver no Instagram
                                 </a>
                             </div>
+                        </div>
+                    </div>
+                </div>
+            )}
+            {/* Lightbox de Preview */}
+            {previewMedia && (
+                <div
+                    className="fixed inset-0 z-[100] flex items-center justify-center bg-black/80 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setPreviewMedia(null)}
+                >
+                    <div
+                        className="relative max-w-[85vw] max-h-[85vh] animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        {previewMedia.type === 'image' ? (
+                            <img
+                                src={previewMedia.url}
+                                alt="Preview ampliada"
+                                className="max-w-full max-h-[85vh] object-contain rounded-xl shadow-2xl"
+                            />
+                        ) : (
+                            <video
+                                src={previewMedia.url}
+                                controls
+                                autoPlay
+                                className="max-w-full max-h-[85vh] rounded-xl shadow-2xl"
+                            />
+                        )}
+                        <button
+                            onClick={() => setPreviewMedia(null)}
+                            className="absolute -top-3 -right-3 w-8 h-8 bg-card border border-border rounded-full flex items-center justify-center text-foreground hover:bg-muted transition-all shadow-lg"
+                        >
+                            <X size={16} />
+                        </button>
+                        <div className="absolute bottom-4 left-1/2 -translate-x-1/2 px-4 py-2 bg-black/60 backdrop-blur-sm rounded-lg">
+                            <p className="text-white text-[11px] font-medium">Clique fora ou no ✕ para fechar</p>
                         </div>
                     </div>
                 </div>

@@ -70,12 +70,19 @@ Crie 3 versões de copy para anúncio deste property:
 2. MÉDIA (max 600 caracteres): Para Facebook e Instagram. Tom envolvente, CTA claro.  
 3. COMPLETA (sem limite): Para portais imobiliários. Descritiva, detalhada, com todos os benefícios.
 
-Retorne APENAS um JSON válido com este formato exato, sem markdown:
+REGRAS CRÍTICAS DE FORMATAÇÃO (OBRIGATÓRIO):
+1. ESPAÇAMENTO: Separe cada frase ou parágrafo por uma linha em branco para melhor legibilidade. No JSON, utilize duas quebras de linha ("\\n\\n") entre as frases.
+2. HASHTAGS: Insira todas as hashtags no final do texto, com cada hashtag obrigatoriamente em sua própria linha separada. No JSON, utilize quebras de linha ("\\n") para separar as hashtags.
+3. VALIDADE DO JSON: Certifique-se de que o JSON é válido, escapando as quebras de linha dentro das strings como "\\n".
+
+EXEMPLO DE RETORNO ESPERADO:
 {
-  "short": "Texto curto aqui",
-  "medium": "Texto médio aqui",
-  "full": "Texto completo aqui"
-}`;
+  "short": "Texto da frase um.\\n\\nTexto da frase dois.\\n\\n#HashtagUm\\n#HashtagDois",
+  "medium": "Texto médio detalhando o imóvel.\\n\\nMais detalhes importantes aqui.\\n\\n#HashtagUm\\n#HashtagDois",
+  "full": "Descrição completa do imóvel.\\n\\nOutro parágrafo detalhado com diferenciais.\\n\\n#HashtagUm\\n#HashtagDois"
+}
+
+Retorne APENAS o JSON válido acima, sem markdown, tags ou explicações fora do JSON.`;
 
     try {
         const result = await runAI(tenantId, prompt);
@@ -130,12 +137,19 @@ Crie 3 versões de copy para a publicação:
 2. MÉDIA (max 600 caracteres): Para Facebook e Instagram. Tom envolvente, contextualizado ao conteúdo visual se houver, com storytelling se apropriado, e CTA claro.
 3. COMPLETA (sem limite): Post detalhado para Blog ou LinkedIn.
 
-Retorne APENAS um JSON válido com este formato exato, sem markdown:
+REGRAS CRÍTICAS DE FORMATAÇÃO (OBRIGATÓRIO):
+1. ESPAÇAMENTO: Separe cada frase ou parágrafo por uma linha em branco para melhor legibilidade. No JSON, utilize duas quebras de linha ("\\n\\n") entre as frases.
+2. HASHTAGS: Insira todas as hashtags no final do texto, com cada hashtag obrigatoriamente em sua própria linha separada. No JSON, utilize quebras de linha ("\\n") para separar as hashtags.
+3. VALIDADE DO JSON: Certifique-se de que o JSON é válido, escapando as quebras de linha dentro das strings como "\\n".
+
+EXEMPLO DE RETORNO ESPERADO:
 {
-  "short": "Texto curto aqui",
-  "medium": "Texto médio aqui",
-  "full": "Texto completo aqui"
-}`;
+  "short": "Texto da frase um.\\n\\nTexto da frase dois.\\n\\n#HashtagUm\\n#HashtagDois",
+  "medium": "Texto médio detalhando o tema.\\n\\nMais detalhes importantes aqui.\\n\\n#HashtagUm\\n#HashtagDois",
+  "full": "Descrição completa sobre o assunto.\\n\\nOutro parágrafo detalhado.\\n\\n#HashtagUm\\n#HashtagDois"
+}
+
+Retorne APENAS o JSON válido acima, sem markdown, tags ou explicações fora do JSON.`;
 
     try {
         const result = await runAI(tenantId, prompt, mediaUrls);

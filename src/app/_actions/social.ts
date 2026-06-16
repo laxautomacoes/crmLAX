@@ -26,19 +26,39 @@ async function getMetaCredentials(tenantId: string) {
 }
 
 /**
+ * Trata erros de validação do token do Instagram/Meta, marcando a integração como inativa no banco de dados.
+ */
+async function handleMetaTokenError(tenantId: string, errorData: any) {
+    if (errorData?.code === 190 || errorData?.message?.includes('token') || errorData?.message?.includes('session')) {
+        try {
+            const supabase = await createClient();
+            await supabase
+                .from('integrations')
+                .update({ status: 'inactive' })
+                .eq('tenant_id', tenantId)
+                .eq('provider', 'instagram');
+            console.log(`[Meta Token Error] Integration updated to inactive for tenant ${tenantId}`);
+        } catch (dbErr) {
+            console.error('Error updating integration status to inactive:', dbErr);
+        }
+    }
+}
+
+/**
  * Busca o feed do Instagram usando o Token e Account ID do Tenant.
  */
 export async function getInstagramFeed(tenantId: string) {
     try {
         const { access_token, account_id } = await getMetaCredentials(tenantId);
 
-        const url = `https://graph.facebook.com/v21.0/${account_id}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp&access_token=${access_token}&limit=12`;
+        const url = `https://graph.facebook.com/v21.0/${account_id}/media?fields=id,caption,media_type,media_url,thumbnail_url,permalink,timestamp,children{id,media_type,media_url,thumbnail_url}&access_token=${access_token}&limit=12`;
         
         const response = await fetch(url, { cache: 'no-store' });
         const data = await response.json();
 
         if (data.error) {
             console.error('Meta API Error:', data.error);
+            await handleMetaTokenError(tenantId, data.error);
             return { success: false, error: data.error.message };
         }
 
@@ -63,6 +83,7 @@ export async function getInstagramStories(tenantId: string) {
 
         if (data.error) {
             console.error('Meta API Error (Stories):', data.error);
+            await handleMetaTokenError(tenantId, data.error);
             return { success: false, error: data.error.message };
         }
 
