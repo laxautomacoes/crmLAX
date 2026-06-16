@@ -34,6 +34,7 @@ export function HeroSection({ config, tenantName, branding }: HeroSectionProps) 
     const subtitle = config.subtitle || `Os melhores imóveis da região com atendimento personalizado.`;
     const ctaText = config.cta_text || 'Ver Imóveis';
     const ctaLink = config.cta_link || '#imoveis';
+    const isExternalOrPage = ctaLink && (ctaLink.startsWith('http') || ctaLink.startsWith('/'));
 
     if (style === 'minimal') {
         return (
@@ -63,6 +64,8 @@ export function HeroSection({ config, tenantName, branding }: HeroSectionProps) 
                     </p>
                     <a
                         href={ctaLink}
+                        target={isExternalOrPage ? "_blank" : undefined}
+                        rel={isExternalOrPage ? "noopener noreferrer" : undefined}
                         className={`inline-block px-8 py-4 font-bold text-lg transition-all duration-700 delay-400 ease-out hover:scale-105 hover:shadow-lg ${
                             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                         }`}
@@ -119,6 +122,8 @@ export function HeroSection({ config, tenantName, branding }: HeroSectionProps) 
                             >
                                 <a
                                     href={ctaLink}
+                                    target={isExternalOrPage ? "_blank" : undefined}
+                                    rel={isExternalOrPage ? "noopener noreferrer" : undefined}
                                     className="inline-block px-8 py-4 font-bold text-lg hover:scale-105 hover:shadow-lg transition-all"
                                     style={{
                                         backgroundColor: 'var(--site-secondary, #FFE600)',
@@ -200,6 +205,8 @@ export function HeroSection({ config, tenantName, branding }: HeroSectionProps) 
                 </p>
                 <a
                     href={ctaLink}
+                    target={isExternalOrPage ? "_blank" : undefined}
+                    rel={isExternalOrPage ? "noopener noreferrer" : undefined}
                     className={`inline-block px-8 py-4 font-bold text-lg transition-all duration-700 delay-400 ease-out hover:scale-105 hover:shadow-xl ${
                         isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                     }`}

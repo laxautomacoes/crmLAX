@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Menu, X, MessageCircle } from 'lucide-react';
+import { Menu, X, MessageCircle, Sun, Moon } from 'lucide-react';
 import { Logo } from '@/components/shared/Logo';
 import { SiteMobileMenu } from './SiteMobileMenu';
+import { useSiteTheme } from './SiteThemeProvider';
 
 interface SiteHeaderProps {
     tenantName: string;
@@ -24,6 +25,7 @@ export function SiteHeader({
 }: SiteHeaderProps) {
     const [isScrolled, setIsScrolled] = useState(false);
     const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+    const { themeMode, toggleTheme } = useSiteTheme();
 
     useEffect(() => {
         const handleScroll = () => {
@@ -90,8 +92,11 @@ export function SiteHeader({
                             />
                         ) : (
                             <span
-                                className="text-xl font-bold transition-colors"
-                                style={{ color: isScrolled ? 'var(--site-secondary, #FFE600)' : 'var(--site-primary-foreground, #fff)' }}
+                                className={`text-xl font-bold transition-colors ${
+                                    isScrolled 
+                                        ? 'text-[var(--site-secondary)]' 
+                                        : 'text-foreground'
+                                }`}
                             >
                                 {tenantName}
                             </span>
@@ -104,12 +109,11 @@ export function SiteHeader({
                             <button
                                 key={link.href}
                                 onClick={() => handleNavClick(link.href)}
-                                className="px-4 py-2 text-sm font-medium transition-all rounded-lg hover:bg-white/10"
-                                style={{
-                                    color: isScrolled
-                                        ? 'var(--site-primary-foreground, #ffffff)'
-                                        : 'var(--site-primary-foreground, #ffffff)',
-                                }}
+                                className={`px-4 py-2 text-sm font-medium transition-all rounded-lg hover:bg-white/10 ${
+                                    isScrolled 
+                                        ? 'text-[var(--site-primary-foreground)]' 
+                                        : 'text-foreground/80 hover:text-foreground'
+                                }`}
                             >
                                 {link.label}
                             </button>
@@ -118,15 +122,24 @@ export function SiteHeader({
 
                     {/* CTA + Mobile Toggle */}
                     <div className="flex items-center gap-3">
+                        <button
+                            onClick={toggleTheme}
+                            className={`p-2.5 rounded-lg transition-colors ${
+                                isScrolled 
+                                    ? 'text-[var(--site-primary-foreground)] hover:bg-white/10' 
+                                    : 'text-foreground hover:bg-foreground/10'
+                            }`}
+                            aria-label="Alternar tema"
+                        >
+                            {themeMode === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
+                        </button>
                         {whatsappHref && (
                             <a
                                 href={whatsappHref}
                                 target="_blank"
                                 rel="noopener noreferrer"
-                                className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 font-bold text-sm transition-all hover:scale-105 hover:shadow-lg"
+                                className="hidden md:inline-flex items-center gap-2 px-5 py-2.5 font-bold text-sm transition-all hover:scale-105 hover:shadow-lg bg-[#25D366] hover:bg-[#20BA5A] text-white hover:text-white"
                                 style={{
-                                    backgroundColor: 'var(--site-secondary, #FFE600)',
-                                    color: 'var(--site-secondary-foreground, #121414)',
                                     borderRadius: 'var(--site-radius, 12px)',
                                 }}
                             >
@@ -136,8 +149,11 @@ export function SiteHeader({
                         )}
                         <button
                             onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                            className="md:hidden p-2 rounded-lg transition-colors hover:bg-white/10"
-                            style={{ color: isScrolled ? 'var(--site-primary-foreground, #fff)' : 'var(--site-primary-foreground, #fff)' }}
+                            className={`md:hidden p-2 rounded-lg transition-colors hover:bg-white/10 ${
+                                isScrolled 
+                                    ? 'text-[var(--site-primary-foreground)]' 
+                                    : 'text-foreground'
+                            }`}
                         >
                             {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
                         </button>

@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
     ChevronDown,
     ChevronUp,
@@ -24,7 +24,11 @@ import {
     Briefcase,
     Heart,
     Eye,
-    EyeOff
+    EyeOff,
+    Video,
+    Check,
+    X,
+    Link
 } from 'lucide-react';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
@@ -39,6 +43,7 @@ interface SectionSettingsPanelProps {
     sections: any;
     onSectionsChange: (sections: any) => void;
     tenantId: string;
+    tenantSlug: string;
 }
 
 // Upload helper reutilizável
@@ -117,6 +122,235 @@ function ImageUpload({
     );
 }
 
+// Seletor de Imóvel para a Hero
+function PropertyPicker({
+    selectedPropertyId,
+    onSelect,
+    onSelectCover,
+    currentCover,
+    tenantId,
+    tenantSlug,
+}: {
+    selectedPropertyId?: string;
+    onSelect: (property: any | null) => void;
+    onSelectCover: (url: string) => void;
+    currentCover?: string;
+    tenantId: string;
+    tenantSlug: string;
+}) {
+    const [properties, setProperties] = useState<any[]>([]);
+    const [loading, setLoading] = useState(false);
+    const [searchTerm, setSearchTerm] = useState('');
+    const [isOpen, setIsOpen] = useState(false);
+    const [selectedProperty, setSelectedProperty] = useState<any>(null);
+
+    // Buscar imóveis do tenant
+    useEffect(() => {
+        if (!tenantId) return;
+        setLoading(true);
+        const supabase = createClient();
+        supabase
+            .from('properties')
+            .select('id, title, slug, type, images, videos')
+            .eq('tenant_id', tenantId)
+            .eq('is_published', true)
+            .eq('is_archived', false)
+            .order('created_at', { ascending: false })
+            .then(({ data }: { data: any[] | null }) => {
+                setProperties(data || []);
+                // Se já tem um property_id selecionado, encontrar o imóvel
+                if (selectedPropertyId && data) {
+                    const found = data.find((p: any) => p.id === selectedPropertyId);
+                    if (found) setSelectedProperty(found);
+                }
+                setLoading(false);
+            });
+    }, [tenantId, selectedPropertyId]);
+
+    const filteredProperties = properties.filter((p) =>
+        p.title?.toLowerCase().includes(searchTerm.toLowerCase())
+    );
+
+    const handleSelectProperty = (property: any) => {
+        setSelectedProperty(property);
+        onSelect(property);
+        setIsOpen(false);
+        setSearchTerm('');
+    };
+
+    const handleClearProperty = () => {
+        setSelectedProperty(null);
+        onSelect(null);
+    };
+
+    const allMedia = selectedProperty
+        ? [
+              ...(selectedProperty.images || []).map((url: string) => ({ type: 'image' as const, url })),
+              ...(selectedProperty.videos || []).map((url: string) => ({ type: 'video' as const, url })),
+          ]
+        : [];
+
+    return (
+        <div className="space-y-3">
+            <label className="text-sm font-bold text-foreground/80 ml-1 flex items-center gap-2">
+                <Building size={14} className="text-secondary" />
+                Vincular Imóvel
+            </label>
+
+            {/* Dropdown de seleção */}
+            <div className="relative">
+                {selectedProperty ? (
+                    <div className="flex items-center gap-2 px-4 py-2.5 bg-foreground/5 border border-border rounded-lg">
+                        {selectedProperty.images?.[0] && (
+                            <img
+                                src={selectedProperty.images[0]}
+                                alt=""
+                                className="w-8 h-8 rounded object-cover shrink-0"
+                            />
+                        )}
+                        <span className="flex-1 text-sm font-medium text-foreground truncate">
+                            {selectedProperty.title}
+                        </span>
+                        <button
+                            onClick={handleClearProperty}
+                            className="p-1 text-muted-foreground hover:text-destructive rounded transition-colors"
+                        >
+                            <X size={14} />
+                        </button>
+                    </div>
+                ) : (
+                    <div>
+                        <div
+                            onClick={() => setIsOpen(!isOpen)}
+                            className="flex items-center gap-2 px-4 py-2.5 bg-foreground/5 border border-border rounded-lg cursor-pointer hover:bg-foreground/10 transition-colors"
+                        >
+                            <Search size={14} className="text-muted-foreground" />
+                            <span className="text-sm text-muted-foreground">
+                                {loading ? 'Carregando imóveis...' : 'Buscar imóvel...'}
+                            </span>
+                            <ChevronDown size={14} className="text-muted-foreground ml-auto" />
+                        </div>
+                    </div>
+                )}
+
+                {/* Dropdown list */}
+                {isOpen && (
+                    <div className="absolute z-20 mt-1 w-full bg-card border border-border rounded-xl shadow-xl overflow-hidden">
+                        <div className="p-2 border-b border-border">
+                            <input
+                                type="text"
+                                value={searchTerm}
+                                onChange={(e) => setSearchTerm(e.target.value)}
+                                placeholder="Filtrar por nome..."
+                                className="w-full px-3 py-2 bg-foreground/5 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 outline-none"
+                                autoFocus
+                            />
+                        </div>
+                        <div className="max-h-[240px] overflow-y-auto">
+                            {filteredProperties.length === 0 ? (
+                                <p className="p-4 text-xs text-muted-foreground text-center">
+                                    {loading ? 'Carregando...' : 'Nenhum imóvel encontrado'}
+                                </p>
+                            ) : (
+                                filteredProperties.map((property) => (
+                                    <button
+                                        key={property.id}
+                                        onClick={() => handleSelectProperty(property)}
+                                        className="w-full flex items-center gap-3 px-3 py-2.5 hover:bg-foreground/5 transition-colors text-left"
+                                    >
+                                        {property.images?.[0] ? (
+                                            <img
+                                                src={property.images[0]}
+                                                alt=""
+                                                className="w-10 h-10 rounded-lg object-cover shrink-0"
+                                            />
+                                        ) : (
+                                            <div className="w-10 h-10 rounded-lg bg-foreground/10 flex items-center justify-center shrink-0">
+                                                <Home size={16} className="text-muted-foreground" />
+                                            </div>
+                                        )}
+                                        <div className="flex-1 min-w-0">
+                                            <p className="text-sm font-medium text-foreground truncate">
+                                                {property.title}
+                                            </p>
+                                            <p className="text-[10px] text-muted-foreground">
+                                                {(property.images?.length || 0)} fotos • {(property.videos?.length || 0)} vídeos
+                                            </p>
+                                        </div>
+                                    </button>
+                                ))
+                            )}
+                        </div>
+                    </div>
+                )}
+            </div>
+
+            {/* Galeria de mídias do imóvel selecionado */}
+            {selectedProperty && allMedia.length > 0 && (
+                <div className="space-y-2">
+                    <label className="text-sm font-bold text-foreground/80 ml-1 block">
+                        Escolha a capa da Hero
+                    </label>
+                    <div className="grid grid-cols-3 md:grid-cols-4 gap-2">
+                        {allMedia.map((media, i) => {
+                            const isSelected = currentCover === media.url;
+                            return (
+                                <button
+                                    key={i}
+                                    onClick={() => onSelectCover(media.url)}
+                                    className={`relative group aspect-[4/3] rounded-xl overflow-hidden border-2 transition-all ${
+                                        isSelected
+                                            ? 'border-secondary ring-2 ring-secondary/30 shadow-lg'
+                                            : 'border-border hover:border-foreground/30'
+                                    }`}
+                                >
+                                    {media.type === 'image' ? (
+                                        <img
+                                            src={media.url}
+                                            alt={`Mídia ${i + 1}`}
+                                            className="w-full h-full object-cover"
+                                        />
+                                    ) : (
+                                        <div className="w-full h-full bg-foreground/10 flex items-center justify-center">
+                                            <Video size={20} className="text-muted-foreground" />
+                                        </div>
+                                    )}
+                                    {isSelected && (
+                                        <div className="absolute inset-0 bg-secondary/20 flex items-center justify-center">
+                                            <div className="w-7 h-7 rounded-full bg-secondary flex items-center justify-center shadow-md">
+                                                <Check size={14} className="text-secondary-foreground" />
+                                            </div>
+                                        </div>
+                                    )}
+                                    {/* Hover overlay */}
+                                    {!isSelected && (
+                                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/30 flex items-center justify-center transition-all">
+                                            <span className="text-[10px] font-bold text-white opacity-0 group-hover:opacity-100 transition-opacity">
+                                                Usar como capa
+                                            </span>
+                                        </div>
+                                    )}
+                                    {media.type === 'video' && (
+                                        <div className="absolute top-1 right-1">
+                                            <Video size={12} className="text-white drop-shadow" />
+                                        </div>
+                                    )}
+                                </button>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {selectedProperty && allMedia.length === 0 && (
+                <div className="p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 text-xs text-amber-700 dark:text-amber-400">
+                    Este imóvel não possui imagens ou vídeos cadastrados.
+                </div>
+            )}
+        </div>
+    );
+}
+
 function SectionToggle({
     label,
     description,
@@ -168,7 +402,7 @@ function SectionToggle({
     );
 }
 
-export function SectionSettingsPanel({ sections, onSectionsChange, tenantId }: SectionSettingsPanelProps) {
+export function SectionSettingsPanel({ sections, onSectionsChange, tenantId, tenantSlug }: SectionSettingsPanelProps) {
     const update = (key: string, data: any) => {
         onSectionsChange({
             ...sections,
@@ -307,11 +541,73 @@ export function SectionSettingsPanel({ sections, onSectionsChange, tenantId }: S
                     />
                     <span className="text-[10px] text-muted-foreground">{Math.round((current('hero').overlay_opacity ?? 0.5) * 100)}%</span>
                 </div>
-                <ImageUpload
-                    value={current('hero').background_image}
-                    onChange={(url) => update('hero', { background_image: url })}
+
+                {/* Vincular Imóvel */}
+                <PropertyPicker
+                    selectedPropertyId={current('hero').property_id}
                     tenantId={tenantId}
-                    label="Imagem de Fundo"
+                    tenantSlug={tenantSlug}
+                    currentCover={current('hero').background_image}
+                    onSelect={(property) => {
+                        if (property) {
+                            const propertyType = (property.type || 'venda').toLowerCase();
+                            const propertySlug = property.slug || property.id;
+                            update('hero', {
+                                property_id: property.id,
+                                property_title: property.title,
+                                cta_link: `/site/${tenantSlug}/imovel/${propertyType}/${propertySlug}`,
+                            });
+                        } else {
+                            update('hero', {
+                                property_id: undefined,
+                                property_title: undefined,
+                            });
+                        }
+                    }}
+                    onSelectCover={(url) => update('hero', { background_image: url })}
+                />
+
+                {/* Link do botão */}
+                {current('hero').property_id && (
+                    <div className="space-y-2">
+                        <label className="text-sm font-bold text-foreground/80 ml-1 flex items-center gap-2">
+                            <Link size={14} className="text-secondary" />
+                            Link do Botão (auto-preenchido)
+                        </label>
+                        <input
+                            type="text"
+                            value={current('hero').cta_link || ''}
+                            onChange={(e) => update('hero', { cta_link: e.target.value })}
+                            placeholder="/site/slug/imovel/tipo/slug"
+                            className="w-full px-4 py-2 bg-input border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none font-mono text-xs"
+                        />
+                        <p className="text-[10px] text-muted-foreground ml-1">
+                            Preenchido automaticamente ao vincular um imóvel. Pode ser editado manualmente.
+                        </p>
+                    </div>
+                )}
+
+                {/* Separador visual */}
+                <div className="relative py-2">
+                    <div className="absolute inset-0 flex items-center">
+                        <div className="w-full border-t border-border" />
+                    </div>
+                    <div className="relative flex justify-center">
+                        <span className="bg-card px-3 text-[10px] font-bold text-muted-foreground uppercase tracking-wider">
+                            ou envie uma imagem personalizada
+                        </span>
+                    </div>
+                </div>
+
+                <ImageUpload
+                    value={!current('hero').property_id ? current('hero').background_image : undefined}
+                    onChange={(url) => update('hero', {
+                        background_image: url,
+                        property_id: undefined,
+                        property_title: undefined,
+                    })}
+                    tenantId={tenantId}
+                    label="Imagem de Fundo (Upload Manual)"
                     height="h-[200px]"
                 />
             </SectionToggle>

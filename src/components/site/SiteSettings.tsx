@@ -679,6 +679,7 @@ export function SiteSettings() {
                                 site_sections: newSections
                             } as any))}
                             tenantId={tenant?.id || ''}
+                            tenantSlug={tenant?.slug || ''}
                         />
 
                         <div className="mt-8 pt-6 flex justify-end">

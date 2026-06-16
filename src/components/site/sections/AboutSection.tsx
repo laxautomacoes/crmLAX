@@ -65,8 +65,7 @@ function AnimatedCounter({ target, label }: { target: string; label: string }) {
     return (
         <div ref={ref} className="text-center">
             <p
-                className="text-3xl md:text-4xl font-bold"
-                style={{ color: 'var(--site-secondary, #FFE600)' }}
+                className="text-3xl md:text-4xl font-bold text-accent-icon"
             >
                 {isVisible ? count : 0}{suffix}
             </p>
@@ -128,8 +127,7 @@ export function AboutSection({ config, tenantName, branding }: AboutSectionProps
                         } ${!config.image ? 'md:col-span-2 max-w-3xl mx-auto text-center' : ''}`}
                     >
                         <h2
-                            className="text-2xl md:text-3xl font-bold mb-6"
-                            style={{ color: 'var(--site-primary, #404F4F)' }}
+                            className="text-2xl md:text-3xl font-bold mb-6 text-[var(--site-primary)] dark:text-foreground"
                         >
                             {title}
                         </h2>

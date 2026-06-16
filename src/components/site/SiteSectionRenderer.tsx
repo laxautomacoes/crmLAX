@@ -18,6 +18,8 @@ export interface SiteSectionsConfig {
         background_image?: string;
         overlay_opacity?: number;
         style?: 'fullscreen' | 'split' | 'minimal';
+        property_id?: string;
+        property_title?: string;
     };
     about?: {
         enabled: boolean;

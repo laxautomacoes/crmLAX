@@ -78,10 +78,8 @@ export function TestimonialsSection({ config, tenantName, branding }: Testimonia
         <section ref={ref} className="py-16 md:py-24 bg-muted/30" id="depoimentos">
             <div className="max-w-[1600px] mx-auto px-4">
                 <h2
-                    className={`text-2xl md:text-3xl font-bold text-center mb-12 transition-all duration-700 ease-out ${
-                        isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                    }`}
-                    style={{ color: 'var(--site-primary, #404F4F)' }}
+                    className={`text-2xl md:text-3xl font-bold text-center mb-12 text-[var(--site-primary)] dark:text-foreground transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                        }`}
                 >
                     {title}
                 </h2>
@@ -90,15 +88,13 @@ export function TestimonialsSection({ config, tenantName, branding }: Testimonia
                     {/* Quote decoration */}
                     <Quote
                         size={60}
-                        className="absolute -top-4 -left-4 md:-left-8 opacity-10"
-                        style={{ color: 'var(--site-primary, #404F4F)' }}
+                        className="absolute -top-4 -left-4 md:-left-8 opacity-10 text-[var(--site-primary)] dark:text-white"
                     />
 
                     {/* Testimonial Card */}
                     <div
-                        className={`bg-card border border-border p-8 md:p-12 text-center transition-all duration-700 ease-out ${
-                            isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
-                        }`}
+                        className={`bg-card border border-border p-8 md:p-12 text-center transition-all duration-700 ease-out ${isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
+                            }`}
                         style={{ borderRadius: 'var(--site-radius-lg, 16px)' }}
                     >
                         {/* Avatar */}
@@ -164,15 +160,10 @@ export function TestimonialsSection({ config, tenantName, branding }: Testimonia
                                         <button
                                             key={i}
                                             onClick={() => goTo(i)}
-                                            className={`w-2.5 h-2.5 rounded-full transition-all ${
-                                                i === current ? 'scale-125' : 'opacity-30'
-                                            }`}
-                                            style={{
-                                                backgroundColor:
-                                                    i === current
-                                                        ? 'var(--site-secondary, #FFE600)'
-                                                        : 'var(--site-primary, #404F4F)',
-                                            }}
+                                            className={`w-2.5 h-2.5 rounded-full transition-all ${i === current
+                                                    ? 'scale-125 bg-[var(--site-secondary)]'
+                                                    : 'opacity-30 bg-[var(--site-primary)] dark:bg-white'
+                                                }`}
                                         />
                                     ))}
                                 </div>

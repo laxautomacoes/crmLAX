@@ -68,10 +68,8 @@ export function SiteMobileMenu({
                         href={whatsappHref}
                         target="_blank"
                         rel="noopener noreferrer"
-                        className="flex items-center justify-center gap-3 w-full py-4 font-bold text-lg transition-all hover:scale-[1.02]"
+                        className="flex items-center justify-center gap-3 w-full py-4 font-bold text-lg transition-all hover:scale-[1.02] bg-[#25D366] hover:bg-[#20BA5A] text-white hover:text-white"
                         style={{
-                            backgroundColor: 'var(--site-secondary, #FFE600)',
-                            color: 'var(--site-secondary-foreground, #121414)',
                             borderRadius: 'var(--site-radius, 12px)',
                         }}
                     >

@@ -49,6 +49,7 @@ export function CTASection({ config, tenantName, whatsappNumber, branding }: CTA
         buttonHref = `https://wa.me/${cleanNumber}?text=${encodeURIComponent(`Olá ${tenantName}! Vim pelo site e gostaria de saber mais sobre os imóveis.`)}`;
     }
     const isWhatsApp = config.button_link === 'whatsapp';
+    const isExternalOrPage = buttonHref && (buttonHref.startsWith('http') || buttonHref.startsWith('/') || isWhatsApp);
 
     let bgStyle: React.CSSProperties = {};
     let textColor: string;
@@ -96,8 +97,8 @@ export function CTASection({ config, tenantName, whatsappNumber, branding }: CTA
                     </p>
                     <a
                         href={buttonHref}
-                        target={isWhatsApp ? '_blank' : undefined}
-                        rel={isWhatsApp ? 'noopener noreferrer' : undefined}
+                        target={isExternalOrPage ? '_blank' : undefined}
+                        rel={isExternalOrPage ? 'noopener noreferrer' : undefined}
                         className={`inline-flex items-center gap-3 px-8 py-4 font-bold text-lg transition-all duration-700 delay-400 ease-out hover:scale-105 hover:shadow-xl ${
                             isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-8'
                         }`}

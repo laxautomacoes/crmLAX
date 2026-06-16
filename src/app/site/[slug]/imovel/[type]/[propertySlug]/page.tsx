@@ -4,6 +4,7 @@ import { getBrokerProfile } from '@/app/_actions/profile';
 import { PropertyPublicView } from '@/components/site/PropertyPublicView';
 import { notFound } from 'next/navigation';
 import { Logo } from '@/components/shared/Logo';
+import { SiteThemeProvider } from '@/components/site/SiteThemeProvider';
 import { TrackPageView } from '@/components/site/TrackPageView';
 import { translatePropertyType } from '@/utils/property-translations';
 import type { Metadata } from 'next';
@@ -206,56 +207,58 @@ export default async function PublicPropertyPage({ params, searchParams }: any) 
     };
 
     return (
-        <div className="min-h-screen bg-background text-foreground">
-            {/* JSON-LD Structured Data para Rich Snippets */}
-            <script
-                type="application/ld+json"
-                dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
-            />
+        <SiteThemeProvider theme={tenant.branding?.site_theme}>
+            <div className="min-h-screen bg-background text-foreground">
+                {/* JSON-LD Structured Data para Rich Snippets */}
+                <script
+                    type="application/ld+json"
+                    dangerouslySetInnerHTML={{ __html: JSON.stringify(jsonLd) }}
+                />
 
-            {/* Tracking de Page View */}
-            <TrackPageView
-                tenantId={tenant.id}
-                propertyId={property.id}
-                brokerId={brokerId || broker?.id}
-                propertyTitle={property.title}
-            />
+                {/* Tracking de Page View */}
+                <TrackPageView
+                    tenantId={tenant.id}
+                    propertyId={property.id}
+                    brokerId={brokerId || broker?.id}
+                    propertyTitle={property.title}
+                />
 
-            <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
-                <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
-                    <a href={`/site/${slug}`} className="flex items-center transition-opacity hover:opacity-80">
-                        {tenant.branding?.logo_full ? (
-                            <Logo 
-                                size="md" 
-                                src={tenant.branding.logo_full} 
-                                height={32}
-                            />
-                        ) : (
-                            <span className="text-xl font-black text-foreground">{tenant.name}</span>
-                        )}
-                    </a>
+                <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
+                    <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
+                        <a href={`/site/${slug}`} className="flex items-center transition-opacity hover:opacity-80">
+                            {tenant.branding?.logo_full ? (
+                                <Logo 
+                                    size="md" 
+                                    src={tenant.branding.logo_full} 
+                                    height={32}
+                                />
+                            ) : (
+                                <span className="text-xl font-black text-foreground">{tenant.name}</span>
+                            )}
+                        </a>
 
-                    {/* Broker name + WhatsApp */}
-                    {broker && (
-                        <div className="flex items-center gap-3">
-                            <div className="text-right">
-                                <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider leading-none">Corretor</p>
-                                <p className="text-xs font-bold text-foreground leading-tight">{broker.full_name || tenant?.name}</p>
+                        {/* Broker name + WhatsApp */}
+                        {broker && (
+                            <div className="flex items-center gap-3">
+                                <div className="text-right">
+                                    <p className="text-[10px] text-muted-foreground uppercase font-bold tracking-wider leading-none">Corretor</p>
+                                    <p className="text-xs font-bold text-foreground leading-tight">{broker.full_name || tenant?.name}</p>
+                                </div>
+                                <a
+                                    href={`https://wa.me/${(broker.whatsapp_number || tenant?.branding?.whatsapp || '').replace(/\D/g, '').replace(/^(?!55)/, '55')}?text=${encodeURIComponent(`Olá! Vi o imóvel "${property.title}" no site e gostaria de mais informações.`)}`}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20BA5A] text-white font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm text-xs"
+                                >
+                                    <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
+                                    <span className="hidden sm:inline">WhatsApp</span>
+                                </a>
                             </div>
-                            <a
-                                href={`https://wa.me/${(broker.whatsapp_number || tenant?.branding?.whatsapp || '').replace(/\\D/g, '').replace(/^(?!55)/, '55')}?text=${encodeURIComponent(`Olá! Vi o imóvel "${property.title}" no site e gostaria de mais informações.`)}`}
-                                target="_blank"
-                                rel="noopener noreferrer"
-                                className="flex items-center gap-1.5 bg-[#25D366] hover:bg-[#20BA5A] text-white font-bold py-1.5 px-3 rounded-lg transition-all shadow-sm text-xs"
-                            >
-                                <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"/></svg>
-                                <span className="hidden sm:inline">WhatsApp</span>
-                            </a>
-                        </div>
-                    )}
+                        )}
+                    </div>
                 </div>
+                <PropertyPublicView property={property} broker={broker} tenant={tenant} config={config} />
             </div>
-            <PropertyPublicView property={property} broker={broker} tenant={tenant} config={config} />
-        </div>
+        </SiteThemeProvider>
     );
 }

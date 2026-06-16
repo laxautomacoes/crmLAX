@@ -45,6 +45,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
     const [videoTime, setVideoTime] = useState<{ [key: string]: number }>({});
     const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const mainVideoRef = useRef<HTMLVideoElement>(null);
+    const locationRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
         if (thumbnailRefs.current[selectedMediaIndex]) {
@@ -152,7 +153,10 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                             <div className="flex flex-col gap-1">
                                 <h1 className="text-3xl font-bold text-foreground">{displayTitle}</h1>
                                 {config?.location !== 'none' && (
-                                    <p className="text-lg text-muted-foreground dark:text-white/80">
+                                    <p 
+                                        onClick={details.endereco?.latitude && details.endereco?.longitude ? () => locationRef.current?.scrollIntoView({ behavior: 'smooth' }) : undefined}
+                                        className={`text-lg text-muted-foreground dark:text-white/80 ${details.endereco?.latitude && details.endereco?.longitude ? 'cursor-pointer hover:underline hover:text-primary transition-colors' : ''}`}
+                                    >
                                         {config?.location === 'exact' && property.details?.endereco?.rua && `${property.details.endereco.rua}, ${property.details.endereco.numero || ''} - `}
                                         {(property.details?.endereco?.bairro || details.endereco?.bairro) && `${property.details?.endereco?.bairro || details.endereco.bairro}, `}
                                         {(property.details?.endereco?.cidade || details.endereco?.cidade) && `${property.details?.endereco?.cidade || details.endereco.cidade}`}
@@ -324,69 +328,37 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                     />
 
                     <h2 className="text-2xl font-bold text-foreground">
-                        Dados do Imóvel
+                        Dados
                     </h2>
 
-                    <div className="p-4 bg-card rounded-xl border border-border shadow-sm">
-                        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-5 gap-3">
+                    <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
+                        <ul className="list-disc pl-5 text-base md:text-lg text-foreground leading-relaxed space-y-2">
                         {config?.showBedrooms !== false && (
-                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
-                                <BedDouble className="text-primary dark:text-white mb-1.5" size={20} />
-                                <span className="text-base font-bold">{details.dormitorios || details.quartos || 0}</span>
-                                <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Dormitórios</span>
-                            </div>
+                            <li>Dormitórios: {details.dormitorios || details.quartos || 0}</li>
                         )}
                         {config?.showSuites !== false && details.suites > 0 && (
-                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
-                                <Bath className="text-primary dark:text-white mb-1.5" size={20} />
-                                <span className="text-base font-bold">{details.suites}</span>
-                                <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Suítes</span>
-                            </div>
+                            <li>Suítes: {details.suites}</li>
                         )}
-                        <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
-                            <Bath className="text-primary dark:text-white mb-1.5" size={20} />
-                            <span className="text-base font-bold">{details.banheiros || 0}</span>
-                            <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Banheiros</span>
-                        </div>
-                        <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
-                            <Car className="text-primary dark:text-white mb-1.5" size={20} />
-                            <span className="text-base font-bold">{details.vagas || 0}</span>
-                            <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Vagas</span>
-                        </div>
+                        <li>Banheiros: {details.banheiros || 0}</li>
+                        <li>Vagas: {details.vagas || 0}</li>
                         {config?.showArea !== false && (
-                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
-                                <Square className="text-primary dark:text-white mb-1.5" size={20} />
-                                <span className="text-base font-bold">{details.area_privativa || details.area_util || details.area_total || 0}m²</span>
-                                <span className="text-[10px] text-muted-foreground dark:text-white uppercase font-medium">Área</span>
-                            </div>
+                            <li>Área privativa: {details.area_privativa || details.area_util || details.area_total || 0} m²</li>
                         )}
                         {config?.showSacada !== false && details.has_sacada_com_churrasqueira && (
-                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
-                                <Fence className="text-primary dark:text-white mb-1.5" size={20} />
-                                <span className="text-sm font-bold text-center leading-tight">Sacada c/ churr.</span>
-                            </div>
+                            <li>Sacada c/ churr.</li>
                         )}
                         {config?.showSacada !== false && !details.has_sacada_com_churrasqueira && details.has_sacada_sem_churrasqueira && (
-                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
-                                <Fence className="text-primary dark:text-white mb-1.5" size={20} />
-                                <span className="text-sm font-bold">Sacada</span>
-                            </div>
+                            <li>Sacada</li>
                         )}
                         {config?.showEscritorio !== false && details.has_escritorio && (
-                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
-                                <Briefcase className="text-primary dark:text-white mb-1.5" size={20} />
-                                <span className="text-sm font-bold">Escritório</span>
-                            </div>
+                            <li>Escritório</li>
                         )}
                         {config?.showDependencia !== false && details.has_dependencia_empregada && (
-                            <div className="flex flex-col items-center justify-center p-3 rounded-lg bg-muted/30">
-                                <User className="text-primary dark:text-white mb-1.5" size={20} />
-                                <span className="text-sm font-bold">Dependência</span>
-                            </div>
+                            <li>Dependência</li>
                         )}
-                        </div>
+                        </ul>
                         {config?.showObservations !== false && details.obs_dormitorios && (
-                            <div className="mt-3 pt-3 border-t border-border/40 flex items-start gap-2">
+                            <div className="mt-4 pt-4 border-t border-border/40 flex items-start gap-2">
                                 <NotebookPen size={14} className="text-muted-foreground mt-0.5 shrink-0" />
                                 <span className="text-xs text-muted-foreground italic">{details.obs_dormitorios}</span>
                             </div>
@@ -399,14 +371,11 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                                 Área Comum | Lazer
                             </h2>
                             <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '0.75rem' }}>
+                                <ul className="list-disc pl-5 text-base md:text-lg text-foreground leading-relaxed space-y-2">
                                     {amenities.map(a => (
-                                        <div key={a.id} className="flex items-center gap-2 px-4 py-2.5 rounded-lg bg-muted/30">
-                                            <span className="text-primary dark:text-white">{a.icon}</span>
-                                            <span className="text-sm font-medium text-foreground">{a.label}</span>
-                                        </div>
+                                        <li key={a.id}>{a.label}</li>
                                     ))}
-                                </div>
+                                </ul>
                             </div>
                         </>
                     )}
@@ -416,7 +385,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                     {config?.description !== 'none' && (
                         <>
                             <h2 className="text-2xl font-bold text-foreground">
-                                Descrição do Imóvel
+                                Descrição
                             </h2>
                             <div className="p-5 bg-card rounded-xl border border-border shadow-sm">
                                 <div className="text-base md:text-lg text-foreground leading-relaxed">
@@ -431,7 +400,7 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                     )}
 
                     {details.endereco?.latitude && details.endereco?.longitude && (
-                        <div className="space-y-4">
+                        <div ref={locationRef} className="space-y-4">
                             <h2 className="text-2xl font-bold text-foreground">
                                 Localização
                             </h2>

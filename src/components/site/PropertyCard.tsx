@@ -45,6 +45,8 @@ export function PropertyCard({ property, tenantSlug }: PropertyCardProps) {
                 {imageUrl ? (
                     <Link 
                         href={propertyHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="relative h-64 overflow-hidden block group"
                     >
                         <img
@@ -56,6 +58,8 @@ export function PropertyCard({ property, tenantSlug }: PropertyCardProps) {
                 ) : (
                     <Link 
                         href={propertyHref}
+                        target="_blank"
+                        rel="noopener noreferrer"
                         className="h-64 bg-muted flex items-center justify-center"
                     >
                         <Home className="w-16 h-16 text-muted-foreground/50" />
@@ -65,7 +69,7 @@ export function PropertyCard({ property, tenantSlug }: PropertyCardProps) {
                 <div className="p-6">
                     <div className="flex items-center justify-between gap-4 mb-1">
                         <h3 className="text-xl font-bold text-foreground truncate">{property.title}</h3>
-                        <span className="text-lg text-white font-bold whitespace-nowrap">
+                        <span className="text-lg text-foreground font-bold whitespace-nowrap">
                             {Number(property.price) > 0 
                                 ? `R$ ${Number(property.price).toLocaleString('pt-BR')}` 
                                 : 'Sob consulta'}
@@ -82,6 +86,8 @@ export function PropertyCard({ property, tenantSlug }: PropertyCardProps) {
                     <div className="flex gap-2">
                         <Link
                             href={propertyHref}
+                            target="_blank"
+                            rel="noopener noreferrer"
                             className="flex-1 bg-muted hover:bg-muted/80 text-foreground font-bold py-3 px-2 md:px-4 rounded-lg transition-all flex items-center justify-center gap-1.5 md:gap-2 text-[11px] xs:text-xs md:text-sm whitespace-nowrap"
                         >
                             <Info size={16} className="flex-shrink-0" />

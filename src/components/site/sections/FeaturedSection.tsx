@@ -81,8 +81,7 @@ export function FeaturedSection({ config, properties = [], tenantSlug, tenantNam
                 >
                     <div>
                         <h2
-                            className="text-2xl md:text-3xl font-bold"
-                            style={{ color: 'var(--site-primary, #404F4F)' }}
+                            className="text-2xl md:text-3xl font-bold text-[var(--site-primary)] dark:text-foreground"
                         >
                             {title}
                         </h2>
@@ -122,6 +121,8 @@ export function FeaturedSection({ config, properties = [], tenantSlug, tenantNam
                             <a
                                 key={property.id}
                                 href={`/site/${tenantSlug}/imovel/${property.id}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
                                 className={`group flex-none w-[320px] md:w-[380px] snap-start transition-all duration-700 ease-out ${
                                     isVisible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-12'
                                 }`}
@@ -178,8 +179,7 @@ export function FeaturedSection({ config, properties = [], tenantSlug, tenantNam
 
                                         {property.price && (
                                             <p
-                                                className="text-xl font-bold mb-4"
-                                                style={{ color: 'var(--site-primary, #404F4F)' }}
+                                                className="text-xl font-bold mb-4 text-[var(--site-primary)] dark:text-foreground"
                                             >
                                                 {formatPrice(property.price)}
                                             </p>
@@ -213,10 +213,8 @@ export function FeaturedSection({ config, properties = [], tenantSlug, tenantNam
                 <div className="text-center mt-8">
                     <a
                         href="#imoveis"
-                        className="inline-block px-6 py-3 font-bold text-sm border-2 transition-all hover:scale-105"
+                        className="inline-block px-6 py-3 font-bold text-sm border-2 border-[var(--site-primary)] text-[var(--site-primary)] dark:border-white dark:text-white transition-all hover:scale-105"
                         style={{
-                            borderColor: 'var(--site-primary, #404F4F)',
-                            color: 'var(--site-primary, #404F4F)',
                             borderRadius: 'var(--site-radius, 12px)',
                         }}
                     >

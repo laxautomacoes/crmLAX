@@ -112,20 +112,19 @@ export function SiteClient({ properties, featuredProperties, tenantName, tenantS
                 </>
             )}
             </div>
-            {whatsappNumber && <WhatsAppButton phone={whatsappNumber} />}
 
             {/* Footer */}
             <footer className="mt-20 py-12 border-t border-border font-sans">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
                     <div>
-                        <h4 className="font-bold text-lg mb-4 text-[#404F4F]">{tenantName}</h4>
+                        <h4 className="font-bold text-lg mb-4 text-foreground">{tenantName}</h4>
                         <p className="text-sm text-muted-foreground max-w-xs transition-all">
                             Sua melhor escolha em imóveis com a tecnologia do CRM LAX.
                         </p>
                     </div>
 
                     <div>
-                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4 text-[#404F4F]">Localização</h4>
+                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4 text-foreground">Localização</h4>
                         {branding?.address?.street ? (
                             <div className="flex items-start gap-2 text-sm text-muted-foreground">
                                 <MapPin size={18} className="text-secondary shrink-0 mt-0.5" />
@@ -142,7 +141,7 @@ export function SiteClient({ properties, featuredProperties, tenantName, tenantS
                     </div>
 
                     <div>
-                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4 text-[#404F4F]">Políticas</h4>
+                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4 text-foreground">Políticas</h4>
                         <ul className="space-y-3">
                             <li>
                                 <button 
@@ -164,7 +163,7 @@ export function SiteClient({ properties, featuredProperties, tenantName, tenantS
                     </div>
 
                     <div className="flex flex-col gap-4">
-                        <h4 className="font-bold text-sm uppercase tracking-widest mb-2 text-[#404F4F]">Siga-nos</h4>
+                        <h4 className="font-bold text-sm uppercase tracking-widest mb-2 text-foreground">Siga-nos</h4>
                         <div className="flex items-center gap-4">
                             {branding?.social_links?.instagram && (
                                 <a href={branding.social_links.instagram} target="_blank" className="p-2 bg-muted/50 rounded-lg hover:bg-secondary hover:text-white transition-all">
@@ -192,7 +191,7 @@ export function SiteClient({ properties, featuredProperties, tenantName, tenantS
                 <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-muted-foreground uppercase font-bold tracking-tighter">
                     <p>© {new Date().getFullYear()} {tenantName} - Todos os direitos reservados.</p>
                     <p className="flex items-center gap-1">
-                        Desenvolvido por <span className="text-[#404F4F] font-black">CRM LAX</span>
+                        Desenvolvido por <span className="text-foreground font-black">CRM LAX</span>
                     </p>
                 </div>
             </footer>

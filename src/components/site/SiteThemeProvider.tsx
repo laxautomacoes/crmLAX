@@ -1,6 +1,21 @@
 'use client';
 
-import { useEffect, useMemo } from 'react';
+import { useEffect, useMemo, useState, createContext, useContext } from 'react';
+
+export interface SiteThemeContextType {
+    themeMode: 'light' | 'dark';
+    toggleTheme: () => void;
+}
+
+export const SiteThemeContext = createContext<SiteThemeContextType | undefined>(undefined);
+
+export function useSiteTheme() {
+    const context = useContext(SiteThemeContext);
+    if (!context) {
+        throw new Error('useSiteTheme must be used within a SiteThemeProvider');
+    }
+    return context;
+}
 
 export interface SiteTheme {
     primary_color?: string;
@@ -85,6 +100,36 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
 
     const merged = useMemo(() => ({ ...defaults, ...theme }), [theme]);
 
+    const [visitorTheme, setVisitorTheme] = useState<'light' | 'dark' | null>(null);
+
+    // Carregar preferência salva
+    useEffect(() => {
+        const saved = localStorage.getItem('crmlax-visitor-theme');
+        if (saved === 'light' || saved === 'dark') {
+            setVisitorTheme(saved);
+        }
+    }, []);
+
+    // Determinar o tema ativo atual
+    const activeTheme = useMemo<'light' | 'dark'>(() => {
+        if (visitorTheme) return visitorTheme;
+        if (merged.dark_mode === 'dark') return 'dark';
+        if (merged.dark_mode === 'light') return 'light';
+
+        // 'auto' segue o sistema
+        if (typeof window !== 'undefined') {
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+        return 'light';
+    }, [visitorTheme, merged.dark_mode]);
+
+    // Alternar tema e salvar no localStorage
+    const toggleTheme = () => {
+        const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
+        setVisitorTheme(nextTheme);
+        localStorage.setItem('crmlax-visitor-theme', nextTheme);
+    };
+
     // Carregar fonte do Google Fonts
     useEffect(() => {
         const fontFamily = merged.font_family || 'Inter';
@@ -107,18 +152,36 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
         };
     }, [merged.font_family]);
 
-    // Aplicar modo escuro/claro
+    // Aplicar a classe .dark conforme o activeTheme
     useEffect(() => {
         const siteRoot = document.getElementById('site-theme-root');
         if (!siteRoot) return;
 
-        if (merged.dark_mode === 'dark') {
+        if (activeTheme === 'dark') {
             siteRoot.classList.add('dark');
-        } else if (merged.dark_mode === 'light') {
+        } else {
             siteRoot.classList.remove('dark');
         }
-        // 'auto' segue o sistema (não faz nada)
-    }, [merged.dark_mode]);
+    }, [activeTheme]);
+
+    // Listener para o preferences do sistema (caso mude externamente e o visitante não tenha escolha fixa)
+    useEffect(() => {
+        if (merged.dark_mode !== 'auto' || visitorTheme) return;
+
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
+            const siteRoot = document.getElementById('site-theme-root');
+            if (!siteRoot) return;
+            if (e.matches) {
+                siteRoot.classList.add('dark');
+            } else {
+                siteRoot.classList.remove('dark');
+            }
+        };
+
+        mediaQuery.addEventListener('change', handleChange);
+        return () => mediaQuery.removeEventListener('change', handleChange);
+    }, [merged.dark_mode, visitorTheme]);
 
     const primaryHSL = hexToHSL(merged.primary_color!);
     const secondaryHSL = hexToHSL(merged.secondary_color!);
@@ -152,21 +215,23 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
     }
 
     return (
-        <div
-            id="site-theme-root"
-            style={cssVars as React.CSSProperties}
-            className="site-themed"
-        >
-            <style>{`
-                .site-themed {
-                    font-family: var(--site-font);
-                }
-                .site-themed * {
-                    font-family: inherit;
-                }
-            `}</style>
-            {children}
-        </div>
+        <SiteThemeContext.Provider value={{ themeMode: activeTheme, toggleTheme }}>
+            <div
+                id="site-theme-root"
+                style={cssVars as React.CSSProperties}
+                className="site-themed"
+            >
+                <style>{`
+                    .site-themed {
+                        font-family: var(--site-font);
+                    }
+                    .site-themed * {
+                        font-family: inherit;
+                    }
+                `}</style>
+                {children}
+            </div>
+        </SiteThemeContext.Provider>
     );
 }
 

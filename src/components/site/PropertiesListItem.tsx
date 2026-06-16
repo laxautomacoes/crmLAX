@@ -17,7 +17,7 @@ export function PropertiesListItem({ property, tenantSlug }: { property: any, te
 
     return (
         <>
-            <Link href={propertyHref} className="block">
+            <Link href={propertyHref} target="_blank" rel="noopener noreferrer" className="block">
                 <div className="bg-card rounded-2xl border border-border overflow-hidden shadow-sm hover:shadow-md transition-all group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer">
                     <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-64 aspect-video md:aspect-auto h-auto md:h-48 bg-muted flex-shrink-0 relative">
@@ -54,6 +54,8 @@ export function PropertiesListItem({ property, tenantSlug }: { property: any, te
                                 <div className="flex gap-2 md:ml-auto">
                                     <Link
                                         href={propertyHref}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
                                         className="bg-muted hover:bg-muted/80 text-foreground font-bold py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 text-xs whitespace-nowrap"
                                     >
                                         <Info size={14} className="flex-shrink-0" />

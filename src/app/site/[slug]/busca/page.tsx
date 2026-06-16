@@ -2,6 +2,7 @@ import { getTenantFromHeaders, getTenantBySlug, getTenantWhatsApp } from '@/lib/
 import { createClient } from '@/lib/supabase/server';
 import { SiteSearchClient } from '@/components/site/SiteSearchClient';
 import { Logo } from '@/components/shared/Logo';
+import { SiteThemeProvider } from '@/components/site/SiteThemeProvider';
 import { TrackPageView } from '@/components/site/TrackPageView';
 import type { Metadata } from 'next';
 
@@ -66,32 +67,34 @@ export default async function SiteSearchPage({ params }: { params: Promise<{ slu
     }
 
     return (
-        <div className="min-h-screen bg-background">
-            <TrackPageView tenantId={tenant.id} />
-            <div className="max-w-[1600px] mx-auto px-4 py-8">
-                <div className="mb-12 flex flex-col items-start">
-                    <a href={`/site/${slug}`}>
-                        <Logo 
-                            size="lg" 
-                            src={tenant.branding?.logo_full} 
-                            height={tenant.branding?.logo_height || 50} 
-                        />
-                    </a>
-                    {!tenant.branding?.logo_full && (
+        <SiteThemeProvider theme={tenant.branding?.site_theme}>
+            <div className="min-h-screen bg-background">
+                <TrackPageView tenantId={tenant.id} />
+                <div className="max-w-[1600px] mx-auto px-4 py-8">
+                    <div className="mb-12 flex flex-col items-start">
                         <a href={`/site/${slug}`}>
-                            <h1 className="text-4xl font-bold text-foreground mt-2">{tenant.name}</h1>
+                            <Logo 
+                                size="lg" 
+                                src={tenant.branding?.logo_full} 
+                                height={tenant.branding?.logo_height || 50} 
+                            />
                         </a>
-                    )}
-                </div>
+                        {!tenant.branding?.logo_full && (
+                            <a href={`/site/${slug}`}>
+                                <h1 className="text-4xl font-bold text-foreground mt-2">{tenant.name}</h1>
+                            </a>
+                        )}
+                    </div>
 
-                <SiteSearchClient
-                    properties={properties}
-                    tenantName={tenant.name}
-                    tenantSlug={tenant.slug}
-                    whatsappNumber={whatsappNumber}
-                    branding={tenant.branding}
-                />
+                    <SiteSearchClient
+                        properties={properties}
+                        tenantName={tenant.name}
+                        tenantSlug={tenant.slug}
+                        whatsappNumber={whatsappNumber}
+                        branding={tenant.branding}
+                    />
+                </div>
             </div>
-        </div>
+        </SiteThemeProvider>
     );
 }
