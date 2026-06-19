@@ -51,6 +51,39 @@ export async function processLeadInbound(data: LeadCreateData) {
 
     if (contactError) throw contactError;
 
+    // Buscar a foto de perfil no WhatsApp de forma assíncrona (não-bloqueante)
+    if (contact && contact.id) {
+        (async () => {
+            try {
+                // 1. Buscar a instância conectada do WhatsApp do tenant
+                const { data: instance } = await supabase
+                    .from('whatsapp_instances')
+                    .select('instance_name')
+                    .eq('tenant_id', tenant_id)
+                    .limit(1)
+                    .maybeSingle();
+
+                if (instance?.instance_name) {
+                    // 2. Consultar o profile no WhatsApp
+                    const cleanPhone = phone.replace(/\D/g, '');
+                    const fullPhone = cleanPhone.startsWith('55') ? cleanPhone : `55${cleanPhone}`;
+                    const profile = await evolutionService.fetchProfile(instance.instance_name, fullPhone);
+                    const avatarUrl = profile?.picture || profile?.profilePictureUrl || profile?.profileUrl || null;
+
+                    if (avatarUrl) {
+                        // 3. Atualizar no banco
+                        await supabase
+                            .from('contacts')
+                            .update({ avatar_url: avatarUrl })
+                            .eq('id', contact.id);
+                    }
+                }
+            } catch (err) {
+                console.error('[lead-service] Erro ao sincronizar foto de perfil do WhatsApp:', err);
+            }
+        })();
+    }
+
     // 2. Verificar se já existe lead ativo para este contato (evitar duplicados)
     const { data: existingLead } = await supabase
         .from('leads')

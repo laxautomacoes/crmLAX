@@ -363,6 +363,7 @@ export type Database = {
           address_state: string | null
           address_street: string | null
           address_zip_code: string | null
+          avatar_url: string | null
           birth_date: string | null
           contact_type: string[] | null
           cpf: string | null
@@ -395,6 +396,7 @@ export type Database = {
           address_state?: string | null
           address_street?: string | null
           address_zip_code?: string | null
+          avatar_url?: string | null
           birth_date?: string | null
           contact_type?: string[] | null
           cpf?: string | null
@@ -427,6 +429,7 @@ export type Database = {
           address_state?: string | null
           address_street?: string | null
           address_zip_code?: string | null
+          avatar_url?: string | null
           birth_date?: string | null
           contact_type?: string[] | null
           cpf?: string | null

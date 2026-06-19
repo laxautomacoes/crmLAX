@@ -10,6 +10,7 @@ interface PropertyDetailsAddress {
     cidade?: string
     rua?: string
     numero?: string
+    estado?: string
 }
 
 interface PropertyDetails {
@@ -49,7 +50,10 @@ interface SendConfig {
     location: 'exact' | 'approximate' | 'none';
     showBedrooms: boolean;
     showSuites: boolean;
-    showArea: boolean;
+    showAreaPrivativa: boolean;
+    showAreaTotal: boolean;
+    showVagas: boolean;
+    showHobbyBox: boolean;
     showType: boolean;
     showAmenities: boolean;
     showSacada: boolean;
@@ -113,20 +117,21 @@ export async function generatePropertyPDF(params: {
     const margin = 40;
     const contentWidth = 595 - (margin * 2); // 515 pt
     let currentY = 50;
+    let isFirstSection = true;
 
     // Helper: Header for the first page
     function drawFirstPageHeader() {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(10);
+        doc.setFontSize(14);
         doc.setTextColor('#404F4F');
-        doc.text(tenantName.toUpperCase(), margin, currentY);
+        doc.text(tenantName.toUpperCase(), 595 - margin, currentY, { align: 'right' });
         
-        currentY += 8;
-        doc.setDrawColor('#FFE600');
-        doc.setLineWidth(2);
+        currentY += 24;
+        doc.setDrawColor('#404F4F');
+        doc.setLineWidth(0.5);
         doc.line(margin, currentY, 595 - margin, currentY);
         
-        currentY += 25;
+        currentY += 50;
     }
 
     // Helper: Add a new page
@@ -137,32 +142,40 @@ export async function generatePropertyPDF(params: {
 
     // Helper: Print a section separator line
     function printSectionHeader(title: string) {
-        if (currentY + 35 > 790) {
+        if (!isFirstSection) {
+            if (currentY + 50 > 790) {
+                addNewPage();
+            } else {
+                doc.setDrawColor('#404F4F'); // Mesma cor do separador do cabeçalho
+                doc.setLineWidth(0.5); // Mesma espessura fina (0.5)
+                doc.line(margin, currentY, 595 - margin, currentY); // Desenha a linha exatamente em currentY
+                currentY += 20; // Espaço após a linha antes do título (exatamente 20pt)
+            }
+        } else {
+            isFirstSection = false;
+        }
+
+        if (currentY + 38 > 790) {
             addNewPage();
         }
         
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(9);
+        doc.setFontSize(18);
         doc.setTextColor('#404F4F');
         
-        const textY = currentY + 8;
+        const textY = currentY + 14;
         doc.text(title.toUpperCase(), margin, textY);
         
-        const textWidth = doc.getTextWidth(title.toUpperCase());
-        doc.setDrawColor('#FFE600');
-        doc.setLineWidth(1.5);
-        doc.line(margin + textWidth + 10, textY - 3, 595 - margin, textY - 3);
-        
-        currentY += 22;
+        currentY += 40;
     }
 
     // Helper: Print a bullet point
     function printBullet(text: string) {
-        if (currentY + 16 > 790) {
+        if (currentY + 32 > 790) {
             addNewPage();
         }
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
+        doc.setFontSize(18);
         doc.setTextColor('#404F4F');
         
         doc.text('•', margin + 5, currentY);
@@ -173,30 +186,30 @@ export async function generatePropertyPDF(params: {
         
         splitText.forEach((line: string, index: number) => {
             if (index > 0) {
-                if (currentY + 14 > 790) {
+                if (currentY + 24 > 790) {
                     addNewPage();
                 }
                 doc.text(line, margin + 15, currentY);
             } else {
                 doc.text(line, margin + 15, currentY);
             }
-            currentY += 14;
+            currentY += 24;
         });
     }
 
     // Helper: Print description paragraph
     function printDescription(text: string) {
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(10);
+        doc.setFontSize(18);
         doc.setTextColor('#404F4F');
         
         const splitDescription = doc.splitTextToSize(text, contentWidth);
         splitDescription.forEach((line: string) => {
-            if (currentY + 14 > 790) {
+            if (currentY + 24 > 790) {
                 addNewPage();
             }
             doc.text(line, margin, currentY);
-            currentY += 14;
+            currentY += 24;
         });
     }
 
@@ -206,16 +219,16 @@ export async function generatePropertyPDF(params: {
     // 1. Title of the Property
     if (config.title) {
         doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
+        doc.setFontSize(34);
         doc.setTextColor('#404F4F');
         
         const splitTitle = doc.splitTextToSize(property.title, contentWidth);
         splitTitle.forEach((line: string) => {
-            if (currentY + 22 > 790) {
+            if (currentY + 40 > 790) {
                 addNewPage();
             }
             doc.text(line, margin, currentY);
-            currentY += 22;
+            currentY += 40;
         });
         currentY += 5;
     }
@@ -226,25 +239,47 @@ export async function generatePropertyPDF(params: {
         const cidade = property.details?.endereco?.cidade || '';
         const rua = property.details?.endereco?.rua || '';
         const numero = property.details?.endereco?.numero || '';
+        const estado = property.details?.endereco?.estado || '';
 
         let addressText = '';
         if (config.location === 'exact' && rua) {
-            addressText = `${rua}, ${numero} - ${bairro}, ${cidade}`;
+            const ruaE_numero = numero?.trim() ? `${rua}, ${numero}` : rua;
+            const parts = [ruaE_numero, bairro, cidade].filter(Boolean);
+            addressText = parts.join(' - ') + (estado ? `/${estado}` : '');
         } else if (bairro && cidade) {
-            addressText = `${bairro} - ${cidade}`;
+            addressText = `${bairro} - ${cidade}${estado ? `/${estado}` : ''}`;
         } else {
-            addressText = bairro || cidade || '';
+            const parts = [bairro, cidade].filter(Boolean);
+            addressText = parts.join(' - ') + (estado ? `/${estado}` : '');
         }
 
         if (addressText) {
-            if (currentY + 16 > 790) {
+            const mapsUrl = `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(addressText)}`;
+            
+            // Imprimir Local
+            printBullet(`Local: ${addressText}`);
+            
+            // Imprimir Link clicável
+            if (currentY + 30 > 790) {
                 addNewPage();
             }
             doc.setFont('helvetica', 'normal');
-            doc.setFontSize(10);
-            doc.setTextColor('#6B7280');
-            doc.text(addressText, margin, currentY);
-            currentY += 20;
+            doc.setFontSize(18);
+            doc.setTextColor('#404F4F');
+            doc.text('• ', margin + 5, currentY);
+            
+            const linkX = margin + 5 + doc.getTextWidth('• ');
+            doc.setTextColor('#3B82F6'); // azul do link
+            doc.textWithLink('Ver no mapa', linkX, currentY, { url: mapsUrl });
+            
+            // Desenhar sublinhado azul para indicar que é link clicável
+            doc.setDrawColor('#3B82F6');
+            doc.setLineWidth(0.5);
+            doc.line(linkX, currentY + 2, linkX + doc.getTextWidth('Ver no mapa'), currentY + 2);
+            
+            doc.setTextColor('#404F4F'); // restaura cor padrão
+            currentY += 24;
+            isFirstSection = false;
         }
     }
 
@@ -262,7 +297,7 @@ export async function generatePropertyPDF(params: {
         printSectionHeader('Valores');
         
         if (hasPrice) {
-            printBullet(`Valor do Imóvel: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}`);
+            printBullet(`Imóvel: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}`);
         }
         if (hasCondo) {
             const condoNum = parseFloat(String(property.details?.valor_condominio));
@@ -276,66 +311,88 @@ export async function generatePropertyPDF(params: {
                 printBullet(`IPTU: R$ ${new Intl.NumberFormat('pt-BR').format(iptuNum)}`);
             }
         }
-        currentY += 10;
     }
 
     // 4. Informações
     const dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'));
     const suites = parseInt(String(property.details?.suites || '0'));
+    const banheiros = parseInt(String(property.details?.banheiros || '0'));
+    const vegasVal = parseInt(String(property.details?.vagas || '0'));
+    const posicaoSolar = property.details?.posicao_solar || property.details?.posicao || property.details?.solar || '';
     
     const showBedrooms = config.showBedrooms && dorms > 0;
     const showSuites = config.showSuites && suites > 0;
-    const showArea = config.showArea && property.details?.area_privativa;
-    const showSacada = config.showSacada && (property.details?.has_sacada_com_churrasqueira || property.details?.has_sacada_sem_churrasqueira);
-    const showEscritorio = config.showEscritorio && property.details?.has_escritorio;
-    const showDependencia = config.showDependencia && property.details?.has_dependencia_empregada;
+    const showAreaPrivativa = config.showAreaPrivativa;
+    const showAreaTotal = config.showAreaTotal;
+    const showVagas = config.showVagas;
+    const showHobbyBox = config.showHobbyBox;
+    const showSacada = config.showSacada;
+    const showEscritorio = config.showEscritorio;
+    const showDependencia = config.showDependencia;
     const showObservations = config.showObservations && property.details?.obs_dormitorios;
-    const vegasVal = parseInt(String(property.details?.vagas || '0'));
 
-    if (showBedrooms || showSuites || showArea || showSacada || showEscritorio || showDependencia || showObservations || vegasVal > 0) {
+    const hasSacadaChurras = property.details?.has_sacada_com_churrasqueira;
+    const hasSacadaSem = property.details?.has_sacada_sem_churrasqueira;
+    const hasLavabo = property.details?.has_lavabo;
+    const hasEscritorio = property.details?.has_escritorio;
+    const hasDependencia = property.details?.has_dependencia_empregada;
+    const hobbyBox = property.details?.hobby_box;
+    const hobbyBoxNum = property.details?.hobby_box_numeracao;
+    const areaPrivativa = property.details?.area_privativa;
+    const areaTotal = property.details?.area_total;
+
+    // Condição para exibir a seção
+    const hasAnyInfo = showBedrooms || showSuites || banheiros > 0 || posicaoSolar ||
+        (showSacada && (hasSacadaChurras || hasSacadaSem)) ||
+        hasLavabo || (showEscritorio && hasEscritorio) || (showDependencia && hasDependencia) ||
+        showObservations || (showVagas && vegasVal > 0) || (showHobbyBox && (hobbyBox || hobbyBoxNum)) ||
+        (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal);
+
+    if (hasAnyInfo) {
         printSectionHeader('Informações');
 
-        // Dormitórios e Suítes
-        if (showBedrooms || showSuites) {
-            if (dorms > 0 && dorms === suites) {
-                printBullet(`${suites} suíte${suites > 1 ? 's' : ''}`);
-            } else if (dorms > 0 && suites > 0) {
-                printBullet(`${dorms} dormitório${dorms > 1 ? 's' : ''} (${suites} suíte${suites > 1 ? 's' : ''})`);
-            } else if (dorms > 0) {
-                printBullet(`${dorms} dormitório${dorms > 1 ? 's' : ''}`);
-            } else if (suites > 0) {
-                printBullet(`${suites} suíte${suites > 1 ? 's' : ''}`);
-            }
+        // Dormitórios
+        if (showBedrooms) {
+            printBullet(`Dormitórios: ${dorms}`);
         }
 
-        // Área privativa
-        if (showArea) {
-            printBullet(`Área privativa: ${property.details?.area_privativa} m²`);
+        // Suítes
+        if (showSuites) {
+            printBullet(`Suítes: ${suites}`);
         }
 
-        // Vagas
-        if (vegasVal > 0) {
-            printBullet(`${vegasVal} vaga${vegasVal > 1 ? 's' : ''} de garagem`);
+        // Banheiros
+        if (banheiros > 0) {
+            printBullet(`Banheiros: ${banheiros}`);
         }
 
-        // Sacada
+        // Posição solar
+        if (posicaoSolar) {
+            printBullet(`Posição solar: ${posicaoSolar}`);
+        }
+
+        // Sacada (Somente se tiver o check)
         if (showSacada) {
-            if (property.details?.has_sacada_com_churrasqueira) {
-                printBullet('Sacada com churrasqueira');
-            } else {
-                printBullet('Sacada');
+            if (hasSacadaChurras) {
+                printBullet('Sacada com churrasqueira: Sim');
+            } else if (hasSacadaSem) {
+                printBullet('Sacada: Sim');
             }
         }
 
-        // Lavabo, Escritório, Dependência
-        if (property.details?.has_lavabo) {
-            printBullet('Lavabo');
+        // Lavabo (Somente se tiver o check)
+        if (hasLavabo) {
+            printBullet('Lavabo: Sim');
         }
-        if (showEscritorio) {
-            printBullet('Escritório');
+
+        // Escritório (Somente se tiver o check)
+        if (showEscritorio && hasEscritorio) {
+            printBullet('Escritório: Sim');
         }
-        if (showDependencia) {
-            printBullet('Dependência de empregada');
+
+        // Dependência de empregada (Somente se tiver o check)
+        if (showDependencia && hasDependencia) {
+            printBullet('Dependência de empregada: Sim');
         }
 
         // Observações
@@ -343,7 +400,29 @@ export async function generatePropertyPDF(params: {
             printBullet(`Observações: ${property.details?.obs_dormitorios}`);
         }
 
-        currentY += 10;
+        // ORDEM FINAL: Vagas, Hobby Box, Área Privativa, Área Total
+        
+        // Vagas
+        if (showVagas && vegasVal > 0) {
+            const descVagas = property.details?.vagas_numeracao ? `Vagas: ${vegasVal} (${property.details.vagas_numeracao})` : `Vagas: ${vegasVal}`;
+            printBullet(descVagas);
+        }
+
+        // Hobby Box
+        if (showHobbyBox && (hobbyBox || hobbyBoxNum)) {
+            const descHB = hobbyBoxNum ? `Hobby Box: ${hobbyBox || 'Sim'} (${hobbyBoxNum})` : `Hobby Box: ${hobbyBox || 'Sim'}`;
+            printBullet(descHB);
+        }
+
+        // Área Privativa
+        if (showAreaPrivativa && areaPrivativa) {
+            printBullet(`Área privativa: ${areaPrivativa} m²`);
+        }
+
+        // Área Total
+        if (showAreaTotal && areaTotal) {
+            printBullet(`Área total: ${areaTotal} m²`);
+        }
     }
 
     // 5. Área comum | Lazer
@@ -372,7 +451,6 @@ export async function generatePropertyPDF(params: {
             activeAmenities.forEach(amenity => {
                 printBullet(amenity);
             });
-            currentY += 10;
         }
     }
 
@@ -388,7 +466,6 @@ export async function generatePropertyPDF(params: {
             .trim();
             
         printDescription(cleanDesc);
-        currentY += 10;
     }
 
     // 7. Responsável
@@ -398,9 +475,31 @@ export async function generatePropertyPDF(params: {
             printSectionHeader('Responsável');
             printBullet(`Corretor: ${broker.full_name}`);
             if (broker.whatsapp_number) {
-                printBullet(`WhatsApp: ${broker.whatsapp_number}`);
+                const cleanPhone = broker.whatsapp_number.replace(/\D/g, '');
+                const waUrl = `https://wa.me/55${cleanPhone}`;
+                
+                if (currentY + 30 > 790) {
+                    addNewPage();
+                }
+                doc.setFont('helvetica', 'normal');
+                doc.setFontSize(18);
+                doc.setTextColor('#404F4F');
+                doc.text('• WhatsApp: ', margin + 5, currentY);
+                
+                const labelWidth = doc.getTextWidth('• WhatsApp: ');
+                const numberX = margin + 5 + labelWidth;
+                
+                doc.setTextColor('#3B82F6'); // Cor de link
+                doc.textWithLink(broker.whatsapp_number, numberX, currentY, { url: waUrl });
+                
+                // Desenhar sublinhado azul discreto
+                doc.setDrawColor('#3B82F6');
+                doc.setLineWidth(0.5);
+                doc.line(numberX, currentY + 2, numberX + doc.getTextWidth(broker.whatsapp_number), currentY + 2);
+                
+                doc.setTextColor('#404F4F'); // restaura a cor
+                currentY += 24;
             }
-            currentY += 10;
         }
     }
 
@@ -423,7 +522,6 @@ export async function generatePropertyPDF(params: {
             if (propEmail) {
                 printBullet(`E-mail: ${propEmail}`);
             }
-            currentY += 10;
         }
     }
 
@@ -471,13 +569,6 @@ export async function generatePropertyPDF(params: {
                 // Center vertically inside its allocated slot if it is shorter than maxBoxH
                 const verticalOffset = (maxBoxH - fit.height) / 2;
                 
-                // Simular bordas arredondadas e sombra desenhando um card sutil
-                doc.setDrawColor('#E5E7EB');
-                doc.setFillColor('#F9FAFA');
-                doc.setLineWidth(1);
-                // Draw card container
-                doc.roundedRect((595 - maxBoxW) / 2 - 5, imageY + verticalOffset - 5, maxBoxW + 10, fit.height + 10, 8, 8, 'FD');
-
                 // Draw the actual image
                 doc.addImage(
                     base64Data,
@@ -492,17 +583,12 @@ export async function generatePropertyPDF(params: {
 
             } catch (e) {
                 console.error(`Error embedding image index ${i}:`, e);
-                // Draw a placeholder card indicating error loading image
+                // Indicar erro ao carregar imagem sem desenhar card
                 if (i % 2 === 0) {
                     addNewPage();
                 }
                 const imageY = (i % 2 === 0) ? 70 : 430;
-                const maxBoxW = 480;
                 const maxBoxH = 320;
-                
-                doc.setDrawColor('#E5E7EB');
-                doc.setFillColor('#F9FAFA');
-                doc.roundedRect((595 - maxBoxW) / 2, imageY, maxBoxW, maxBoxH, 8, 8, 'FD');
                 
                 doc.setFont('helvetica', 'italic');
                 doc.setFontSize(10);
@@ -524,7 +610,7 @@ export async function generatePropertyPDF(params: {
         
         // Footer texts
         doc.setFont('helvetica', 'normal');
-        doc.setFontSize(8);
+        doc.setFontSize(12);
         doc.setTextColor('#8E9A9A');
         
         // Left footer
@@ -537,6 +623,12 @@ export async function generatePropertyPDF(params: {
     }
 
     // Save document
-    const cleanSlug = property.slug ? property.slug : 'imovel';
-    doc.save(`ficha-${cleanSlug}.pdf`);
+    const rawTitle = property.title || 'Imóvel';
+    const cleanedTitle = rawTitle.replace(/[-_]+/g, ' ');
+    const capitalizedTitle = cleanedTitle
+        .split(/\s+/)
+        .map(word => word.charAt(0).toUpperCase() + word.slice(1).toLowerCase())
+        .join(' ');
+    
+    doc.save(`Imóvel ${capitalizedTitle}.pdf`);
 }

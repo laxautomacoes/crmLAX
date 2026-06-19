@@ -203,7 +203,6 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
                 tenantId={tenantId}
                 stages={stages}
                 onSuccess={handleSuccess}
-                hasAIAccess={false}
             />
         </div>
     )

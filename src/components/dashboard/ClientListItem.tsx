@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Phone, Mail, MessageSquare, Edit, Trash2, Archive, MoreVertical } from 'lucide-react'
+import { Phone, Mail, MessageSquare, Edit, Trash2, Archive, MoreVertical, User } from 'lucide-react'
 import { formatPhone } from '@/lib/utils/phone'
 import { LeadTemperatureBadge } from '@/components/dashboard/leads/LeadTemperatureBadge'
 
@@ -27,7 +27,16 @@ export function ClientListItem({
     return (
         <tr className="hover:bg-muted/50 transition-colors cursor-pointer group" onClick={onClickClient}>
             <td className="px-4 py-5 text-center">
-                <span className="font-bold text-foreground">{client.name}</span>
+                <div className="flex items-center justify-center gap-3">
+                    <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10">
+                        {client.avatar_url ? (
+                            <img src={client.avatar_url} alt={client.name} className="w-full h-full object-cover" />
+                        ) : (
+                            <User size={16} />
+                        )}
+                    </div>
+                    <span className="font-bold text-foreground">{client.name}</span>
+                </div>
             </td>
             <td className="px-4 py-5">
                 <div className="flex flex-col items-center justify-center gap-1 text-sm whitespace-nowrap">

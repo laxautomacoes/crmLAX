@@ -287,11 +287,14 @@ export function getPropertyEmail(property: any, propertyUrl: string, config: any
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
                     ${(config?.showBedrooms !== false && (details.dormitorios || details.quartos)) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.dormitorios || details.quartos}</strong> Dormitórios</p>` : ''}
                     ${(config?.showSuites !== false && details.suites) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.suites}</strong> Suítes</p>` : ''}
-                    ${(config?.showArea !== false && details.area_privativa) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.area_privativa}m²</strong> privativos</p>` : ''}
                     ${(config?.showSacada !== false && details.has_sacada_com_churrasqueira) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Sacada com churrasqueira</p>` : ''}
-                    ${(config?.showSacada !== false && details.has_sacada_sem_churrasqueira) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Sacada</p>` : ''}
+                    ${(config?.showSacada !== false && !details.has_sacada_com_churrasqueira && details.has_sacada_sem_churrasqueira) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Sacada</p>` : ''}
                     ${(config?.showEscritorio !== false && details.has_escritorio) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Escritório</p>` : ''}
                     ${(config?.showDependencia !== false && details.has_dependencia_empregada) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Dependência de empregada</p>` : ''}
+                    ${(config?.showVagas !== false && details.vagas && parseInt(String(details.vagas)) > 0) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.vagas}</strong> Vaga${parseInt(String(details.vagas)) > 1 ? 's' : ''}</p>` : ''}
+                    ${(config?.showHobbyBox !== false && (details.hobby_box || details.hobby_box_numeracao)) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Hobby Box: ${details.hobby_box_numeracao ? `${details.hobby_box || 'Sim'} (${details.hobby_box_numeracao})` : (details.hobby_box || 'Sim')}</p>` : ''}
+                    ${(config?.showAreaPrivativa !== false && config?.showArea !== false && details.area_privativa) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.area_privativa}m²</strong> privativos</p>` : ''}
+                    ${(config?.showAreaTotal !== false && config?.showArea !== false && details.area_total) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.area_total}m²</strong> totais</p>` : ''}
                     ${(config?.showObservations !== false && details.obs_dormitorios) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Obs: <strong>${details.obs_dormitorios}</strong></p>` : ''}
                 </div>
             </div>

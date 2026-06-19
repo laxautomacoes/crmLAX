@@ -17,6 +17,7 @@ interface ContactRecord {
     phone?: string | null
     email?: string | null
     tags?: string[] | null
+    avatar_url?: string | null
 }
 
 interface AssignedProfileRecord {
@@ -79,7 +80,7 @@ export async function getPipelineData(tenantId: string) {
         .select(`
             *,
             contacts (
-                name, phone, email, tags
+                name, phone, email, tags, avatar_url
             ),
             profiles:assigned_to (
                 full_name
@@ -104,6 +105,7 @@ export async function getPipelineData(tenantId: string) {
         name: lead.contacts?.name || 'Sem nome',
         phone: lead.contacts?.phone || '',
         email: lead.contacts?.email || '',
+        avatar_url: lead.contacts?.avatar_url || null,
         tags: lead.contacts?.tags || [],
         status: lead.stage_id,
         notes: lead.notes,

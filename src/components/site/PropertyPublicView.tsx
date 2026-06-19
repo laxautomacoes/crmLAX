@@ -27,6 +27,10 @@ interface PropertyPublicViewProps {
         showBedrooms: boolean;
         showSuites: boolean;
         showArea: boolean;
+        showAreaPrivativa?: boolean;
+        showAreaTotal?: boolean;
+        showVagas?: boolean;
+        showHobbyBox?: boolean;
         showType: boolean;
         showSacada?: boolean;
         showEscritorio?: boolean;
@@ -340,9 +344,17 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                             <li>Suítes: {details.suites}</li>
                         )}
                         <li>Banheiros: {details.banheiros || 0}</li>
-                        <li>Vagas: {details.vagas || 0}</li>
-                        {config?.showArea !== false && (
-                            <li>Área privativa: {details.area_privativa || details.area_util || details.area_total || 0} m²</li>
+                        {config?.showVagas !== false && details.vagas > 0 && (
+                            <li>Vagas: {details.vagas}</li>
+                        )}
+                        {config?.showHobbyBox !== false && (details.hobby_box || details.hobby_box_numeracao) && (
+                            <li>Hobby Box: {details.hobby_box_numeracao ? `${details.hobby_box || 'Sim'} (${details.hobby_box_numeracao})` : (details.hobby_box || 'Sim')}</li>
+                        )}
+                        {config?.showAreaPrivativa !== false && config?.showArea !== false && details.area_privativa > 0 && (
+                            <li>Área privativa: {details.area_privativa} m²</li>
+                        )}
+                        {config?.showAreaTotal !== false && config?.showArea !== false && details.area_total > 0 && (
+                            <li>Área total: {details.area_total} m²</li>
                         )}
                         {config?.showSacada !== false && details.has_sacada_com_churrasqueira && (
                             <li>Sacada c/ churr.</li>

@@ -15,4 +15,5 @@ export {
     createLeadCampaign
 } from './distribution'
 export { createLeadsBulk } from './bulk-import'
+export { syncContactAvatar, syncAllContactAvatars } from './sync-avatars'
 

@@ -44,6 +44,37 @@ export async function createLead(tenantId: string, data: unknown) {
 
     if (contactError) return { success: false, error: contactError.message }
 
+    // Buscar foto de perfil do WhatsApp em background
+    if (contact && contact.id) {
+        (async () => {
+            try {
+                const { evolutionService } = await import('@/lib/evolution');
+                const { data: instance } = await supabase
+                    .from('whatsapp_instances')
+                    .select('instance_name')
+                    .eq('tenant_id', tenantId)
+                    .limit(1)
+                    .maybeSingle();
+
+                if (instance?.instance_name) {
+                    const cleanPhoneVal = cleanPhone(input.phone);
+                    const fullPhone = cleanPhoneVal.startsWith('55') ? cleanPhoneVal : `55${cleanPhoneVal}`;
+                    const profile = await evolutionService.fetchProfile(instance.instance_name, fullPhone);
+                    const avatarUrl = profile?.picture || profile?.profilePictureUrl || profile?.profileUrl || null;
+
+                    if (avatarUrl) {
+                        await supabase
+                            .from('contacts')
+                            .update({ avatar_url: avatarUrl })
+                            .eq('id', contact.id);
+                    }
+                }
+            } catch (err) {
+                console.error('[create-lead] Erro ao sincronizar foto de perfil do WhatsApp:', err);
+            }
+        })();
+    }
+
     // 2. Distribuição automática (Round Robin)
     const { data: { user } } = await supabase.auth.getUser()
     let assignedTo = input.assigned_to

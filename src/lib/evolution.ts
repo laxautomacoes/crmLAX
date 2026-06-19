@@ -199,5 +199,12 @@ export const evolutionService = {
                 convertToMp4: false
             }),
         });
+    },
+
+    async fetchProfile(instanceName: string, number: string): Promise<{ profilePictureUrl?: string; profileUrl?: string; [key: string]: any }> {
+        return evolutionFetch(`/chat/fetchProfile/${instanceName}`, {
+            method: 'POST',
+            body: JSON.stringify({ number }),
+        });
     }
 };

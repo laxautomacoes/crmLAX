@@ -69,36 +69,8 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             onClick={() => onView(prop)}
             className="hover:bg-muted/30 transition-colors animate-in fade-in slide-in-from-left-2 duration-300 cursor-pointer"
         >
-            <td className="px-6 py-4">
+            <td className="px-6 py-4 min-w-[250px] md:min-w-0">
                 <div className="flex items-center gap-4">
-                    <div className="w-24 h-18 rounded-lg bg-muted flex-shrink-0 overflow-hidden relative group">
-                        {prop.images?.[0] ? (
-                            <img src={prop.images[0]} alt={prop.title} className="w-full h-full object-cover" />
-                        ) : (
-                            <div className="w-full h-full flex items-center justify-center text-foreground/50">
-                                <Home size={24} />
-                            </div>
-                        )}
-                        
-                        {prop.status === 'Pending' && (
-                            <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
-                                <span className="px-1.5 py-0.5 bg-secondary text-secondary-foreground rounded-full text-[8px] font-black uppercase tracking-tighter shadow-lg">{translateStatus(prop.status)}</span>
-                            </div>
-                        )}
-
-                        <div className="absolute bottom-0 right-0 flex gap-0.5 p-0.5 bg-black/50 rounded-tl-md z-10">
-                            {prop.videos?.length > 0 && (
-                                <div title={`${prop.videos.length} vídeo(s)`}>
-                                    <Video size={10} className="text-foreground" />
-                                </div>
-                            )}
-                            {prop.documents?.length > 0 && (
-                                <div title={`${prop.documents.length} documento(s)`}>
-                                    <FileText size={10} className="text-foreground" />
-                                </div>
-                            )}
-                        </div>
-                    </div>
                     <div className="text-left max-w-md">
                         <div className="font-bold text-foreground text-sm line-clamp-1">
                             {prop.title ? prop.title.replace(/\s*-\s*Apto\s+.*/i, '') : ''}

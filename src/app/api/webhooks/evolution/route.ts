@@ -307,12 +307,31 @@ export async function POST(req: Request) {
     // Since phone is in contacts, we need to join or filter
     const { data: contact } = await supabase
         .from('contacts')
-        .select('id')
+        .select('id, avatar_url')
         .eq('tenant_id', instance.tenant_id!)
         .ilike('phone', `%${phone.slice(-8)}%`) // Match last 8 digits for safety
         .maybeSingle();
 
     if (!contact) return NextResponse.json({ received: true });
+
+    // Sincronizar foto de perfil do WhatsApp em background para contatos antigos que não têm avatar
+    if (contact && !contact.avatar_url) {
+        (async () => {
+            try {
+                const profile = await evolutionService.fetchProfile(instanceName, phone);
+                const avatarUrl = profile?.picture || profile?.profilePictureUrl || profile?.profileUrl || null;
+
+                if (avatarUrl) {
+                    await supabase
+                        .from('contacts')
+                        .update({ avatar_url: avatarUrl })
+                        .eq('id', contact.id);
+                }
+            } catch (err) {
+                console.error('[Evolution Webhook] Erro ao sincronizar foto de perfil para contato existente:', err);
+            }
+        })();
+    }
 
     const { data: lead } = await supabase
         .from('leads')

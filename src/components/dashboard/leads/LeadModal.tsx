@@ -287,7 +287,16 @@ export function LeadModal({
             isOpen={isOpen}
             onClose={() => { setCreationMethod(null); onClose() }}
             title={
-                <div className="flex items-center gap-4">
+                <div className="flex items-center gap-3">
+                    {editingLead && (
+                        <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10">
+                            {editingLead.avatar_url ? (
+                                <img src={editingLead.avatar_url} alt={leadData.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <User size={16} />
+                            )}
+                        </div>
+                    )}
                     <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
                         {editingLead ? "Editar Lead" : "Novo Lead"}
                     </h3>
@@ -385,7 +394,16 @@ export function LeadModal({
                     <div className="space-y-4">
                         <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4">
+                            <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 items-end">
+                                {editingLead && (
+                                    <div className="w-11 h-11 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10 mb-1">
+                                        {editingLead.avatar_url ? (
+                                            <img src={editingLead.avatar_url} alt={leadData.name} className="w-full h-full object-cover" />
+                                        ) : (
+                                            <User size={20} />
+                                        )}
+                                    </div>
+                                )}
                                 <div className="flex-1 md:flex-[2]">
                                     <FormInput
                                         label="Nome completo"

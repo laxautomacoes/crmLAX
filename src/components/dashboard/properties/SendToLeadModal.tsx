@@ -5,7 +5,7 @@ import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
 import { Search, Mail, MessageCircle, Loader2, User, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Video, FileText, MapPin, Info, Home, Download, Building2, UserCheck, DollarSign, Waves } from 'lucide-react'
-import { getPipelineData, createLead } from '@/app/_actions/leads'
+import { getPipelineData, createLead, syncContactAvatar } from '@/app/_actions/leads'
 import { sendPropertyEmail, logInteraction } from '@/app/_actions/messaging'
 import { getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
@@ -137,7 +137,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         location: 'exact' | 'approximate' | 'none';
         showBedrooms: boolean;
         showSuites: boolean;
-        showArea: boolean;
+        showAreaPrivativa: boolean;
+        showAreaTotal: boolean;
+        showVagas: boolean;
+        showHobbyBox: boolean;
         showType: boolean;
         showAmenities: boolean;
         showSacada: boolean;
@@ -158,7 +161,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         location: 'none',
         showBedrooms: false,
         showSuites: false,
-        showArea: false,
+        showAreaPrivativa: false,
+        showAreaTotal: false,
+        showVagas: false,
+        showHobbyBox: false,
         showType: false,
         showAmenities: false,
         showSacada: false,
@@ -225,6 +231,32 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const result = await getPipelineData(tenantId)
         if (result.success && result.data) {
             setLeads(result.data.leads)
+
+            // Sincronizar avatares em background para leads sem foto
+            const leadsWithoutAvatar = result.data.leads.filter(
+                (l: Lead) => !l.avatar_url && l.contact_id
+            )
+            if (leadsWithoutAvatar.length > 0) {
+                ;(async () => {
+                    for (const lead of leadsWithoutAvatar) {
+                        try {
+                            const res = await syncContactAvatar(lead.contact_id!, tenantId)
+                            if (res.success && res.avatar_url) {
+                                setLeads(prev => prev.map(l =>
+                                    l.id === lead.id ? { ...l, avatar_url: res.avatar_url } : l
+                                ))
+                                setSelectedLead(prev => 
+                                    prev && prev.id === lead.id 
+                                        ? { ...prev, avatar_url: res.avatar_url } 
+                                        : prev
+                                )
+                            }
+                        } catch {
+                            // silencioso
+                        }
+                    }
+                })()
+            }
         }
         setIsLoading(false)
     }
@@ -330,7 +362,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (config.location !== 'approximate') queryParams.set('cl', config.location === 'exact' ? 'e' : 'n')
         if (!config.showBedrooms) queryParams.set('cbr', '0')
         if (!config.showSuites) queryParams.set('cst', '0')
-        if (!config.showArea) queryParams.set('car', '0')
+        if (!config.showAreaPrivativa) queryParams.set('carp', '0')
+        if (!config.showAreaTotal) queryParams.set('cart', '0')
+        if (!config.showVagas) queryParams.set('cvag', '0')
+        if (!config.showHobbyBox) queryParams.set('chob', '0')
         if (!config.showType) queryParams.set('cty', '0')
         if (!config.showAmenities) queryParams.set('cam', '0')
         if (!config.showSacada) queryParams.set('csa', '0')
@@ -416,15 +451,28 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (config.showEscritorio && property.details?.has_escritorio) details.push('Escritório')
         if (config.showDependencia && property.details?.has_dependencia_empregada) details.push('Dependência de empregada')
         
+        // Vagas
+        const vagas = parseInt(String(property.details?.vagas || '0'))
+        if (config.showVagas && vagas > 0) {
+            details.push(`${vagas} vaga${vagas > 1 ? 's' : ''} de garagem`)
+        }
+
+        // Hobby Box
+        const hobbyBox = property.details?.hobby_box
+        const hobbyBoxNum = property.details?.hobby_box_numeracao
+        if (config.showHobbyBox && (hobbyBox || hobbyBoxNum)) {
+            const descHB = hobbyBoxNum ? `Hobby Box: ${hobbyBox || 'Sim'} (${hobbyBoxNum})` : `Hobby Box: ${hobbyBox || 'Sim'}`
+            details.push(descHB)
+        }
+        
         // Área privativa
-        if (config.showArea && property.details?.area_privativa) {
+        if (config.showAreaPrivativa && property.details?.area_privativa) {
             details.push(`Área privativa: ${property.details.area_privativa} m²`)
         }
         
-        // Vagas
-        const vagas = parseInt(String(property.details?.vagas || '0'))
-        if (vagas > 0) {
-            details.push(`${vagas} vaga${vagas > 1 ? 's' : ''} de garagem`)
+        // Área total
+        if (config.showAreaTotal && property.details?.area_total) {
+            details.push(`Área total: ${property.details.area_total} m²`)
         }
 
         // Observações
@@ -504,6 +552,116 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         } finally {
             setIsGeneratingPDF(false)
         }
+    }
+
+    const handleSelectAll = (section: 'valores' | 'images' | 'videos' | 'docs' | 'details') => {
+        if (section === 'valores') {
+            setConfig(prev => ({
+                ...prev,
+                price: true,
+                showCondo: true,
+                showIptu: true
+            }))
+        } else if (section === 'images') {
+            setConfig(prev => ({
+                ...prev,
+                selectedImages: property.images || []
+            }))
+        } else if (section === 'videos') {
+            setConfig(prev => ({
+                ...prev,
+                selectedVideos: property.videos || []
+            }))
+        } else if (section === 'docs') {
+            setConfig(prev => ({
+                ...prev,
+                selectedDocs: property.documents || []
+            }))
+        } else if (section === 'details') {
+            setConfig(prev => ({
+                ...prev,
+                showBedrooms: true,
+                showSuites: true,
+                showAreaPrivativa: true,
+                showAreaTotal: true,
+                showVagas: true,
+                showHobbyBox: true,
+                showSacada: true,
+                showEscritorio: true,
+                showDependencia: true,
+                showObservations: true
+            }))
+        }
+    }
+
+    const handleDeselectAll = (section: 'valores' | 'images' | 'videos' | 'docs' | 'details') => {
+        if (section === 'valores') {
+            setConfig(prev => ({
+                ...prev,
+                price: false,
+                showCondo: false,
+                showIptu: false
+            }))
+        } else if (section === 'images') {
+            setConfig(prev => ({
+                ...prev,
+                selectedImages: []
+            }))
+        } else if (section === 'videos') {
+            setConfig(prev => ({
+                ...prev,
+                selectedVideos: []
+            }))
+        } else if (section === 'docs') {
+            setConfig(prev => ({
+                ...prev,
+                selectedDocs: []
+            }))
+        } else if (section === 'details') {
+            setConfig(prev => ({
+                ...prev,
+                showBedrooms: false,
+                showSuites: false,
+                showAreaPrivativa: false,
+                showAreaTotal: false,
+                showVagas: false,
+                showHobbyBox: false,
+                showSacada: false,
+                showEscritorio: false,
+                showDependencia: false,
+                showObservations: false
+            }))
+        }
+    }
+
+    const hasSelectedItems = (section: 'valores' | 'images' | 'videos' | 'docs' | 'details'): boolean => {
+        if (section === 'valores') {
+            return !!(config.price || config.showCondo || config.showIptu)
+        }
+        if (section === 'images') {
+            return config.selectedImages.length > 0
+        }
+        if (section === 'videos') {
+            return config.selectedVideos.length > 0
+        }
+        if (section === 'docs') {
+            return config.selectedDocs.length > 0
+        }
+        if (section === 'details') {
+            return !!(
+                config.showBedrooms ||
+                config.showSuites ||
+                config.showAreaPrivativa ||
+                config.showAreaTotal ||
+                config.showVagas ||
+                config.showHobbyBox ||
+                config.showSacada ||
+                config.showEscritorio ||
+                config.showDependencia ||
+                config.showObservations
+            )
+        }
+        return false
     }
 
     const selectedImagesSet = useMemo(() => new Set(config.selectedImages), [config.selectedImages])
@@ -612,8 +770,16 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     onClick={() => setSelectedLead(lead)}
                                                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-foreground/5 transition-all text-left group cursor-pointer"
                                                 >
-                                                    <div className="w-10 h-10 rounded-full bg-muted flex items-center justify-center text-foreground group-hover:bg-foreground/10 transition-colors">
-                                                        <User size={20} />
+                                                    <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground group-hover:bg-foreground/10 transition-colors flex-shrink-0">
+                                                        {lead.avatar_url ? (
+                                                            <img 
+                                                                src={lead.avatar_url} 
+                                                                alt={lead.name} 
+                                                                className="w-full h-full object-cover" 
+                                                            />
+                                                        ) : (
+                                                            <User size={20} />
+                                                        )}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
                                                         <p className="font-bold text-foreground truncate">{lead.name}</p>
@@ -646,24 +812,32 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                     ) : (
                         <div className="space-y-6 animate-in fade-in slide-in-from-bottom-2 duration-300">
                             {/* Lead Header */}
-                            <div className="flex items-center gap-4 p-4 rounded-xl bg-[#FFE600]/10 border border-[#FFE600]/20">
-                                <div className="w-12 h-12 rounded-full bg-[#FFE600]/20 flex items-center justify-center text-[#FFE600]">
-                                    <User size={24} />
+                            <div className="flex items-center gap-4 p-4 rounded-xl bg-[#404F4F] text-white border border-[#404F4F]/10">
+                                <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center text-white flex-shrink-0">
+                                    {selectedLead.avatar_url ? (
+                                        <img 
+                                            src={selectedLead.avatar_url} 
+                                            alt={selectedLead.name} 
+                                            className="w-full h-full object-cover" 
+                                        />
+                                    ) : (
+                                        <User size={24} />
+                                    )}
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-xs font-bold text-foreground uppercase tracking-wider">Lead Selecionado</p>
-                                    <p className="text-lg font-bold text-foreground">{selectedLead.name}</p>
+                                    <p className="text-xs font-bold text-white/70 uppercase tracking-wider">Lead Selecionado</p>
+                                    <p className="text-lg font-bold text-white">{selectedLead.name}</p>
                                 </div>
                                 <button 
                                     onClick={() => setSelectedLead(null)}
-                                    className="text-sm font-bold text-foreground hover:underline"
+                                    className="text-sm font-bold text-white hover:text-white/80 hover:underline"
                                 >
                                     Alterar
                                 </button>
                             </div>
 
                             {/* Configuration Options */}
-                            <div className="space-y-0 rounded-xl overflow-hidden bg-card">
+                            <div className="space-y-0 rounded-xl overflow-hidden bg-card divide-y divide-border/30">
                                 {/* 1. Imóvel */}
                                 <div className="">
                                     <button 
@@ -732,7 +906,28 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             <DollarSign size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Valores</span>
                                         </div>
-                                        {expandedSections.valores ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        <div className="flex items-center gap-3">
+                                            {expandedSections.valores && (
+                                                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                    <button 
+                                                        onClick={() => handleSelectAll('valores')}
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                    >
+                                                        Selecionar todas
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeselectAll('valores')}
+                                                        className={hasSelectedItems('valores')
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                        }
+                                                    >
+                                                        Desmarcar todas
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {expandedSections.valores ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        </div>
                                     </button>
                                     {expandedSections.valores && (
                                         <div className="p-4 pt-0 space-y-3">
@@ -765,7 +960,28 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             <ImageIcon size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Imagens ({config.selectedImages.length})</span>
                                         </div>
-                                        {expandedSections.images ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        <div className="flex items-center gap-3">
+                                            {expandedSections.images && (property.images?.length ?? 0) > 1 && (
+                                                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                    <button 
+                                                        onClick={() => handleSelectAll('images')}
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                    >
+                                                        Selecionar todas
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeselectAll('images')}
+                                                        className={hasSelectedItems('images')
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                        }
+                                                    >
+                                                        Desmarcar todas
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {expandedSections.images ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        </div>
                                     </button>
                                     {expandedSections.images && (
                                         <div className="p-4 pt-0 space-y-3">
@@ -834,7 +1050,28 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             <Video size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Vídeos ({config.selectedVideos.length})</span>
                                         </div>
-                                        {expandedSections.videos ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        <div className="flex items-center gap-3">
+                                            {expandedSections.videos && (property.videos?.length ?? 0) > 1 && (
+                                                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                    <button 
+                                                        onClick={() => handleSelectAll('videos')}
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                    >
+                                                        Selecionar todas
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeselectAll('videos')}
+                                                        className={hasSelectedItems('videos')
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                        }
+                                                    >
+                                                        Desmarcar todas
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {expandedSections.videos ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        </div>
                                     </button>
                                     {expandedSections.videos && (
                                         <div className="p-4 pt-0 space-y-4">
@@ -847,7 +1084,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                             checked={selectedVideosSet.has(video)}
                                                             onChange={(e) => {
                                                                 const checked = e.target.checked
-                                                                const newVideos = checked
+                                                                 const newVideos = checked
                                                                     ? [...config.selectedVideos, video]
                                                                     : config.selectedVideos.filter((v: string) => v !== video)
                                                                 setConfig({...config, selectedVideos: newVideos})
@@ -872,7 +1109,28 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             <FileText size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Documentos ({config.selectedDocs.length})</span>
                                         </div>
-                                        {expandedSections.docs ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        <div className="flex items-center gap-3">
+                                            {expandedSections.docs && (property.documents?.length ?? 0) > 1 && (
+                                                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                    <button 
+                                                        onClick={() => handleSelectAll('docs')}
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                    >
+                                                        Selecionar todas
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeselectAll('docs')}
+                                                        className={hasSelectedItems('docs')
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                        }
+                                                    >
+                                                        Desmarcar todas
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {expandedSections.docs ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        </div>
                                     </button>
                                     {expandedSections.docs && (
                                         <div className="p-4 pt-0 space-y-4">
@@ -910,49 +1168,118 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             <Info size={18} className="text-foreground" />
                                             <span className="font-bold text-foreground">Informações</span>
                                         </div>
-                                        {expandedSections.details ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                                    </button>
-                                    {expandedSections.details && (
-                                        <div className="p-4 pt-0 space-y-3">
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <FormCheckbox 
-                                                    label="Dormitórios" 
-                                                    checked={config.showBedrooms} 
-                                                    onChange={(e) => setConfig({...config, showBedrooms: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Suítes" 
-                                                    checked={config.showSuites} 
-                                                    onChange={(e) => setConfig({...config, showSuites: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Áreas" 
-                                                    checked={config.showArea} 
-                                                    onChange={(e) => setConfig({...config, showArea: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Sacada" 
-                                                    checked={config.showSacada} 
-                                                    onChange={(e) => setConfig({...config, showSacada: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Escritório" 
-                                                    checked={config.showEscritorio} 
-                                                    onChange={(e) => setConfig({...config, showEscritorio: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Dependência" 
-                                                    checked={config.showDependencia} 
-                                                    onChange={(e) => setConfig({...config, showDependencia: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Observações" 
-                                                    checked={config.showObservations} 
-                                                    onChange={(e) => setConfig({...config, showObservations: e.target.checked})} 
-                                                />
-                                            </div>
+                                        <div className="flex items-center gap-3">
+                                            {expandedSections.details && (
+                                                <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
+                                                    <button 
+                                                        onClick={() => handleSelectAll('details')}
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                    >
+                                                        Selecionar todas
+                                                    </button>
+                                                    <button 
+                                                        onClick={() => handleDeselectAll('details')}
+                                                        className={hasSelectedItems('details')
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                        }
+                                                    >
+                                                        Desmarcar todas
+                                                    </button>
+                                                </div>
+                                            )}
+                                            {expandedSections.details ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                         </div>
-                                    )}
+                                    </button>
+                                    {expandedSections.details && (() => {
+                                        const dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'))
+                                        const suites = parseInt(String(property.details?.suites || '0'))
+                                        const sacada = !!(property.details?.has_sacada_com_churrasqueira || property.details?.has_sacada_sem_churrasqueira)
+                                        const escritorio = !!property.details?.has_escritorio
+                                        const dependencia = !!property.details?.has_dependencia_empregada
+                                        const vagas = parseInt(String(property.details?.vagas || '0')) > 0
+                                        const hobby = !!(property.details?.hobby_box || property.details?.hobby_box_numeracao)
+                                        const areaPrivativa = parseFloat(String(property.details?.area_privativa || '0')) > 0
+                                        const areaTotal = parseFloat(String(property.details?.area_total || '0')) > 0
+                                        const obs = !!property.details?.obs_dormitorios
+
+                                        return (
+                                            <div className="p-4 pt-0 space-y-3">
+                                                <div className="grid grid-cols-3 gap-3">
+                                                    {dorms > 0 && (
+                                                        <FormCheckbox 
+                                                            label="Dormitórios" 
+                                                            checked={config.showBedrooms} 
+                                                            onChange={(e) => setConfig({...config, showBedrooms: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                    {suites > 0 && (
+                                                        <FormCheckbox 
+                                                            label="Suítes" 
+                                                            checked={config.showSuites} 
+                                                            onChange={(e) => setConfig({...config, showSuites: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                    {sacada && (
+                                                        <FormCheckbox 
+                                                            label="Sacada" 
+                                                            checked={config.showSacada} 
+                                                            onChange={(e) => setConfig({...config, showSacada: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                    {escritorio && (
+                                                        <FormCheckbox 
+                                                            label="Escritório" 
+                                                            checked={config.showEscritorio} 
+                                                            onChange={(e) => setConfig({...config, showEscritorio: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                    {dependencia && (
+                                                        <FormCheckbox 
+                                                            label="Dependência" 
+                                                            checked={config.showDependencia} 
+                                                            onChange={(e) => setConfig({...config, showDependencia: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                    {vagas && (
+                                                        <FormCheckbox 
+                                                            label="Vagas" 
+                                                            checked={config.showVagas} 
+                                                            onChange={(e) => setConfig({...config, showVagas: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                    {hobby && (
+                                                        <FormCheckbox 
+                                                            label="Hobby Box" 
+                                                            checked={config.showHobbyBox} 
+                                                            onChange={(e) => setConfig({...config, showHobbyBox: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                    {areaPrivativa && (
+                                                        <FormCheckbox 
+                                                            label="Área Privativa" 
+                                                            checked={config.showAreaPrivativa} 
+                                                            onChange={(e) => setConfig({...config, showAreaPrivativa: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                    {areaTotal && (
+                                                        <FormCheckbox 
+                                                            label="Área Total" 
+                                                            checked={config.showAreaTotal} 
+                                                            onChange={(e) => setConfig({...config, showAreaTotal: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                    {obs && (
+                                                        <FormCheckbox 
+                                                            label="Observações" 
+                                                            checked={config.showObservations} 
+                                                            onChange={(e) => setConfig({...config, showObservations: e.target.checked})} 
+                                                        />
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )
+                                    })()}
                                 </div>
 
                                 {/* 8. Área comum | Lazer */}
@@ -1057,9 +1384,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <button
                                 onClick={() => handleSendEmail(selectedLead)}
                                 disabled={sending || isGeneratingPDF || !selectedLead.email}
-                                className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-blue-500/5 hover:border-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
+                                className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
-                                <div className="w-7 h-7 rounded-full bg-blue-500/10 flex-shrink-0 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                                <div className="w-7 h-7 rounded-full bg-blue-500/20 flex-shrink-0 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
                                     <Mail size={14} />
                                 </div>
                                 <div className="overflow-hidden min-w-0 flex-1">
@@ -1071,9 +1398,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <button
                                 onClick={() => handleSendWhatsApp(selectedLead)}
                                 disabled={sending || isGeneratingPDF || !selectedLead.phone}
-                                className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-[#25D366]/5 hover:border-[#25D366]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
+                                className="flex items-center gap-2 p-2.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
-                                <div className="w-7 h-7 rounded-full bg-[#25D366]/10 flex-shrink-0 flex items-center justify-center text-[#25D366] group-hover:scale-110 transition-transform">
+                                <div className="w-7 h-7 rounded-full bg-[#25D366]/20 flex-shrink-0 flex items-center justify-center text-[#25D366] group-hover:scale-110 transition-transform">
                                     <MessageCircle size={14} />
                                 </div>
                                 <div className="overflow-hidden min-w-0 flex-1">
@@ -1085,9 +1412,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <button
                                 onClick={handleGeneratePDF}
                                 disabled={sending || isGeneratingPDF}
-                                className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-amber-500/5 hover:border-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left cursor-pointer animate-in fade-in"
+                                className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left cursor-pointer animate-in fade-in"
                             >
-                                <div className="w-7 h-7 rounded-full bg-amber-500/10 flex-shrink-0 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                                <div className="w-7 h-7 rounded-full bg-amber-500/20 flex-shrink-0 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
                                     {isGeneratingPDF ? (
                                         <Loader2 className="animate-spin" size={14} />
                                     ) : (

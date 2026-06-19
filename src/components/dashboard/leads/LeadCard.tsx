@@ -1,4 +1,4 @@
-import { MoreVertical, Edit, Trash2, FileText } from 'lucide-react'
+import { MoreVertical, Edit, Trash2, FileText, User } from 'lucide-react'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useRef, useEffect } from 'react'
 import { useSortable } from '@dnd-kit/sortable'
@@ -54,9 +54,18 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
         >
             <div className="flex justify-between items-start">
                 <div className="flex-1">
-                    <h4 className="font-bold text-foreground text-sm leading-tight mb-2">
-                        {lead.name}
-                    </h4>
+                    <div className="flex items-center gap-2 mb-2 min-w-0">
+                        <div className="w-6 h-6 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10">
+                            {lead.avatar_url ? (
+                                <img src={lead.avatar_url} alt={lead.name} className="w-full h-full object-cover" />
+                            ) : (
+                                <User size={12} />
+                            )}
+                        </div>
+                        <h4 className="font-bold text-foreground text-sm leading-tight truncate flex-1" title={lead.name}>
+                            {lead.name}
+                        </h4>
+                    </div>
                     {lead.interest && (
                         <span className="inline-block px-2.5 py-0.5 bg-muted text-muted-foreground rounded-full text-[10px] font-bold shadow-sm transition-colors border border-muted-foreground/30">
                             {lead.interest}

@@ -48,7 +48,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onA
                     <thead className="bg-muted/50">
                         <tr>
                             <th
-                                className={sortableThClass}
+                                className={`${sortableThClass} min-w-[250px] md:min-w-0`}
                                 onClick={() => onSort?.('title')}
                             >
                                 <span className="inline-flex items-center gap-1.5">
