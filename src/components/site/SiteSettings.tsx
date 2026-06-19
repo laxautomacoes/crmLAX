@@ -235,6 +235,71 @@ export function SiteSettings() {
 
     return (
         <div className="space-y-6">
+            <style dangerouslySetInnerHTML={{ __html: `
+                .slider-ajuste {
+                    -webkit-appearance: none !important;
+                    appearance: none !important;
+                    background: transparent !important;
+                    width: 100% !important;
+                }
+                /* Webkit - Track */
+                .slider-ajuste::-webkit-slider-runnable-track {
+                    background: #cbd5e1 !important;
+                    height: 4px !important;
+                    border-radius: 9999px !important;
+                }
+                .dark .slider-ajuste::-webkit-slider-runnable-track {
+                    background: #2d3939 !important;
+                }
+                /* Webkit - Thumb */
+                .slider-ajuste::-webkit-slider-thumb {
+                    -webkit-appearance: none !important;
+                    appearance: none !important;
+                    height: 14px !important;
+                    width: 14px !important;
+                    border-radius: 50% !important;
+                    background: #404F4F !important;
+                    cursor: pointer !important;
+                    margin-top: -5px !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
+                    transition: transform 0.1s ease !important;
+                }
+                .slider-ajuste::-webkit-slider-thumb:hover {
+                    transform: scale(1.2) !important;
+                }
+                .dark .slider-ajuste::-webkit-slider-thumb {
+                    background: #FFE600 !important;
+                    border-color: #121414 !important;
+                }
+                /* Firefox - Track */
+                .slider-ajuste::-moz-range-track {
+                    background: #cbd5e1 !important;
+                    height: 4px !important;
+                    border-radius: 9999px !important;
+                }
+                .dark .slider-ajuste::-moz-range-track {
+                    background: #2d3939 !important;
+                }
+                /* Firefox - Thumb */
+                .slider-ajuste::-moz-range-thumb {
+                    height: 14px !important;
+                    width: 14px !important;
+                    border-radius: 50% !important;
+                    background: #404F4F !important;
+                    cursor: pointer !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
+                    transition: transform 0.1s ease !important;
+                }
+                .slider-ajuste::-moz-range-thumb:hover {
+                    transform: scale(1.2) !important;
+                }
+                .dark .slider-ajuste::-moz-range-thumb {
+                    background: #FFE600 !important;
+                    border-color: #121414 !important;
+                }
+            `}} />
             {/* Tab Navigation */}
             <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar">
                 <button
@@ -271,7 +336,7 @@ export function SiteSettings() {
                 {/* BRANDING TAB */}
                 {activeTab === 'branding' && (
                     <div className="space-y-6">
-                        <div className="bg-card border border-border rounded-2xl p-6">
+                        <div className="bg-card border border-border rounded-lg p-6">
                             <div className="mb-6">
                                 <h3 className="text-lg font-bold text-foreground">Identidade Visual</h3>
                                 <p className="text-sm text-muted-foreground">Logotipos e ícone | favicon exibidos no site e no sistema.</p>
@@ -284,7 +349,7 @@ export function SiteSettings() {
                                         <label className="text-sm font-bold text-foreground">Logotipo Site</label>
                                         <p className="text-xs text-muted-foreground">Exibido no site | Recomendado: 5:1</p>
                                     </div>
-                                    <div className="relative group min-h-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
+                                    <div className="relative group min-h-[140px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
                                         {branding.logo_full ? (
                                             <>
                                                 <div className="p-4">
@@ -318,7 +383,7 @@ export function SiteSettings() {
                                                 value={branding.logo_height || 50}
                                                 onChange={(e) => setBranding(prev => ({ ...prev, logo_height: parseInt(e.target.value) }))}
                                                 onMouseUp={handleSaveMain}
-                                                className="w-full h-1.5 bg-gray-200 dark:bg-muted rounded-lg appearance-none cursor-pointer accent-muted-foreground transition-colors"
+                                                className="slider-ajuste cursor-pointer transition-colors"
                                             />
                                             <div className="flex justify-between items-center px-1">
                                                 <span className="text-[9px] font-bold text-muted-foreground">20px</span>
@@ -334,7 +399,7 @@ export function SiteSettings() {
                                         <label className="text-sm font-bold text-foreground">Logotipo Header</label>
                                         <p className="text-xs text-muted-foreground">Exibido no sistema | Recomendado: 5:1</p>
                                     </div>
-                                    <div className="relative group min-h-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
+                                    <div className="relative group min-h-[140px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
                                         {(branding.logo_header || branding.logo_full) ? (
                                             <>
                                                 <div className="p-4">
@@ -374,7 +439,7 @@ export function SiteSettings() {
                                                 value={branding.logo_header_height || (branding.logo_header ? 40 : branding.logo_height || 40)}
                                                 onChange={(e) => setBranding(prev => ({ ...prev, logo_header_height: parseInt(e.target.value) }))}
                                                 onMouseUp={handleSaveMain}
-                                                className="w-full h-1.5 bg-gray-200 dark:bg-muted rounded-lg appearance-none cursor-pointer accent-muted-foreground transition-colors"
+                                                className="slider-ajuste cursor-pointer transition-colors"
                                             />
                                             <div className="flex justify-between items-center px-1">
                                                 <span className="text-[9px] font-bold text-muted-foreground">20px</span>
@@ -390,7 +455,7 @@ export function SiteSettings() {
                                         <label className="text-sm font-bold text-foreground">Ícone | Favicon</label>
                                         <p className="text-xs text-muted-foreground">Exibido no sistema | Recomendado: 1:1 (200x200px)</p>
                                     </div>
-                                    <div className="relative group aspect-square max-w-[140px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
+                                    <div className="relative group aspect-square max-w-[140px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
                                         {branding.logo_icon ? (
                                             <>
                                                 <img src={branding.logo_icon} className="w-full h-full object-contain p-4" alt="Icon" />

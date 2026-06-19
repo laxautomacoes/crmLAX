@@ -27,6 +27,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const [tenantSlug, setTenantSlug] = useState<string | null>(null);
     const [branding, setBranding] = useState<{ logo_full?: string; logo_header?: string; logo_icon?: string; logo_height?: number; logo_header_height?: number } | null>(null);
     const [brandingLoading, setBrandingLoading] = useState(true);
+    const [siteUrl, setSiteUrl] = useState<string>('#');
 
     const handleLogout = async () => {
         await recordAccessLog('logout').catch(console.error);
@@ -77,19 +78,31 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                     setUserRole(profile?.role || 'user');
                     setUserProfile(profile);
 
-                    // Buscar Slug e Branding do Tenant
+                    // Buscar Slug, Branding e Custom Domain do Tenant
                     if (profile?.tenant_id) {
                         const { data: tenant } = await supabase
                             .from('tenants')
-                            .select('slug, branding')
+                            .select('slug, branding, custom_domain, custom_domain_verified')
                             .eq('id', profile.tenant_id)
                             .maybeSingle();
 
-                        if (tenant?.slug) {
-                            setTenantSlug(tenant.slug);
-                        }
-                        if (tenant?.branding) {
-                            setBranding(tenant.branding as any);
+                        if (tenant) {
+                            if (tenant.slug) {
+                                setTenantSlug(tenant.slug);
+                            }
+                            if (tenant.branding) {
+                                setBranding(tenant.branding as any);
+                            }
+                            
+                            // Calcular siteUrl
+                            const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(profile?.role?.toLowerCase() || '');
+                            if (isSuperAdmin) {
+                                setSiteUrl('/conheca');
+                            } else if (tenant.custom_domain && tenant.custom_domain_verified) {
+                                setSiteUrl(`https://${tenant.custom_domain}`);
+                            } else if (tenant.slug) {
+                                setSiteUrl(`/site/${tenant.slug}`);
+                            }
                         }
                     }
                 }
@@ -165,12 +178,11 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                         return true;
                     })
                     .map(sub => {
-                        // Se for o link do site, injetar o slug real
+                        // Se for o link do site, injetar o slug real ou domínio customizado
                         if (sub.name === 'Site') {
-                            const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(userRole?.toLowerCase() || '');
                             return {
                                 ...sub,
-                                href: isSuperAdmin ? '/conheca' : (tenantSlug ? `/site/${tenantSlug}` : '#'),
+                                href: siteUrl,
                                 isExternal: true
                             };
                         }

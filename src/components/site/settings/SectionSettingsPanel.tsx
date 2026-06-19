@@ -106,7 +106,7 @@ function ImageUpload({
                     </button>
                 </div>
             ) : (
-                <label className={`flex flex-col items-center justify-center ${height} border-2 border-dashed border-border rounded-xl bg-foreground/5 hover:bg-foreground/10 cursor-pointer transition-colors`}>
+                <label className={`flex flex-col items-center justify-center ${height} border-2 border-border rounded-xl bg-foreground/5 hover:bg-foreground/10 cursor-pointer transition-colors`}>
                     {uploading ? (
                         <Loader2 size={24} className="animate-spin text-muted-foreground" />
                     ) : (

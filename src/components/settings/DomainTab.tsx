@@ -14,11 +14,11 @@ import {
 } from 'lucide-react'
 import { createClient } from '@/lib/supabase/client'
 import { getProfile } from '@/app/_actions/profile'
-import { 
-    updateTenantDomain, 
-    verifyTenantDomain, 
-    verifyTenantCRMSubdomain, 
-    getVercelDomainConfig 
+import {
+    updateTenantDomain,
+    verifyTenantDomain,
+    verifyTenantCRMSubdomain,
+    getVercelDomainConfig
 } from '@/app/_actions/tenant'
 import { toast } from 'sonner'
 
@@ -70,7 +70,7 @@ export function DomainTab() {
         if (result.success) {
             toast.success('Configurações de domínio salvas!')
             setTenant({ ...tenant, custom_domain: domain, custom_domain_verified: false })
-            
+
             // Buscar config da Vercel após salvar novo domínio
             if (domain) {
                 getVercelDomainConfig(domain).then(res => {
@@ -179,23 +179,21 @@ export function DomainTab() {
                             <label className="text-sm font-bold text-muted-foreground ml-1 mb-2 block uppercase tracking-wider">Seu Domínio</label>
                             <div className="flex gap-2">
                                 <div className="relative flex-1">
-                                    <div className="absolute inset-y-0 left-3 flex items-center pointer-events-none">
-                                        <Globe className="h-4 w-4 text-muted-foreground" />
-                                    </div>
                                     <input
                                         type="text"
                                         value={domain}
                                         onChange={(e) => setDomain(e.target.value.toLowerCase())}
                                         placeholder="ex: properties.suaempresa.com.br"
-                                        className="w-full pl-10 pr-4 py-2 bg-muted/40 border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        className="w-full px-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                                        style={{ backgroundColor: 'var(--background)' }}
                                     />
                                 </div>
                                 <button
                                     onClick={domain !== tenant?.custom_domain ? handleSaveDomain : handleVerifyDomain}
                                     disabled={saving || verifying || (tenant?.custom_domain_verified && domain === tenant?.custom_domain)}
                                     className={`px-6 py-2 rounded-lg font-bold transition-all text-sm flex items-center justify-center min-w-[120px] h-10 gap-2 ${tenant?.custom_domain_verified && domain === tenant?.custom_domain
-                                            ? 'bg-green-500 text-white cursor-default'
-                                            : 'bg-secondary text-secondary-foreground hover:opacity-90'
+                                        ? 'bg-green-500 text-white cursor-default'
+                                        : 'bg-secondary text-secondary-foreground hover:opacity-90'
                                         }`}
                                 >
                                     {saving || verifying ? (
@@ -235,7 +233,10 @@ export function DomainTab() {
                                     <div className="p-4 space-y-4">
                                         {(() => {
                                             const domain = tenant.custom_domain || '';
-                                            const isRoot = domain && !domain.startsWith('www.') && domain.split('.').length === 2;
+                                            const parts = domain.split('.').filter(Boolean);
+                                            const compoundTlds = ['com.br', 'net.br', 'org.br', 'gov.br', 'edu.br', 'ind.br', 'art.br', 'etc.br', 'mil.br', 'esp.br'];
+                                            const lastTwoParts = parts.slice(-2).join('.');
+                                            const isRoot = domain && !domain.startsWith('www.') && (compoundTlds.includes(lastTwoParts) ? parts.length === 3 : parts.length === 2);
 
                                             let records = [];
 
@@ -312,9 +313,9 @@ export function DomainTab() {
                                                             </div>
                                                         ))}
                                                     </div>
-                                                    <div className="flex items-start gap-2 bg-secondary/10 border border-secondary/20 rounded-lg p-3">
-                                                        <Info size={14} className="text-secondary mt-0.5 shrink-0" />
-                                                        <p className="text-[10px] text-foreground/80 leading-tight">
+                                                    <div className="flex items-start gap-2 bg-background dark:bg-muted/10 border border-border/40 rounded-lg p-3">
+                                                        <Info size={14} className="text-accent-icon mt-0.5 shrink-0" />
+                                                        <p className="text-[10px] text-muted-foreground leading-tight">
                                                             A propagação do DNS pode levar até 24h.
                                                         </p>
                                                     </div>
@@ -329,7 +330,7 @@ export function DomainTab() {
                                     <div className="absolute top-0 right-0 p-4 opacity-5 group-hover:opacity-10 transition-opacity">
                                         <LayoutDashboard size={80} className="text-muted-foreground" />
                                     </div>
-                                    
+
                                     <div className="relative z-10">
                                         <div className="flex items-center gap-2 mb-4">
                                             <div className="p-2 bg-foreground/10 rounded-lg text-foreground">
@@ -343,7 +344,7 @@ export function DomainTab() {
                                                         VERIFICADO
                                                     </div>
                                                 ) : (
-                                                    <button 
+                                                    <button
                                                         onClick={handleVerifyCRM}
                                                         disabled={verifyingCRM}
                                                         className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg text-xs font-bold hover:opacity-90 transition-opacity flex items-center gap-2 disabled:opacity-50"
@@ -354,9 +355,9 @@ export function DomainTab() {
                                                 )}
                                             </div>
                                         </div>
-                                        
+
                                         <p className="text-sm text-muted-foreground mb-6 max-w-lg">
-                                            Sua equipe também pode acessar o painel administrativo através do seu próprio domínio. 
+                                            Sua equipe também pode acessar o painel administrativo através do seu próprio domínio.
                                             Isso melhora a autoridade da sua marca e profissionaliza o acesso.
                                         </p>
 
@@ -367,7 +368,7 @@ export function DomainTab() {
                                                 </div>
                                                 <div className="flex items-center justify-between">
                                                     <code className="text-sm font-bold text-foreground">crm.{tenant.custom_domain}</code>
-                                                    <button 
+                                                    <button
                                                         onClick={() => copyToClipboard(`crm.${tenant.custom_domain}`, 'URL do CRM')}
                                                         className="text-muted-foreground hover:text-foreground transition-colors"
                                                     >
@@ -405,12 +406,6 @@ export function DomainTab() {
                 </div>
             )}
 
-            <div className="bg-muted/30 border border-border rounded-xl p-4 flex items-center gap-3">
-                <Globe size={18} className="text-muted-foreground" />
-                <p className="text-sm text-muted-foreground font-medium">
-                    Após a verificação, seu site e todos os links de WhatsApp/E-mail usarão <strong className="text-foreground">{domain || 'seu domínio'}</strong>.
-                </p>
-            </div>
         </div>
     )
 }

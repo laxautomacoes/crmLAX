@@ -159,7 +159,72 @@ export function BrandingTab() {
 
     return (
         <div className="space-y-6">
-            <div className="bg-card border border-border rounded-xl p-6">
+            <style dangerouslySetInnerHTML={{ __html: `
+                .slider-ajuste {
+                    -webkit-appearance: none !important;
+                    appearance: none !important;
+                    background: transparent !important;
+                    width: 100% !important;
+                }
+                /* Webkit - Track */
+                .slider-ajuste::-webkit-slider-runnable-track {
+                    background: #cbd5e1 !important;
+                    height: 4px !important;
+                    border-radius: 9999px !important;
+                }
+                .dark .slider-ajuste::-webkit-slider-runnable-track {
+                    background: #2d3939 !important;
+                }
+                /* Webkit - Thumb */
+                .slider-ajuste::-webkit-slider-thumb {
+                    -webkit-appearance: none !important;
+                    appearance: none !important;
+                    height: 14px !important;
+                    width: 14px !important;
+                    border-radius: 50% !important;
+                    background: #404F4F !important;
+                    cursor: pointer !important;
+                    margin-top: -5px !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
+                    transition: transform 0.1s ease !important;
+                }
+                .slider-ajuste::-webkit-slider-thumb:hover {
+                    transform: scale(1.2) !important;
+                }
+                .dark .slider-ajuste::-webkit-slider-thumb {
+                    background: #FFE600 !important;
+                    border-color: #121414 !important;
+                }
+                /* Firefox - Track */
+                .slider-ajuste::-moz-range-track {
+                    background: #cbd5e1 !important;
+                    height: 4px !important;
+                    border-radius: 9999px !important;
+                }
+                .dark .slider-ajuste::-moz-range-track {
+                    background: #2d3939 !important;
+                }
+                /* Firefox - Thumb */
+                .slider-ajuste::-moz-range-thumb {
+                    height: 14px !important;
+                    width: 14px !important;
+                    border-radius: 50% !important;
+                    background: #404F4F !important;
+                    cursor: pointer !important;
+                    border: 2px solid #ffffff !important;
+                    box-shadow: 0 1px 4px rgba(0,0,0,0.2) !important;
+                    transition: transform 0.1s ease !important;
+                }
+                .slider-ajuste::-moz-range-thumb:hover {
+                    transform: scale(1.2) !important;
+                }
+                .dark .slider-ajuste::-moz-range-thumb {
+                    background: #FFE600 !important;
+                    border-color: #121414 !important;
+                }
+            `}} />
+            <div className="bg-card border border-border rounded-lg p-6">
                 <div className="flex items-center justify-between mb-6">
                     <div>
                         <h3 className="text-lg font-bold text-foreground">Branding</h3>
@@ -177,7 +242,7 @@ export function BrandingTab() {
                             <p className="text-[11px] text-muted-foreground italic leading-none">Arquivos aceitos: JPG, PNG e WEBP</p>
                         </div>
 
-                        <div className="relative group min-h-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
+                        <div className="relative group min-h-[120px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
                             {branding.logo_full ? (
                                 <>
                                     <div className="flex items-center justify-center p-2">
@@ -243,7 +308,7 @@ export function BrandingTab() {
                                             return newBranding;
                                         });
                                     }}
-                                    className="w-full h-1.5 bg-muted rounded-lg appearance-none cursor-pointer accent-secondary"
+                                    className="slider-ajuste cursor-pointer transition-colors"
                                 />
                             </div>
                         )}
@@ -262,7 +327,7 @@ export function BrandingTab() {
                             <p className="text-[11px] text-muted-foreground italic leading-none">Arquivos aceitos: JPG, PNG e WEBP</p>
                         </div>
 
-                        <div className="relative group aspect-square max-w-[120px] rounded-xl border-2 border-dashed border-border flex items-center justify-center overflow-hidden bg-muted/20 hover:bg-muted/30 transition-colors">
+                        <div className="relative group aspect-square max-w-[120px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
                             {branding.logo_icon ? (
                                 <>
                                     <img src={branding.logo_icon} alt="Logo Icon" className="w-full h-full object-cover" />

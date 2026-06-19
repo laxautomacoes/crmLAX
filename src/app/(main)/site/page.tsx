@@ -24,7 +24,13 @@ export default async function SitePage() {
 
         if (tenant) {
             const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(profile?.role?.toLowerCase() || '');
-            siteUrl = isSuperAdmin ? '/conheca' : `/site/${tenant.slug}`
+            if (isSuperAdmin) {
+                siteUrl = '/conheca'
+            } else if (tenant.custom_domain && tenant.custom_domain_verified) {
+                siteUrl = `https://${tenant.custom_domain}`
+            } else {
+                siteUrl = `/site/${tenant.slug}`
+            }
         }
     }
 

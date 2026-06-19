@@ -127,7 +127,10 @@ export async function verifyTenantDomain(tenantId: string) {
     if (!tenant?.custom_domain) return { success: false, error: 'Nenhum domínio configurado.' }
 
     try {
-        const isRoot = tenant.custom_domain.split('.').filter(Boolean).length === 2;
+        const parts = tenant.custom_domain.split('.').filter(Boolean);
+        const compoundTlds = ['com.br', 'net.br', 'org.br', 'gov.br', 'edu.br', 'ind.br', 'art.br', 'etc.br', 'mil.br', 'esp.br'];
+        const lastTwoParts = parts.slice(-2).join('.');
+        const isRoot = compoundTlds.includes(lastTwoParts) ? parts.length === 3 : parts.length === 2;
         const dnsType = isRoot ? 'A' : 'CNAME';
 
         // Verificação real via Cloudflare DNS-over-HTTPS
