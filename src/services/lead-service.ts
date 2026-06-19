@@ -133,6 +133,7 @@ export async function processLeadInbound(data: LeadCreateData) {
             .select('id, full_name, whatsapp_number')
             .eq('tenant_id', tenant_id)
             .eq('is_active_for_service', true)
+            .eq('is_archived', false)
             .order('last_lead_assigned_at', { ascending: true, nullsFirst: true })
             .limit(1)
             .single();

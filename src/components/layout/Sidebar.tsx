@@ -120,10 +120,10 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                 if (!hasRole) return false;
             }
 
-            // Se o item tem uma permissão específica e o usuário é superadmin no sistema
-            if ((item as any).permission && userRole?.toLowerCase() === 'superadmin') {
+            // Se o item tem uma permissão específica
+            if ((item as any).permission) {
                 const permissions = userProfile?.permissions || {};
-                // Se a permissão não estiver explicitamente como true, esconder o item
+                // Se a permissão estiver como false, esconder o item
                 if (permissions[(item as any).permission] === false) return false;
             }
 
@@ -157,7 +157,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                         }
 
                         // Verificação de permissão para sub-itens
-                        if ((sub as any).permission && userRole?.toLowerCase() === 'superadmin') {
+                        if ((sub as any).permission) {
                             const permissions = userProfile?.permissions || {};
                             if (permissions[(sub as any).permission] === false) return false;
                         }

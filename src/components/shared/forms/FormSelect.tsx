@@ -7,10 +7,12 @@ interface FormSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
     label?: string
     error?: string
     icon?: LucideIcon
+    iconSize?: number
+    roundedClassName?: string
     options: Array<{ value: string; label: string }>
 }
 
-export function FormSelect({ label, error, icon: Icon, options, className = '', ...props }: FormSelectProps) {
+export function FormSelect({ label, error, icon: Icon, iconSize = 18, roundedClassName, options, className = '', ...props }: FormSelectProps) {
     return (
         <div className="w-full">
             {label && (
@@ -21,12 +23,12 @@ export function FormSelect({ label, error, icon: Icon, options, className = '', 
             <div className="relative">
                 {Icon && (
                     <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground pointer-events-none">
-                        <Icon size={18} />
+                        <Icon size={iconSize} />
                     </div>
                 )}
                 <select
                     className={`
-                        w-full rounded-lg border border-muted-foreground/30 bg-background text-foreground text-sm outline-none transition-all
+                        w-full ${roundedClassName || 'rounded-lg'} border border-muted-foreground/30 bg-background text-foreground text-sm outline-none transition-all
                         focus:ring-2 focus:ring-secondary/50 focus:border-secondary
                         disabled:opacity-50 disabled:cursor-not-allowed
                         appearance-none pr-10

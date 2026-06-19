@@ -39,29 +39,30 @@ export function InvitationsTable({ invitations, fetching, onRefresh, searchTerm 
 
     return (
         <>
-            <div className="bg-card rounded-2xl shadow-sm border border-border overflow-hidden">
-                <div className="overflow-x-auto">
-                    <table className="w-full">
-                        <thead>
-                            <tr className="bg-muted/50 text-center text-[10px] font-bold text-foreground uppercase tracking-wider">
-                                <th className="px-6 py-4 text-left">COLABORADOR</th>
-                                <th className="px-6 py-4">Criado em</th>
-                                <th className="px-6 py-4">Nível Acesso</th>
-                                <th className="px-6 py-4">Status</th>
-                                <th className="px-6 py-4 text-right">Ação</th>
+            <div className="bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm min-h-[250px]">
+                <div className="overflow-x-auto min-h-[250px]">
+                    <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
+                        <thead className="bg-muted/50 border-b border-muted-foreground/30">
+                            <tr>
+                                <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '20%' }}>Colaborador</th>
+                                <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '25%' }}>Contato</th>
+                                <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '15%' }}>Criado em</th>
+                                <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '18%' }}>Nível Acesso</th>
+                                <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '12%' }}>Status</th>
+                                <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '10%' }}>Ação</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-border">
+                        <tbody className="divide-y divide-muted-foreground/30">
                             {fetching ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                                         <Loader2 className="w-6 h-6 animate-spin mx-auto mb-2" />
                                         Carregando convites...
                                     </td>
                                 </tr>
                             ) : filteredInvitations.length === 0 ? (
                                 <tr>
-                                    <td colSpan={5} className="px-6 py-12 text-center text-muted-foreground">
+                                    <td colSpan={6} className="px-6 py-12 text-center text-muted-foreground">
                                         {searchTerm ? 'Nenhum colaborador encontrado para esta busca.' : 'Nenhum convite pendente.'}
                                     </td>
                                 </tr>
@@ -72,6 +73,7 @@ export function InvitationsTable({ invitations, fetching, onRefresh, searchTerm 
                                         invitation={inv}
                                         onCopyLink={copyInviteLink}
                                         onEdit={handleEdit}
+                                        onRefresh={onRefresh}
                                     />
                                 ))
                             )}

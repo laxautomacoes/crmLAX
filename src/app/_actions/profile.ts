@@ -24,6 +24,11 @@ export async function getProfile() {
             .eq('id', user.id)
             .maybeSingle()
 
+        if (profile?.is_archived) {
+            await supabase.auth.signOut()
+            return { error: 'Esta conta foi arquivada pelo administrador. Acesso negado.' }
+        }
+
         return {
             profile: {
                 ...profile,
@@ -244,6 +249,7 @@ export async function getBrokers(tenantId: string) {
             .from('profiles')
             .select('id, full_name, role')
             .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
             .order('full_name')
 
         if (error) throw error
@@ -375,6 +381,7 @@ export async function getServiceQueue(tenantId: string) {
             .from('profiles')
             .select('id, full_name, avatar_url, is_active_for_service, updated_at')
             .eq('tenant_id', tenantId)
+            .eq('is_archived', false)
             .order('full_name')
 
         if (error) throw error

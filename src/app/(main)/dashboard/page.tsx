@@ -45,6 +45,7 @@ export default async function DashboardPage() {
                 .from('profiles')
                 .select('id, full_name')
                 .eq('tenant_id', profile.tenant_id)
+                .eq('is_archived', false)
                 .order('full_name', { ascending: true })
             : Promise.resolve({ data: [] })
     ]);

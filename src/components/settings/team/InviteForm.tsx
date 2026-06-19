@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { UserPlus, Mail, Loader2, Phone } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
+import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox';
 import { createInvitation } from '@/app/_actions/invitations';
 import { getProfile } from '@/app/_actions/profile';
@@ -17,7 +18,7 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
-    const [role, setRole] = useState<'admin' | 'user'>('user');
+    const [role, setRole] = useState<'superadmin' | 'admin' | 'user' | 'contador' | 'advogado' | 'financeiro' | 'recursos_humanos'>('user');
     const [loading, setLoading] = useState(false);
     const [isSystemContext, setIsSystemContext] = useState(false);
 
@@ -27,7 +28,12 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
         leads: false,
         clients: false,
         properties: false,
+        proposals: false,
+        marketing: false,
+        site: false,
         calendar: false,
+        notes: false,
+        financeiro: false,
         reports: false,
         settings: false
     });
@@ -89,7 +95,12 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
                 leads: false,
                 clients: false,
                 properties: false,
+                proposals: false,
+                marketing: false,
+                site: false,
                 calendar: false,
+                notes: false,
+                financeiro: false,
                 reports: false,
                 settings: false
             });
@@ -98,7 +109,7 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
         setLoading(false);
     };
 
-    const handleRoleChange = (newRole: 'admin' | 'user') => {
+    const handleRoleChange = (newRole: 'superadmin' | 'admin' | 'user' | 'contador' | 'advogado' | 'financeiro' | 'recursos_humanos') => {
         setRole(newRole);
         if (newRole === 'admin') {
             // Full access by default for these roles
@@ -118,7 +129,12 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
                     leads: true,
                     clients: true,
                     properties: true,
+                    proposals: true,
+                    marketing: true,
+                    site: true,
                     calendar: true,
+                    notes: true,
+                    financeiro: true,
                     reports: true,
                     settings: true
                 });
@@ -136,7 +152,12 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
         leads: 'Leads',
         clients: 'Clientes',
         properties: 'Imóveis',
+        proposals: 'Propostas',
+        marketing: 'Marketing',
+        site: 'Site',
         calendar: 'Agenda',
+        notes: 'Notas',
+        financeiro: 'Financeiro',
         reports: 'Relatórios',
         settings: 'Configurações'
     };
@@ -203,22 +224,21 @@ export function InviteForm({ onInviteCreated, isModalMode = false }: InviteFormP
 
                 <div className="space-y-1.5">
                     <label className="text-sm font-bold text-foreground ml-1">Nível Acesso</label>
-                    <div className="grid grid-cols-2 gap-2">
-                        <button
-                            type="button"
-                            onClick={() => handleRoleChange('admin')}
-                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'admin' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card text-foreground border-border hover:bg-muted'}`}
-                        >
-                            Admin
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => handleRoleChange('user')}
-                            className={`py-3 rounded-lg text-sm font-bold border transition-all ${role === 'user' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card text-foreground border-border hover:bg-muted'}`}
-                        >
-                            {isSystemContext ? 'Suporte' : 'Colaborador'}
-                        </button>
-                    </div>
+                    <FormSelect
+                        value={role}
+                        onChange={(e) => handleRoleChange(e.target.value as any)}
+                        options={isSystemContext ? [
+                            { value: 'user', label: 'Suporte' },
+                            { value: 'admin', label: 'Admin' }
+                        ] : [
+                            { value: 'user', label: 'Colaborador' },
+                            { value: 'admin', label: 'Admin' },
+                            { value: 'contador', label: 'Contador' },
+                            { value: 'advogado', label: 'Advogado' },
+                            { value: 'financeiro', label: 'Financeiro' },
+                            { value: 'recursos_humanos', label: 'Recursos Humanos' }
+                        ]}
+                    />
                     <p className="text-[10px] text-muted-foreground mt-1 ml-1">
                         {role === 'admin' ? 'Acesso total ao painel administrativo.' : 'Acesso restrito conforme permissões abaixo.'}
                     </p>

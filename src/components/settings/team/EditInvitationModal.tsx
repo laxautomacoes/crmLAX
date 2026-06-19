@@ -1,11 +1,12 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Modal } from '@/components/shared/Modal';
 import { FormInput } from '@/components/shared/forms/FormInput';
+import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { updateInvitation, deleteInvitation, resendInvitation } from '@/app/_actions/invitations';
-import { deleteTeamMember } from '@/app/_actions/team';
-import { Loader2, Trash2, Calendar, ShieldCheck, User, Mail, Phone, Send } from 'lucide-react';
+import { deleteTeamMember, toggleArchiveTeamMember, resendMemberAccess, updateTeamMember } from '@/app/_actions/team';
+import { Loader2, Trash2, Calendar, ShieldCheck, User, Mail, Phone, Send, Archive, MoreVertical } from 'lucide-react';
 import { InvitationPermissions } from './InvitationPermissions';
 
 interface EditInvitationModalProps {
@@ -32,44 +33,74 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
     const [name, setName] = useState('');
     const [email, setEmail] = useState('');
     const [phone, setPhone] = useState('');
-    const [role, setRole] = useState<'admin' | 'user'>('user');
-    const [permissions, setPermissions] = useState({ dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: true });
+    const [role, setRole] = useState<'superadmin' | 'admin' | 'user' | 'contador' | 'advogado' | 'financeiro' | 'recursos_humanos'>('user');
+    const [permissions, setPermissions] = useState({ dashboard: true, leads: true, clients: true, properties: true, proposals: true, marketing: true, site: true, calendar: true, notes: true, financeiro: true, reports: true, settings: true });
     const [loading, setLoading] = useState(false);
     const [isDeleting, setIsDeleting] = useState(false);
     const [isResending, setIsResending] = useState(false);
+    const [isArchiving, setIsArchiving] = useState(false);
+    const [showActionsMenu, setShowActionsMenu] = useState(false);
+    const menuRef = useRef<HTMLDivElement>(null);
+
+    const isMember = invitation?.type === 'member';
 
     useEffect(() => {
         if (invitation) {
             setName(invitation.name || '');
             setEmail(invitation.email || '');
-            setPhone(formatPhone(invitation.phone || ''));
+            setPhone(formatPhone(invitation.phone || invitation.whatsapp_number || ''));
             setRole(invitation.role || 'user');
-            setPermissions(invitation.permissions || { dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: true });
+            setPermissions(invitation.permissions || { dashboard: true, leads: true, clients: true, properties: true, proposals: true, marketing: true, site: true, calendar: true, notes: true, financeiro: true, reports: true, settings: true });
         }
     }, [invitation]);
 
+    // Fechar menu de ações ao clicar fora
+    useEffect(() => {
+        const handleClickOutside = (event: MouseEvent) => {
+            if (menuRef.current && !menuRef.current.contains(event.target as Node)) {
+                setShowActionsMenu(false);
+            }
+        };
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
+
     if (!invitation) return null;
 
-    const handleRoleChange = (newRole: 'admin' | 'user') => {
+    const handleRoleChange = (newRole: 'superadmin' | 'admin' | 'user' | 'contador' | 'advogado' | 'financeiro' | 'recursos_humanos') => {
         setRole(newRole);
-        if (newRole === 'admin') setPermissions({ dashboard: true, leads: true, clients: true, properties: true, calendar: true, reports: true, settings: true });
+        if (newRole === 'admin') setPermissions({ dashboard: true, leads: true, clients: true, properties: true, proposals: true, marketing: true, site: true, calendar: true, notes: true, financeiro: true, reports: true, settings: true });
     };
 
     const togglePermission = (key: string) => {
-        if (role === 'admin') return;
+        if (role === 'admin' || invitation.is_archived || loading || isDeleting || isResending || isArchiving) return;
         setPermissions((prev: any) => ({ ...prev, [key]: !prev[key] }));
     };
 
     const handleSave = async () => {
         setLoading(true);
-        const { error } = await updateInvitation(invitation.id, {
-            name,
-            email,
-            phone: cleanPhone(phone),
-            role,
-            permissions
-        });
-        if (error) alert('Erro: ' + error);
+        const cleanedPhone = cleanPhone(phone);
+        
+        let res;
+        if (invitation.type === 'member') {
+            res = await updateTeamMember(invitation.id, {
+                name,
+                email,
+                phone: cleanedPhone,
+                role,
+                permissions
+            });
+        } else {
+            res = await updateInvitation(invitation.id, {
+                name,
+                email,
+                phone: cleanedPhone,
+                role,
+                permissions
+            });
+        }
+
+        if (res.error) alert('Erro: ' + res.error);
         else { onUpdate(); onClose(); }
         setLoading(false);
     };
@@ -98,70 +129,158 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
         }
     };
 
+    const handleToggleArchive = async () => {
+        const message = invitation.is_archived
+            ? 'Desarquivar colaborador? O usuário recuperará o acesso ao sistema.'
+            : 'Arquivar colaborador? O usuário perderá o acesso e não receberá mais leads.';
+
+        if (!confirm(message)) return;
+
+        setIsArchiving(true);
+        const { error } = await toggleArchiveTeamMember(invitation.id, !invitation.is_archived);
+        if (error) {
+            alert('Erro: ' + error);
+        } else {
+            onUpdate();
+            onClose();
+        }
+        setIsArchiving(false);
+    };
+
     const handleResend = async () => {
         setIsResending(true);
-        const { error } = await resendInvitation(invitation.id);
-        if (error) alert('Erro: ' + error);
-        else alert('Convite reenviado com sucesso!');
+        if (isMember) {
+            const { error } = await resendMemberAccess(invitation.email);
+            if (error) alert('Erro: ' + error);
+            else alert('E-mail de recuperação de acesso enviado com sucesso!');
+        } else {
+            const { error } = await resendInvitation(invitation.id);
+            if (error) alert('Erro: ' + error);
+            else alert('Convite reenviado com sucesso!');
+        }
         setIsResending(false);
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Editar Colaborador" size="md">
-            <div className="space-y-5">
+        <Modal 
+            isOpen={isOpen} 
+            onClose={onClose} 
+            title={
+                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                    Editar Colaborador
+                </h3>
+            }
+            extraHeaderContent={
+                <div className="flex items-center gap-2" ref={menuRef}>
+                    <div className="relative">
+                        <button
+                            type="button"
+                            onClick={() => setShowActionsMenu(!showActionsMenu)}
+                            className="p-2 bg-muted text-foreground rounded-md shadow-sm hover:bg-muted/80 transition-colors flex items-center justify-center"
+                            title="Ações"
+                        >
+                            <MoreVertical className="w-4 h-4" />
+                        </button>
+
+                        {showActionsMenu && (
+                            <div className="absolute right-0 top-10 w-48 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-50 animate-in fade-in slide-in-from-top-2 duration-150 text-left">
+                                <div className="py-1">
+                                    <button
+                                        onClick={() => { setShowActionsMenu(false); handleResend(); }}
+                                        disabled={isResending || isDeleting || isArchiving || loading}
+                                        className="w-full px-4 py-2.5 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        <Send className="w-4 h-4 text-blue-500" /> {isMember ? 'Reenviar Acesso' : 'Reenviar Convite'}
+                                    </button>
+                                    {isMember && (
+                                        <button
+                                            onClick={() => { setShowActionsMenu(false); handleToggleArchive(); }}
+                                            disabled={isResending || isDeleting || isArchiving || loading}
+                                            className="w-full px-4 py-2.5 text-left text-sm text-foreground hover:bg-muted transition-colors flex items-center gap-2 disabled:opacity-50"
+                                        >
+                                            <Archive className="w-4 h-4 text-amber-500" /> {invitation.is_archived ? 'Desarquivar' : 'Arquivar'}
+                                        </button>
+                                    )}
+                                    <button
+                                        onClick={() => { setShowActionsMenu(false); handleDelete(); }}
+                                        disabled={isResending || isDeleting || isArchiving || loading}
+                                        className="w-full px-4 py-2.5 text-left text-sm text-red-600 hover:bg-red-50 dark:hover:bg-red-950/20 transition-colors flex items-center gap-2 disabled:opacity-50"
+                                    >
+                                        <Trash2 className="w-4 h-4 text-red-500" /> Excluir
+                                    </button>
+                                </div>
+                            </div>
+                        )}
+                    </div>
+
+                    <button
+                        onClick={handleSave}
+                        disabled={isDeleting || isResending || loading || isArchiving || invitation.is_archived}
+                        className="px-6 py-2 bg-secondary text-secondary-foreground rounded-md font-bold shadow-sm active:scale-[0.99] transition-all text-xs whitespace-nowrap hover:opacity-90 disabled:opacity-50 min-w-[120px] text-center flex items-center justify-center"
+                    >
+                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
+                    </button>
+                </div>
+            }
+            size="lg"
+        >
+            <div className="space-y-8">
                 <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1 flex gap-1 items-center"><User className="w-3 h-3" /> Dados</label>
+                    <h3 className="block text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1">Dados</h3>
                     <div className="space-y-2">
                         <FormInput
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             icon={User}
+                            iconSize={15}
+                            roundedClassName="rounded-md"
                             placeholder="Nome"
+                            disabled={invitation.is_archived || loading || isDeleting || isResending || isArchiving}
                         />
                         <FormInput
                             type="email"
                             value={email}
                             onChange={(e) => setEmail(e.target.value)}
                             icon={Mail}
+                            iconSize={15}
+                            roundedClassName="rounded-md"
                             placeholder="Email"
+                            disabled={invitation.is_archived || loading || isDeleting || isResending || isArchiving}
                         />
                         <FormInput
                             type="tel"
                             value={phone}
                             onChange={(e) => setPhone(formatPhone(e.target.value))}
                             icon={Phone}
+                            iconSize={15}
+                            roundedClassName="rounded-md"
                             placeholder="(00) 00000 0000"
                             maxLength={15}
+                            disabled={invitation.is_archived || loading || isDeleting || isResending || isArchiving}
                         />
                     </div>
                 </div>
 
-                <hr className="border-border/50" />
-
-                <div className="space-y-2">
-                    <label className="text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1 flex gap-1 items-center"><ShieldCheck className="w-3 h-3" /> Acesso</label>
-                    <div className="grid grid-cols-2 gap-2">
-                        <button type="button" onClick={() => handleRoleChange('admin')} className={`py-2 rounded-lg text-sm font-bold border ${role === 'admin' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card'}`}>Admin</button>
-                        <button type="button" onClick={() => handleRoleChange('user')} className={`py-2 rounded-lg text-sm font-bold border ${role === 'user' ? 'bg-secondary text-secondary-foreground border-secondary' : 'bg-card'}`}>Colaborador</button>
-                    </div>
+                <div className="space-y-2 pt-8 border-t border-border/50">
+                    <h3 className="block text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1">Acesso</h3>
+                    <FormSelect
+                        value={role}
+                        onChange={(e) => handleRoleChange(e.target.value as any)}
+                        disabled={invitation.is_archived || loading || isDeleting || isResending || isArchiving}
+                        roundedClassName="rounded-md"
+                        options={[
+                            { value: 'user', label: 'Colaborador' },
+                            { value: 'admin', label: 'Admin' },
+                            { value: 'contador', label: 'Contador' },
+                            { value: 'advogado', label: 'Advogado' },
+                            { value: 'financeiro', label: 'Financeiro' },
+                            { value: 'recursos_humanos', label: 'Recursos Humanos' }
+                        ]}
+                    />
                 </div>
 
-                <hr className="border-border/50" />
-
-                <InvitationPermissions role={role} permissions={permissions} onToggle={togglePermission} />
-
-                <hr className="border-border/50" />
-
-                <div className="flex gap-2 pt-1">
-                    <button onClick={handleDelete} disabled={isDeleting || isResending || loading} className="flex-1 py-3 bg-[#EF4444] hover:bg-[#DC2626] text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors disabled:opacity-50 text-xs">
-                        {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />} Excluir
-                    </button>
-                    <button onClick={handleResend} disabled={isDeleting || isResending || loading} className="flex-1 py-3 bg-blue-600 hover:bg-blue-700 text-white font-bold rounded-lg flex justify-center items-center gap-2 transition-colors disabled:opacity-50 text-xs">
-                        {isResending ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} Reenviar
-                    </button>
-                    <button onClick={handleSave} disabled={isDeleting || isResending || loading} className="flex-1 py-3 bg-secondary hover:opacity-90 text-secondary-foreground font-bold rounded-lg flex justify-center items-center gap-2 transition-colors disabled:opacity-50 text-xs">
-                        {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : 'Salvar'}
-                    </button>
+                <div className="pt-8 border-t border-border/50">
+                    <InvitationPermissions role={role} permissions={permissions} onToggle={togglePermission} />
                 </div>
             </div>
         </Modal>

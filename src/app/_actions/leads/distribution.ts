@@ -10,6 +10,7 @@ export async function getNextBrokerForDistribution(tenantId: string) {
         .select('id')
         .eq('tenant_id', tenantId)
         .eq('is_active_for_service', true)
+        .eq('is_archived', false)
         .order('last_lead_assigned_at', { ascending: true, nullsFirst: true })
         .limit(1)
         .single()

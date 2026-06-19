@@ -22,6 +22,9 @@ export type LogAction =
   | 'create_note'
   | 'delete_note'
   | 'update_note'
+  | 'archive_team_member'
+  | 'unarchive_team_member'
+  | 'update_team_member'
   | 'delete_team_member';
 
 export type EntityType = 'auth' | 'lead' | 'property' | 'invitation' | 'member' | 'profile' | 'tenant' | 'note';

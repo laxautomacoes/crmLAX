@@ -25,6 +25,7 @@ interface PropertyDetailsAddress {
     cidade?: string
     rua?: string
     numero?: string
+    estado?: string
 }
 
 interface PropertyDetails {
@@ -402,110 +403,224 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const firstName = currentLead.name.split(' ')[0]
         let message = `Olá ${firstName}! Tudo bem?\n\nEstou enviando os detalhes deste imóvel que pode te interessar:\n\n`
         
-        if (config.title) message += `Imóvel: *${property.title}*\n`
-        
-        const details: string[] = []
-
-        if (config.location !== 'none') {
-            const bairro = property.details?.endereco?.bairro || ''
-            const cidade = property.details?.endereco?.cidade || ''
-            const rua = property.details?.endereco?.rua || ''
-            const numero = property.details?.endereco?.numero || ''
-            
-            if (config.location === 'exact' && rua) {
-                details.push(`local: ${rua}, ${numero} - ${bairro}, ${cidade}`)
-            } else if (bairro && cidade) {
-                details.push(`local: ${bairro} - ${cidade}`)
-            } else if (bairro || cidade) {
-                details.push(`local: ${bairro || cidade}`)
+        // 1. Título e Endereço do Imóvel
+        if (config.title || config.location !== 'none') {
+            message += `*IMÓVEL*\n`
+            if (config.title) {
+                message += `• ${property.title}\n`
             }
+            if (config.location !== 'none') {
+                const bairro = property.details?.endereco?.bairro || ''
+                const cidade = property.details?.endereco?.cidade || ''
+                const rua = property.details?.endereco?.rua || ''
+                const numero = property.details?.endereco?.numero || ''
+                const estado = property.details?.endereco?.estado || ''
+
+                let addressText = ''
+                if (config.location === 'exact' && rua) {
+                    const ruaE_numero = numero?.trim() ? `${rua}, ${numero}` : rua
+                    const parts = [ruaE_numero, bairro, cidade].filter(Boolean)
+                    addressText = parts.join(' - ') + (estado ? `/${estado}` : '')
+                } else if (bairro && cidade) {
+                    addressText = `${bairro} - ${cidade}${estado ? `/${estado}` : ''}`
+                } else {
+                    const parts = [bairro, cidade].filter(Boolean)
+                    addressText = parts.join(' - ') + (estado ? `/${estado}` : '')
+                }
+                if (addressText) {
+                    message += `• Local: ${addressText}\n`
+                }
+            }
+            message += `\n`
         }
-        
-        // Dormitórios e Suítes
+
+        // 2. Valores
+        const hasPrice = config.price
+        const hasCondo = config.showCondo && property.details?.valor_condominio
+        const hasIptu = config.showIptu && property.details?.valor_iptu
+
+        if (hasPrice || hasCondo || hasIptu) {
+            message += `*VALORES*\n`
+            if (hasPrice) {
+                message += `• Imóvel: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}\n`
+            }
+            if (hasCondo) {
+                const condoNum = parseFloat(String(property.details?.valor_condominio))
+                if (!isNaN(condoNum) && condoNum > 0) {
+                    message += `• Condomínio: R$ ${new Intl.NumberFormat('pt-BR').format(condoNum)}\n`
+                }
+            }
+            if (hasIptu) {
+                const iptuNum = parseFloat(String(property.details?.valor_iptu))
+                if (!isNaN(iptuNum) && iptuNum > 0) {
+                    message += `• IPTU: R$ ${new Intl.NumberFormat('pt-BR').format(iptuNum)}\n`
+                }
+            }
+            message += `\n`
+        }
+
+        // 3. Informações
         const dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'))
         const suites = parseInt(String(property.details?.suites || '0'))
+        const banheiros = parseInt(String(property.details?.banheiros || '0'))
+        const vegasVal = parseInt(String(property.details?.vagas || '0'))
+        const posicaoSolar = property.details?.posicao_solar || property.details?.posicao || property.details?.solar || ''
         
-        if (config.showBedrooms || config.showSuites) {
-            if (dorms > 0 && dorms === suites) {
-                details.push(`${suites} suíte${suites > 1 ? 's' : ''}`)
-            } else if (dorms > 0 && suites > 0) {
-                details.push(`${dorms} dormitório${dorms > 1 ? 's' : ''} (${suites} suíte${suites > 1 ? 's' : ''})`)
-            } else if (dorms > 0) {
-                details.push(`${dorms} dormitório${dorms > 1 ? 's' : ''}`)
-            } else if (suites > 0) {
-                details.push(`${suites} suíte${suites > 1 ? 's' : ''}`)
-            }
-        }
+        const showBedrooms = config.showBedrooms && dorms > 0
+        const showSuites = config.showSuites && suites > 0
+        const showAreaPrivativa = config.showAreaPrivativa
+        const showAreaTotal = config.showAreaTotal
+        const showVagas = config.showVagas
+        const showHobbyBox = config.showHobbyBox
+        const showSacada = config.showSacada
+        const showEscritorio = config.showEscritorio
+        const showDependencia = config.showDependencia
+        const showObservations = config.showObservations && property.details?.obs_dormitorios
 
-        // Sacada
-        if (config.showSacada) {
-            if (property.details?.has_sacada_com_churrasqueira) {
-                details.push('Sacada com churrasqueira')
-            } else if (property.details?.has_sacada_sem_churrasqueira) {
-                details.push('Sacada')
-            }
-        }
-
-        // Outros ambientes
-        if (property.details?.has_lavabo) details.push('Lavabo')
-        if (config.showEscritorio && property.details?.has_escritorio) details.push('Escritório')
-        if (config.showDependencia && property.details?.has_dependencia_empregada) details.push('Dependência de empregada')
-        
-        // Vagas
-        const vagas = parseInt(String(property.details?.vagas || '0'))
-        if (config.showVagas && vagas > 0) {
-            details.push(`${vagas} vaga${vagas > 1 ? 's' : ''} de garagem`)
-        }
-
-        // Hobby Box
+        const hasSacadaChurras = property.details?.has_sacada_com_churrasqueira
+        const hasSacadaSem = property.details?.has_sacada_sem_churrasqueira
+        const hasLavabo = property.details?.has_lavabo
+        const hasEscritorio = property.details?.has_escritorio
+        const hasDependencia = property.details?.has_dependencia_empregada
         const hobbyBox = property.details?.hobby_box
         const hobbyBoxNum = property.details?.hobby_box_numeracao
-        if (config.showHobbyBox && (hobbyBox || hobbyBoxNum)) {
-            const descHB = hobbyBoxNum ? `Hobby Box: ${hobbyBox || 'Sim'} (${hobbyBoxNum})` : `Hobby Box: ${hobbyBox || 'Sim'}`
-            details.push(descHB)
-        }
-        
-        // Área privativa
-        if (config.showAreaPrivativa && property.details?.area_privativa) {
-            details.push(`Área privativa: ${property.details.area_privativa} m²`)
-        }
-        
-        // Área total
-        if (config.showAreaTotal && property.details?.area_total) {
-            details.push(`Área total: ${property.details.area_total} m²`)
+        const areaPrivativa = property.details?.area_privativa
+        const areaTotal = property.details?.area_total
+
+        const hasAnyInfo = showBedrooms || showSuites || banheiros > 0 || posicaoSolar ||
+            (showSacada && (hasSacadaChurras || hasSacadaSem)) ||
+            hasLavabo || (showEscritorio && hasEscritorio) || (showDependencia && hasDependencia) ||
+            showObservations || (showVagas && vegasVal > 0) || (showHobbyBox && (hobbyBox || hobbyBoxNum)) ||
+            (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal)
+
+        if (hasAnyInfo) {
+            message += `*INFORMAÇÕES*\n`
+            if (showBedrooms) {
+                message += `• Dormitórios: ${dorms}\n`
+            }
+            if (showSuites) {
+                message += `• Suítes: ${suites}\n`
+            }
+            if (banheiros > 0) {
+                message += `• Banheiros: ${banheiros}\n`
+            }
+            if (posicaoSolar) {
+                message += `• Posição solar: ${posicaoSolar}\n`
+            }
+            if (showSacada) {
+                if (hasSacadaChurras) {
+                    message += '• Sacada com churrasqueira: Sim\n'
+                } else if (hasSacadaSem) {
+                    message += '• Sacada: Sim\n'
+                }
+            }
+            if (hasLavabo) {
+                message += '• Lavabo: Sim\n'
+            }
+            if (showEscritorio && hasEscritorio) {
+                message += '• Escritório: Sim\n'
+            }
+            if (showDependencia && hasDependencia) {
+                message += '• Dependência de empregada: Sim\n'
+            }
+            if (showObservations) {
+                message += `• Observações: ${property.details?.obs_dormitorios}\n`
+            }
+            if (showVagas && vegasVal > 0) {
+                const descVagas = property.details?.vagas_numeracao ? `Vagas: ${vegasVal} (${property.details.vagas_numeracao})` : `Vagas: ${vegasVal}`
+                message += `• ${descVagas}\n`
+            }
+            if (showHobbyBox && (hobbyBox || hobbyBoxNum)) {
+                const descHB = hobbyBoxNum ? `Hobby Box: ${hobbyBox || 'Sim'} (${hobbyBoxNum})` : `Hobby Box: ${hobbyBox || 'Sim'}`
+                message += `• ${descHB}\n`
+            }
+            if (showAreaPrivativa && areaPrivativa) {
+                message += `• Área privativa: ${areaPrivativa} m²\n`
+            }
+            if (showAreaTotal && areaTotal) {
+                message += `• Área total: ${areaTotal} m²\n`
+            }
+            message += `\n`
         }
 
-        // Observações
-        if (config.showObservations && property.details?.obs_dormitorios) {
-            details.push(`Observações: ${property.details.obs_dormitorios}`)
-        }
-        
-        if (details.length > 0) {
-            message += `• ${details.join('\n• ')}\n`
-        }
+        // 4. Área comum | Lazer
+        if (config.showAmenities) {
+            const amenitiesMap = [
+                { id: 'portaria_24h', label: 'Portaria 24h' },
+                { id: 'portaria_virtual', label: 'Portaria Virtual' },
+                { id: 'piscina', label: 'Piscina' },
+                { id: 'piscina_aquecida', label: 'Piscina Aquecida' },
+                { id: 'espaco_gourmet', label: 'Espaço Gourmet' },
+                { id: 'salao_festas', label: 'Salão de Festas' },
+                { id: 'academia', label: 'Academia' },
+                { id: 'sala_jogos', label: 'Sala de Jogos' },
+                { id: 'sala_estudos_coworking', label: 'Estudos/Coworking' },
+                { id: 'sala_cinema', label: 'Sala de Cinema' },
+                { id: 'playground', label: 'Playground' },
+                { id: 'brinquedoteca', label: 'Brinquedoteca' },
+                { id: 'home_market', label: 'Home Market' },
+            ]
+            const activeAmenities = amenitiesMap
+                .filter(a => property.details?.[a.id])
+                .map(a => a.label)
 
-        // Preço, Condomínio e IPTU — cada um como bullet separado
-        const priceLines: string[] = []
-        if (config.price) {
-            priceLines.push(`Valor: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}`)
-        }
-        if (config.showCondo && property.details?.valor_condominio) {
-            const condoNum = parseFloat(String(property.details.valor_condominio))
-            if (!isNaN(condoNum) && condoNum > 0) {
-                priceLines.push(`Condomínio: R$ ${new Intl.NumberFormat('pt-BR').format(condoNum)}`)
+            if (activeAmenities.length > 0) {
+                message += `*ÁREA COMUM | LAZER*\n`
+                activeAmenities.forEach(amenity => {
+                    message += `• ${amenity}\n`
+                })
+                message += `\n`
             }
         }
-        if (config.showIptu && property.details?.valor_iptu) {
-            const iptuNum = parseFloat(String(property.details.valor_iptu))
-            if (!isNaN(iptuNum) && iptuNum > 0) {
-                priceLines.push(`IPTU: R$ ${new Intl.NumberFormat('pt-BR').format(iptuNum)}`)
-            }
-        }
-        if (priceLines.length > 0) {
-            message += `\n• ${priceLines.join('\n• ')}\n`
+
+        // 5. Descrição
+        if (config.description === 'full' && property.description?.trim()) {
+            message += `*DESCRIÇÃO*\n`
+            const cleanDesc = property.description
+                .replace(/\*\*/g, '')
+                .replace(/\*/g, '')
+                .replace(/#/g, '')
+                .trim()
+            message += `${cleanDesc}\n\n`
         }
 
-        message += `\nConfira imagens e mais informações em:\n\n• ${propertyUrl}\n\nQualquer dúvida, estou à disposição!`
+        // 6. Responsável
+        if (config.showResponsavel) {
+            const broker = property.created_by_profile
+            if (broker) {
+                message += `*RESPONSÁVEL*\n`
+                message += `• Corretor: ${broker.full_name}\n`
+                if (broker.whatsapp_number) {
+                    message += `• WhatsApp: ${broker.whatsapp_number}\n`
+                }
+                message += `\n`
+            }
+        }
+
+        // 7. Proprietário | Construtora
+        if (config.showConstrutora) {
+            const propNome = property.details?.proprietario?.nome || (property as any).owner_name
+            const propTel = property.details?.proprietario?.telefone || (property as any).owner_phone
+            const propEmail = property.details?.proprietario?.email || (property as any).owner_email
+            const propResp = property.details?.proprietario?.responsavel
+
+            if (propNome) {
+                message += `*PROPRIETÁRIO | CONSTRUTORA*\n`
+                message += `• Nome: ${propNome}\n`
+                if (propResp) {
+                    message += `• Responsável: ${propResp}\n`
+                }
+                if (propTel) {
+                    message += `• Telefone: ${propTel}\n`
+                }
+                if (propEmail) {
+                    message += `• E-mail: ${propEmail}\n`
+                }
+                message += `\n`
+            }
+        }
+
+        message += `Confira imagens e mais informações em:\n\n• ${propertyUrl}\n\nQualquer dúvida, estou à disposição!`
         
         const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`
         

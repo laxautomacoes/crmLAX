@@ -13,7 +13,7 @@ import { createLog } from '@/lib/utils/logging'
  */
 export async function createInvitation(
     email: string,
-    role: 'admin' | 'user' = 'user',
+    role: 'superadmin' | 'admin' | 'user' | 'contador' | 'advogado' | 'financeiro' | 'recursos_humanos' = 'user',
     name?: string,
     permissions?: Record<string, boolean>,
     phone?: string
@@ -168,7 +168,7 @@ export async function listInvitations() {
 export async function updateInvitation(
     id: string,
     updates: {
-        role?: 'admin' | 'user',
+        role?: 'superadmin' | 'admin' | 'user' | 'contador' | 'advogado' | 'financeiro' | 'recursos_humanos',
         name?: string,
         email?: string,
         phone?: string,

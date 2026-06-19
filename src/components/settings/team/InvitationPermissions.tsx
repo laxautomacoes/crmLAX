@@ -4,7 +4,7 @@ import { Lock } from 'lucide-react';
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox';
 
 interface InvitationPermissionsProps {
-    role: 'admin' | 'user';
+    role: 'superadmin' | 'admin' | 'user' | 'contador' | 'advogado' | 'financeiro' | 'recursos_humanos';
     permissions: Record<string, boolean>;
     onToggle: (key: string) => void;
 }
@@ -14,7 +14,12 @@ const permissionLabels: Record<string, string> = {
     leads: 'Leads',
     clients: 'Clientes',
     properties: 'Imóveis',
+    proposals: 'Propostas',
+    marketing: 'Marketing',
+    site: 'Site',
     calendar: 'Agenda',
+    notes: 'Notas',
+    financeiro: 'Financeiro',
     reports: 'Relatórios',
     settings: 'Configurações'
 };
@@ -22,10 +27,10 @@ const permissionLabels: Record<string, string> = {
 export function InvitationPermissions({ role, permissions, onToggle }: InvitationPermissionsProps) {
     return (
         <div className="space-y-2">
-            <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1 flex items-center gap-1">
-                <Lock className="w-3 h-3" /> Permissões
+            <h4 className="text-sm font-bold text-muted-foreground uppercase tracking-wider ml-1">
+                Permissões
             </h4>
-            <div className="bg-muted/30 p-3 rounded-xl border border-border">
+            <div className="bg-muted/30 p-3 rounded-lg">
                 <div className="grid grid-cols-2 gap-2">
                     {Object.entries(permissionLabels).map(([key, label]) => (
                         <FormCheckbox
