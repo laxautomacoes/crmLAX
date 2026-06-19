@@ -14,6 +14,11 @@ import {
     ArrowDown,
     Info,
     X,
+    Building2,
+    ChevronDown,
+    Check,
+    ArrowLeft,
+    Upload,
 } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
 import { toast } from 'sonner';
@@ -73,6 +78,59 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
     const mediaInputRef = useRef<HTMLInputElement>(null);
     const activeStepRef = useRef<string | null>(null);
 
+    // Property image picker states
+    const [properties, setProperties] = useState<any[]>([]);
+    const [isLoadingProperties, setIsLoadingProperties] = useState(false);
+    const [propertyPickerStepId, setPropertyPickerStepId] = useState<string | null>(null);
+    const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
+    const [propertyImages, setPropertyImages] = useState<string[]>([]);
+
+    // Load properties on mount
+    useEffect(() => {
+        if (!isOpen) return;
+        const loadProperties = async () => {
+            setIsLoadingProperties(true);
+            try {
+                const supabase = createClient();
+                const { data: { user } } = await supabase.auth.getUser();
+                if (!user) return;
+                const { data: profile } = await supabase
+                    .from('profiles')
+                    .select('tenant_id')
+                    .eq('id', user.id)
+                    .single();
+                if (!profile?.tenant_id) return;
+                const { data, error } = await supabase
+                    .from('properties')
+                    .select('id, title, images, type, main_image_url')
+                    .eq('tenant_id', profile.tenant_id)
+                    .eq('is_archived', false)
+                    .order('created_at', { ascending: false });
+                if (!error && data) setProperties(data);
+            } catch (err) {
+                console.error('Erro ao buscar imóveis:', err);
+            } finally {
+                setIsLoadingProperties(false);
+            }
+        };
+        loadProperties();
+    }, [isOpen]);
+
+    // Update property images when a property is selected in the picker
+    useEffect(() => {
+        if (selectedPropertyId) {
+            const prop = properties.find(p => p.id === selectedPropertyId);
+            if (prop?.images && Array.isArray(prop.images)) {
+                const urls = prop.images.map((img: any) => typeof img === 'string' ? img : img?.url).filter(Boolean);
+                setPropertyImages(urls);
+            } else {
+                setPropertyImages([]);
+            }
+        } else {
+            setPropertyImages([]);
+        }
+    }, [selectedPropertyId, properties]);
+
     useEffect(() => {
         if (editingSequence && isOpen) {
             setIsLoadingEdit(true);
@@ -104,6 +162,9 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
             setExitOnReply(true);
             setSteps([{ id: `step_${Date.now()}`, delay_value: 1, delay_unit: 'hours', message_template: '' }]);
         }
+        // Reset property picker state when modal opens/closes
+        setPropertyPickerStepId(null);
+        setSelectedPropertyId('');
     }, [editingSequence, isOpen]);
 
     const addStep = () => {
@@ -178,6 +239,24 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
         mediaInputRef.current?.click();
     };
 
+    const openPropertyPicker = (stepId: string) => {
+        setPropertyPickerStepId(stepId);
+        setSelectedPropertyId('');
+        setPropertyImages([]);
+    };
+
+    const selectPropertyImage = (stepId: string, imageUrl: string) => {
+        const prop = properties.find(p => p.id === selectedPropertyId);
+        const propTitle = prop?.title || 'Imóvel';
+        const fileName = imageUrl.split('/').pop() || 'imagem-imovel.jpg';
+        updateStep(stepId, 'media_url', imageUrl);
+        updateStep(stepId, 'media_type', 'image');
+        updateStep(stepId, 'media_name', `${propTitle} - ${fileName}`);
+        setPropertyPickerStepId(null);
+        setSelectedPropertyId('');
+        toast.success('Imagem do imóvel selecionada!');
+    };
+
     const handleSave = async () => {
         if (!name.trim()) { toast.error('Informe o nome da sequência.'); return; }
         const emptySteps = steps.filter(s => !s.message_template.trim());
@@ -203,6 +282,14 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
 
             if (result.success) {
                 toast.success(editingSequence ? 'Sequência atualizada!' : 'Sequência criada!');
+                
+                const hasDynamicImage = steps.some(s => s.media_url === '__PROPERTY_MAIN_IMAGE__');
+                if (hasDynamicImage) {
+                    toast.info('Lembre-se de definir a Foto Principal (⭐) nas mídias dos seus imóveis para o envio dinâmico funcionar.', {
+                        duration: 8000
+                    });
+                }
+                
                 onSaved(); onClose();
             } else { toast.error(result.error || 'Erro ao salvar.'); }
         } catch { toast.error('Erro ao salvar sequência.'); }
@@ -376,7 +463,17 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                                             <label className="text-[10px] font-bold text-foreground uppercase tracking-wider mb-1.5 block">Mídia ou Documento (opcional)</label>
                                             {step.media_url ? (
                                                 <div className="relative group">
-                                                    {step.media_type === 'image' ? (
+                                                    {step.media_url === '__PROPERTY_MAIN_IMAGE__' ? (
+                                                        <div className="flex items-center gap-3 p-4 bg-yellow-500/10 rounded-lg border border-dashed border-yellow-500/40">
+                                                            <div className="w-10 h-10 rounded-md bg-card shadow-sm flex items-center justify-center border border-border/40">
+                                                                <ImageIcon className="h-5 w-5 text-yellow-500" />
+                                                            </div>
+                                                            <div className="flex-1 min-w-0">
+                                                                <p className="text-xs font-bold text-foreground truncate">📸 Imagem Dinâmica</p>
+                                                                <p className="text-[10px] text-muted-foreground uppercase font-black tracking-widest">Imagem Principal do Imóvel do Lead</p>
+                                                            </div>
+                                                        </div>
+                                                    ) : step.media_type === 'image' ? (
                                                         <div className="relative h-24 rounded-lg overflow-hidden border border-border/40 bg-foreground/5 shadow-sm">
                                                             <img src={step.media_url} alt="Preview" className="w-full h-full object-cover" />
                                                             <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
@@ -399,18 +496,126 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                                                         <X className="h-3 w-3" />
                                                     </button>
                                                 </div>
+                                            ) : propertyPickerStepId === step.id ? (
+                                                /* Property Image Picker */
+                                                <div className="space-y-3 p-3 bg-foreground/5 rounded-lg border border-border/40">
+                                                    <div className="flex items-center justify-between">
+                                                        <div className="flex items-center gap-2">
+                                                            <Building2 className="h-3.5 w-3.5 text-blue-400" />
+                                                            <span className="text-[10px] font-bold text-blue-400 uppercase tracking-wider">Imagens do Imóvel</span>
+                                                        </div>
+                                                        <button
+                                                            onClick={() => setPropertyPickerStepId(null)}
+                                                            className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-foreground transition-all"
+                                                        >
+                                                            <ArrowLeft className="h-3 w-3" />
+                                                            Voltar
+                                                        </button>
+                                                    </div>
+
+                                                    {/* Property selector */}
+                                                    <div className="relative">
+                                                        <select
+                                                            value={selectedPropertyId}
+                                                            onChange={e => setSelectedPropertyId(e.target.value)}
+                                                            className="appearance-none w-full h-9 px-3 pr-8 rounded-lg border border-border/40 bg-foreground/5 text-foreground text-xs font-bold focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 transition-all"
+                                                        >
+                                                            <option value="">Selecione um imóvel...</option>
+                                                            {properties.map(p => (
+                                                                <option key={p.id} value={p.id}>{p.title}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                                                    </div>
+
+                                                    {/* Property images grid */}
+                                                    {isLoadingProperties ? (
+                                                        <div className="flex items-center justify-center py-4">
+                                                            <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
+                                                        </div>
+                                                    ) : selectedPropertyId && propertyImages.length > 0 ? (
+                                                        <div className="grid grid-cols-4 gap-2 max-h-40 overflow-y-auto custom-scrollbar">
+                                                            {propertyImages.map((url, idx) => (
+                                                                <button
+                                                                    key={idx}
+                                                                    type="button"
+                                                                    onClick={() => selectPropertyImage(step.id, url)}
+                                                                    className="relative aspect-square rounded-lg overflow-hidden border border-border/40 hover:border-blue-400 hover:ring-2 hover:ring-blue-400/30 transition-all group/img cursor-pointer"
+                                                                >
+                                                                    <img src={url} alt={`Imóvel ${idx + 1}`} className="w-full h-full object-cover" />
+                                                                    <div className="absolute inset-0 bg-black/0 group-hover/img:bg-black/30 transition-all flex items-center justify-center">
+                                                                        <div className="w-6 h-6 rounded-full bg-[#FFE600] flex items-center justify-center opacity-0 group-hover/img:opacity-100 transition-opacity shadow-lg">
+                                                                            <Check className="h-3.5 w-3.5 text-[#404F4F]" strokeWidth={3} />
+                                                                        </div>
+                                                                    </div>
+                                                                </button>
+                                                            ))}
+                                                        </div>
+                                                    ) : selectedPropertyId && propertyImages.length === 0 ? (
+                                                        <p className="text-[10px] text-muted-foreground text-center py-3">Este imóvel não possui imagens cadastradas.</p>
+                                                    ) : null}
+                                                </div>
                                             ) : (
-                                                <button onClick={() => triggerMediaSelect(step.id)} disabled={uploadingStepId === step.id}
-                                                    className="w-full flex items-center justify-center gap-2 py-3 border-2 border-dashed border-border/40 rounded-lg hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground">
-                                                    {uploadingStepId === step.id ? (
-                                                        <Loader2 className="h-4 w-4 animate-spin text-foreground" />
-                                                    ) : (
-                                                        <>
-                                                            <ImageIcon className="h-4 w-4" />
-                                                            <span className="text-[10px] font-bold">Adicionar Foto, Vídeo ou PDF</span>
-                                                        </>
-                                                    )}
-                                                </button>
+                                                /* Three options: Dynamic property main image, choose from property, or upload file */
+                                                <div className="grid grid-cols-3 gap-2">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => {
+                                                            updateStep(step.id, 'media_url', '__PROPERTY_MAIN_IMAGE__');
+                                                            updateStep(step.id, 'media_type', 'image');
+                                                            updateStep(step.id, 'media_name', 'Imagem Principal do Imóvel do Lead');
+                                                            
+                                                            const propertiesWithoutMainImage = properties.filter(p => !p.main_image_url);
+                                                            if (properties.length === 0) {
+                                                                toast.success('Imagem dinâmica selecionada!', {
+                                                                    description: 'Lembre-se: Quando cadastrar imóveis, marque uma Foto Principal (⭐) na galeria de mídias deles.',
+                                                                    duration: 6000
+                                                                });
+                                                            } else if (propertiesWithoutMainImage.length > 0) {
+                                                                const nomesImoveis = propertiesWithoutMainImage.slice(0, 2).map(p => p.title).join(', ');
+                                                                const rest = propertiesWithoutMainImage.length - 2;
+                                                                const descExtra = rest > 0 ? ` e mais ${rest} imóvel(is)` : '';
+                                                                toast.warning('Imagem dinâmica selecionada!', {
+                                                                    description: `Alguns imóveis (${nomesImoveis}${descExtra}) não possuem Foto Principal (⭐). Neles, o sistema usará a primeira foto como fallback.`,
+                                                                    duration: 8000
+                                                                });
+                                                            } else {
+                                                                toast.success('Imagem dinâmica selecionada!', {
+                                                                    description: 'Excelente! Todos os seus imóveis ativos possuem uma Foto Principal (⭐) definida.',
+                                                                    duration: 5000
+                                                                });
+                                                            }
+                                                        }}
+                                                        className="flex flex-col items-center justify-center gap-1.5 py-3 border-2 border-dashed border-border/40 rounded-lg hover:border-yellow-400 hover:bg-yellow-400/5 transition-all text-muted-foreground hover:text-yellow-400"
+                                                    >
+                                                        <ImageIcon className="h-4 w-4" />
+                                                        <span className="text-[9px] font-bold text-center leading-tight">Imagem do Imóvel</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => openPropertyPicker(step.id)}
+                                                        disabled={isLoadingProperties || properties.length === 0}
+                                                        className="flex flex-col items-center justify-center gap-1.5 py-3 border-2 border-dashed border-border/40 rounded-lg hover:border-blue-400 hover:bg-blue-400/5 transition-all text-muted-foreground hover:text-blue-400 disabled:opacity-40 disabled:cursor-not-allowed"
+                                                    >
+                                                        <Building2 className="h-4 w-4" />
+                                                        <span className="text-[9px] font-bold text-center leading-tight">Fotos do Imóvel</span>
+                                                    </button>
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => triggerMediaSelect(step.id)}
+                                                        disabled={uploadingStepId === step.id}
+                                                        className="flex flex-col items-center justify-center gap-1.5 py-3 border-2 border-dashed border-border/40 rounded-lg hover:border-accent-icon hover:bg-accent-icon/5 transition-all text-muted-foreground hover:text-foreground"
+                                                    >
+                                                        {uploadingStepId === step.id ? (
+                                                            <Loader2 className="h-4 w-4 animate-spin text-foreground" />
+                                                        ) : (
+                                                            <>
+                                                                <Upload className="h-4 w-4" />
+                                                                <span className="text-[9px] font-bold text-center leading-tight">Enviar Arquivo</span>
+                                                            </>
+                                                        )}
+                                                    </button>
+                                                </div>
                                             )}
                                         </div>
                                     </div>

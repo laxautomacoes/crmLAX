@@ -29,6 +29,7 @@ import {
 import FollowUpSequenceModal from './FollowUpSequenceModal';
 import FollowUpEnrollModal from './FollowUpEnrollModal';
 import FollowUpLogsModal from './FollowUpLogsModal';
+import { FormInput } from '@/components/shared/forms/FormInput';
 
 interface FollowUpDashboardProps {
     tenantId: string;
@@ -202,14 +203,13 @@ export default function FollowUpDashboard({ tenantId, profileId, isAdmin, userRo
 
             {/* Barra de Ações */}
             <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3">
-                <div className="relative flex-1">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                    <input
-                        type="text"
+                <div className="flex-1">
+                    <FormInput
                         placeholder="Buscar sequências..."
                         value={search}
                         onChange={e => setSearch(e.target.value)}
-                        className="w-full pl-10 pr-4 py-2.5 rounded-lg border border-border/40 bg-foreground/5 text-foreground text-sm focus:outline-none focus:ring-2 focus:ring-ring/50 focus:border-ring placeholder:text-muted-foreground/50 transition-all"
+                        icon={Search}
+                        className="focus:!border-muted-foreground/50 focus:!ring-muted-foreground/20"
                     />
                 </div>
 

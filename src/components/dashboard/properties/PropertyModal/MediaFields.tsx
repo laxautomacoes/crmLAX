@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useCallback, useRef } from 'react'
-import { Image as ImageIcon, Film, FileText, X, Upload, Loader2, Download, Check, Globe, Trash2, GripVertical, Play, Pause, ZoomIn } from 'lucide-react'
+import { Image as ImageIcon, Film, FileText, X, Upload, Loader2, Download, Check, Globe, Trash2, GripVertical, Play, Pause, ZoomIn, Star } from 'lucide-react'
 import { toast } from 'sonner'
 import {
     DndContext,
@@ -30,9 +30,11 @@ interface SortableImageProps {
     isSelected?: boolean;
     onToggleSelect?: (url: string) => void;
     onPreview?: (url: string) => void;
+    isMainImage?: boolean;
+    onSetMainImage?: (url: string) => void;
 }
 
-function SortableImage({ url, index, onRemove, isSelected, onToggleSelect, onPreview }: SortableImageProps) {
+function SortableImage({ url, index, onRemove, isSelected, onToggleSelect, onPreview, isMainImage, onSetMainImage }: SortableImageProps) {
     const {
         attributes,
         listeners,
@@ -81,6 +83,23 @@ function SortableImage({ url, index, onRemove, isSelected, onToggleSelect, onPre
                     )}
                 </button>
             )}
+
+            {/* Estrela de Foto Principal — canto inferior esquerdo */}
+            {onSetMainImage && (
+                <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onSetMainImage(url); }}
+                    className={`absolute bottom-1 left-1 z-[6] p-1 flex items-center justify-center transition-all ${
+                        isMainImage 
+                            ? 'text-[#FFE600] opacity-100 drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]' 
+                            : 'text-white opacity-0 group-hover:opacity-100 hover:text-[#FFE600] drop-shadow-[0_1px_3px_rgba(0,0,0,0.8)]'
+                    }`}
+                    title={isMainImage ? "Foto principal" : "Definir como foto principal"}
+                >
+                    <Star size={16} fill={isMainImage ? "#FFE600" : "none"} strokeWidth={2} />
+                </button>
+            )}
+
             <button
                 type="button"
                 onClick={(e) => { e.stopPropagation(); onRemove(index); }}
@@ -355,6 +374,8 @@ interface MediaFieldsProps {
     onDragEnd?: () => void
     showImagesOnly?: boolean
     showVideosDocsOnly?: boolean
+    mainImageUrl?: string
+    onSetMainImage?: (url: string) => void
 }
 
 export function MediaFields({ 
@@ -364,7 +385,9 @@ export function MediaFields({
     propertyTitle, onRemoveMultipleImages,
     onDragStart: onDragStartProp, onDragEnd: onDragEndProp,
     showImagesOnly = false,
-    showVideosDocsOnly = false
+    showVideosDocsOnly = false,
+    mainImageUrl,
+    onSetMainImage
 }: MediaFieldsProps) {
     const [selectedSourceImages, setSelectedSourceImages] = useState<Set<number>>(new Set())
     const [activeImageId, setActiveImageId] = useState<string | null>(null)
@@ -670,6 +693,8 @@ export function MediaFields({
                                     isSelected={selectedDownloadImages.has(url)}
                                     onToggleSelect={toggleDownloadImage}
                                     onPreview={(u) => setPreviewMedia({ url: u, type: 'image' })}
+                                    isMainImage={url === mainImageUrl}
+                                    onSetMainImage={onSetMainImage}
                                 />
                             ))}
                         </SortableContext>

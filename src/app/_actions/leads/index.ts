@@ -14,3 +14,5 @@ export {
     getLeadCampaigns,
     createLeadCampaign
 } from './distribution'
+export { createLeadsBulk } from './bulk-import'
+

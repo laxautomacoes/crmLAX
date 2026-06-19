@@ -126,8 +126,8 @@ export function PropertyDetailsContent({
         ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}`
         : 'Sob consulta';
 
-    const formattedCondo = details.valor_condominio ? `R$ ${Number(details.valor_condominio).toLocaleString('pt-BR')}` : 'Sob consulta';
-    const formattedIptu = details.valor_iptu ? `R$ ${Number(details.valor_iptu).toLocaleString('pt-BR')}` : 'Sob consulta';
+    const formattedCondo = details.valor_condominio ? `R$ ${Number(details.valor_condominio).toLocaleString('pt-BR')}` : '-';
+    const formattedIptu = details.valor_iptu ? `R$ ${Number(details.valor_iptu).toLocaleString('pt-BR')}` : '-';
 
     const formatPrevisaoValue = () => {
         if (!details.is_empreendimento) return '-';
@@ -262,6 +262,20 @@ export function PropertyDetailsContent({
                             >
                                 {fullAddress || 'Endereço não informado'}
                             </div>
+                        </div>
+                    </div>
+
+                    <div className="border-t border-border/60 my-6" />
+
+                    {/* Valores */}
+                    <div className="space-y-4">
+                        <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
+                            Valores
+                        </h4>
+                        <div className="text-foreground bg-background p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
+                            <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
+                            <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
+                            <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
                         </div>
                     </div>
                 </div>
@@ -428,13 +442,9 @@ export function PropertyDetailsContent({
                                             Informações
                                         </h4>
                                         <div className="text-foreground bg-background p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
-                                            <InfoRow icon={<Building2 size={14} />} label="Construtora" value={details.empreendimento?.construtora || details.construtora || '-'} />
-                                            <InfoRow icon={<Calendar size={14} />} label="Previsão Entrega" value={previsaoVal} />
-                                            <InfoRow icon={<Calendar size={14} />} label="Idade" value={formatIdade(details.idade_imovel)} />
-
                                             {!details.is_empreendimento && (
                                                 <>
-                                                    <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
+
                                                     <InfoRow icon={<BedDouble size={14} />} label="Dormitórios" value={`${details.dormitorios || details.quartos || 0} ${Number(details.suites) > 0 ? `(${details.suites} Suítes)` : ''}`} />
                                                     {details.obs_dormitorios && (
                                                         <InfoRow icon={<BedDouble size={14} />} label="Observações" value={details.obs_dormitorios} />
@@ -458,6 +468,15 @@ export function PropertyDetailsContent({
                                                     <InfoRow icon={<Car size={14} />} label="Vagas" value={`${details.vagas || 0} ${details.vagas_numeracao ? `(${details.vagas_numeracao})` : ''}`} />
                                                     <InfoRow icon={<Maximize2 size={14} />} label="Área Privativa" value={`${details.area_privativa || 0}m²`} />
                                                     <InfoRow icon={<Maximize2 size={14} />} label="Área Total" value={`${details.area_total || 0}m²`} />
+                                                </>
+                                            )}
+
+                                            <InfoRow icon={<Building2 size={14} />} label="Construtora" value={details.empreendimento?.construtora || details.construtora || '-'} />
+                                            <InfoRow icon={<Calendar size={14} />} label="Previsão Entrega" value={previsaoVal} />
+                                            <InfoRow icon={<Calendar size={14} />} label="Idade" value={formatIdade(details.idade_imovel)} />
+
+                                            {!details.is_empreendimento && (
+                                                <>
                                                     {details.torre_bloco && (
                                                         <InfoRow icon={<Home size={14} />} label="Número de Torre | Bloco" value={details.torre_bloco} />
                                                     )}
@@ -469,8 +488,7 @@ export function PropertyDetailsContent({
                                                     )}
                                                 </>
                                             )}
-                                            <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
-                                            <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
+
                                         </div>
                                     </div>
 

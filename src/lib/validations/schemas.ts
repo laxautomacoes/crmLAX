@@ -44,6 +44,7 @@ export const createPropertySchema = z.object({
     is_published: z.boolean().optional().default(false),
     is_archived: z.boolean().optional().default(false),
     owner_contact_id: optionalUuid,
+    main_image_url: optionalText,
 })
 
 export const updatePropertySchema = createPropertySchema.partial()

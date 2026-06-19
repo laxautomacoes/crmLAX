@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
-import { Search, Mail, MessageCircle, Loader2, User, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Video, FileText, MapPin, Info, Home, Download } from 'lucide-react'
+import { Search, Mail, MessageCircle, Loader2, User, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Video, FileText, MapPin, Info, Home, Download, Building2, UserCheck, DollarSign, Waves } from 'lucide-react'
 import { getPipelineData, createLead } from '@/app/_actions/leads'
 import { sendPropertyEmail, logInteraction } from '@/app/_actions/messaging'
 import { getProfile } from '@/app/_actions/profile'
@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { formatPhone } from '@/lib/utils/phone'
 import { getPropertyUrl } from '@/lib/utils/url'
 import { createClient } from '@/lib/supabase/client'
-import { UserPlus, ArrowLeft, Check } from 'lucide-react'
+import { UserPlus, ArrowLeft, Check, FileDown } from 'lucide-react'
 import type { Lead } from '@/components/dashboard/leads/PipelineBoard'
 
 interface PropertyDocument {
@@ -47,13 +47,23 @@ interface PropertyData {
     videos?: string[]
     documents?: PropertyDocument[]
     details?: PropertyDetails
+    created_by_profile?: {
+        id: string
+        full_name: string
+        whatsapp_number?: string
+        avatar_url?: string | null
+    }
 }
 
 interface BrokerProfile {
     id: string
+    full_name: string
+    whatsapp_number?: string
+    avatar_url?: string | null
 }
 
 interface TenantRecord {
+    name?: string
     slug?: string
     custom_domain?: string | null
     custom_domain_verified?: boolean
@@ -78,6 +88,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     const [isManualMode, setIsManualMode] = useState(false)
     const [manualLead, setManualLead] = useState({ name: '', email: '', phone: '' })
     const [isDownloading, setIsDownloading] = useState(false)
+    const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
 
     const handleDownloadImages = async () => {
         setIsDownloading(true)
@@ -133,25 +144,29 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         showEscritorio: boolean;
         showDependencia: boolean;
         showObservations: boolean;
+        showResponsavel: boolean;
+        showConstrutora: boolean;
         selectedImages: string[];
         selectedVideos: string[];
         selectedDocs: PropertyDocument[];
     }>({
-        title: true,
-        price: true,
-        showCondo: true,
-        showIptu: true,
-        description: 'full',
-        location: 'approximate',
-        showBedrooms: true,
-        showSuites: true,
-        showArea: true,
-        showType: true,
-        showAmenities: true,
-        showSacada: true,
-        showEscritorio: true,
-        showDependencia: true,
-        showObservations: true,
+        title: false,
+        price: false,
+        showCondo: false,
+        showIptu: false,
+        description: 'none',
+        location: 'none',
+        showBedrooms: false,
+        showSuites: false,
+        showArea: false,
+        showType: false,
+        showAmenities: false,
+        showSacada: false,
+        showEscritorio: false,
+        showDependencia: false,
+        showObservations: false,
+        showResponsavel: false,
+        showConstrutora: false,
         selectedImages: [],
         selectedVideos: [],
         selectedDocs: []
@@ -162,20 +177,25 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (isOpen && property) {
             setConfig(prev => ({
                 ...prev,
-                selectedImages: property.images || [],
-                selectedVideos: property.videos || [],
-                selectedDocs: property.documents || []
+                selectedImages: [],
+                selectedVideos: [],
+                selectedDocs: []
             }))
         }
     }, [isOpen, property])
 
     const [expandedSections, setExpandedSections] = useState({
         basic: false,
-        details: false,
         location: false,
+        valores: false,
         images: false,
         videos: false,
-        docs: false
+        docs: false,
+        details: false,
+        amenities: false,
+        descricao: false,
+        responsavel: false,
+        construtora: false
     })
 
     const toggleSection = (section: keyof typeof expandedSections) => {
@@ -186,7 +206,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const supabase = createClient()
         const { data } = await supabase
             .from('tenants')
-            .select('slug, custom_domain, custom_domain_verified')
+            .select('name, slug, custom_domain, custom_domain_verified')
             .eq('id', tenantId)
             .single()
         
@@ -450,6 +470,42 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         onClose()
     }
 
+    const handleGeneratePDF = async () => {
+        setIsGeneratingPDF(true)
+        try {
+            const { generatePropertyPDF } = await import('@/lib/utils/generatePropertyPDF')
+            
+            let brokerProfile = property.created_by_profile
+            
+            if (!brokerProfile && currentBroker) {
+                brokerProfile = {
+                    id: currentBroker.id,
+                    full_name: currentBroker.full_name,
+                    whatsapp_number: currentBroker.whatsapp_number,
+                    avatar_url: currentBroker.avatar_url
+                }
+            }
+
+            const formattedProperty = {
+                ...property,
+                created_by_profile: brokerProfile
+            }
+
+            await generatePropertyPDF({
+                property: formattedProperty,
+                config,
+                tenantName: tenant?.name || 'CRM LAX'
+            })
+            
+            toast.success('PDF gerado com sucesso!')
+        } catch (error) {
+            console.error('Erro ao gerar PDF:', error)
+            toast.error('Ocorreu um erro ao gerar o PDF.')
+        } finally {
+            setIsGeneratingPDF(false)
+        }
+    }
+
     const selectedImagesSet = useMemo(() => new Set(config.selectedImages), [config.selectedImages])
     const selectedVideosSet = useMemo(() => new Set(config.selectedVideos), [config.selectedVideos])
     const selectedDocsSet = useMemo(() => new Set(config.selectedDocs.map((d) => d.url)), [config.selectedDocs])
@@ -608,15 +664,15 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
                             {/* Configuration Options */}
                             <div className="space-y-0 rounded-xl overflow-hidden bg-card">
-                                {/* Basic Info Section */}
+                                {/* 1. Imóvel */}
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('basic')}
                                         className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Info size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Identificação e valor</span>
+                                            <Home size={18} className="text-foreground" />
+                                            <span className="font-bold text-foreground">Imóvel</span>
                                         </div>
                                         {expandedSections.basic ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                     </button>
@@ -627,91 +683,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 checked={config.title} 
                                                 onChange={(e) => setConfig({...config, title: e.target.checked})} 
                                             />
-                                            <FormCheckbox 
-                                                label="Preço" 
-                                                checked={config.price} 
-                                                onChange={(e) => setConfig({...config, price: e.target.checked})} 
-                                            />
-                                            <FormCheckbox 
-                                                label="Condomínio" 
-                                                checked={config.showCondo} 
-                                                onChange={(e) => setConfig({...config, showCondo: e.target.checked})} 
-                                            />
-                                            <FormCheckbox 
-                                                label="IPTU" 
-                                                checked={config.showIptu} 
-                                                onChange={(e) => setConfig({...config, showIptu: e.target.checked})} 
-                                            />
-                                            <FormCheckbox 
-                                                label="Descrição" 
-                                                checked={config.description === 'full'} 
-                                                onChange={(e) => setConfig({...config, description: e.target.checked ? 'full' : 'none'})} 
-                                            />
                                         </div>
                                     )}
                                 </div>
 
-                                {/* Details Section */}
-                                <div className="">
-                                    <button 
-                                        onClick={() => toggleSection('details')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
-                                    >
-                                        <div className="flex items-center gap-2">
-                                            <Home size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Informações</span>
-                                        </div>
-                                        {expandedSections.details ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
-                                    </button>
-                                    {expandedSections.details && (
-                                        <div className="p-4 pt-0 space-y-3">
-                                            <div className="grid grid-cols-2 gap-3">
-                                                <FormCheckbox 
-                                                    label="Dormitórios" 
-                                                    checked={config.showBedrooms} 
-                                                    onChange={(e) => setConfig({...config, showBedrooms: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Suítes" 
-                                                    checked={config.showSuites} 
-                                                    onChange={(e) => setConfig({...config, showSuites: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Áreas" 
-                                                    checked={config.showArea} 
-                                                    onChange={(e) => setConfig({...config, showArea: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Sacada" 
-                                                    checked={config.showSacada} 
-                                                    onChange={(e) => setConfig({...config, showSacada: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Escritório" 
-                                                    checked={config.showEscritorio} 
-                                                    onChange={(e) => setConfig({...config, showEscritorio: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Dependência" 
-                                                    checked={config.showDependencia} 
-                                                    onChange={(e) => setConfig({...config, showDependencia: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Observações" 
-                                                    checked={config.showObservations} 
-                                                    onChange={(e) => setConfig({...config, showObservations: e.target.checked})} 
-                                                />
-                                                <FormCheckbox 
-                                                    label="Área de Lazer" 
-                                                    checked={config.showAmenities} 
-                                                    onChange={(e) => setConfig({...config, showAmenities: e.target.checked})} 
-                                                />
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Location Section */}
+                                {/* 2. Endereço */}
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('location')}
@@ -719,7 +695,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     >
                                         <div className="flex items-center gap-2">
                                             <MapPin size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Localização</span>
+                                            <span className="font-bold text-foreground">Endereço</span>
                                         </div>
                                         {expandedSections.location ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
                                     </button>
@@ -746,7 +722,40 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     )}
                                 </div>
 
-                                {/* Media Sections (Images/Videos/Docs) */}
+                                {/* 3. Valores */}
+                                <div className="">
+                                    <button 
+                                        onClick={() => toggleSection('valores')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <DollarSign size={18} className="text-foreground" />
+                                            <span className="font-bold text-foreground">Valores</span>
+                                        </div>
+                                        {expandedSections.valores ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                    </button>
+                                    {expandedSections.valores && (
+                                        <div className="p-4 pt-0 space-y-3">
+                                            <FormCheckbox 
+                                                label="Preço" 
+                                                checked={config.price} 
+                                                onChange={(e) => setConfig({...config, price: e.target.checked})} 
+                                            />
+                                            <FormCheckbox 
+                                                label="Condomínio" 
+                                                checked={config.showCondo} 
+                                                onChange={(e) => setConfig({...config, showCondo: e.target.checked})} 
+                                            />
+                                            <FormCheckbox 
+                                                label="IPTU" 
+                                                checked={config.showIptu} 
+                                                onChange={(e) => setConfig({...config, showIptu: e.target.checked})} 
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 4. Imagens */}
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('images')}
@@ -815,6 +824,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     )}
                                 </div>
 
+                                {/* 5. Vídeos */}
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('videos')}
@@ -852,6 +862,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     )}
                                 </div>
 
+                                {/* 6. Documentos */}
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('docs')}
@@ -888,6 +899,153 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         </div>
                                     )}
                                 </div>
+
+                                {/* 7. Informações */}
+                                <div className="">
+                                    <button 
+                                        onClick={() => toggleSection('details')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Info size={18} className="text-foreground" />
+                                            <span className="font-bold text-foreground">Informações</span>
+                                        </div>
+                                        {expandedSections.details ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                    </button>
+                                    {expandedSections.details && (
+                                        <div className="p-4 pt-0 space-y-3">
+                                            <div className="grid grid-cols-2 gap-3">
+                                                <FormCheckbox 
+                                                    label="Dormitórios" 
+                                                    checked={config.showBedrooms} 
+                                                    onChange={(e) => setConfig({...config, showBedrooms: e.target.checked})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Suítes" 
+                                                    checked={config.showSuites} 
+                                                    onChange={(e) => setConfig({...config, showSuites: e.target.checked})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Áreas" 
+                                                    checked={config.showArea} 
+                                                    onChange={(e) => setConfig({...config, showArea: e.target.checked})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Sacada" 
+                                                    checked={config.showSacada} 
+                                                    onChange={(e) => setConfig({...config, showSacada: e.target.checked})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Escritório" 
+                                                    checked={config.showEscritorio} 
+                                                    onChange={(e) => setConfig({...config, showEscritorio: e.target.checked})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Dependência" 
+                                                    checked={config.showDependencia} 
+                                                    onChange={(e) => setConfig({...config, showDependencia: e.target.checked})} 
+                                                />
+                                                <FormCheckbox 
+                                                    label="Observações" 
+                                                    checked={config.showObservations} 
+                                                    onChange={(e) => setConfig({...config, showObservations: e.target.checked})} 
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 8. Área comum | Lazer */}
+                                <div className="">
+                                    <button 
+                                        onClick={() => toggleSection('amenities')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Waves size={18} className="text-foreground" />
+                                            <span className="font-bold text-foreground">Área comum | Lazer</span>
+                                        </div>
+                                        {expandedSections.amenities ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                    </button>
+                                    {expandedSections.amenities && (
+                                        <div className="p-4 pt-0 space-y-3">
+                                            <FormCheckbox 
+                                                label="Incluir área de lazer" 
+                                                checked={config.showAmenities} 
+                                                onChange={(e) => setConfig({...config, showAmenities: e.target.checked})} 
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 9. Descrição */}
+                                <div className="">
+                                    <button 
+                                        onClick={() => toggleSection('descricao')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <FileText size={18} className="text-foreground" />
+                                            <span className="font-bold text-foreground">Descrição</span>
+                                        </div>
+                                        {expandedSections.descricao ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                    </button>
+                                    {expandedSections.descricao && (
+                                        <div className="p-4 pt-0 space-y-3">
+                                            <FormCheckbox 
+                                                label="Incluir descrição" 
+                                                checked={config.description === 'full'} 
+                                                onChange={(e) => setConfig({...config, description: e.target.checked ? 'full' : 'none'})} 
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 10. Responsável */}
+                                <div className="">
+                                    <button 
+                                        onClick={() => toggleSection('responsavel')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <UserCheck size={18} className="text-foreground" />
+                                            <span className="font-bold text-foreground">Responsável</span>
+                                        </div>
+                                        {expandedSections.responsavel ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                    </button>
+                                    {expandedSections.responsavel && (
+                                        <div className="p-4 pt-0 space-y-3">
+                                            <FormCheckbox 
+                                                label="Incluir dados do responsável" 
+                                                checked={config.showResponsavel} 
+                                                onChange={(e) => setConfig({...config, showResponsavel: e.target.checked})} 
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* 11. Proprietário | Construtora */}
+                                <div className="">
+                                    <button 
+                                        onClick={() => toggleSection('construtora')}
+                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                    >
+                                        <div className="flex items-center gap-2">
+                                            <Building2 size={18} className="text-foreground" />
+                                            <span className="font-bold text-foreground">Proprietário | Construtora</span>
+                                        </div>
+                                        {expandedSections.construtora ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                    </button>
+                                    {expandedSections.construtora && (
+                                        <div className="p-4 pt-0 space-y-3">
+                                            <FormCheckbox 
+                                                label="Incluir dados do proprietário/construtora" 
+                                                checked={config.showConstrutora} 
+                                                onChange={(e) => setConfig({...config, showConstrutora: e.target.checked})} 
+                                            />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         </div>
                     )}
@@ -895,10 +1053,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
                 {selectedLead && (
                     <div className="pt-4 mt-auto">
-                        <div className="grid grid-cols-2 gap-2">
+                        <div className="grid grid-cols-3 gap-2">
                             <button
                                 onClick={() => handleSendEmail(selectedLead)}
-                                disabled={sending || !selectedLead.email}
+                                disabled={sending || isGeneratingPDF || !selectedLead.email}
                                 className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-blue-500/5 hover:border-blue-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
                                 <div className="w-7 h-7 rounded-full bg-blue-500/10 flex-shrink-0 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
@@ -912,7 +1070,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
                             <button
                                 onClick={() => handleSendWhatsApp(selectedLead)}
-                                disabled={sending || !selectedLead.phone}
+                                disabled={sending || isGeneratingPDF || !selectedLead.phone}
                                 className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-[#25D366]/5 hover:border-[#25D366]/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
                                 <div className="w-7 h-7 rounded-full bg-[#25D366]/10 flex-shrink-0 flex items-center justify-center text-[#25D366] group-hover:scale-110 transition-transform">
@@ -921,6 +1079,24 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="overflow-hidden min-w-0 flex-1">
                                     <p className="font-bold text-foreground text-xs truncate">WhatsApp</p>
                                     <p className="text-[9px] text-foreground truncate">{formatPhone(selectedLead.phone) || 'Sem telefone'}</p>
+                                </div>
+                            </button>
+
+                            <button
+                                onClick={handleGeneratePDF}
+                                disabled={sending || isGeneratingPDF}
+                                className="flex items-center gap-2 p-2.5 rounded-xl border border-border hover:bg-amber-500/5 hover:border-amber-500/20 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left cursor-pointer animate-in fade-in"
+                            >
+                                <div className="w-7 h-7 rounded-full bg-amber-500/10 flex-shrink-0 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                                    {isGeneratingPDF ? (
+                                        <Loader2 className="animate-spin" size={14} />
+                                    ) : (
+                                        <FileDown size={14} />
+                                    )}
+                                </div>
+                                <div className="overflow-hidden min-w-0 flex-1">
+                                    <p className="font-bold text-foreground text-xs truncate">Gerar PDF</p>
+                                    <p className="text-[9px] text-foreground truncate">Ficha do imóvel</p>
                                 </div>
                             </button>
                         </div>

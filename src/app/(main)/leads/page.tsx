@@ -2,13 +2,13 @@
 
 import { useState, useEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { Plus } from 'lucide-react'
+import { Plus, Upload } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { LeadsHeader } from '@/components/dashboard/leads/LeadsHeader'
 import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
 import { Modal } from '@/components/shared/Modal'
 import { LeadModal } from '@/components/dashboard/leads/LeadModal'
-import { LeadImportImageModal } from '@/components/dashboard/leads/LeadImportImageModal'
+import { LeadBulkImportModal } from '@/components/dashboard/leads/LeadBulkImportModal'
 import { ClientModal } from '@/components/dashboard/clients/ClientModal'
 import { getProfile, getBrokers } from '@/app/_actions/profile'
 import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
@@ -45,7 +45,7 @@ type PipelineLead = Lead & {
 export default function LeadsPage() {
     const [isStageModalOpen, setIsStageModalOpen] = useState(false)
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)
-    const [isLeadImportImageModalOpen, setIsLeadImportImageModalOpen] = useState(false)
+    const [isLeadBulkImportModalOpen, setIsLeadBulkImportModalOpen] = useState(false)
     const [newStageName, setNewStageName] = useState('')
     const [tenantId, setTenantId] = useState<string | null>(null)
     const [stages, setStages] = useState<Stage[]>([])
@@ -318,10 +318,9 @@ export default function LeadsPage() {
                     stages={stages}
                     onSuccess={fetchData}
                     editingLead={editingLead ?? undefined}
-                    hasAIAccess={hasAIAccess}
-                    onSelectImportPrint={() => {
+                    onSelectImportBulk={() => {
                         setIsLeadModalOpen(false)
-                        setIsLeadImportImageModalOpen(true)
+                        setIsLeadBulkImportModalOpen(true)
                     }}
                     onMakeProposal={async (contactId, leadId) => {
                         setIsLeadModalOpen(false)
@@ -338,11 +337,11 @@ export default function LeadsPage() {
                 />
             )}
 
-            {/* Modal Importar Print (IA) */}
+            {/* Modal Importar em Massa (IA/Planilha/PDF) */}
             {tenantId && (
-                <LeadImportImageModal
-                    isOpen={isLeadImportImageModalOpen}
-                    onClose={() => setIsLeadImportImageModalOpen(false)}
+                <LeadBulkImportModal
+                    isOpen={isLeadBulkImportModalOpen}
+                    onClose={() => setIsLeadBulkImportModalOpen(false)}
                     tenantId={tenantId}
                     stages={stages}
                     brokers={brokers}

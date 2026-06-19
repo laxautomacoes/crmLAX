@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
-import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload } from 'lucide-react'
 import type { Lead } from './PipelineBoard'
 
 interface Broker {
@@ -47,7 +47,7 @@ type EditableLead = Partial<Lead> & {
 
 const LEAD_MODAL_INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira'] as const
 
-export type LeadCreationMethod = 'manual' | 'import_print' | null
+export type LeadCreationMethod = 'manual' | 'import_bulk' | null
 
 interface LeadModalProps {
     isOpen: boolean
@@ -56,8 +56,7 @@ interface LeadModalProps {
     stages: Array<{ id: string; name: string }>
     onSuccess: () => void
     editingLead?: EditableLead // Para edição
-    hasAIAccess: boolean
-    onSelectImportPrint?: () => void
+    onSelectImportBulk?: () => void
     onMakeProposal?: (contactId: string, leadId: string) => void
 }
 
@@ -68,8 +67,7 @@ export function LeadModal({
     stages,
     onSuccess,
     editingLead,
-    hasAIAccess,
-    onSelectImportPrint,
+    onSelectImportBulk,
     onMakeProposal
 }: LeadModalProps) {
     const [creationMethod, setCreationMethod] = useState<LeadCreationMethod>(null)
@@ -277,8 +275,8 @@ export function LeadModal({
     const showMethodSelection = !editingLead && creationMethod === null
 
     const handleSelectMethod = (method: LeadCreationMethod) => {
-        if (method === 'import_print') {
-            onSelectImportPrint?.()
+        if (method === 'import_bulk') {
+            onSelectImportBulk?.()
         } else {
             setCreationMethod('manual')
         }
@@ -357,9 +355,9 @@ export function LeadModal({
                             <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
                         </button>
 
-                        {/* Importar Print (IA) */}
+                        {/* Importação com IA ou Planilha */}
                         <button
-                            onClick={() => handleSelectMethod('import_print')}
+                            onClick={() => handleSelectMethod('import_bulk')}
                             className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-purple-500/30 rounded-xl px-4 py-4 transition-all text-left"
                         >
                             <div className="p-2.5 bg-purple-500/10 rounded-xl group-hover:bg-purple-500/20 transition-colors shrink-0">
@@ -367,11 +365,11 @@ export function LeadModal({
                             </div>
                             <div className="flex-1 min-w-0">
                                 <div className="flex items-center gap-2">
-                                    <p className="text-sm font-bold text-foreground">Importar Print</p>
+                                    <p className="text-sm font-bold text-foreground">Importar com IA ou Planilha</p>
                                     <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 text-[9px] font-black uppercase tracking-wider rounded-md">IA</span>
                                 </div>
                                 <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
-                                    Tire um print de outro CRM e a IA extrai os dados
+                                    Importe um ou múltiplos leads a partir de prints (fotos), PDFs ou planilhas
                                 </p>
                             </div>
                             <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />

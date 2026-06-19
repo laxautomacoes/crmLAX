@@ -80,7 +80,7 @@ export function BasicInfoFields({
                                 label="SITE"
                             />
                         )}
-                        {isAdmin && formData.is_published && (
+                        {isAdmin && (
                             <Switch
                                 checked={formData.is_featured || false}
                                 onChange={(checked) => setFormData({ ...formData, is_featured: checked })}

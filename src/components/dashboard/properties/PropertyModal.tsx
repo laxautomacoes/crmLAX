@@ -33,6 +33,7 @@ function getEmptyFormData() {
         created_by: null as string | null,
         owner_contact_id: null as string | null,
         images: [] as string[],
+        main_image_url: '',
         videos: [] as string[],
         documents: [] as { name: string, url: string }[],
         is_published: false,
@@ -390,6 +391,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 created_by: editingProperty.created_by || null,
                 owner_contact_id: editingProperty.owner_contact_id || null,
                 images: editingProperty.images || [],
+                main_image_url: (editingProperty as any).main_image_url || '',
                 videos: editingProperty.videos || [],
                 documents: editingProperty.documents || [],
                 is_published: editingProperty.is_published || false,
@@ -566,9 +568,14 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         }
 
         if (type === 'images') {
+            const removedUrl = formData.images[index]
             const newFiles = [...formData.images]
             newFiles.splice(index, 1)
-            setFormData({ ...formData, images: newFiles })
+            setFormData(prev => ({ 
+                ...prev, 
+                images: newFiles,
+                main_image_url: prev.main_image_url === removedUrl ? '' : prev.main_image_url
+            }))
             return
         }
 
@@ -864,7 +871,16 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         onDragStart={() => { isDraggingRef.current = true; setIsDragging(true) }}
                         onDragEnd={() => { isDraggingRef.current = false; setIsDragging(false) }}
                         propertyTitle={formData.title}
-                        onRemoveMultipleImages={(urls) => setFormData(prev => ({ ...prev, images: prev.images.filter((img: string) => !urls.includes(img)) }))}
+                        onRemoveMultipleImages={(urls) => setFormData(prev => ({ 
+                            ...prev, 
+                            images: prev.images.filter((img: string) => !urls.includes(img)),
+                            main_image_url: urls.includes(prev.main_image_url) ? '' : prev.main_image_url
+                        }))}
+                        mainImageUrl={formData.main_image_url}
+                        onSetMainImage={(url) => setFormData(prev => ({ 
+                            ...prev, 
+                            main_image_url: url === prev.main_image_url ? '' : url 
+                        }))}
                     />
                     <div className="border-t border-border/60" />
                     <AddressFields formData={formData} setFormData={setFormData} />

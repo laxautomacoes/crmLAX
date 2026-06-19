@@ -8,7 +8,6 @@ const corsHeaders = {
   'Access-Control-Allow-Headers': 'authorization, x-client-info, apikey, content-type',
 };
 
-
 /** Converte Uint8Array para base64 em chunks para evitar stack overflow */
 function uint8ToBase64(bytes: Uint8Array): string {
   let binary = '';
@@ -32,34 +31,40 @@ Deno.serve(async (req: Request) => {
     );
 
     const formData = await req.formData();
-    const imageFile = formData.get('file') as File;
+    const file = formData.get('file') as File;
     const tenant_id = formData.get('tenant_id') as string;
     const ai_provider = (formData.get('ai_provider') as string) || 'gemini';
     const ai_model = (formData.get('ai_model') as string) || 'gemini-2.5-flash';
 
-    if (!imageFile || !tenant_id) {
-      throw new Error("Arquivo de imagem e tenant_id são obrigatórios.");
+    if (!file || !tenant_id) {
+      throw new Error("Arquivo e tenant_id são obrigatórios.");
     }
 
     const prompt = `
-      Você é um especialista em OCR e extração de dados de CRM imobiliário.
-      Analise o print deste lead e extraia as informações estruturadas.
-      Retorne APENAS um JSON válido contendo os dados identificados no seguinte formato:
+      Você é um especialista em OCR e extração em massa de dados de CRM imobiliário.
+      Analise o arquivo anexo (que pode ser uma imagem de tabela/print ou um documento PDF) contendo múltiplos leads.
+      Extraia as informações de todos os leads encontrados no documento.
+      Retorne APENAS um JSON válido contendo um array de leads no seguinte formato:
       {
-        "name": "Nome Completo do Lead (se houver, caso contrário crie um nome genérico como 'Lead via Print')",
-        "phone": "Telefone limpo (apenas números, incluindo o DDI e DDD se disponível, ex: 5548984153533 ou 48984153533)",
-        "email": "Endereço de e-mail (se houver, senão null)",
-        "notes": "Uma descrição concisa das observações, perfil, orçamento ou interesse extraído da imagem (ex: 'Interesse em Venda de Empreendimento em São José/SC...')"
+        "leads": [
+          {
+            "name": "Nome Completo do Lead (se não estiver claro, use algo genérico como 'Lead via Importação')",
+            "phone": "Telefone limpo (apenas números, incluindo código de país e área se disponíveis. Ex: 5548988231720 ou 48988231720)",
+            "email": "Endereço de e-mail (ou null se não encontrado)",
+            "notes": "Uma descrição curta com detalhes de perfil, interesses de compra/aluguel, faixa de preço, localização de preferência, corretor encarregado ou observações presentes no print/documento"
+          }
+        ]
       }
-      Seja rigoroso com tipos e valores. Não inclua texto explicativo fora do JSON.
+      Seja rigoroso ao extrair todos os leads. Não inclua texto explicativo fora do JSON.
     `;
 
     let responseText = "";
     let totalTokens = 0;
 
-    // Converter imagem para ArrayBuffer e depois para Base64
-    const arrayBuffer = await imageFile.arrayBuffer();
+    // Converter arquivo para ArrayBuffer e depois para Base64
+    const arrayBuffer = await file.arrayBuffer();
     const base64Data = uint8ToBase64(new Uint8Array(arrayBuffer));
+    const mimeType = file.type || (file.name.endsWith('.pdf') ? 'application/pdf' : 'image/png');
 
     // Chamar IA (Gemini ou OpenAI)
     if (ai_provider === 'openai') {
@@ -68,25 +73,32 @@ Deno.serve(async (req: Request) => {
       
       const openai = new OpenAI({ apiKey: openaiApiKey });
 
-      const response = await openai.chat.completions.create({
-        model: ai_model || "gpt-4o-mini",
-        messages: [
-          {
-            role: "user",
-            content: [
-              { type: "text", text: prompt },
-              {
-                type: "image_url",
-                image_url: { url: `data:${imageFile.type};base64,${base64Data}` }
-              }
-            ]
-          }
-        ],
-        temperature: 0.1,
-      });
+      if (mimeType.startsWith('image/')) {
+        const response = await openai.chat.completions.create({
+          model: ai_model || "gpt-4o-mini",
+          messages: [
+            {
+              role: "user",
+              content: [
+                { type: "text", text: prompt },
+                {
+                  type: "image_url",
+                  image_url: { url: `data:${mimeType};base64,${base64Data}` }
+                }
+              ]
+            }
+          ],
+          temperature: 0.1,
+        });
 
-      responseText = response.choices[0].message.content || "";
-      totalTokens = response.usage?.total_tokens || 0;
+        responseText = response.choices[0].message.content || "";
+        totalTokens = response.usage?.total_tokens || 0;
+      } else {
+        // Para PDF com OpenAI, como não suporta PDF direto via API do chat completion comum sem assistant,
+        // vamos instruir que use Gemini, ou se for OpenAI podemos tentar enviar via Assistant ou dar erro amigável.
+        // No entanto, podemos simplesmente usar o Gemini para PDFs que é 100% suportado nativamente.
+        throw new Error("O processamento de PDFs com OpenAI não está habilitado neste endpoint. Use o Gemini.");
+      }
 
     } else {
       // Gemini
@@ -101,7 +113,7 @@ Deno.serve(async (req: Request) => {
         {
           inlineData: {
             data: base64Data,
-            mimeType: imageFile.type
+            mimeType: mimeType
           }
         }
       ]);
@@ -119,7 +131,7 @@ Deno.serve(async (req: Request) => {
       tenant_id: tenant_id,
       model: ai_model,
       total_tokens: totalTokens,
-      feature_context: `lead-image-import`
+      feature_context: `lead-bulk-import`
     });
 
     return new Response(
@@ -134,7 +146,7 @@ Deno.serve(async (req: Request) => {
     );
 
   } catch (error: any) {
-    console.error('Error processing lead image:', error.message);
+    console.error('Error processing bulk leads:', error.message);
     return new Response(
       JSON.stringify({ error: error.message }),
       {
