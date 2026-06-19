@@ -38,14 +38,14 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onA
         )
     }
 
-    const sortableThClass = "px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center cursor-pointer select-none hover:bg-muted/30 transition-colors group"
-    const staticThClass = "px-6 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center"
+    const sortableThClass = "px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center cursor-pointer select-none hover:bg-muted/30 transition-colors group"
+    const staticThClass = "px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center"
 
     return (
-        <div className="bg-card rounded-2xl overflow-hidden shadow-sm">
+        <div className="bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="bg-muted/50">
+                    <thead className="bg-muted/50 border-b border-muted-foreground/30">
                         <tr>
                             <th
                                 className={`${sortableThClass} min-w-[250px] md:min-w-0`}
@@ -80,7 +80,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onA
                             <th className={staticThClass}>Ações</th>
                         </tr>
                     </thead>
-                    <tbody>
+                    <tbody className="divide-y divide-muted-foreground/30">
                         {properties.map((prop) => (
                             <PropertyListItem
                                 key={prop.id}

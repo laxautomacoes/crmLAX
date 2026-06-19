@@ -67,9 +67,9 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
     return (
         <tr 
             onClick={() => onView(prop)}
-            className="hover:bg-muted/30 transition-colors animate-in fade-in slide-in-from-left-2 duration-300 cursor-pointer"
+            className="hover:bg-muted/50 transition-colors animate-in fade-in slide-in-from-left-2 duration-300 cursor-pointer"
         >
-            <td className="px-6 py-4 min-w-[250px] md:min-w-0">
+            <td className="px-4 py-5 min-w-[250px] md:min-w-0">
                 <div className="flex items-center gap-4">
                     <div className="text-left max-w-md">
                         <div className="font-bold text-foreground text-sm line-clamp-1">
@@ -90,7 +90,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-4 text-center">
+            <td className="px-4 py-5 text-center">
                 <div className="flex flex-col items-center gap-1">
                     <span className="text-xs font-medium text-foreground">{translatePropertyType(prop.type)}</span>
                     {prop.details?.situacao && (
@@ -100,7 +100,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                     )}
                 </div>
             </td>
-            <td className="px-6 py-4">
+            <td className="px-4 py-5">
                 <div className="flex flex-col gap-1 items-center">
                     <div className="flex items-center gap-1 text-foreground" title="Dormitórios">
                         <BedDouble size={12} />
@@ -119,7 +119,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                     </div>
                 </div>
             </td>
-            <td className="px-6 py-4">
+            <td className="px-4 py-5">
                 <div className="flex flex-col gap-1 items-center">
                     {(() => {
                         const type = (prop.type || prop.details?.type || '').toLowerCase()
@@ -171,14 +171,14 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                     })()}
                 </div>
             </td>
-            <td className="px-6 py-4">
+            <td className="px-4 py-5">
                 <div className="flex flex-col gap-1 items-center">
                     <div className="font-bold text-foreground text-sm whitespace-nowrap">{formattedPrice}</div>
                     {formattedCondo && <div className="text-[10px] text-foreground font-medium">{formattedCondo}</div>}
                     {formattedIptu && <div className="text-[10px] text-foreground font-medium">{formattedIptu}</div>}
                 </div>
             </td>
-            <td className="px-6 py-4">
+            <td className="px-4 py-5">
                 <div className="flex flex-col gap-1.5 items-center">
                     {(isAdmin || prop.status === 'Pending') && (
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
@@ -211,7 +211,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                     )}
                 </div>
             </td>
-            <td className="px-6 py-4 text-center">
+            <td className="px-4 py-5 text-center">
                 <div className="flex items-center justify-center" ref={dropdownRef}>
                     {isAdmin && prop.status === 'Pending' && onApprove && (
                         <button

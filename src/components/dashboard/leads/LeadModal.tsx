@@ -72,7 +72,22 @@ export function LeadModal({
 }: LeadModalProps) {
     const [creationMethod, setCreationMethod] = useState<LeadCreationMethod>(null)
     const [isLoading, setIsLoading] = useState(false)
+    const [isAvatarZoomed, setIsAvatarZoomed] = useState(false)
     const [brokers, setBrokers] = useState<Broker[]>([])
+
+    useEffect(() => {
+        const handleKeyDown = (e: KeyboardEvent) => {
+            if (e.key === 'Escape') {
+                setIsAvatarZoomed(false)
+            }
+        }
+        if (isAvatarZoomed) {
+            window.addEventListener('keydown', handleKeyDown)
+        }
+        return () => {
+            window.removeEventListener('keydown', handleKeyDown)
+        }
+    }, [isAvatarZoomed])
     const [userRole, setUserRole] = useState<string>('user')
     const [sources, setSources] = useState<string[]>([])
     const [campaigns, setCampaigns] = useState<string[]>([])
@@ -287,20 +302,9 @@ export function LeadModal({
             isOpen={isOpen}
             onClose={() => { setCreationMethod(null); onClose() }}
             title={
-                <div className="flex items-center gap-3">
-                    {editingLead && (
-                        <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10">
-                            {editingLead.avatar_url ? (
-                                <img src={editingLead.avatar_url} alt={leadData.name} className="w-full h-full object-cover" />
-                            ) : (
-                                <User size={16} />
-                            )}
-                        </div>
-                    )}
-                    <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
-                        {editingLead ? "Editar Lead" : "Novo Lead"}
-                    </h3>
-                </div>
+                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                    {editingLead ? "Editar Lead" : "Novo Lead"}
+                </h3>
             }
             size={showMethodSelection ? 'md' : 'xl'}
             align="top"
@@ -396,28 +400,25 @@ export function LeadModal({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 items-end">
                                 {editingLead && (
-                                    <div className="w-11 h-11 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10 mb-1">
+                                    <button
+                                        type="button"
+                                        onClick={() => setIsAvatarZoomed(true)}
+                                        className="w-11 h-11 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10 mb-1 cursor-zoom-in hover:opacity-90 active:scale-[0.97] transition-all focus:outline-none"
+                                        title="Clique para ampliar a foto"
+                                    >
                                         {editingLead.avatar_url ? (
                                             <img src={editingLead.avatar_url} alt={leadData.name} className="w-full h-full object-cover" />
                                         ) : (
                                             <User size={20} />
                                         )}
-                                    </div>
+                                    </button>
                                 )}
-                                <div className="flex-1 md:flex-[2]">
+                                <div className="flex-1">
                                     <FormInput
                                         label="Nome completo"
                                         value={leadData.name}
                                         onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
                                         placeholder="Ex: João Silva"
-                                    />
-                                </div>
-                                <div className="w-full md:w-[130px]">
-                                    <FormInput
-                                        label="Criado em"
-                                        type="date"
-                                        value={leadData.date}
-                                        onChange={(e) => setLeadData({ ...leadData, date: e.target.value })}
                                     />
                                 </div>
                                 {(userRole === 'admin' || userRole === 'superadmin') && (
@@ -434,33 +435,43 @@ export function LeadModal({
                                     </div>
                                 )}
                             </div>
-                            <div>
-                                <FormInput
-                                    label="Telefone"
-                                    value={leadData.phone}
-                                    onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
-                                    placeholder="(48) 99999 9999"
-                                />
-                                {leadData.phone && (
-                                    <a
-                                        href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors w-fit"
-                                    >
-                                        <MessageSquare size={12} />
-                                        Abrir conversa no WhatsApp
-                                    </a>
-                                )}
-                            </div>
-                            <div>
-                                <FormInput
-                                    label="E-mail"
-                                    type="email"
-                                    value={leadData.email}
-                                    onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
-                                    placeholder="joao@email.com"
-                                />
+                            <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 items-start">
+                                <div className="flex-1">
+                                    <FormInput
+                                        label="Telefone"
+                                        value={leadData.phone}
+                                        onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
+                                        placeholder="(48) 99999 9999"
+                                    />
+                                    {leadData.phone && (
+                                        <a
+                                            href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors w-fit"
+                                        >
+                                            <MessageSquare size={12} />
+                                            Abrir conversa no WhatsApp
+                                        </a>
+                                    )}
+                                </div>
+                                <div className="flex-1">
+                                    <FormInput
+                                        label="E-mail"
+                                        type="email"
+                                        value={leadData.email}
+                                        onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
+                                        placeholder="joao@email.com"
+                                    />
+                                </div>
+                                <div className="w-full md:w-[130px]">
+                                    <FormInput
+                                        label="Criado em"
+                                        type="date"
+                                        value={leadData.date}
+                                        onChange={(e) => setLeadData({ ...leadData, date: e.target.value })}
+                                    />
+                                </div>
                             </div>
                         </div>
                     </div>
@@ -629,6 +640,44 @@ export function LeadModal({
                         />
                     </div>
 
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Zoom do Avatar */}
+            {isAvatarZoomed && editingLead && (
+                <div
+                    className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm animate-in fade-in duration-200"
+                    onClick={() => setIsAvatarZoomed(false)}
+                >
+                    <div
+                        className="relative max-w-sm w-full mx-4 bg-card rounded-2xl p-6 shadow-2xl border border-border/10 flex flex-col items-center animate-in zoom-in-95 duration-200"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <button
+                            type="button"
+                            onClick={() => setIsAvatarZoomed(false)}
+                            className="absolute top-4 right-4 p-1 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+                        >
+                            <X size={18} />
+                        </button>
+                        <div className="w-48 h-48 rounded-full overflow-hidden bg-muted border border-border flex items-center justify-center shadow-lg mb-4">
+                            {editingLead.avatar_url ? (
+                                <img
+                                    src={editingLead.avatar_url}
+                                    alt={leadData.name}
+                                    className="w-full h-full object-cover"
+                                />
+                            ) : (
+                                <User size={96} className="text-muted-foreground" />
+                            )}
+                        </div>
+                        <h4 className="text-base font-bold text-foreground text-center">
+                            {leadData.name || "Sem nome"}
+                        </h4>
+                        <p className="text-xs text-muted-foreground mt-1">
+                            Foto do Lead
+                        </p>
                     </div>
                 </div>
             )}

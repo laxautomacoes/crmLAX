@@ -24,7 +24,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     const [selectedBroker, setSelectedBroker] = useState('all')
     const [brokers, setBrokers] = useState<any[]>([])
     const [userRole, setUserRole] = useState<string>('user')
-    const [showAll, setShowAll] = useState(false)
+    const [currentPage, setCurrentPage] = useState(1)
     const PAGE_SIZE = 25
     const [sortField, setSortField] = useState<'name' | 'created_at' | null>(null)
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
@@ -64,6 +64,10 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         }
         fetchBrokers()
     }, [tenantId])
+
+    useEffect(() => {
+        setCurrentPage(1)
+    }, [searchTerm, filters, sortField, sortDirection])
 
     const filteredClients = clients.filter(client => {
         // Filtro de status (ativo/arquivado)
@@ -132,6 +136,14 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             return 0
         })
     }, [filteredClients, sortField, sortDirection])
+
+    const totalPages = Math.ceil(sortedClients.length / PAGE_SIZE)
+
+    const paginatedClients = useMemo(() => {
+        const start = (currentPage - 1) * PAGE_SIZE
+        const end = start + PAGE_SIZE
+        return sortedClients.slice(start, end)
+    }, [sortedClients, currentPage])
 
     const SortIcon = ({ field }: { field: 'name' | 'created_at' }) => {
         if (sortField !== field) return <ArrowUpDown size={12} className="opacity-40 ml-1" />
@@ -251,7 +263,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                 </tr>
                             </thead>
                             <tbody className="divide-y divide-muted-foreground/30">
-                                {(showAll ? sortedClients : sortedClients.slice(0, PAGE_SIZE)).map(client => (
+                                {paginatedClients.map(client => (
                                     <ClientListItem
                                         key={client.id}
                                         client={client}
@@ -268,26 +280,27 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                     </div>
                 </div>
 
-                {/* Contador + Carregar todos */}
-                <div className="flex flex-col items-center gap-2 px-2 mt-3">
+                {/* Contador + Paginação */}
+                <div className="flex flex-col sm:flex-row items-center justify-between gap-4 px-2 mt-4">
                     <span className="text-xs text-muted-foreground">
-                        Exibindo {Math.min(showAll ? sortedClients.length : PAGE_SIZE, sortedClients.length)} de {sortedClients.length} clientes
+                        Exibindo {Math.min(currentPage * PAGE_SIZE, sortedClients.length)} de {sortedClients.length} clientes
                     </span>
-                    {sortedClients.length > PAGE_SIZE && !showAll && (
-                        <button
-                            onClick={() => setShowAll(true)}
-                            className="text-xs font-bold text-secondary hover:text-secondary/80 transition-colors"
-                        >
-                            Carregar todos ({sortedClients.length})
-                        </button>
-                    )}
-                    {showAll && sortedClients.length > PAGE_SIZE && (
-                        <button
-                            onClick={() => setShowAll(false)}
-                            className="text-xs font-bold text-muted-foreground hover:text-foreground transition-colors"
-                        >
-                            Mostrar menos
-                        </button>
+                    {totalPages > 1 && (
+                        <div className="flex items-center gap-1.5">
+                            {Array.from({ length: totalPages }, (_, i) => i + 1).map(page => (
+                                <button
+                                    key={page}
+                                    onClick={() => setCurrentPage(page)}
+                                    className={`flex items-center justify-center w-8 h-8 rounded-lg text-xs font-bold transition-all active:scale-[0.97] ${
+                                        currentPage === page
+                                            ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                            : 'bg-card border border-border text-foreground hover:bg-muted'
+                                    }`}
+                                >
+                                    {page}
+                                </button>
+                            ))}
+                        </div>
                     )}
                 </div>
 
