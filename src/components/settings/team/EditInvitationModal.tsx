@@ -80,7 +80,7 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
     const handleSave = async () => {
         setLoading(true);
         const cleanedPhone = cleanPhone(phone);
-        
+
         let res;
         if (invitation.type === 'member') {
             res = await updateTeamMember(invitation.id, {
@@ -107,25 +107,25 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
 
     const handleDelete = async () => {
         const isMember = invitation.type === 'member';
-        const message = isMember 
-            ? 'Excluir colaborador? Isso removerá permanentemente o acesso e o perfil do usuário.' 
+        const message = isMember
+            ? 'Excluir colaborador? Isso removerá permanentemente o acesso e o perfil do usuário.'
             : 'Excluir convite?';
-            
+
         if (!confirm(message)) return;
-        
+
         setIsDeleting(true);
         const { error } = await deleteTeamMember({
             id: invitation.id,
             email: invitation.email,
             type: invitation.type
         });
-        
-        if (error) { 
-            alert('Erro: ' + error); 
-            setIsDeleting(false); 
-        } else { 
-            onUpdate(); 
-            onClose(); 
+
+        if (error) {
+            alert('Erro: ' + error);
+            setIsDeleting(false);
+        } else {
+            onUpdate();
+            onClose();
         }
     };
 
@@ -162,9 +162,9 @@ export function EditInvitationModal({ isOpen, onClose, invitation, onUpdate }: E
     };
 
     return (
-        <Modal 
-            isOpen={isOpen} 
-            onClose={onClose} 
+        <Modal
+            isOpen={isOpen}
+            onClose={onClose}
             title={
                 <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
                     Editar Colaborador
