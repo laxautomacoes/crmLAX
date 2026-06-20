@@ -104,6 +104,7 @@ export async function updateTenantDomain(tenantId: string, domain: string | null
         .update({ 
             custom_domain: domain,
             custom_domain_verified: false, // Resetar verificação ao mudar
+            custom_domain_crm_verified: false, // Resetar verificação do CRM ao mudar
             custom_domain_updated_at: new Date()
         })
         .eq('id', tenantId)
