@@ -85,7 +85,7 @@ function getBorderRadius(style?: string): string {
         case 'sharp': return '0px';
         case 'pill': return '9999px';
         case 'rounded':
-        default: return '12px';
+        default: return '8px';
     }
 }
 
@@ -187,8 +187,8 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
         '--site-accent-foreground': getContrastColor(merged.accent_color!),
         '--site-font': `'${merged.font_family}', sans-serif`,
         '--site-radius': getBorderRadius(merged.border_radius),
-        '--site-radius-sm': merged.border_radius === 'sharp' ? '0px' : merged.border_radius === 'pill' ? '9999px' : '8px',
-        '--site-radius-lg': merged.border_radius === 'sharp' ? '0px' : merged.border_radius === 'pill' ? '9999px' : '16px',
+        '--site-radius-sm': merged.border_radius === 'sharp' ? '0px' : merged.border_radius === 'pill' ? '9999px' : '6px',
+        '--site-radius-lg': merged.border_radius === 'sharp' ? '0px' : merged.border_radius === 'pill' ? '9999px' : '12px',
     };
 
     // Variantes de cor para hover/gradientes

@@ -621,3 +621,17 @@ input[type="range"]::-moz-range-thumb:hover {
   font-size: 9px !important;
   background: rgba(255, 255, 255, 0.7) !important;
 }
+
+/* ═══════════════════════════════════════════════
+   SITE VITRINE — Customização de Arredondamento (Border Radius)
+   Mapeia os tokens do Tailwind v4 para as variáveis dinâmicas do tema.
+   ═══════════════════════════════════════════════ */
+.site-themed {
+  --radius-xs: var(--site-radius-sm, 4px);
+  --radius-sm: var(--site-radius-sm, 6px);
+  --radius-md: var(--site-radius, 8px);
+  --radius-lg: var(--site-radius-lg, 12px);
+  --radius-xl: var(--site-radius-lg, 12px);
+  --radius-2xl: var(--site-radius-lg, 12px);
+  --radius-3xl: var(--site-radius-lg, 12px);
+}
