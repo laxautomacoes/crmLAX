@@ -173,22 +173,6 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
         };
     }, [merged.font_family]);
 
-    // Aplicar a classe .dark ao html e ao site-theme-root para compatibilidade total
-    useEffect(() => {
-        const siteRoot = document.getElementById('site-theme-root');
-        
-        if (currentResolvedTheme === 'dark') {
-            if (siteRoot) siteRoot.classList.add('dark');
-            document.documentElement.classList.add('dark');
-            document.documentElement.classList.remove('light');
-            document.documentElement.style.colorScheme = 'dark';
-        } else {
-            if (siteRoot) siteRoot.classList.remove('dark');
-            document.documentElement.classList.remove('dark');
-            document.documentElement.classList.add('light');
-            document.documentElement.style.colorScheme = 'light';
-        }
-    }, [currentResolvedTheme]);
 
     const primaryHSL = hexToHSL(merged.primary_color!);
     const secondaryHSL = hexToHSL(merged.secondary_color!);
