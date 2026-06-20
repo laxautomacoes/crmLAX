@@ -173,15 +173,20 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
         };
     }, [merged.font_family]);
 
-    // Aplicar a classe .dark também ao site-theme-root local para compatibilidade
+    // Aplicar a classe .dark ao html e ao site-theme-root para compatibilidade total
     useEffect(() => {
         const siteRoot = document.getElementById('site-theme-root');
-        if (!siteRoot) return;
-
+        
         if (currentResolvedTheme === 'dark') {
-            siteRoot.classList.add('dark');
+            if (siteRoot) siteRoot.classList.add('dark');
+            document.documentElement.classList.add('dark');
+            document.documentElement.classList.remove('light');
+            document.documentElement.style.colorScheme = 'dark';
         } else {
-            siteRoot.classList.remove('dark');
+            if (siteRoot) siteRoot.classList.remove('dark');
+            document.documentElement.classList.remove('dark');
+            document.documentElement.classList.add('light');
+            document.documentElement.style.colorScheme = 'light';
         }
     }, [currentResolvedTheme]);
 
