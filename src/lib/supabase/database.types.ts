@@ -150,16 +150,22 @@ export type Database = {
       }
       bulk_campaigns: {
         Row: {
+          cancel_requested: boolean | null
           completed_at: string | null
           created_at: string | null
+          current_index: number | null
           filters_applied: Json | null
           id: string
+          instance_name: string | null
+          last_activity_at: string | null
           media_name: string | null
           media_type: string | null
           media_url: string | null
           message: string | null
           profile_id: string
+          recipients_data: Json | null
           source_type: string | null
+          speed_setting: string | null
           status: string
           tenant_id: string
           title: string | null
@@ -168,16 +174,22 @@ export type Database = {
           total_success: number
         }
         Insert: {
+          cancel_requested?: boolean | null
           completed_at?: string | null
           created_at?: string | null
+          current_index?: number | null
           filters_applied?: Json | null
           id?: string
+          instance_name?: string | null
+          last_activity_at?: string | null
           media_name?: string | null
           media_type?: string | null
           media_url?: string | null
           message?: string | null
           profile_id: string
+          recipients_data?: Json | null
           source_type?: string | null
+          speed_setting?: string | null
           status?: string
           tenant_id: string
           title?: string | null
@@ -186,16 +198,22 @@ export type Database = {
           total_success?: number
         }
         Update: {
+          cancel_requested?: boolean | null
           completed_at?: string | null
           created_at?: string | null
+          current_index?: number | null
           filters_applied?: Json | null
           id?: string
+          instance_name?: string | null
+          last_activity_at?: string | null
           media_name?: string | null
           media_type?: string | null
           media_url?: string | null
           message?: string | null
           profile_id?: string
+          recipients_data?: Json | null
           source_type?: string | null
+          speed_setting?: string | null
           status?: string
           tenant_id?: string
           title?: string | null
@@ -1443,6 +1461,69 @@ export type Database = {
           },
         ]
       }
+      market_analysis_history: {
+        Row: {
+          bedrooms: string | null
+          city: string
+          created_at: string
+          id: string
+          neighborhoods: string[]
+          price_max: string | null
+          price_min: string | null
+          profile_id: string
+          property_type: string | null
+          results: Json
+          status: string
+          tenant_id: string
+          uf: string
+        }
+        Insert: {
+          bedrooms?: string | null
+          city: string
+          created_at?: string
+          id?: string
+          neighborhoods: string[]
+          price_max?: string | null
+          price_min?: string | null
+          profile_id: string
+          property_type?: string | null
+          results?: Json
+          status?: string
+          tenant_id: string
+          uf: string
+        }
+        Update: {
+          bedrooms?: string | null
+          city?: string
+          created_at?: string
+          id?: string
+          neighborhoods?: string[]
+          price_max?: string | null
+          price_min?: string | null
+          profile_id?: string
+          property_type?: string | null
+          results?: Json
+          status?: string
+          tenant_id?: string
+          uf?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "market_analysis_history_profile_id_fkey"
+            columns: ["profile_id"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "market_analysis_history_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       notes: {
         Row: {
           attachments: Json | null
@@ -1681,6 +1762,7 @@ export type Database = {
           full_name: string | null
           id: string
           is_active_for_service: boolean | null
+          is_archived: boolean
           last_lead_assigned_at: string | null
           permissions: Json | null
           role: Database["public"]["Enums"]["profile_role"] | null
@@ -1697,6 +1779,7 @@ export type Database = {
           full_name?: string | null
           id: string
           is_active_for_service?: boolean | null
+          is_archived?: boolean
           last_lead_assigned_at?: string | null
           permissions?: Json | null
           role?: Database["public"]["Enums"]["profile_role"] | null
@@ -1713,6 +1796,7 @@ export type Database = {
           full_name?: string | null
           id?: string
           is_active_for_service?: boolean | null
+          is_archived?: boolean
           last_lead_assigned_at?: string | null
           permissions?: Json | null
           role?: Database["public"]["Enums"]["profile_role"] | null
@@ -1744,9 +1828,14 @@ export type Database = {
           id: string
           images: Json | null
           is_archived: boolean | null
+          is_featured: boolean | null
           is_published: boolean | null
+          main_image_url: string | null
           owner_contact_id: string | null
           price: number | null
+          price_table_template_mapping: Json | null
+          price_table_template_url: string | null
+          rejection_note: string | null
           slug: string | null
           status: string | null
           tenant_id: string | null
@@ -1764,9 +1853,14 @@ export type Database = {
           id?: string
           images?: Json | null
           is_archived?: boolean | null
+          is_featured?: boolean | null
           is_published?: boolean | null
+          main_image_url?: string | null
           owner_contact_id?: string | null
           price?: number | null
+          price_table_template_mapping?: Json | null
+          price_table_template_url?: string | null
+          rejection_note?: string | null
           slug?: string | null
           status?: string | null
           tenant_id?: string | null
@@ -1784,9 +1878,14 @@ export type Database = {
           id?: string
           images?: Json | null
           is_archived?: boolean | null
+          is_featured?: boolean | null
           is_published?: boolean | null
+          main_image_url?: string | null
           owner_contact_id?: string | null
           price?: number | null
+          price_table_template_mapping?: Json | null
+          price_table_template_url?: string | null
+          rejection_note?: string | null
           slug?: string | null
           status?: string | null
           tenant_id?: string | null
@@ -1818,30 +1917,221 @@ export type Database = {
           },
         ]
       }
+      property_price_tables: {
+        Row: {
+          available_units: number | null
+          block_tower: string | null
+          created_at: string
+          file_url: string | null
+          id: string
+          index_type: string | null
+          index_value: number | null
+          is_active: boolean | null
+          payment_structure: Json | null
+          property_id: string
+          reference_month: string
+          template_file_url: string | null
+          template_mapping: Json | null
+          tenant_id: string
+          total_units: number | null
+          uploaded_by: string | null
+        }
+        Insert: {
+          available_units?: number | null
+          block_tower?: string | null
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          index_type?: string | null
+          index_value?: number | null
+          is_active?: boolean | null
+          payment_structure?: Json | null
+          property_id: string
+          reference_month: string
+          template_file_url?: string | null
+          template_mapping?: Json | null
+          tenant_id: string
+          total_units?: number | null
+          uploaded_by?: string | null
+        }
+        Update: {
+          available_units?: number | null
+          block_tower?: string | null
+          created_at?: string
+          file_url?: string | null
+          id?: string
+          index_type?: string | null
+          index_value?: number | null
+          is_active?: boolean | null
+          payment_structure?: Json | null
+          property_id?: string
+          reference_month?: string
+          template_file_url?: string | null
+          template_mapping?: Json | null
+          tenant_id?: string
+          total_units?: number | null
+          uploaded_by?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_price_tables_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_price_tables_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_price_tables_uploaded_by_fkey"
+            columns: ["uploaded_by"]
+            isOneToOne: false
+            referencedRelation: "profiles"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      property_units: {
+        Row: {
+          area_privativa: number | null
+          area_total: number | null
+          block_tower: string | null
+          created_at: string
+          extra_data: Json | null
+          floor: number | null
+          garage_number: string | null
+          garage_type: string | null
+          hobby_box: string | null
+          hobby_box_number: string | null
+          id: string
+          price_table_id: string | null
+          property_id: string
+          soma_poupanca: number | null
+          status: string | null
+          tenant_id: string
+          unit_number: string
+          updated_at: string
+          valor_ato: number | null
+          valor_chaves: number | null
+          valor_financiamento: number | null
+          valor_mensais: number | null
+          valor_reforcos: number | null
+          valor_total: number | null
+        }
+        Insert: {
+          area_privativa?: number | null
+          area_total?: number | null
+          block_tower?: string | null
+          created_at?: string
+          extra_data?: Json | null
+          floor?: number | null
+          garage_number?: string | null
+          garage_type?: string | null
+          hobby_box?: string | null
+          hobby_box_number?: string | null
+          id?: string
+          price_table_id?: string | null
+          property_id: string
+          soma_poupanca?: number | null
+          status?: string | null
+          tenant_id: string
+          unit_number: string
+          updated_at?: string
+          valor_ato?: number | null
+          valor_chaves?: number | null
+          valor_financiamento?: number | null
+          valor_mensais?: number | null
+          valor_reforcos?: number | null
+          valor_total?: number | null
+        }
+        Update: {
+          area_privativa?: number | null
+          area_total?: number | null
+          block_tower?: string | null
+          created_at?: string
+          extra_data?: Json | null
+          floor?: number | null
+          garage_number?: string | null
+          garage_type?: string | null
+          hobby_box?: string | null
+          hobby_box_number?: string | null
+          id?: string
+          price_table_id?: string | null
+          property_id?: string
+          soma_poupanca?: number | null
+          status?: string | null
+          tenant_id?: string
+          unit_number?: string
+          updated_at?: string
+          valor_ato?: number | null
+          valor_chaves?: number | null
+          valor_financiamento?: number | null
+          valor_mensais?: number | null
+          valor_reforcos?: number | null
+          valor_total?: number | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "property_units_price_table_id_fkey"
+            columns: ["price_table_id"]
+            isOneToOne: false
+            referencedRelation: "property_price_tables"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_units_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "property_units_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       proposal_templates: {
         Row: {
+          ai_model: string | null
+          ai_provider: string | null
           created_at: string
           created_by: string | null
           file_path: string
           id: string
+          mapped_fields: Json | null
           name: string
           tenant_id: string | null
           updated_at: string
         }
         Insert: {
+          ai_model?: string | null
+          ai_provider?: string | null
           created_at?: string
           created_by?: string | null
           file_path: string
           id?: string
+          mapped_fields?: Json | null
           name: string
           tenant_id?: string | null
           updated_at?: string
         }
         Update: {
+          ai_model?: string | null
+          ai_provider?: string | null
           created_at?: string
           created_by?: string | null
           file_path?: string
           id?: string
+          mapped_fields?: Json | null
           name?: string
           tenant_id?: string | null
           updated_at?: string
@@ -1866,41 +2156,63 @@ export type Database = {
       proposals: {
         Row: {
           buyer_data: Json | null
+          contact_id: string | null
           created_at: string
           created_by: string | null
+          generated_pdf_url: string | null
           id: string
+          is_archived: boolean
           lead_id: string | null
           payment_terms: Json | null
+          property_id: string | null
           status: string | null
+          template_id: string | null
           tenant_id: string | null
           updated_at: string
           value: number
         }
         Insert: {
           buyer_data?: Json | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          generated_pdf_url?: string | null
           id?: string
+          is_archived?: boolean
           lead_id?: string | null
           payment_terms?: Json | null
+          property_id?: string | null
           status?: string | null
+          template_id?: string | null
           tenant_id?: string | null
           updated_at?: string
           value: number
         }
         Update: {
           buyer_data?: Json | null
+          contact_id?: string | null
           created_at?: string
           created_by?: string | null
+          generated_pdf_url?: string | null
           id?: string
+          is_archived?: boolean
           lead_id?: string | null
           payment_terms?: Json | null
+          property_id?: string | null
           status?: string | null
+          template_id?: string | null
           tenant_id?: string | null
           updated_at?: string
           value?: number
         }
         Relationships: [
+          {
+            foreignKeyName: "proposals_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
           {
             foreignKeyName: "proposals_created_by_fkey"
             columns: ["created_by"]
@@ -1913,6 +2225,20 @@ export type Database = {
             columns: ["lead_id"]
             isOneToOne: false
             referencedRelation: "leads"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "proposals_template_id_fkey"
+            columns: ["template_id"]
+            isOneToOne: false
+            referencedRelation: "proposal_templates"
             referencedColumns: ["id"]
           },
           {
@@ -2329,6 +2655,10 @@ export type Database = {
         Returns: number
       }
       get_user_tenant_id: { Args: never; Returns: string }
+      schedule_next_bulk_send: {
+        Args: { p_campaign_id: string; p_delay_seconds?: number }
+        Returns: undefined
+      }
       slugify: { Args: { "": string }; Returns: string }
     }
     Enums: {
@@ -2343,7 +2673,14 @@ export type Database = {
       calendar_event_type: "duty" | "visit" | "note" | "other"
       interaction_type: "whatsapp" | "system" | "note"
       plan_type: "freemium" | "starter" | "pro" | "business" | "enterprise"
-      profile_role: "superadmin" | "admin" | "user"
+      profile_role:
+        | "superadmin"
+        | "admin"
+        | "user"
+        | "contador"
+        | "advogado"
+        | "financeiro"
+        | "recursos_humanos"
       update_type: "feature" | "fix" | "roadmap"
     }
     CompositeTypes: {
@@ -2484,7 +2821,15 @@ export const Constants = {
       calendar_event_type: ["duty", "visit", "note", "other"],
       interaction_type: ["whatsapp", "system", "note"],
       plan_type: ["freemium", "starter", "pro", "business", "enterprise"],
-      profile_role: ["superadmin", "admin", "user"],
+      profile_role: [
+        "superadmin",
+        "admin",
+        "user",
+        "contador",
+        "advogado",
+        "financeiro",
+        "recursos_humanos",
+      ],
       update_type: ["feature", "fix", "roadmap"],
     },
   },

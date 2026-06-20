@@ -1,15 +1,15 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
-import { getProposalsByContact, saveProposal, updateProposalStatus } from '@/app/_actions/proposals'
+import { useState, useEffect } from 'react'
+import { getProposalsByContact, saveProposal, updateProposalStatus, getProposalTemplates } from '@/app/_actions/proposals'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { Plus, FileText, Home, Loader2, ChevronDown, ChevronUp, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
-// @ts-expect-error - lodash/debounce does not have types installed
-import debounce from 'lodash/debounce'
+import { autoFillProposalFields } from '@/lib/utils/proposal-autofill'
+import { ProposalDynamicForm } from './ProposalDynamicForm'
 
 interface ClientProposalsTabProps {
     client: any
@@ -28,6 +28,8 @@ interface ProposalItem {
     payment_terms?: any
     property?: { id: string; title: string; price: number; type: string; address_city: string; address_state: string } | null
     lead?: { id: string; property_interest: string; stage_id: string; lead_stages?: { name: string; color: string } } | null
+    template_id?: string | null
+    buyer_data?: any
 }
 
 const STATUS_OPTIONS = [
@@ -48,6 +50,12 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
     const [expandedId, setExpandedId] = useState<string | null>(null)
     const [selectedLeadId, setSelectedLeadId] = useState('')
     const [saving, setSaving] = useState(false)
+    const [isEditing, setIsEditing] = useState(false)
+
+    const [templates, setTemplates] = useState<any[]>([])
+    const [selectedTemplateId, setSelectedTemplateId] = useState('')
+    const [dynamicFields, setDynamicFields] = useState<any[]>([])
+    const [dynamicResponses, setDynamicResponses] = useState<Record<string, string>>({})
 
     const [formData, setFormData] = useState({
         value: '',
@@ -64,28 +72,60 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         async function load() {
             if (!client?.id) return
             setLoading(true)
-            const res = await getProposalsByContact(client.id)
-            if (res.success && res.data) {
-                setProposals(res.data as ProposalItem[])
+            const [proposalsRes, templatesRes] = await Promise.all([
+                getProposalsByContact(client.id),
+                getProposalTemplates(tenantId)
+            ])
+            if (proposalsRes.success && proposalsRes.data) {
+                setProposals(proposalsRes.data as ProposalItem[])
+            }
+            if (templatesRes.success && templatesRes.data) {
+                setTemplates(templatesRes.data)
             }
             setLoading(false)
         }
         load()
-    }, [client?.id])
+    }, [client?.id, tenantId])
 
-    // Auto-abrir formulário quando vem do botão "Fazer Proposta" em Leads
+    // Auto-abrir formulário ou expandir proposta existente quando vem de Leads
     useEffect(() => {
-        if (initialLeadId) {
+        if (initialLeadId && proposals.length > 0) {
+            const existingProposal = proposals.find(p => p.lead_id === initialLeadId)
+            if (existingProposal) {
+                setExpandedId(existingProposal.id)
+                setShowNewForm(false)
+            } else {
+                setSelectedLeadId(initialLeadId)
+                setShowNewForm(true)
+            }
+            onConsumeInitialLead?.()
+        } else if (initialLeadId && !loading) {
             setSelectedLeadId(initialLeadId)
             setShowNewForm(true)
             onConsumeInitialLead?.()
         }
-    }, [initialLeadId])
+    }, [initialLeadId, proposals, loading, onConsumeInitialLead])
 
     const resetForm = () => {
         setFormData({ value: '', down_payment: '', financing: '', installments: '', permutas: '', notes: '' })
         setSelectedLeadId('')
         setShowNewForm(false)
+        setIsEditing(false)
+    }
+
+    const handleStartEdit = (proposal: ProposalItem) => {
+        const terms = proposal.payment_terms || {}
+        setFormData({
+            value: proposal.value ? formatCurrencyBRL(Math.round(proposal.value * 100).toString()) : '',
+            down_payment: terms.down_payment ? formatCurrencyBRL(Math.round(terms.down_payment * 100).toString()) : '',
+            financing: terms.financing ? formatCurrencyBRL(Math.round(terms.financing * 100).toString()) : '',
+            installments: terms.installments || '',
+            permutas: terms.permutas || '',
+            notes: terms.notes || '',
+        })
+        setSelectedLeadId(proposal.lead_id)
+        setIsEditing(true)
+        setShowNewForm(true)
     }
 
     const handleCreateProposal = async () => {
@@ -162,7 +202,9 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             {showNewForm && (
                 <div className="bg-card dark:bg-muted/10 p-5 rounded-xl border border-border/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Nova Proposta</h4>
+                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
+                            {isEditing ? 'Editar Proposta' : 'Nova Proposta'}
+                        </h4>
                         <button onClick={resetForm} className="p-1 hover:bg-muted rounded-md transition-colors">
                             <X size={14} className="text-muted-foreground" />
                         </button>
@@ -174,6 +216,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                             <FormSelect
                                 label="Lead / Imóvel de Interesse"
                                 value={selectedLeadId}
+                                disabled={isEditing}
                                 onChange={e => setSelectedLeadId(e.target.value)}
                                 options={[
                                     { value: '', label: 'Selecione o lead...' },
@@ -256,7 +299,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                             disabled={!selectedLeadId || saving}
                             className="px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all disabled:opacity-50"
                         >
-                            {saving ? 'Salvando...' : 'Criar Proposta'}
+                            {saving ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Criar Proposta')}
                         </button>
                     </div>
                 </div>
@@ -356,25 +399,33 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                 </p>
                                             </div>
                                         </div>
-
-                                        {terms.installments && (
+                                        <div className="space-y-2 pt-2 border-t border-border/10">
                                             <div className="text-xs">
                                                 <span className="font-bold text-muted-foreground">Parcelamento:</span>{' '}
-                                                <span className="text-foreground">{terms.installments}</span>
+                                                <span className="text-foreground">{terms.installments || '—'}</span>
                                             </div>
-                                        )}
-                                        {terms.permutas && (
                                             <div className="text-xs">
-                                                <span className="font-bold text-muted-foreground">Permutas:</span>{' '}
-                                                <span className="text-foreground">{terms.permutas}</span>
+                                                <span className="font-bold text-muted-foreground">Permutas/Bens:</span>{' '}
+                                                <span className="text-foreground">{terms.permutas || '—'}</span>
                                             </div>
-                                        )}
-                                        {terms.notes && (
                                             <div className="text-xs">
                                                 <span className="font-bold text-muted-foreground">Observações:</span>{' '}
-                                                <span className="text-foreground italic">{terms.notes}</span>
+                                                <span className="text-foreground italic">{terms.notes || '—'}</span>
                                             </div>
-                                        )}
+                                        </div>
+
+                                        <div className="flex justify-end gap-2 pt-3 border-t border-border/20 mt-3">
+                                            <button
+                                                type="button"
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleStartEdit(proposal);
+                                                }}
+                                                className="px-3 py-1.5 text-xs font-bold text-[#404F4F] border border-[#404F4F]/20 hover:bg-[#404F4F]/5 rounded-lg transition-all active:scale-[0.98]"
+                                            >
+                                                Editar Proposta
+                                            </button>
+                                        </div>
                                     </div>
                                 )}
                             </div>

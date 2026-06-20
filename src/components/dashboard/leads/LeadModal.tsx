@@ -313,8 +313,11 @@ export function LeadModal({
                 <div className="flex items-center gap-2">
                     {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
                         editingLead.has_proposal ? (
-                            <span
-                                className="px-4 py-1.5 border border-foreground/30 text-foreground/70 rounded-lg font-bold text-sm whitespace-nowrap flex items-center gap-1.5"
+                            <button
+                                type="button"
+                                onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
+                                className="px-4 py-1.5 border border-foreground/30 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-lg font-bold text-sm whitespace-nowrap flex items-center gap-1.5 transition-all shadow-sm active:scale-[0.97]"
+                                title="Ver Proposta"
                             >
                                 <span
                                     className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded-full shrink-0"
@@ -323,7 +326,7 @@ export function LeadModal({
                                     P
                                 </span>
                                 Em Proposta
-                            </span>
+                            </button>
                         ) : (
                             <button
                                 type="button"

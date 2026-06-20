@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { getProfile } from './profile'
+import { analyzeProposalPDF } from '@/lib/ai/proposal-analyzer'
 
 // ─── Buscar proposta de um lead (com dados do cliente e imóvel) ───
 export async function getProposal(leadId: string) {
@@ -40,6 +41,8 @@ export async function saveProposal(
         status?: string
         contact_id?: string
         property_id?: string
+        buyer_data?: any
+        template_id?: string
     }
 ) {
     const supabase = await createClient()
@@ -61,6 +64,8 @@ export async function saveProposal(
             status: proposalData.status || 'criada',
             contact_id: proposalData.contact_id || null,
             property_id: proposalData.property_id || null,
+            buyer_data: proposalData.buyer_data || null,
+            template_id: proposalData.template_id || null,
             updated_at: new Date().toISOString()
         }
 
@@ -293,7 +298,14 @@ export async function getProposalTemplates(tenantId: string) {
     }
 }
 
-export async function createProposalTemplate(tenantId: string, name: string, filePath: string) {
+export async function createProposalTemplate(
+    tenantId: string, 
+    name: string, 
+    filePath: string,
+    aiProvider?: string,
+    aiModel?: string,
+    mappedFields?: any
+) {
     const supabase = await createClient()
     const { profile } = await getProfile()
 
@@ -306,7 +318,10 @@ export async function createProposalTemplate(tenantId: string, name: string, fil
                 tenant_id: tenantId,
                 name,
                 file_path: filePath,
-                created_by: profile.id
+                created_by: profile.id,
+                ai_provider: aiProvider || 'gemini',
+                ai_model: aiModel || 'gemini-2.5-flash',
+                mapped_fields: mappedFields || []
             }])
             .select()
             .single()
@@ -316,6 +331,20 @@ export async function createProposalTemplate(tenantId: string, name: string, fil
     } catch (error: any) {
         console.error('Error creating proposal template:', error)
         return { success: false, error: error.message }
+    }
+}
+
+export async function analyzeProposalTemplatePDF(
+    pageImagesBase64: string[],
+    provider: 'gemini' | 'openai',
+    modelName: string
+) {
+    try {
+        const fields = await analyzeProposalPDF(pageImagesBase64, provider, modelName);
+        return { success: true, data: fields };
+    } catch (error: any) {
+        console.error('Erro na action analyzeProposalTemplatePDF:', error);
+        return { success: false, error: error.message || 'Falha ao analisar o PDF.' };
     }
 }
 
