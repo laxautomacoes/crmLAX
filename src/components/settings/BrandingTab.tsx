@@ -224,24 +224,17 @@ export function BrandingTab() {
                     border-color: #121414 !important;
                 }
             `}} />
-            <div className="bg-card border border-border rounded-lg p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-lg font-bold text-foreground">Branding</h3>
-                        <p className="text-sm text-muted-foreground">Personalize o logotipo e ícone | favicon da empresa.</p>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                
+                {/* Coluna Logotipo */}
+                <div className="flex flex-col space-y-3">
+                    <div className="px-1 space-y-1">
+                        <h3 className="text-lg font-bold text-foreground">Logotipo</h3>
+                        <p className="text-sm text-muted-foreground">Exibido na barra lateral expandida e nas mensagens.</p>
+                        <p className="text-xs text-muted-foreground">Medidas de referência: 250x50 px (5:1) | JPG, PNG e WEBP</p>
                     </div>
-                </div>
-
-                <div className="flex flex-col md:flex-row md:items-stretch gap-8">
-                    {/* Logotipo */}
-                    <div className="flex-1 space-y-4 flex flex-col">
-                        <div className="min-h-[80px] space-y-2">
-                            <label className="text-lg font-bold text-foreground mb-1 block">Logotipo</label>
-                            <p className="text-sm text-muted-foreground leading-none">Exibido na barra lateral expandida e nas mensagens.</p>
-                            <p className="text-sm text-muted-foreground leading-none">Medidas de referência: 250x50 px (5:1)</p>
-                            <p className="text-[11px] text-muted-foreground italic leading-none">Arquivos aceitos: JPG, PNG e WEBP</p>
-                        </div>
-
+                    
+                    <div className="bg-card border border-border rounded-2xl p-6 flex-1 flex flex-col justify-center min-h-[220px]">
                         <div className="relative group min-h-[120px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
                             {branding.logo_full ? (
                                 <>
@@ -293,7 +286,7 @@ export function BrandingTab() {
                         </div>
 
                         {branding.logo_full && (
-                            <div className="flex items-center gap-4 mt-2 px-1">
+                            <div className="flex items-center gap-4 mt-4 px-1">
                                 <label className="text-[10px] font-bold text-muted-foreground uppercase whitespace-nowrap">Tamanho: {(branding.logo_height || 50) * 5}x{branding.logo_height || 50}px</label>
                                 <input
                                     type="range"
@@ -313,21 +306,18 @@ export function BrandingTab() {
                             </div>
                         )}
                     </div>
+                </div>
 
-                    {/* Separador */}
-                    <div className="hidden md:block w-px bg-border self-stretch opacity-80" />
-                    <div className="block md:hidden h-px bg-border w-full opacity-80" />
-
-                    {/* Ícone */}
-                    <div className="flex-1 space-y-4 flex flex-col">
-                        <div className="min-h-[80px] space-y-2">
-                            <label className="text-lg font-bold text-foreground mb-1 block">Ícone | Favicon</label>
-                            <p className="text-sm text-muted-foreground leading-none">Exibido na barra lateral recolhida e nas mensagens.</p>
-                            <p className="text-sm text-muted-foreground leading-none">Medidas de referência: 200x200 px (1:1)</p>
-                            <p className="text-[11px] text-muted-foreground italic leading-none">Arquivos aceitos: JPG, PNG e WEBP</p>
-                        </div>
-
-                        <div className="relative group aspect-square max-w-[120px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
+                {/* Coluna Ícone | Favicon */}
+                <div className="flex flex-col space-y-3">
+                    <div className="px-1 space-y-1">
+                        <h3 className="text-lg font-bold text-foreground">Ícone | Favicon</h3>
+                        <p className="text-sm text-muted-foreground">Exibido na barra lateral recolhida e nas mensagens.</p>
+                        <p className="text-xs text-muted-foreground">Medidas de referência: 200x200 px (1:1) | JPG, PNG e WEBP</p>
+                    </div>
+                    
+                    <div className="bg-card border border-border rounded-2xl p-6 flex-1 flex flex-col justify-center items-center min-h-[220px]">
+                        <div className="relative group aspect-square w-[120px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
                             {branding.logo_icon ? (
                                 <>
                                     <img src={branding.logo_icon} alt="Logo Icon" className="w-full h-full object-cover" />
@@ -372,6 +362,7 @@ export function BrandingTab() {
                         </div>
                     </div>
                 </div>
+
             </div>
 
             <button

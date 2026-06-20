@@ -1,229 +1,112 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter, useSearchParams } from 'next/navigation';
 import { PropertyFilters } from './PropertyFilters';
 import { PropertiesGrid } from './PropertiesGrid';
 import { PropertiesList } from './PropertiesList';
 import { WhatsAppButton } from './WhatsAppButton';
 import { SiteSectionRenderer } from './SiteSectionRenderer';
 import { BackToTop } from './BackToTop';
-import { Instagram, Facebook, Linkedin, Youtube, MapPin } from 'lucide-react';
-import { Modal } from '@/components/shared/Modal';
+import { SiteFooter } from './SiteFooter';
+import { filterProperties } from '@/utils/property-filter';
 
 interface SiteClientProps {
-    properties: any[];
-    featuredProperties?: any[];
-    tenantName: string;
-    tenantSlug: string;
-    whatsappNumber?: string | null;
-    branding?: any;
+    properties: any[]; featuredProperties?: any[]; tenantName: string;
+    tenantSlug: string; whatsappNumber?: string | null; branding?: any; isHomepage?: boolean;
 }
 
-export function SiteClient({ properties, featuredProperties, tenantName, tenantSlug, whatsappNumber, branding }: SiteClientProps) {
+export function SiteClient({
+    properties = [], featuredProperties = [], tenantName, tenantSlug, whatsappNumber, branding, isHomepage = true
+}: SiteClientProps) {
+    const router = useRouter();
+    const searchParams = useSearchParams();
     const [viewMode, setViewMode] = useState<'gallery' | 'list' | 'map'>('gallery');
-    const [isPrivacyOpen, setIsPrivacyOpen] = useState(false);
-    const [isTermsOpen, setIsTermsOpen] = useState(false);
+    const getParam = (k: string, def = '') => searchParams.get(k) || def;
+    
     const [filters, setFilters] = useState({
-        tipo: '',
-        quartos: '',
-        precoMin: '',
-        precoMax: '',
-        search: ''
+        tipo: getParam('tipo'), quartos: getParam('quartos'), precoMin: getParam('precoMin'), precoMax: getParam('precoMax'),
+        search: getParam('search'), cidade: getParam('cidade'), bairro: getParam('bairro'), suites: getParam('suites'),
+        banheiros: getParam('banheiros'), vagas: getParam('vagas'), areaMin: getParam('areaMin'), areaMax: getParam('areaMax'),
+        codigo: getParam('codigo'), empreendimento: getParam('empreendimento'),
+        mobiliado: getParam('mobiliado') === 'true', ofertas: getParam('ofertas') === 'true',
+        searchMode: getParam('searchMode', 'standard') as 'standard' | 'code' | 'project',
+        transactionType: getParam('transactionType', 'venda') as 'venda' | 'aluguel' | 'lancamentos'
     });
 
-    const filteredProperties = properties.filter(property => {
-        // Filtro de busca
-        if (filters.search) {
-            const searchLower = filters.search.toLowerCase();
-            const titleLower = property.title.toLowerCase();
-            const tipo = (property.details?.tipo_property || property.details?.type || '').toLowerCase();
-            const bairro = (property.details?.endereco?.bairro || '').toLowerCase();
-            if (!titleLower.includes(searchLower) && !tipo.includes(searchLower) && !bairro.includes(searchLower)) {
-                return false;
-            }
-        }
+    const getParams = () => {
+        const p = new URLSearchParams();
+        Object.entries(filters).forEach(([k, v]) => {
+            if (v === true) p.set(k, 'true');
+            else if (v && typeof v === 'string' && v !== 'standard' && v !== 'venda') p.set(k, v);
+        });
+        return p.toString();
+    };
 
-        // Filtro de tipo
-        if (filters.tipo) {
-            const tipo = (property.details?.tipo_property || property.details?.type || '').toLowerCase();
-            if (!tipo.includes(filters.tipo.toLowerCase())) {
-                return false;
-            }
+    useEffect(() => {
+        if (isHomepage) return;
+        const query = getParams();
+        const currentQuery = window.location.search.replace(/^\?/, '');
+        if (query !== currentQuery) {
+            const isSitePath = window.location.pathname.startsWith('/site/');
+            const targetPath = isSitePath ? `/site/${tenantSlug}/imoveis` : '/imoveis';
+            router.replace(`${targetPath}${query ? `?${query}` : ''}`, { scroll: false });
         }
+    }, [filters, isHomepage, tenantSlug, router]);
 
-        // Filtro de dormitórios
-        if (filters.quartos) {
-            const dormitorios = String(property.details?.dormitorios || property.details?.quartos || property.details?.rooms || '');
-            if (!dormitorios.includes(filters.quartos)) {
-                return false;
-            }
-        }
+    const handleSearch = () => {
+        const isSitePath = window.location.pathname.startsWith('/site/');
+        const targetPath = isSitePath ? `/site/${tenantSlug}/imoveis` : '/imoveis';
+        router.push(`${targetPath}?${getParams()}`);
+    };
 
-        // Filtro de preço máximo
-        if (filters.precoMax && property.price) {
-            const precoMax = parseFloat(filters.precoMax.replace(/[^\d,.-]/g, '').replace(',', '.'));
-            if (!isNaN(precoMax) && Number(property.price) > precoMax) {
-                return false;
-            }
-        }
+    const filteredProperties = filterProperties(properties, filters, tenantSlug);
+    const bgImage = branding?.filter_bg_image || 'https://images.unsplash.com/photo-1582407947304-fd86f028f716?q=80&w=1920&auto=format&fit=crop';
+    const filterTitle = branding?.filter_title || `Encontre seu imóvel em ${tenantName || 'sua cidade'}`;
 
-        return true;
-    });
+    const filtersForm = isHomepage ? (
+        <div id="imoveis" className="relative w-full py-16 md:py-24 px-4 bg-cover bg-center flex flex-col items-center justify-center min-h-[400px] mb-8" style={{ backgroundImage: `url(${bgImage})` }}>
+            <div className="absolute inset-0 bg-black/60 z-0" />
+            <div className="relative z-10 w-full max-w-[1200px] text-center space-y-6 md:space-y-8">
+                <h1 className="text-3xl md:text-5xl font-black text-white drop-shadow-md tracking-tight max-w-[900px] mx-auto leading-tight">{filterTitle}</h1>
+                <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }} className="w-full">
+                    <PropertyFilters properties={properties} filters={filters} onFilterChange={setFilters} viewMode={viewMode} onViewModeChange={setViewMode} mapUrl={`/site/${tenantSlug}/busca`} isHomepage={isHomepage} onSearch={handleSearch} />
+                </form>
+            </div>
+        </div>
+    ) : (
+        <div id="imoveis" className="w-full max-w-[1600px] mx-auto px-4 mt-8 mb-8">
+            <form onSubmit={(e) => { e.preventDefault(); handleSearch(); }}>
+                <PropertyFilters properties={properties} filters={filters} onFilterChange={setFilters} viewMode={viewMode} onViewModeChange={setViewMode} mapUrl={`/site/${tenantSlug}/busca`} isHomepage={isHomepage} onSearch={handleSearch} />
+            </form>
+        </div>
+    );
+
     return (
         <>
-            {/* Seções configuráveis do site */}
-            <SiteSectionRenderer
-                sections={branding?.site_sections}
-                featuredProperties={featuredProperties}
-                tenantName={tenantName}
-                tenantSlug={tenantSlug}
-                whatsappNumber={whatsappNumber}
-                branding={branding}
-            />
-
-            <div id="imoveis">
-            <PropertyFilters
-                filters={filters}
-                onFilterChange={setFilters}
-                viewMode={viewMode}
-                onViewModeChange={setViewMode}
-                mapUrl={`/site/${tenantSlug}/busca`}
-            />
-
-            {properties.length === 0 || filteredProperties.length === 0 ? (
-                <div className="text-center py-20 bg-card rounded-2xl border border-border animate-in fade-in zoom-in duration-500">
-                    <p className="text-xl font-bold text-foreground mb-2">
-                        Nenhum imóvel disponível no momento
-                    </p>
-                    <p className="text-sm text-muted-foreground">
-                        Volte em breve para ver nossos imóveis!
-                    </p>
-                </div>
+            {isHomepage ? (
+                <SiteSectionRenderer sections={branding?.site_sections} featuredProperties={featuredProperties} tenantName={tenantName} tenantSlug={tenantSlug} whatsappNumber={whatsappNumber} branding={branding}>
+                    {filtersForm}
+                </SiteSectionRenderer>
             ) : (
                 <>
-                    <p className="text-xs text-muted-foreground mb-4 font-medium">
-                        {filteredProperties.length} imóveis encontrados
-                    </p>
-                    {viewMode === 'list' ? (
-                        <PropertiesList properties={filteredProperties} tenantSlug={tenantSlug} />
+                    {filtersForm}
+                    {properties.length === 0 || filteredProperties.length === 0 ? (
+                        <div className="text-center py-20 bg-card rounded-2xl border border-border animate-in fade-in zoom-in duration-500">
+                            <p className="text-xl font-bold text-foreground mb-2">Nenhum imóvel disponível no momento</p>
+                            <p className="text-sm text-muted-foreground">Volte em breve para ver nossos imóveis!</p>
+                        </div>
                     ) : (
-                        <PropertiesGrid properties={filteredProperties} tenantSlug={tenantSlug} />
+                        <div className="max-w-[1600px] mx-auto px-4">
+                            <p className="text-xs text-muted-foreground mb-4 font-medium">{filteredProperties.length} imóveis encontrados</p>
+                            {viewMode === 'list' ? <PropertiesList properties={filteredProperties} tenantSlug={tenantSlug} /> : <PropertiesGrid properties={filteredProperties} tenantSlug={tenantSlug} />}
+                        </div>
                     )}
                 </>
             )}
-            </div>
-
-            {/* Footer */}
-            <footer className="mt-20 py-12 border-t border-border font-sans">
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
-                    <div>
-                        <h4 className="font-bold text-lg mb-4 text-foreground">{tenantName}</h4>
-                        <p className="text-sm text-muted-foreground max-w-xs transition-all">
-                            Sua melhor escolha em imóveis com a tecnologia do CRM LAX.
-                        </p>
-                    </div>
-
-                    <div>
-                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4 text-foreground">Localização</h4>
-                        {branding?.address?.street ? (
-                            <div className="flex items-start gap-2 text-sm text-muted-foreground">
-                                <MapPin size={18} className="text-secondary shrink-0 mt-0.5" />
-                                <div>
-                                    <p>{branding.address.street}, {branding.address.number}</p>
-                                    <p>{branding.address.neighborhood}</p>
-                                    <p>{branding.address.city} - {branding.address.state}</p>
-                                    <p>{branding.address.zip_code}</p>
-                                </div>
-                            </div>
-                        ) : (
-                            <p className="text-sm text-muted-foreground">Endereço não informado.</p>
-                        )}
-                    </div>
-
-                    <div>
-                        <h4 className="font-bold text-sm uppercase tracking-widest mb-4 text-foreground">Políticas</h4>
-                        <ul className="space-y-3">
-                            <li>
-                                <button 
-                                    onClick={() => setIsPrivacyOpen(true)}
-                                    className="text-sm text-muted-foreground hover:text-secondary transition-colors"
-                                >
-                                    Política de Privacidade
-                                </button>
-                            </li>
-                            <li>
-                                <button 
-                                    onClick={() => setIsTermsOpen(true)}
-                                    className="text-sm text-muted-foreground hover:text-secondary transition-colors"
-                                >
-                                    Termos de Serviço
-                                </button>
-                            </li>
-                        </ul>
-                    </div>
-
-                    <div className="flex flex-col gap-4">
-                        <h4 className="font-bold text-sm uppercase tracking-widest mb-2 text-foreground">Siga-nos</h4>
-                        <div className="flex items-center gap-4">
-                            {branding?.social_links?.instagram && (
-                                <a href={branding.social_links.instagram} target="_blank" className="p-2 bg-muted/50 rounded-lg hover:bg-secondary hover:text-white transition-all">
-                                    <Instagram size={20} />
-                                </a>
-                            )}
-                            {branding?.social_links?.facebook && (
-                                <a href={branding.social_links.facebook} target="_blank" className="p-2 bg-muted/50 rounded-lg hover:bg-secondary hover:text-white transition-all">
-                                    <Facebook size={20} />
-                                </a>
-                            )}
-                            {branding?.social_links?.linkedin && (
-                                <a href={branding.social_links.linkedin} target="_blank" className="p-2 bg-muted/50 rounded-lg hover:bg-secondary hover:text-white transition-all">
-                                    <Linkedin size={20} />
-                                </a>
-                            )}
-                            {branding?.social_links?.youtube && (
-                                <a href={branding.social_links.youtube} target="_blank" className="p-2 bg-muted/50 rounded-lg hover:bg-secondary hover:text-white transition-all">
-                                    <Youtube size={20} />
-                                </a>
-                            )}
-                        </div>
-                    </div>
-                </div>
-                <div className="mt-12 pt-8 border-t border-border flex flex-col md:flex-row justify-between items-center gap-4 text-[11px] text-muted-foreground uppercase font-bold tracking-tighter">
-                    <p>© {new Date().getFullYear()} {tenantName} - Todos os direitos reservados.</p>
-                    <p className="flex items-center gap-1">
-                        Desenvolvido por <span className="text-foreground font-black">CRM LAX</span>
-                    </p>
-                </div>
-            </footer>
-
-            {/* Modals de Políticas */}
-            <Modal
-                isOpen={isPrivacyOpen}
-                onClose={() => setIsPrivacyOpen(false)}
-                title="Política de Privacidade"
-                size="lg"
-            >
-                <div className="prose prose-sm max-w-none">
-                    <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                        {branding?.privacy_policy || 'A Política de Privacidade ainda não foi configurada para este site.'}
-                    </p>
-                </div>
-            </Modal>
-
-            <Modal
-                isOpen={isTermsOpen}
-                onClose={() => setIsTermsOpen(false)}
-                title="Termos de Serviço"
-                size="lg"
-            >
-                <div className="prose prose-sm max-w-none">
-                    <p className="whitespace-pre-wrap text-muted-foreground leading-relaxed">
-                        {branding?.terms_of_service || 'Os Termos de Serviço ainda não foram configurados para este site.'}
-                    </p>
-                </div>
-            </Modal>
+            <SiteFooter tenantName={tenantName} branding={branding} />
+            {whatsappNumber && <WhatsAppButton phone={whatsappNumber} />}
             <BackToTop />
         </>
     );
 }
-

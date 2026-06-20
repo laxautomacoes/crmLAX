@@ -45,7 +45,7 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onA
         <div className="bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm">
             <div className="overflow-x-auto">
                 <table className="w-full text-left">
-                    <thead className="bg-muted/50 border-b border-muted-foreground/30">
+                    <thead className="bg-gray-200 dark:bg-muted/50 border-b border-muted-foreground/30">
                         <tr>
                             <th
                                 className={`${sortableThClass} min-w-[250px] md:min-w-0`}

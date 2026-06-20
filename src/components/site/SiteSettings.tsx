@@ -31,6 +31,7 @@ import { toast } from 'sonner'
 import { Logo } from '@/components/shared/Logo'
 import { AVAILABLE_FONTS, type SiteTheme } from '@/components/site/SiteThemeProvider'
 import { SectionSettingsPanel } from '@/components/site/settings/SectionSettingsPanel'
+import { PageHeader } from '@/components/shared/PageHeader'
 
 interface BrandingData {
     logo_full?: string
@@ -38,6 +39,11 @@ interface BrandingData {
     logo_icon?: string
     logo_height?: number
     logo_header_height?: number
+    site_logo?: string
+    site_favicon?: string
+    site_logo_height?: number
+    filter_bg_image?: string
+    filter_title?: string
     address?: {
         street?: string
         number?: string
@@ -67,14 +73,15 @@ interface BrandingData {
     }
 }
 
-export function SiteSettings() {
+export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
     const [activeTab, setActiveTab] = useState<'branding' | 'appearance' | 'sections' | 'footer'>('branding')
     const [loading, setLoading] = useState(true)
     const [saving, setSaving] = useState(false)
-    const [isUploading, setIsUploading] = useState<'logo_full' | 'logo_header' | 'logo_icon' | null>(null)
+    const [isUploading, setIsUploading] = useState<'site_logo' | 'site_favicon' | null>(null)
     const [profile, setProfile] = useState<any>(null)
     const [tenant, setTenant] = useState<any>(null)
     const [branding, setBranding] = useState<BrandingData>({})
+    const [savedBranding, setSavedBranding] = useState<BrandingData | null>(null)
 
     useEffect(() => {
         async function loadData() {
@@ -102,6 +109,7 @@ export function SiteSettings() {
                     setTenant(tenantData)
                     if (tenantData.branding) {
                         setBranding(tenantData.branding)
+                        setSavedBranding(JSON.parse(JSON.stringify(tenantData.branding)))
                     }
                 }
             }
@@ -110,11 +118,11 @@ export function SiteSettings() {
         loadData()
     }, [])
 
-    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'logo_full' | 'logo_header' | 'logo_icon') => {
+    const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>, type: 'site_logo' | 'site_favicon') => {
         const file = e.target.files?.[0]
         if (!file || !profile?.tenant_id) return
 
-        if (type === 'logo_full' || type === 'logo_header') {
+        if (type === 'site_logo') {
             const isValidRatio = await new Promise<boolean>((resolve) => {
                 const img = new Image()
                 img.onload = () => {
@@ -160,7 +168,7 @@ export function SiteSettings() {
             await updateTenantBranding(profile.tenant_id, newBranding)
 
             window.dispatchEvent(new CustomEvent('branding-updated', { detail: newBranding }))
-            toast.success(`${type === 'logo_full' ? 'Logo do Site' : type === 'logo_header' ? 'Logo do Header' : 'Ícone'} carregado com sucesso!`)
+            toast.success(`${type === 'site_logo' ? 'Logo do Site' : 'Favicon'} carregado com sucesso!`)
         } catch (error: any) {
             console.error(`Error uploading ${type}:`, error)
             toast.error(`Erro ao carregar imagem: ${error.message}`)
@@ -179,6 +187,7 @@ export function SiteSettings() {
 
         if (result.success) {
             toast.success('Configurações salvas com sucesso!')
+            setSavedBranding(JSON.parse(JSON.stringify(branding)))
             window.dispatchEvent(new CustomEvent('branding-updated', { detail: branding }))
         } else {
             toast.error('Erro ao salvar: ' + result.error)
@@ -186,11 +195,10 @@ export function SiteSettings() {
         setSaving(false)
     }
 
-    const handleRemoveLogo = (type: 'logo_full' | 'logo_header' | 'logo_icon') => {
+    const handleRemoveLogo = (type: 'site_logo' | 'site_favicon') => {
         const labels = {
-            logo_full: 'logotipo principal',
-            logo_header: 'logotipo do header',
-            logo_icon: 'ícone'
+            site_logo: 'logotipo principal do site',
+            site_favicon: 'ícone/favicon'
         };
         if (confirm(`Deseja remover o ${labels[type]}?`)) {
             const newBranding = { ...branding, [type]: undefined };
@@ -225,6 +233,22 @@ export function SiteSettings() {
         }))
     }
 
+    const isSectionsTabEdited = () => {
+        if (!savedBranding) return false;
+        const currentSections = branding.site_sections || {};
+        const savedSections = savedBranding.site_sections || {};
+        const currentTitle = branding.filter_title || '';
+        const savedTitle = savedBranding.filter_title || '';
+        const currentBg = branding.filter_bg_image || '';
+        const savedBg = savedBranding.filter_bg_image || '';
+
+        return (
+            currentTitle !== savedTitle ||
+            currentBg !== savedBg ||
+            JSON.stringify(currentSections) !== JSON.stringify(savedSections)
+        );
+    };
+
     if (loading) {
         return (
             <div className="flex items-center justify-center min-h-[400px]">
@@ -234,8 +258,37 @@ export function SiteSettings() {
     }
 
     return (
-        <div className="space-y-6">
-            <style dangerouslySetInnerHTML={{ __html: `
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+            <PageHeader title="Configurações do Site">
+                <div className="flex items-center gap-3">
+                    {activeTab === 'sections' && (
+                        <button
+                            onClick={handleSaveMain}
+                            disabled={saving || !isSectionsTabEdited()}
+                            className={`flex items-center justify-center px-12 py-3 md:py-2 min-w-[140px] text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap ${
+                                isSectionsTabEdited()
+                                    ? 'bg-secondary hover:opacity-90 cursor-pointer'
+                                    : 'bg-secondary opacity-30 cursor-not-allowed pointer-events-none'
+                            }`}
+                        >
+                            {saving ? 'Salvando...' : 'Salvar'}
+                        </button>
+                    )}
+                    {siteUrl && siteUrl !== '#' && (
+                        <a 
+                            href={siteUrl} 
+                            target="_blank" 
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center px-12 py-3 md:py-2 min-w-[140px] bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                        >
+                            Ver site
+                        </a>
+                    )}
+                </div>
+            </PageHeader>
+
+            <div className="space-y-6">
+                <style dangerouslySetInnerHTML={{ __html: `
                 .slider-ajuste {
                     -webkit-appearance: none !important;
                     appearance: none !important;
@@ -342,7 +395,7 @@ export function SiteSettings() {
                                 <p className="text-sm text-muted-foreground">Logotipos e ícone | favicon exibidos no site e no sistema.</p>
                             </div>
 
-                            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                                 {/* Logo Full (Site) */}
                                 <div className="space-y-4">
                                     <div className="space-y-1">
@@ -350,12 +403,12 @@ export function SiteSettings() {
                                         <p className="text-xs text-muted-foreground">Exibido no site | Recomendado: 5:1</p>
                                     </div>
                                     <div className="relative group min-h-[140px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
-                                        {branding.logo_full ? (
+                                        {branding.site_logo ? (
                                             <>
                                                 <div className="p-4">
-                                                    <Logo size="lg" src={branding.logo_full} height={branding.logo_height || 50} />
+                                                    <Logo size="lg" src={branding.site_logo} height={branding.site_logo_height || 50} />
                                                 </div>
-                                                <button onClick={() => handleRemoveLogo('logo_full')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
+                                                <button onClick={() => handleRemoveLogo('site_logo')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
                                                     <Trash2 size={14} />
                                                 </button>
                                             </>
@@ -366,78 +419,22 @@ export function SiteSettings() {
                                             </div>
                                         )}
                                         <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 hover:bg-black/20 hover:opacity-100 transition-all">
-                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo_full')} disabled={!!isUploading} />
-                                            {isUploading === 'logo_full' && <Loader2 className="animate-spin text-white" />}
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'site_logo')} disabled={!!isUploading} />
+                                            {isUploading === 'site_logo' && <Loader2 className="animate-spin text-white" />}
                                         </label>
                                     </div>
-                                    {branding.logo_full && (
+                                    {branding.site_logo && (
                                         <div className="space-y-2">
                                             <div className="flex items-center justify-between">
                                                 <label className="text-[10px] font-bold text-foreground/60 dark:text-muted-foreground uppercase">Ajustar Tamanho (Site)</label>
-                                                <span className="text-[10px] font-bold text-foreground/60">{branding.logo_height || 50}px</span>
+                                                <span className="text-[10px] font-bold text-foreground/60">{branding.site_logo_height || 50}px</span>
                                             </div>
                                             <input
                                                 type="range"
                                                 min="20"
                                                 max="60"
-                                                value={branding.logo_height || 50}
-                                                onChange={(e) => setBranding(prev => ({ ...prev, logo_height: parseInt(e.target.value) }))}
-                                                onMouseUp={handleSaveMain}
-                                                className="slider-ajuste cursor-pointer transition-colors"
-                                            />
-                                            <div className="flex justify-between items-center px-1">
-                                                <span className="text-[9px] font-bold text-muted-foreground">20px</span>
-                                                <span className="text-[9px] font-bold text-muted-foreground">60px</span>
-                                            </div>
-                                        </div>
-                                    )}
-                                </div>
-
-                                {/* Logo Header (System) */}
-                                <div className="space-y-4">
-                                    <div className="space-y-1">
-                                        <label className="text-sm font-bold text-foreground">Logotipo Header</label>
-                                        <p className="text-xs text-muted-foreground">Exibido no sistema | Recomendado: 5:1</p>
-                                    </div>
-                                    <div className="relative group min-h-[140px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
-                                        {(branding.logo_header || branding.logo_full) ? (
-                                            <>
-                                                <div className="p-4">
-                                                    <Logo
-                                                        size="lg"
-                                                        src={branding.logo_header || branding.logo_full}
-                                                        height={branding.logo_header_height || (branding.logo_header ? 40 : branding.logo_height || 40)}
-                                                    />
-                                                </div>
-                                                {(branding.logo_header || branding.logo_full) && (
-                                                    <button onClick={() => handleRemoveLogo('logo_header')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
-                                                        <Trash2 size={14} />
-                                                    </button>
-                                                )}
-                                            </>
-                                        ) : (
-                                            <div className="text-center p-4">
-                                                <ImageIcon className="w-8 h-8 text-muted-foreground mx-auto mb-2" />
-                                                <span className="text-xs text-muted-foreground">Upload Header Logo</span>
-                                            </div>
-                                        )}
-                                        <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 hover:bg-black/20 hover:opacity-100 transition-all">
-                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo_header')} disabled={!!isUploading} />
-                                            {isUploading === 'logo_header' && <Loader2 className="animate-spin text-white" />}
-                                        </label>
-                                    </div>
-                                    {(branding.logo_header || branding.logo_full) && (
-                                        <div className="space-y-2">
-                                            <div className="flex items-center justify-between">
-                                                <label className="text-[10px] font-bold text-foreground/60 dark:text-muted-foreground uppercase">Ajustar Tamanho (Header)</label>
-                                                <span className="text-[10px] font-bold text-foreground/60">{branding.logo_header_height || (branding.logo_header ? 40 : branding.logo_height || 40)}px</span>
-                                            </div>
-                                            <input
-                                                type="range"
-                                                min="20"
-                                                max="60"
-                                                value={branding.logo_header_height || (branding.logo_header ? 40 : branding.logo_height || 40)}
-                                                onChange={(e) => setBranding(prev => ({ ...prev, logo_header_height: parseInt(e.target.value) }))}
+                                                value={branding.site_logo_height || 50}
+                                                onChange={(e) => setBranding(prev => ({ ...prev, site_logo_height: parseInt(e.target.value) }))}
                                                 onMouseUp={handleSaveMain}
                                                 className="slider-ajuste cursor-pointer transition-colors"
                                             />
@@ -453,13 +450,13 @@ export function SiteSettings() {
                                 <div className="space-y-4">
                                     <div className="space-y-1">
                                         <label className="text-sm font-bold text-foreground">Ícone | Favicon</label>
-                                        <p className="text-xs text-muted-foreground">Exibido no sistema | Recomendado: 1:1 (200x200px)</p>
+                                        <p className="text-xs text-muted-foreground">Exibido na aba do navegador e no site | Recomendado: 1:1</p>
                                     </div>
                                     <div className="relative group aspect-square max-w-[140px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
-                                        {branding.logo_icon ? (
+                                        {branding.site_favicon ? (
                                             <>
-                                                <img src={branding.logo_icon} className="w-full h-full object-contain p-4" alt="Icon" />
-                                                <button onClick={() => handleRemoveLogo('logo_icon')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
+                                                <img src={branding.site_favicon} className="w-full h-full object-contain p-4" alt="Icon" />
+                                                <button onClick={() => handleRemoveLogo('site_favicon')} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-opacity cursor-pointer z-10">
                                                     <Trash2 size={14} />
                                                 </button>
                                             </>
@@ -470,8 +467,8 @@ export function SiteSettings() {
                                             </div>
                                         )}
                                         <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 hover:bg-black/20 hover:opacity-100 transition-all">
-                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'logo_icon')} disabled={!!isUploading} />
-                                            {isUploading === 'logo_icon' && <Loader2 className="animate-spin text-white" />}
+                                            <input type="file" className="hidden" accept="image/*" onChange={(e) => handleFileUpload(e, 'site_favicon')} disabled={!!isUploading} />
+                                            {isUploading === 'site_favicon' && <Loader2 className="animate-spin text-white" />}
                                         </label>
                                     </div>
                                 </div>
@@ -726,9 +723,9 @@ export function SiteSettings() {
                             <button
                                 onClick={handleSaveMain}
                                 disabled={saving}
-                                className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+                                className="px-12 py-2 min-w-[140px] bg-secondary text-secondary-foreground rounded-md font-bold hover:opacity-90 transition-opacity"
                             >
-                                Salvar Aparência
+                                {saving ? 'Salvando...' : 'Salvar Aparência'}
                             </button>
                         </div>
                     </div>
@@ -745,17 +742,13 @@ export function SiteSettings() {
                             } as any))}
                             tenantId={tenant?.id || ''}
                             tenantSlug={tenant?.slug || ''}
+                            branding={branding}
+                            setBranding={setBranding}
+                            savedBranding={savedBranding}
+                            onSave={handleSaveMain}
+                            saving={saving}
                         />
 
-                        <div className="mt-8 pt-6 flex justify-end">
-                            <button
-                                onClick={handleSaveMain}
-                                disabled={saving}
-                                className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
-                            >
-                                Salvar Seções
-                            </button>
-                        </div>
                     </div>
                 )}
 
@@ -929,14 +922,15 @@ export function SiteSettings() {
                             <button
                                 onClick={handleSaveMain}
                                 disabled={saving}
-                                className="px-8 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity flex items-center gap-2"
+                                className="px-12 py-2 min-w-[140px] bg-secondary text-secondary-foreground rounded-md font-bold hover:opacity-90 transition-opacity"
                             >
-                                Salvar
+                                {saving ? 'Salvando...' : 'Salvar'}
                             </button>
                         </div>
                     </div>
                 )}
             </div>
         </div>
+    </div>
     )
 }

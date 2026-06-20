@@ -90,6 +90,14 @@ Interface Site: Galeria de fotos otimizada, busca com filtros (Tipo, Quartos, Pr
 
 Página de Roadmap: /updates - Timeline vertical pública para transparência com o cliente.
 
+Padrão de Layout Multicolunas (Configurações / Perfis):
+- Em páginas de configurações que utilizam layouts de múltiplos cards dispostos em colunas (ex: Meu Perfil):
+  - Os títulos e subtítulos das seções devem ficar localizados **fora e acima** de seus respectivos cards de conteúdo.
+  - Título: `<h3 className="text-lg font-bold text-foreground">`. Não utilizar ícones junto a esses títulos.
+  - Subtítulo: `<p className="text-sm text-muted-foreground">` posicionado logo abaixo do título correspondente.
+  - O contêiner de cada coluna deve usar `flex flex-col space-y-3` para agrupar o cabeçalho externo e o card, mantendo o espaçamento padrão de 12px.
+  - O card de conteúdo interno (`bg-card rounded-2xl border border-border`) não deve conter cabeçalhos redundantes em seu interior.
+
 8. REQUISITOS DE MONETIZAÇÃO
 - Freemium: Limite de 30 leads/mês.
 - Starter: Domínio crmlax.com/sualoja.

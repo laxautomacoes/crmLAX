@@ -16,8 +16,12 @@ alwaysApply: true
 - layout de modals
 
 4. Padrão de arredondamento de cards/containers: `rounded-lg`
-   - Todos os cards, containers, inputs, botões, dropdowns e modais devem usar `rounded-lg`
-   - NÃO usar `rounded-xl` ou `rounded-2xl` para cards — arredondamento excessivo
+   - Todos os cards, containers, inputs, botões, dropdowns e modais devem usar `rounded-lg` (ou `rounded-xl` se for card principal estrutural como especificado no design system)
    - Tags/badges podem usar `rounded-full` ou `rounded-md`
 
-5. Padrão de headers de tabela: `text-[10px] font-bold text-foreground uppercase tracking-wider`
+5. Padrão de Tabelas (Design System):
+   - **Estrutura:** Sempre usar a classe `bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm` com rolagem horizontal.
+   - **Cabeçalhos (`<thead>`):** Usar `bg-gray-200 dark:bg-muted/50 border-b border-muted-foreground/30`. Fonte: `text-[10px] font-bold text-foreground uppercase tracking-wider`.
+   - **Alinhamento:** O título do cabeçalho da coluna e a informação correspondente devem estar sempre perfeitamente alinhados/centralizados.
+   - **Corpo (`<tbody>`):** Divisores de linha com `divide-y divide-muted-foreground/30` e células com padding `px-4 py-5`.
+   - **Paginação:** Rodapé flexível com contagem `text-xs text-muted-foreground` e botões de paginação.

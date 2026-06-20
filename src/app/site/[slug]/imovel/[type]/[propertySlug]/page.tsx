@@ -60,7 +60,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         : `${baseUrl}/site/${slug}/imovel/${type}/${propertySlug}`;
 
     // Imagem de capa
-    const ogImage = property.images?.[0] || tenant.branding?.logo_full;
+    const ogImage = property.images?.[0] || tenant.branding?.site_logo || tenant.branding?.logo_full;
 
     // Keywords
     const keywords = [
@@ -105,6 +105,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         robots: {
             index: true,
             follow: true,
+        },
+        icons: {
+            icon: tenant.branding?.site_favicon || tenant.branding?.logo_icon || '/logo-icon.png',
         },
     };
 }
@@ -206,7 +209,7 @@ export default async function PublicPropertyPage({ params, searchParams }: any) 
         seller: {
             '@type': 'RealEstateAgent',
             name: tenant.name?.replace(' - ADM', '') || tenant.name,
-            ...(tenant.branding?.logo_full && { image: tenant.branding.logo_full }),
+            ...((tenant.branding?.site_logo || tenant.branding?.logo_full) && { image: tenant.branding.site_logo || tenant.branding.logo_full }),
         },
     };
 
@@ -230,11 +233,11 @@ export default async function PublicPropertyPage({ params, searchParams }: any) 
                 <div className="border-b border-border bg-card/50 backdrop-blur-sm sticky top-0 z-50">
                     <div className="max-w-6xl mx-auto px-4 h-16 flex items-center justify-between">
                         <a href={`/site/${slug}`} className="flex items-center transition-opacity hover:opacity-80">
-                            {tenant.branding?.logo_full ? (
+                            {(tenant.branding?.site_logo || tenant.branding?.logo_full) ? (
                                 <Logo 
                                     size="md" 
-                                    src={tenant.branding.logo_full} 
-                                    height={32}
+                                    src={tenant.branding.site_logo || tenant.branding.logo_full} 
+                                    height={tenant.branding.site_logo_height || 32}
                                 />
                             ) : (
                                 <span className="text-xl font-black text-foreground">{tenant.name}</span>

@@ -15,8 +15,8 @@ export function ProfileAvatarUpload({ profile, uploading, onUpload, onDelete }: 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
     return (
-        <div className="flex flex-col items-center">
-            <div className="relative group">
+        <div className="flex flex-col items-center w-full">
+            <div className="relative group w-40 h-40">
                 <div
                     className="cursor-pointer"
                     onClick={() => fileInputRef.current?.click()}
@@ -30,23 +30,34 @@ export function ProfileAvatarUpload({ profile, uploading, onUpload, onDelete }: 
                     <div className="absolute inset-0 bg-black/40 rounded-full flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                         <Camera className="text-white" size={28} />
                     </div>
-                    <div className="absolute bottom-1 right-1 bg-secondary p-2 rounded-full text-secondary-foreground border-2 border-card shadow-sm">
-                        <Camera size={16} />
-                    </div>
                 </div>
+
+                {/* Botões encostados na borda superior do círculo - Versão Recompilada Simétrica (left: 25% / right: 25%) */}
+                <button
+                    type="button"
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    style={{ left: '25%', top: '-6px' }}
+                    className="absolute bg-secondary text-secondary-foreground p-1.5 rounded-full hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center shadow-sm z-10"
+                    title="Nova foto"
+                >
+                    <Camera size={14} />
+                </button>
 
                 {profile?.avatar_url && !uploading && (
                     <button
+                        type="button"
                         onClick={(e) => {
                             e.stopPropagation();
                             if (confirm('Tem certeza que deseja remover sua foto?')) {
                                 onDelete();
                             }
                         }}
-                        className="absolute bottom-1 left-1 bg-red-600 text-white p-2 rounded-full shadow-lg hover:scale-110 transition-transform z-10 border-2 border-card"
+                        style={{ right: '25%', top: '-6px', left: 'auto' }}
+                        className="absolute bg-red-600 text-white p-1.5 rounded-full hover:bg-red-700 transition-colors shadow-sm z-10"
                         title="Remover foto"
                     >
-                        <Trash2 size={16} />
+                        <Trash2 size={14} />
                     </button>
                 )}
             </div>

@@ -38,10 +38,39 @@ export function ProfileTab() {
     }
 
     return (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-fr">
-            <ProfileAvatar profile={profile} onProfileUpdate={handleProfileUpdate} />
-            <ProfileInfo profile={profile} onProfileUpdate={handleProfileUpdate} />
-            <PasswordForm />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+            {/* Foto */}
+            <div className="flex flex-col space-y-3">
+                <div className="px-1 space-y-1">
+                    <h3 className="text-lg font-bold text-foreground">Foto</h3>
+                    <p className="text-sm text-muted-foreground">Personalize seu avatar de exibição no sistema.</p>
+                </div>
+                <div className="flex-1">
+                    <ProfileAvatar profile={profile} onProfileUpdate={handleProfileUpdate} />
+                </div>
+            </div>
+
+            {/* Informações */}
+            <div className="flex flex-col space-y-3">
+                <div className="px-1 space-y-1">
+                    <h3 className="text-lg font-bold text-foreground">Informações</h3>
+                    <p className="text-sm text-muted-foreground">Gerencie seu nome, e-mail e telefone de contato.</p>
+                </div>
+                <div className="flex-1">
+                    <ProfileInfo profile={profile} onProfileUpdate={handleProfileUpdate} />
+                </div>
+            </div>
+
+            {/* Alterar Senha */}
+            <div className="flex flex-col space-y-3">
+                <div className="px-1 space-y-1">
+                    <h3 className="text-lg font-bold text-foreground">Alterar Senha</h3>
+                    <p className="text-sm text-muted-foreground">Mantenha sua conta segura atualizando sua senha.</p>
+                </div>
+                <div className="flex-1">
+                    <PasswordForm />
+                </div>
+            </div>
         </div>
     );
 }

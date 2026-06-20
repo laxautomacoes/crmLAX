@@ -7,7 +7,6 @@ import { BrandingTab } from '@/components/settings/BrandingTab';
 
 
 import { TemplatesTab } from '@/components/settings/TemplatesTab';
-import { SourcesTab } from '@/components/settings/SourcesTab';
 import { EmailDomainsTab } from '@/components/settings/EmailDomainsTab';
 import { getProfile } from '@/app/_actions/profile';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -45,10 +44,9 @@ export default function SettingsPage() {
     ];
 
     if (hasBrandingAccess) {
-        tabs.push({ id: 'identity', label: 'Identidade' });
+        tabs.push({ id: 'identity', label: 'Branding' });
 
 
-        tabs.push({ id: 'sources', label: 'Origens' });
         tabs.push({ id: 'templates', label: 'Templates' });
         tabs.push({ id: 'email-domains', label: 'Domínios de E-mail' });
     }
@@ -58,21 +56,35 @@ export default function SettingsPage() {
     const getPageTitle = () => {
         switch (activeTab) {
             case 'profile': return 'Meu Perfil';
-            case 'identity': return 'Identidade da Empresa';
+            case 'identity': return 'Branding da Empresa';
 
 
             case 'templates': return 'Templates de Proposta';
-            case 'sources': return 'Origens de Leads';
             default: return 'Configurações';
+        }
+    };
+
+    const getPageSubtitle = () => {
+        switch (activeTab) {
+            case 'profile': 
+                return 'Gerencie suas credenciais de acesso, foto de perfil e informações de contato.';
+            case 'identity': 
+                return 'Configure os logotipos e ícone/favicon da sua empresa.';
+            case 'templates': 
+                return 'Gerencie os modelos e templates de proposta comercial do sistema.';
+            case 'email-domains':
+                return 'Gerencie os domínios de e-mail autorizados para envio de mensagens.';
+            default: 
+                return 'Gerencie as configurações da sua conta.';
         }
     };
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
-            <PageHeader title={getPageTitle()} />
+            <PageHeader title={getPageTitle()} subtitle={getPageSubtitle()} />
 
             {/* Tab Navigation */}
-            {tabs.length > 1 && (
+            {tabs.length > 1 ? (
                 <div className="flex items-center justify-between border-b border-border">
                     <div className="flex items-center gap-2 overflow-x-auto no-scrollbar">
                         {tabs.map((tab) => (
@@ -89,6 +101,10 @@ export default function SettingsPage() {
                         ))}
                     </div>
                 </div>
+            ) : (
+                <div className="border-b border-border w-full py-3">
+                    <div className="h-5" />
+                </div>
             )}
 
             <div>
@@ -97,7 +113,6 @@ export default function SettingsPage() {
 
 
                 {activeTab === 'templates' && tenantId && <TemplatesTab tenantId={tenantId} />}
-                {activeTab === 'sources' && tenantId && <SourcesTab tenantId={tenantId} />}
                 {activeTab === 'email-domains' && tenantId && <EmailDomainsTab tenantId={tenantId} />}
             </div>
         </div>

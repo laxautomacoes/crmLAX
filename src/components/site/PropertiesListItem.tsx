@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import { Home, MapPin, BedDouble, Car, Maximize2, Info, MessageCircle } from 'lucide-react';
 import { translatePropertyType } from '@/utils/property-translations';
+import { getPropertyCode } from '@/utils/property-filter';
 import { LeadFormModal } from './LeadFormModal';
 import Link from 'next/link';
 
@@ -12,6 +13,7 @@ export function PropertiesListItem({ property, tenantSlug }: { property: any, te
     const tipo = translatePropertyType(property.details?.tipo_property || property.details?.type || property.type);
     const bairro = property.details?.endereco?.bairro || 'Bairro ñ inf.';
     const cidade = property.details?.endereco?.cidade || 'Cidade ñ inf.';
+    const codigo = getPropertyCode(property, tenantSlug);
     const propertyType = property.type || property.details?.tipo_property || 'imovel';
     const propertyHref = `/site/${tenantSlug}/imovel/${propertyType}/${property.slug || property.id}`;
 
@@ -22,13 +24,17 @@ export function PropertiesListItem({ property, tenantSlug }: { property: any, te
                     <div className="flex flex-col md:flex-row">
                         <div className="w-full md:w-64 aspect-video md:aspect-auto h-auto md:h-48 bg-muted flex-shrink-0 relative">
                             {property.images?.[0] ? <img src={property.images[0]} alt={property.title} className="w-full h-full object-cover" /> : <div className="w-full h-full flex items-center justify-center text-foreground/30"><Home size={32} /></div>}
+                            <span className="absolute top-3 left-3 bg-[#404F4F] text-[#FFE600] px-2 py-1 rounded text-[10px] font-bold shadow-md">
+                                Cód: {codigo}
+                            </span>
                         </div>
                         <div className="flex-1 p-5 flex flex-col justify-between">
                             <div>
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-2">
                                     <div>
-                                        <div className="mb-1.5">
+                                        <div className="mb-1.5 flex gap-2">
                                             <span className="px-2 py-0.5 bg-foreground/10 rounded text-[10px] font-bold uppercase tracking-wider text-foreground">{tipo}</span>
+                                            <span className="px-2 py-0.5 bg-foreground/10 rounded text-[10px] font-bold uppercase tracking-wider text-foreground">Cód: {codigo}</span>
                                         </div>
                                         <h3 className="font-bold text-foreground text-lg leading-tight group-hover:text-primary transition-colors line-clamp-1">{property.title}</h3>
                                         <div className="flex items-center gap-1 text-foreground/70 text-sm mt-1"><MapPin size={14} /><span>{bairro}, {cidade}</span></div>
@@ -52,21 +58,11 @@ export function PropertiesListItem({ property, tenantSlug }: { property: any, te
                                     </div>
                                 </div>
                                 <div className="flex gap-2 md:ml-auto">
-                                    <Link
-                                        href={propertyHref}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        className="bg-muted hover:bg-muted/80 text-foreground font-bold py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 text-xs whitespace-nowrap"
-                                    >
-                                        <Info size={14} className="flex-shrink-0" />
-                                        Ver detalhes
+                                    <Link href={propertyHref} target="_blank" rel="noopener noreferrer" className="bg-muted hover:bg-muted/80 text-foreground font-bold py-2.5 px-4 rounded-lg transition-all flex items-center justify-center gap-2 text-xs whitespace-nowrap">
+                                        <Info size={14} className="flex-shrink-0" />Ver detalhes
                                     </Link>
-                                    <button
-                                        onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowLeadForm(true); }}
-                                        className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2.5 px-4 rounded-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 text-xs whitespace-nowrap"
-                                    >
-                                        <MessageCircle size={14} className="flex-shrink-0" />
-                                        Tenho interesse
+                                    <button onClick={(e) => { e.preventDefault(); e.stopPropagation(); setShowLeadForm(true); }} className="bg-secondary hover:opacity-90 text-secondary-foreground font-bold py-2.5 px-4 rounded-lg transition-all transform active:scale-[0.99] flex items-center justify-center gap-2 text-xs whitespace-nowrap">
+                                        <MessageCircle size={14} className="flex-shrink-0" />Tenho interesse
                                     </button>
                                 </div>
                             </div>
@@ -75,13 +71,7 @@ export function PropertiesListItem({ property, tenantSlug }: { property: any, te
                 </div>
             </Link>
 
-            <LeadFormModal
-                isOpen={showLeadForm}
-                onClose={() => setShowLeadForm(false)}
-                propertyId={property.id}
-                propertyTitle={property.title}
-                tenantId={property.tenant_id}
-            />
+            <LeadFormModal isOpen={showLeadForm} onClose={() => setShowLeadForm(false)} propertyId={property.id} propertyTitle={property.title} tenantId={property.tenant_id} />
         </>
     );
 }

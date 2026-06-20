@@ -27,6 +27,7 @@ export interface DashboardMetrics {
         color?: string
         created_at: string
         last_interaction_at?: string | null
+        assigned_to_name?: string
     }>
 }
 
@@ -181,6 +182,9 @@ export async function getDashboardMetrics(tenantId: string) {
                 last_interaction_at,
                 contacts (
                     name
+                ),
+                profiles:assigned_to (
+                    full_name
                 )
             `)
             .eq('tenant_id', tenantId)
@@ -205,7 +209,8 @@ export async function getDashboardMetrics(tenantId: string) {
                 status: stage?.name || 'Novo',
                 color: stage?.color || undefined,
                 created_at: lead.created_at,
-                last_interaction_at: lead.last_interaction_at
+                last_interaction_at: lead.last_interaction_at,
+                assigned_to_name: lead.profiles?.full_name || 'Sem responsável'
             };
         })
 

@@ -21,6 +21,9 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
     return {
         title: `Busca de Imóveis — ${tenantName}`,
         description: `Encontre imóveis no mapa com ${tenantName}. Busca avançada com filtros e localização.`,
+        icons: {
+            icon: tenant.branding?.site_favicon || tenant.branding?.logo_icon || '/logo-icon.png',
+        },
     };
 }
 
@@ -75,11 +78,11 @@ export default async function SiteSearchPage({ params }: { params: Promise<{ slu
                         <a href={`/site/${slug}`}>
                             <Logo 
                                 size="lg" 
-                                src={tenant.branding?.logo_full} 
-                                height={tenant.branding?.logo_height || 50} 
+                                src={tenant.branding?.site_logo || tenant.branding?.logo_full} 
+                                height={tenant.branding?.site_logo_height || tenant.branding?.logo_height || 50} 
                             />
                         </a>
-                        {!tenant.branding?.logo_full && (
+                        {!(tenant.branding?.site_logo || tenant.branding?.logo_full) && (
                             <a href={`/site/${slug}`}>
                                 <h1 className="text-4xl font-bold text-foreground mt-2">{tenant.name}</h1>
                             </a>

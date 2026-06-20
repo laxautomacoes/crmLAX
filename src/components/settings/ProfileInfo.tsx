@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { User, Mail } from 'lucide-react';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { updateProfile, requestEmailChange } from '@/app/_actions/profile';
 import { toast } from 'sonner';
@@ -105,11 +104,6 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
 
     return (
         <div className="bg-card p-6 rounded-2xl border border-border shadow-sm h-full flex flex-col">
-            <div className="flex items-center gap-2 mb-6">
-                <User className="text-muted-foreground" size={20} />
-                <h2 className="font-semibold text-foreground">Informações</h2>
-            </div>
-
             <div className="space-y-4 flex flex-col flex-1">
 
                 <div className="space-y-4 flex-1">
@@ -131,22 +125,24 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
                         />
                         {!isAdmin && (
                             <div className="mt-4 space-y-1.5 w-full">
-                                <label className="text-[10px] font-bold text-muted-foreground uppercase px-1">
+                                <label className="block text-sm font-bold text-foreground ml-1 mb-1 tracking-tight">
                                     Solicitar alteração de e-mail
                                 </label>
-                                <div className="flex gap-2">
-                                    <input
-                                        type="email"
-                                        placeholder="Novo e-mail"
-                                        value={requestEmail}
-                                        onChange={(e) => setRequestEmail(e.target.value)}
-                                        className="flex-1 bg-card text-sm px-4 py-2 rounded-lg border border-muted-foreground/30 focus:ring-2 focus:ring-secondary/50 focus:border-secondary transition-all outline-none"
-                                    />
+                                <div className="flex gap-2 items-stretch">
+                                    <div className="flex-1">
+                                        <FormInput
+                                            type="email"
+                                            placeholder="Novo e-mail"
+                                            value={requestEmail}
+                                            onChange={(e) => setRequestEmail(e.target.value)}
+                                            className="bg-background"
+                                        />
+                                    </div>
                                     <button
                                         type="button"
                                         onClick={handleRequestEmailChange}
                                         disabled={requesting || !requestEmail}
-                                        className="bg-secondary text-secondary-foreground text-xs font-bold px-6 py-2 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center whitespace-nowrap shadow-sm h-[38px]"
+                                        className="bg-secondary text-secondary-foreground text-xs font-bold px-6 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center whitespace-nowrap shadow-sm"
                                     >
                                         {requesting ? '...' : 'Solicitar'}
                                     </button>

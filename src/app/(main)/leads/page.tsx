@@ -246,7 +246,7 @@ export default function LeadsPage() {
 
     return (
         <div className="max-w-[1600px] mx-auto flex flex-col gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300 h-[calc(100vh-120px)] md:h-[calc(100vh-100px)]">
-            <PageHeader title="Leads">
+            <PageHeader title="Leads" subtitle={`${filteredLeads.length} leads encontrados`}>
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
                         onClick={() => handleOpenLeadModal()}

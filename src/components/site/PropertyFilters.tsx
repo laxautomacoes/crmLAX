@@ -1,116 +1,50 @@
 'use client';
 
-import { Search, Filter, LayoutGrid, List, Map } from 'lucide-react';
-import { FormInput } from '@/components/shared/forms/FormInput';
-import { FormSelect } from '@/components/shared/forms/FormSelect';
-import Link from 'next/link';
+import { useMemo, useState } from 'react';
+import { TransactionTabs } from './filters/TransactionTabs';
+import { ModeToggles } from './filters/ModeToggles';
+import { StandardBar } from './filters/StandardBar';
+import { AdvancedDrawer } from './filters/AdvancedDrawer';
+import { CodeBar } from './filters/CodeBar';
+import { ProjectBar } from './filters/ProjectBar';
+import { getUniqueCities, getUniqueNeighborhoods, getUniqueProjects } from '@/utils/property-filter';
 
 interface PropertyFiltersProps {
-    filters: {
-        tipo: string;
-        quartos: string;
-        precoMin: string;
-        precoMax: string;
-        search: string;
-    };
-    onFilterChange: (filters: PropertyFiltersProps['filters']) => void;
-    viewMode: 'gallery' | 'list' | 'map';
-    onViewModeChange: (mode: 'gallery' | 'list' | 'map') => void;
+    properties: any[];
+    filters: any;
+    onFilterChange: (filters: any) => void;
+    viewMode?: 'gallery' | 'list' | 'map';
+    onViewModeChange?: (mode: 'gallery' | 'list' | 'map') => void;
     mapUrl?: string;
+    isHomepage?: boolean;
+    onSearch?: () => void;
 }
 
-export function PropertyFilters({ filters, onFilterChange, viewMode, onViewModeChange, mapUrl }: PropertyFiltersProps) {
-    const handleChange = (key: keyof typeof filters, value: string) => {
-        onFilterChange({ ...filters, [key]: value });
-    };
+export function PropertyFilters({ properties = [], filters, onFilterChange, onSearch }: PropertyFiltersProps) {
+    const [advancedOpen, setAdvancedOpen] = useState(false);
+    const handleChange = (k: string, v: any) => onFilterChange({ ...filters, [k]: v });
+    const cities = useMemo(() => getUniqueCities(properties), [properties]);
+    const neighborhoods = useMemo(() => getUniqueNeighborhoods(properties, filters.cidade), [properties, filters.cidade]);
+    const projects = useMemo(() => getUniqueProjects(properties), [properties]);
+    const handleSubmit = () => onSearch?.();
+    const mode = filters.searchMode || 'standard';
 
     return (
-        <div className="bg-card rounded-2xl border border-border shadow-sm p-6 mb-8">
-            <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                    <Filter className="text-primary" size={20} />
-                    <h3 className="text-lg font-bold text-primary">Filtros</h3>
-                </div>
-                <div className="flex items-center bg-muted border border-border rounded-lg p-1 shadow-sm">
-                    <button
-                        onClick={() => onViewModeChange('gallery')}
-                        className={`p-2 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-                        title="Visualização em Galeria"
-                    >
-                        <LayoutGrid size={18} />
-                    </button>
-                    <button
-                        onClick={() => onViewModeChange('list')}
-                        className={`p-2 rounded-md transition-all ${viewMode === 'list' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-                        title="Visualização em Lista"
-                    >
-                        <List size={18} />
-                    </button>
-                    {mapUrl ? (
-                        <Link
-                            href={mapUrl}
-                            className="p-2 rounded-md transition-all text-muted-foreground hover:bg-muted hover:text-foreground"
-                            title="Buscar no Mapa"
-                        >
-                            <Map size={18} />
-                        </Link>
-                    ) : (
-                        <button
-                            onClick={() => onViewModeChange('map')}
-                            className={`p-2 rounded-md transition-all md:hidden ${viewMode === 'map' ? 'bg-primary text-primary-foreground shadow-sm' : 'text-muted-foreground hover:bg-muted hover:text-foreground'}`}
-                            title="Visualização em Mapa"
-                        >
-                            <Map size={18} />
-                        </button>
-                    )}
-                </div>
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4">
-                <div className="lg:col-span-2">
-                    <FormInput
-                        label="Buscar"
-                        value={filters.search}
-                        onChange={(e) => handleChange('search', e.target.value)}
-                        placeholder="Bairro, condomínio ou tipo de property..."
-                        icon={Search}
-                    />
-                </div>
-
-                <FormSelect
-                    label="Tipo"
-                    value={filters.tipo}
-                    onChange={(e) => handleChange('tipo', e.target.value)}
-                    options={[
-                        { value: '', label: 'Todos os tipos' },
-                        { value: 'house', label: 'Casa' },
-                        { value: 'apartment', label: 'Apartamento' },
-                        { value: 'land', label: 'Terreno' },
-                        { value: 'commercial', label: 'Comercial' },
-                        { value: 'penthouse', label: 'Cobertura' },
-                        { value: 'studio', label: 'Studio' },
-                        { value: 'rural', label: 'Rural' },
-                        { value: 'warehouse', label: 'Galpão' },
-                        { value: 'office', label: 'Sala/Escritório' },
-                        { value: 'store', label: 'Loja' }
-                    ]}
-                />
-
-                <FormInput
-                    label="Dormitórios"
-                    value={filters.quartos}
-                    onChange={(e) => handleChange('quartos', e.target.value)}
-                    placeholder="Ex: 2 ou mais"
-                />
-
-                <FormInput
-                    label="Preço até"
-                    value={filters.precoMax}
-                    onChange={(e) => handleChange('precoMax', e.target.value)}
-                    placeholder="Até R$ 1.500.000"
-                />
+        <div className="w-full mb-8">
+            <TransactionTabs value={filters.transactionType || 'venda'} onChange={(val) => handleChange('transactionType', val)} />
+            <div className="bg-card rounded-2xl border border-border shadow-md p-6">
+                {mode === 'code' ? (
+                    <CodeBar value={filters.codigo || ''} onFieldChange={(val) => handleChange('codigo', val)} onSubmit={handleSubmit} onBack={() => { handleChange('searchMode', 'standard'); handleChange('codigo', ''); }} />
+                ) : mode === 'project' ? (
+                    <ProjectBar value={filters.empreendimento || ''} projects={projects} onFieldChange={(val) => handleChange('empreendimento', val)} onSubmit={handleSubmit} onBack={() => { handleChange('searchMode', 'standard'); handleChange('empreendimento', ''); }} />
+                ) : (
+                    <>
+                        <StandardBar tipo={filters.tipo || ''} cidade={filters.cidade || ''} bairro={filters.bairro || ''} cities={cities} neighborhoods={neighborhoods} onFieldChange={handleChange} onSubmit={handleSubmit} />
+                        {advancedOpen && <AdvancedDrawer filters={filters} onFieldChange={handleChange} />}
+                    </>
+                )}
+                <ModeToggles searchMode={mode} advancedOpen={advancedOpen} onToggleAdvanced={() => setAdvancedOpen(!advancedOpen)} onChangeMode={(m) => { handleChange('searchMode', m); setAdvancedOpen(false); }} />
             </div>
         </div>
     );
 }
-

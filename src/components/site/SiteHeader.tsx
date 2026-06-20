@@ -49,13 +49,26 @@ export function SiteHeader({
 
     const handleNavClick = (href: string) => {
         setIsMobileMenuOpen(false);
-        if (href === '#') {
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            return;
-        }
-        const el = document.querySelector(href);
+        const isSitePath = window.location.pathname.startsWith('/site/');
+        
+        // Rolar localmente se o elemento existir na página atual
+        const el = href !== '#' ? document.querySelector(href) : null;
         if (el) {
             el.scrollIntoView({ behavior: 'smooth' });
+            return;
+        }
+
+        // Caso o elemento não exista ou seja a Home, decide rolagem ou redirecionamento
+        const isSlugHome = isSitePath 
+            ? window.location.pathname.split('/').length === 3 
+            : window.location.pathname === '/';
+
+        if (href === '#' && isSlugHome) {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+            const slug = isSitePath ? window.location.pathname.split('/')[2] : '';
+            const homeUrl = isSitePath ? `/site/${slug}` : '/';
+            window.location.href = href === '#' ? homeUrl : `${homeUrl}${href}`;
         }
     };
 
