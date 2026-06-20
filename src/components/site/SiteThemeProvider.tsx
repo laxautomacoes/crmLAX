@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useMemo, useState, createContext, useContext } from 'react';
+import { useTheme } from 'next-themes';
 
 export interface SiteThemeContextType {
     themeMode: 'light' | 'dark';
@@ -98,9 +99,11 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
         border_radius: 'rounded',
     };
 
+    const { setTheme } = useTheme();
     const merged = useMemo(() => ({ ...defaults, ...theme }), [theme]);
 
     const [visitorTheme, setVisitorTheme] = useState<'light' | 'dark' | null>(null);
+    const [systemTheme, setSystemTheme] = useState<'light' | 'dark'>('light');
 
     // Carregar preferência salva
     useEffect(() => {
@@ -110,22 +113,40 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
         }
     }, []);
 
-    // Determinar o tema ativo atual
-    const activeTheme = useMemo<'light' | 'dark'>(() => {
+    // Monitorar preferência do sistema no cliente
+    useEffect(() => {
+        if (typeof window === 'undefined') return;
+        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const handleSystemThemeChange = (e: MediaQueryListEvent | MediaQueryList) => {
+            setSystemTheme(e.matches ? 'dark' : 'light');
+        };
+        setSystemTheme(mediaQuery.matches ? 'dark' : 'light');
+        mediaQuery.addEventListener('change', handleSystemThemeChange);
+        return () => mediaQuery.removeEventListener('change', handleSystemThemeChange);
+    }, []);
+
+    // Determinar o tema ativo a ser enviado ao next-themes ('light', 'dark' ou 'system')
+    const activeTheme = useMemo<'light' | 'dark' | 'system'>(() => {
         if (visitorTheme) return visitorTheme;
         if (merged.dark_mode === 'dark') return 'dark';
         if (merged.dark_mode === 'light') return 'light';
-
-        // 'auto' segue o sistema
-        if (typeof window !== 'undefined') {
-            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-        }
-        return 'light';
+        return 'system';
     }, [visitorTheme, merged.dark_mode]);
+
+    // Tema resolvido atual (apenas 'light' ou 'dark') para a UI e ícones
+    const currentResolvedTheme = useMemo<'light' | 'dark'>(() => {
+        if (activeTheme === 'system') return systemTheme;
+        return activeTheme;
+    }, [activeTheme, systemTheme]);
+
+    // Sincronizar com next-themes para propagar a classe .dark ao elemento html
+    useEffect(() => {
+        setTheme(activeTheme);
+    }, [activeTheme, setTheme]);
 
     // Alternar tema e salvar no localStorage
     const toggleTheme = () => {
-        const nextTheme = activeTheme === 'dark' ? 'light' : 'dark';
+        const nextTheme = currentResolvedTheme === 'dark' ? 'light' : 'dark';
         setVisitorTheme(nextTheme);
         localStorage.setItem('crmlax-visitor-theme', nextTheme);
     };
@@ -152,36 +173,17 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
         };
     }, [merged.font_family]);
 
-    // Aplicar a classe .dark conforme o activeTheme
+    // Aplicar a classe .dark também ao site-theme-root local para compatibilidade
     useEffect(() => {
         const siteRoot = document.getElementById('site-theme-root');
         if (!siteRoot) return;
 
-        if (activeTheme === 'dark') {
+        if (currentResolvedTheme === 'dark') {
             siteRoot.classList.add('dark');
         } else {
             siteRoot.classList.remove('dark');
         }
-    }, [activeTheme]);
-
-    // Listener para o preferences do sistema (caso mude externamente e o visitante não tenha escolha fixa)
-    useEffect(() => {
-        if (merged.dark_mode !== 'auto' || visitorTheme) return;
-
-        const mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
-        const handleChange = (e: MediaQueryListEvent | MediaQueryList) => {
-            const siteRoot = document.getElementById('site-theme-root');
-            if (!siteRoot) return;
-            if (e.matches) {
-                siteRoot.classList.add('dark');
-            } else {
-                siteRoot.classList.remove('dark');
-            }
-        };
-
-        mediaQuery.addEventListener('change', handleChange);
-        return () => mediaQuery.removeEventListener('change', handleChange);
-    }, [merged.dark_mode, visitorTheme]);
+    }, [currentResolvedTheme]);
 
     const primaryHSL = hexToHSL(merged.primary_color!);
     const secondaryHSL = hexToHSL(merged.secondary_color!);
@@ -215,7 +217,7 @@ export function SiteThemeProvider({ theme, children }: SiteThemeProviderProps) {
     }
 
     return (
-        <SiteThemeContext.Provider value={{ themeMode: activeTheme, toggleTheme }}>
+        <SiteThemeContext.Provider value={{ themeMode: currentResolvedTheme, toggleTheme }}>
             <div
                 id="site-theme-root"
                 style={cssVars as React.CSSProperties}
