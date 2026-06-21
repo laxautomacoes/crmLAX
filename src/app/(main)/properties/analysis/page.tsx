@@ -135,7 +135,7 @@ export default function AnalysisPage() {
                 subtitle="Consulte o valor médio do metro quadrado baseado em ofertas reais da internet para uma região específica."
             />
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             {/* Filters + Resultados + Histórico (tudo dentro do card) */}
             <LocationFilters onSearch={handleSearch} loading={loading}>

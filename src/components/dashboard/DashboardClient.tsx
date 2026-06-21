@@ -1,8 +1,8 @@
 'use client'
 
 import { useState, useMemo } from 'react'
-import { Plus, Filter } from 'lucide-react'
 import { useRouter } from 'next/navigation'
+import { Filter, Plus } from 'lucide-react'
 import KPICards from '@/components/dashboard/KPICards'
 import SalesFunnel from '@/components/dashboard/SalesFunnel'
 import RecentLeadsList from '@/components/dashboard/RecentLeadsList'
@@ -152,12 +152,12 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
 
             {/* Header / Actions Section */}
             <PageHeader title="Dashboard">
-                <div className="flex flex-row items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
+                <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max">
                     <button
                         onClick={() => setIsFilterOpen(true)}
-                        className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium whitespace-nowrap flex-1 md:flex-none outline-none focus:ring-2 focus:ring-ring/50 relative"
+                        className="h-[38px] flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 focus:ring-ring/50 relative shadow-sm"
                     >
-                        <Filter size={18} />
+                        <Filter size={14} strokeWidth={1} />
                         Filtrar
                         {activeFilterCount > 0 && (
                             <span className="absolute -top-1.5 -right-1.5 bg-secondary text-secondary-foreground text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shadow-sm">
@@ -167,9 +167,9 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
                     </button>
                     <button
                         onClick={() => setIsLeadModalOpen(true)}
-                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold shadow-sm whitespace-nowrap flex-1 md:flex-none"
+                        className="h-[38px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
                     >
-                        <Plus size={18} />
+                        <Plus size={14} strokeWidth={1} />
                         Novo Lead
                     </button>
                 </div>

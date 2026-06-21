@@ -331,24 +331,24 @@ export default function ProposalsClient() {
             <PageHeader title="Propostas">
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     {/* Search */}
-                    <div className="relative flex-1 md:flex-none md:w-[260px] order-1">
+                    <div className="relative flex-1 md:flex-none w-full md:w-[320px] h-[42px] order-1">
                         <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="Buscar por cliente ou imóvel..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full pl-9 pr-3 py-2 text-xs bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/30"
+                            className="w-full h-full pl-9 pr-3 text-sm font-medium bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/30"
                         />
                     </div>
 
                     {/* Status Filter */}
-                    <div className="relative order-3">
+                    <div className="relative order-3 h-[42px] min-w-[130px]">
                         <Filter size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                         <select
                             value={statusFilter}
                             onChange={e => setStatusFilter(e.target.value)}
-                            className="appearance-none pl-9 pr-8 py-2 text-xs bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer"
+                            className="w-full h-full appearance-none pl-9 pr-8 text-sm font-bold bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/30 cursor-pointer"
                         >
                             {STATUS_OPTIONS.map(opt => (
                                 <option key={opt.value} value={opt.value}>{opt.label}</option>
@@ -358,17 +358,17 @@ export default function ProposalsClient() {
                     </div>
 
                     {/* View Toggle */}
-                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm shrink-0 order-2">
+                    <div className="h-[42px] flex items-center bg-card border border-muted-foreground/30 rounded-lg p-1 shadow-sm shrink-0 order-2">
                         <button
                             onClick={() => setViewMode('pipeline')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'pipeline' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                            className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'pipeline' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Pipeline"
                         >
                             <Columns3 size={16} />
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                            className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Lista"
                         >
                             <List size={16} />

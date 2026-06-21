@@ -27,7 +27,7 @@ export default async function AdminLogsPage() {
                 subtitle="Registro completo de atividades e eventos da plataforma." 
             />
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             <LogsTable tenantId={profile.tenant_id} />
         </div>

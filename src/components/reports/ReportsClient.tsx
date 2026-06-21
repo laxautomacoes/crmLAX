@@ -73,13 +73,13 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                 <div className="flex flex-wrap items-center gap-3">
                     {/* Broker Filter - Only visible for admins */}
                     {isAdmin && (
-                        <div className="relative">
+                        <div className="relative h-[42px]">
                             <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                             <select
                                 value={brokerId}
                                 onChange={(e) => handleBrokerChange(e.target.value)}
                                 disabled={isPending}
-                                className="pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[200px]"
+                                className="w-full h-full pl-9 pr-8 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[200px]"
                             >
                                 <option value="all">Todos Corretores</option>
                                 {brokers.map((broker) => (
@@ -95,13 +95,13 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                     )}
 
                     {/* Property Filter */}
-                    <div className="relative">
+                    <div className="relative h-[42px]">
                         <Home className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <select
                             value={propertyId}
                             onChange={(e) => handlePropertyChange(e.target.value)}
                             disabled={isPending}
-                            className="pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[220px]"
+                            className="w-full h-full pl-9 pr-8 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[220px]"
                         >
                             <option value="all">Todos Imóveis</option>
                             {properties.map((property) => (
@@ -116,13 +116,13 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                     </div>
 
                     {/* Period Filter */}
-                    <div className="relative">
+                    <div className="relative h-[42px]">
                         <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
                         <select
                             value={period}
                             onChange={(e) => handlePeriodChange(e.target.value)}
                             disabled={isPending}
-                            className="pl-9 pr-8 py-2 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px]"
+                            className="w-full h-full pl-9 pr-8 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px]"
                         >
                             {PERIODS.map((p) => (
                                 <option key={p.value} value={p.value}>
@@ -137,7 +137,7 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                 </div>
             </PageHeader>
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             {/* IA Insights */}
             <AIInsightsCard 

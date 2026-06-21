@@ -248,23 +248,25 @@ export default function LeadsPage() {
         <div className="max-w-[1600px] mx-auto flex flex-col gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300 h-[calc(100vh-120px)] md:h-[calc(100vh-100px)]">
             <PageHeader title="Leads" subtitle={`${filteredLeads.length} leads encontrados`}>
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
-                    <button
-                        onClick={() => handleOpenLeadModal()}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2 md:order-3"
-                    >
-                        <Plus size={18} />
-                        Novo Lead
-                    </button>
                     <LeadsHeader 
                         onSearch={handleSearch} 
                         brokers={brokers}
                         onBrokerChange={handleBrokerChange}
                         isAdmin={userRole === 'admin' || userRole === 'superadmin'}
-                    />
+                        selectedBroker={selectedBroker}
+                    >
+                        <button
+                            onClick={() => handleOpenLeadModal()}
+                            className="h-[38px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                        >
+                            <Plus size={14} strokeWidth={1} />
+                            Novo Lead
+                        </button>
+                    </LeadsHeader>
                 </div>
             </PageHeader>
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             <PipelineBoard
                 initialStages={stages}

@@ -79,7 +79,7 @@ export default function SettingsPage() {
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
             <PageHeader title={getPageTitle()} subtitle={getPageSubtitle()} />
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             {/* Tab Navigation */}
             {tabs.length > 1 ? (

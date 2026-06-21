@@ -183,22 +183,18 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
                             <button
                                 onClick={handlePortal}
                                 disabled={isPortaling}
-                                className="flex items-center justify-center gap-2 px-4 py-2 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted transition-all active:scale-[0.98] disabled:opacity-50"
+                                className="h-[42px] min-w-[130px] flex items-center justify-center px-4 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted transition-all active:scale-[0.98] disabled:opacity-50"
                             >
                                 {isPortaling ? (
                                     <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
-                                    <>
-                                        <CreditCard size={16} />
-                                        Gerenciar Faturamento
-                                    </>
+                                    "Gerenciar Faturamento"
                                 )}
                             </button>
                             <button
                                 onClick={handleCancelSubscription}
-                                className="flex items-center justify-center gap-2 px-4 py-2 bg-card border border-red-500/30 rounded-lg text-sm font-medium text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition-all active:scale-[0.98]"
+                                className="h-[42px] min-w-[130px] flex items-center justify-center px-4 bg-card border border-red-500/30 rounded-lg text-sm font-bold text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition-all active:scale-[0.98]"
                             >
-                                <MessageCircle size={14} />
                                 Cancelar Assinatura
                             </button>
                         </div>
@@ -206,7 +202,7 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
                 </div>
             </PageHeader>
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             {/* Cards de Planos */}
             <div className="mt-4 md:mt-10">

@@ -265,7 +265,7 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
                         <button
                             onClick={handleSaveMain}
                             disabled={saving || !isSectionsTabEdited()}
-                            className={`flex items-center justify-center px-12 py-3 md:py-2 min-w-[140px] text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap ${
+                            className={`h-[42px] min-w-[130px] flex items-center justify-center px-12 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap ${
                                 isSectionsTabEdited()
                                     ? 'bg-secondary hover:opacity-90 cursor-pointer'
                                     : 'bg-secondary opacity-30 cursor-not-allowed pointer-events-none'
@@ -279,7 +279,7 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
                             href={siteUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="flex items-center justify-center px-12 py-3 md:py-2 min-w-[140px] bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                            className="h-[42px] min-w-[130px] flex items-center justify-center px-12 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
                         >
                             Ver site
                         </a>

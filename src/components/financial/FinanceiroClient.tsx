@@ -153,14 +153,14 @@ export function FinanceiroClient({ tenantId, leads }: FinanceiroClientProps) {
             >
                 <button
                     onClick={handleOpenModal}
-                    className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold shadow-sm flex-1 md:flex-none"
+                    className="h-[38px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm"
                 >
-                    <Plus size={18} />
+                    <Plus size={14} strokeWidth={1} />
                     Nova Transação
                 </button>
             </PageHeader>
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             <FinancialKPIs data={summary} />
 

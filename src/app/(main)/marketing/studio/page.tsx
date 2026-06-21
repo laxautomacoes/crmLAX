@@ -33,7 +33,7 @@ export default async function MarketingStudioPage() {
                 subtitle="Crie conteúdos incríveis para suas redes sociais com o poder da inteligência artificial."
             />
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             <div className="grid grid-cols-1">
                 <PlanGate 

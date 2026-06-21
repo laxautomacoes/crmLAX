@@ -445,27 +445,28 @@ export default function PropertiesClient({
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 icon={Search}
+                                className="w-full md:w-[320px] h-[42px]"
                             />
                         </div>
 
-                        <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm shrink-0">
+                        <div className="h-[42px] flex items-center bg-card border border-muted-foreground/30 rounded-lg p-1 shadow-sm shrink-0">
                             <button
                                 onClick={() => setViewMode('list')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                                className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
                                 title="Visualização em Lista"
                             >
                                 <List size={16} />
                             </button>
                             <button
                                 onClick={() => setViewMode('gallery')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'gallery' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                                className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'gallery' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
                                 title="Visualização em Galeria"
                             >
                                 <LayoutGrid size={16} />
                             </button>
                             <button
                                 onClick={() => setViewMode('map')}
-                                className={`p-1.5 rounded-md transition-all ${viewMode === 'map' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                                className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'map' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
                                 title="Visualização em Mapa"
                             >
                                 <Map size={16} />
@@ -474,28 +475,30 @@ export default function PropertiesClient({
                     </div>
 
                     {/* Linha 2 mobile: Filtrar + Novo Imóvel */}
-                    <button
-                        onClick={() => setIsFiltersOpen(true)}
-                        className={`flex items-center justify-center gap-2 px-4 py-3 md:py-2 rounded-lg border transition-all text-sm font-medium active:scale-[0.98] whitespace-nowrap flex-1 md:flex-none order-2 outline-none focus:ring-2 focus:ring-ring/50 ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest' && v !== false)
-                            ? 'bg-secondary text-secondary-foreground border-secondary'
-                            : 'bg-card border-muted-foreground/30 text-foreground hover:bg-muted/50'
-                            }`}
-                    >
-                        <Filter size={18} />
-                        Filtrar
-                    </button>
+                    <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max order-2">
+                        <button
+                            onClick={() => setIsFiltersOpen(true)}
+                            className={`h-[38px] flex items-center justify-center gap-2 px-4 rounded-lg border transition-all text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 shadow-sm ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest' && v !== false)
+                                ? 'bg-secondary/10 text-secondary-foreground border-secondary hover:bg-secondary/20 focus:ring-secondary/50'
+                                : 'bg-card border-muted-foreground/30 text-foreground hover:bg-muted/50 focus:ring-ring/50'
+                                }`}
+                        >
+                            <Filter size={14} strokeWidth={1} />
+                            Filtrar
+                        </button>
 
-                    <button
-                        onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                        className="flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 py-3 md:py-2 rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2"
-                    >
-                        <Plus size={18} />
-                        Novo Imóvel
-                    </button>
+                        <button
+                            onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
+                            className="h-[38px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 transition-all text-sm font-bold uppercase tracking-wide shadow-sm active:scale-[0.99] whitespace-nowrap"
+                        >
+                            <Plus size={14} strokeWidth={1} />
+                            Novo Imóvel
+                        </button>
+                    </div>
                 </div>
             </PageHeader>
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             {isRefreshing ? (
                 <div className="flex h-[30vh] items-center justify-center">

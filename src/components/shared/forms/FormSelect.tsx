@@ -16,7 +16,7 @@ export function FormSelect({ label, error, icon: Icon, iconSize = 18, roundedCla
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-sm font-bold text-foreground ml-1 mb-1 tracking-tight">
+                <label className="block text-xs font-bold text-foreground ml-1 mb-2">
                     {label}
                 </label>
             )}
@@ -28,7 +28,7 @@ export function FormSelect({ label, error, icon: Icon, iconSize = 18, roundedCla
                 )}
                 <select
                     className={`
-                        w-full ${roundedClassName || 'rounded-lg'} border border-muted-foreground/30 bg-background text-foreground text-sm outline-none transition-all
+                        w-full ${roundedClassName || 'rounded-lg'} border border-border bg-background text-foreground text-sm outline-none transition-all
                         focus:ring-2 focus:ring-secondary/50 focus:border-secondary
                         disabled:opacity-50 disabled:cursor-not-allowed
                         appearance-none pr-10

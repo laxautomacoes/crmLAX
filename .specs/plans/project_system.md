@@ -75,6 +75,9 @@ Todas as telas principais devem utilizar o componente `<PageHeader />` para gara
 - **Subtitle**: `text-sm text-muted-foreground mt-4 md:mt-1`.
 - **Layout (Desktop)**: `flex justify-between items-center gap-4`. Alinhamento `md:text-left`.
 - **Layout (Mobile)**: `text-center`, seguido de um separador `h-px bg-foreground/25 w-full mt-2 mb-6`.
+- **Separador (Desktop)**: Imediatamente após o `PageHeader`, incluir o separador. O espaçamento vertical de equilíbrio (ex: 32px acima e 32px abaixo) deve ser herdado nativamente do container pai (`space-y-8` ou `gap-8`). Porém, para garantir o equilíbrio visual em relação aos botões à direita, **siga esta regra condicional**:
+  - **Se a página NÃO tiver subtítulo** (ex: Dashboard): Use `<hr className="hidden md:block border-border" />`.
+  - **Se a página TIVER subtítulo** (ex: Leads): Use `<hr className="hidden md:block border-border -mt-2" />`. O `-mt-2` anula o "espaço fantasma" embaixo dos botões (causado pelo alinhamento `items-center` contra um bloco de texto mais alto), mantendo o separador simétrico em ambos os cenários.
 - **Botões de Ação**: Alinhados à direita no desktop e centralizados no mobile, com `gap-3`.
 - **Botões de Ação (Padding)**: Sempre utilizar `px-4 py-3 md:py-2` para garantir consistência de altura e usabilidade em telas touch.
 

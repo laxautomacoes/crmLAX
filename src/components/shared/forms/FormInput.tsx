@@ -8,11 +8,12 @@ interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
     error?: string
     icon?: LucideIcon
     iconSize?: number
+    iconStrokeWidth?: number
     roundedClassName?: string
     rightElement?: React.ReactNode
 }
 
-export function FormInput({ label, error, icon: Icon, iconSize = 18, roundedClassName, rightElement, className = '', ...props }: FormInputProps) {
+export function FormInput({ label, error, icon: Icon, iconSize = 18, iconStrokeWidth, roundedClassName, rightElement, className = '', ...props }: FormInputProps) {
     // Se for um input de data e não tiver rightElement, adiciona o ícone de calendário
     const isDateInput = props.type === 'date' || props.type === 'datetime-local' || props.type === 'time'
     const finalRightElement = rightElement || (isDateInput ? (
@@ -30,8 +31,8 @@ export function FormInput({ label, error, icon: Icon, iconSize = 18, roundedClas
             )}
             <div className="relative">
                 {Icon && (
-                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground pointer-events-none">
-                        <Icon size={iconSize} />
+                    <div className="absolute left-3 top-1/2 -translate-y-1/2 text-foreground pointer-events-none flex items-center justify-center">
+                        <Icon size={iconSize} strokeWidth={iconStrokeWidth} />
                     </div>
                 )}
                 <input

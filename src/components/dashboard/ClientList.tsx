@@ -195,42 +195,46 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
             <PageHeader title="Clientes" subtitle={`${filteredClients.length} clientes encontrados`}>
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     {/* Linha 1 mobile: Busca + Toggle */}
-                    <div className="w-[calc(100%-84px)] md:w-[310px] md:flex-none order-1 md:order-1">
+                    <div className="w-full md:w-[320px] md:flex-none order-1 md:order-1">
                         <FormInput
                             placeholder="Buscar por nome ou email..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             icon={Search}
+                            iconSize={14}
+                            iconStrokeWidth={1}
+                            className="w-full h-[38px]"
                         />
                     </div>
 
 
 
-                    {/* Linha 2 mobile: Filtrar + Novo Cliente */}
-                    <button
-                        onClick={() => setIsFilterModalOpen(true)}
-                        className={`flex items-center justify-center gap-2 px-4 py-3 md:py-2 border rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2 md:order-3 ${
-                            filters.status !== 'active' || filters.startDate || filters.endDate || filters.interest || filters.primaryInterest || filters.maritalStatus || (filters.brokerId && filters.brokerId !== 'all')
-                                ? 'bg-secondary/10 border-secondary text-secondary-foreground'
-                                : 'border-border bg-card hover:bg-muted/10 text-foreground'
-                        }`}
-                    >
-                        <Filter size={18} />
-                        Filtrar
-                    </button>
+                    <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max order-2 md:order-2">
+                        <button
+                            onClick={() => setIsFilterModalOpen(true)}
+                            className={`h-[38px] flex items-center justify-center gap-2 px-4 border rounded-lg transition-all text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 shadow-sm ${
+                                filters.status !== 'active' || filters.startDate || filters.endDate || filters.interest || filters.primaryInterest || filters.maritalStatus || (filters.brokerId && filters.brokerId !== 'all')
+                                    ? 'bg-secondary/10 border-secondary text-secondary-foreground hover:bg-secondary/20 focus:ring-secondary/50'
+                                    : 'bg-card border-muted-foreground/30 text-foreground hover:bg-muted/50 focus:ring-ring/50'
+                            }`}
+                        >
+                            <Filter size={14} strokeWidth={1} />
+                            Filtrar
+                        </button>
 
-                    <button
-                        onClick={handleOpenCreate}
-                        className="flex items-center justify-center gap-2 px-4 py-3 md:py-2 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap flex-1 md:flex-none order-2 md:order-4"
-                    >
-                        <Plus size={18} />
-                        Novo Cliente
-                    </button>
+                        <button
+                            onClick={handleOpenCreate}
+                            className="h-[38px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                        >
+                            <Plus size={14} strokeWidth={1} />
+                            Novo Cliente
+                        </button>
+                    </div>
 
                 </div>
             </PageHeader>
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             {/* Content Area */}
                 <div className="bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm">

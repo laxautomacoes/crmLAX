@@ -303,7 +303,7 @@ export default function RoadmapPage() {
                 )}
             </PageHeader>
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             {stages.length === 0 ? (
                 <div className="bg-card p-12 rounded-2xl border border-dashed border-border flex flex-col items-center justify-center text-center">

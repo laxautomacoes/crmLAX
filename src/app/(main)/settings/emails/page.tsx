@@ -14,7 +14,7 @@ export default function EmailSettingsPage() {
                 subtitle="Personalize a identidade visual e os templates das comunicações automáticas da sua imobiliária."
             />
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
             
             <EmailSettingsForm />
         </div>

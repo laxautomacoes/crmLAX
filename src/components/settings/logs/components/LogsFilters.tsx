@@ -40,18 +40,19 @@ export function LogsFilters({
                 </span>
             </div>
 
-            <button onClick={exportToCSV} disabled={logs.length === 0 || loading}
-                className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-3 h-9 rounded-lg hover:bg-muted/50 disabled:opacity-50 transition-colors text-sm font-medium shadow-sm"
-            >
-                <Download size={18} /> Exportar CSV
-            </button>
+            <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max">
+                <button onClick={exportToCSV} disabled={logs.length === 0 || loading}
+                    className="h-[38px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 disabled:opacity-50 transition-colors text-sm font-bold shadow-sm"
+                >
+                    Exportar CSV
+                </button>
 
             {/* Filtro de Datas */}
             <div className="relative">
                 <button onClick={() => setIsDateFilterOpen(!isDateFilterOpen)}
-                    className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-3 h-9 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium shadow-sm"
+                    className="h-[38px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold shadow-sm"
                 >
-                    <Calendar size={18} /> Período
+                    Período
                 </button>
                 {isDateFilterOpen && (
                     <>
@@ -75,9 +76,11 @@ export function LogsFilters({
             {/* Filtro de Usuário */}
             <div className="relative">
                 <button onClick={() => setIsUserFilterOpen(!isUserFilterOpen)}
-                    className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-3 h-9 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium shadow-sm"
+                    className="h-[38px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold shadow-sm"
                 >
-                    <UserIcon size={18} /> {profileId === 'all' ? 'Usuários' : brokers.find(b => b.id === profileId)?.full_name || 'Usuário'}
+                    <span className="truncate max-w-[100px] md:max-w-[150px]">
+                        {profileId === 'all' ? 'Usuários' : brokers.find(b => b.id === profileId)?.full_name || 'Usuário'}
+                    </span>
                 </button>
                 {isUserFilterOpen && (
                     <>
@@ -99,9 +102,11 @@ export function LogsFilters({
             {/* Filtro de Ação */}
             <div className="relative">
                 <button onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-muted-foreground px-3 h-9 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium shadow-sm"
+                    className="h-[38px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold shadow-sm"
                 >
-                    <Filter size={18} /> {actionTypes.find(t => t.value === actionType)?.label || 'Filtrar'}
+                    <span className="truncate max-w-[100px] md:max-w-[150px]">
+                        {actionTypes.find(t => t.value === actionType)?.label || 'Filtrar'}
+                    </span>
                 </button>
                 {isFilterOpen && (
                     <>
@@ -115,6 +120,7 @@ export function LogsFilters({
                         </div>
                     </>
                 )}
+            </div>
             </div>
         </div>
     );

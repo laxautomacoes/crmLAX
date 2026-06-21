@@ -27,7 +27,7 @@ export default async function EmailBulkPage() {
                 subtitle="Crie campanhas, gerencie leads e acompanhe os relatórios de envio."
             />
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             <div className="grid grid-cols-1 gap-6">
                 <EmailBulkSenderForm 

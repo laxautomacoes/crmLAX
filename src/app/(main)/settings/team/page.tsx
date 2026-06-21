@@ -99,7 +99,7 @@ export default function TeamSettingsPage() {
                 </div>
             </PageHeader>
 
-            <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
             <div className="w-full">
                 <InvitationsTable

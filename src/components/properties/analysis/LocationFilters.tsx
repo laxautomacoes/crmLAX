@@ -89,12 +89,16 @@ export function LocationFilters({ onSearch, loading, children }: LocationFilters
     };
 
     return (
-        <div className="bg-card border border-border p-6 rounded-xl shadow-sm space-y-6">
-            <h2 className="text-lg font-bold text-foreground">
-                Características e Localização
-            </h2>
-
-            <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+        <div className="space-y-6">
+            <div className="flex flex-col space-y-3">
+                <div className="px-1 space-y-1">
+                    <h2 className="text-lg font-bold text-foreground">
+                        Características e Localização
+                    </h2>
+                </div>
+                
+                <div className="bg-card border border-border p-6 rounded-lg shadow-sm space-y-6">
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                 <FormSelect
                     label="Tipo de Imóvel"
                     value={propertyType}
@@ -142,11 +146,11 @@ export function LocationFilters({ onSearch, loading, children }: LocationFilters
                     {neighborhoods.map((neighborhood, index) => (
                         <div 
                             key={index} 
-                            className="flex items-end gap-2 rounded-lg p-3 pl-4 border border-muted-foreground/30"
+                            className="flex items-end gap-2 rounded-lg p-3 pl-4 border border-border"
                             style={{ borderLeftWidth: '3px', borderLeftColor: NEIGHBORHOOD_COLORS[index].color }}
                         >
                             <div className="flex-1">
-                                <label className="block text-sm font-bold text-foreground/80 ml-1 mb-1">
+                                <label className="block text-xs font-bold text-foreground ml-1 mb-2">
                                     Bairro {index + 1}
                                 </label>
                                 <input
@@ -154,7 +158,7 @@ export function LocationFilters({ onSearch, loading, children }: LocationFilters
                                     value={neighborhood}
                                     onChange={(e) => updateNeighborhood(index, e.target.value)}
                                     placeholder={`Ex: ${index === 0 ? 'Itaim Bibi' : index === 1 ? 'Vila Olímpia' : 'Pinheiros'}`}
-                                    className="w-full rounded-lg border border-muted-foreground/30 bg-background px-3 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-foreground"
+                                    className="w-full rounded-lg border border-border bg-background px-4 py-2 text-sm outline-none transition-all focus:ring-2 focus:ring-secondary/50 focus:border-secondary text-foreground"
                                 />
                             </div>
                             {index > 0 && (
@@ -176,7 +180,7 @@ export function LocationFilters({ onSearch, loading, children }: LocationFilters
                     <button
                         type="button"
                         onClick={addNeighborhood}
-                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-muted-foreground/30 bg-muted/30 text-foreground hover:bg-foreground/10 hover:border-foreground/40 transition-all text-xs font-bold"
+                        className="flex items-center gap-1.5 px-4 py-2 rounded-lg border border-border bg-muted/30 text-foreground hover:bg-muted/50 transition-all text-xs font-bold"
                     >
                         <Plus size={14} />
                         Adicionar Bairro
@@ -199,10 +203,11 @@ export function LocationFilters({ onSearch, loading, children }: LocationFilters
                     )}
                 </button>
             </div>
-
+            </div>
+            </div>
             {/* Conteúdo filho (resultados + histórico) */}
             {children && (
-                <div className="space-y-6 pt-2">
+                <div className="space-y-6">
                     {children}
                 </div>
             )}
