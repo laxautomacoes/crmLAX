@@ -120,7 +120,7 @@ async function enrichProposals(supabase: any, proposals: any[]) {
             ? supabase.from('properties').select('id, title, price, type, address_city, address_state').in('id', propertyIds)
             : { data: [] },
         leadIds.length > 0
-            ? supabase.from('leads').select('id, property_interest, stage_id').in('id', leadIds)
+            ? supabase.from('leads').select('id, property_interest, stage_id, property_id, properties(id, title, price, type, address_city, address_state)').in('id', leadIds)
             : { data: [] }
     ])
 
@@ -144,6 +144,7 @@ async function enrichProposals(supabase: any, proposals: any[]) {
         const stage = stageMap.get(l.stage_id)
         return [l.id, { ...l, lead_stages: stage || null }]
     }))
+
 
     // Enriquecer cada proposta
     return proposals.map((p: any) => ({

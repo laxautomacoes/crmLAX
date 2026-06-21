@@ -57,9 +57,9 @@ export function ProposalDynamicForm({ fields, responses, onChange }: ProposalDyn
                 const isFullWidth = field.type === 'text' && (
                     field.label.toLowerCase().includes('obs') ||
                     field.label.toLowerCase().includes('nota') ||
-                    field.label.toLowerCase().includes('descri') ||
-                    field.label.toLowerCase().includes('parcela') ||
-                    field.label.length > 25
+                    field.label.toLowerCase().includes('condic') ||
+                    field.label.toLowerCase().includes('detalhe') ||
+                    field.label.toLowerCase().includes('descricao')
                 )
 
                 if (isFullWidth) {

@@ -74,8 +74,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         if (filters.status === 'active' && client.is_archived) return false
         if (filters.status === 'archived' && !client.is_archived) return false
 
-        const matchesSearch = client.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            client.email.toLowerCase().includes(searchTerm.toLowerCase())
+        const matchesSearch = (client.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (client.email || '').toLowerCase().includes(searchTerm.toLowerCase())
 
         const matchesBroker = filters.brokerId === 'all' || client.assigned_to === filters.brokerId
 

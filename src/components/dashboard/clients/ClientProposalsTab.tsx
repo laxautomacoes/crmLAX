@@ -1,11 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { getProposalsByContact, saveProposal, updateProposalStatus, getProposalTemplates } from '@/app/_actions/proposals'
+import { useState, useEffect, useRef, Fragment } from 'react'
+import { getProposalsByContact, saveProposal, updateProposalStatus, getProposalTemplates, archiveProposal, deleteProposal } from '@/app/_actions/proposals'
+import { generateProposalPdf } from '@/app/_actions/generate-proposal-pdf'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { Plus, FileText, Home, Loader2, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { Plus, FileText, Home, Loader2, ChevronDown, ChevronUp, X, Archive, Trash2, MoreVertical, Eye } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 import { autoFillProposalFields } from '@/lib/utils/proposal-autofill'
@@ -27,9 +28,10 @@ interface ProposalItem {
     updated_at: string
     payment_terms?: any
     property?: { id: string; title: string; price: number; type: string; address_city: string; address_state: string } | null
-    lead?: { id: string; property_interest: string; stage_id: string; lead_stages?: { name: string; color: string } } | null
+    lead?: { id: string; property_interest: string; stage_id: string; property_id?: string | null; properties?: { id: string; title: string; price: number; type: string; address_city: string; address_state: string } | null; lead_stages?: { name: string; color: string } } | null
     template_id?: string | null
     buyer_data?: any
+    is_archived?: boolean
 }
 
 const STATUS_OPTIONS = [
@@ -41,6 +43,84 @@ const STATUS_OPTIONS = [
 
 function getStatusBadge(status: string) {
     return STATUS_OPTIONS.find(o => o.value === status)?.color || STATUS_OPTIONS[0].color
+}
+
+interface ClientProposalActionsDropdownProps {
+    onEdit: () => void;
+    onArchive: () => void;
+    onDelete: () => void;
+    onDownloadPDF?: () => void;
+    hasTemplate?: boolean;
+    downloading?: boolean;
+}
+
+function ClientProposalActionsDropdown({ 
+    onEdit, 
+    onArchive, 
+    onDelete, 
+    onDownloadPDF, 
+    hasTemplate, 
+    downloading 
+}: ClientProposalActionsDropdownProps) {
+    const [isOpen, setIsOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    return (
+        <div className="relative inline-block" ref={dropdownRef} onClick={e => e.stopPropagation()}>
+            <button
+                onClick={(e) => { e.stopPropagation(); setIsOpen(o => !o) }}
+                className="p-1.5 bg-muted text-foreground rounded-md hover:bg-muted/80 transition-colors shadow-sm"
+                title="Ações"
+            >
+                <MoreVertical size={14} />
+            </button>
+            {isOpen && (
+                <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 text-left">
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit() }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                    >
+                        <Eye size={14} className="text-blue-500" />
+                        Editar
+                    </button>
+                    {hasTemplate && onDownloadPDF && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDownloadPDF() }}
+                            disabled={downloading}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+                        >
+                            <FileText size={14} className="text-emerald-500" />
+                            {downloading ? 'Gerando...' : 'Baixar PDF'}
+                        </button>
+                    )}
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onArchive() }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-amber-500/10 transition-colors"
+                    >
+                        <Archive size={14} className="text-amber-500" />
+                        Arquivar
+                    </button>
+                    <button
+                        onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDelete() }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-red-500/10 transition-colors"
+                    >
+                        <Trash2 size={14} className="text-red-500" />
+                        Excluir
+                    </button>
+                </div>
+            )}
+        </div>
+    )
 }
 
 export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeInitialLead }: ClientProposalsTabProps) {
@@ -106,9 +186,55 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         }
     }, [initialLeadId, proposals, loading, onConsumeInitialLead])
 
+    // Efeito para re-executar auto-preenchimento quando o Lead selecionado muda
+    useEffect(() => {
+        if (selectedTemplateId && selectedLeadId) {
+            const template = templates.find(t => t.id === selectedTemplateId)
+            if (template) {
+                const fields = template.mapped_fields || []
+                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId)
+                
+                setDynamicResponses(prev => {
+                    const newResponses = { ...prev }
+                    fields.forEach((f: any) => {
+                        const nameKey = f.name || f.label
+                        if (f.crm_binding && autoFilled[nameKey]) {
+                            newResponses[nameKey] = autoFilled[nameKey]
+                        }
+                    })
+                    return newResponses
+                })
+            }
+        }
+    }, [selectedLeadId, selectedTemplateId, templates, client])
+
+    const handleTemplateChange = (templateId: string) => {
+        setSelectedTemplateId(templateId)
+        if (!templateId) {
+            setDynamicFields([])
+            setDynamicResponses({})
+            return
+        }
+
+        const template = templates.find(t => t.id === templateId)
+        if (template) {
+            const fields = template.mapped_fields || []
+            setDynamicFields(fields)
+            if (selectedLeadId) {
+                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId)
+                setDynamicResponses(autoFilled)
+            } else {
+                setDynamicResponses({})
+            }
+        }
+    }
+
     const resetForm = () => {
         setFormData({ value: '', down_payment: '', financing: '', installments: '', permutas: '', notes: '' })
         setSelectedLeadId('')
+        setSelectedTemplateId('')
+        setDynamicFields([])
+        setDynamicResponses({})
         setShowNewForm(false)
         setIsEditing(false)
     }
@@ -124,6 +250,22 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             notes: terms.notes || '',
         })
         setSelectedLeadId(proposal.lead_id)
+        
+        if (proposal.template_id) {
+            setSelectedTemplateId(proposal.template_id)
+            const template = templates.find(t => t.id === proposal.template_id)
+            if (template) {
+                setDynamicFields(template.mapped_fields || [])
+            } else {
+                setDynamicFields([])
+            }
+            setDynamicResponses(proposal.buyer_data || {})
+        } else {
+            setSelectedTemplateId('')
+            setDynamicFields([])
+            setDynamicResponses({})
+        }
+
         setIsEditing(true)
         setShowNewForm(true)
     }
@@ -148,18 +290,20 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             },
             status: 'criada',
             contact_id: client.id,
-            property_id: lead?.property_id || undefined
+            property_id: lead?.property_id || undefined,
+            template_id: selectedTemplateId || undefined,
+            buyer_data: selectedTemplateId ? dynamicResponses : undefined
         }
 
         const res = await saveProposal(selectedLeadId, tenantId, payload)
         if (res.success) {
-            toast.success('Proposta criada com sucesso!')
+            toast.success(isEditing ? 'Proposta salva com sucesso!' : 'Proposta criada com sucesso!')
             resetForm()
             // Recarregar
             const updated = await getProposalsByContact(client.id)
             if (updated.success && updated.data) setProposals(updated.data as ProposalItem[])
         } else {
-            toast.error('Erro ao criar proposta: ' + res.error)
+            toast.error('Erro ao salvar proposta: ' + res.error)
         }
         setSaving(false)
     }
@@ -173,6 +317,61 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             toast.error('Erro ao atualizar status')
         }
     }
+
+    const handleArchive = async (proposalId: string) => {
+        const res = await archiveProposal(proposalId)
+        if (res.success) {
+            setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, is_archived: true } : p))
+            toast.success('Proposta arquivada com sucesso!')
+        } else {
+            toast.error('Erro ao arquivar proposta: ' + res.error)
+        }
+    }
+
+    const handleDelete = async (proposalId: string) => {
+        if (!confirm('Tem certeza que deseja excluir esta proposta permanentemente?')) return
+        const res = await deleteProposal(proposalId)
+        if (res.success) {
+            setProposals(prev => prev.filter(p => p.id !== proposalId))
+            toast.success('Proposta excluída com sucesso!')
+        } else {
+            toast.error('Erro ao excluir proposta: ' + res.error)
+        }
+    }
+
+    const [downloadingId, setDownloadingId] = useState<string | null>(null)
+
+    const handleDownloadPDF = async (proposalId: string) => {
+        setDownloadingId(proposalId)
+        try {
+            const res = await generateProposalPdf(proposalId)
+            if (res.success && res.base64 && res.fileName) {
+                const byteCharacters = atob(res.base64)
+                const byteNumbers = new Array(byteCharacters.length)
+                for (let i = 0; i < byteCharacters.length; i++) {
+                    byteNumbers[i] = byteCharacters.charCodeAt(i)
+                }
+                const byteArray = new Uint8Array(byteNumbers)
+                const blob = new Blob([byteArray], { type: 'application/pdf' })
+                
+                const link = document.createElement('a')
+                link.href = window.URL.createObjectURL(blob)
+                link.download = res.fileName
+                document.body.appendChild(link)
+                link.click()
+                document.body.removeChild(link)
+                toast.success('Download da ficha iniciado!')
+            } else {
+                toast.error(res.error || 'Erro ao gerar PDF da proposta.')
+            }
+        } catch (error: any) {
+            toast.error('Erro no download: ' + (error.message || error))
+        } finally {
+            setDownloadingId(null)
+        }
+    }
+
+    const activeProposals = proposals.filter(p => !p.is_archived)
 
     if (loading) {
         return (
@@ -190,7 +389,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                 {!showNewForm && (
                     <button
                         onClick={() => setShowNewForm(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all"
+                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all"
                     >
                         <Plus size={14} />
                         Nova Proposta
@@ -200,7 +399,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
 
             {/* Formulário de Nova Proposta */}
             {showNewForm && (
-                <div className="bg-card dark:bg-muted/10 p-5 rounded-xl border border-border/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="bg-white dark:bg-muted/10 p-5 rounded-lg border border-border/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
                     <div className="flex items-center justify-between">
                         <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
                             {isEditing ? 'Editar Proposta' : 'Nova Proposta'}
@@ -241,6 +440,22 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                 placeholder="—"
                             />
                         </div>
+                    </div>
+
+                    {/* Seletor de Modelo de Ficha (Template) */}
+                    <div className="grid grid-cols-1 gap-3">
+                        <FormSelect
+                            label="Modelo de Ficha de Proposta"
+                            value={selectedTemplateId}
+                            onChange={e => handleTemplateChange(e.target.value)}
+                            options={[
+                                { value: '', label: 'Ficha Simples (Sem Modelo)' },
+                                ...templates.map((t: any) => ({
+                                    value: t.id,
+                                    label: t.name
+                                }))
+                            ]}
+                        />
                     </div>
 
                     {/* Condições */}
@@ -287,17 +502,26 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                         placeholder="Detalhes específicos..."
                     />
 
+                    {/* Campos dinâmicos do modelo de proposta */}
+                    {selectedTemplateId && (
+                        <ProposalDynamicForm
+                            fields={dynamicFields}
+                            responses={dynamicResponses}
+                            onChange={(name, val) => setDynamicResponses(prev => ({ ...prev, [name]: val }))}
+                        />
+                    )}
+
                     <div className="flex justify-end gap-2 pt-1">
                         <button
                             onClick={resetForm}
-                            className="px-4 py-2 text-xs font-bold text-muted-foreground hover:text-foreground border border-border/40 rounded-lg transition-all"
+                            className="px-4 py-2 text-xs font-bold text-muted-foreground hover:text-foreground border border-border/40 rounded-md transition-all"
                         >
                             Cancelar
                         </button>
                         <button
                             onClick={handleCreateProposal}
                             disabled={!selectedLeadId || saving}
-                            className="px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all disabled:opacity-50"
+                            className="px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all disabled:opacity-50"
                         >
                             {saving ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Criar Proposta')}
                         </button>
@@ -306,132 +530,200 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             )}
 
             {/* Lista de Propostas */}
-            {proposals.length === 0 && !showNewForm ? (
-                <div className="bg-muted/50 p-8 rounded-xl border border-dashed border-border text-center">
-                    <FileText size={28} className="mx-auto text-muted-foreground/40 mb-2" />
-                    <p className="text-xs text-muted-foreground">Nenhuma proposta criada para este cliente.</p>
-                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">Clique em "Nova Proposta" para começar.</p>
-                </div>
-            ) : (
-                <div className="space-y-3">
-                    {proposals.map(proposal => {
-                        const isExpanded = expandedId === proposal.id
-                        const propertyName = proposal.property?.title || proposal.lead?.property_interest || 'Imóvel não especificado'
-                        const terms = proposal.payment_terms || {}
+            {!showNewForm && (
+                activeProposals.length === 0 ? (
+                    <div className="bg-muted/50 p-8 rounded-xl border border-dashed border-border text-center">
+                        <FileText size={28} className="mx-auto text-muted-foreground/40 mb-2" />
+                        <p className="text-xs text-muted-foreground">Nenhuma proposta criada para este cliente.</p>
+                        <p className="text-[10px] text-muted-foreground/60 mt-0.5">Clique em "Nova Proposta" para começar.</p>
+                    </div>
+                ) : (
+                    <div className="bg-card rounded-lg border border-muted-foreground/30 overflow-hidden shadow-sm">
+                        <div className="overflow-x-auto min-h-[500px]">
+                            <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
+                                <colgroup>
+                                    <col style={{ width: '26%' }} />
+                                    <col style={{ width: '14%' }} />
+                                    <col style={{ width: '17%' }} />
+                                    <col style={{ width: '12%' }} />
+                                    <col style={{ width: '12%' }} />
+                                    <col style={{ width: '11%' }} />
+                                    <col style={{ width: '8%' }} />
+                                </colgroup>
+                                <thead className="bg-gray-200 dark:bg-muted/50 border-b border-muted-foreground/30">
+                                    <tr>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-left whitespace-nowrap">Imóvel</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Valor tabela</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Valor proposto</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Criado em</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Atualizado em</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Status</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Ações</th>
+                                    </tr>
+                                </thead>
+                                <tbody className="divide-y divide-muted-foreground/30">
+                                    {activeProposals.map(proposal => {
+                                        const isExpanded = expandedId === proposal.id
+                                        const property = proposal.property || proposal.lead?.properties
+                                        const propertyName = property?.title || proposal.lead?.property_interest || 'Imóvel não especificado'
+                                        const terms = proposal.payment_terms || {}
 
-                        return (
-                            <div key={proposal.id} className="bg-card rounded-xl border border-border/40 shadow-sm overflow-hidden">
-                                {/* Header */}
-                                <button
-                                    onClick={() => setExpandedId(isExpanded ? null : proposal.id)}
-                                    className="w-full p-4 flex items-center justify-between gap-3 hover:bg-muted/20 transition-colors text-left"
-                                >
-                                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                                        <div className="w-8 h-8 rounded-full bg-accent-icon/10 flex items-center justify-center shrink-0">
-                                            <Home size={14} className="text-accent-icon" />
-                                        </div>
-                                        <div className="min-w-0 flex-1">
-                                            <p className="text-sm font-bold text-foreground truncate">{propertyName}</p>
-                                            <p className="text-[11px] text-muted-foreground">
-                                                R$ {proposal.value ? parseFloat(proposal.value.toString()).toLocaleString('pt-BR') : '0'} • {new Date(proposal.updated_at).toLocaleDateString('pt-BR')}
-                                            </p>
-                                        </div>
-                                    </div>
-                                    <div className="flex items-center gap-2 shrink-0">
-                                        <select
-                                            value={proposal.status}
-                                            onClick={e => e.stopPropagation()}
-                                            onChange={e => {
-                                                e.stopPropagation()
-                                                handleStatusChange(proposal.id, e.target.value)
-                                            }}
-                                            className={`appearance-none text-[10px] font-bold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none ${getStatusBadge(proposal.status)}`}
-                                        >
-                                            {STATUS_OPTIONS.map(opt => (
-                                                <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                            ))}
-                                        </select>
-                                        {isExpanded ? (
-                                            <ChevronUp size={14} className="text-muted-foreground" />
-                                        ) : (
-                                            <ChevronDown size={14} className="text-muted-foreground" />
-                                        )}
-                                    </div>
-                                </button>
+                                        // Calcular diferença de valor
+                                        const propertyPrice = property?.price ? parseFloat(property.price.toString()) : 0
+                                        const proposalPrice = proposal.value ? parseFloat(proposal.value.toString()) : 0
+                                        let diffPercentStr = ""
+                                        let diffValue = 0
+                                        if (propertyPrice > 0 && proposalPrice > 0) {
+                                            diffValue = proposalPrice - propertyPrice
+                                            const diff = (diffValue / propertyPrice) * 100
+                                            const sign = diff > 0 ? '+' : ''
+                                            diffPercentStr = `(${sign}${diff.toFixed(1).replace('.0', '')}%)`
+                                        }
 
-                                {/* Detalhes expandidos */}
-                                {isExpanded && (
-                                    <div className="px-4 pb-4 pt-1 border-t border-border/30 space-y-3 animate-in fade-in duration-200">
-                                        {/* Imóvel */}
-                                        {proposal.property && (
-                                            <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                <Home size={12} />
-                                                <span>{proposal.property.title}</span>
-                                                {proposal.property.address_city && (
-                                                    <span>• {proposal.property.address_city}{proposal.property.address_state ? ` - ${proposal.property.address_state}` : ''}</span>
+                                        return (
+                                            <Fragment key={proposal.id}>
+                                                <tr 
+                                                    onClick={() => setExpandedId(isExpanded ? null : proposal.id)}
+                                                    className="hover:bg-muted/50 transition-colors cursor-pointer group"
+                                                >
+                                                    <td className="px-4 py-5 text-sm font-bold text-foreground truncate text-left">
+                                                        <div className="flex flex-col min-w-0">
+                                                            <span className="truncate">{propertyName}</span>
+                                                            {property?.address_city && (
+                                                                <span className="text-[10px] font-medium text-muted-foreground truncate">
+                                                                    {property.address_city} - {property.address_state}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-5 text-sm font-medium text-foreground text-center whitespace-nowrap">
+                                                        R$ {property?.price ? parseFloat(property.price.toString()).toLocaleString('pt-BR') : '—'}
+                                                    </td>
+                                                    <td className="px-4 py-5 text-sm font-medium text-foreground text-center whitespace-nowrap">
+                                                        <div className="flex flex-col items-center">
+                                                            <span>R$ {proposal.value ? parseFloat(proposal.value.toString()).toLocaleString('pt-BR') : '0'}</span>
+                                                            {diffPercentStr && (
+                                                                <span className={`text-[10px] font-bold ${diffValue > 0 ? 'text-emerald-500' : diffValue < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
+                                                                    {diffPercentStr}
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-5 text-sm font-medium text-muted-foreground text-center whitespace-nowrap">
+                                                        {new Date(proposal.created_at || proposal.updated_at).toLocaleDateString('pt-BR')}
+                                                    </td>
+                                                    <td className="px-4 py-5 text-sm font-medium text-muted-foreground text-center whitespace-nowrap">
+                                                        {new Date(proposal.updated_at).toLocaleDateString('pt-BR')}
+                                                    </td>
+                                                    <td className="px-4 py-5 text-center" onClick={e => e.stopPropagation()}>
+                                                        <div className="inline-block relative">
+                                                            <select
+                                                                value={proposal.status}
+                                                                onChange={e => handleStatusChange(proposal.id, e.target.value)}
+                                                                className={`appearance-none text-[10px] font-bold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none ${getStatusBadge(proposal.status)}`}
+                                                            >
+                                                                {STATUS_OPTIONS.map(opt => (
+                                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+                                                    </td>
+                                                    <td className="px-4 py-5 text-center" onClick={e => e.stopPropagation()}>
+                                                        <ClientProposalActionsDropdown
+                                                            onEdit={() => handleStartEdit(proposal)}
+                                                            onArchive={() => handleArchive(proposal.id)}
+                                                            onDelete={() => handleDelete(proposal.id)}
+                                                            onDownloadPDF={() => handleDownloadPDF(proposal.id)}
+                                                            hasTemplate={!!proposal.template_id}
+                                                            downloading={downloadingId === proposal.id}
+                                                        />
+                                                    </td>
+                                                </tr>
+                                                {isExpanded && (
+                                                    <tr className="bg-white dark:bg-muted/10">
+                                                        <td colSpan={7} className="px-6 py-5 border-t border-border/30">
+                                                            <div className="space-y-4 animate-in fade-in duration-200">
+                                                                {/* Imóvel */}
+                                                                {property && (
+                                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                                                                        <Home size={12} />
+                                                                        <span>{property.title}</span>
+                                                                        {property.address_city && (
+                                                                            <span>• {property.address_city}{property.address_state ? ` - ${property.address_state}` : ''}</span>
+                                                                        )}
+                                                                        {property.price && (
+                                                                            <span className="font-bold text-foreground ml-auto">
+                                                                                R$ {parseFloat(property.price.toString()).toLocaleString('pt-BR')}
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                )}
+                                                                
+                                                                
+                                                                {/* Valores */}
+                                                                <div className="grid grid-cols-3 gap-3">
+                                                                    <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
+                                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Valor Proposta</p>
+                                                                        <p className="text-sm font-bold text-foreground mt-0.5">
+                                                                            R$ {proposal.value ? parseFloat(proposal.value.toString()).toLocaleString('pt-BR') : '0'}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
+                                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Sinal/Entrada</p>
+                                                                        <p className="text-sm font-bold text-foreground mt-0.5">
+                                                                            R$ {terms.down_payment ? parseFloat(terms.down_payment.toString()).toLocaleString('pt-BR') : '0'}
+                                                                        </p>
+                                                                    </div>
+                                                                    <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
+                                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Financiamento</p>
+                                                                        <p className="text-sm font-bold text-foreground mt-0.5">
+                                                                            R$ {terms.financing ? parseFloat(terms.financing.toString()).toLocaleString('pt-BR') : '0'}
+                                                                        </p>
+                                                                    </div>
+                                                                </div>
+                                                                <div className="space-y-2 pt-2 border-t border-border/10">
+                                                                    <div className="text-xs">
+                                                                        <span className="font-bold text-muted-foreground">Parcelamento:</span>{' '}
+                                                                        <span className="text-foreground">{terms.installments || '—'}</span>
+                                                                    </div>
+                                                                    <div className="text-xs">
+                                                                        <span className="font-bold text-muted-foreground">Permutas/Bens:</span>{' '}
+                                                                        <span className="text-foreground">{terms.permutas || '—'}</span>
+                                                                    </div>
+                                                                    <div className="text-xs">
+                                                                        <span className="font-bold text-muted-foreground">Observações:</span>{' '}
+                                                                        <span className="text-foreground italic">{terms.notes || '—'}</span>
+                                                                    </div>
+                                                                </div>
+
+                                                                {/* Exibição dos Dados Dinâmicos da Ficha */}
+                                                                {proposal.template_id && proposal.buyer_data && Object.keys(proposal.buyer_data).length > 0 && (
+                                                                    <div className="pt-3 border-t border-border/10 mt-3 space-y-2">
+                                                                        <p className="text-[10px] font-bold text-accent-icon dark:text-[#FFE600] uppercase tracking-wider">
+                                                                            Dados Específicos da Ficha
+                                                                        </p>
+                                                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-x-4 gap-y-1.5">
+                                                                            {Object.entries(proposal.buyer_data).map(([key, val]) => (
+                                                                                <div key={key} className="text-xs">
+                                                                                    <span className="font-bold text-muted-foreground">{key}:</span>{' '}
+                                                                                    <span className="text-foreground">{val as string || '—'}</span>
+                                                                                </div>
+                                                                            ))}
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        </td>
+                                                    </tr>
                                                 )}
-                                                {proposal.property.price && (
-                                                    <span className="font-bold text-foreground ml-auto">
-                                                        R$ {parseFloat(proposal.property.price.toString()).toLocaleString('pt-BR')}
-                                                    </span>
-                                                )}
-                                            </div>
-                                        )}
-
-                                        {/* Valores */}
-                                        <div className="grid grid-cols-3 gap-3">
-                                            <div className="bg-muted/30 rounded-lg p-3">
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Valor Proposta</p>
-                                                <p className="text-sm font-bold text-foreground mt-0.5">
-                                                    R$ {proposal.value ? parseFloat(proposal.value.toString()).toLocaleString('pt-BR') : '0'}
-                                                </p>
-                                            </div>
-                                            <div className="bg-muted/30 rounded-lg p-3">
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Sinal/Entrada</p>
-                                                <p className="text-sm font-bold text-foreground mt-0.5">
-                                                    R$ {terms.down_payment ? parseFloat(terms.down_payment.toString()).toLocaleString('pt-BR') : '0'}
-                                                </p>
-                                            </div>
-                                            <div className="bg-muted/30 rounded-lg p-3">
-                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Financiamento</p>
-                                                <p className="text-sm font-bold text-foreground mt-0.5">
-                                                    R$ {terms.financing ? parseFloat(terms.financing.toString()).toLocaleString('pt-BR') : '0'}
-                                                </p>
-                                            </div>
-                                        </div>
-                                        <div className="space-y-2 pt-2 border-t border-border/10">
-                                            <div className="text-xs">
-                                                <span className="font-bold text-muted-foreground">Parcelamento:</span>{' '}
-                                                <span className="text-foreground">{terms.installments || '—'}</span>
-                                            </div>
-                                            <div className="text-xs">
-                                                <span className="font-bold text-muted-foreground">Permutas/Bens:</span>{' '}
-                                                <span className="text-foreground">{terms.permutas || '—'}</span>
-                                            </div>
-                                            <div className="text-xs">
-                                                <span className="font-bold text-muted-foreground">Observações:</span>{' '}
-                                                <span className="text-foreground italic">{terms.notes || '—'}</span>
-                                            </div>
-                                        </div>
-
-                                        <div className="flex justify-end gap-2 pt-3 border-t border-border/20 mt-3">
-                                            <button
-                                                type="button"
-                                                onClick={(e) => {
-                                                    e.stopPropagation();
-                                                    handleStartEdit(proposal);
-                                                }}
-                                                className="px-3 py-1.5 text-xs font-bold text-[#404F4F] border border-[#404F4F]/20 hover:bg-[#404F4F]/5 rounded-lg transition-all active:scale-[0.98]"
-                                            >
-                                                Editar Proposta
-                                            </button>
-                                        </div>
-                                    </div>
-                                )}
-                            </div>
-                        )
-                    })}
-                </div>
+                                            </Fragment>
+                                        )
+                                    })}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                )
             )}
         </div>
     )

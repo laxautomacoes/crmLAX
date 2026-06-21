@@ -1,11 +1,11 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { getProposal, saveProposal } from '@/app/_actions/proposals';
+import { getProposal, saveProposal, archiveProposal, deleteProposal } from '@/app/_actions/proposals';
 import { createLeadDocument } from '@/app/_actions/documents';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormTextarea } from '@/components/shared/forms/FormTextarea';
-import { User, Home, FileDown, Eye, Loader2, MapPin, Phone, Mail, CreditCard } from 'lucide-react';
+import { User, Home, FileDown, Eye, Loader2, MapPin, Phone, Mail, CreditCard, Archive, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency';
 // @ts-expect-error - lodash/debounce does not have types installed
@@ -38,6 +38,8 @@ export function LeadProposalTab({
     const [showPreview, setShowPreview] = useState(false);
     const [contactData, setContactData] = useState<any>(null);
     const [propertyData, setPropertyData] = useState<any>(null);
+    const [proposalId, setProposalId] = useState<string | null>(null);
+    const [isArchived, setIsArchived] = useState(false);
     
     const [formData, setFormData] = useState({
         value: '',
@@ -57,6 +59,8 @@ export function LeadProposalTab({
             if (res.success && res.data) {
                 const p = res.data;
                 const terms = p.payment_terms || {};
+                setProposalId(p.id);
+                setIsArchived(p.is_archived || false);
                 setFormData({
                     value: p.value ? formatCurrencyBRL(Math.round(Number(p.value) * 100).toString()) : '',
                     down_payment: terms.down_payment ? formatCurrencyBRL(Math.round(Number(terms.down_payment) * 100).toString()) : '',
@@ -71,6 +75,9 @@ export function LeadProposalTab({
                 if (p.updated_at) {
                     setLastSaved(new Date(p.updated_at).toLocaleTimeString('pt-BR'));
                 }
+            } else {
+                setProposalId(null);
+                setIsArchived(false);
             }
             setLoading(false);
         }
@@ -100,6 +107,10 @@ export function LeadProposalTab({
             const res = await saveProposal(leadId, tenantId, payload);
             if (res.success) {
                 setLastSaved(new Date().toLocaleTimeString('pt-BR'));
+                if (res.data?.id) {
+                    setProposalId(res.data.id);
+                    setIsArchived(res.data.is_archived || false);
+                }
             } else {
                 toast.error('Erro no salvamento automático.');
             }
@@ -107,6 +118,43 @@ export function LeadProposalTab({
         }, 1200),
         [leadId, tenantId, contactId, propertyId]
     );
+
+    const handleArchive = async () => {
+        if (!proposalId) return;
+        setSaving(true);
+        const res = await archiveProposal(proposalId);
+        if (res.success) {
+            setIsArchived(res.archived ?? false);
+            toast.success(res.archived ? 'Proposta arquivada com sucesso!' : 'Proposta desarquivada com sucesso!');
+        } else {
+            toast.error('Erro ao arquivar proposta: ' + res.error);
+        }
+        setSaving(false);
+    };
+
+    const handleDelete = async () => {
+        if (!proposalId) return;
+        if (!confirm('Tem certeza que deseja excluir esta proposta permanentemente?')) return;
+        setSaving(true);
+        const res = await deleteProposal(proposalId);
+        if (res.success) {
+            setProposalId(null);
+            setIsArchived(false);
+            setFormData({
+                value: '',
+                down_payment: '',
+                financing: '',
+                installments: '',
+                permutas: '',
+                notes: '',
+                status: 'criada'
+            });
+            toast.success('Proposta excluída com sucesso!');
+        } else {
+            toast.error('Erro ao excluir proposta: ' + res.error);
+        }
+        setSaving(false);
+    };
 
     const handleInputChange = (field: string, val: string) => {
         const updated = { ...formData, [field]: val };
@@ -181,6 +229,11 @@ export function LeadProposalTab({
                     <div className="flex items-center gap-2">
                         <User size={14} className="text-accent-icon" />
                         <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Proponente</h4>
+                        {isArchived && (
+                            <span className="text-[9px] bg-amber-500/10 text-amber-500 font-bold px-2 py-0.5 rounded-full uppercase tracking-wider animate-pulse">
+                                Arquivada
+                            </span>
+                        )}
                     </div>
                     {lastSaved && (
                         <span className="text-[9px] text-muted-foreground font-bold">
@@ -317,15 +370,39 @@ export function LeadProposalTab({
             {/* Ações */}
             <div className="flex gap-3 justify-end pt-2 border-t border-border/40">
                 <button
+                    type="button"
                     onClick={() => setShowPreview(!showPreview)}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-foreground border border-border/40 hover:bg-gray-50 dark:hover:bg-muted rounded-lg transition-all"
                 >
                     <Eye size={14} />
                     {showPreview ? 'Ocultar Espelho' : 'Visualizar Lâmina'}
                 </button>
+                {proposalId && (
+                    <>
+                        <button
+                            type="button"
+                            onClick={handleArchive}
+                            disabled={saving}
+                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-amber-600 border border-amber-600/20 hover:bg-amber-500/5 rounded-lg transition-all active:scale-[0.98] disabled:opacity-50"
+                        >
+                            <Archive size={14} />
+                            {isArchived ? 'Desarquivar' : 'Arquivar'}
+                        </button>
+                        <button
+                            type="button"
+                            onClick={handleDelete}
+                            disabled={saving}
+                            className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold text-red-600 border border-red-600/20 hover:bg-red-500/5 rounded-lg transition-all active:scale-[0.98] disabled:opacity-50"
+                        >
+                            <Trash2 size={14} />
+                            Excluir
+                        </button>
+                    </>
+                )}
                 <button
+                    type="button"
                     onClick={handleGeneratePDF}
-                    disabled={!formData.value}
+                    disabled={!formData.value || saving}
                     className="flex items-center gap-1.5 px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all disabled:opacity-50"
                 >
                     <FileDown size={14} />

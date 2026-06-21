@@ -122,7 +122,7 @@ export function ClientModal({
                 videos: editingClient.videos || [],
                 documents: editingClient.documents || []
             })
-            setActiveTab('info')
+            setActiveTab(initialTab || 'info')
         } else {
             setFormData({
                 name: '',
@@ -151,13 +151,13 @@ export function ClientModal({
                 videos: [],
                 documents: []
             })
-            setActiveTab('info')
+            setActiveTab(initialTab || 'info')
         }
 
         // Reset AI
         setIsAnalyzed(false)
         setAnalysisResult(null)
-    }, [isOpen, editingClient])
+    }, [isOpen, editingClient, initialTab])
 
     // Click outside para fechar resultado de CEP
     useEffect(() => {
@@ -328,14 +328,16 @@ export function ClientModal({
                     {isEditing ? "Editar Cliente" : "Novo Cliente"}
                 </h3>
             }
-            size="xl"
+            size="2xl"
             align="top"
+            fullHeight={true}
+            className="rounded-lg"
             extraHeaderContent={
                 <button
                     type="submit"
                     form="client-modal-form"
                     disabled={loading}
-                    className="bg-secondary text-secondary-foreground font-bold px-4 py-1.5 rounded-lg hover:opacity-90 transition-all disabled:opacity-50 text-sm shadow-sm whitespace-nowrap"
+                    className="bg-secondary text-secondary-foreground font-bold px-4 py-1.5 rounded-md hover:opacity-90 transition-all disabled:opacity-50 text-sm shadow-sm whitespace-nowrap"
                 >
                     {loading ? 'Salvando...' : (isEditing ? 'Atualizar Dados' : 'Criar Cliente')}
                 </button>
@@ -344,11 +346,11 @@ export function ClientModal({
             <div className="space-y-6">
                 {/* Tabs — só para clientes existentes */}
                 {isEditing && (
-                    <div className="flex items-center gap-1.5 p-1.5 rounded-xl mb-6 overflow-x-auto no-scrollbar border border-border/30" style={{ backgroundColor: 'var(--background)' }}>
+                    <div className="flex items-center gap-1.5 p-1.5 rounded-lg mb-6 overflow-x-auto no-scrollbar border border-border/30" style={{ backgroundColor: 'var(--background)' }}>
                         <button
                             type="button"
                             onClick={() => setActiveTab('info')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'info' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'info' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
                             <User size={14} />
                             Informações
@@ -356,7 +358,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('leads')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'leads' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'leads' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
                             <Filter size={14} />
                             Leads
@@ -364,7 +366,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('proposals')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'proposals' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'proposals' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
                             <FileText size={14} />
                             Propostas
@@ -372,7 +374,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('documents')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'documents' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'documents' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
                             <FileText size={14} />
                             Documentos
@@ -380,7 +382,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('financeiro')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'financeiro' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'financeiro' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
                             <DollarSign size={14} />
                             Financeiro
@@ -388,7 +390,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('ai')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-lg transition-all whitespace-nowrap ${activeTab === 'ai' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'ai' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
                             <Sparkles size={14} />
                             Análise IA

@@ -96,6 +96,10 @@ Todas as tabelas do CRM LAX devem seguir rigorosamente as diretrizes abaixo para
 - **Fonte do Título:** `text-[10px] font-bold text-foreground uppercase tracking-wider`.
 - **Padding:** `px-4 py-4`.
 - **Alinhamento:** O alinhamento horizontal do título deve coincidir perfeitamente com o alinhamento da respectiva informação na célula (ex: se o conteúdo é centralizado, o cabeçalho usa `text-center`).
+  - *Exemplo de Alinhamento e Classes (Propostas):*
+    - **Imóvel:** Alinhamento à esquerda (`text-left`) em cabeçalho e célula.
+    - **Valor tabela / Valor proposto:** Alinhamento à direita (`text-right`) em cabeçalho e célula.
+    - **Criado em / Atualizado em / Status / Ações:** Centralizado (`text-center`) em cabeçalho e célula.
 
 ### 3. Corpo da Tabela (`<tbody>`)
 - **Divisor de Linhas:** `divide-y divide-muted-foreground/30`.

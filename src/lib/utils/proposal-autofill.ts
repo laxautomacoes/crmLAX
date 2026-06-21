@@ -29,9 +29,16 @@ export function autoFillProposalFields(
             case 'contact.marital_status':
                 val = client.marital_status || '';
                 break;
-            case 'contact.birth_date':
-                val = client.birth_date || '';
+            case 'contact.birth_date': {
+                const bdate = client.birth_date || '';
+                if (/^\d{4}-\d{2}-\d{2}$/.test(bdate)) {
+                    const [year, month, day] = bdate.split('-');
+                    val = `${day}/${month}/${year}`;
+                } else {
+                    val = bdate;
+                }
                 break;
+            }
             case 'contact.address_street':
                 val = client.address_street || '';
                 break;
@@ -50,9 +57,35 @@ export function autoFillProposalFields(
             case 'contact.address_zip_code':
                 val = client.address_zip_code || '';
                 break;
-            case 'property.title':
-                val = property?.title || lead?.property_interest || '';
+            case 'property.title': {
+                const title = property?.title || lead?.property_interest || '';
+                if (property) {
+                    const details = property.details || {};
+                    const parts = [title];
+                    
+                    const apto = details.endereco?.apto || details.apto;
+                    if (apto) parts.push(`Apto: ${apto}`);
+                    
+                    const vagas = details.vagas;
+                    if (vagas && parseInt(String(vagas)) > 0) {
+                        const vagasNum = details.vagas_numeracao ? ` (${details.vagas_numeracao})` : '';
+                        parts.push(`Vagas: ${vagas}${vagasNum}`);
+                    }
+                    
+                    const hb = details.hobby_box_numeracao || details.hobby_box;
+                    if (hb && hb !== 'Não' && hb !== 'Sim') {
+                        parts.push(`Hobby Box: ${hb}`);
+                    } else if (details.hobby_box === 'Sim' || details.hobby_box_numeracao) {
+                        const hbVal = details.hobby_box_numeracao ? ` (${details.hobby_box_numeracao})` : '';
+                        parts.push(`Hobby Box: Sim${hbVal}`);
+                    }
+                    
+                    val = parts.join(', ');
+                } else {
+                    val = title;
+                }
                 break;
+            }
             case 'property.price':
                 val = property?.price
                     ? parseFloat(property.price).toLocaleString('pt-BR', {
