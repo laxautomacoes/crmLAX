@@ -69,7 +69,7 @@ export function PasswordForm() {
     };
 
     return (
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-full">
+        <div className="bg-card p-6 rounded-lg border border-border shadow-sm flex flex-col h-full">
             <div className="space-y-4 flex flex-col flex-1">
                 <div className="space-y-4 flex-1">
                     <FormInput

@@ -175,6 +175,8 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
                 </div>
             </PageHeader>
 
+            <hr className="hidden md:block border-border" />
+
             <KPICards kpis={metrics.kpis} />
 
             {/* Seção ROI - Apenas para Admins */}

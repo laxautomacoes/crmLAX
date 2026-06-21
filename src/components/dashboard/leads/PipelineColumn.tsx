@@ -34,9 +34,10 @@ interface PipelineColumnProps {
     onEditLead: (lead: Lead) => void
     onDeleteLead: (leadId: string) => void
     onArchiveLead: (leadId: string) => void
+    onProposalClick?: (contactId: string, leadId: string) => void
 }
 
-export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onUpdateColor, onEditLead, onDeleteLead, onArchiveLead }: PipelineColumnProps) {
+export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onUpdateColor, onEditLead, onDeleteLead, onArchiveLead, onProposalClick }: PipelineColumnProps) {
     const [showDropdown, setShowDropdown] = useState(false)
     const [showColorPicker, setShowColorPicker] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
@@ -285,6 +286,7 @@ export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDe
                             onEdit={onEditLead} 
                             onDelete={onDeleteLead} 
                             onArchive={onArchiveLead}
+                            onProposalClick={onProposalClick}
                         />
                     ))}
                 </SortableContext>

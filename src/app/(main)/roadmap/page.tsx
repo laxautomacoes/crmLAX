@@ -278,7 +278,7 @@ export default function RoadmapPage() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <PageHeader
                 title="Roadmap do Produto"
                 subtitle="Acompanhe as próximas funcionalidades e melhorias do CRM LAX"
@@ -302,6 +302,8 @@ export default function RoadmapPage() {
                     </div>
                 )}
             </PageHeader>
+
+            <hr className="hidden md:block border-border" />
 
             {stages.length === 0 ? (
                 <div className="bg-card p-12 rounded-2xl border border-dashed border-border flex flex-col items-center justify-center text-center">

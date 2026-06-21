@@ -11,10 +11,12 @@ export function PageHeader({ title, subtitle, children }: PageHeaderProps) {
                 <h1 className="text-2xl font-bold text-foreground">
                     {title}
                 </h1>
-                {subtitle && (
+                {subtitle ? (
                     <p className="text-sm text-muted-foreground mt-4 md:mt-1">
                         {subtitle}
                     </p>
+                ) : (
+                    <div className="hidden md:block h-[20px] mt-1" aria-hidden="true" />
                 )}
             </div>
 

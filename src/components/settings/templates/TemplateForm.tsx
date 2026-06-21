@@ -1,10 +1,11 @@
 'use client';
 
 import { useState, useRef } from 'react';
-import { Upload, FileText, Loader2, Plus, AlertCircle, Cpu, Globe } from 'lucide-react';
+import { Upload, FileText, Loader2, Plus, AlertCircle, Cpu, Globe, ChevronDown } from 'lucide-react';
 import { renderPDFPages } from '@/lib/utils/pdf-render';
 import { createClient } from '@/lib/supabase/client';
 import { createProposalTemplate, analyzeProposalTemplatePDF } from '@/app/_actions/proposals';
+import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuLabel, DropdownMenuSeparator, DropdownMenuTrigger } from '@/components/ui/dropdown-menu';
 import { toast } from 'sonner';
 
 const OCR_MODELS = {
@@ -27,6 +28,7 @@ interface TemplateFormProps {
 export function TemplateForm({ tenantId, onSuccess }: TemplateFormProps) {
     const [provider, setProvider] = useState<'gemini' | 'openai'>('gemini');
     const [model, setModel] = useState<string>('gemini-2.5-flash');
+    const [templateType, setTemplateType] = useState<string>('proposta');
     const [analyzing, setAnalyzing] = useState(false);
     const [uploading, setUploading] = useState(false);
     const [name, setName] = useState('');
@@ -37,11 +39,11 @@ export function TemplateForm({ tenantId, onSuccess }: TemplateFormProps) {
 
     const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
         const selectedFile = e.target.files?.[0];
-        if (selectedFile && selectedFile.type === 'application/pdf') {
+        if (selectedFile && (selectedFile.type === 'application/pdf' || selectedFile.type.startsWith('image/'))) {
             setFile(selectedFile);
             if (!name) setName(selectedFile.name.replace(/\.[^/.]+$/, ''));
         } else if (selectedFile) {
-            toast.error('Por favor, envie um arquivo PDF.');
+            toast.error('Por favor, envie um arquivo PDF ou Imagem.');
         }
     };
 
@@ -51,8 +53,34 @@ export function TemplateForm({ tenantId, onSuccess }: TemplateFormProps) {
 
         setAnalyzing(true);
         try {
-            const images = await renderPDFPages(file);
-            const res = await analyzeProposalTemplatePDF(images, provider, model);
+            let images: string[] = [];
+            if (file.type.startsWith('image/')) {
+                const base64 = await new Promise<string>((resolve, reject) => {
+                    const img = new Image();
+                    img.onload = () => {
+                        const canvas = document.createElement('canvas');
+                        canvas.width = img.width;
+                        canvas.height = img.height;
+                        const ctx = canvas.getContext('2d');
+                        if (ctx) {
+                            ctx.fillStyle = '#FFFFFF';
+                            ctx.fillRect(0, 0, canvas.width, canvas.height);
+                            ctx.drawImage(img, 0, 0);
+                            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+                            resolve(dataUrl.split(',')[1]);
+                        } else {
+                            reject(new Error('Canvas não suportado.'));
+                        }
+                    };
+                    img.onerror = reject;
+                    img.src = URL.createObjectURL(file);
+                });
+                images = [base64];
+            } else {
+                images = await renderPDFPages(file);
+            }
+
+            const res = await analyzeProposalTemplatePDF(images, provider, model, templateType);
             if (res.success && res.data) {
                 setMappedFields(res.data);
                 setStep('review');
@@ -83,7 +111,7 @@ export function TemplateForm({ tenantId, onSuccess }: TemplateFormProps) {
 
             const { data: { publicUrl } } = supabase.storage.from('crm-attachments').getPublicUrl(filePath);
 
-            const res = await createProposalTemplate(tenantId, name.trim(), publicUrl, provider, model, mappedFields);
+            const res = await createProposalTemplate(tenantId, name.trim(), publicUrl, provider, model, mappedFields, templateType);
             if (res.success) {
                 toast.success('Template salvo com sucesso!');
                 setName('');
@@ -102,52 +130,68 @@ export function TemplateForm({ tenantId, onSuccess }: TemplateFormProps) {
     };
 
     return (
-        <div className="col-span-1 bg-card rounded-2xl p-6 border border-gray-100 shadow-sm flex flex-col justify-between">
+        <div className="bg-card rounded-lg p-6 border border-border shadow-sm flex flex-col justify-between flex-1">
             {step === 'upload' ? (
                 <form onSubmit={handleAnalyze} className="space-y-4">
-                    <div className="pb-2 border-b border-gray-100">
-                        <h3 className="text-base font-bold text-[#404F4F]">Novo Modelo</h3>
-                    </div>
+                    <div className="flex gap-4">
+                        <div className="flex-1 min-w-0 flex flex-col">
+                            <label className="text-sm font-bold text-foreground ml-1 mb-2">Categoria Formulário</label>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="w-full flex justify-between items-center bg-background border border-input focus:border-primary/50 focus:ring-1 focus:ring-primary/20 rounded-lg px-3 py-2 text-xs font-medium text-foreground outline-none transition-all cursor-pointer truncate"
+                                    >
+                                        <span className="truncate">
+                                            {templateType === 'proposta' ? 'Proposta Comercial' :
+                                             templateType === 'agenciamento' ? 'Ficha de Agenciamento' : 'Formulário Genérico / Outros'}
+                                        </span>
+                                        <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-2" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                                    <DropdownMenuItem onClick={() => setTemplateType('proposta')}>Proposta Comercial</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setTemplateType('agenciamento')}>Ficha de Agenciamento</DropdownMenuItem>
+                                    <DropdownMenuItem onClick={() => setTemplateType('generico')}>Formulário Genérico / Outros</DropdownMenuItem>
+                                </DropdownMenuContent>
+                            </DropdownMenu>
+                        </div>
 
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-800 ml-1">Motor de IA de Mapeamento</label>
-                        <div className="flex gap-2">
-                            <div className="relative flex flex-1 p-0.5 bg-muted/50 rounded-lg border border-border h-8 items-center">
-                                <button
-                                    type="button"
-                                    onClick={() => { setProvider('gemini'); setModel('gemini-2.5-flash'); }}
-                                    className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-1 text-[10px] font-black transition-colors rounded-md ${
-                                        provider === 'gemini' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
-                                    }`}
-                                >
-                                    <Cpu className="w-3 h-3" /> GEMINI
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => { setProvider('openai'); setModel('gpt-4o-mini'); }}
-                                    className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-1 text-[10px] font-black transition-colors rounded-md ${
-                                        provider === 'openai' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground'
-                                    }`}
-                                >
-                                    <Globe className="w-3 h-3" /> GPT
-                                </button>
-                            </div>
-                            <select
-                                value={model}
-                                onChange={(e) => setModel(e.target.value)}
-                                className="flex-1 bg-muted/30 border border-border rounded-lg px-2 py-1 text-[10px] font-bold text-foreground focus:outline-none focus:ring-1 focus:ring-primary/20 appearance-none cursor-pointer"
-                                style={{
-                                    backgroundImage: `url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 24 24' stroke='%2394a3b8'%3E%3Cpath stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m19 9-7 7-7-7' /%3E%3C/svg%3E")`,
-                                    backgroundRepeat: 'no-repeat', backgroundPosition: 'right 6px center', backgroundSize: '10px'
-                                }}
-                            >
-                                {OCR_MODELS[provider].map(m => <option key={m.id} value={m.id}>{m.name}</option>)}
-                            </select>
+                        <div className="flex-1 min-w-0 flex flex-col">
+                            <label className="text-sm font-bold text-foreground ml-1 mb-2">IA Mapeamento</label>
+                            <DropdownMenu>
+                                <DropdownMenuTrigger asChild>
+                                    <button
+                                        type="button"
+                                        className="w-full flex justify-between items-center bg-background border border-input focus:border-primary/50 focus:ring-1 focus:ring-primary/20 rounded-lg px-3 py-2 text-xs font-medium text-foreground outline-none transition-all cursor-pointer truncate"
+                                    >
+                                        <span className="truncate">
+                                            {OCR_MODELS[provider].find(m => m.id === model)?.name || 'Selecionar IA'}
+                                        </span>
+                                        <ChevronDown size={14} className="text-muted-foreground shrink-0 ml-2" />
+                                    </button>
+                                </DropdownMenuTrigger>
+                                <DropdownMenuContent className="w-[--radix-dropdown-menu-trigger-width]">
+                                    <DropdownMenuLabel className="text-[10px] font-black tracking-wider text-muted-foreground">GEMINI</DropdownMenuLabel>
+                                    {OCR_MODELS.gemini.map(m => (
+                                        <DropdownMenuItem key={m.id} onClick={() => { setProvider('gemini'); setModel(m.id); }}>
+                                            {m.name}
+                                        </DropdownMenuItem>
+                                    ))}
+                                    <DropdownMenuSeparator />
+                                    <DropdownMenuLabel className="text-[10px] font-black tracking-wider text-muted-foreground">OPENAI</DropdownMenuLabel>
+                                    {OCR_MODELS.openai.map(m => (
+                                        <DropdownMenuItem key={m.id} onClick={() => { setProvider('openai'); setModel(m.id); }}>
+                                            {m.name}
+                                        </DropdownMenuItem>
+                                    ))}
+                                </DropdownMenuContent>
+                            </DropdownMenu>
                         </div>
                     </div>
 
-                    <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-800 ml-1">Nome do Template *</label>
+                    <div className="flex flex-col">
+                        <label className="text-sm font-bold text-foreground ml-1 mb-2">Nome Template</label>
                         <input
                             type="text"
                             value={name}
@@ -155,23 +199,22 @@ export function TemplateForm({ tenantId, onSuccess }: TemplateFormProps) {
                             placeholder="Ex: Proposta Padrão CRM LAX"
                             required
                             disabled={analyzing}
-                            className="w-full bg-gray-55 border border-gray-200 focus:border-primary/50 focus:ring-1 focus:ring-primary/20 rounded-lg px-3 py-2 text-xs font-medium text-gray-900 placeholder:text-gray-400 outline-none transition-all"
+                            className="w-full bg-background border border-input focus:border-primary/50 focus:ring-1 focus:ring-primary/20 rounded-lg px-3 py-2 text-xs font-medium text-foreground placeholder:text-muted-foreground outline-none transition-all"
                         />
                     </div>
 
                     <div className="space-y-1">
-                        <label className="text-xs font-bold text-gray-800 ml-1">Arquivo PDF *</label>
                         {!file ? (
-                            <label className="border-[0.5px] border-dashed border-border/40 rounded-lg p-6 flex flex-col items-center justify-center gap-2 hover:bg-muted/10 hover:border-accent-icon/50 transition-all cursor-pointer">
+                            <label className="border border-border/40 bg-background hover:bg-gray-50 dark:hover:bg-muted/30 rounded-lg p-6 flex flex-col items-center justify-center gap-2 transition-all cursor-pointer">
                                 <Upload size={18} className="text-muted-foreground" />
-                                <span className="text-[11px] font-bold text-muted-foreground text-center">Clique para selecionar PDF</span>
-                                <input type="file" ref={fileInputRef} accept=".pdf" onChange={handleFileChange} className="hidden" />
+                                <span className="text-[11px] font-bold text-muted-foreground text-center">Clique para selecionar PDF ou Imagem</span>
+                                <input type="file" ref={fileInputRef} accept=".pdf,.png,.jpg,.jpeg" onChange={handleFileChange} className="hidden" />
                             </label>
                         ) : (
-                            <div className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-200">
+                            <div className="flex items-center justify-between p-3 rounded-lg bg-muted/30 border border-border">
                                 <div className="flex items-center gap-2 min-w-0">
                                     <FileText size={16} className="text-red-500 shrink-0" />
-                                    <span className="text-xs font-medium truncate">{file.name}</span>
+                                    <span className="text-xs font-medium text-foreground truncate">{file.name}</span>
                                 </div>
                                 <button type="button" onClick={() => setFile(null)} className="text-[10px] font-bold text-red-500 hover:underline">
                                     Remover
@@ -183,7 +226,7 @@ export function TemplateForm({ tenantId, onSuccess }: TemplateFormProps) {
                     <button
                         type="submit"
                         disabled={analyzing || !file || !name.trim()}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 md:py-2 text-xs font-bold bg-[#404F4F] text-white hover:bg-[#2d3939] dark:bg-[#FFE600] dark:text-[#404F4F] dark:hover:bg-[#F2DB00] rounded-lg shadow-sm transition-all disabled:opacity-50 mt-4"
+                        className="w-full flex items-center justify-center gap-2 px-4 py-3 md:py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 hover:opacity-90 rounded-lg shadow-sm transition-all disabled:opacity-50 mt-4"
                     >
                         {analyzing ? (
                             <>
@@ -191,19 +234,16 @@ export function TemplateForm({ tenantId, onSuccess }: TemplateFormProps) {
                                 Analisando com IA...
                             </>
                         ) : (
-                            <>
-                                <Plus size={14} />
-                                Analisar Ficha com IA
-                            </>
+                            'Analisar com IA'
                         )}
                     </button>
                 </form>
             ) : (
                 <div className="space-y-4">
-                    <div className="pb-2 border-b border-gray-100 flex justify-between items-center">
-                        <h3 className="text-sm font-bold text-[#404F4F]">Mapeamento ({mappedFields.length} campos)</h3>
-                        <button onClick={() => setStep('upload')} className="text-xs font-bold text-muted-foreground hover:text-foreground">
-                            Voltar
+                    <div className="pb-2 border-b border-border flex justify-between items-center">
+                        <span className="text-xs font-bold text-foreground">Revisão dos campos ({mappedFields.length})</span>
+                        <button onClick={() => setStep('upload')} className="text-[10px] font-black text-muted-foreground hover:text-foreground uppercase tracking-wider">
+                            ← Voltar
                         </button>
                     </div>
 
@@ -249,10 +289,10 @@ export function TemplateForm({ tenantId, onSuccess }: TemplateFormProps) {
                 </div>
             )}
 
-            <div className="mt-4 bg-[#404F4F]/5 rounded-xl p-3 border border-[#404F4F]/10 flex gap-2">
-                <AlertCircle className="text-[#404F4F] shrink-0 mt-0.5" size={14} />
-                <p className="text-[10px] text-foreground/80 leading-relaxed">
-                    A IA mapeará os campos do seu PDF para preenchê-lo automaticamente na criação de propostas.
+            <div className="mt-4 bg-muted/30 rounded-lg p-3 border border-border flex gap-2">
+                <AlertCircle className="text-muted-foreground shrink-0 mt-0.5" size={14} />
+                <p className="text-[10px] text-muted-foreground leading-relaxed">
+                    A IA mapeará os campos do seu arquivo para preenchê-lo automaticamente com base na categoria escolhida.
                 </p>
             </div>
         </div>

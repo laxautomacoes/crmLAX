@@ -27,6 +27,8 @@ export default async function WhatsAppBulkPage() {
                 subtitle="Envie mensagens e mídias em massa para seus leads e contatos."
             />
 
+            <hr className="hidden md:block border-border" />
+
             <div className="grid grid-cols-1 gap-6">
                 <BulkSenderForm 
                     tenantId={profile.tenant_id}

@@ -14,49 +14,6 @@ export function autoFillProposalFields(
 
         let val = '';
         switch (field.crm_binding) {
-            case 'contact.name':
-                val = client.name || '';
-                break;
-            case 'contact.phone':
-                val = client.phone || '';
-                break;
-            case 'contact.email':
-                val = client.email || '';
-                break;
-            case 'contact.cpf':
-                val = client.cpf || '';
-                break;
-            case 'contact.marital_status':
-                val = client.marital_status || '';
-                break;
-            case 'contact.birth_date': {
-                const bdate = client.birth_date || '';
-                if (/^\d{4}-\d{2}-\d{2}$/.test(bdate)) {
-                    const [year, month, day] = bdate.split('-');
-                    val = `${day}/${month}/${year}`;
-                } else {
-                    val = bdate;
-                }
-                break;
-            }
-            case 'contact.address_street':
-                val = client.address_street || '';
-                break;
-            case 'contact.address_number':
-                val = client.address_number || '';
-                break;
-            case 'contact.address_neighborhood':
-                val = client.address_neighborhood || '';
-                break;
-            case 'contact.address_city':
-                val = client.address_city || '';
-                break;
-            case 'contact.address_state':
-                val = client.address_state || '';
-                break;
-            case 'contact.address_zip_code':
-                val = client.address_zip_code || '';
-                break;
             case 'property.title': {
                 const title = property?.title || lead?.property_interest || '';
                 if (property) {
@@ -103,6 +60,18 @@ export function autoFillProposalFields(
                 val = property?.address_state || '';
                 break;
             default:
+                if (field.crm_binding.startsWith('contact.')) {
+                    const propName = field.crm_binding.substring(8);
+                    const rawVal = client[propName];
+                    const rawValStr = rawVal !== null && rawVal !== undefined ? String(rawVal) : '';
+                    
+                    if (propName.includes('date') && /^\d{4}-\d{2}-\d{2}$/.test(rawValStr)) {
+                        const [year, month, day] = rawValStr.split('-');
+                        val = `${day}/${month}/${year}`;
+                    } else {
+                        val = rawValStr;
+                    }
+                }
                 break;
         }
 

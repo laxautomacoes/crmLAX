@@ -245,7 +245,7 @@ export default function LeadsPage() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto flex flex-col gap-4 md:gap-6 animate-in fade-in slide-in-from-bottom-4 duration-300 h-[calc(100vh-120px)] md:h-[calc(100vh-100px)]">
+        <div className="max-w-[1600px] mx-auto flex flex-col gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-300 h-[calc(100vh-120px)] md:h-[calc(100vh-100px)]">
             <PageHeader title="Leads" subtitle={`${filteredLeads.length} leads encontrados`}>
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <button
@@ -264,6 +264,8 @@ export default function LeadsPage() {
                 </div>
             </PageHeader>
 
+            <hr className="hidden md:block border-border" />
+
             <PipelineBoard
                 initialStages={stages}
                 initialLeads={filteredLeads}
@@ -277,6 +279,16 @@ export default function LeadsPage() {
                 onEditLead={handleEditLead}
                 onDeleteLead={handleDeleteLead}
                 onArchiveLead={handleArchiveLead}
+                onProposalClick={async (contactId, leadId) => {
+                    const res = await getClientById(contactId)
+                    if (res.success && res.data) {
+                        setProposalClient(res.data)
+                        setPendingProposalLeadId(leadId)
+                        setIsClientModalOpen(true)
+                    } else {
+                        toast.error('Erro ao buscar cliente vinculado ao lead.')
+                    }
+                }}
             />
 
             {/* Modal Novo Estágio */}

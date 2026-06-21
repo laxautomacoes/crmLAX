@@ -128,12 +128,14 @@ export default function AnalysisPage() {
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             {/* Header Section */}
             <PageHeader 
                 title="Análise de Valor de m²"
                 subtitle="Consulte o valor médio do metro quadrado baseado em ofertas reais da internet para uma região específica."
             />
+
+            <hr className="hidden md:block border-border" />
 
             {/* Filters + Resultados + Histórico (tudo dentro do card) */}
             <LocationFilters onSearch={handleSearch} loading={loading}>

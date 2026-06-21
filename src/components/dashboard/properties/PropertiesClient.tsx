@@ -422,7 +422,7 @@ export default function PropertiesClient({
     })
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             {!isOnline && (
                 <div className="bg-amber-100 border-l-4 border-amber-500 text-amber-700 p-4 rounded shadow-sm mb-4" role="alert">
                     <p className="font-bold flex items-center gap-2">
@@ -494,6 +494,8 @@ export default function PropertiesClient({
                     </button>
                 </div>
             </PageHeader>
+
+            <hr className="hidden md:block border-border" />
 
             {isRefreshing ? (
                 <div className="flex h-[30vh] items-center justify-center">

@@ -69,6 +69,7 @@ interface PipelineBoardProps {
     onDeleteLead: (leadId: string) => void
     onArchiveLead: (leadId: string) => void
     onAddStage?: () => void
+    onProposalClick?: (contactId: string, leadId: string) => void
 }
 
 // Wrapper sortable para cada coluna de estágio
@@ -83,6 +84,7 @@ function SortableStageColumn({
     onEditLead,
     onDeleteLead,
     onArchiveLead,
+    onProposalClick,
 }: {
     stage: Stage
     leads: Lead[]
@@ -94,6 +96,7 @@ function SortableStageColumn({
     onEditLead: (lead: Lead) => void
     onDeleteLead: (leadId: string) => void
     onArchiveLead: (leadId: string) => void
+    onProposalClick?: (contactId: string, leadId: string) => void
 }) {
     const {
         attributes,
@@ -135,12 +138,13 @@ function SortableStageColumn({
                 onEditLead={onEditLead}
                 onDeleteLead={onDeleteLead}
                 onArchiveLead={onArchiveLead}
+                onProposalClick={onProposalClick}
             />
         </div>
     )
 }
 
-export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onUpdateStageColor, onEditLead, onDeleteLead, onArchiveLead, onAddStage }: PipelineBoardProps) {
+export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLead, onDeleteStage, onDuplicateStage, onRenameStage, onUpdateStageColor, onEditLead, onDeleteLead, onArchiveLead, onAddStage, onProposalClick }: PipelineBoardProps) {
     const [leads, setLeads] = useState<Lead[]>(initialLeads)
     const [stages, setStages] = useState<Stage[]>(initialStages)
     const [activeLead, setActiveLead] = useState<Lead | null>(null)
@@ -277,6 +281,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
                             onEditLead={onEditLead}
                             onDeleteLead={onDeleteLead}
                             onArchiveLead={onArchiveLead}
+                            onProposalClick={onProposalClick}
                         />
                     ))}
                     {onAddStage && (

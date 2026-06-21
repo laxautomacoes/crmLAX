@@ -158,6 +158,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
     const [selectedLeadId, setSelectedLeadId] = useState('')
     const [saving, setSaving] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
+    const [editingProposalId, setEditingProposalId] = useState<string | null>(null)
 
     // Configurações do WhatsApp
     const [waInstance, setWaInstance] = useState<any>(null)
@@ -280,6 +281,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         setDynamicResponses({})
         setShowNewForm(false)
         setIsEditing(false)
+        setEditingProposalId(null)
     }
 
     const handleStartEdit = (proposal: ProposalItem) => {
@@ -310,7 +312,9 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         }
 
         setIsEditing(true)
-        setShowNewForm(true)
+        setEditingProposalId(proposal.id)
+        setExpandedId(proposal.id)
+        setShowNewForm(false)
     }
 
     const handleCreateProposal = async () => {
@@ -476,6 +480,142 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         }
     }
 
+    const renderProposalForm = (isInline = false) => {
+        return (
+            <div className={`${isInline ? 'bg-muted/10 p-5 rounded-lg border border-border/30' : 'bg-white dark:bg-muted/10 p-5 rounded-lg border border-border/40'} space-y-4 animate-in fade-in duration-200 text-left`}>
+                {!isInline && (
+                    <div className="flex items-center justify-end">
+                        <button onClick={resetForm} className="p-1 hover:bg-muted rounded-md transition-colors">
+                            <X size={14} className="text-muted-foreground" />
+                        </button>
+                    </div>
+                )}
+
+                {/* Seletor de Lead/Imóvel */}
+                <div className="grid grid-cols-1 gap-3">
+                    <FormSelect
+                        label="Lead / Imóvel de Interesse"
+                        value={selectedLeadId}
+                        disabled={isEditing}
+                        onChange={e => setSelectedLeadId(e.target.value)}
+                        options={[
+                            { value: '', label: 'Selecione o lead...' },
+                            ...clientLeads.map((lead: any) => ({
+                                value: lead.id,
+                                label: lead.property_interest || lead.properties?.title || lead.source || `Lead ${new Date(lead.created_at).toLocaleDateString('pt-BR')}`
+                            }))
+                        ]}
+                    />
+                </div>
+
+                {/* Condições e Valor Cadastrado */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                    <div>
+                        <FormInput
+                            label="Valor Cadastrado (R$)"
+                            value={(() => {
+                                if (!selectedLeadId) return ''
+                                const lead = clientLeads.find((l: any) => l.id === selectedLeadId)
+                                const price = lead?.properties?.price
+                                return price ? parseFloat(price).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '—'
+                            })()}
+                            onChange={() => {}}
+                            disabled
+                            placeholder="—"
+                        />
+                    </div>
+                    <div>
+                        <FormInput
+                            label="Valor Total (R$)"
+                            value={formData.value}
+                            onChange={e => setFormData({ ...formData, value: formatCurrencyBRL(e.target.value) })}
+                            placeholder="0,00"
+                        />
+                    </div>
+                    <div>
+                        <FormInput
+                            label="Sinal/Entrada"
+                            value={formData.down_payment}
+                            onChange={e => setFormData({ ...formData, down_payment: formatCurrencyBRL(e.target.value) })}
+                            placeholder="0,00"
+                        />
+                    </div>
+                    <div>
+                        <FormInput
+                            label="Saldo Financiado"
+                            value={formData.financing}
+                            onChange={e => setFormData({ ...formData, financing: formatCurrencyBRL(e.target.value) })}
+                            placeholder="0,00"
+                        />
+                    </div>
+                </div>
+
+                <FormInput
+                    label="Parcelamento Direto"
+                    value={formData.installments}
+                    onChange={e => setFormData({ ...formData, installments: e.target.value })}
+                    placeholder="Ex: 12x de R$ 5.000"
+                />
+
+                <FormInput
+                    label="Permutas / Bens"
+                    value={formData.permutas}
+                    onChange={e => setFormData({ ...formData, permutas: e.target.value })}
+                    placeholder="Ex: Carro avaliado em R$ 120.000"
+                />
+
+                <FormTextarea
+                    label="Observações"
+                    value={formData.notes}
+                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                    rows={2}
+                    placeholder="Detalhes específicos..."
+                />
+
+                {/* Modelo de Ficha de Proposta (Abaixo do separador após Observações) */}
+                <div className="pt-4 border-t border-border/30">
+                    <FormSelect
+                        label="Modelo de Ficha de Proposta"
+                        value={selectedTemplateId}
+                        onChange={e => handleTemplateChange(e.target.value)}
+                        options={[
+                            { value: '', label: 'Ficha Simples (Sem Modelo)' },
+                            ...templates.map((t: any) => ({
+                                value: t.id,
+                                label: t.name
+                            }))
+                        ]}
+                    />
+                </div>
+
+                {/* Campos dinâmicos do modelo de proposta */}
+                {selectedTemplateId && (
+                    <ProposalDynamicForm
+                        fields={dynamicFields}
+                        responses={dynamicResponses}
+                        onChange={(name, val) => setDynamicResponses(prev => ({ ...prev, [name]: val }))}
+                    />
+                )}
+
+                <div className="flex justify-end gap-2 pt-1">
+                    <button
+                        onClick={resetForm}
+                        className="px-4 py-2 text-xs font-bold text-muted-foreground hover:text-foreground border border-border/40 rounded-md transition-all"
+                    >
+                        Cancelar
+                    </button>
+                    <button
+                        onClick={handleCreateProposal}
+                        disabled={!selectedLeadId || saving}
+                        className="px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all disabled:opacity-50"
+                    >
+                        {saving ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Criar Proposta')}
+                    </button>
+                </div>
+            </div>
+        )
+    }
+
     const activeProposals = proposals.filter(p => !p.is_archived)
 
     if (loading) {
@@ -503,137 +643,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             </div>
 
             {/* Formulário de Nova Proposta */}
-            {showNewForm && (
-                <div className="bg-white dark:bg-muted/10 p-5 rounded-lg border border-border/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="flex items-center justify-end">
-                        <button onClick={resetForm} className="p-1 hover:bg-muted rounded-md transition-colors">
-                            <X size={14} className="text-muted-foreground" />
-                        </button>
-                    </div>
-
-                    {/* Seletor de Lead/Imóvel */}
-                    <div className="grid grid-cols-1 gap-3">
-                        <FormSelect
-                            label="Lead / Imóvel de Interesse"
-                            value={selectedLeadId}
-                            disabled={isEditing}
-                            onChange={e => setSelectedLeadId(e.target.value)}
-                            options={[
-                                { value: '', label: 'Selecione o lead...' },
-                                ...clientLeads.map((lead: any) => ({
-                                    value: lead.id,
-                                    label: lead.property_interest || lead.properties?.title || lead.source || `Lead ${new Date(lead.created_at).toLocaleDateString('pt-BR')}`
-                                }))
-                            ]}
-                        />
-                    </div>
-
-                    {/* Condições e Valor Cadastrado */}
-                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
-                        <div>
-                            <FormInput
-                                label="Valor Cadastrado (R$)"
-                                value={(() => {
-                                    if (!selectedLeadId) return ''
-                                    const lead = clientLeads.find((l: any) => l.id === selectedLeadId)
-                                    const price = lead?.properties?.price
-                                    return price ? parseFloat(price).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '—'
-                                })()}
-                                onChange={() => {}}
-                                disabled
-                                placeholder="—"
-                            />
-                        </div>
-                        <div>
-                            <FormInput
-                                label="Valor Total (R$)"
-                                value={formData.value}
-                                onChange={e => setFormData({ ...formData, value: formatCurrencyBRL(e.target.value) })}
-                                placeholder="0,00"
-                            />
-                        </div>
-                        <div>
-                            <FormInput
-                                label="Sinal/Entrada"
-                                value={formData.down_payment}
-                                onChange={e => setFormData({ ...formData, down_payment: formatCurrencyBRL(e.target.value) })}
-                                placeholder="0,00"
-                            />
-                        </div>
-                        <div>
-                            <FormInput
-                                label="Saldo Financiado"
-                                value={formData.financing}
-                                onChange={e => setFormData({ ...formData, financing: formatCurrencyBRL(e.target.value) })}
-                                placeholder="0,00"
-                            />
-                        </div>
-                    </div>
-
-                    <FormInput
-                        label="Parcelamento Direto"
-                        value={formData.installments}
-                        onChange={e => setFormData({ ...formData, installments: e.target.value })}
-                        placeholder="Ex: 12x de R$ 5.000"
-                    />
-
-                    <FormInput
-                        label="Permutas / Bens"
-                        value={formData.permutas}
-                        onChange={e => setFormData({ ...formData, permutas: e.target.value })}
-                        placeholder="Ex: Carro avaliado em R$ 120.000"
-                    />
-
-                    <FormTextarea
-                        label="Observações"
-                        value={formData.notes}
-                        onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                        rows={2}
-                        placeholder="Detalhes específicos..."
-                    />
-
-                    {/* Modelo de Ficha de Proposta (Abaixo do separador após Observações) */}
-                    <div className="pt-4 border-t border-border/30">
-                        <FormSelect
-                            label="Modelo de Ficha de Proposta"
-                            value={selectedTemplateId}
-                            onChange={e => handleTemplateChange(e.target.value)}
-                            options={[
-                                { value: '', label: 'Ficha Simples (Sem Modelo)' },
-                                ...templates.map((t: any) => ({
-                                    value: t.id,
-                                    label: t.name
-                                }))
-                            ]}
-                        />
-                    </div>
-
-                    {/* Campos dinâmicos do modelo de proposta */}
-                    {selectedTemplateId && (
-                        <ProposalDynamicForm
-                            fields={dynamicFields}
-                            responses={dynamicResponses}
-                            onChange={(name, val) => setDynamicResponses(prev => ({ ...prev, [name]: val }))}
-                        />
-                    )}
-
-                    <div className="flex justify-end gap-2 pt-1">
-                        <button
-                            onClick={resetForm}
-                            className="px-4 py-2 text-xs font-bold text-muted-foreground hover:text-foreground border border-border/40 rounded-md transition-all"
-                        >
-                            Cancelar
-                        </button>
-                        <button
-                            onClick={handleCreateProposal}
-                            disabled={!selectedLeadId || saving}
-                            className="px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all disabled:opacity-50"
-                        >
-                            {saving ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Criar Proposta')}
-                        </button>
-                    </div>
-                </div>
-            )}
+            {showNewForm && !isEditing && renderProposalForm(false)}
 
             {/* Lista de Propostas */}
             {!showNewForm && (
@@ -644,7 +654,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                         <p className="text-[10px] text-muted-foreground/60 mt-0.5">Clique em "Nova Proposta" para começar.</p>
                     </div>
                 ) : (
-                    <div className="bg-card rounded-lg border border-muted-foreground/30 overflow-hidden shadow-sm">
+                    <div className="bg-white dark:bg-card rounded-lg border border-muted-foreground/30 overflow-hidden shadow-sm">
                         <div className="overflow-x-auto min-h-[500px]">
                             <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
                                 <colgroup>
@@ -689,8 +699,18 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                         return (
                                             <Fragment key={proposal.id}>
                                                 <tr 
-                                                    onClick={() => setExpandedId(isExpanded ? null : proposal.id)}
-                                                    className="hover:bg-muted/50 transition-colors cursor-pointer group"
+                                                    onClick={() => {
+                                                        if (isExpanded) {
+                                                            if (isEditing && editingProposalId === proposal.id) {
+                                                                resetForm()
+                                                            } else {
+                                                                setExpandedId(null)
+                                                            }
+                                                        } else {
+                                                            setExpandedId(proposal.id)
+                                                        }
+                                                    }}
+                                                    className="bg-white dark:bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
                                                 >
                                                     <td className="px-4 py-5 text-sm font-bold text-foreground truncate text-center">
                                                         <div className="flex flex-col min-w-0">
@@ -706,7 +726,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                         R$ {property?.price ? parseFloat(property.price.toString()).toLocaleString('pt-BR') : '—'}
                                                     </td>
                                                     <td className="px-4 py-5 text-sm font-medium text-foreground text-center whitespace-nowrap">
-                                                        <div className="flex flex-col items-center">
+                                                        <div className="flex items-center justify-center gap-1.5">
                                                             <span>R$ {proposal.value ? parseFloat(proposal.value.toString()).toLocaleString('pt-BR') : '0'}</span>
                                                             {diffPercentStr && (
                                                                 <span className={`text-[10px] font-bold ${diffValue > 0 ? 'text-emerald-500' : diffValue < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
@@ -753,7 +773,10 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                 {isExpanded && (
                                                     <tr className="bg-white dark:bg-muted/10">
                                                         <td colSpan={7} className="px-6 py-5 border-t border-border/30">
-                                                            <div className="space-y-4 animate-in fade-in duration-200">
+                                                            {isEditing && editingProposalId === proposal.id ? (
+                                                                renderProposalForm(true)
+                                                            ) : (
+                                                                <div className="space-y-4 animate-in fade-in duration-200">
                                                                 {/* Imóvel */}
                                                                 {property && (
                                                                     <div className="flex items-center gap-2 text-xs text-muted-foreground">
@@ -824,6 +847,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                                     </div>
                                                                 )}
                                                             </div>
+                                                            )}
                                                         </td>
                                                     </tr>
                                                 )}

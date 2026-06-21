@@ -27,6 +27,8 @@ export default async function FollowUpPage() {
                 subtitle="Crie sequências automatizadas de mensagens para nutrir seus leads."
             />
 
+            <hr className="hidden md:block border-border" />
+
             <FollowUpDashboard
                 tenantId={profile.tenant_id}
                 profileId={profile.id}

@@ -17,15 +17,31 @@ export async function addEmailDomain(tenantId: string, domain: string) {
         if (!resend) throw new Error('API do Resend não configurada.')
 
         // 1. Cria no Resend
+        let resendDomainId = '';
+        let resendDomainStatus = 'pending';
+
         const { data: resendDomain, error: resendError } = await resend.domains.create({
-            name: domain
+            name: domain,
+            region: 'sa-east-1'
         });
 
         if (resendError) {
-            return { success: false, error: resendError.message }
+            // Se o limite do plano foi atingido ou se o domínio já existe, tentamos listar os domínios no Resend
+            const { data: existingDomains } = await resend.domains.list();
+            const existing = existingDomains?.data?.find(d => d.name === domain);
+            
+            if (existing) {
+                resendDomainId = existing.id;
+                resendDomainStatus = existing.status;
+            } else {
+                return { success: false, error: resendError.message }
+            }
+        } else if (resendDomain) {
+            resendDomainId = resendDomain.id;
+            resendDomainStatus = resendDomain.status || 'pending';
+        } else {
+            throw new Error('Erro ao criar domínio no Resend.')
         }
-
-        if (!resendDomain) throw new Error('Erro ao criar domínio no Resend.')
 
         // 2. Salva no banco de dados
         const { data, error } = await supabase
@@ -33,8 +49,8 @@ export async function addEmailDomain(tenantId: string, domain: string) {
             .insert({
                 tenant_id: tenantId,
                 domain: domain,
-                resend_domain_id: resendDomain.id,
-                status: 'pending'
+                resend_domain_id: resendDomainId,
+                status: resendDomainStatus
             })
             .select()
             .single()
@@ -56,18 +72,19 @@ export async function verifyEmailDomain(domainId: string, resendDomainId: string
         const resend = getResendClient()
         if (!resend) throw new Error('API do Resend não configurada.')
 
-        const { data: resendData, error: resendError } = await resend.domains.verify(resendDomainId)
+        // 1. Buscar status atual no Resend primeiro
+        let { data: statusData, error: statusError } = await resend.domains.get(resendDomainId)
+        if (statusError) return { success: false, error: statusError.message }
 
-        if (resendError) {
-            return { success: false, error: resendError.message }
-        }
-
-        // Resend API returns the domain object. We can check status.
-        // Also fetch to check status if verify just triggers it.
-        const { data: statusData, error: statusError } = await resend.domains.get(resendDomainId)
-        
-        if (statusError) {
-             return { success: false, error: statusError.message }
+        // 2. Se não estiver verificado, forçar a verificação e re-buscar
+        if (statusData?.status !== 'verified') {
+            const { error: verifyError } = await resend.domains.verify(resendDomainId)
+            if (!verifyError) {
+                const checkRes = await resend.domains.get(resendDomainId)
+                if (!checkRes.error && checkRes.data) {
+                    statusData = checkRes.data
+                }
+            }
         }
 
         let newStatus = 'pending'

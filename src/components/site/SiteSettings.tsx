@@ -287,6 +287,8 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
                 </div>
             </PageHeader>
 
+            <hr className="hidden md:block border-border" />
+
             <div className="space-y-6">
                 <style dangerouslySetInnerHTML={{ __html: `
                 .slider-ajuste {

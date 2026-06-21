@@ -27,6 +27,8 @@ export default async function EmailBulkPage() {
                 subtitle="Crie campanhas, gerencie leads e acompanhe os relatórios de envio."
             />
 
+            <hr className="hidden md:block border-border" />
+
             <div className="grid grid-cols-1 gap-6">
                 <EmailBulkSenderForm 
                     tenantId={profile.tenant_id}

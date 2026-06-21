@@ -206,6 +206,8 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
                 </div>
             </PageHeader>
 
+            <hr className="hidden md:block border-border" />
+
             {/* Cards de Planos */}
             <div className="mt-4 md:mt-10">
                 <DndContext 

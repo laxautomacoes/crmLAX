@@ -27,11 +27,13 @@ export default async function MarketingStudioPage() {
     const hasProPlan = profile.tenants?.plan_type?.toLowerCase() === 'pro';
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 pb-12 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <PageHeader 
                 title="Estúdio Criação"
                 subtitle="Crie conteúdos incríveis para suas redes sociais com o poder da inteligência artificial."
             />
+
+            <hr className="hidden md:block border-border" />
 
             <div className="grid grid-cols-1">
                 <PlanGate 

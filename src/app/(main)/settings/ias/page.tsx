@@ -44,6 +44,8 @@ export default async function AIConfigurationPage() {
                     </p>
                 </div>
 
+                <hr className="hidden md:block border-border" />
+
                 {/* Stats Grid */}
                 <AIUsageStats stats={stats} />
 

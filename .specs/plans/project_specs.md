@@ -98,6 +98,14 @@ Padrão de Layout Multicolunas (Configurações / Perfis):
   - O contêiner de cada coluna deve usar `flex flex-col space-y-3` para agrupar o cabeçalho externo e o card, mantendo o espaçamento padrão de 12px.
   - O card de conteúdo interno (`bg-card rounded-lg border border-border`) não deve conter cabeçalhos redundantes em seu interior.
 
+Padrões de Cards de DNS (Configurações de Domínio):
+- O rótulo (label) indicando o tipo de dado (ex: Tipo, Host, Valor, Prioridade, TTL) na lista de registros deve possuir largura fixa suficiente para não encavalar com valores e textos.
+- Utilizar OBRIGATORIAMENTE `w-20` (80px) em conjunto com `text-[9px] font-bold text-muted-foreground uppercase tracking-wider` nas spans dos labels. Exemplo: `<span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20">Prioridade</span>`.
+- Evitar larguras estreitas como `w-8` ou `w-14` nestes cenários para manter a legibilidade, mesmo com nomenclaturas longas.
+
+Uso de Ícones em Botões e Elementos:
+- Não há necessidade de inserir ícones em botões e demais itens do sistema, salvo em casos onde seja estritamente necessário para compreensão (como setas de paginação ou ícones de menu hambúrguer).
+- O objetivo é manter o sistema com uma estética mais *clean* e evitar a poluição visual decorativa. Botões de ação, como "Confirmar Exclusão", "Salvar" e "Cancelar", devem conter apenas o texto.
 8. REQUISITOS DE MONETIZAÇÃO
 - Freemium: Limite de 30 leads/mês.
 - Starter: Domínio crmlax.com/sualoja.

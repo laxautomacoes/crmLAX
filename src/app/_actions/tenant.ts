@@ -668,6 +668,7 @@ export async function setupEmailDomain(tenantId: string, domain: string) {
         // 1. Criar domínio no Resend
         const { data, error } = await resend.domains.create({
             name: cleanDomain,
+            region: 'sa-east-1'
         });
 
         if (error) {
@@ -719,12 +720,20 @@ export async function checkEmailDomainStatus(tenantId: string, resendDomainId: s
     if (!resend) return { success: false, error: 'Resend API Key não configurada.' };
 
     try {
-        // 1. Buscar status atual no Resend
-        const { data, error } = await resend.domains.get(resendDomainId);
-        
+        // 1. Buscar status atual no Resend primeiro
+        let { data, error } = await resend.domains.get(resendDomainId);
         if (error) return { success: false, error: error.message };
 
-        // 2. Atualizar nosso banco
+        // 2. Se não estiver verificado, forçar a verificação no Resend e re-buscar o status
+        if (data?.status !== 'verified') {
+            await resend.domains.verify(resendDomainId);
+            const checkRes = await resend.domains.get(resendDomainId);
+            if (!checkRes.error && checkRes.data) {
+                data = checkRes.data;
+            }
+        }
+
+        // 3. Atualizar nosso banco
         const isVerified = data?.status === 'verified';
         
         const supabase = createAdminClient();

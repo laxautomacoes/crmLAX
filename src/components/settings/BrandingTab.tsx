@@ -151,7 +151,7 @@ export function BrandingTab() {
 
     if (!hasBrandingAccess) {
         return (
-            <div className="bg-card border border-border rounded-xl p-8 text-center">
+            <div className="bg-card border border-border rounded-lg p-8 text-center">
                 <p className="text-muted-foreground">Você não tem permissão para alterar o branding empresarial.</p>
             </div>
         )
@@ -234,7 +234,7 @@ export function BrandingTab() {
                         <p className="text-xs text-muted-foreground">Medidas de referência: 250x50 px (5:1) | JPG, PNG e WEBP</p>
                     </div>
                     
-                    <div className="bg-card border border-border rounded-2xl p-6 flex-1 flex flex-col justify-center min-h-[220px]">
+                    <div className="bg-card border border-border rounded-lg p-6 flex-1 flex flex-col justify-center min-h-[220px]">
                         <div className="relative group min-h-[120px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
                             {branding.logo_full ? (
                                 <>
@@ -316,7 +316,7 @@ export function BrandingTab() {
                         <p className="text-xs text-muted-foreground">Medidas de referência: 200x200 px (1:1) | JPG, PNG e WEBP</p>
                     </div>
                     
-                    <div className="bg-card border border-border rounded-2xl p-6 flex-1 flex flex-col justify-center items-center min-h-[220px]">
+                    <div className="bg-card border border-border rounded-lg p-6 flex-1 flex flex-col justify-center items-center min-h-[220px]">
                         <div className="relative group aspect-square w-[120px] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-colors" style={{ backgroundColor: 'var(--background)' }}>
                             {branding.logo_icon ? (
                                 <>
@@ -374,7 +374,7 @@ export function BrandingTab() {
                 Salvar Alterações
             </button>
 
-            <div className="bg-muted/30 border border-border rounded-xl p-4">
+            <div className="bg-muted/30 border border-border rounded-lg p-4">
                 <p className="text-sm text-muted-foreground font-medium">
                     <strong className="text-foreground">Dica:</strong> Após salvar, as alterações serão aplicadas em todo o sistema. Se os logos não atualizarem imediatamente, tente recarregar a página para limpar o cache do navegador.
                 </p>

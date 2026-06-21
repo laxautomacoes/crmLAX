@@ -17,7 +17,7 @@ export async function getProposal(leadId: string) {
             .from('proposals')
             .select(`
                 *,
-                contact:contacts(id, name, phone, email, cpf, address_street, address_number, address_neighborhood, address_city, address_state, address_zip_code),
+                contact:contacts(*),
                 property:properties(id, title, price, type, details)
             `)
             .eq('lead_id', leadId)
@@ -124,7 +124,7 @@ async function enrichProposals(supabase: any, proposals: any[]) {
     // Buscar dados relacionados em paralelo (sem sub-relações)
     const [contactsRes, propertiesRes, leadsRes] = await Promise.all([
         contactIds.length > 0
-            ? supabase.from('contacts').select('id, name, phone, email, cpf').in('id', contactIds)
+            ? supabase.from('contacts').select('*').in('id', contactIds)
             : { data: [] },
         propertyIds.length > 0
             ? supabase.from('properties').select('id, title, price, type, details').in('id', propertyIds)
@@ -332,7 +332,8 @@ export async function createProposalTemplate(
     filePath: string,
     aiProvider?: string,
     aiModel?: string,
-    mappedFields?: any
+    mappedFields?: any,
+    templateType: string = 'proposta'
 ) {
     const supabase = await createClient()
     const { profile } = await getProfile()
@@ -349,7 +350,8 @@ export async function createProposalTemplate(
                 created_by: profile.id,
                 ai_provider: aiProvider || 'gemini',
                 ai_model: aiModel || 'gemini-2.5-flash',
-                mapped_fields: mappedFields || []
+                mapped_fields: mappedFields || [],
+                template_type: templateType
             }])
             .select()
             .single()
@@ -365,10 +367,11 @@ export async function createProposalTemplate(
 export async function analyzeProposalTemplatePDF(
     pageImagesBase64: string[],
     provider: 'gemini' | 'openai',
-    modelName: string
+    modelName: string,
+    templateType: string = 'proposta'
 ) {
     try {
-        const fields = await analyzeProposalPDF(pageImagesBase64, provider, modelName);
+        const fields = await analyzeProposalPDF(pageImagesBase64, provider, modelName, templateType);
         return { success: true, data: fields };
     } catch (error: any) {
         console.error('Erro na action analyzeProposalTemplatePDF:', error);

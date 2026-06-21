@@ -103,7 +103,7 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
     const isAdmin = ['admin', 'superadmin', 'super_admin', 'super administrador', 'super admin', 'super_administrador'].includes(profile?.role?.toLowerCase() || '');
 
     return (
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm h-full flex flex-col">
+        <div className="bg-card p-6 rounded-lg border border-border shadow-sm h-full flex flex-col">
             <div className="space-y-4 flex flex-col flex-1">
 
                 <div className="space-y-4 flex-1">
@@ -118,37 +118,34 @@ export function ProfileInfo({ profile, onProfileUpdate }: ProfileInfoProps) {
                             label="Email"
                             type="email"
                             value={profile?.email || ''}
-                            onChange={isAdmin ? (e) => onProfileUpdate({ email: e.target.value }) : undefined}
-                            readOnly={!isAdmin}
-                            disabled={!isAdmin}
-                            className={!isAdmin ? "cursor-not-allowed" : ""}
+                            readOnly={true}
+                            disabled={true}
+                            className="cursor-not-allowed"
                         />
-                        {!isAdmin && (
-                            <div className="mt-4 space-y-1.5 w-full">
-                                <label className="block text-sm font-bold text-foreground ml-1 mb-1 tracking-tight">
-                                    Solicitar alteração de e-mail
-                                </label>
-                                <div className="flex gap-2 items-stretch">
-                                    <div className="flex-1">
-                                        <FormInput
-                                            type="email"
-                                            placeholder="Novo e-mail"
-                                            value={requestEmail}
-                                            onChange={(e) => setRequestEmail(e.target.value)}
-                                            className="bg-background"
-                                        />
-                                    </div>
-                                    <button
-                                        type="button"
-                                        onClick={handleRequestEmailChange}
-                                        disabled={requesting || !requestEmail}
-                                        className="bg-secondary text-secondary-foreground text-xs font-bold px-6 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center whitespace-nowrap shadow-sm"
-                                    >
-                                        {requesting ? '...' : 'Solicitar'}
-                                    </button>
+                        <div className="mt-4 space-y-1.5 w-full">
+                            <label className="block text-sm font-bold text-foreground ml-1 mb-1 tracking-tight">
+                                Solicitar alteração de e-mail
+                            </label>
+                            <div className="flex gap-2 items-stretch">
+                                <div className="flex-1">
+                                    <FormInput
+                                        type="email"
+                                        placeholder="Novo e-mail"
+                                        value={requestEmail}
+                                        onChange={(e) => setRequestEmail(e.target.value)}
+                                        className="bg-background"
+                                    />
                                 </div>
+                                <button
+                                    type="button"
+                                    onClick={handleRequestEmailChange}
+                                    disabled={requesting || !requestEmail}
+                                    className="bg-secondary text-secondary-foreground text-xs font-bold px-6 rounded-lg hover:opacity-90 transition-opacity disabled:opacity-50 flex items-center justify-center whitespace-nowrap shadow-sm"
+                                >
+                                    {requesting ? '...' : 'Solicitar'}
+                                </button>
                             </div>
-                        )}
+                        </div>
                     </div>
 
                     <FormInput

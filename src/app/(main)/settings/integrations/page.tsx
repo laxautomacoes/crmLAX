@@ -20,6 +20,8 @@ export default async function IntegrationsSettingsPage() {
                 subtitle="Conecte suas ferramentas favoritas para automatizar a captação e gestão de leads."
             />
 
+            <hr className="hidden md:block border-border" />
+
             <IntegrationsContent
                 tenantId={tenant?.id || ''}
                 slug={tenant?.slug}

@@ -160,6 +160,8 @@ export function FinanceiroClient({ tenantId, leads }: FinanceiroClientProps) {
                 </button>
             </PageHeader>
 
+            <hr className="hidden md:block border-border" />
+
             <FinancialKPIs data={summary} />
 
             <MonthlyChart data={monthlyData} />

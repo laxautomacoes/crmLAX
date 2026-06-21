@@ -168,7 +168,7 @@ export default function AgendaPage() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader title="Agenda">
                 <div className="flex items-center gap-2">
                     <DropdownMenu>
@@ -209,6 +209,8 @@ export default function AgendaPage() {
                     </button>
                 </div>
             </PageHeader>
+
+            <hr className="hidden md:block border-border" />
 
             <CalendarGrid
                 events={filterType === 'all' ? events : events.filter(e => e.event_type === filterType)}

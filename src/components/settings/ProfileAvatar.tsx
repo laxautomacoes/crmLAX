@@ -84,7 +84,7 @@ export function ProfileAvatar({ profile, onProfileUpdate }: ProfileAvatarProps) 
     };
 
     return (
-        <div className="bg-card p-6 rounded-2xl border border-border shadow-sm flex flex-col h-full justify-center">
+        <div className="bg-card p-6 rounded-lg border border-border shadow-sm flex flex-col h-full justify-center">
             <div className="flex flex-col items-center justify-start">
                 
                 <ProfileAvatarUpload

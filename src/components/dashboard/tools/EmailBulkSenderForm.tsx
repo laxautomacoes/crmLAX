@@ -152,10 +152,33 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
 
     useEffect(() => {
         async function loadDomains() {
+            let domainsList: { domain: string }[] = []
+            
+            // 1. Carregar domínios da tabela email_domains (Histórico / Múltiplos)
             const res = await getEmailDomains(tenantId)
             if (res.success && res.data) {
-                setVerifiedDomains(res.data.filter((d: any) => d.status === 'verified'))
+                domainsList = res.data.filter((d: any) => d.status === 'verified').map((d: any) => ({ domain: d.domain }))
             }
+            
+            // 2. Carregar o domínio primário do próprio tenant
+            try {
+                const supabase = createClient()
+                const { data: tenant } = await supabase
+                    .from('tenants')
+                    .select('custom_domain, email_domain_verified')
+                    .eq('id', tenantId)
+                    .single()
+                
+                if (tenant?.custom_domain && tenant?.email_domain_verified) {
+                    if (!domainsList.some(d => d.domain === tenant.custom_domain)) {
+                        domainsList.push({ domain: tenant.custom_domain })
+                    }
+                }
+            } catch (err) {
+                console.error('Erro ao obter o domínio do tenant:', err)
+            }
+            
+            setVerifiedDomains(domainsList)
             setLoadingDomains(false)
         }
         loadDomains()

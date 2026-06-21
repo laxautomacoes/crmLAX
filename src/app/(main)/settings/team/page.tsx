@@ -73,7 +73,7 @@ export default function TeamSettingsPage() {
     }
 
     return (
-        <div className="space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
             <PageHeader
                 title="Gestão da Equipe"
                 subtitle="Administre os colaboradores e convites da sua empresa"
@@ -98,6 +98,8 @@ export default function TeamSettingsPage() {
                     </button>
                 </div>
             </PageHeader>
+
+            <hr className="hidden md:block border-border" />
 
             <div className="w-full">
                 <InvitationsTable

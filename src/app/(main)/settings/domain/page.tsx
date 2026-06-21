@@ -12,6 +12,8 @@ export default function DomainPage() {
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
             <PageHeader title="Domínio" subtitle="Configure um domínio oficial para seu site." />
 
+            <hr className="hidden md:block border-border" />
+
             <DomainTab />
         </div>
     )

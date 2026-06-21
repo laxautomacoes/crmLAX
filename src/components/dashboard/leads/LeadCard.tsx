@@ -11,10 +11,11 @@ interface LeadCardProps {
     onEdit?: (lead: Lead) => void
     onDelete?: (leadId: string) => void
     onArchive?: (leadId: string) => void
+    onProposalClick?: (contactId: string, leadId: string) => void
     isOverlay?: boolean
 }
 
-export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadCardProps) {
+export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive, onProposalClick }: LeadCardProps) {
     const [showDropdown, setShowDropdown] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
 
@@ -50,10 +51,10 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
             {...attributes}
             {...listeners}
             onClick={() => !isDragging && onEdit?.(lead)}
-            className={`p-4 rounded-xl border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''}`}
+            className={`p-4 rounded-lg border border-muted-foreground/30 hover:shadow-md transition-all cursor-grab active:cursor-grabbing group w-full relative ${isOverlay ? 'shadow-2xl' : ''}`}
         >
-            <div className="flex justify-between items-start">
-                <div className="flex-1">
+            <div className="flex justify-between items-start gap-2 w-full min-w-0">
+                <div className="flex-1 min-w-0">
                     <div className="flex items-center gap-2 mb-2 min-w-0">
                         <div className="w-6 h-6 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10">
                             {lead.avatar_url ? (
@@ -75,13 +76,11 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
 
                 <div className="flex items-center gap-1.5">
                     {lead.has_proposal && (
-                        <span
-                            className="w-5 h-5 flex items-center justify-center text-[10px] font-black rounded-full shrink-0"
-                            style={{ backgroundColor: '#FFE600', color: '#1a1a1a' }}
-                            title="Lead com proposta"
-                        >
-                            P
-                        </span>
+                        <LeadProposalBadge
+                            contactId={lead.contact_id}
+                            leadId={lead.id}
+                            onProposalClick={onProposalClick}
+                        />
                     )}
                     <LeadTemperatureBadge lastInteractionAt={lead.last_interaction_at} />
                     <div className="relative" ref={dropdownRef} onClick={(e) => e.stopPropagation()}>
@@ -140,6 +139,85 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive }: LeadC
                     </div>
                 </div>
             </div>
+        </div>
+    )
+}
+
+interface LeadProposalBadgeProps {
+    contactId: string | undefined
+    leadId: string
+    onProposalClick?: (contactId: string, leadId: string) => void
+}
+
+function LeadProposalBadge({ contactId, leadId, onProposalClick }: LeadProposalBadgeProps) {
+    const [showTooltip, setShowTooltip] = useState(false)
+    const badgeRef = useRef<HTMLDivElement>(null)
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (badgeRef.current && !badgeRef.current.contains(event.target as Node)) {
+                setShowTooltip(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleMouseEnter = () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current)
+        setShowTooltip(true)
+    }
+
+    const handleMouseLeave = () => {
+        timeoutRef.current = setTimeout(() => setShowTooltip(false), 150)
+    }
+
+    const handleClick = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (contactId) {
+            onProposalClick?.(contactId, leadId)
+        }
+    }
+
+    return (
+        <div
+            ref={badgeRef}
+            className="relative flex items-center"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+            <button
+                onClick={handleClick}
+                className="w-5 h-5 flex items-center justify-center text-[10px] font-black rounded-full shrink-0 hover:scale-105 transition-transform cursor-pointer relative"
+                style={{ backgroundColor: '#FFE600', color: '#1a1a1a' }}
+            >
+                P
+            </button>
+
+            <AnimatePresence>
+                {showTooltip && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 4 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-full mt-2 z-50 min-w-[200px]"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="bg-card border border-muted-foreground/30 rounded-lg shadow-xl p-3 text-left">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                                    Proposta ativa
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                Este lead possui propostas cadastradas. Clique aqui para gerenciar e visualizar as propostas deste cliente.
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     )
 }

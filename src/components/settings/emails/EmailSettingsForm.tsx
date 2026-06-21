@@ -370,65 +370,74 @@ export function EmailSettingsForm() {
                     />
                 )}
 
-                <h4 className="text-lg font-bold text-foreground text-center sm:text-left sm:ml-1 mb-6 sm:mb-3">
-                    Identidade Visual
-                </h4>
-                <div className="bg-card border border-border rounded-2xl p-6 space-y-6 shadow-sm">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="space-y-3">
-                            <label className="text-sm font-bold text-foreground text-center sm:text-left sm:ml-1 block">Logo Empresa</label>
-                            <div className="relative aspect-[5/2] rounded-xl border border-solid border-border flex items-center justify-center overflow-hidden bg-background hover:bg-muted/10 transition-colors group shadow-sm">
-                                {settings.logo_url ? (
-                                    <>
-                                        <img src={settings.logo_url} alt="Logo" className="max-h-full object-contain p-2" />
-                                        <button onClick={handleRemoveLogo} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-lg">
-                                            <Trash2 size={14} />
-                                        </button>
-                                    </>
-                                ) : (
-                                    <div className="text-center text-muted-foreground">
-                                        <ImageIcon className="w-8 h-8 mx-auto mb-1 opacity-20" />
-                                        <span className="text-[10px]">Recomendado: 250x50px</span>
-                                    </div>
-                                )}
-                                {!settings.logo_url && (
-                                    <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 group-hover:bg-black/40 group-hover:opacity-100 transition-all">
-                                        <div className="text-white">{isUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Upload className="w-6 h-6" />}</div>
-                                        <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={isUploading} />
-                                    </label>
-                                )}
-                            </div>
-                        </div>
-                        <div className="space-y-3 sm:md:ml-24">
-                            <label className="text-sm font-bold text-foreground text-center sm:text-left sm:ml-1 block">Cor Destaque</label>
-                            <div className="flex items-center justify-center sm:justify-start gap-3">
-                                <div className="relative group overflow-hidden rounded-xl h-12 w-12 border border-border shadow-sm">
-                                    <input type="color" value={settings.primary_color || '#FFE600'} onChange={(e) => setSettings(prev => ({ ...prev, primary_color: e.target.value }))} className="absolute inset-0 w-[200%] h-[200%] -top-[50%] -left-[50%] cursor-pointer border-none appearance-none bg-transparent" />
+                <div className="flex flex-col space-y-3">
+                    <div className="px-1 space-y-1">
+                        <h3 className="text-lg font-bold text-foreground">
+                            Identidade Visual
+                        </h3>
+                        <p className="text-sm text-muted-foreground">Personalize a aparência de suas comunicações.</p>
+                    </div>
+                    <div className="bg-card border border-border rounded-lg p-6 space-y-6 shadow-sm">
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div className="flex flex-col">
+                                <label className="text-xs font-bold text-foreground ml-1 mb-2">Logo Empresa</label>
+                                <div className="relative aspect-[5/2] rounded-lg border border-border/40 flex items-center justify-center overflow-hidden bg-background hover:bg-gray-50 dark:hover:bg-muted/30 transition-all group">
+                                    {settings.logo_url ? (
+                                        <>
+                                            <img src={settings.logo_url} alt="Logo" className="max-h-full object-contain p-2" />
+                                            <button onClick={handleRemoveLogo} className="absolute top-2 right-2 p-1.5 bg-red-500 text-white rounded-lg opacity-0 group-hover:opacity-100 transition-all hover:bg-red-600 shadow-lg">
+                                                <Trash2 size={14} />
+                                            </button>
+                                        </>
+                                    ) : (
+                                        <div className="text-center text-muted-foreground">
+                                            <ImageIcon className="w-8 h-8 mx-auto mb-1 opacity-20" />
+                                            <span className="text-[10px]">Recomendado: 250x50px</span>
+                                        </div>
+                                    )}
+                                    {!settings.logo_url && (
+                                        <label className="absolute inset-0 cursor-pointer flex items-center justify-center opacity-0 group-hover:bg-black/40 group-hover:opacity-100 transition-all">
+                                            <div className="text-white">{isUploading ? <Loader2 className="w-6 h-6 animate-spin" /> : <Upload className="w-6 h-6" />}</div>
+                                            <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} disabled={isUploading} />
+                                        </label>
+                                    )}
                                 </div>
-                                <input type="text" value={settings.primary_color || '#FFE600'} onChange={(e) => setSettings(prev => ({ ...prev, primary_color: e.target.value }))} className="w-32 h-12 bg-background border border-border rounded-xl px-4 text-sm font-mono outline-none text-center" />
+                            </div>
+                            <div className="flex flex-col sm:md:ml-24">
+                                <label className="text-xs font-bold text-foreground ml-1 mb-2">Cor Destaque</label>
+                                <div className="flex items-center justify-center sm:justify-start gap-3">
+                                    <div className="relative group overflow-hidden rounded-lg h-12 w-12 border border-border shadow-sm">
+                                        <input type="color" value={settings.primary_color || '#FFE600'} onChange={(e) => setSettings(prev => ({ ...prev, primary_color: e.target.value }))} className="absolute inset-0 w-[200%] h-[200%] -top-[50%] -left-[50%] cursor-pointer border-none appearance-none bg-transparent" />
+                                    </div>
+                                    <input type="text" value={settings.primary_color || '#FFE600'} onChange={(e) => setSettings(prev => ({ ...prev, primary_color: e.target.value }))} className="w-32 h-12 bg-background border border-border rounded-lg px-4 text-sm font-mono outline-none text-center" />
+                                </div>
                             </div>
                         </div>
                     </div>
                 </div>
 
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between sm:ml-1 mb-6 sm:mb-3 gap-4">
-                        <h4 className="text-lg font-bold text-foreground text-center sm:text-left">Conteúdo</h4>
+                <div className="flex flex-col space-y-3">
+                    <div className="flex flex-col sm:flex-row sm:items-start justify-between px-1 gap-4">
+                        <div className="space-y-1">
+                            <h3 className="text-lg font-bold text-foreground">Conteúdo</h3>
+                            <p className="text-sm text-muted-foreground">Configure os textos dos e-mails enviados.</p>
+                        </div>
                         <div className="relative hidden sm:flex flex-col sm:flex-row items-center gap-2 w-full sm:w-auto" ref={dropdownRef}>
                             <button 
                                 onClick={() => setShowPreviewModal(true)} 
-                                className="hidden sm:flex w-full sm:w-auto bg-background border border-border rounded-lg sm:rounded-xl px-4 py-2.5 sm:py-2 text-xs font-bold hover:bg-muted/30 transition-all shadow-sm items-center justify-center gap-2"
+                                className="hidden sm:flex w-full sm:w-auto bg-background border border-border rounded-lg px-4 py-2 text-xs font-bold hover:bg-muted/30 transition-all shadow-sm items-center justify-center gap-2"
                             >
                                 <Eye size={14} className="text-muted-foreground" />
                                 Visualizar E-mail
                             </button>
-                            <button onClick={() => setShowTypeDropdown(!showTypeDropdown)} className="w-full sm:w-auto bg-background border border-border rounded-lg sm:rounded-xl px-4 py-2.5 sm:py-2 text-xs font-bold hover:bg-muted/30 transition-all shadow-sm flex items-center gap-2 sm:min-w-[180px] justify-center sm:justify-between text-left">
+                            <button onClick={() => setShowTypeDropdown(!showTypeDropdown)} className="w-full sm:w-auto bg-background border border-border rounded-lg px-4 py-2 text-xs font-bold hover:bg-muted/30 transition-all shadow-sm flex items-center gap-2 sm:min-w-[180px] justify-center sm:justify-between text-left">
                                 <span className="flex items-center gap-2 truncate">
                                     {activeTemplate === 'invitation' ? 'Convite Colaborador' : activeTemplate === 'confirmation' ? 'Confirmação de E-mail' : 'Aviso de Suspensão'}
                                 </span>
                                 <ChevronDown size={14} className={`text-muted-foreground shrink-0 transition-transform ${showTypeDropdown ? 'rotate-180' : ''}`} />
                             </button>
                             {showTypeDropdown && (
-                                <div className="absolute right-0 top-full mt-2 w-full min-w-[200px] bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                <div className="absolute right-0 top-full mt-2 w-full min-w-[200px] bg-card border border-border rounded-lg shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                     {[{ id: 'invitation', label: 'Convite Colaborador' }, { id: 'confirmation', label: 'Confirmação de E-mail' }, { id: 'suspension', label: 'Aviso de Suspensão' }].map((type) => (
                                         <button key={type.id} onClick={() => { setActiveTemplate(type.id as any); setShowTypeDropdown(false) }} className="w-full px-4 py-3 text-left text-xs font-bold hover:bg-muted/50 transition-colors flex items-center gap-3">
                                             <div className="w-4 shrink-0">{activeTemplate === type.id && <Check size={14} />}</div>
@@ -442,7 +451,7 @@ export function EmailSettingsForm() {
                     
                     <div className="space-y-6">
                         {/* Card Único de Conteúdo */}
-                        <div className="bg-card border border-border rounded-2xl p-6 space-y-8 shadow-sm overflow-visible">
+                        <div className="bg-card border border-border rounded-lg p-6 space-y-8 shadow-sm overflow-visible">
                             {/* Seletor de Template - Mobile Only */}
                             <div className="sm:hidden relative" ref={dropdownMobileRef}>
                                 <button 
@@ -457,7 +466,7 @@ export function EmailSettingsForm() {
                                 
                                 {showTypeDropdown && (
                                     <>
-                                        <div className="absolute left-0 right-0 top-full mt-2 bg-card border border-border rounded-xl shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+                                        <div className="absolute left-0 right-0 top-full mt-2 bg-card border border-border rounded-lg shadow-2xl z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200">
                                             {[{ id: 'invitation', label: 'Convite Colaborador' }, { id: 'confirmation', label: 'Confirmação de E-mail' }, { id: 'suspension', label: 'Aviso de Suspensão' }].map((type) => (
                                                 <button 
                                                     key={type.id} 
@@ -481,7 +490,7 @@ export function EmailSettingsForm() {
                                         <Plus size={10} /> Salvar Novo
                                     </button>
                                 </div>
-                                <div className="bg-background border border-border rounded-xl p-4 space-y-3 shadow-inner">
+                                <div className="bg-background border border-border rounded-lg p-4 space-y-3 shadow-inner">
                                     {savedTemplates.filter(t => t.type === activeTemplate).length > 0 ? (
                                         <div className="flex flex-wrap gap-2">
                                             {savedTemplates.filter(t => t.type === activeTemplate).map((t) => (
@@ -502,15 +511,15 @@ export function EmailSettingsForm() {
                             </div>
 
                             {/* Assunto */}
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-foreground ml-1">Assunto</h4>
+                            <div className="flex flex-col">
+                                <label className="text-xs font-bold text-foreground ml-1 mb-2">Assunto</label>
                                 <input type="text" value={currentTemplate.subject || getDefaultSubject(activeTemplate)} onChange={(e) => updateTemplate('subject', e.target.value)} placeholder="Assunto do e-mail" className="w-full bg-background border border-border rounded-lg px-4 py-3 text-sm font-medium focus:ring-2 focus:ring-secondary/50 outline-none transition-all" />
                             </div>
 
                             {/* Descrição */}
-                            <div className="space-y-3">
-                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                                    <h4 className="text-sm font-bold text-foreground">Descrição</h4>
+                            <div className="flex flex-col">
+                                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 mb-2">
+                                    <label className="text-xs font-bold text-foreground ml-1">Descrição</label>
                                     <div className="flex flex-col sm:flex-row sm:items-center gap-2">
                                         <span className="text-[10px] text-muted-foreground uppercase font-black tracking-tighter">Variáveis:</span>
                                         <div className="flex flex-wrap gap-1">
@@ -526,8 +535,8 @@ export function EmailSettingsForm() {
                             </div>
 
                             {/* Assinatura */}
-                            <div className="space-y-3">
-                                <h4 className="text-sm font-bold text-foreground mb-3">Assinatura</h4>
+                            <div className="flex flex-col">
+                                <label className="text-xs font-bold text-foreground ml-1 mb-2">Assinatura</label>
                                 <FormRichTextarea value={settings.signature_html || getDefaultSignature()} onChange={(val) => setSettings(prev => ({ ...prev, signature_html: val }))} placeholder="Atenciosamente, Sua Equipe" className="rich-text-editor-signature" attachments={settings.attachments} onUpload={onToolbarUpload} />
                                 
                                 {/* Visualizar E-mail - Mobile Only */}
@@ -543,16 +552,22 @@ export function EmailSettingsForm() {
                             </div>
                         </div>
                     </div>
+                </div>
 
-                <h4 className="text-lg font-bold text-foreground text-center sm:text-left sm:ml-1 mb-6 sm:mb-3">Galeria</h4>
-                <div className="bg-card border border-border rounded-2xl p-6 space-y-6 shadow-sm">
-                    {profile?.tenant_id && (
-                        <MediaUpload bucket="email-logos" pathPrefix={`${profile.tenant_id}/assets`} images={settings.attachments?.images || []} videos={settings.attachments?.videos || []} documents={settings.attachments?.documents || []} onUpload={handleMediaUpload} onRemove={handleMediaRemove} />
-                    )}
+                <div className="flex flex-col space-y-3">
+                    <div className="px-1 space-y-1">
+                        <h3 className="text-lg font-bold text-foreground">Galeria</h3>
+                        <p className="text-sm text-muted-foreground">Adicione imagens e anexos que possam ser usados nos seus e-mails.</p>
+                    </div>
+                    <div className="bg-card border border-border rounded-lg p-6 space-y-6 shadow-sm">
+                        {profile?.tenant_id && (
+                            <MediaUpload bucket="email-logos" pathPrefix={`${profile.tenant_id}/assets`} images={settings.attachments?.images || []} videos={settings.attachments?.videos || []} documents={settings.attachments?.documents || []} onUpload={handleMediaUpload} onRemove={handleMediaRemove} />
+                        )}
+                    </div>
                 </div>
 
                 <div className="pt-2">
-                    <button onClick={handleSave} disabled={saving} className="w-full py-4 bg-secondary text-secondary-foreground font-bold rounded-xl hover:opacity-90 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-secondary/10">
+                    <button onClick={handleSave} disabled={saving} className="w-full py-4 bg-secondary text-secondary-foreground font-bold rounded-lg hover:opacity-90 transition-all transform active:scale-[0.98] flex items-center justify-center gap-2 shadow-xl shadow-secondary/10">
                         {saving ? <Loader2 className="w-5 h-5 animate-spin" /> : null}
                         Salvar configurações
                     </button>
@@ -562,7 +577,7 @@ export function EmailSettingsForm() {
             {/* Modais */}
             {showPreviewModal && (
                 <div 
-                    className="fixed inset-0 bg-black/90 backdrop-blur-md z-[100] flex items-center justify-center animate-in fade-in duration-300"
+                    className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center animate-in fade-in duration-300"
                     onClick={() => setShowPreviewModal(false)}
                 >
                     <div 
@@ -570,21 +585,21 @@ export function EmailSettingsForm() {
                         onClick={(e) => e.stopPropagation()}
                     >
                         {/* Card Envolvente */}
-                        <div className="flex-1 flex flex-col rounded-2xl border border-white/10 shadow-2xl p-4 bg-[#111] overflow-hidden">
+                        <div className="flex-1 flex flex-col rounded-lg border border-border shadow-2xl p-4 bg-card overflow-hidden">
                             {/* Botão Fechar */}
                             <div className="flex justify-end mb-2">
                                 <button 
                                     onClick={() => setShowPreviewModal(false)}
-                                    className="text-white/40 hover:text-white transition-colors p-1"
+                                    className="text-muted-foreground hover:text-foreground transition-colors p-1"
                                 >
                                     <X size={20} />
                                 </button>
                             </div>
 
                             {/* Card Assunto */}
-                            <div className="bg-[#1A1A1A] rounded-xl border border-white/10 px-5 py-4 shrink-0 mb-2">
-                                <p className="text-sm font-bold text-white">
-                                    <span className="text-white/40">Assunto:</span>{' '}
+                            <div className="bg-muted/30 rounded-lg border border-border px-5 py-4 shrink-0 mb-2">
+                                <p className="text-sm font-bold text-foreground">
+                                    <span className="text-muted-foreground">Assunto:</span>{' '}
                                     {currentTemplate.subject || getDefaultSubject(activeTemplate)}
                                 </p>
                             </div>
@@ -592,7 +607,7 @@ export function EmailSettingsForm() {
                             {/* Preview do E-mail */}
                             <iframe 
                                 srcDoc={previewHtml} 
-                                className="flex-1 w-full border-none bg-transparent rounded-xl" 
+                                className="flex-1 w-full border-none bg-transparent rounded-lg" 
                                 title="Email Preview" 
                             />
 
@@ -600,7 +615,7 @@ export function EmailSettingsForm() {
                             <div className="pt-4 shrink-0">
                                 <button 
                                     onClick={() => { setShowPreviewModal(false); setShowTestModal(true) }} 
-                                    className="w-full py-3.5 bg-secondary text-secondary-foreground font-bold rounded-xl hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg"
+                                    className="w-full py-3.5 bg-secondary text-secondary-foreground font-bold rounded-lg hover:opacity-90 transition-all flex items-center justify-center gap-2 shadow-lg"
                                 >
                                     <Mail size={16} /> 
                                     Enviar Teste
@@ -613,13 +628,16 @@ export function EmailSettingsForm() {
 
             {showSaveTemplateModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-card rounded-2xl p-6 w-full max-w-md shadow-2xl border border-border">
+                    <div className="bg-card rounded-lg p-6 w-full max-w-md shadow-2xl border border-border">
                         <h3 className="text-lg font-bold mb-4">Salvar como Template</h3>
                         <p className="text-sm text-muted-foreground mb-4">Dê um nome para este template.</p>
-                        <input type="text" placeholder="Ex: Convite de Natal..." className="w-full bg-muted border border-border rounded-xl px-4 py-3 mb-6 outline-none focus:ring-2 focus:ring-secondary/50" autoFocus value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
+                        <div className="flex flex-col mb-6">
+                            <label className="text-xs font-bold text-foreground ml-1 mb-2">Nome do Template</label>
+                            <input type="text" placeholder="Ex: Convite de Natal..." className="w-full bg-muted border border-border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/50" autoFocus value={newTemplateName} onChange={(e) => setNewTemplateName(e.target.value)} />
+                        </div>
                         <div className="flex gap-3">
-                            <button onClick={() => setShowSaveTemplateModal(false)} className="flex-1 py-3 border border-border rounded-xl font-bold hover:bg-muted transition-all text-foreground">Cancelar</button>
-                            <button onClick={handleSaveTemplate} disabled={saving || !newTemplateName.trim()} className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 transition-all disabled:opacity-50 text-foreground">Salvar Template</button>
+                            <button onClick={() => setShowSaveTemplateModal(false)} className="flex-1 py-3 border border-border rounded-lg font-bold hover:bg-muted transition-all text-foreground">Cancelar</button>
+                            <button onClick={handleSaveTemplate} disabled={saving || !newTemplateName.trim()} className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-all disabled:opacity-50 text-foreground">Salvar</button>
                         </div>
                     </div>
                 </div>
@@ -627,19 +645,19 @@ export function EmailSettingsForm() {
 
             {showTestModal && (
                 <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-[100] flex items-center justify-center p-4 animate-in fade-in duration-200">
-                    <div className="bg-card rounded-2xl p-6 w-full max-w-md shadow-2xl border border-border">
+                    <div className="bg-card rounded-lg p-6 w-full max-w-md shadow-2xl border border-border">
                         <div className="flex items-center gap-3 mb-4">
                             <div className="w-10 h-10 bg-secondary/20 rounded-full flex items-center justify-center text-secondary"><Mail size={20} /></div>
                             <h3 className="text-lg font-bold">Disparo de Teste</h3>
                         </div>
                         <p className="text-sm text-muted-foreground mb-6">Enviaremos uma versão de teste para você.</p>
-                        <div className="space-y-2 mb-8">
-                            <label className="text-xs font-black uppercase tracking-widest text-muted-foreground ml-1">E-mail de Destino</label>
-                            <input type="email" placeholder="seu@email.com" className="w-full bg-muted border border-border rounded-xl px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/50" autoFocus value={testRecipient} onChange={(e) => setTestRecipient(e.target.value)} />
+                        <div className="flex flex-col mb-8">
+                            <label className="text-xs font-bold text-foreground ml-1 mb-2">E-mail de Destino</label>
+                            <input type="email" placeholder="seu@email.com" className="w-full bg-muted border border-border rounded-lg px-4 py-3 outline-none focus:ring-2 focus:ring-secondary/50" autoFocus value={testRecipient} onChange={(e) => setTestRecipient(e.target.value)} />
                         </div>
                         <div className="flex gap-3">
-                            <button onClick={() => setShowTestModal(false)} className="flex-1 py-3 border border-border rounded-xl font-bold hover:bg-muted transition-all text-foreground">Cancelar</button>
-                            <button onClick={handleSendTest} disabled={sendingTest || !testRecipient.trim()} className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 text-foreground">
+                            <button onClick={() => setShowTestModal(false)} className="flex-1 py-3 border border-border rounded-lg font-bold hover:bg-muted transition-all text-foreground">Cancelar</button>
+                            <button onClick={handleSendTest} disabled={sendingTest || !testRecipient.trim()} className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-all flex items-center justify-center gap-2 text-foreground">
                                 {sendingTest && <Loader2 className="w-4 h-4 animate-spin" />} Enviar Agora
                             </button>
                         </div>

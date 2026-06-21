@@ -164,7 +164,7 @@ export function DomainTab() {
                     <div className="max-w-md space-y-2">
                         <h3 className="text-xl font-bold text-foreground">Domínio Próprio</h3>
                         <p className="text-muted-foreground">
-                            Use seu próprio domínio (ex: properties.suaempresa.com.br). Disponível no plano <strong className="text-secondary">PRO</strong>.
+                            Use seu próprio domínio (ex: suaempresa.com.br). Disponível no plano <strong className="text-secondary">PRO</strong>.
                         </p>
                     </div>
                     <button className="px-8 py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 transition-opacity">
@@ -184,7 +184,7 @@ export function DomainTab() {
                                     type="text"
                                     value={domain}
                                     onChange={(e) => setDomain(e.target.value.toLowerCase())}
-                                    placeholder="ex: properties.suaempresa.com.br"
+                                    placeholder="ex: suaempresa.com.br"
                                     className="w-full px-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                     style={{ backgroundColor: 'var(--background)' }}
                                 />
@@ -229,7 +229,7 @@ export function DomainTab() {
                                         type="text"
                                         value={domain}
                                         onChange={(e) => setDomain(e.target.value.toLowerCase())}
-                                        placeholder="ex: properties.suaempresa.com.br"
+                                        placeholder="ex: suaempresa.com.br"
                                         className="w-full px-4 py-2 bg-background border border-border rounded-lg text-sm focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                                         style={{ backgroundColor: 'var(--background)' }}
                                     />
@@ -317,41 +317,41 @@ export function DomainTab() {
                                                         </div>
 
                                                         <div className="space-y-1.5">
-                                                            <div className="flex items-center gap-6 group/row">
-                                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Tipo</span>
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">{record.type}</code>
-                                                                    <button onClick={() => copyToClipboard(record.type, 'Tipo')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                                            <div className="flex items-start gap-6 group/row">
+                                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20 mt-1">Tipo</span>
+                                                                <div className="flex items-start gap-1.5">
+                                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-relaxed break-all">{record.type}</code>
+                                                                    <button onClick={() => copyToClipboard(record.type, 'Tipo')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded mt-0.5">
                                                                         <Copy size={10} className="text-muted-foreground/60" />
                                                                     </button>
                                                                 </div>
                                                             </div>
 
-                                                            <div className="flex items-center gap-6 group/row">
-                                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Host</span>
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">{record.host}</code>
-                                                                    <button onClick={() => copyToClipboard(record.host, 'Host')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                                            <div className="flex items-start gap-6 group/row">
+                                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20 mt-1">Host</span>
+                                                                <div className="flex items-start gap-1.5 flex-1">
+                                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-relaxed break-all">{record.host}</code>
+                                                                    <button onClick={() => copyToClipboard(record.host, 'Host')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded mt-0.5">
                                                                         <Copy size={10} className="text-muted-foreground/60" />
                                                                     </button>
                                                                 </div>
                                                             </div>
 
-                                                            <div className="flex items-center gap-6 group/row">
-                                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Valor</span>
-                                                                <div className="flex items-center gap-1.5 overflow-hidden max-w-[80%]">
-                                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground truncate leading-none">{record.value}</code>
-                                                                    <button onClick={() => copyToClipboard(record.value, 'Valor')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded shrink-0">
+                                                            <div className="flex items-start gap-6 group/row">
+                                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20 mt-1">Valor</span>
+                                                                <div className="flex items-start gap-1.5 flex-1">
+                                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-relaxed break-all">{record.value}</code>
+                                                                    <button onClick={() => copyToClipboard(record.value, 'Valor')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded shrink-0 mt-0.5">
                                                                         <Copy size={10} className="text-muted-foreground/60" />
                                                                     </button>
                                                                 </div>
                                                             </div>
 
-                                                            <div className="flex items-center gap-6 group/row">
-                                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">TTL</span>
-                                                                <div className="flex items-center gap-1.5">
-                                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">3600</code>
-                                                                    <button onClick={() => copyToClipboard('3600', 'TTL')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                                            <div className="flex items-start gap-6 group/row">
+                                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20 mt-1">TTL</span>
+                                                                <div className="flex items-start gap-1.5">
+                                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-relaxed break-all">3600</code>
+                                                                    <button onClick={() => copyToClipboard('3600', 'TTL')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded mt-0.5">
                                                                         <Copy size={10} className="text-muted-foreground/60" />
                                                                     </button>
                                                                 </div>
@@ -439,41 +439,41 @@ export function DomainTab() {
                                         </div>
 
                                         <div className="space-y-1.5">
-                                            <div className="flex items-center gap-6 group/row">
-                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Tipo</span>
-                                                <div className="flex items-center gap-1.5">
-                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">CNAME</code>
-                                                    <button onClick={() => copyToClipboard('CNAME', 'Tipo')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                            <div className="flex items-start gap-6 group/row">
+                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20 mt-1">Tipo</span>
+                                                <div className="flex items-start gap-1.5">
+                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-relaxed break-all">CNAME</code>
+                                                    <button onClick={() => copyToClipboard('CNAME', 'Tipo')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded mt-0.5">
                                                         <Copy size={10} className="text-muted-foreground/60" />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-6 group/row">
-                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Host</span>
-                                                <div className="flex items-center gap-1.5">
-                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">crm</code>
-                                                    <button onClick={() => copyToClipboard('crm', 'Host')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                            <div className="flex items-start gap-6 group/row">
+                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20 mt-1">Host</span>
+                                                <div className="flex items-start gap-1.5 flex-1">
+                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-relaxed break-all">crm</code>
+                                                    <button onClick={() => copyToClipboard('crm', 'Host')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded mt-0.5">
                                                         <Copy size={10} className="text-muted-foreground/60" />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-6 group/row">
-                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">Valor</span>
-                                                <div className="flex items-center gap-1.5 overflow-hidden max-w-[80%]">
-                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground truncate leading-none">cname.vercel-dns.com</code>
-                                                    <button onClick={() => copyToClipboard('cname.vercel-dns.com', 'Valor')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded shrink-0">
+                                            <div className="flex items-start gap-6 group/row">
+                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20 mt-1">Valor</span>
+                                                <div className="flex items-start gap-1.5 flex-1">
+                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-relaxed break-all">cname.vercel-dns.com</code>
+                                                    <button onClick={() => copyToClipboard('cname.vercel-dns.com', 'Valor')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded shrink-0 mt-0.5">
                                                         <Copy size={10} className="text-muted-foreground/60" />
                                                     </button>
                                                 </div>
                                             </div>
 
-                                            <div className="flex items-center gap-6 group/row">
-                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-8">TTL</span>
-                                                <div className="flex items-center gap-1.5">
-                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-none">3600</code>
-                                                    <button onClick={() => copyToClipboard('3600', 'TTL')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded">
+                                            <div className="flex items-start gap-6 group/row">
+                                                <span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20 mt-1">TTL</span>
+                                                <div className="flex items-start gap-1.5">
+                                                    <code className="px-1 py-0.5 bg-muted/30 rounded text-[10px] font-bold text-foreground leading-relaxed break-all">3600</code>
+                                                    <button onClick={() => copyToClipboard('3600', 'TTL')} className="opacity-0 group-hover/row:opacity-100 transition-opacity p-0.5 hover:bg-muted rounded mt-0.5">
                                                         <Copy size={10} className="text-muted-foreground/60" />
                                                     </button>
                                                 </div>

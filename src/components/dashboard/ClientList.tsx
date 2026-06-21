@@ -191,7 +191,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     }
 
     return (
-        <div className="space-y-4 md:space-y-6">
+        <div className="space-y-6 md:space-y-8">
             <PageHeader title="Clientes" subtitle={`${filteredClients.length} clientes encontrados`}>
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     {/* Linha 1 mobile: Busca + Toggle */}
@@ -229,6 +229,8 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
 
                 </div>
             </PageHeader>
+
+            <hr className="hidden md:block border-border" />
 
             {/* Content Area */}
                 <div className="bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm">

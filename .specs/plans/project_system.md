@@ -128,10 +128,9 @@ Em páginas de configurações que utilizam layouts de múltiplos cards disposto
 - **Estrutura dos Subtítulos**: Usar `<p className="text-sm text-muted-foreground">` posicionado logo abaixo do título correspondente para contextualização rápida.
 - **Alinhamento e Espaçamento**: O contêiner de cada coluna deve usar a estrutura `flex flex-col space-y-3` para agrupar o cabeçalho externo e o card, mantendo o espaçamento padrão de 12px.
 - **Card de Conteúdo**: O card interno (ex: `bg-card p-6 rounded-lg border border-border`) não deve conter títulos ou descrições redundantes em seu interior.
+- **Alinhamento pelo Topo no Desktop**: Para garantir que os cards comecem na mesma linha horizontal quando os subtítulos externos têm número de linhas diferente no desktop, o cabeçalho externo deve possuir uma altura mínima constante e alinhamento inferior no desktop (ex: classe `md:min-h-[85px] flex flex-col justify-end pb-1`). Isso impede que a variação de linhas de texto empurre um card para baixo desordenadamente.
 
 ---
 
 > [!IMPORTANT]
 > A seriedade do sistema é transmitida pela precisão matemática dos arredondamentos e o uso equilibrado do Petrol com o Amarelo. **Nunca** utilize `rounded-3xl` ou `rounded-xl` em novos layouts sem autorização prévia.
-
-

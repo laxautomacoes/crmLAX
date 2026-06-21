@@ -137,6 +137,8 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                 </div>
             </PageHeader>
 
+            <hr className="hidden md:block border-border" />
+
             {/* IA Insights */}
             <AIInsightsCard 
                 tenantId={tenantId} 

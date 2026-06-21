@@ -7,7 +7,6 @@ import { BrandingTab } from '@/components/settings/BrandingTab';
 
 
 import { TemplatesTab } from '@/components/settings/TemplatesTab';
-import { EmailDomainsTab } from '@/components/settings/EmailDomainsTab';
 import { getProfile } from '@/app/_actions/profile';
 import { PageHeader } from '@/components/shared/PageHeader';
 
@@ -48,7 +47,6 @@ export default function SettingsPage() {
 
 
         tabs.push({ id: 'templates', label: 'Templates' });
-        tabs.push({ id: 'email-domains', label: 'Domínios de E-mail' });
     }
 
     if (loading) return null;
@@ -72,8 +70,6 @@ export default function SettingsPage() {
                 return 'Configure os logotipos e ícone/favicon da sua empresa.';
             case 'templates': 
                 return 'Gerencie os modelos e templates de proposta comercial do sistema.';
-            case 'email-domains':
-                return 'Gerencie os domínios de e-mail autorizados para envio de mensagens.';
             default: 
                 return 'Gerencie as configurações da sua conta.';
         }
@@ -82,6 +78,8 @@ export default function SettingsPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
             <PageHeader title={getPageTitle()} subtitle={getPageSubtitle()} />
+
+            <hr className="hidden md:block border-border" />
 
             {/* Tab Navigation */}
             {tabs.length > 1 ? (
@@ -113,7 +111,6 @@ export default function SettingsPage() {
 
 
                 {activeTab === 'templates' && tenantId && <TemplatesTab tenantId={tenantId} />}
-                {activeTab === 'email-domains' && tenantId && <EmailDomainsTab tenantId={tenantId} />}
             </div>
         </div>
     );
