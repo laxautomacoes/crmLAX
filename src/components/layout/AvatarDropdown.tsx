@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Moon, Sun, Bell, Settings, LogOut, User, Users } from 'lucide-react';
+import { Moon, Sun, Bell, Settings, LogOut, User, Users, Headphones } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
 import { getProfile } from '@/app/_actions/profile';
@@ -12,10 +12,12 @@ import { useTheme } from 'next-themes';
 import { saveAccount, removeAccount } from '@/lib/utils/multi-account';
 import { SwitchAccountModal } from './AvatarDropdown/SwitchAccountModal';
 import { recordAccessLog } from '@/app/_actions/auth-logs';
+import { SupportModal } from '@/components/shared/SupportModal';
 
 export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
     const [profile, setProfile] = useState<any>(null);
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
@@ -107,6 +109,14 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
                         </div>
                         <MenuItem icon={User} label="Configurações" href="/settings" />
                         <MenuItem 
+                            icon={Headphones} 
+                            label="Suporte" 
+                            onClick={() => {
+                                setIsOpen(false);
+                                setIsSupportModalOpen(true);
+                            }} 
+                        />
+                        <MenuItem 
                             icon={Users} 
                             label="Trocar Conta" 
                             onClick={() => {
@@ -123,6 +133,11 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
                 isOpen={isModalOpen} 
                 onClose={() => setIsModalOpen(false)} 
                 currentEmail={profile?.email || profile?.user?.email}
+            />
+
+            <SupportModal 
+                isOpen={isSupportModalOpen} 
+                onClose={() => setIsSupportModalOpen(false)} 
             />
         </div>
     );

@@ -69,8 +69,8 @@ export default function RecentLeadsList({ recentLeads }: RecentLeadsListProps) {
                                         onClick={() => router.push(`/leads?id=${lead.id}`)}
                                         className="hover:bg-muted/50 transition-colors cursor-pointer group"
                                     >
-                                        <td className="px-4 py-5 text-center">
-                                            <div className="flex items-center justify-center gap-3">
+                                        <td className="px-4 py-5 text-left">
+                                            <div className="flex items-center justify-start gap-3">
                                                 <div className="h-8 w-8 rounded-full flex items-center justify-center font-bold text-xs shrink-0 bg-[#404F4F] text-white dark:bg-white dark:text-[#404F4F] border border-border/10">
                                                     {getInitials(lead.name)}
                                                 </div>

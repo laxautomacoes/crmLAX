@@ -3,10 +3,13 @@
 import { useState, useEffect, useRef, Fragment } from 'react'
 import { getProposalsByContact, saveProposal, updateProposalStatus, getProposalTemplates, archiveProposal, deleteProposal } from '@/app/_actions/proposals'
 import { generateProposalPdf } from '@/app/_actions/generate-proposal-pdf'
+import { getWhatsAppInstance } from '@/app/_actions/whatsapp'
+import { evolutionService } from '@/lib/evolution'
+import { createClient } from '@/lib/supabase/client'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { Plus, FileText, Home, Loader2, ChevronDown, ChevronUp, X, Archive, Trash2, MoreVertical, Eye } from 'lucide-react'
+import { Plus, FileText, Home, Loader2, ChevronDown, ChevronUp, X, Archive, Trash2, MoreVertical, Eye, Send, MessageSquare } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 import { autoFillProposalFields } from '@/lib/utils/proposal-autofill'
@@ -52,6 +55,9 @@ interface ClientProposalActionsDropdownProps {
     onDownloadPDF?: () => void;
     hasTemplate?: boolean;
     downloading?: boolean;
+    onSendWhatsAppProposal?: () => void;
+    onSendWhatsAppSale?: () => void;
+    waConnected?: boolean;
 }
 
 function ClientProposalActionsDropdown({ 
@@ -60,7 +66,10 @@ function ClientProposalActionsDropdown({
     onDelete, 
     onDownloadPDF, 
     hasTemplate, 
-    downloading 
+    downloading,
+    onSendWhatsAppProposal,
+    onSendWhatsAppSale,
+    waConnected
 }: ClientProposalActionsDropdownProps) {
     const [isOpen, setIsOpen] = useState(false)
     const dropdownRef = useRef<HTMLDivElement>(null)
@@ -85,7 +94,7 @@ function ClientProposalActionsDropdown({
                 <MoreVertical size={14} />
             </button>
             {isOpen && (
-                <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 text-left">
+                <div className="absolute right-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 text-left">
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit() }}
                         className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
@@ -101,6 +110,24 @@ function ClientProposalActionsDropdown({
                         >
                             <FileText size={14} className="text-emerald-500" />
                             {downloading ? 'Gerando...' : 'Baixar PDF'}
+                        </button>
+                    )}
+                    {waConnected && onSendWhatsAppProposal && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onSendWhatsAppProposal() }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                        >
+                            <MessageSquare size={14} className="text-green-500" />
+                            Avisar Proposta
+                        </button>
+                    )}
+                    {waConnected && onSendWhatsAppSale && (
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onSendWhatsAppSale() }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                        >
+                            <Send size={14} className="text-green-500" />
+                            Avisar Venda
                         </button>
                     )}
                     <button
@@ -132,6 +159,10 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
     const [saving, setSaving] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
 
+    // Configurações do WhatsApp
+    const [waInstance, setWaInstance] = useState<any>(null)
+    const [waLoading, setWaLoading] = useState(false)
+
     const [templates, setTemplates] = useState<any[]>([])
     const [selectedTemplateId, setSelectedTemplateId] = useState('')
     const [dynamicFields, setDynamicFields] = useState<any[]>([])
@@ -147,6 +178,17 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
     })
 
     const clientLeads = client?.leads || []
+
+    const loadWhatsApp = async () => {
+        try {
+            const res = await getWhatsAppInstance()
+            if (res?.data && res.data.status === 'connected') {
+                setWaInstance(res.data)
+            }
+        } catch (error) {
+            console.error('Erro ao carregar WhatsApp:', error)
+        }
+    }
 
     useEffect(() => {
         async function load() {
@@ -165,6 +207,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             setLoading(false)
         }
         load()
+        loadWhatsApp()
     }, [client?.id, tenantId])
 
     // Auto-abrir formulário ou expandir proposta existente quando vem de Leads
@@ -318,25 +361,45 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         }
     }
 
-    const handleArchive = async (proposalId: string) => {
-        const res = await archiveProposal(proposalId)
-        if (res.success) {
-            setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, is_archived: true } : p))
-            toast.success('Proposta arquivada com sucesso!')
-        } else {
-            toast.error('Erro ao arquivar proposta: ' + res.error)
-        }
+    const [proposalToDelete, setProposalToDelete] = useState<ProposalItem | null>(null)
+    const [proposalToArchive, setProposalToArchive] = useState<ProposalItem | null>(null)
+    const [deleting, setDeleting] = useState(false)
+    const [archiving, setArchiving] = useState(false)
+
+    const handleStartDelete = (proposal: ProposalItem) => {
+        setProposalToDelete(proposal)
     }
 
-    const handleDelete = async (proposalId: string) => {
-        if (!confirm('Tem certeza que deseja excluir esta proposta permanentemente?')) return
-        const res = await deleteProposal(proposalId)
+    const handleStartArchive = (proposal: ProposalItem) => {
+        setProposalToArchive(proposal)
+    }
+
+    const confirmDelete = async () => {
+        if (!proposalToDelete) return
+        setDeleting(true)
+        const res = await deleteProposal(proposalToDelete.id)
         if (res.success) {
-            setProposals(prev => prev.filter(p => p.id !== proposalId))
+            setProposals(prev => prev.filter(p => p.id !== proposalToDelete.id))
             toast.success('Proposta excluída com sucesso!')
+            setProposalToDelete(null)
         } else {
             toast.error('Erro ao excluir proposta: ' + res.error)
         }
+        setDeleting(false)
+    }
+
+    const confirmArchive = async () => {
+        if (!proposalToArchive) return
+        setArchiving(true)
+        const res = await archiveProposal(proposalToArchive.id)
+        if (res.success) {
+            setProposals(prev => prev.map(p => p.id === proposalToArchive.id ? { ...p, is_archived: true } : p))
+            toast.success('Proposta arquivada com sucesso!')
+            setProposalToArchive(null)
+        } else {
+            toast.error('Erro ao arquivar proposta: ' + res.error)
+        }
+        setArchiving(false)
     }
 
     const [downloadingId, setDownloadingId] = useState<string | null>(null)
@@ -371,6 +434,48 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         }
     }
 
+    const handleSendWhatsAppNotification = async (proposal: ProposalItem, type: 'proposta' | 'venda') => {
+        if (!waInstance) {
+            toast.error('Nenhuma instância de WhatsApp ativa ou conectada encontrada nas configurações de integração.')
+            return
+        }
+
+        setWaLoading(true)
+        const toastId = toast.loading('Enviando notificação de WhatsApp...')
+        try {
+            const supabase = createClient()
+            
+            // Buscar JID do grupo nas configurações do tenant (tabela tenants.branding ou campo equivalente)
+            const { data: tenant } = await supabase
+                .from('tenants')
+                .select('branding')
+                .eq('id', tenantId)
+                .single()
+
+            const groupJid = tenant?.branding?.whatsapp_group_jid
+
+            if (!groupJid) {
+                toast.error('Por favor, configure o ID do Grupo de WhatsApp nas Configurações da Empresa.', { id: toastId })
+                setWaLoading(false)
+                return
+            }
+
+            const property = proposal.property || proposal.lead?.properties
+            const propertyName = property?.title || proposal.lead?.property_interest || 'Imóvel sem descrição'
+
+            const emoji = type === 'proposta' ? '📝 Proposta' : '🎉 Venda'
+            const message = `- ${emoji} ${propertyName}`
+
+            await evolutionService.sendMessage(waInstance.instance_name, groupJid, message)
+            toast.success('Notificação de WhatsApp enviada para o grupo!', { id: toastId })
+        } catch (error: any) {
+            console.error('Erro ao enviar WhatsApp:', error)
+            toast.error('Falha ao enviar notificação de WhatsApp: ' + error.message, { id: toastId })
+        } finally {
+            setWaLoading(false)
+        }
+    }
+
     const activeProposals = proposals.filter(p => !p.is_archived)
 
     if (loading) {
@@ -400,32 +505,31 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             {/* Formulário de Nova Proposta */}
             {showNewForm && (
                 <div className="bg-white dark:bg-muted/10 p-5 rounded-lg border border-border/40 space-y-4 animate-in fade-in slide-in-from-top-2 duration-200">
-                    <div className="flex items-center justify-between">
-                        <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">
-                            {isEditing ? 'Editar Proposta' : 'Nova Proposta'}
-                        </h4>
+                    <div className="flex items-center justify-end">
                         <button onClick={resetForm} className="p-1 hover:bg-muted rounded-md transition-colors">
                             <X size={14} className="text-muted-foreground" />
                         </button>
                     </div>
 
-                    {/* Seletor de Lead/Imóvel + Valor cadastrado */}
-                    <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                        <div className="md:col-span-2">
-                            <FormSelect
-                                label="Lead / Imóvel de Interesse"
-                                value={selectedLeadId}
-                                disabled={isEditing}
-                                onChange={e => setSelectedLeadId(e.target.value)}
-                                options={[
-                                    { value: '', label: 'Selecione o lead...' },
-                                    ...clientLeads.map((lead: any) => ({
-                                        value: lead.id,
-                                        label: lead.property_interest || lead.properties?.title || lead.source || `Lead ${new Date(lead.created_at).toLocaleDateString('pt-BR')}`
-                                    }))
-                                ]}
-                            />
-                        </div>
+                    {/* Seletor de Lead/Imóvel */}
+                    <div className="grid grid-cols-1 gap-3">
+                        <FormSelect
+                            label="Lead / Imóvel de Interesse"
+                            value={selectedLeadId}
+                            disabled={isEditing}
+                            onChange={e => setSelectedLeadId(e.target.value)}
+                            options={[
+                                { value: '', label: 'Selecione o lead...' },
+                                ...clientLeads.map((lead: any) => ({
+                                    value: lead.id,
+                                    label: lead.property_interest || lead.properties?.title || lead.source || `Lead ${new Date(lead.created_at).toLocaleDateString('pt-BR')}`
+                                }))
+                            ]}
+                        />
+                    </div>
+
+                    {/* Condições e Valor Cadastrado */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                         <div>
                             <FormInput
                                 label="Valor Cadastrado (R$)"
@@ -440,44 +544,30 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                 placeholder="—"
                             />
                         </div>
-                    </div>
-
-                    {/* Seletor de Modelo de Ficha (Template) */}
-                    <div className="grid grid-cols-1 gap-3">
-                        <FormSelect
-                            label="Modelo de Ficha de Proposta"
-                            value={selectedTemplateId}
-                            onChange={e => handleTemplateChange(e.target.value)}
-                            options={[
-                                { value: '', label: 'Ficha Simples (Sem Modelo)' },
-                                ...templates.map((t: any) => ({
-                                    value: t.id,
-                                    label: t.name
-                                }))
-                            ]}
-                        />
-                    </div>
-
-                    {/* Condições */}
-                    <div className="grid grid-cols-3 gap-3">
-                        <FormInput
-                            label="Valor Total (R$)"
-                            value={formData.value}
-                            onChange={e => setFormData({ ...formData, value: formatCurrencyBRL(e.target.value) })}
-                            placeholder="0,00"
-                        />
-                        <FormInput
-                            label="Sinal/Entrada"
-                            value={formData.down_payment}
-                            onChange={e => setFormData({ ...formData, down_payment: formatCurrencyBRL(e.target.value) })}
-                            placeholder="0,00"
-                        />
-                        <FormInput
-                            label="Saldo Financiado"
-                            value={formData.financing}
-                            onChange={e => setFormData({ ...formData, financing: formatCurrencyBRL(e.target.value) })}
-                            placeholder="0,00"
-                        />
+                        <div>
+                            <FormInput
+                                label="Valor Total (R$)"
+                                value={formData.value}
+                                onChange={e => setFormData({ ...formData, value: formatCurrencyBRL(e.target.value) })}
+                                placeholder="0,00"
+                            />
+                        </div>
+                        <div>
+                            <FormInput
+                                label="Sinal/Entrada"
+                                value={formData.down_payment}
+                                onChange={e => setFormData({ ...formData, down_payment: formatCurrencyBRL(e.target.value) })}
+                                placeholder="0,00"
+                            />
+                        </div>
+                        <div>
+                            <FormInput
+                                label="Saldo Financiado"
+                                value={formData.financing}
+                                onChange={e => setFormData({ ...formData, financing: formatCurrencyBRL(e.target.value) })}
+                                placeholder="0,00"
+                            />
+                        </div>
                     </div>
 
                     <FormInput
@@ -501,6 +591,22 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                         rows={2}
                         placeholder="Detalhes específicos..."
                     />
+
+                    {/* Modelo de Ficha de Proposta (Abaixo do separador após Observações) */}
+                    <div className="pt-4 border-t border-border/30">
+                        <FormSelect
+                            label="Modelo de Ficha de Proposta"
+                            value={selectedTemplateId}
+                            onChange={e => handleTemplateChange(e.target.value)}
+                            options={[
+                                { value: '', label: 'Ficha Simples (Sem Modelo)' },
+                                ...templates.map((t: any) => ({
+                                    value: t.id,
+                                    label: t.name
+                                }))
+                            ]}
+                        />
+                    </div>
 
                     {/* Campos dinâmicos do modelo de proposta */}
                     {selectedTemplateId && (
@@ -552,7 +658,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                 </colgroup>
                                 <thead className="bg-gray-200 dark:bg-muted/50 border-b border-muted-foreground/30">
                                     <tr>
-                                        <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-left whitespace-nowrap">Imóvel</th>
+                                        <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Imóvel</th>
                                         <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Valor tabela</th>
                                         <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Valor proposto</th>
                                         <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Criado em</th>
@@ -586,7 +692,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                     onClick={() => setExpandedId(isExpanded ? null : proposal.id)}
                                                     className="hover:bg-muted/50 transition-colors cursor-pointer group"
                                                 >
-                                                    <td className="px-4 py-5 text-sm font-bold text-foreground truncate text-left">
+                                                    <td className="px-4 py-5 text-sm font-bold text-foreground truncate text-center">
                                                         <div className="flex flex-col min-w-0">
                                                             <span className="truncate">{propertyName}</span>
                                                             {property?.address_city && (
@@ -616,26 +722,31 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                         {new Date(proposal.updated_at).toLocaleDateString('pt-BR')}
                                                     </td>
                                                     <td className="px-4 py-5 text-center" onClick={e => e.stopPropagation()}>
-                                                        <div className="inline-block relative">
-                                                            <select
-                                                                value={proposal.status}
-                                                                onChange={e => handleStatusChange(proposal.id, e.target.value)}
-                                                                className={`appearance-none text-[10px] font-bold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none ${getStatusBadge(proposal.status)}`}
-                                                            >
-                                                                {STATUS_OPTIONS.map(opt => (
-                                                                    <option key={opt.value} value={opt.value}>{opt.label}</option>
-                                                                ))}
-                                                            </select>
+                                                        <div className="flex justify-center items-center">
+                                                            <div className="inline-block relative">
+                                                                <select
+                                                                    value={proposal.status}
+                                                                    onChange={e => handleStatusChange(proposal.id, e.target.value)}
+                                                                    className={`appearance-none text-[10px] font-bold px-2.5 py-1 rounded-full border-0 cursor-pointer focus:outline-none text-center ${getStatusBadge(proposal.status)}`}
+                                                                >
+                                                                    {STATUS_OPTIONS.map(opt => (
+                                                                        <option key={opt.value} value={opt.value}>{opt.label}</option>
+                                                                    ))}
+                                                                </select>
+                                                            </div>
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-5 text-center" onClick={e => e.stopPropagation()}>
                                                         <ClientProposalActionsDropdown
                                                             onEdit={() => handleStartEdit(proposal)}
-                                                            onArchive={() => handleArchive(proposal.id)}
-                                                            onDelete={() => handleDelete(proposal.id)}
+                                                            onArchive={() => handleStartArchive(proposal)}
+                                                            onDelete={() => handleStartDelete(proposal)}
                                                             onDownloadPDF={() => handleDownloadPDF(proposal.id)}
                                                             hasTemplate={!!proposal.template_id}
                                                             downloading={downloadingId === proposal.id}
+                                                            onSendWhatsAppProposal={() => handleSendWhatsAppNotification(proposal, 'proposta')}
+                                                            onSendWhatsAppSale={() => handleSendWhatsAppNotification(proposal, 'venda')}
+                                                            waConnected={!!waInstance}
                                                         />
                                                     </td>
                                                 </tr>
@@ -724,6 +835,149 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                         </div>
                     </div>
                 )
+            )}
+            {/* Modal de Confirmação de Exclusão */}
+            {proposalToDelete && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setProposalToDelete(null)}>
+                    <div className="bg-card border border-border rounded-lg shadow-2xl w-full max-w-md mx-4 animate-in fade-in zoom-in-95 duration-200 relative text-left" onClick={(e) => e.stopPropagation()}>
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-border/40">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-red-500/10 rounded-lg">
+                                    <Trash2 size={20} className="text-red-500" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-foreground">Excluir Proposta</h3>
+                                    <p className="text-xs text-muted-foreground">Esta ação não poderá ser desfeita</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setProposalToDelete(null)}
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-3">
+                            <p className="text-sm text-foreground">
+                                Tem certeza de que deseja excluir permanentemente esta proposta?
+                            </p>
+                            <div className="bg-muted/30 border border-border/40 rounded-lg p-3 space-y-1.5 text-xs text-muted-foreground">
+                                <div>
+                                    <span className="font-bold text-foreground">Imóvel:</span>{' '}
+                                    <span>
+                                        {proposalToDelete.property?.title || proposalToDelete.lead?.property_interest || 'Imóvel não especificado'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="font-bold text-foreground">Valor Proposto:</span>{' '}
+                                    <span>
+                                        R$ {proposalToDelete.value ? parseFloat(proposalToDelete.value.toString()).toLocaleString('pt-BR') : '0'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex gap-3 p-6 pt-0">
+                            <button
+                                onClick={() => setProposalToDelete(null)}
+                                disabled={deleting}
+                                className="flex-1 px-4 py-2.5 rounded-lg border border-border text-foreground font-bold text-sm hover:bg-muted/50 transition-colors disabled:opacity-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmDelete}
+                                disabled={deleting}
+                                className="flex-1 px-4 py-2.5 rounded-lg bg-red-500 text-white font-bold text-sm hover:bg-red-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                            >
+                                {deleting ? (
+                                    <>
+                                        <Loader2 size={14} className="animate-spin" />
+                                        <span>Excluindo...</span>
+                                    </>
+                                ) : (
+                                    <span>Excluir Proposta</span>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            )}
+
+            {/* Modal de Confirmação de Arquivamento */}
+            {proposalToArchive && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-200" onClick={() => setProposalToArchive(null)}>
+                    <div className="bg-card border border-border rounded-lg shadow-2xl w-full max-w-md mx-4 animate-in fade-in zoom-in-95 duration-200 relative text-left" onClick={(e) => e.stopPropagation()}>
+                        {/* Header */}
+                        <div className="flex items-center justify-between p-6 border-b border-border/40">
+                            <div className="flex items-center gap-3">
+                                <div className="p-2.5 bg-amber-500/10 rounded-lg">
+                                    <Archive size={20} className="text-amber-500" />
+                                </div>
+                                <div>
+                                    <h3 className="font-bold text-foreground">Arquivar Proposta</h3>
+                                    <p className="text-xs text-muted-foreground">Ela será movida para o arquivo</p>
+                                </div>
+                            </div>
+                            <button
+                                onClick={() => setProposalToArchive(null)}
+                                className="p-1.5 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                            >
+                                <X size={18} />
+                            </button>
+                        </div>
+
+                        {/* Body */}
+                        <div className="p-6 space-y-3">
+                            <p className="text-sm text-foreground">
+                                Tem certeza de que deseja arquivar esta proposta? Ela sairá da sua lista ativa de propostas do cliente.
+                            </p>
+                            <div className="bg-muted/30 border border-border/40 rounded-lg p-3 space-y-1.5 text-xs text-muted-foreground">
+                                <div>
+                                    <span className="font-bold text-foreground">Imóvel:</span>{' '}
+                                    <span>
+                                        {proposalToArchive.property?.title || proposalToArchive.lead?.property_interest || 'Imóvel não especificado'}
+                                    </span>
+                                </div>
+                                <div>
+                                    <span className="font-bold text-foreground">Valor Proposto:</span>{' '}
+                                    <span>
+                                        R$ {proposalToArchive.value ? parseFloat(proposalToArchive.value.toString()).toLocaleString('pt-BR') : '0'}
+                                    </span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Footer */}
+                        <div className="flex gap-3 p-6 pt-0">
+                            <button
+                                onClick={() => setProposalToArchive(null)}
+                                disabled={archiving}
+                                className="flex-1 px-4 py-2.5 rounded-lg border border-border text-foreground font-bold text-sm hover:bg-muted/50 transition-colors disabled:opacity-50"
+                            >
+                                Cancelar
+                            </button>
+                            <button
+                                onClick={confirmArchive}
+                                disabled={archiving}
+                                className="flex-1 px-4 py-2.5 rounded-lg bg-amber-500 text-white font-bold text-sm hover:bg-amber-600 transition-colors disabled:opacity-50 flex items-center justify-center gap-1.5"
+                            >
+                                {archiving ? (
+                                    <>
+                                        <Loader2 size={14} className="animate-spin" />
+                                        <span>Arquivando...</span>
+                                    </>
+                                ) : (
+                                    <span>Arquivar Proposta</span>
+                                )}
+                            </button>
+                        </div>
+                    </div>
+                </div>
             )}
         </div>
     )

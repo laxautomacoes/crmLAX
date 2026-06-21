@@ -2,10 +2,8 @@
 
 import { useState, useEffect } from 'react';
 import { getLeadDocuments, createLeadDocument, deleteLeadDocument, updateLeadDocumentStatus, sendToDocuSign } from '@/app/_actions/documents';
-import { getWhatsAppInstance } from '@/app/_actions/whatsapp';
-import { evolutionService } from '@/lib/evolution';
 import { createClient } from '@/lib/supabase/client';
-import { FileText, Upload, Trash2, Loader2, CheckCircle2, XCircle, Send, MessageSquare, AlertCircle } from 'lucide-react';
+import { FileText, Upload, Trash2, Loader2, CheckCircle2, XCircle, AlertCircle } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface LeadDocument {
@@ -42,10 +40,7 @@ export function LeadDocumentsTab({ leadId, tenantId, leadName, propertyInterest,
     const [sendingDocuSign, setSendingDocuSign] = useState<string | null>(null);
     const [docType, setDocType] = useState('identidade');
     
-    // Configurações do WhatsApp
-    const [waInstance, setWaInstance] = useState<any>(null);
-    const [sendToWa, setSendToWa] = useState(true);
-    const [waLoading, setWaLoading] = useState(false);
+
 
     const isAdmin = ['admin', 'superadmin', 'super_admin'].includes(userRole.toLowerCase());
 
@@ -58,16 +53,8 @@ export function LeadDocumentsTab({ leadId, tenantId, leadName, propertyInterest,
         setLoading(false);
     };
 
-    const loadWhatsApp = async () => {
-        const res = await getWhatsAppInstance();
-        if (res?.data && res.data.status === 'connected') {
-            setWaInstance(res.data);
-        }
-    };
-
     useEffect(() => {
         loadDocuments();
-        loadWhatsApp();
     }, [leadId]);
 
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -150,75 +137,10 @@ export function LeadDocumentsTab({ leadId, tenantId, leadName, propertyInterest,
         setSendingDocuSign(null);
     };
 
-    // 4. Lógica de Envio de WhatsApp (Notificação Enxuta)
-    const handleSendWhatsAppNotification = async (type: 'proposta' | 'venda') => {
-        if (!waInstance) {
-            toast.error('Nenhuma instância de WhatsApp ativa ou conectada encontrada nas configurações de integração.');
-            return;
-        }
 
-        setWaLoading(true);
-        try {
-            const supabase = createClient();
-            
-            // Buscar JID do grupo nas configurações do tenant (tabela tenants.branding ou campo equivalente)
-            const { data: tenant } = await supabase
-                .from('tenants')
-                .select('branding')
-                .eq('id', tenantId)
-                .single();
-
-            const groupJid = tenant?.branding?.whatsapp_group_jid;
-
-            if (!groupJid) {
-                toast.error('Por favor, configure o ID do Grupo de WhatsApp nas Configurações da Empresa.');
-                setWaLoading(false);
-                return;
-            }
-
-            // Ex: "- Proposta 101 Torre 2 Jardim Nascente"
-            const emoji = type === 'proposta' ? '📝 Proposta' : '🎉 Venda';
-            const message = `- ${emoji} ${propertyInterest || 'Imóvel sem descrição'}`;
-
-            await evolutionService.sendMessage(waInstance.instance_name, groupJid, message);
-            toast.success('Notificação de WhatsApp enviada para o grupo!');
-        } catch (error: any) {
-            console.error('Erro ao enviar WhatsApp:', error);
-            toast.error('Falha ao enviar notificação de WhatsApp: ' + error.message);
-        } finally {
-            setWaLoading(false);
-        }
-    };
 
     return (
         <div className="space-y-5">
-            {/* Lançamento e Notificação Rápida */}
-            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card dark:bg-muted/10 border border-border/40 rounded-xl p-4 gap-4">
-                <div className="space-y-1">
-                    <h4 className="text-xs font-bold text-foreground uppercase tracking-wider">Ações do WhatsApp</h4>
-                    <p className="text-[10px] text-muted-foreground leading-normal">
-                        Dispare notificações simplificadas sobre propostas e vendas direto para o grupo da imobiliária.
-                    </p>
-                </div>
-                <div className="flex gap-2">
-                    <button
-                        onClick={() => handleSendWhatsAppNotification('proposta')}
-                        disabled={waLoading || !waInstance}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-[#404F4F]/5 dark:bg-muted text-[#404F4F] dark:text-foreground hover:bg-[#404F4F]/10 dark:hover:bg-muted/80 rounded-lg transition-all disabled:opacity-50 shrink-0"
-                    >
-                        <MessageSquare size={13} className="shrink-0" />
-                        <span className="whitespace-nowrap">Avisar Proposta</span>
-                    </button>
-                    <button
-                        onClick={() => handleSendWhatsAppNotification('venda')}
-                        disabled={waLoading || !waInstance}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all disabled:opacity-50 shrink-0"
-                    >
-                        <Send size={13} className="shrink-0" />
-                        <span className="whitespace-nowrap">Avisar Venda</span>
-                    </button>
-                </div>
-            </div>
 
             {/* Grid principal */}
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">

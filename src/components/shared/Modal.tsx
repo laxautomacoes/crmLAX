@@ -45,7 +45,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
 
     return (
         <div className={`fixed inset-0 z-[100] flex ${align === 'top' ? 'items-start pt-8 md:pt-12' : 'items-center'} justify-center bg-black/50 backdrop-blur-sm p-4`} onClick={onClose}>
-            <div onClick={(e) => e.stopPropagation()} className={`bg-card shadow-xl w-full ${sizeClasses[size]} ${fullHeight ? 'h-[95vh] md:h-[90vh]' : 'max-h-[95vh] md:max-h-[90vh]'} flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative ${className?.includes('rounded') ? '' : 'rounded-xl'} ${className || ''}`}>
+            <div onClick={(e) => e.stopPropagation()} className={`bg-card shadow-xl w-full ${sizeClasses[size]} ${fullHeight ? 'h-[95vh] md:h-[90vh]' : 'max-h-[95vh] md:max-h-[90vh]'} flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative ${className?.includes('rounded') ? '' : 'rounded-lg'} ${className || ''}`}>
                 {title ? (
                     <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border shrink-0 gap-3 md:gap-4">
                         <div className={`flex-1 min-w-0 ${titleClassName || ''}`}>

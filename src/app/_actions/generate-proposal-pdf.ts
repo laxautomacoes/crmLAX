@@ -52,6 +52,10 @@ export async function generateProposalPdf(proposalId: string) {
 
     // 2. Construir descrição detalhada do imóvel
     const prop = proposal.property || proposal.lead?.property
+    if (prop) {
+      prop.address_city = prop.details?.endereco?.cidade || prop.address_city
+      prop.address_state = prop.details?.endereco?.estado || prop.address_state
+    }
     let imovelDescricao = ''
     if (prop) {
       const details = prop.details || {}

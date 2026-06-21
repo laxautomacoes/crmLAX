@@ -113,7 +113,7 @@ export function Autocomplete({
                 )}
 
                 {isOpen && !selectedItem && searchTerm.length >= 2 && (
-                    <div className="absolute top-full left-0 w-full mt-1 bg-popover border border-border rounded-xl shadow-xl z-50 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
+                    <div className="absolute top-full left-0 w-full mt-1 bg-popover border border-border rounded-lg shadow-xl z-50 py-1 max-h-60 overflow-y-auto animate-in fade-in slide-in-from-top-2 duration-200">
                         {isLoading ? (
                             <div className="px-4 py-3 text-xs text-muted-foreground flex items-center gap-2 font-medium italic">
                                 <Loader2 size={12} className="animate-spin" />

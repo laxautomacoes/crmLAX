@@ -383,25 +383,59 @@ export type Database = {
           address_zip_code: string | null
           avatar_url: string | null
           birth_date: string | null
+          com_address_city: string | null
+          com_address_complement: string | null
+          com_address_neighborhood: string | null
+          com_address_number: string | null
+          com_address_same: boolean | null
+          com_address_state: string | null
+          com_address_street: string | null
+          com_address_zip_code: string | null
           contact_type: string[] | null
           cpf: string | null
           created_at: string | null
           documents: Json | null
           email: string | null
+          father_name: string | null
+          favorite_team: string | null
           id: string
           images: Json | null
+          instagram: string | null
           is_archived: boolean | null
           is_owner_only: boolean
+          issuing_agency: string | null
+          linkedin: string | null
           marital_status: string | null
+          marriage_date: string | null
+          mother_name: string | null
           name: string
+          nationality: string | null
+          naturalness: string | null
           notes: string | null
           phone: string | null
+          profession: string | null
           property_regime: string | null
+          rg_cnh: string | null
+          rg_cnh_date: string | null
           spouse_birth_date: string | null
           spouse_cpf: string | null
           spouse_email: string | null
+          spouse_father_name: string | null
+          spouse_favorite_team: string | null
+          spouse_instagram: string | null
+          spouse_issuing_agency: string | null
+          spouse_linkedin: string | null
+          spouse_marital_status: string | null
+          spouse_marriage_date: string | null
+          spouse_mother_name: string | null
           spouse_name: string | null
+          spouse_nationality: string | null
+          spouse_naturalness: string | null
           spouse_phone: string | null
+          spouse_profession: string | null
+          spouse_property_regime: string | null
+          spouse_rg_cnh: string | null
+          spouse_rg_cnh_date: string | null
           tags: Json | null
           tenant_id: string | null
           videos: Json | null
@@ -416,25 +450,59 @@ export type Database = {
           address_zip_code?: string | null
           avatar_url?: string | null
           birth_date?: string | null
+          com_address_city?: string | null
+          com_address_complement?: string | null
+          com_address_neighborhood?: string | null
+          com_address_number?: string | null
+          com_address_same?: boolean | null
+          com_address_state?: string | null
+          com_address_street?: string | null
+          com_address_zip_code?: string | null
           contact_type?: string[] | null
           cpf?: string | null
           created_at?: string | null
           documents?: Json | null
           email?: string | null
+          father_name?: string | null
+          favorite_team?: string | null
           id?: string
           images?: Json | null
+          instagram?: string | null
           is_archived?: boolean | null
           is_owner_only?: boolean
+          issuing_agency?: string | null
+          linkedin?: string | null
           marital_status?: string | null
+          marriage_date?: string | null
+          mother_name?: string | null
           name: string
+          nationality?: string | null
+          naturalness?: string | null
           notes?: string | null
           phone?: string | null
+          profession?: string | null
           property_regime?: string | null
+          rg_cnh?: string | null
+          rg_cnh_date?: string | null
           spouse_birth_date?: string | null
           spouse_cpf?: string | null
           spouse_email?: string | null
+          spouse_father_name?: string | null
+          spouse_favorite_team?: string | null
+          spouse_instagram?: string | null
+          spouse_issuing_agency?: string | null
+          spouse_linkedin?: string | null
+          spouse_marital_status?: string | null
+          spouse_marriage_date?: string | null
+          spouse_mother_name?: string | null
           spouse_name?: string | null
+          spouse_nationality?: string | null
+          spouse_naturalness?: string | null
           spouse_phone?: string | null
+          spouse_profession?: string | null
+          spouse_property_regime?: string | null
+          spouse_rg_cnh?: string | null
+          spouse_rg_cnh_date?: string | null
           tags?: Json | null
           tenant_id?: string | null
           videos?: Json | null
@@ -449,25 +517,59 @@ export type Database = {
           address_zip_code?: string | null
           avatar_url?: string | null
           birth_date?: string | null
+          com_address_city?: string | null
+          com_address_complement?: string | null
+          com_address_neighborhood?: string | null
+          com_address_number?: string | null
+          com_address_same?: boolean | null
+          com_address_state?: string | null
+          com_address_street?: string | null
+          com_address_zip_code?: string | null
           contact_type?: string[] | null
           cpf?: string | null
           created_at?: string | null
           documents?: Json | null
           email?: string | null
+          father_name?: string | null
+          favorite_team?: string | null
           id?: string
           images?: Json | null
+          instagram?: string | null
           is_archived?: boolean | null
           is_owner_only?: boolean
+          issuing_agency?: string | null
+          linkedin?: string | null
           marital_status?: string | null
+          marriage_date?: string | null
+          mother_name?: string | null
           name?: string
+          nationality?: string | null
+          naturalness?: string | null
           notes?: string | null
           phone?: string | null
+          profession?: string | null
           property_regime?: string | null
+          rg_cnh?: string | null
+          rg_cnh_date?: string | null
           spouse_birth_date?: string | null
           spouse_cpf?: string | null
           spouse_email?: string | null
+          spouse_father_name?: string | null
+          spouse_favorite_team?: string | null
+          spouse_instagram?: string | null
+          spouse_issuing_agency?: string | null
+          spouse_linkedin?: string | null
+          spouse_marital_status?: string | null
+          spouse_marriage_date?: string | null
+          spouse_mother_name?: string | null
           spouse_name?: string | null
+          spouse_nationality?: string | null
+          spouse_naturalness?: string | null
           spouse_phone?: string | null
+          spouse_profession?: string | null
+          spouse_property_regime?: string | null
+          spouse_rg_cnh?: string | null
+          spouse_rg_cnh_date?: string | null
           tags?: Json | null
           tenant_id?: string | null
           videos?: Json | null

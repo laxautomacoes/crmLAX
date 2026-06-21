@@ -26,8 +26,8 @@ export function ClientListItem({
 }: ClientListItemProps) {
     return (
         <tr className="hover:bg-muted/50 transition-colors cursor-pointer group" onClick={onClickClient}>
-            <td className="px-4 py-5 text-center">
-                <div className="flex items-center justify-center gap-3">
+            <td className="px-4 py-5 text-left">
+                <div className="flex items-center justify-start gap-3">
                     <div className="w-8 h-8 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10">
                         {client.avatar_url ? (
                             <img src={client.avatar_url} alt={client.name} className="w-full h-full object-cover" />

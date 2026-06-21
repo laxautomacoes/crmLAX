@@ -15,8 +15,8 @@ import { analyzeLeadProbability } from '@/app/_actions/ai-analysis'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
-    User, Filter, Sparkles, MessageSquare, Search, Loader2,
-    ChevronDown, MapPin, FileText, Image as ImageIcon, Video, DollarSign
+    User, Filter, Sparkles, MessageCircle, Search, Loader2,
+    ChevronDown, MapPin, FileText, Image as ImageIcon, Video, DollarSign, Pen
 } from 'lucide-react'
 import { ClientProposalsTab } from './ClientProposalsTab'
 import { LeadDocumentsTab } from '@/components/dashboard/leads/LeadDocumentsTab'
@@ -50,6 +50,9 @@ export function ClientModal({
     const [searchResults, setSearchResults] = useState<ViaCEPResponse[]>([])
     const [showResults, setShowResults] = useState(false)
     const resultsRef = useRef<HTMLDivElement>(null)
+    const [comSearchResults, setComSearchResults] = useState<ViaCEPResponse[]>([])
+    const [showComResults, setShowComResults] = useState(false)
+    const comResultsRef = useRef<HTMLDivElement>(null)
 
     // Sincronizar quando vem de fora (ex: LeadModal → Fazer Proposta)
     useEffect(() => {
@@ -75,6 +78,14 @@ export function ClientModal({
         address_city: '',
         address_state: '',
         address_zip_code: '',
+        com_address_street: '',
+        com_address_number: '',
+        com_address_complement: '',
+        com_address_neighborhood: '',
+        com_address_city: '',
+        com_address_state: '',
+        com_address_zip_code: '',
+        com_address_same: false,
         marital_status: '',
         birth_date: '',
         contact_type: [] as string[],
@@ -84,6 +95,32 @@ export function ClientModal({
         spouse_phone: '',
         spouse_cpf: '',
         spouse_birth_date: '',
+        spouse_instagram: '',
+        spouse_linkedin: '',
+        spouse_rg_cnh: '',
+        spouse_rg_cnh_date: '',
+        spouse_issuing_agency: '',
+        spouse_profession: '',
+        spouse_naturalness: '',
+        spouse_nationality: '',
+        spouse_favorite_team: '',
+        spouse_marital_status: '',
+        spouse_property_regime: '',
+        spouse_marriage_date: '',
+        spouse_father_name: '',
+        spouse_mother_name: '',
+        marriage_date: '',
+        rg_cnh: '',
+        rg_cnh_date: '',
+        issuing_agency: '',
+        profession: '',
+        naturalness: '',
+        nationality: '',
+        father_name: '',
+        mother_name: '',
+        instagram: '',
+        linkedin: '',
+        favorite_team: '',
         notes: '',
         images: [] as string[],
         videos: [] as string[],
@@ -108,6 +145,14 @@ export function ClientModal({
                 address_city: editingClient.address_city || '',
                 address_state: editingClient.address_state || '',
                 address_zip_code: editingClient.address_zip_code || '',
+                com_address_street: editingClient.com_address_street || '',
+                com_address_number: editingClient.com_address_number || '',
+                com_address_complement: editingClient.com_address_complement || '',
+                com_address_neighborhood: editingClient.com_address_neighborhood || '',
+                com_address_city: editingClient.com_address_city || '',
+                com_address_state: editingClient.com_address_state || '',
+                com_address_zip_code: editingClient.com_address_zip_code || '',
+                com_address_same: editingClient.com_address_same || false,
                 marital_status: editingClient.marital_status || '',
                 birth_date: editingClient.birth_date || '',
                 contact_type: editingClient.contact_type || [],
@@ -117,6 +162,32 @@ export function ClientModal({
                 spouse_phone: editingClient.spouse_phone ? formatPhone(editingClient.spouse_phone) : '',
                 spouse_cpf: editingClient.spouse_cpf || '',
                 spouse_birth_date: editingClient.spouse_birth_date || '',
+                spouse_instagram: editingClient.spouse_instagram || '',
+                spouse_linkedin: editingClient.spouse_linkedin || '',
+                spouse_rg_cnh: editingClient.spouse_rg_cnh || '',
+                spouse_rg_cnh_date: editingClient.spouse_rg_cnh_date || '',
+                spouse_issuing_agency: editingClient.spouse_issuing_agency || '',
+                spouse_profession: editingClient.spouse_profession || '',
+                spouse_naturalness: editingClient.spouse_naturalness || '',
+                spouse_nationality: editingClient.spouse_nationality || '',
+                spouse_favorite_team: editingClient.spouse_favorite_team || '',
+                spouse_marital_status: editingClient.spouse_marital_status || '',
+                spouse_property_regime: editingClient.spouse_property_regime || '',
+                spouse_marriage_date: editingClient.spouse_marriage_date || '',
+                spouse_father_name: editingClient.spouse_father_name || '',
+                spouse_mother_name: editingClient.spouse_mother_name || '',
+                marriage_date: editingClient.marriage_date || '',
+                rg_cnh: editingClient.rg_cnh || '',
+                rg_cnh_date: editingClient.rg_cnh_date || '',
+                issuing_agency: editingClient.issuing_agency || '',
+                profession: editingClient.profession || '',
+                naturalness: editingClient.naturalness || '',
+                nationality: editingClient.nationality || '',
+                father_name: editingClient.father_name || '',
+                mother_name: editingClient.mother_name || '',
+                instagram: editingClient.instagram || '',
+                linkedin: editingClient.linkedin || '',
+                favorite_team: editingClient.favorite_team || '',
                 notes: editingClient.notes || '',
                 images: editingClient.images || [],
                 videos: editingClient.videos || [],
@@ -137,6 +208,14 @@ export function ClientModal({
                 address_city: '',
                 address_state: '',
                 address_zip_code: '',
+                com_address_street: '',
+                com_address_number: '',
+                com_address_complement: '',
+                com_address_neighborhood: '',
+                com_address_city: '',
+                com_address_state: '',
+                com_address_zip_code: '',
+                com_address_same: false,
                 marital_status: '',
                 birth_date: '',
                 contact_type: [],
@@ -146,6 +225,32 @@ export function ClientModal({
                 spouse_phone: '',
                 spouse_cpf: '',
                 spouse_birth_date: '',
+                spouse_instagram: '',
+                spouse_linkedin: '',
+                spouse_rg_cnh: '',
+                spouse_rg_cnh_date: '',
+                spouse_issuing_agency: '',
+                spouse_profession: '',
+                spouse_naturalness: '',
+                spouse_nationality: '',
+                spouse_favorite_team: '',
+                spouse_marital_status: '',
+                spouse_property_regime: '',
+                spouse_marriage_date: '',
+                spouse_father_name: '',
+                spouse_mother_name: '',
+                marriage_date: '',
+                rg_cnh: '',
+                rg_cnh_date: '',
+                issuing_agency: '',
+                profession: '',
+                naturalness: '',
+                nationality: '',
+                father_name: '',
+                mother_name: '',
+                instagram: '',
+                linkedin: '',
+                favorite_team: '',
                 notes: '',
                 images: [],
                 videos: [],
@@ -164,6 +269,9 @@ export function ClientModal({
         function handleClickOutside(event: MouseEvent) {
             if (resultsRef.current && !resultsRef.current.contains(event.target as Node)) {
                 setShowResults(false)
+            }
+            if (comResultsRef.current && !comResultsRef.current.contains(event.target as Node)) {
+                setShowComResults(false)
             }
         }
         document.addEventListener('mousedown', handleClickOutside)
@@ -267,6 +375,157 @@ export function ClientModal({
         setShowResults(false)
     }
 
+    const handleComCepChange = async (cep: string) => {
+        const formattedCep = formatCEP(cep)
+        const digitsOnly = formattedCep.replace(/\D/g, '')
+
+        if (digitsOnly.length < 8) {
+            setFormData(prev => ({
+                ...prev,
+                com_address_zip_code: formattedCep,
+                com_address_street: '',
+                com_address_neighborhood: '',
+                com_address_city: '',
+                com_address_state: '',
+                com_address_complement: '',
+                com_address_number: ''
+            }))
+        } else {
+            setFormData(prev => ({ ...prev, com_address_zip_code: formattedCep }))
+        }
+
+        if (digitsOnly.length === 8) {
+            setCepLoading(true)
+            try {
+                const address = await fetchAddressByCep(formattedCep)
+                if (address) {
+                    setFormData(prev => ({
+                        ...prev,
+                        com_address_street: address.logradouro || prev.com_address_street,
+                        com_address_neighborhood: address.bairro || prev.com_address_neighborhood,
+                        com_address_city: address.localidade || prev.com_address_city,
+                        com_address_state: address.uf || prev.com_address_state,
+                        com_address_zip_code: formattedCep
+                    }))
+                }
+            } finally {
+                setCepLoading(false)
+            }
+        }
+    }
+
+    const handleComSearchAddress = async () => {
+        const { com_address_street: rua, com_address_city: cidade, com_address_state: estado } = formData
+
+        if (!estado || estado.length !== 2) {
+            toast.error('Informe o estado (UF) com 2 letras')
+            return
+        }
+        if (!cidade || cidade.length < 3) {
+            toast.error('Informe a cidade (mínimo 3 letras)')
+            return
+        }
+        if (!rua || rua.length < 3) {
+            toast.error('Informe a rua (mínimo 3 letras)')
+            return
+        }
+
+        setCepLoading(true)
+        try {
+            const results = await fetchCepByAddress(estado, cidade, rua)
+            setComSearchResults(results)
+            setShowComResults(true)
+            if (results.length === 0) {
+                toast.error('Nenhum CEP encontrado para este endereço')
+            }
+        } catch (error) {
+            console.error('Error searching address:', error)
+            toast.error('Erro ao buscar endereço')
+        } finally {
+            setCepLoading(false)
+        }
+    }
+
+    const selectComAddress = (address: ViaCEPResponse) => {
+        setFormData(prev => ({
+            ...prev,
+            com_address_street: address.logradouro,
+            com_address_neighborhood: address.bairro,
+            com_address_city: address.localidade,
+            com_address_state: address.uf,
+            com_address_zip_code: formatCEP(address.cep)
+        }))
+        setShowComResults(false)
+    }
+
+    const handleComAddressSameChange = (checked: boolean) => {
+        setFormData(prev => {
+            if (checked) {
+                return {
+                    ...prev,
+                    com_address_same: true,
+                    com_address_street: prev.address_street,
+                    com_address_number: prev.address_number,
+                    com_address_complement: prev.address_complement,
+                    com_address_neighborhood: prev.address_neighborhood,
+                    com_address_city: prev.address_city,
+                    com_address_state: prev.address_state,
+                    com_address_zip_code: prev.address_zip_code,
+                };
+            } else {
+                return {
+                    ...prev,
+                    com_address_same: false,
+                    com_address_street: '',
+                    com_address_number: '',
+                    com_address_complement: '',
+                    com_address_neighborhood: '',
+                    com_address_city: '',
+                    com_address_state: '',
+                    com_address_zip_code: '',
+                };
+            }
+        });
+    }
+
+    // Sincronização em tempo real do endereço comercial com o residencial quando com_address_same for true
+    useEffect(() => {
+        if (formData.com_address_same) {
+            setFormData(prev => {
+                if (
+                    prev.com_address_street !== prev.address_street ||
+                    prev.com_address_number !== prev.address_number ||
+                    prev.com_address_complement !== prev.address_complement ||
+                    prev.com_address_neighborhood !== prev.address_neighborhood ||
+                    prev.com_address_city !== prev.address_city ||
+                    prev.com_address_state !== prev.address_state ||
+                    prev.com_address_zip_code !== prev.address_zip_code
+                ) {
+                    return {
+                        ...prev,
+                        com_address_street: prev.address_street,
+                        com_address_number: prev.address_number,
+                        com_address_complement: prev.address_complement,
+                        com_address_neighborhood: prev.address_neighborhood,
+                        com_address_city: prev.address_city,
+                        com_address_state: prev.address_state,
+                        com_address_zip_code: prev.address_zip_code,
+                    };
+                }
+                return prev;
+            });
+        }
+    }, [
+        formData.com_address_same,
+        formData.address_street,
+        formData.address_number,
+        formData.address_complement,
+        formData.address_neighborhood,
+        formData.address_city,
+        formData.address_state,
+        formData.address_zip_code
+    ]);
+
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault()
         setLoading(true)
@@ -346,53 +605,53 @@ export function ClientModal({
             <div className="space-y-6">
                 {/* Tabs — só para clientes existentes */}
                 {isEditing && (
-                    <div className="flex items-center gap-1.5 p-1.5 rounded-lg mb-6 overflow-x-auto no-scrollbar border border-border/30" style={{ backgroundColor: 'var(--background)' }}>
+                    <div className="flex items-stretch gap-0 p-0 rounded-lg mb-6 overflow-x-auto overflow-y-hidden no-scrollbar border border-border/30 overflow-hidden" style={{ backgroundColor: 'var(--background)' }}>
                         <button
                             type="button"
                             onClick={() => setActiveTab('info')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'info' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'info' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
-                            <User size={14} />
+                            <User size={16} />
                             Informações
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('leads')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'leads' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'leads' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
-                            <Filter size={14} />
+                            <Filter size={16} />
                             Leads
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('proposals')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'proposals' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'proposals' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
-                            <FileText size={14} />
+                            <Pen size={16} className="-scale-x-100" />
                             Propostas
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('documents')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'documents' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'documents' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
-                            <FileText size={14} />
+                            <FileText size={16} />
                             Documentos
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('financeiro')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'financeiro' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'financeiro' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
-                            <DollarSign size={14} />
+                            <DollarSign size={16} />
                             Financeiro
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('ai')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-2.5 px-4 text-xs font-bold rounded-md transition-all whitespace-nowrap ${activeTab === 'ai' ? 'bg-[#FFE600] text-[#404F4F] shadow-md' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'ai' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
                         >
-                            <Sparkles size={14} />
+                            <Sparkles size={16} />
                             Análise IA
                         </button>
                     </div>
@@ -448,72 +707,160 @@ export function ClientModal({
                                                     })}
                                                 </div>
                                             </div>
-                                            <div>
+                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                 <FormInput
+                                                     label="Telefone"
+                                                     required
+                                                     value={formData.phone}
+                                                     onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
+                                                     placeholder="(48) 99999 9999"
+                                                     rightElement={
+                                                         formData.phone && (
+                                                             <a
+                                                                 href={`https://wa.me/55${formData.phone.replace(/\D/g, '')}`}
+                                                                 target="_blank"
+                                                                 rel="noopener noreferrer"
+                                                                 className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
+                                                                 title="Conversar WhatsApp"
+                                                             >
+                                                                 <MessageCircle size={16} />
+                                                             </a>
+                                                         )
+                                                     }
+                                                 />
                                                 <FormInput
-                                                    label="Telefone"
+                                                    label="E-mail"
+                                                    type="email"
                                                     required
-                                                    value={formData.phone}
-                                                    onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
-                                                    placeholder="(48) 99999 9999"
+                                                    value={formData.email}
+                                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                                    placeholder="joao@exemplo.com"
                                                 />
-                                                {formData.phone && (
-                                                    <a
-                                                        href={`https://wa.me/55${formData.phone.replace(/\D/g, '')}`}
-                                                        target="_blank"
-                                                        rel="noopener noreferrer"
-                                                        className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors w-fit"
-                                                    >
-                                                        <MessageSquare size={12} />
-                                                        Abrir conversa no WhatsApp
-                                                    </a>
-                                                )}
+                                                <FormInput
+                                                    label="Instagram"
+                                                    value={formData.instagram}
+                                                    onChange={e => setFormData({ ...formData, instagram: e.target.value })}
+                                                    placeholder="@usuario"
+                                                />
+                                                <FormInput
+                                                    label="Linkedin"
+                                                    value={formData.linkedin}
+                                                    onChange={e => setFormData({ ...formData, linkedin: e.target.value })}
+                                                    placeholder="linkedin.com/in/..."
+                                                />
                                             </div>
-                                            <FormInput
-                                                label="E-mail"
-                                                type="email"
-                                                required
-                                                value={formData.email}
-                                                onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                placeholder="joao@exemplo.com"
-                                            />
-                                            <FormInput
-                                                label="CPF"
-                                                value={formData.cpf}
-                                                onChange={e => setFormData({ ...formData, cpf: e.target.value })}
-                                                placeholder="000.000.000-00"
-                                            />
-                                            <FormInput
-                                                label="Data de Nascimento"
-                                                type="date"
-                                                value={formData.birth_date}
-                                                onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
-                                            />
-                                            <FormSelect
-                                                label="Estado Civil"
-                                                value={formData.marital_status}
-                                                onChange={e => setFormData({ ...formData, marital_status: e.target.value })}
-                                                options={[
-                                                    { value: '', label: 'Selecione...' },
-                                                    { value: 'Solteiro(a)', label: 'Solteiro(a)' },
-                                                    { value: 'Casado(a)', label: 'Casado(a)' },
-                                                    { value: 'Divorciado(a)', label: 'Divorciado(a)' },
-                                                    { value: 'Viúvo(a)', label: 'Viúvo(a)' },
-                                                    { value: 'União Estável', label: 'União Estável' }
-                                                ]}
-                                            />
-                                            <FormSelect
-                                                label="Regime de Comunhão"
-                                                value={formData.property_regime}
-                                                onChange={e => setFormData({ ...formData, property_regime: e.target.value })}
-                                                options={[
-                                                    { value: '', label: 'Selecione...' },
-                                                    { value: 'Comunhão Parcial', label: 'Comunhão Parcial' },
-                                                    { value: 'Comunhão Universal', label: 'Comunhão Universal' },
-                                                    { value: 'Separação Total', label: 'Separação Total' },
-                                                    { value: 'Separação Obrigatória', label: 'Separação Obrigatória' },
-                                                    { value: 'Participação Final nos Aquestos', label: 'Participação Final nos Aquestos' }
-                                                ]}
-                                            />
+
+                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                <FormInput
+                                                    label="CPF"
+                                                    value={formData.cpf}
+                                                    onChange={e => setFormData({ ...formData, cpf: e.target.value })}
+                                                    placeholder="000.000.000-00"
+                                                />
+                                                <FormInput
+                                                    label="RG | CNH"
+                                                    value={formData.rg_cnh}
+                                                    onChange={e => setFormData({ ...formData, rg_cnh: e.target.value })}
+                                                    placeholder="Digite o documento"
+                                                />
+                                                <FormInput
+                                                    label="Data expedição | Data validade"
+                                                    value={formData.rg_cnh_date}
+                                                    onChange={e => setFormData({ ...formData, rg_cnh_date: e.target.value })}
+                                                    placeholder="ex: dd/mm/aaaa | dd/mm/aaaa"
+                                                />
+                                                <FormInput
+                                                    label="Órgão Expedidor"
+                                                    value={formData.issuing_agency}
+                                                    onChange={e => setFormData({ ...formData, issuing_agency: e.target.value })}
+                                                    placeholder="ex: SSP/SC"
+                                                />
+                                            </div>
+
+                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                <FormInput
+                                                    label="Profissão"
+                                                    value={formData.profession}
+                                                    onChange={e => setFormData({ ...formData, profession: e.target.value })}
+                                                    placeholder="Ex: Corretor de Imóveis"
+                                                />
+                                                <FormInput
+                                                    label="Naturalidade"
+                                                    value={formData.naturalness}
+                                                    onChange={e => setFormData({ ...formData, naturalness: e.target.value })}
+                                                    placeholder="Ex: Florianópolis - SC"
+                                                />
+                                                <FormInput
+                                                    label="Nacionalidade"
+                                                    value={formData.nationality}
+                                                    onChange={e => setFormData({ ...formData, nationality: e.target.value })}
+                                                    placeholder="Ex: Brasileira"
+                                                />
+                                                <FormInput
+                                                    label="Time Coração"
+                                                    value={formData.favorite_team}
+                                                    onChange={e => setFormData({ ...formData, favorite_team: e.target.value })}
+                                                    placeholder="Time do coração"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormInput
+                                                    label="Data Nascimento"
+                                                    type="date"
+                                                    value={formData.birth_date}
+                                                    onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
+                                                />
+                                                <FormSelect
+                                                    label="Estado Civil"
+                                                    value={formData.marital_status}
+                                                    onChange={e => setFormData({ ...formData, marital_status: e.target.value })}
+                                                    options={[
+                                                        { value: '', label: 'Selecione...' },
+                                                        { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                                                        { value: 'Casado(a)', label: 'Casado(a)' },
+                                                        { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                                                        { value: 'Viúvo(a)', label: 'Viúvo(a)' },
+                                                        { value: 'União Estável', label: 'União Estável' }
+                                                    ]}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormSelect
+                                                    label="Regime Casamento"
+                                                    value={formData.property_regime}
+                                                    onChange={e => setFormData({ ...formData, property_regime: e.target.value })}
+                                                    options={[
+                                                        { value: '', label: 'Selecione...' },
+                                                        { value: 'Comunhão Parcial', label: 'Comunhão Parcial' },
+                                                        { value: 'Comunhão Universal', label: 'Comunhão Universal' },
+                                                        { value: 'Separação Total', label: 'Separação Total' },
+                                                        { value: 'Separação Obrigatória', label: 'Separação Obrigatória' },
+                                                        { value: 'Participação Final nos Aquestos', label: 'Participação Final nos Aquestos' }
+                                                    ]}
+                                                />
+                                                <FormInput
+                                                    label="Data Casamento"
+                                                    type="date"
+                                                    value={formData.marriage_date}
+                                                    onChange={e => setFormData({ ...formData, marriage_date: e.target.value })}
+                                                />
+                                            </div>
+
+                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormInput
+                                                    label="Nome do Pai"
+                                                    value={formData.father_name}
+                                                    onChange={e => setFormData({ ...formData, father_name: e.target.value })}
+                                                    placeholder="Nome completo do pai"
+                                                />
+                                                <FormInput
+                                                    label="Nome da Mãe"
+                                                    value={formData.mother_name}
+                                                    onChange={e => setFormData({ ...formData, mother_name: e.target.value })}
+                                                    placeholder="Nome completo da mãe"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
@@ -529,40 +876,167 @@ export function ClientModal({
                                                     placeholder="Nome do cônjuge ou sócio"
                                                 />
                                             </div>
-                                            <FormInput
-                                                label="E-mail"
-                                                type="email"
-                                                value={formData.spouse_email}
-                                                onChange={e => setFormData({ ...formData, spouse_email: e.target.value })}
-                                                placeholder="email@exemplo.com"
-                                            />
-                                            <FormInput
-                                                label="Telefone / WhatsApp"
-                                                value={formData.spouse_phone}
-                                                onChange={e => setFormData({ ...formData, spouse_phone: formatPhone(e.target.value) })}
-                                                placeholder="(48) 99999 9999"
-                                            />
-                                            <FormInput
-                                                label="CPF"
-                                                value={formData.spouse_cpf}
-                                                onChange={e => setFormData({ ...formData, spouse_cpf: e.target.value })}
-                                                placeholder="000.000.000-00"
-                                            />
-                                            <FormInput
-                                                label="Data de Nascimento"
-                                                type="date"
-                                                value={formData.spouse_birth_date}
-                                                onChange={e => setFormData({ ...formData, spouse_birth_date: e.target.value })}
-                                            />
+
+                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                 <FormInput
+                                                     label="Telefone"
+                                                     value={formData.spouse_phone}
+                                                     onChange={e => setFormData({ ...formData, spouse_phone: formatPhone(e.target.value) })}
+                                                     placeholder="(48) 99999 9999"
+                                                     rightElement={
+                                                         formData.spouse_phone && (
+                                                             <a
+                                                                 href={`https://wa.me/55${formData.spouse_phone.replace(/\D/g, '')}`}
+                                                                 target="_blank"
+                                                                 rel="noopener noreferrer"
+                                                                 className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
+                                                                 title="Conversar WhatsApp"
+                                                             >
+                                                                 <MessageCircle size={16} />
+                                                             </a>
+                                                         )
+                                                     }
+                                                 />
+                                                <FormInput
+                                                    label="E-mail"
+                                                    type="email"
+                                                    value={formData.spouse_email}
+                                                    onChange={e => setFormData({ ...formData, spouse_email: e.target.value })}
+                                                    placeholder="email@exemplo.com"
+                                                />
+                                                <FormInput
+                                                    label="Instagram"
+                                                    value={formData.spouse_instagram}
+                                                    onChange={e => setFormData({ ...formData, spouse_instagram: e.target.value })}
+                                                    placeholder="@usuario"
+                                                />
+                                                <FormInput
+                                                    label="Linkedin"
+                                                    value={formData.spouse_linkedin}
+                                                    onChange={e => setFormData({ ...formData, spouse_linkedin: e.target.value })}
+                                                    placeholder="linkedin.com/in/..."
+                                                />
+                                            </div>
+
+                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                <FormInput
+                                                    label="CPF"
+                                                    value={formData.spouse_cpf}
+                                                    onChange={e => setFormData({ ...formData, spouse_cpf: e.target.value })}
+                                                    placeholder="000.000.000-00"
+                                                />
+                                                <FormInput
+                                                    label="RG | CNH"
+                                                    value={formData.spouse_rg_cnh}
+                                                    onChange={e => setFormData({ ...formData, spouse_rg_cnh: e.target.value })}
+                                                    placeholder="Digite o documento"
+                                                />
+                                                <FormInput
+                                                    label="Data expedição | Data validade"
+                                                    value={formData.spouse_rg_cnh_date}
+                                                    onChange={e => setFormData({ ...formData, spouse_rg_cnh_date: e.target.value })}
+                                                    placeholder="ex: dd/mm/aaaa | dd/mm/aaaa"
+                                                />
+                                                <FormInput
+                                                    label="Órgão Expedidor"
+                                                    value={formData.spouse_issuing_agency}
+                                                    onChange={e => setFormData({ ...formData, spouse_issuing_agency: e.target.value })}
+                                                    placeholder="ex: SSP/SC"
+                                                />
+                                            </div>
+
+                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                                <FormInput
+                                                    label="Profissão"
+                                                    value={formData.spouse_profession}
+                                                    onChange={e => setFormData({ ...formData, spouse_profession: e.target.value })}
+                                                    placeholder="Ex: Corretor de Imóveis"
+                                                />
+                                                <FormInput
+                                                    label="Naturalidade"
+                                                    value={formData.spouse_naturalness}
+                                                    onChange={e => setFormData({ ...formData, spouse_naturalness: e.target.value })}
+                                                    placeholder="Ex: Florianópolis - SC"
+                                                />
+                                                <FormInput
+                                                    label="Nacionalidade"
+                                                    value={formData.spouse_nationality}
+                                                    onChange={e => setFormData({ ...formData, spouse_nationality: e.target.value })}
+                                                    placeholder="Ex: Brasileira"
+                                                />
+                                                <FormInput
+                                                    label="Time Coração"
+                                                    value={formData.spouse_favorite_team}
+                                                    onChange={e => setFormData({ ...formData, spouse_favorite_team: e.target.value })}
+                                                    placeholder="Time do coração"
+                                                />
+                                            </div>
+
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormInput
+                                                    label="Data Nascimento"
+                                                    type="date"
+                                                    value={formData.spouse_birth_date}
+                                                    onChange={e => setFormData({ ...formData, spouse_birth_date: e.target.value })}
+                                                />
+                                                <FormSelect
+                                                    label="Estado Civil"
+                                                    value={formData.spouse_marital_status}
+                                                    onChange={e => setFormData({ ...formData, spouse_marital_status: e.target.value })}
+                                                    options={[
+                                                        { value: '', label: 'Selecione...' },
+                                                        { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                                                        { value: 'Casado(a)', label: 'Casado(a)' },
+                                                        { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                                                        { value: 'Viúvo(a)', label: 'Viúvo(a)' },
+                                                        { value: 'União Estável', label: 'União Estável' }
+                                                    ]}
+                                                />
+                                            </div>
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormSelect
+                                                    label="Regime Casamento"
+                                                    value={formData.spouse_property_regime}
+                                                    onChange={e => setFormData({ ...formData, spouse_property_regime: e.target.value })}
+                                                    options={[
+                                                        { value: '', label: 'Selecione...' },
+                                                        { value: 'Comunhão Parcial', label: 'Comunhão Parcial' },
+                                                        { value: 'Comunhão Universal', label: 'Comunhão Universal' },
+                                                        { value: 'Separação Total', label: 'Separação Total' },
+                                                        { value: 'Separação Obrigatória', label: 'Separação Obrigatória' },
+                                                        { value: 'Participação Final nos Aquestos', label: 'Participação Final nos Aquestos' }
+                                                    ]}
+                                                />
+                                                <FormInput
+                                                    label="Data Casamento"
+                                                    type="date"
+                                                    value={formData.spouse_marriage_date}
+                                                    onChange={e => setFormData({ ...formData, spouse_marriage_date: e.target.value })}
+                                                />
+                                            </div>
+
+                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                                <FormInput
+                                                    label="Nome do Pai"
+                                                    value={formData.spouse_father_name}
+                                                    onChange={e => setFormData({ ...formData, spouse_father_name: e.target.value })}
+                                                    placeholder="Nome completo do pai"
+                                                />
+                                                <FormInput
+                                                    label="Nome da Mãe"
+                                                    value={formData.spouse_mother_name}
+                                                    onChange={e => setFormData({ ...formData, spouse_mother_name: e.target.value })}
+                                                    placeholder="Nome completo da mãe"
+                                                />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Endereço */}
+                                    {/* Endereço Residencial */}
                                     <div className="space-y-4 pt-8 border-t border-border/50">
-                                        <h4 className="text-base font-black text-foreground uppercase tracking-widest flex items-center gap-2">
-                                            <MapPin size={14} className="text-foreground" />
-                                            Endereço
-                                        </h4>
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
+                                            Endereço Residencial
+                                        </h3>
                                         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-6">
                                             <div className="sm:col-span-1 lg:col-span-3">
                                                 <FormInput
@@ -636,7 +1110,7 @@ export function ClientModal({
                                                     placeholder="Apto, Bloco, etc"
                                                 />
                                             </div>
-                                            <div className="sm:col-span-1 lg:col-span-2">
+                                            <div className="sm:col-span-1 lg:col-span-3">
                                                 <FormInput
                                                     label="Bairro"
                                                     value={formData.address_neighborhood}
@@ -644,7 +1118,7 @@ export function ClientModal({
                                                     placeholder="Bairro"
                                                 />
                                             </div>
-                                            <div className="sm:col-span-1 lg:col-span-5">
+                                            <div className="sm:col-span-1 lg:col-span-4">
                                                 <FormInput
                                                     label="Cidade"
                                                     value={formData.address_city}
@@ -658,6 +1132,132 @@ export function ClientModal({
                                                     value={formData.address_state}
                                                     onChange={e => setFormData({ ...formData, address_state: e.target.value })}
                                                     maxLength={2}
+                                                />
+                                            </div>
+                                        </div>
+                                    </div>
+
+                                    {/* Endereço Comercial */}
+                                    <div className="space-y-4 pt-8 border-t border-border/50">
+                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
+                                                Endereço Comercial
+                                            </h3>
+                                            <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+                                                <input
+                                                    type="checkbox"
+                                                    checked={formData.com_address_same || false}
+                                                    onChange={e => handleComAddressSameChange(e.target.checked)}
+                                                    className="w-4 h-4 rounded border-muted-foreground/40 bg-foreground/5 text-secondary focus:ring-secondary/30 focus:ring-offset-0 cursor-pointer accent-[#FFE600]"
+                                                />
+                                                <span className={`text-xs font-bold transition-colors ${formData.com_address_same ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'}`}>
+                                                    Mesmo Residencial
+                                                </span>
+                                            </label>
+                                        </div>
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-6">
+                                            <div className="sm:col-span-1 lg:col-span-3">
+                                                <FormInput
+                                                    label={
+                                                        <div className="flex items-center gap-1">
+                                                            CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
+                                                        </div>
+                                                    }
+                                                    value={formData.com_address_zip_code}
+                                                    onChange={e => handleComCepChange(e.target.value)}
+                                                    placeholder="00000-000"
+                                                    disabled={cepLoading || formData.com_address_same}
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-2 lg:col-span-7 relative" ref={comResultsRef}>
+                                                <FormInput
+                                                    label="Avenida | Rua"
+                                                    value={formData.com_address_street}
+                                                    onChange={e => setFormData({ ...formData, com_address_street: e.target.value })}
+                                                    placeholder="Rua / Avenida"
+                                                    disabled={formData.com_address_same}
+                                                    rightElement={
+                                                        !formData.com_address_same && (
+                                                            <button
+                                                                type="button"
+                                                                onClick={handleComSearchAddress}
+                                                                className="p-1 hover:bg-muted rounded-md transition-colors text-foreground"
+                                                                title="Buscar CEP por endereço"
+                                                                disabled={cepLoading}
+                                                            >
+                                                                {cepLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                                                            </button>
+                                                        )
+                                                    }
+                                                />
+
+                                                {showComResults && (
+                                                    <div className="absolute z-50 w-full mt-1 bg-card border border-muted-foreground/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                                        {comSearchResults.length > 0 ? (
+                                                            comSearchResults.map((result, index) => (
+                                                                <button
+                                                                    key={index}
+                                                                    type="button"
+                                                                    onClick={() => selectComAddress(result)}
+                                                                    className="w-full text-left px-4 py-2 hover:bg-secondary/10 border-b border-muted-foreground/10 last:border-0 transition-colors"
+                                                                >
+                                                                    <div className="text-sm font-medium">{result.logradouro}</div>
+                                                                    <div className="text-xs text-muted-foreground">
+                                                                        {result.bairro}, {result.localidade} - {result.uf} | CEP: {result.cep}
+                                                                    </div>
+                                                                </button>
+                                                            ))
+                                                        ) : !cepLoading && (
+                                                            <div className="p-4 text-center text-sm text-muted-foreground">
+                                                                Nenhum endereço encontrado.
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                )}
+                                            </div>
+                                            <div className="sm:col-span-1 lg:col-span-2">
+                                                <FormInput
+                                                    label="Nº"
+                                                    value={formData.com_address_number}
+                                                    onChange={e => setFormData({ ...formData, com_address_number: e.target.value })}
+                                                    placeholder="123"
+                                                    disabled={formData.com_address_same}
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-1 lg:col-span-3">
+                                                <FormInput
+                                                    label="Complemento"
+                                                    value={formData.com_address_complement}
+                                                    onChange={e => setFormData({ ...formData, com_address_complement: e.target.value })}
+                                                    placeholder="Apto, Bloco, etc"
+                                                    disabled={formData.com_address_same}
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-1 lg:col-span-3">
+                                                <FormInput
+                                                    label="Bairro"
+                                                    value={formData.com_address_neighborhood}
+                                                    onChange={e => setFormData({ ...formData, com_address_neighborhood: e.target.value })}
+                                                    placeholder="Bairro"
+                                                    disabled={formData.com_address_same}
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-1 lg:col-span-4">
+                                                <FormInput
+                                                    label="Cidade"
+                                                    value={formData.com_address_city}
+                                                    onChange={e => setFormData({ ...formData, com_address_city: e.target.value })}
+                                                    placeholder="Cidade"
+                                                    disabled={formData.com_address_same}
+                                                />
+                                            </div>
+                                            <div className="sm:col-span-1 lg:col-span-2">
+                                                <FormInput
+                                                    label="Estado"
+                                                    value={formData.com_address_state}
+                                                    onChange={e => setFormData({ ...formData, com_address_state: e.target.value })}
+                                                    maxLength={2}
+                                                    disabled={formData.com_address_same}
                                                 />
                                             </div>
                                         </div>

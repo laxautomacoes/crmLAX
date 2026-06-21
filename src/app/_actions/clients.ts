@@ -21,6 +21,14 @@ export interface ClientData {
     address_city?: string
     address_state?: string
     address_zip_code?: string
+    com_address_street?: string
+    com_address_number?: string
+    com_address_complement?: string
+    com_address_neighborhood?: string
+    com_address_city?: string
+    com_address_state?: string
+    com_address_zip_code?: string
+    com_address_same?: boolean
     marital_status?: string
     birth_date?: string
     contact_type?: string[]
@@ -30,6 +38,32 @@ export interface ClientData {
     spouse_phone?: string
     spouse_cpf?: string
     spouse_birth_date?: string
+    marriage_date?: string
+    spouse_instagram?: string
+    spouse_linkedin?: string
+    spouse_rg_cnh?: string
+    spouse_rg_cnh_date?: string
+    spouse_issuing_agency?: string
+    spouse_profession?: string
+    spouse_naturalness?: string
+    spouse_nationality?: string
+    spouse_favorite_team?: string
+    spouse_marital_status?: string
+    spouse_property_regime?: string
+    spouse_marriage_date?: string
+    spouse_father_name?: string
+    spouse_mother_name?: string
+    rg_cnh?: string
+    rg_cnh_date?: string
+    issuing_agency?: string
+    profession?: string
+    naturalness?: string
+    nationality?: string
+    father_name?: string
+    mother_name?: string
+    instagram?: string
+    linkedin?: string
+    favorite_team?: string
     images?: string[]
     videos?: string[]
     documents?: { name: string, url: string }[]
@@ -45,7 +79,7 @@ export async function getClientById(contactId: string) {
             leads (
                 *,
                 profiles:assigned_to ( full_name ),
-                properties ( id, title, price ),
+                properties ( id, title, price, type, details ),
                 lead_stages ( name, color ),
                 interactions ( content, type, created_at ),
                 proposals ( id )
@@ -78,6 +112,14 @@ export async function getClientById(contactId: string) {
         address_city: contact.address_city,
         address_state: contact.address_state,
         address_zip_code: contact.address_zip_code,
+        com_address_street: contact.com_address_street,
+        com_address_number: contact.com_address_number,
+        com_address_complement: contact.com_address_complement,
+        com_address_neighborhood: contact.com_address_neighborhood,
+        com_address_city: contact.com_address_city,
+        com_address_state: contact.com_address_state,
+        com_address_zip_code: contact.com_address_zip_code,
+        com_address_same: contact.com_address_same || false,
         marital_status: contact.marital_status,
         birth_date: contact.birth_date,
         contact_type: contact.contact_type || [],
@@ -87,6 +129,32 @@ export async function getClientById(contactId: string) {
         spouse_phone: contact.spouse_phone,
         spouse_cpf: contact.spouse_cpf,
         spouse_birth_date: contact.spouse_birth_date,
+        spouse_instagram: contact.spouse_instagram,
+        spouse_linkedin: contact.spouse_linkedin,
+        spouse_rg_cnh: contact.spouse_rg_cnh,
+        spouse_rg_cnh_date: contact.spouse_rg_cnh_date,
+        spouse_issuing_agency: contact.spouse_issuing_agency,
+        spouse_profession: contact.spouse_profession,
+        spouse_naturalness: contact.spouse_naturalness,
+        spouse_nationality: contact.spouse_nationality,
+        spouse_favorite_team: contact.spouse_favorite_team,
+        spouse_marital_status: contact.spouse_marital_status,
+        spouse_property_regime: contact.spouse_property_regime,
+        spouse_marriage_date: contact.spouse_marriage_date,
+        spouse_father_name: contact.spouse_father_name,
+        spouse_mother_name: contact.spouse_mother_name,
+        marriage_date: contact.marriage_date,
+        rg_cnh: contact.rg_cnh,
+        rg_cnh_date: contact.rg_cnh_date,
+        issuing_agency: contact.issuing_agency,
+        profession: contact.profession,
+        naturalness: contact.naturalness,
+        nationality: contact.nationality,
+        father_name: contact.father_name,
+        mother_name: contact.mother_name,
+        instagram: contact.instagram,
+        linkedin: contact.linkedin,
+        favorite_team: contact.favorite_team,
         created_at: contact.created_at,
         is_archived: contact.is_archived || false,
         interest,
@@ -100,12 +168,21 @@ export async function getClientById(contactId: string) {
         assigned_to: activeLead?.assigned_to,
         leads: ((contact.leads as any[]) || [])
             .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-            .map((l) => ({
-                ...l,
-                status_name: l.lead_stages?.name || l.status,
-                status_color: l.lead_stages?.color || null,
-                has_proposal: (l.proposals && l.proposals.length > 0)
-            }))
+            .map((l) => {
+                const rawProp = l.properties;
+                const mappedProp = rawProp ? {
+                    ...rawProp,
+                    address_city: rawProp.details?.endereco?.cidade || null,
+                    address_state: rawProp.details?.endereco?.estado || null
+                } : null;
+                return {
+                    ...l,
+                    properties: mappedProp,
+                    status_name: l.lead_stages?.name || l.status,
+                    status_color: l.lead_stages?.color || null,
+                    has_proposal: (l.proposals && l.proposals.length > 0)
+                };
+            })
     }
 
     return { success: true, data: client }
@@ -145,7 +222,9 @@ export async function getClients(tenantId: string, includeArchived = false) {
         properties (
             id,
             title,
-            price
+            price,
+            type,
+            details
         ),
         lead_stages (
             name,
@@ -203,6 +282,14 @@ export async function getClients(tenantId: string, includeArchived = false) {
             address_city: contact.address_city,
             address_state: contact.address_state,
             address_zip_code: contact.address_zip_code,
+            com_address_street: contact.com_address_street,
+            com_address_number: contact.com_address_number,
+            com_address_complement: contact.com_address_complement,
+            com_address_neighborhood: contact.com_address_neighborhood,
+            com_address_city: contact.com_address_city,
+            com_address_state: contact.com_address_state,
+            com_address_zip_code: contact.com_address_zip_code,
+            com_address_same: contact.com_address_same || false,
             marital_status: contact.marital_status,
             birth_date: contact.birth_date,
             contact_type: contact.contact_type || [],
@@ -212,6 +299,32 @@ export async function getClients(tenantId: string, includeArchived = false) {
             spouse_phone: contact.spouse_phone,
             spouse_cpf: contact.spouse_cpf,
             spouse_birth_date: contact.spouse_birth_date,
+            spouse_instagram: contact.spouse_instagram,
+            spouse_linkedin: contact.spouse_linkedin,
+            spouse_rg_cnh: contact.spouse_rg_cnh,
+            spouse_rg_cnh_date: contact.spouse_rg_cnh_date,
+            spouse_issuing_agency: contact.spouse_issuing_agency,
+            spouse_profession: contact.spouse_profession,
+            spouse_naturalness: contact.spouse_naturalness,
+            spouse_nationality: contact.spouse_nationality,
+            spouse_favorite_team: contact.spouse_favorite_team,
+            spouse_marital_status: contact.spouse_marital_status,
+            spouse_property_regime: contact.spouse_property_regime,
+            spouse_marriage_date: contact.spouse_marriage_date,
+            spouse_father_name: contact.spouse_father_name,
+            spouse_mother_name: contact.spouse_mother_name,
+            marriage_date: contact.marriage_date,
+            rg_cnh: contact.rg_cnh,
+            rg_cnh_date: contact.rg_cnh_date,
+            issuing_agency: contact.issuing_agency,
+            profession: contact.profession,
+            naturalness: contact.naturalness,
+            nationality: contact.nationality,
+            father_name: contact.father_name,
+            mother_name: contact.mother_name,
+            instagram: contact.instagram,
+            linkedin: contact.linkedin,
+            favorite_team: contact.favorite_team,
             created_at: contact.created_at,
             is_archived: contact.is_archived || false,
             interest,
@@ -225,12 +338,21 @@ export async function getClients(tenantId: string, includeArchived = false) {
             assigned_to: activeLead?.assigned_to,
             leads: ((contact.leads as any[]) || [])
                 .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-                .map((l) => ({
-                ...l,
-                status_name: l.lead_stages?.name || l.status,
-                status_color: l.lead_stages?.color || null,
-                has_proposal: (l.proposals && l.proposals.length > 0)
-            }))
+                .map((l) => {
+                    const rawProp = l.properties;
+                    const mappedProp = rawProp ? {
+                        ...rawProp,
+                        address_city: rawProp.details?.endereco?.cidade || null,
+                        address_state: rawProp.details?.endereco?.estado || null
+                    } : null;
+                    return {
+                        ...l,
+                        properties: mappedProp,
+                        status_name: l.lead_stages?.name || l.status,
+                        status_color: l.lead_stages?.color || null,
+                        has_proposal: (l.proposals && l.proposals.length > 0)
+                    };
+                })
         }
     })
 
@@ -264,6 +386,14 @@ export async function createNewClient(tenantId: string, data: ClientData) {
             address_city: data.address_city,
             address_state: data.address_state,
             address_zip_code: data.address_zip_code,
+            com_address_street: data.com_address_street,
+            com_address_number: data.com_address_number,
+            com_address_complement: data.com_address_complement,
+            com_address_neighborhood: data.com_address_neighborhood,
+            com_address_city: data.com_address_city,
+            com_address_state: data.com_address_state,
+            com_address_zip_code: data.com_address_zip_code,
+            com_address_same: data.com_address_same || false,
             marital_status: data.marital_status,
             birth_date: data.birth_date || null,
             contact_type: data.contact_type || [],
@@ -273,6 +403,32 @@ export async function createNewClient(tenantId: string, data: ClientData) {
             spouse_phone: data.spouse_phone ? cleanPhone(data.spouse_phone) : null,
             spouse_cpf: data.spouse_cpf,
             spouse_birth_date: data.spouse_birth_date || null,
+            spouse_instagram: data.spouse_instagram,
+            spouse_linkedin: data.spouse_linkedin,
+            spouse_rg_cnh: data.spouse_rg_cnh,
+            spouse_rg_cnh_date: data.spouse_rg_cnh_date,
+            spouse_issuing_agency: data.spouse_issuing_agency,
+            spouse_profession: data.spouse_profession,
+            spouse_naturalness: data.spouse_naturalness,
+            spouse_nationality: data.spouse_nationality,
+            spouse_favorite_team: data.spouse_favorite_team,
+            spouse_marital_status: data.spouse_marital_status,
+            spouse_property_regime: data.spouse_property_regime,
+            spouse_marriage_date: data.spouse_marriage_date || null,
+            spouse_father_name: data.spouse_father_name,
+            spouse_mother_name: data.spouse_mother_name,
+            marriage_date: data.marriage_date || null,
+            rg_cnh: data.rg_cnh,
+            rg_cnh_date: data.rg_cnh_date,
+            issuing_agency: data.issuing_agency,
+            profession: data.profession,
+            naturalness: data.naturalness,
+            nationality: data.nationality,
+            father_name: data.father_name,
+            mother_name: data.mother_name,
+            instagram: data.instagram,
+            linkedin: data.linkedin,
+            favorite_team: data.favorite_team,
             notes: data.notes,
             images: data.images || [],
             videos: data.videos || [],
@@ -325,6 +481,14 @@ export async function updateClient(clientId: string, data: Partial<ClientData>) 
             address_city: data.address_city,
             address_state: data.address_state,
             address_zip_code: data.address_zip_code,
+            com_address_street: data.com_address_street,
+            com_address_number: data.com_address_number,
+            com_address_complement: data.com_address_complement,
+            com_address_neighborhood: data.com_address_neighborhood,
+            com_address_city: data.com_address_city,
+            com_address_state: data.com_address_state,
+            com_address_zip_code: data.com_address_zip_code,
+            com_address_same: data.com_address_same,
             marital_status: data.marital_status,
             birth_date: data.birth_date || null,
             contact_type: data.contact_type || [],
@@ -334,6 +498,32 @@ export async function updateClient(clientId: string, data: Partial<ClientData>) 
             spouse_phone: data.spouse_phone ? cleanPhone(data.spouse_phone) : null,
             spouse_cpf: data.spouse_cpf,
             spouse_birth_date: data.spouse_birth_date || null,
+            spouse_instagram: data.spouse_instagram,
+            spouse_linkedin: data.spouse_linkedin,
+            spouse_rg_cnh: data.spouse_rg_cnh,
+            spouse_rg_cnh_date: data.spouse_rg_cnh_date,
+            spouse_issuing_agency: data.spouse_issuing_agency,
+            spouse_profession: data.spouse_profession,
+            spouse_naturalness: data.spouse_naturalness,
+            spouse_nationality: data.spouse_nationality,
+            spouse_favorite_team: data.spouse_favorite_team,
+            spouse_marital_status: data.spouse_marital_status,
+            spouse_property_regime: data.spouse_property_regime,
+            spouse_marriage_date: data.spouse_marriage_date || null,
+            spouse_father_name: data.spouse_father_name,
+            spouse_mother_name: data.spouse_mother_name,
+            marriage_date: data.marriage_date || null,
+            rg_cnh: data.rg_cnh,
+            rg_cnh_date: data.rg_cnh_date,
+            issuing_agency: data.issuing_agency,
+            profession: data.profession,
+            naturalness: data.naturalness,
+            nationality: data.nationality,
+            father_name: data.father_name,
+            mother_name: data.mother_name,
+            instagram: data.instagram,
+            linkedin: data.linkedin,
+            favorite_team: data.favorite_team,
             notes: data.notes,
             images: data.images,
             videos: data.videos,

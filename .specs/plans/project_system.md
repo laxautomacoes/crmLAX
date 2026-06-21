@@ -39,11 +39,11 @@ Este documento é a fonte única de verdade para a interface do CRM LAX. Deve se
 
 Seguir rigorosamente para evitar inconsistências visuais:
 
-- **Cards Principais**: `rounded-2xl` (16px).
+- **Cards Principais**: `rounded-lg` (8px).
 - **Inputs (Campos)**: `rounded-lg` (8px).
 - **Botões (Padrão)**: `rounded-lg` (8px).
 - **Botões de Header**: `px-4 py-3 md:py-2` (Padrão de altura: 48px mobile / 40px desktop).
-- **Modais e Overlays**: `rounded-2xl` (16px).
+- **Modais e Overlays**: `rounded-lg` (8px).
 - **Badges e Avatares**: `rounded-full`.
 - **Bordas**: `border border-gray-100` ou `border-gray-200` para separação sutil.
 
@@ -127,7 +127,7 @@ Em páginas de configurações que utilizam layouts de múltiplos cards disposto
 - **Estrutura dos Títulos**: Usar `<h3 className="text-lg font-bold text-foreground">`. Não utilizar ícones decorativos junto a esses títulos.
 - **Estrutura dos Subtítulos**: Usar `<p className="text-sm text-muted-foreground">` posicionado logo abaixo do título correspondente para contextualização rápida.
 - **Alinhamento e Espaçamento**: O contêiner de cada coluna deve usar a estrutura `flex flex-col space-y-3` para agrupar o cabeçalho externo e o card, mantendo o espaçamento padrão de 12px.
-- **Card de Conteúdo**: O card interno (ex: `bg-card p-6 rounded-2xl border border-border`) não deve conter títulos ou descrições redundantes em seu interior.
+- **Card de Conteúdo**: O card interno (ex: `bg-card p-6 rounded-lg border border-border`) não deve conter títulos ou descrições redundantes em seu interior.
 
 ---
 

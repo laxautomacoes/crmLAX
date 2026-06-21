@@ -1,0 +1,15 @@
+ALTER TABLE public.contacts
+ADD COLUMN IF NOT EXISTS spouse_instagram text,
+ADD COLUMN IF NOT EXISTS spouse_linkedin text,
+ADD COLUMN IF NOT EXISTS spouse_rg_cnh text,
+ADD COLUMN IF NOT EXISTS spouse_rg_cnh_date text,
+ADD COLUMN IF NOT EXISTS spouse_issuing_agency text,
+ADD COLUMN IF NOT EXISTS spouse_profession text,
+ADD COLUMN IF NOT EXISTS spouse_naturalness text,
+ADD COLUMN IF NOT EXISTS spouse_nationality text,
+ADD COLUMN IF NOT EXISTS spouse_favorite_team text,
+ADD COLUMN IF NOT EXISTS spouse_marital_status text,
+ADD COLUMN IF NOT EXISTS spouse_property_regime text,
+ADD COLUMN IF NOT EXISTS spouse_marriage_date text,
+ADD COLUMN IF NOT EXISTS spouse_father_name text,
+ADD COLUMN IF NOT EXISTS spouse_mother_name text;

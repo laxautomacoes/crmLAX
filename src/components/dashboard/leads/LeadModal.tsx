@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
-import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle } from 'lucide-react'
 import type { Lead } from './PipelineBoard'
 
 interface Broker {
@@ -357,9 +357,9 @@ export function LeadModal({
                         {/* Preenchimento Manual */}
                         <button
                             onClick={() => handleSelectMethod('manual')}
-                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-emerald-500/30 rounded-xl px-4 py-4 transition-all text-left"
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-emerald-500/30 rounded-lg px-4 py-4 transition-all text-left"
                         >
-                            <div className="p-2.5 bg-emerald-500/10 rounded-xl group-hover:bg-emerald-500/20 transition-colors shrink-0">
+                            <div className="p-2.5 bg-emerald-500/10 rounded-lg group-hover:bg-emerald-500/20 transition-colors shrink-0">
                                 <PenLine size={20} className="text-emerald-500" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -370,13 +370,13 @@ export function LeadModal({
                             </div>
                             <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
                         </button>
-
+ 
                         {/* Importação com IA ou Planilha */}
                         <button
                             onClick={() => handleSelectMethod('import_bulk')}
-                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-purple-500/30 rounded-xl px-4 py-4 transition-all text-left"
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-purple-500/30 rounded-lg px-4 py-4 transition-all text-left"
                         >
-                            <div className="p-2.5 bg-purple-500/10 rounded-xl group-hover:bg-purple-500/20 transition-colors shrink-0">
+                            <div className="p-2.5 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors shrink-0">
                                 <Sparkles size={20} className="text-purple-500" />
                             </div>
                             <div className="flex-1 min-w-0">
@@ -445,18 +445,20 @@ export function LeadModal({
                                         value={leadData.phone}
                                         onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
                                         placeholder="(48) 99999 9999"
+                                        rightElement={
+                                            leadData.phone && (
+                                                <a
+                                                    href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
+                                                    title="Conversar WhatsApp"
+                                                >
+                                                    <MessageCircle size={16} />
+                                                </a>
+                                            )
+                                        }
                                     />
-                                    {leadData.phone && (
-                                        <a
-                                            href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
-                                            target="_blank"
-                                            rel="noopener noreferrer"
-                                            className="mt-1 flex items-center gap-1.5 text-[11px] font-bold text-emerald-500 hover:text-emerald-600 transition-colors w-fit"
-                                        >
-                                            <MessageSquare size={12} />
-                                            Abrir conversa no WhatsApp
-                                        </a>
-                                    )}
                                 </div>
                                 <div className="flex-1">
                                     <FormInput
@@ -654,7 +656,7 @@ export function LeadModal({
                     onClick={() => setIsAvatarZoomed(false)}
                 >
                     <div
-                        className="relative max-w-sm w-full mx-4 bg-card rounded-2xl p-6 shadow-2xl border border-border/10 flex flex-col items-center animate-in zoom-in-95 duration-200"
+                        className="relative max-w-sm w-full mx-4 bg-card rounded-lg p-6 shadow-2xl border border-border/10 flex flex-col items-center animate-in zoom-in-95 duration-200"
                         onClick={(e) => e.stopPropagation()}
                     >
                         <button

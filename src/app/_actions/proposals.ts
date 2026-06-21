@@ -18,12 +18,22 @@ export async function getProposal(leadId: string) {
             .select(`
                 *,
                 contact:contacts(id, name, phone, email, cpf, address_street, address_number, address_neighborhood, address_city, address_state, address_zip_code),
-                property:properties(id, title, price, type, address_city, address_state)
+                property:properties(id, title, price, type, details)
             `)
             .eq('lead_id', leadId)
             .maybeSingle()
 
         if (error) throw error
+
+        if (data && data.property) {
+            const prop = data.property as any
+            data.property = {
+                ...prop,
+                address_city: prop.details?.endereco?.cidade || null,
+                address_state: prop.details?.endereco?.estado || null
+            }
+        }
+
         return { success: true, data }
     } catch (error: any) {
         console.error('Error fetching proposal:', error)
@@ -117,10 +127,10 @@ async function enrichProposals(supabase: any, proposals: any[]) {
             ? supabase.from('contacts').select('id, name, phone, email, cpf').in('id', contactIds)
             : { data: [] },
         propertyIds.length > 0
-            ? supabase.from('properties').select('id, title, price, type, address_city, address_state').in('id', propertyIds)
+            ? supabase.from('properties').select('id, title, price, type, details').in('id', propertyIds)
             : { data: [] },
         leadIds.length > 0
-            ? supabase.from('leads').select('id, property_interest, stage_id, property_id, properties(id, title, price, type, address_city, address_state)').in('id', leadIds)
+            ? supabase.from('leads').select('id, property_interest, stage_id, property_id, properties(id, title, price, type, details)').in('id', leadIds)
             : { data: [] }
     ])
 
@@ -137,14 +147,31 @@ async function enrichProposals(supabase: any, proposals: any[]) {
         }
     }
 
+    // Processar e mapear endereços de properties
+    const mapPropertyAddress = (prop: any) => {
+        if (!prop) return null
+        return {
+            ...prop,
+            address_city: prop.details?.endereco?.cidade || null,
+            address_state: prop.details?.endereco?.estado || null
+        }
+    }
+
+    const processedProperties = (propertiesRes.data || []).map(mapPropertyAddress)
+    const processedLeads = (leadsRes.data || []).map((l: any) => {
+        const stage = stageMap.get(l.stage_id)
+        const rawProp = l.properties
+        return {
+            ...l,
+            properties: mapPropertyAddress(rawProp),
+            lead_stages: stage || null
+        }
+    })
+
     // Criar maps para lookup rápido
     const contactMap = new Map((contactsRes.data || []).map((c: any) => [c.id, c]))
-    const propertyMap = new Map((propertiesRes.data || []).map((p: any) => [p.id, p]))
-    const leadMap = new Map((leadsRes.data || []).map((l: any) => {
-        const stage = stageMap.get(l.stage_id)
-        return [l.id, { ...l, lead_stages: stage || null }]
-    }))
-
+    const propertyMap = new Map(processedProperties.map((p: any) => [p.id, p]))
+    const leadMap = new Map(processedLeads.map((l: any) => [l.id, l]))
 
     // Enriquecer cada proposta
     return proposals.map((p: any) => ({

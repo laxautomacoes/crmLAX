@@ -96,7 +96,7 @@ Padrão de Layout Multicolunas (Configurações / Perfis):
   - Título: `<h3 className="text-lg font-bold text-foreground">`. Não utilizar ícones junto a esses títulos.
   - Subtítulo: `<p className="text-sm text-muted-foreground">` posicionado logo abaixo do título correspondente.
   - O contêiner de cada coluna deve usar `flex flex-col space-y-3` para agrupar o cabeçalho externo e o card, mantendo o espaçamento padrão de 12px.
-  - O card de conteúdo interno (`bg-card rounded-2xl border border-border`) não deve conter cabeçalhos redundantes em seu interior.
+  - O card de conteúdo interno (`bg-card rounded-lg border border-border`) não deve conter cabeçalhos redundantes em seu interior.
 
 8. REQUISITOS DE MONETIZAÇÃO
 - Freemium: Limite de 30 leads/mês.

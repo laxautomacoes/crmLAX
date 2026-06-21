@@ -7,8 +7,6 @@ import { createClient } from '@/lib/supabase/client';
 import { menuItems } from './Sidebar/menuItems';
 import { Logo } from '@/components/shared/Logo';
 import { NavItem } from './Sidebar/NavItem';
-import { Footer } from './Sidebar/Footer';
-import { SupportModal } from '@/components/shared/SupportModal';
 import { recordAccessLog } from '@/app/_actions/auth-logs';
 
 interface SidebarProps {
@@ -23,18 +21,10 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
     const [userRole, setUserRole] = useState<string | null>(null);
     const [userProfile, setUserProfile] = useState<any>(null);
-    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
     const [tenantSlug, setTenantSlug] = useState<string | null>(null);
     const [branding, setBranding] = useState<{ logo_full?: string; logo_header?: string; logo_icon?: string; logo_height?: number; logo_header_height?: number } | null>(null);
     const [brandingLoading, setBrandingLoading] = useState(true);
     const [siteUrl, setSiteUrl] = useState<string>('#');
-
-    const handleLogout = async () => {
-        await recordAccessLog('logout').catch(console.error);
-        await supabase.auth.signOut();
-        router.push('/login');
-        router.refresh();
-    };
 
     useEffect(() => {
         const handleBrandingUpdate = (event: any) => {
@@ -230,19 +220,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                     ))}
                 </nav>
 
-                <Footer
-                    isCollapsed={effectiveCollapsed}
-                    onLogout={handleLogout}
-                    onClose={onClose}
-                    profile={userProfile}
-                    onSupportClick={() => setIsSupportModalOpen(true)}
-                />
             </div>
-
-            <SupportModal
-                isOpen={isSupportModalOpen}
-                onClose={() => setIsSupportModalOpen(false)}
-            />
         </>
     );
 }
