@@ -61,28 +61,28 @@ export function AIUsageStats({ stats }: StatsProps) {
                 {cards.map((card, index) => (
                     <div 
                         key={index} 
-                        className={`p-8 rounded-xl bg-card border shadow-sm transition-all hover:shadow-md hover:-translate-y-1 duration-300 group ${
-                            card.highlight ? 'border-secondary/40' : 'border-border'
+                        className={`p-6 rounded-lg bg-card border shadow-sm transition-all hover:shadow-md hover:-translate-y-1 duration-300 group ${
+                            card.highlight ? 'border-secondary/40 ring-1 ring-secondary/20' : 'border-border/60'
                         }`}
                     >
-                        <div className="flex items-center justify-between mb-6">
-                            <div className={`p-3.5 rounded-2xl transition-transform group-hover:scale-110 duration-300 ${
-                                card.highlight ? 'bg-secondary/10' : 'bg-muted'
+                        <div className="flex flex-row items-start justify-between pb-2">
+                            <div className="space-y-1">
+                                <h3 className="text-lg font-bold text-foreground">{card.title}</h3>
+                                {card.subtitle && (
+                                    <p className="text-sm text-muted-foreground">{card.subtitle}</p>
+                                )}
+                                {'subtitle2' in card && card.subtitle2 && (
+                                    <p className="text-xs text-muted-foreground">{card.subtitle2}</p>
+                                )}
+                            </div>
+                            <div className={`p-2 rounded-lg transition-transform group-hover:scale-110 duration-300 ${
+                                card.highlight ? 'bg-secondary/10 text-secondary' : 'bg-primary/10 text-primary'
                             }`}>
-                                <card.icon className={`w-5 h-5 transition-colors ${
-                                    card.highlight ? 'text-secondary' : 'text-muted-foreground group-hover:text-foreground'
-                                }`} />
+                                <card.icon className="w-4 h-4" />
                             </div>
                         </div>
-                        <div className="space-y-1">
-                            <p className="text-[11px] font-bold tracking-widest text-muted-foreground uppercase">{card.title}</p>
-                            <h3 className="text-3xl font-semibold text-foreground">{card.value}</h3>
-                            {card.subtitle && (
-                                <p className="text-[10px] text-muted-foreground font-medium">{card.subtitle}</p>
-                            )}
-                            {'subtitle2' in card && card.subtitle2 && (
-                                <p className="text-[10px] text-muted-foreground/60 font-medium">{card.subtitle2}</p>
-                            )}
+                        <div className="mt-2">
+                            <h3 className="text-3xl font-black text-foreground">{card.value}</h3>
                         </div>
                     </div>
                 ))}

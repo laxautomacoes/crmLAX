@@ -74,23 +74,26 @@ export function AIPlanConfig({ configs }: Props) {
     };
 
     return (
-        <div className="bg-card p-10 rounded-[40px] border border-border shadow-sm space-y-12">
-            <div className="space-y-2">
-                <div className="flex items-center gap-3 text-muted-foreground">
-                    <div className="p-2 bg-muted rounded-xl">
-                        <Settings2 className="w-5 h-5" />
-                    </div>
-                    <h3 className="text-xl font-bold text-foreground font-outfit tracking-tight">Motores de Inteligência</h3>
+        <div className="bg-card p-10 rounded-lg border border-border shadow-sm space-y-12">
+            <div className="flex items-center gap-4">
+                <div className="p-3 bg-muted rounded-xl">
+                    <Settings2 className="w-6 h-6 text-muted-foreground" />
                 </div>
-                <p className="text-xs text-muted-foreground font-bold tracking-[0.2em] uppercase">Mapeamento Técnico por Assinatura</p>
+                <div className="space-y-1">
+                    <h3 className="text-lg font-bold text-foreground">Motores de Inteligência</h3>
+                    <p className="text-sm text-muted-foreground">Mapeamento técnico por assinatura.</p>
+                </div>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-10">
                 {localConfigs.map((plan) => (
                     <div key={plan.plan_type} className="space-y-6 flex flex-col">
-                        <div className="flex justify-between items-center px-1">
-                            <span className="text-xs font-black text-muted-foreground uppercase tracking-widest">{plan.display_name}</span>
-                            {isPending && <Loader2 className="w-3 h-3 animate-spin text-secondary" />}
+                        <div className="flex justify-between items-start px-1">
+                            <div className="space-y-1">
+                                <h3 className="text-lg font-bold text-foreground">{plan.display_name}</h3>
+                                <p className="text-sm text-muted-foreground">Motor e modelo padrão alocado.</p>
+                            </div>
+                            {isPending && <Loader2 className="w-4 h-4 animate-spin text-secondary" />}
                         </div>
                         
                         <div className="space-y-4 flex-1">

@@ -30,14 +30,14 @@ export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin, select
                 icon={Search}
                 iconSize={14}
                 iconStrokeWidth={1}
-                className="w-full md:w-[320px] h-[38px]"
+                className="w-full md:w-[320px] h-[34px]"
             />
-            <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max">
+            <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max">
                 {isAdmin && brokers && brokers.length > 0 && (
-                    <div className="relative group hidden md:block">
+                    <div className="relative group hidden md:block min-w-[130px]">
                         <button
                             onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className="h-[38px] w-full flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 focus:ring-ring/50"
+                            className="min-w-[130px] h-[34px] w-full flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 focus:ring-ring/50"
                         >
                             <Filter size={14} strokeWidth={1} className="flex-shrink-0" />
                             <span className={selectedBroker === 'all' ? "" : "truncate max-w-[120px] md:max-w-[150px]"}>

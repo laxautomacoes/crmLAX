@@ -4,6 +4,7 @@ import { useSearchParams, useRouter } from 'next/navigation';
 import { useState, useEffect } from 'react';
 import { ProfileTab } from '@/components/settings/ProfileTab';
 import { BrandingTab } from '@/components/settings/BrandingTab';
+import { User, Palette, FileText } from 'lucide-react';
 
 
 import { TemplatesTab } from '@/components/settings/TemplatesTab';
@@ -39,14 +40,14 @@ export default function SettingsPage() {
     const hasBrandingAccess = ['admin', 'superadmin', 'super_admin', 'super administrador', 'super admin', 'super_administrador'].includes(userRole);
 
     const tabs = [
-        { id: 'profile', label: 'Perfil' }
+        { id: 'profile', label: 'Perfil', icon: User }
     ];
 
     if (hasBrandingAccess) {
-        tabs.push({ id: 'identity', label: 'Branding' });
+        tabs.push({ id: 'identity', label: 'Branding', icon: Palette });
 
 
-        tabs.push({ id: 'templates', label: 'Templates' });
+        tabs.push({ id: 'templates', label: 'Templates', icon: FileText });
     }
 
     if (loading) return null;
@@ -89,11 +90,12 @@ export default function SettingsPage() {
                             <button
                                 key={tab.id}
                                 onClick={() => router.push(`/settings?tab=${tab.id}`)}
-                                className={`px-6 py-3 text-sm font-bold transition-all relative whitespace-nowrap ${activeTab === tab.id
+                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === tab.id
                                     ? 'text-foreground border-b-[3px] active-tab-indicator'
                                     : 'text-muted-foreground hover:text-foreground'
                                     }`}
                             >
+                                {tab.icon && <tab.icon size={18} strokeWidth={1} />}
                                 {tab.label}
                             </button>
                         ))}

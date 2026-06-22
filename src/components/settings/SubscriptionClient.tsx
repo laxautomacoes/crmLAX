@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react';
-import { Check, CreditCard, Crown, Loader2, Settings2, Sparkles, Zap, AlertTriangle, ArrowUpRight, ArrowDownRight, MessageCircle, X } from 'lucide-react';
+import { Check, CreditCard, Crown, Loader2, Settings2, Sparkles, Zap, AlertTriangle, ArrowUpRight, ArrowDownRight, MessageCircle, X, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { getStripePortalUrl, type PlanConfigInput } from '@/app/_actions/plan';
 import { useSearchParams } from 'next/navigation';
@@ -11,6 +11,7 @@ import { updatePlansOrderAction } from '@/app/_actions/plan';
 import { PageHeader } from '@/components/shared/PageHeader';
 import { PlanItem } from './subscription/PlanItem';
 import { SortableItem } from './subscription/SortableItem';
+import { SubscriptionInvoices } from './SubscriptionInvoices';
 
 import {
     DndContext,
@@ -168,99 +169,105 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
     return (
         <div className="bg-card -m-4 md:-m-8 p-4 md:p-8 min-h-screen">
             <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
-            <PageHeader 
-                title="Assinatura"
-                subtitle={isSuperadmin ? 'Edite os planos exibidos para seus clientes.' : 'Gerencie seu plano e acompanhe o uso de IA.'}
-            >
-                <div className="flex items-center gap-3">
-                    {isSuperadmin && (
-                        <span className="inline-flex items-center gap-1 rounded-full bg-[#404F4F] px-2.5 py-0.5 text-xs font-bold text-white">
-                            <Settings2 className="h-3 w-3" /> Modo Editor
-                        </span>
-                    )}
-                    {!isSuperadmin && (
-                        <div className="flex items-center gap-2">
-                            <button
-                                onClick={handlePortal}
-                                disabled={isPortaling}
-                                className="h-[42px] min-w-[130px] flex items-center justify-center px-4 bg-card border border-border rounded-lg text-sm font-bold text-foreground hover:bg-muted transition-all active:scale-[0.98] disabled:opacity-50"
-                            >
-                                {isPortaling ? (
-                                    <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                    "Gerenciar Faturamento"
-                                )}
-                            </button>
-                            <button
-                                onClick={handleCancelSubscription}
-                                className="h-[42px] min-w-[130px] flex items-center justify-center px-4 bg-card border border-red-500/30 rounded-lg text-sm font-bold text-red-400 hover:bg-red-500/10 hover:border-red-500/50 transition-all active:scale-[0.98]"
-                            >
-                                Cancelar Assinatura
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </PageHeader>
-
-            <hr className="hidden md:block border-border -mt-2" />
-
-            {/* Cards de Planos */}
-            <div className="mt-4 md:mt-10">
-                <DndContext 
-                    sensors={sensors}
-                    collisionDetection={closestCenter}
-                    onDragEnd={handleDragEnd}
+                <PageHeader
+                    title="Assinatura"
+                    subtitle={isSuperadmin ? 'Edite os planos exibidos para seus clientes.' : 'Gerencie seu plano e acompanhe o uso de IA.'}
                 >
-                    <SortableContext 
-                        items={allPlanLimits.map((p: any) => p.plan_type)}
-                        strategy={rectSortingStrategy}
-                        disabled={!isSuperadmin}
-                    >
-                        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
-                            {allPlanLimits.map((planLimit: any) => (
-                                <SortableItem 
-                                    key={planLimit.plan_type} 
-                                    id={planLimit.plan_type}
-                                    disabled={!isSuperadmin}
-                                >
-                                    <PlanItem 
-                                        planLimit={planLimit}
-                                        currentPlan={currentPlan}
-                                        isSuperadmin={isSuperadmin}
-                                        selectedPlan={selectedPlan}
-                                        isSubscribing={isSubscribing}
-                                        setSelectedPlan={setSelectedPlan}
-                                        handleSubscribe={handleSubscribeClick}
-                                        router={router}
-                                    />
-                                </SortableItem>
-                            ))}
-                        </div>
-                    </SortableContext>
-                </DndContext>
-            </div>
+                    <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max items-center justify-end">
+                        {isSuperadmin && (
+                            <span className="inline-flex items-center justify-center gap-1 rounded-full bg-[#404F4F] px-4 text-xs font-bold text-white h-[34px]">
+                                <Settings2 className="h-3 w-3" /> Modo Editor
+                            </span>
+                        )}
+                        {!isSuperadmin && (
+                            <>
 
-            {!isSuperadmin && (
-                <div className="rounded-xl border border-border/50 bg-background p-5 space-y-3">
-                    <p className="text-sm font-bold text-foreground flex items-center gap-2">
-                        <AlertTriangle className="h-4 w-4 text-[#FFE600]" />
-                        Como funciona a troca de plano
-                    </p>
-                    <div className="space-y-2.5 text-xs text-muted-foreground">
-                        <div className="flex items-start gap-2">
-                            <ArrowUpRight className="h-3.5 w-3.5 mt-0.5 shrink-0 text-green-400" />
-                            <p><strong className="text-foreground">Upgrade:</strong> Sua assinatura atual é cancelada e uma nova é criada com o plano superior. As novas funcionalidades são liberadas imediatamente.</p>
-                        </div>
-                        <div className="flex items-start gap-2">
-                            <ArrowDownRight className="h-3.5 w-3.5 mt-0.5 shrink-0 text-orange-400" />
-                            <p><strong className="text-foreground">Downgrade:</strong> Sua assinatura atual é cancelada imediatamente. Os dias restantes do plano atual não são reembolsados.</p>
+                                <button
+                                    onClick={handleCancelSubscription}
+                                    className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-destructive/10 text-destructive border border-transparent px-4 rounded-lg hover:bg-destructive/20 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                                >
+                                    Cancelar Assinatura
+                                </button>
+                            </>
+                        )}
+                    </div>
+                </PageHeader>
+
+                <hr className="hidden md:block border-border -mt-2" />
+
+                {/* Cards de Planos */}
+                <div className="mt-4 md:mt-10">
+                    <DndContext
+                        sensors={sensors}
+                        collisionDetection={closestCenter}
+                        onDragEnd={handleDragEnd}
+                    >
+                        <SortableContext
+                            items={allPlanLimits.map((p: any) => p.plan_type)}
+                            strategy={rectSortingStrategy}
+                            disabled={!isSuperadmin}
+                        >
+                            <div className="grid grid-cols-1 gap-6 md:grid-cols-2 xl:grid-cols-4">
+                                {allPlanLimits.map((planLimit: any) => (
+                                    <SortableItem
+                                        key={planLimit.plan_type}
+                                        id={planLimit.plan_type}
+                                        disabled={!isSuperadmin}
+                                    >
+                                        <PlanItem
+                                            planLimit={planLimit}
+                                            currentPlan={currentPlan}
+                                            isSuperadmin={isSuperadmin}
+                                            selectedPlan={selectedPlan}
+                                            isSubscribing={isSubscribing}
+                                            setSelectedPlan={setSelectedPlan}
+                                            handleSubscribe={handleSubscribeClick}
+                                            router={router}
+                                        />
+                                    </SortableItem>
+                                ))}
+                            </div>
+                        </SortableContext>
+                    </DndContext>
+                </div>
+
+                {!isSuperadmin && (
+                    <div className="rounded-xl border border-border/50 bg-background p-5 space-y-3">
+                        <p className="text-base font-bold text-foreground">
+                            Como funciona a troca de plano:
+                        </p>
+                        <div className="space-y-3 text-sm text-muted-foreground">
+                            <div className="flex items-start gap-2">
+                                <ArrowUpRight className="h-4 w-4 mt-0.5 shrink-0 text-green-400" strokeWidth={1} />
+                                <p className="text-sm"><strong className="text-foreground">Upgrade:</strong> Sua assinatura atual é cancelada e uma nova é criada com o plano superior. As novas funcionalidades são liberadas imediatamente.</p>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <ArrowDownRight className="h-4 w-4 mt-0.5 shrink-0 text-orange-400" strokeWidth={1} />
+                                <p className="text-sm"><strong className="text-foreground">Downgrade:</strong> Sua assinatura atual é cancelada imediatamente. Os dias restantes do plano atual não são reembolsados.</p>
+                            </div>
+                            <div className="flex items-start gap-2">
+                                <div className="flex items-center justify-center h-4 w-4 mt-0.5 shrink-0">
+                                    <span className="text-[16px] font-light text-blue-400 leading-none">?</span>
+                                </div>
+                                <p className="text-sm">
+                                    <strong className="text-foreground">Dúvidas?</strong> Entre em contato: <a href={`https://wa.me/${CRMLAX_WHATSAPP}`} target="_blank" className="font-semibold text-foreground hover:underline">WhatsApp CRM LAX</a> ou <a href="mailto:contato@laxperience.online" className="font-semibold text-foreground hover:underline">contato@laxperience.online</a>
+                                </p>
+                            </div>
                         </div>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                        Dúvidas? Entre em contato: <a href={`https://wa.me/${CRMLAX_WHATSAPP}`} target="_blank" className="font-semibold text-foreground hover:underline">WhatsApp CRM LAX</a> ou <a href="mailto:contato@laxperience.online" className="font-semibold text-foreground hover:underline">contato@laxperience.online</a>
-                    </p>
-                </div>
-            )}
+                )}
+
+                {!isSuperadmin && (
+                    <>
+                        <hr className="hidden md:block border-border my-8" />
+                        <div className="space-y-4">
+                            <h2 className="text-lg font-bold text-foreground flex items-center gap-2">
+                                Histórico de Pagamentos
+                            </h2>
+                            <SubscriptionInvoices />
+                        </div>
+                    </>
+                )}
             </div>
 
             {/* Modal de Confirmação de Troca de Plano */}

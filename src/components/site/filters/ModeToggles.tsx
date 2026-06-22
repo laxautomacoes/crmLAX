@@ -21,7 +21,7 @@ export function ModeToggles({ searchMode, advancedOpen, onToggleAdvanced, onChan
                 disabled={searchMode !== 'standard'}
                 className={`flex items-center gap-1.5 transition-all cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed ${advancedOpen ? activeClass : inactiveClass}`}
             >
-                {advancedOpen ? <ChevronUp size={16} className={iconColor} /> : <Filter size={16} className={iconColor} />}
+                {advancedOpen ? <ChevronUp size={16} strokeWidth={1} className={iconColor} /> : <Filter size={16} strokeWidth={1} className={iconColor} />}
                 {advancedOpen ? 'Simples' : 'Avançado'}
             </button>
             <button
@@ -29,7 +29,7 @@ export function ModeToggles({ searchMode, advancedOpen, onToggleAdvanced, onChan
                 onClick={() => onChangeMode(searchMode === 'code' ? 'standard' : 'code')}
                 className={`flex items-center gap-1.5 transition-all cursor-pointer ${searchMode === 'code' ? activeClass : inactiveClass}`}
             >
-                <Hash size={16} className={iconColor} />
+                <Hash size={16} strokeWidth={1} className={iconColor} />
                 Por código
             </button>
             <button
@@ -37,7 +37,7 @@ export function ModeToggles({ searchMode, advancedOpen, onToggleAdvanced, onChan
                 onClick={() => onChangeMode(searchMode === 'project' ? 'standard' : 'project')}
                 className={`flex items-center gap-1.5 transition-all cursor-pointer ${searchMode === 'project' ? activeClass : inactiveClass}`}
             >
-                <Building2 size={16} className={iconColor} />
+                <Building2 size={16} strokeWidth={1} className={iconColor} />
                 Empreendimentos
             </button>
         </div>

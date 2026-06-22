@@ -55,3 +55,18 @@ alwaysApply: true
     - A implementação do separador desktop deve utilizar: `<hr className="hidden md:block border-border" />`.
     - **Espaçamento Estritamente Idêntico:** Para garantir que todas as páginas tenham as mesmas medidas exatas de espaçamento acima e abaixo do separador, o contêiner principal de TODAS as páginas DEVE OBRIGATORIAMENTE utilizar o padrão mestre de espaçamento do sistema: `space-y-6 md:space-y-8` (se bloco convencional) ou `gap-6 md:gap-8` (se flex/grid). Não utilize medidas menores como `gap-4 md:gap-6` nos contêineres raiz. Não adicione margens manuais (`mt-`, `mb-`) no `<hr>`.
     - **Altura Constante do Cabeçalho:** O componente `PageHeader` possui uma implementação que garante altura constante no desktop inserindo um bloco vazio (`<div className="hidden md:block h-[20px] mt-1" aria-hidden="true" />`) quando não há subtítulo, assegurando que o espaçamento até o separador seja sempre perfeitamente o mesmo.
+
+11. Padrão de Botões de Ação do Cabeçalho (Header):
+    - Botões primários de ação (ex: "Novo Lead", "Novo Cliente", "Ver Site", "Salvar") no cabeçalho das páginas devem obrigatoriamente possuir altura de `h-[34px]`.
+    - Classe mestra de formatação: `h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap`.
+    - Os botões devem possuir um ícone Lucide-React acompanhando o texto, utilizando tamanho padrão: `size={14} strokeWidth={1}`.
+
+12. Nomenclatura e Terminologia:
+    - Nunca utilize o termo "site vitrine" em textos, títulos, comentários ou código.
+    - O termo correto e oficial da plataforma é exclusivamente "site".
+
+13. Padrão de Abas de Navegação (Active Tabs):
+    - Abas horizontais de navegação devem usar as classes: `px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap`
+    - Aba Ativa (selecionada): `text-foreground border-b-[3px] active-tab-indicator` (ou variante específica com `border-b-[3px]`).
+    - Aba Inativa: `text-muted-foreground hover:text-foreground`
+    - Ícones (Lucide-React): `size={18} strokeWidth={1}`

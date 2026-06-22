@@ -206,20 +206,16 @@ export function IntegrationEndpointCard({
                 className="group bg-card hover:bg-muted/5 rounded-xl border border-border overflow-hidden transition-all duration-300 cursor-pointer select-none"
                 onClick={() => setIsModalOpen(true)}
             >
-                <div className="px-6 py-6 bg-muted/30">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4 flex-1">
-                            <div className={`p-2.5 rounded-xl ${iconColor}`}>
-                                <Icon size={20} />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-base font-bold text-foreground">{title}</h3>
-                                    <span className={`flex h-2 w-2 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                </div>
-                                <p className="text-xs text-muted-foreground max-w-xl line-clamp-1">{description}</p>
-                            </div>
+                <div className="p-5 bg-muted/30 flex flex-col gap-3">
+                    <div className="flex items-start justify-between mb-1">
+                        <div className={`p-2.5 rounded-xl ${iconColor} w-fit`}>
+                            <Icon size={22} />
                         </div>
+                        <span className={`flex h-2.5 w-2.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <h3 className="text-sm font-bold text-foreground line-clamp-1">{title}</h3>
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">{description}</p>
                     </div>
                 </div>
             </div>

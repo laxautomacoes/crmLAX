@@ -105,7 +105,7 @@ export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDe
     return (
         <div
             ref={setNodeRef}
-            className="flex flex-col w-[280px] min-w-[280px] md:w-[310px] md:min-w-[310px] rounded-xl p-4 border border-muted-foreground/30 shadow-sm bg-card dark:bg-card overflow-hidden h-full"
+            className="flex flex-col w-[280px] min-w-[280px] md:w-[310px] md:min-w-[310px] rounded-lg p-4 border border-muted-foreground/30 shadow-sm bg-card dark:bg-card overflow-hidden h-full"
             style={{
                 borderTop: hasBorderColor ? `4px solid ${currentColor}` : undefined,
             }}
@@ -272,6 +272,8 @@ export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDe
                     </AnimatePresence>
                 </div>
             </div>
+
+            <hr className="border-t border-muted-foreground/20 mx-2 mb-4" />
 
             <div className="flex-1 space-y-3 overflow-y-auto no-scrollbar pb-4 min-h-0">
                 <SortableContext

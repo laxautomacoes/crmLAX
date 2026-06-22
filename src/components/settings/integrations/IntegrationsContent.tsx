@@ -22,16 +22,18 @@ export function IntegrationsContent({ tenantId, slug, customDomain }: Integratio
             <div className="space-y-6">
                 <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em]">Comunicação</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                     <WhatsAppCard />
                 </div>
             </div>
+
+            <hr className="border-border/60" />
 
             {/* SEÇÃO 2: ANÚNCIOS & PORTAIS */}
             <div className="space-y-6">
                 <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em]">Anúncios & Portais</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                     <IntegrationEndpointCard 
                         title="Facebook & Instagram Ads"
                         description="Capture leads do Facebook e Instagram em tempo real."
@@ -65,30 +67,36 @@ export function IntegrationsContent({ tenantId, slug, customDomain }: Integratio
                 </div>
             </div>
 
+            <hr className="border-border/60" />
+
             {/* SEÇÃO 3: FINANCEIRO */}
             <div className="space-y-6">
                 <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em]">Financeiro</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                     <GatewayCard tenantId={tenantId} provider="stripe" />
                     <GatewayCard tenantId={tenantId} provider="checkout_lax" />
                 </div>
             </div>
 
+            <hr className="border-border/60" />
+
             {/* SEÇÃO 4: ASSINATURA DIGITAL */}
             <div className="space-y-6">
                 <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em]">Assinatura Digital & Alertas</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                     <DocuSignCard />
                 </div>
             </div>
+
+            <hr className="border-border/60" />
 
             {/* SEÇÃO 5: INTELIGÊNCIA DE MERCADO */}
             <div className="space-y-6">
                 <h2 className="text-sm font-black text-foreground uppercase tracking-[0.2em]">Inteligência de Mercado</h2>
 
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-5 gap-4 md:gap-6">
                     <MarketDataCard tenantId={tenantId} />
                     <NewsFeedCard tenantId={tenantId} />
                 </div>

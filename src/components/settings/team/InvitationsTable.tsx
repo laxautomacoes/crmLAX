@@ -39,8 +39,8 @@ export function InvitationsTable({ invitations, fetching, onRefresh, searchTerm 
 
     return (
         <>
-            <div className="bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm min-h-[250px]">
-                <div className="overflow-x-auto min-h-[250px]">
+            <div className="bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm min-h-[calc(100vh-220px)]">
+                <div className="overflow-x-auto min-h-[calc(100vh-220px)]">
                     <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
                         <thead className="bg-muted/50 border-b border-muted-foreground/30">
                             <tr>

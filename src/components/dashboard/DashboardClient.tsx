@@ -152,10 +152,10 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
 
             {/* Header / Actions Section */}
             <PageHeader title="Dashboard">
-                <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max">
+                <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max">
                     <button
                         onClick={() => setIsFilterOpen(true)}
-                        className="h-[38px] flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 focus:ring-ring/50 relative shadow-sm"
+                        className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 focus:ring-ring/50 relative shadow-sm"
                     >
                         <Filter size={14} strokeWidth={1} />
                         Filtrar
@@ -167,7 +167,7 @@ export default function DashboardClient({ metrics, roiData, profileName, tenantI
                     </button>
                     <button
                         onClick={() => setIsLeadModalOpen(true)}
-                        className="h-[38px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                        className="h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
                     >
                         <Plus size={14} strokeWidth={1} />
                         Novo Lead

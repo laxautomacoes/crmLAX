@@ -70,16 +70,16 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                 title="Relatórios Gerenciais"
                 subtitle="Acompanhe o desempenho do seu negócio e da sua equipe."
             >
-                <div className="flex flex-wrap items-center gap-3">
+                <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max items-center justify-end">
                     {/* Broker Filter - Only visible for admins */}
                     {isAdmin && (
-                        <div className="relative h-[42px]">
-                            <User className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                        <div className="relative h-[34px]">
+                            <User size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                             <select
                                 value={brokerId}
                                 onChange={(e) => handleBrokerChange(e.target.value)}
                                 disabled={isPending}
-                                className="w-full h-full pl-9 pr-8 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[200px]"
+                                className="w-full h-full pl-9 pr-8 bg-card border border-muted-foreground/30 rounded-lg text-sm font-bold uppercase tracking-wide text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[200px] shadow-sm"
                             >
                                 <option value="all">Todos Corretores</option>
                                 {brokers.map((broker) => (
@@ -95,13 +95,13 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                     )}
 
                     {/* Property Filter */}
-                    <div className="relative h-[42px]">
-                        <Home className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <div className="relative h-[34px]">
+                        <Home size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <select
                             value={propertyId}
                             onChange={(e) => handlePropertyChange(e.target.value)}
                             disabled={isPending}
-                            className="w-full h-full pl-9 pr-8 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[220px]"
+                            className="w-full h-full pl-9 pr-8 bg-card border border-muted-foreground/30 rounded-lg text-sm font-bold uppercase tracking-wide text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] max-w-[220px] shadow-sm"
                         >
                             <option value="all">Todos Imóveis</option>
                             {properties.map((property) => (
@@ -116,13 +116,13 @@ export default function ReportsClient({ initialMetrics, tenantId, brokers, prope
                     </div>
 
                     {/* Period Filter */}
-                    <div className="relative h-[42px]">
-                        <CalendarDays className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground w-4 h-4" />
+                    <div className="relative h-[34px]">
+                        <CalendarDays size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <select
                             value={period}
                             onChange={(e) => handlePeriodChange(e.target.value)}
                             disabled={isPending}
-                            className="w-full h-full pl-9 pr-8 bg-card border border-border rounded-lg text-sm font-medium focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px]"
+                            className="w-full h-full pl-9 pr-8 bg-card border border-muted-foreground/30 rounded-lg text-sm font-bold uppercase tracking-wide text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none appearance-none cursor-pointer hover:bg-muted/50 transition-colors disabled:opacity-50 min-w-[160px] shadow-sm"
                         >
                             {PERIODS.map((p) => (
                                 <option key={p.value} value={p.value}>

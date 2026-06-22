@@ -10,7 +10,7 @@ interface TrackPageViewProps {
 }
 
 /**
- * Componente client-side para rastreamento de page views no site vitrine.
+ * Componente client-side para rastreamento de page views no site.
  * Envia um beacon para a API de analytics ao montar.
  * Usa `sendBeacon` quando disponível para não impactar performance.
  * Deduplica envios com um ref para evitar double-tracking em strict mode.

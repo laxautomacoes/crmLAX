@@ -366,20 +366,20 @@ function ComparisonResults({ entries, formatCurrency }: { entries: ComparisonEnt
                 className="bg-card border border-border rounded-xl shadow-sm overflow-hidden"
             >
                 {/* Tabs */}
-                <div className="flex border-b border-border">
+                <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar">
                     {entries.map((entry, idx) => (
                         <button
                             key={idx}
                             onClick={() => setActiveTab(idx)}
-                            className={`flex-1 flex items-center justify-center gap-2 px-4 py-3 text-xs font-black uppercase tracking-wider transition-all
+                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap
                                 ${activeTab === idx 
-                                    ? 'text-foreground border-b-2' 
-                                    : 'text-muted-foreground hover:text-foreground hover:bg-muted/20'
+                                    ? 'text-foreground border-b-[3px]' 
+                                    : 'text-muted-foreground hover:text-foreground'
                                 }`}
                             style={activeTab === idx ? { borderBottomColor: entry.color } : undefined}
                         >
                             <div 
-                                className="h-2.5 w-2.5 rounded-full shrink-0"
+                                className="h-3 w-3 rounded-full shrink-0"
                                 style={{ backgroundColor: entry.color }}
                             />
                             {entry.neighborhood}

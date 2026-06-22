@@ -32,7 +32,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
                         onClick={onClose}
                         className={`flex items-center gap-3 ${isCollapsed ? '' : 'flex-1'} min-w-0`}
                     >
-                        <item.icon size={18} className="shrink-0" />
+                        <item.icon size={18} strokeWidth={1} className="shrink-0" />
                         {!isCollapsed && (
                             <span className="flex-1 text-left">{item.name}</span>
                         )}
@@ -42,7 +42,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
                             onClick={(e) => { e.stopPropagation(); onToggleExpand(item.name); }}
                             className="p-1 transition-colors"
                         >
-                            {isExpanded ? <ChevronDown size={16} /> : <ChevronRight size={16} />}
+                            {isExpanded ? <ChevronDown size={16} strokeWidth={1} /> : <ChevronRight size={16} strokeWidth={1} />}
                         </button>
                     )}
                 </div>
@@ -84,7 +84,7 @@ export function NavItem({ item, pathname, searchParams, isCollapsed, isExpanded,
             className={`flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-base font-medium ${isActive ? 'bg-white/10 text-secondary' : 'text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground'} ${isCollapsed ? 'justify-center' : ''}`}
             title={isCollapsed ? item.name : ''}
         >
-            <item.icon size={18} className="shrink-0" />
+            <item.icon size={18} strokeWidth={1} className="shrink-0" />
             {!isCollapsed && <span className="whitespace-nowrap overflow-hidden transition-opacity duration-300">{item.name}</span>}
         </Link>
     );

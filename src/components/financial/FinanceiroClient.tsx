@@ -151,13 +151,15 @@ export function FinanceiroClient({ tenantId, leads }: FinanceiroClientProps) {
                 title="Financeiro"
                 subtitle="Gerencie receitas e despesas do seu negócio"
             >
-                <button
-                    onClick={handleOpenModal}
-                    className="h-[38px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm"
-                >
-                    <Plus size={14} strokeWidth={1} />
-                    Nova Transação
-                </button>
+                <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max">
+                    <button
+                        onClick={handleOpenModal}
+                        className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                    >
+                        <Plus size={14} strokeWidth={1} />
+                        Nova Transação
+                    </button>
+                </div>
             </PageHeader>
 
             <hr className="hidden md:block border-border -mt-2" />

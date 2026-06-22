@@ -116,22 +116,18 @@ export function DocuSignCard() {
                 className="bg-card rounded-xl border border-border overflow-hidden transition-all hover:bg-muted/5 cursor-pointer select-none"
                 onClick={() => setIsModalOpen(true)}
             >
-                <div className="px-6 py-6 bg-muted/30">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500">
-                                <DocuSignIcon size={20} />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-base font-bold text-foreground">DocuSign</h3>
-                                    <span className={`flex h-2 w-2 rounded-full ${status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                </div>
-                                <p className="text-xs text-muted-foreground line-clamp-1 max-w-xl">
-                                    Assinatura digital e gestão de contratos eletrônicos.
-                                </p>
-                            </div>
+                <div className="p-5 bg-muted/30 flex flex-col gap-3">
+                    <div className="flex items-start justify-between mb-1">
+                        <div className="p-2.5 rounded-xl bg-blue-500/10 text-blue-500 w-fit">
+                            <DocuSignIcon size={22} />
                         </div>
+                        <span className={`flex h-2.5 w-2.5 rounded-full ${status === 'active' ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <h3 className="text-sm font-bold text-foreground line-clamp-1">DocuSign</h3>
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                            Assinatura digital e gestão de contratos eletrônicos.
+                        </p>
                     </div>
                 </div>
             </div>
@@ -212,22 +208,18 @@ export function DocuSignCard() {
                 className="bg-card rounded-xl border border-border overflow-hidden transition-all hover:bg-muted/5 cursor-pointer select-none"
                 onClick={() => setIsWaModalOpen(true)}
             >
-                <div className="px-6 py-6 bg-muted/30">
-                    <div className="flex items-center justify-between gap-4">
-                        <div className="flex items-center gap-4">
-                            <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500">
-                                <MessageSquare size={20} />
-                            </div>
-                            <div>
-                                <div className="flex items-center gap-2">
-                                    <h3 className="text-base font-bold text-foreground">Grupo de Notificações</h3>
-                                    <span className={`flex h-2 w-2 rounded-full ${groupJid ? 'bg-emerald-500' : 'bg-red-500'}`} />
-                                </div>
-                                <p className="text-xs text-muted-foreground line-clamp-1 max-w-xl">
-                                    Grupo do WhatsApp onde os corretores e gerentes serão notificados.
-                                </p>
-                            </div>
+                <div className="p-5 bg-muted/30 flex flex-col gap-3">
+                    <div className="flex items-start justify-between mb-1">
+                        <div className="p-2.5 rounded-xl bg-emerald-500/10 text-emerald-500 w-fit">
+                            <MessageSquare size={22} />
                         </div>
+                        <span className={`flex h-2.5 w-2.5 rounded-full ${groupJid ? 'bg-emerald-500' : 'bg-red-500'}`} />
+                    </div>
+                    <div className="flex flex-col gap-1">
+                        <h3 className="text-sm font-bold text-foreground line-clamp-1">Grupo de Notificações</h3>
+                        <p className="text-[11px] text-muted-foreground line-clamp-2 leading-relaxed">
+                            Grupo do WhatsApp onde os corretores e gerentes serão notificados.
+                        </p>
                     </div>
                 </div>
             </div>

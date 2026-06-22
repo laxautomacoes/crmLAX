@@ -143,30 +143,32 @@ export default function NotesPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader title="Notas">
-                <div className="flex items-center justify-center md:justify-end gap-3">
+                <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max items-center justify-end">
                     <FormInput
                         placeholder="Buscar notas..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         icon={Search}
-                        className="md:w-64"
+                        iconSize={14}
+                        iconStrokeWidth={1}
+                        className="w-full md:w-[240px] h-[34px]"
                     />
                     
                     {/* View Toggle */}
-                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm h-10 md:h-[40px]">
+                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm h-[34px]">
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'grid' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
+                            className={`p-1 rounded-md transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'grid' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Grade"
                         >
-                            <LayoutGrid size={18} />
+                            <LayoutGrid size={14} strokeWidth={1} />
                         </button>
                         <button
                             onClick={() => setViewMode('table')}
-                            className={`p-1.5 rounded-md transition-all ${viewMode === 'table' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
+                            className={`p-1 rounded-md transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'table' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Tabela"
                         >
-                            <TableIcon size={18} />
+                            <TableIcon size={14} strokeWidth={1} />
                         </button>
                     </div>
 
@@ -175,9 +177,9 @@ export default function NotesPage() {
                             setEditingNote(null)
                             setIsModalOpen(true)
                         }}
-                        className="flex items-center gap-2 px-4 py-3 md:py-2 bg-secondary text-secondary-foreground rounded-lg hover:opacity-90 transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                        className="h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
                     >
-                        <Plus size={18} />
+                        <Plus size={14} strokeWidth={1} />
                         Nova Nota
                     </button>
                 </div>

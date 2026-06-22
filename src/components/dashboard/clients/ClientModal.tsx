@@ -605,53 +605,53 @@ export function ClientModal({
             <div className="space-y-6">
                 {/* Tabs — só para clientes existentes */}
                 {isEditing && (
-                    <div className="flex items-stretch gap-0 p-0 rounded-lg mb-6 overflow-x-auto overflow-y-hidden no-scrollbar border border-border/30 overflow-hidden" style={{ backgroundColor: 'var(--background)' }}>
+                    <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar mb-6">
                         <button
                             type="button"
                             onClick={() => setActiveTab('info')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'info' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'info' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
-                            <User size={16} />
+                            <User size={18} strokeWidth={1} />
                             Informações
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('leads')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'leads' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'leads' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
-                            <Filter size={16} />
+                            <Filter size={18} strokeWidth={1} />
                             Leads
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('proposals')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'proposals' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'proposals' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
-                            <Pen size={16} className="-scale-x-100" />
+                            <Pen size={18} strokeWidth={1} className="-scale-x-100" />
                             Propostas
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('documents')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'documents' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'documents' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
-                            <FileText size={16} />
+                            <FileText size={18} strokeWidth={1} />
                             Documentos
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('financeiro')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'financeiro' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'financeiro' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
-                            <DollarSign size={16} />
+                            <DollarSign size={18} strokeWidth={1} />
                             Financeiro
                         </button>
                         <button
                             type="button"
                             onClick={() => setActiveTab('ai')}
-                            className={`flex-1 flex items-center justify-center gap-2 py-3.5 px-4 text-sm font-bold transition-all whitespace-nowrap ${activeTab === 'ai' ? 'bg-[#FFE600] text-[#404F4F] shadow-sm' : 'text-muted-foreground hover:text-foreground hover:bg-muted/40'}`}
+                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'ai' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
-                            <Sparkles size={16} />
+                            <Sparkles size={18} strokeWidth={1} />
                             Análise IA
                         </button>
                     </div>

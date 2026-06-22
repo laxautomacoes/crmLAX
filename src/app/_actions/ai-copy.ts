@@ -17,7 +17,8 @@ interface CopyVariants {
 export async function generatePropertyCopy(
     propertyId: string,
     tenantId: string,
-    profileId: string
+    profileId: string,
+    promptId?: string
 ): Promise<{ success: boolean; data?: CopyVariants; error?: string }> {
     await requirePlanFeature(tenantId, 'ai');
 
@@ -32,6 +33,12 @@ export async function generatePropertyCopy(
         .single();
 
     if (!property) throw new Error('Property não encontrado.');
+
+    let customSystemPrompt = '';
+    if (promptId) {
+        const { data: aiPrompt } = await supabase.from('ai_prompts').select('system_prompt').eq('id', promptId).single();
+        if (aiPrompt) customSystemPrompt = `\n\nINSTRUÇÕES GERAIS DE TOM E IDENTIDADE (OBRIGATÓRIO SEGUIR):\n${aiPrompt.system_prompt}\n`;
+    }
 
     const d = property.details || {};
     const price = property.price
@@ -63,7 +70,7 @@ Descrição do corretor: ${property.description || 'Não informada'}`;
 
 DADOS DO IMÓVEL:
 ${propertyProfile}
-
+${customSystemPrompt}
 TAREFA:
 Crie 3 versões de copy para anúncio deste property:
 1. CURTA (max 300 caracteres): Para WhatsApp e Stories. Direta, com destaque no maior diferencial.
@@ -114,11 +121,18 @@ export async function generateGeneralCopy(
     topic: string,
     tenantId: string,
     profileId: string,
-    mediaUrls?: string[]
+    mediaUrls?: string[],
+    promptId?: string
 ): Promise<{ success: boolean; data?: CopyVariants; error?: string }> {
     await requirePlanFeature(tenantId, 'ai');
 
     const supabase = await createClient();
+
+    let customSystemPrompt = '';
+    if (promptId) {
+        const { data: aiPrompt } = await supabase.from('ai_prompts').select('system_prompt').eq('id', promptId).single();
+        if (aiPrompt) customSystemPrompt = `\n\nINSTRUÇÕES GERAIS DE TOM E IDENTIDADE (OBRIGATÓRIO SEGUIR):\n${aiPrompt.system_prompt}\n`;
+    }
 
     const hasMedia = mediaUrls && mediaUrls.length > 0;
     const topicSection = topic ? `TÓPICO DO POST / INSTRUÇÕES DO USUÁRIO:\n"${topic}"` : '';
@@ -130,7 +144,7 @@ export async function generateGeneralCopy(
 
 ${topicSection}
 ${mediaSection}
-
+${customSystemPrompt}
 TAREFA:
 Crie 3 versões de copy para a publicação:
 1. CURTA (max 300 caracteres): Para WhatsApp e Stories. Direta e impactante.

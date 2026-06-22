@@ -96,9 +96,9 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
             </button>
 
             {isOpen && (
-                <div className="absolute right-0 mt-3 w-72 bg-card rounded-2xl shadow-xl border border-border z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
+                <div className="absolute right-0 mt-3 w-72 bg-background rounded-2xl shadow-xl border border-border z-50 overflow-hidden animate-in fade-in zoom-in-95 duration-200 origin-top-right">
                     <DropdownHeader profile={profile} />
-                    <div className="flex flex-col bg-card">
+                    <div className="flex flex-col bg-background">
                         <MenuItem
                             icon={theme === 'dark' ? Sun : Moon}
                             label={theme === 'dark' ? "Modo Claro" : "Modo Escuro"}

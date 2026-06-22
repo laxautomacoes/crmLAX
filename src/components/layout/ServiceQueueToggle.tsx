@@ -99,14 +99,14 @@ export function ServiceQueueToggle({ initialStatus = false, tenantId, companyNam
                         flex items-center gap-2 px-4 py-1.5 rounded-full transition-all text-xs font-bold border shadow-sm active:scale-[0.98]
                         ${isActive 
                             ? 'bg-[#3EBC79] border-[#3EBC79] text-white hover:brightness-110' 
-                            : 'bg-card border-border text-foreground/70 hover:bg-muted'}
+                            : 'bg-card dark:bg-muted border-border text-foreground/70 hover:bg-muted dark:hover:bg-muted/80'}
                     `}
                     title={isActive ? 'Sair do atendimento' : 'Entrar em atendimento'}
                 >
                     {isLoading ? (
                         <Loader2 size={14} className="animate-spin" />
                     ) : (
-                        <Headphones size={14} />
+                        <Headphones size={14} strokeWidth={1} />
                     )}
                     <span>
                         {isActive ? 'Em Atendimento' : 'Atendimento'}

@@ -248,3 +248,85 @@ export async function deleteRoadmapStage(stageId: string) {
         return { error: 'Falha ao excluir coluna' }
     }
 }
+
+export async function updateRoadmapStageColor(stageId: string, color: string) {
+    try {
+        const { error: authError, supabase } = await verifySuperAdmin()
+        if (authError || !supabase) return { error: authError }
+
+        const { error } = await supabase
+            .from('roadmap_stages')
+            .update({ color })
+            .eq('id', stageId)
+
+        if (error) return { error: error.message }
+
+        revalidatePath('/roadmap')
+        return { success: true }
+    } catch (error) {
+        console.error('Error in updateRoadmapStageColor:', error)
+        return { error: 'Falha ao atualizar cor' }
+    }
+}
+
+export async function duplicateRoadmapStage(stageId: string) {
+    try {
+        const { error: authError, supabase } = await verifySuperAdmin()
+        if (authError || !supabase) return { error: authError }
+
+        const { data: stage } = await supabase
+            .from('roadmap_stages')
+            .select('*')
+            .eq('id', stageId)
+            .single()
+
+        if (!stage) return { error: 'Estágio não encontrado' }
+
+        const { data: allStages } = await supabase
+            .from('roadmap_stages')
+            .select('name')
+
+        const baseName = stage.name.replace(/ \(Cópia \d+\)$/, '')
+        let copyNumber = 1
+        let newName = `${baseName} (Cópia ${copyNumber})`
+
+        const existingNames = allStages?.map(s => s.name) || []
+        while (existingNames.includes(newName)) {
+            copyNumber++
+            newName = `${baseName} (Cópia ${copyNumber})`
+        }
+
+        return await createRoadmapStage(newName)
+    } catch (error) {
+        console.error('Error in duplicateRoadmapStage:', error)
+        return { error: 'Falha ao duplicar coluna' }
+    }
+}
+
+export async function updateRoadmapStagesOrder(updates: { id: string, order_index: number }[]) {
+    try {
+        const { error: authError, supabase } = await verifySuperAdmin()
+        if (authError || !supabase) return { error: authError }
+
+        // We can do an upsert or individual updates
+        // Supabase update for multiple rows can be done with upsert if we select all required fields
+        // Since we only want to update order_index, we might need a loop or RPC
+        // Let's use a loop since there are typically few stages
+        for (const update of updates) {
+            const { error } = await supabase
+                .from('roadmap_stages')
+                .update({ order_index: update.order_index })
+                .eq('id', update.id)
+            if (error) {
+                console.error('Error updating stage order:', error)
+                return { error: error.message }
+            }
+        }
+
+        revalidatePath('/roadmap')
+        return { success: true }
+    } catch (error) {
+        console.error('Error in updateRoadmapStagesOrder:', error)
+        return { error: 'Falha ao reordenar colunas' }
+    }
+}

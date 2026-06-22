@@ -45,13 +45,13 @@ function SyncButton() {
         >
             {isSyncing ? (
                 <>
-                    <RefreshCw size={14} className="animate-spin" />
+                    <RefreshCw size={14} strokeWidth={1} className="animate-spin" />
                     <span>Sincronizando {syncProgress}%</span>
                 </>
             ) : (
                 <>
                     {/* Icon changes? Maybe check mark if synced? Keeping CloudDownload for now or Check if synced */}
-                    {isSyncedRecently ? <CloudDownload size={14} /> : <CloudDownload size={14} />}
+                    {isSyncedRecently ? <CloudDownload size={14} strokeWidth={1} /> : <CloudDownload size={14} strokeWidth={1} />}
                     <span>
                         {isSyncedRecently ? 'Sincronizado' : 'Sincronizar'}
                     </span>
@@ -276,14 +276,14 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
                                     onClick={() => setTheme(theme === 'dark' ? 'light' : 'dark')}
                                     className="text-foreground/70 hover:text-foreground transition-colors"
                                 >
-                                    {theme === 'dark' ? <Sun size={20} /> : <Moon size={20} />}
+                                    {theme === 'dark' ? <Sun size={20} strokeWidth={1} /> : <Moon size={20} strokeWidth={1} />}
                                 </button>
                             )}
                             <button
                                 onClick={() => setIsNotificationsOpen(true)}
                                 className="text-foreground/70 hover:text-foreground relative"
                             >
-                                <Bell size={20} />
+                                <Bell size={20} strokeWidth={1} />
                                 {unreadCount > 0 && (
                                     <span className="absolute -top-1 -right-1 h-2.5 w-2.5 bg-red-500 rounded-full border-2 border-card"></span>
                                 )}

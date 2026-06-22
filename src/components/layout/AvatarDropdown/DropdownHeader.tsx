@@ -6,7 +6,7 @@ interface DropdownHeaderProps {
 
 export function DropdownHeader({ profile }: DropdownHeaderProps) {
     return (
-        <div className="flex items-center gap-4 p-4 border-b border-border bg-card">
+        <div className="flex items-center gap-4 p-4 border-b border-border bg-muted">
             <UserAvatar
                 src={profile?.avatar_url}
                 name={profile?.full_name}

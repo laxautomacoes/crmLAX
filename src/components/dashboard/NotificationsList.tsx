@@ -12,7 +12,6 @@ interface NotificationsListProps {
 }
 
 export function NotificationsList({ notifications, onRefresh }: NotificationsListProps) {
-    const [expandedId, setExpandedId] = useState<string | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
     const [isProcessing, setIsProcessing] = useState(false);
 
@@ -72,7 +71,7 @@ export function NotificationsList({ notifications, onRefresh }: NotificationsLis
                 />
             </div>
 
-            <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar p-4 space-y-4">
+            <div className="flex-1 overflow-y-auto overflow-x-hidden custom-scrollbar divide-y divide-muted-foreground/20">
                 {notifications.length === 0 ? (
                     <div className="flex flex-col items-center justify-center py-24 text-muted-foreground animate-in fade-in zoom-in duration-300">
                         <Bell size={48} className="mb-4 opacity-10 text-foreground" />
@@ -85,9 +84,7 @@ export function NotificationsList({ notifications, onRefresh }: NotificationsLis
                             key={notification.id}
                             notification={notification}
                             isSelected={selectedIds.includes(notification.id)}
-                            isExpanded={expandedId === notification.id}
                             onToggleSelect={() => toggleSelect(notification.id)}
-                            onToggleExpand={() => setExpandedId(expandedId === notification.id ? null : notification.id)}
                             onRefresh={onRefresh}
                         />
                     ))

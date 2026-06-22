@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Sparkles, Loader2, Copy, Send, Layout, Grid3X3, Film, Check, Image as ImageIcon, Instagram, Facebook, ChevronDown, ExternalLink, Play, Plus, X, Wand2, ZoomIn, ChevronLeft, ChevronRight, Eye } from 'lucide-react';
 import { generateGeneralCopy, generatePropertyCopy } from '@/app/_actions/ai-copy';
+import { getAIPrompts, AIPrompt } from '@/app/_actions/ai-prompts';
 import { publishSocialPost, getInstagramFeed, getInstagramStories } from '@/app/_actions/social';
 import { createClient } from '@/lib/supabase/client';
 import { toast } from 'sonner';
@@ -21,6 +22,8 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     const [results, setResults] = useState<any>(null);
     const [activeTab, setActiveTab] = useState<'medium' | 'ig-feed' | 'ig-reels' | 'ig-stories'>('medium');
     const [copied, setCopied] = useState(false);
+    const [prompts, setPrompts] = useState<AIPrompt[]>([]);
+    const [selectedPromptId, setSelectedPromptId] = useState<string>('');
 
     // Estados para Imóveis
     const [properties, setProperties] = useState<any[]>([]);
@@ -51,6 +54,10 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
     useEffect(() => {
         setCurrentCarouselIndex(0);
     }, [selectedPost]);
+
+    useEffect(() => {
+        getAIPrompts(tenantId).then(setPrompts).catch(console.error);
+    }, [tenantId]);
 
     useEffect(() => {
         async function loadProperties() {
@@ -180,10 +187,10 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
         setLoading(true);
         try {
             if (mode === 'livre') {
-                const result = await generateGeneralCopy(topic, tenantId, profileId, freePostMedia);
+                const result = await generateGeneralCopy(topic, tenantId, profileId, freePostMedia, selectedPromptId || undefined);
                 if (result.success) setResults(result.data);
             } else {
-                const result = await generatePropertyCopy(selectedPropertyId, tenantId, profileId);
+                const result = await generatePropertyCopy(selectedPropertyId, tenantId, profileId, selectedPromptId || undefined);
                 if (result.success) setResults(result.data);
             }
             toast.success('Conteúdo gerado com sucesso!');
@@ -498,6 +505,29 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                     )}
 
                         <div className="space-y-4 mt-auto pt-6 border-t border-border/50">
+                            {!isOnlyStory && (
+                                <div className="space-y-2">
+                                    <label className="text-[10px] font-black text-muted-foreground uppercase tracking-[0.2em] px-1">
+                                        Tom de Voz (IA)
+                                    </label>
+                                    <div className="relative">
+                                        <select
+                                            value={selectedPromptId}
+                                            onChange={(e) => setSelectedPromptId(e.target.value)}
+                                            className="w-full appearance-none pl-4 pr-10 py-3 text-xs font-medium rounded-lg border border-border bg-background text-foreground outline-none focus:ring-2 focus:ring-secondary/50 transition-all cursor-pointer shadow-sm"
+                                        >
+                                            <option value="">Voz Padrão do Sistema</option>
+                                            {prompts.map(p => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                            <ChevronDown size={14} />
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
+
                             <div className="flex items-center justify-center gap-4 py-2 flex-wrap">
                                 <label className="flex items-center gap-2 cursor-pointer group">
                                     <input 
@@ -572,7 +602,7 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                 {/* Lado Direito: Resultados/Preview */}
                 <div className="bg-card rounded-lg border border-border/50 shadow-sm overflow-hidden flex flex-col relative group h-auto xl:h-[620px] min-h-[500px] transition-all hover:shadow-md">
                     <div className="p-4 md:p-8 pb-4 border-b border-border/50">
-                        <div className="flex items-center gap-1.5 w-full">
+                        <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar">
                                 {[
                                     { id: 'medium', label: 'Legenda IA', icon: Sparkles },
                                     { id: 'ig-feed', label: 'Feed', icon: Grid3X3 },
@@ -582,13 +612,13 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
                                     <button
                                         key={tab.id}
                                         onClick={() => setActiveTab(tab.id as any)}
-                                        className={`flex-1 flex items-center justify-center gap-1.5 px-2 py-2 rounded-lg text-[10px] font-black uppercase tracking-wider transition-all whitespace-nowrap ${
+                                        className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
                                             activeTab === tab.id
-                                                ? 'bg-secondary text-secondary-foreground shadow-sm'
-                                                : 'text-muted-foreground hover:text-foreground hover:bg-foreground/5'
+                                                ? 'text-foreground border-b-[3px] active-tab-indicator'
+                                                : 'text-muted-foreground hover:text-foreground'
                                         }`}
                                     >
-                                        <tab.icon size={13} />
+                                        <tab.icon size={18} strokeWidth={1} />
                                         {tab.label}
                                     </button>
                                 ))}

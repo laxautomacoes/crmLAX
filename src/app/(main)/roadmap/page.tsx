@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Rocket, Plus, Loader2 } from 'lucide-react';
+import { Rocket, Plus, Loader2, GripVertical } from 'lucide-react';
 import {
     getRoadmap,
     createRoadmapItem,
@@ -10,14 +10,17 @@ import {
     updateRoadmapItemStage,
     createRoadmapStage,
     renameRoadmapStage,
-    deleteRoadmapStage
+    deleteRoadmapStage,
+    updateRoadmapStagesOrder,
+    duplicateRoadmapStage,
+    updateRoadmapStageColor
 } from '@/app/_actions/roadmap';
 import { getProfile } from '@/app/_actions/profile';
 import { useRouter } from 'next/navigation';
 import { FormInput } from '@/components/shared/forms/FormInput';
-import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { FormTextarea } from '@/components/shared/forms/FormTextarea';
 import { PageHeader } from '@/components/shared/PageHeader';
+import { Modal } from '@/components/shared/Modal';
 import {
     DndContext,
     DragOverlay,
@@ -30,10 +33,81 @@ import {
     DragEndEvent,
     defaultDropAnimationSideEffects,
 } from '@dnd-kit/core';
-import { sortableKeyboardCoordinates } from '@dnd-kit/sortable';
+import { 
+    sortableKeyboardCoordinates,
+    SortableContext,
+    horizontalListSortingStrategy,
+    arrayMove
+} from '@dnd-kit/sortable';
+import { CSS } from '@dnd-kit/utilities';
+import { useSortable } from '@dnd-kit/sortable';
 import { RoadmapColumn } from '@/components/roadmap/RoadmapColumn';
 import { RoadmapCard } from '@/components/roadmap/RoadmapCard';
 import { toast } from 'sonner';
+
+// Wrapper sortável para cada coluna do Roadmap — mesmo padrão do PipelineBoard
+function SortableRoadmapColumn({
+    stage, items, isSuperAdmin,
+    onAddItem, onEditItem, onDeleteItem,
+    onRenameStage, onDeleteStage, onDuplicateStage, onUpdateColor
+}: {
+    stage: RoadmapStage
+    items: RoadmapItem[]
+    isSuperAdmin: boolean
+    onAddItem: (stageId: string) => void
+    onEditItem: (item: RoadmapItem) => void
+    onDeleteItem: (id: string) => void
+    onRenameStage: (stageId: string, name: string) => void
+    onDeleteStage: (stageId: string) => void
+    onDuplicateStage: (stageId: string) => void
+    onUpdateColor: (stageId: string, color: string) => void
+}) {
+    const {
+        attributes,
+        listeners,
+        setNodeRef,
+        transform,
+        transition,
+        isDragging,
+    } = useSortable({ id: stage.id, disabled: !isSuperAdmin })
+
+    const style = {
+        transform: CSS.Transform.toString(transform),
+        transition,
+        opacity: isDragging ? 0.4 : 1,
+    }
+
+    return (
+        <div ref={setNodeRef} style={style} className="group/stage relative h-full">
+            {/* Drag handle — aparece no hover, fora e acima do card */}
+            {isSuperAdmin && (
+                <div
+                    {...attributes}
+                    {...listeners}
+                    className="absolute top-1.5 left-1/2 -translate-x-1/2 z-10 cursor-grab active:cursor-grabbing p-0.5 rounded opacity-0 group-hover/stage:opacity-100 transition-opacity"
+                    title="Arrastar para reordenar"
+                >
+                    <GripVertical size={12} className="text-muted-foreground/50 rotate-90" />
+                </div>
+            )}
+            <RoadmapColumn
+                id={stage.id}
+                title={stage.name}
+                color={stage.color}
+                items={items}
+                count={items.length}
+                isSuperAdmin={isSuperAdmin}
+                onAddItem={onAddItem}
+                onEditItem={onEditItem}
+                onDeleteItem={onDeleteItem}
+                onRenameStage={onRenameStage}
+                onDeleteStage={onDeleteStage}
+                onDuplicateStage={onDuplicateStage}
+                onUpdateColor={onUpdateColor}
+            />
+        </div>
+    )
+}
 
 export const dynamic = 'force-dynamic';
 
@@ -50,6 +124,7 @@ interface RoadmapStage {
     id: string;
     name: string;
     order_index: number;
+    color?: string;
 }
 
 export default function RoadmapPage() {
@@ -61,13 +136,12 @@ export default function RoadmapPage() {
     const [showModal, setShowModal] = useState(false);
     const [editingItem, setEditingItem] = useState<RoadmapItem | null>(null);
     const [activeItem, setActiveItem] = useState<RoadmapItem | null>(null);
+    const [activeStage, setActiveStage] = useState<RoadmapStage | null>(null);
     const router = useRouter();
 
     const [formData, setFormData] = useState({
         title: '',
         description: '',
-        type: 'roadmap' as 'feature' | 'fix' | 'roadmap',
-        stage_id: ''
     });
 
     const loadData = async () => {
@@ -142,6 +216,11 @@ export default function RoadmapPage() {
     );
 
     function handleDragStart(event: DragStartEvent) {
+        if (event.active.data.current?.type === 'Column') {
+            const stage = stages.find(s => s.id === event.active.id);
+            if (stage) setActiveStage(stage);
+            return;
+        }
         const item = items.find((i) => i.id === event.active.id);
         if (item) setActiveItem(item);
     }
@@ -149,7 +228,35 @@ export default function RoadmapPage() {
     async function handleDragEnd(event: DragEndEvent) {
         const { active, over } = event;
         setActiveItem(null);
+        setActiveStage(null);
         if (!over) return;
+
+        if (active.data.current?.type === 'Column') {
+            const activeId = active.id;
+            const overId = over.id;
+
+            if (activeId === overId) return;
+
+            const oldIndex = stages.findIndex(s => s.id === activeId);
+            const newIndex = stages.findIndex(s => s.id === overId);
+
+            if (oldIndex !== -1 && newIndex !== -1) {
+                const newStages = arrayMove(stages, oldIndex, newIndex);
+                setStages(newStages);
+                
+                const updates = newStages.map((stage, index) => ({
+                    id: stage.id,
+                    order_index: index
+                }));
+
+                const res = await updateRoadmapStagesOrder(updates);
+                if (!res.success) {
+                    toast.error(res.error || 'Erro ao reordenar colunas');
+                    setStages(stages); // revert
+                }
+            }
+            return;
+        }
 
         const draggedItem = items.find(i => i.id === active.id);
         if (!draggedItem) return;
@@ -183,30 +290,29 @@ export default function RoadmapPage() {
             setFormData({
                 title: item.title,
                 description: item.description || '',
-                type: item.type,
-                stage_id: item.stage_id
             });
         } else {
             setEditingItem(null);
-            setFormData({
-                title: '',
-                description: '',
-                type: 'roadmap',
-                stage_id: stageId || stages[0]?.id || ''
-            });
+            setFormData({ title: '', description: '' });
         }
         setShowModal(true);
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
+    const handleSubmit = async (e?: React.FormEvent) => {
+        if (e) e.preventDefault();
+        if (!formData.title.trim()) return;
         setActionLoading(true);
+
+        // Para edição mantém stage_id existente; para novo, sempre o primeiro estágio
+        const payload = editingItem
+            ? { title: formData.title, description: formData.description, type: editingItem.type, stage_id: editingItem.stage_id }
+            : { title: formData.title, description: formData.description, type: 'roadmap' as const, stage_id: stages[0]?.id || '' };
 
         let res;
         if (editingItem) {
-            res = await updateRoadmapItem(editingItem.id, formData);
+            res = await updateRoadmapItem(editingItem.id, payload);
         } else {
-            res = await createRoadmapItem(formData);
+            res = await createRoadmapItem(payload);
         }
 
         if (res.success) {
@@ -267,6 +373,27 @@ export default function RoadmapPage() {
         }
     };
 
+    const handleDuplicateStage = async (stageId: string) => {
+        if (!isSuperAdmin) return;
+        const res = await duplicateRoadmapStage(stageId);
+        if (res.success) {
+            toast.success('Coluna duplicada com sucesso');
+            loadData();
+        } else {
+            toast.error(res.error || 'Erro ao duplicar coluna');
+        }
+    };
+
+    const handleUpdateStageColor = async (stageId: string, color: string) => {
+        if (!isSuperAdmin) return;
+        const res = await updateRoadmapStageColor(stageId, color);
+        if (res.success) {
+            loadData();
+        } else {
+            toast.error(res.error || 'Erro ao atualizar cor');
+        }
+    };
+
     // ─── Render ───────────────────────────────────────────────────
 
     if (loading) {
@@ -278,25 +405,25 @@ export default function RoadmapPage() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500">
+        <div className="max-w-[1600px] mx-auto flex flex-col gap-6 md:gap-8 animate-in fade-in slide-in-from-bottom-4 duration-500 h-[calc(100vh-120px)] md:h-[calc(100vh-100px)]">
             <PageHeader
-                title="Roadmap do Produto"
+                title="Roadmap"
                 subtitle="Acompanhe as próximas funcionalidades e melhorias do CRM LAX"
             >
                 {isSuperAdmin && (
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleCreateStage}
-                            className="border border-border hover:bg-muted text-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg transition-all flex items-center justify-center gap-2 active:scale-[0.98]"
+                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-card hover:bg-muted text-foreground border border-border px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-wider shadow-sm whitespace-nowrap"
                         >
-                            <Plus size={18} />
+                            <Plus size={14} strokeWidth={2} />
                             Nova Coluna
                         </button>
                         <button
                             onClick={() => handleOpenModal()}
-                            className="bg-secondary hover:opacity-90 text-secondary-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg transition-all flex items-center justify-center gap-2 shadow-sm active:scale-[0.98]"
+                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-wider shadow-sm whitespace-nowrap"
                         >
-                            <Plus size={20} />
+                            <Plus size={14} strokeWidth={2} />
                             Novo Item
                         </button>
                     </div>
@@ -316,28 +443,31 @@ export default function RoadmapPage() {
                     </p>
                 </div>
             ) : (
+                <div className="flex-1 min-h-0 flex flex-col">
                 <DndContext
                     sensors={sensors}
                     collisionDetection={closestCorners}
                     onDragStart={handleDragStart}
                     onDragEnd={handleDragEnd}
                 >
-                    <div className="flex gap-6 overflow-x-auto pb-6 -mx-4 md:-mx-8 px-4 md:px-8 custom-scrollbar h-[calc(100vh-220px)]">
-                        {stages.map((stage) => (
-                            <RoadmapColumn
-                                key={stage.id}
-                                id={stage.id}
-                                title={stage.name}
-                                items={items.filter((i) => i.stage_id === stage.id)}
-                                count={items.filter((i) => i.stage_id === stage.id).length}
-                                isSuperAdmin={isSuperAdmin}
-                                onAddItem={(stageId) => handleOpenModal(null, stageId)}
-                                onEditItem={(item) => handleOpenModal(item)}
-                                onDeleteItem={handleDelete}
-                                onRenameStage={handleRenameStage}
-                                onDeleteStage={handleDeleteStage}
-                            />
-                        ))}
+                <div className="flex gap-6 overflow-x-auto pb-6 -mx-4 md:-mx-8 px-4 md:px-8 custom-scrollbar flex-1 min-h-0">
+                        <SortableContext items={stages.map(s => s.id)} strategy={horizontalListSortingStrategy}>
+                            {stages.map((stage) => (
+                                <SortableRoadmapColumn
+                                    key={stage.id}
+                                    stage={stage}
+                                    items={items.filter((i) => i.stage_id === stage.id)}
+                                    isSuperAdmin={isSuperAdmin}
+                                    onAddItem={(stageId) => handleOpenModal(null, stageId)}
+                                    onEditItem={(item) => handleOpenModal(item)}
+                                    onDeleteItem={handleDelete}
+                                    onRenameStage={handleRenameStage}
+                                    onDeleteStage={handleDeleteStage}
+                                    onDuplicateStage={handleDuplicateStage}
+                                    onUpdateColor={handleUpdateStageColor}
+                                />
+                            ))}
+                        </SortableContext>
                     </div>
 
                     <DragOverlay dropAnimation={{
@@ -345,80 +475,69 @@ export default function RoadmapPage() {
                             styles: { active: { opacity: '0.5' } },
                         }),
                     }}>
-                        {activeItem ? (
+                        {activeStage ? (
+                            <RoadmapColumn
+                                id={activeStage.id}
+                                title={activeStage.name}
+                                items={items.filter(i => i.stage_id === activeStage.id)}
+                                count={items.filter(i => i.stage_id === activeStage.id).length}
+                                isSuperAdmin={isSuperAdmin}
+                                onAddItem={() => {}}
+                                onEditItem={() => {}}
+                                onDeleteItem={() => {}}
+                                onRenameStage={() => {}}
+                                onDeleteStage={() => {}}
+                                onDuplicateStage={() => {}}
+                                onUpdateColor={() => {}}
+                            />
+                        ) : activeItem ? (
                             <div className="w-[310px] px-4">
                                 <RoadmapCard item={activeItem} isSuperAdmin={false} isOverlay />
                             </div>
                         ) : null}
                     </DragOverlay>
                 </DndContext>
-            )}
-
-            {/* Modal */}
-            {showModal && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/40 backdrop-blur-sm animate-in fade-in duration-200">
-                    <div className="bg-card w-full max-w-md rounded-2xl shadow-xl border border-border overflow-hidden ring-1 ring-black/5">
-                        <div className="p-6 border-b border-border">
-                            <h2 className="text-xl font-bold text-foreground">
-                                {editingItem ? 'Editar Item' : 'Novo Item do Roadmap'}
-                            </h2>
-                        </div>
-                        <form onSubmit={handleSubmit} className="p-6 space-y-5">
-                            <FormInput
-                                label="Título"
-                                required
-                                value={formData.title}
-                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                                placeholder="Ex: Novo dashboard de métricas"
-                            />
-
-                            <FormTextarea
-                                label="Descrição"
-                                rows={3}
-                                value={formData.description}
-                                onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-                                placeholder="Descreva brevemente a funcionalidade..."
-                            />
-
-                            <div className="grid grid-cols-2 gap-4">
-                                <FormSelect
-                                    label="Tipo"
-                                    value={formData.type}
-                                    onChange={(e) => setFormData({ ...formData, type: e.target.value as any })}
-                                    options={[
-                                        { value: 'roadmap', label: 'Roadmap' },
-                                        { value: 'feature', label: 'Melhoria' },
-                                        { value: 'fix', label: 'Correção' }
-                                    ]}
-                                />
-                                <FormSelect
-                                    label="Coluna"
-                                    value={formData.stage_id}
-                                    onChange={(e) => setFormData({ ...formData, stage_id: e.target.value })}
-                                    options={stages.map(s => ({ value: s.id, label: s.name }))}
-                                />
-                            </div>
-
-                            <div className="flex items-center gap-3 pt-4">
-                                <button
-                                    type="button"
-                                    onClick={() => setShowModal(false)}
-                                    className="flex-1 py-2.5 rounded-lg border border-border bg-muted text-sm font-bold text-foreground hover:bg-muted/80 transition-all"
-                                >
-                                    Cancelar
-                                </button>
-                                <button
-                                    type="submit"
-                                    disabled={actionLoading}
-                                    className="flex-1 py-2.5 bg-secondary hover:opacity-90 text-secondary-foreground font-bold rounded-lg transition-all shadow-sm active:scale-[0.98] disabled:opacity-50 flex justify-center items-center"
-                                >
-                                    {actionLoading ? <Loader2 className="w-5 h-5 animate-spin" /> : (editingItem ? 'Salvar Alterações' : 'Adicionar Item')}
-                                </button>
-                            </div>
-                        </form>
-                    </div>
                 </div>
             )}
+
+            <Modal
+                isOpen={showModal}
+                onClose={() => setShowModal(false)}
+                title={
+                    <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                        {editingItem ? 'Editar Item' : 'Novo Item'}
+                    </h3>
+                }
+                size="md"
+                align="top"
+                extraHeaderContent={
+                    <button
+                        type="button"
+                        disabled={actionLoading || !formData.title.trim()}
+                        onClick={() => handleSubmit()}
+                        className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
+                    >
+                        {actionLoading ? 'Salvando...' : (editingItem ? 'Salvar Alterações' : 'Adicionar Item')}
+                    </button>
+                }
+            >
+                <form onSubmit={handleSubmit} className="space-y-5">
+                    <FormInput
+                        label="Título"
+                        required
+                        value={formData.title}
+                        onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                        placeholder="Ex: Novo dashboard de métricas"
+                    />
+                    <FormTextarea
+                        label="Descrição"
+                        rows={4}
+                        value={formData.description}
+                        onChange={(e) => setFormData({ ...formData, description: e.target.value })}
+                        placeholder="Descreva brevemente a funcionalidade..."
+                    />
+                </form>
+            </Modal>
         </div>
     );
 }

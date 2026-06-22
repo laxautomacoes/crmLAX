@@ -1,13 +1,14 @@
 'use client';
 
 import { usePathname, useSearchParams, useRouter } from 'next/navigation';
-import { X } from 'lucide-react';
+import { X, Headphones, LogOut } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { createClient } from '@/lib/supabase/client';
 import { menuItems } from './Sidebar/menuItems';
 import { Logo } from '@/components/shared/Logo';
 import { NavItem } from './Sidebar/NavItem';
 import { recordAccessLog } from '@/app/_actions/auth-logs';
+import { SupportModal } from '@/components/shared/SupportModal';
 
 interface SidebarProps {
     isOpen: boolean; onClose: () => void; isCollapsed: boolean; toggleCollapse: () => void;
@@ -25,6 +26,7 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const [branding, setBranding] = useState<{ logo_full?: string; logo_header?: string; logo_icon?: string; logo_height?: number; logo_header_height?: number } | null>(null);
     const [brandingLoading, setBrandingLoading] = useState(true);
     const [siteUrl, setSiteUrl] = useState<string>('#');
+    const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
     useEffect(() => {
         const handleBrandingUpdate = (event: any) => {
@@ -220,7 +222,35 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
                     ))}
                 </nav>
 
+                <div className="p-3 space-y-1">
+                    <button
+                        onClick={() => setIsSupportModalOpen(true)}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-base font-medium text-sidebar-foreground/70 hover:bg-white/10 hover:text-sidebar-foreground ${effectiveCollapsed ? 'justify-center' : ''}`}
+                        title={effectiveCollapsed ? "Suporte" : ""}
+                    >
+                        <Headphones size={18} strokeWidth={1} className="shrink-0" />
+                        {!effectiveCollapsed && <span className="flex-1 text-left whitespace-nowrap overflow-hidden transition-opacity duration-300">Suporte</span>}
+                    </button>
+
+                    <button
+                        onClick={async () => {
+                            await supabase.auth.signOut();
+                            router.push('/login');
+                            router.refresh();
+                        }}
+                        className={`w-full flex items-center gap-3 px-3 py-2 rounded-lg transition-colors text-base font-medium text-rose-500/90 hover:bg-rose-500/10 hover:text-rose-500 ${effectiveCollapsed ? 'justify-center' : ''}`}
+                        title={effectiveCollapsed ? "Sair" : ""}
+                    >
+                        <LogOut size={18} strokeWidth={1} className="shrink-0" />
+                        {!effectiveCollapsed && <span className="flex-1 text-left whitespace-nowrap overflow-hidden transition-opacity duration-300">Sair</span>}
+                    </button>
+                </div>
             </div>
+            
+            <SupportModal 
+                isOpen={isSupportModalOpen} 
+                onClose={() => setIsSupportModalOpen(false)} 
+            />
         </>
     );
 }

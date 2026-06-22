@@ -59,58 +59,56 @@ export function AIUsageTable({ records, isSuperadmin }: Props) {
 
     // Custo total filtrado
     const totalFilteredCost = filtered.reduce((sum, r) => sum + calculateCostBRL(r.model, r.total_tokens), 0);
-
     return (
-        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="space-y-6">
             {/* Header */}
-            <div className="p-6 border-b border-border">
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div className="flex items-center gap-3">
-                        <div className="h-2 w-2 bg-secondary rounded-full" />
-                        <h3 className="text-lg font-semibold text-foreground font-outfit">Logs de Atividade</h3>
-                        <span className="text-[10px] font-bold text-muted-foreground tracking-widest uppercase">
-                            {filtered.length} {filtered.length !== records.length ? `de ${records.length}` : ''} operações
-                        </span>
+            <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
+                <div className="space-y-1">
+                    <h3 className="text-lg font-bold text-foreground">Logs de Atividade</h3>
+                    <p className="text-sm text-muted-foreground">
+                        {filtered.length} {filtered.length !== records.length ? `de ${records.length}` : ''} operações registradas.
+                    </p>
+                </div>
+
+                {/* Filtros */}
+                <div className="flex items-center gap-3">
+                    <div className="relative">
+                        <select
+                            value={modelFilter}
+                            onChange={(e) => setModelFilter(e.target.value)}
+                            className="appearance-none bg-muted/50 border border-border rounded-lg px-3 py-2 pr-8 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer"
+                        >
+                            <option value="all">Todos os Modelos</option>
+                            {uniqueModels.map(m => (
+                                <option key={m} value={m}>{m}</option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
                     </div>
 
-                    {/* Filtros */}
-                    <div className="flex items-center gap-3">
-                        <div className="relative">
-                            <select
-                                value={modelFilter}
-                                onChange={(e) => setModelFilter(e.target.value)}
-                                className="appearance-none bg-muted/50 border border-border rounded-lg px-3 py-2 pr-8 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer"
-                            >
-                                <option value="all">Todos os Modelos</option>
-                                {uniqueModels.map(m => (
-                                    <option key={m} value={m}>{m}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                        </div>
+                    <div className="relative">
+                        <select
+                            value={contextFilter}
+                            onChange={(e) => setContextFilter(e.target.value)}
+                            className="appearance-none bg-muted/50 border border-border rounded-lg px-3 py-2 pr-8 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer"
+                        >
+                            <option value="all">Todos os Contextos</option>
+                            {uniqueContexts.map(c => (
+                                <option key={c} value={c}>{getContextLabel(c)}</option>
+                            ))}
+                        </select>
+                        <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
+                    </div>
 
-                        <div className="relative">
-                            <select
-                                value={contextFilter}
-                                onChange={(e) => setContextFilter(e.target.value)}
-                                className="appearance-none bg-muted/50 border border-border rounded-lg px-3 py-2 pr-8 text-xs font-bold text-foreground focus:outline-none focus:ring-2 focus:ring-secondary/20 transition-all cursor-pointer"
-                            >
-                                <option value="all">Todos os Contextos</option>
-                                {uniqueContexts.map(c => (
-                                    <option key={c} value={c}>{getContextLabel(c)}</option>
-                                ))}
-                            </select>
-                            <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-muted-foreground pointer-events-none" />
-                        </div>
-
-                        {/* Custo total filtrado */}
-                        <div className="hidden md:flex items-center gap-1.5 px-3 py-2 bg-secondary/10 border border-secondary/20 rounded-lg">
-                            <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total:</span>
-                            <span className="text-xs font-bold text-secondary">{formatBRL(totalFilteredCost)}</span>
-                        </div>
+                    {/* Custo total filtrado */}
+                    <div className="hidden md:flex items-center gap-1.5 px-3 py-2 bg-secondary/10 border border-secondary/20 rounded-lg">
+                        <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Total:</span>
+                        <span className="text-xs font-bold text-secondary">{formatBRL(totalFilteredCost)}</span>
                     </div>
                 </div>
             </div>
+
+            <div className="bg-card rounded-lg border border-border shadow-sm overflow-hidden">
 
             {/* Tabela */}
             <div className="overflow-x-auto">
@@ -180,6 +178,7 @@ export function AIUsageTable({ records, isSuperadmin }: Props) {
                     </p>
                 </div>
             )}
+            </div>
         </div>
     );
 }

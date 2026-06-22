@@ -288,7 +288,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
                         <div className="shrink-0 w-[40px]">
                             <button
                                 onClick={onAddStage}
-                                className="w-full h-full flex items-center justify-center border border-muted-foreground/30 hover:border-muted-foreground/50 rounded-xl bg-card hover:bg-card transition-all group"
+                                className="w-full h-full flex items-center justify-center border border-muted-foreground/30 hover:border-muted-foreground/50 rounded-lg bg-card hover:bg-card transition-all group"
                                 title="Novo Estágio"
                             >
                                 <Plus size={22} className="text-muted-foreground group-hover:text-foreground transition-colors" />

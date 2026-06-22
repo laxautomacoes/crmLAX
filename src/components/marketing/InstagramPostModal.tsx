@@ -1,10 +1,11 @@
 'use client';
 
-import { useState } from 'react';
-import { Instagram, Send, Loader2, Sparkles, X, CheckCircle2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Instagram, Send, Loader2, Sparkles, X, CheckCircle2, ChevronDown } from 'lucide-react';
 import { Modal } from '@/components/shared/Modal';
 import { toast } from 'sonner';
 import { generatePropertyCopy } from '@/app/_actions/ai-copy';
+import { getAIPrompts, AIPrompt } from '@/app/_actions/ai-prompts';
 
 interface InstagramPostModalProps {
     isOpen: boolean;
@@ -19,12 +20,22 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
     const [isLoading, setIsLoading] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
     const [isSuccess, setIsSuccess] = useState(false);
+    const [prompts, setPrompts] = useState<AIPrompt[]>([]);
+    const [selectedPromptId, setSelectedPromptId] = useState<string>('');
+
+    useEffect(() => {
+        if (isOpen) {
+            getAIPrompts(tenantId)
+                .then(data => setPrompts(data))
+                .catch(err => console.error("Erro ao carregar prompts", err));
+        }
+    }, [isOpen, tenantId]);
 
     const generateCaption = async () => {
         if (isLoading) return;
         setIsLoading(true);
         try {
-            const result = await generatePropertyCopy(prop.id, tenantId, profileId);
+            const result = await generatePropertyCopy(prop.id, tenantId, profileId, selectedPromptId || undefined);
             
             if (result.success && result.data) {
                 // Usamos a versão 'medium' que é otimizada para Instagram/Facebook
@@ -113,14 +124,31 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
 
                         {/* Editor de Legenda */}
                         <div className="space-y-3">
-                            <div className="flex items-center justify-between">
-                                <label className="text-[10px] font-black text-[#404F4F]/60 uppercase tracking-[0.15em] flex items-center gap-2">
-                                    Legenda Sugerida
-                                </label>
+                            <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-3">
+                                <div className="flex flex-col gap-1.5 flex-1">
+                                    <label className="text-[10px] font-black text-[#404F4F]/60 uppercase tracking-[0.15em] flex items-center gap-2">
+                                        Tom de Voz (IA)
+                                    </label>
+                                    <div className="relative max-w-[200px]">
+                                        <select
+                                            value={selectedPromptId}
+                                            onChange={(e) => setSelectedPromptId(e.target.value)}
+                                            className="w-full appearance-none pl-3 pr-8 py-2 text-xs font-medium rounded-lg border border-border bg-background text-foreground outline-none focus:ring-2 focus:ring-secondary/50 transition-all cursor-pointer"
+                                        >
+                                            <option value="">Padrão do Sistema</option>
+                                            {prompts.map(p => (
+                                                <option key={p.id} value={p.id}>{p.name}</option>
+                                            ))}
+                                        </select>
+                                        <div className="absolute right-3 top-1/2 -translate-y-1/2 pointer-events-none text-muted-foreground">
+                                            <ChevronDown size={14} />
+                                        </div>
+                                    </div>
+                                </div>
                                 <button
                                     onClick={generateCaption}
                                     disabled={isLoading}
-                                    className="text-[10px] font-black uppercase tracking-widest flex items-center gap-1.5 px-3 py-2 bg-[#404F4F] text-white rounded-lg hover:bg-[#2d3939] transition-all disabled:opacity-50 shadow-sm"
+                                    className="h-[34px] text-[10px] font-black uppercase tracking-widest flex items-center justify-center gap-1.5 px-4 bg-[#404F4F] text-white rounded-lg hover:bg-[#2d3939] transition-all disabled:opacity-50 shadow-sm"
                                 >
                                     {isLoading ? <Loader2 size={12} className="animate-spin" /> : <Sparkles size={12} className="text-accent-icon" />}
                                     Sugerir com IA

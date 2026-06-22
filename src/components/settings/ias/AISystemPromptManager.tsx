@@ -80,33 +80,34 @@ export function AISystemPromptManager({ prompts, tenantId, isSuperadmin }: AISys
     };
 
     return (
-        <>
-            {/* Card Principal */}
-            <div className="bg-card border border-border rounded-xl p-6">
-                <div className="flex items-center justify-between mb-6">
-                    <div>
-                        <h3 className="text-lg font-bold text-foreground flex items-center gap-2">
-                            <Wand2 className="w-5 h-5 text-secondary" />
-                            Gerenciador de Prompts
-                        </h3>
-                        <p className="text-sm text-muted-foreground mt-1">
-                            {isSuperadmin
-                                ? 'Configure os Prompts Globais usados como base pelo sistema.'
-                                : 'Personalize os comandos de IA para o contexto da sua imobiliária.'}
-                        </p>
-                    </div>
-                    <button
-                        onClick={() => handleEdit()}
-                        className="flex items-center gap-2 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 transition-opacity"
-                    >
-                        <Plus className="w-4 h-4" />
-                        Novo Prompt
-                    </button>
+        <div className="space-y-6">
+            {/* Header da Seção */}
+            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 px-1">
+                <div className="space-y-1">
+                    <h3 className="text-lg font-bold text-foreground">
+                        Gerenciador de Prompts
+                    </h3>
+                    <p className="text-sm text-muted-foreground">
+                        {isSuperadmin
+                            ? 'Configure os Prompts Globais usados como base pelo sistema.'
+                            : 'Personalize os comandos de IA para o contexto da sua imobiliária.'}
+                    </p>
                 </div>
+                <button
+                    onClick={() => handleEdit()}
+                    className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                >
+                    <Plus size={14} strokeWidth={1} />
+                    Novo Prompt
+                </button>
+            </div>
+
+            {/* Card Principal */}
+            <div className="bg-card border border-border rounded-lg p-6">
 
                 {/* Lista de Prompts */}
                 {prompts.length === 0 ? (
-                    <div className="text-center py-12 bg-muted/20 rounded-xl border-2 border-dashed border-border">
+                    <div className="text-center py-12 bg-muted/20 rounded-lg border border-border">
                         <Wand2 className="w-8 h-8 text-muted-foreground mx-auto mb-3" />
                         <p className="text-foreground font-medium">Nenhum prompt configurado.</p>
                         <p className="text-muted-foreground text-sm mt-1">
@@ -118,17 +119,17 @@ export function AISystemPromptManager({ prompts, tenantId, isSuperadmin }: AISys
                         {prompts.map(prompt => (
                             <div
                                 key={prompt.id}
-                                className="group relative p-4 border border-border rounded-xl bg-background flex flex-col gap-3 overflow-hidden hover:border-secondary/50 transition-colors"
+                                className="group relative p-4 border border-border rounded-lg bg-background flex flex-col gap-3 overflow-hidden hover:border-secondary/50 transition-colors"
                             >
                                 {/* Barra lateral decorativa */}
-                                <span className="absolute top-0 left-0 w-1 h-full bg-secondary rounded-l-xl" />
+                                <span className="absolute top-0 left-0 w-1 h-full bg-secondary rounded-l-lg" />
 
                                 <div className="flex items-start justify-between pl-2">
-                                    <div>
-                                        <h4 className="font-bold text-foreground">{prompt.name}</h4>
-                                        <span className="text-[10px] uppercase font-bold tracking-wider px-2 py-0.5 rounded-full bg-muted text-muted-foreground mt-1 inline-block">
+                                    <div className="space-y-1">
+                                        <h3 className="text-lg font-bold text-foreground">{prompt.name}</h3>
+                                        <p className="text-sm text-muted-foreground">
                                             {prompt.ai_provider === 'gemini' ? '✦ Gemini' : '◆ GPT-4o'}
-                                        </span>
+                                        </p>
                                     </div>
                                     <div className="flex opacity-0 group-hover:opacity-100 transition-opacity gap-1">
                                         <button
@@ -167,23 +168,30 @@ export function AISystemPromptManager({ prompts, tenantId, isSuperadmin }: AISys
                     />
 
                     {/* Modal */}
-                    <div className="relative z-10 w-full max-w-2xl bg-card border border-border rounded-2xl shadow-2xl">
+                    <div className="relative z-10 w-full max-w-2xl bg-card border border-border rounded-lg shadow-2xl">
                         {/* Header */}
-                        <div className="flex items-center justify-between p-6 border-b border-border">
-                            <div>
-                                <h2 className="text-lg font-bold text-foreground">
-                                    {editingPrompt?.id ? 'Editar Prompt' : 'Criar Novo Prompt'}
-                                </h2>
-                                <p className="text-sm text-muted-foreground mt-1.5 md:mt-0.5">
-                                    Defina as instruções. Use o botão com ✦ para transformar rascunhos em super-prompts.
-                                </p>
+                        <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border shrink-0 gap-3 md:gap-4">
+                            <div className="flex-1 min-w-0">
+                                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                                    {editingPrompt?.id ? 'Editar Prompt' : 'Novo Prompt'}
+                                </h3>
                             </div>
-                            <button
-                                onClick={handleClose}
-                                className="p-2 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
+                            <div className="flex items-center gap-3 md:gap-4">
+                                <button
+                                    onClick={handleSave}
+                                    disabled={isPending || isEnhancing}
+                                    className="flex items-center gap-2 px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50 shadow-sm"
+                                >
+                                    {isPending && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
+                                    Salvar Prompt
+                                </button>
+                                <button
+                                    onClick={handleClose}
+                                    className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </div>
 
                         {/* Body */}
@@ -228,7 +236,7 @@ export function AISystemPromptManager({ prompts, tenantId, isSuperadmin }: AISys
                                     <button
                                         onClick={handleEnhance}
                                         disabled={isEnhancing}
-                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg border border-secondary/30 bg-secondary/10 text-secondary hover:bg-secondary/20 transition-colors disabled:opacity-50"
+                                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold rounded-lg bg-foreground text-background hover:opacity-90 transition-opacity disabled:opacity-50 shadow-sm"
                                     >
                                         {isEnhancing
                                             ? <Loader2 className="w-3 h-3 animate-spin" />
@@ -247,26 +255,9 @@ export function AISystemPromptManager({ prompts, tenantId, isSuperadmin }: AISys
                             </div>
                         </div>
 
-                        {/* Footer */}
-                        <div className="flex items-center justify-end gap-3 p-6 border-t border-border">
-                            <button
-                                onClick={handleClose}
-                                className="px-4 py-2 rounded-lg border border-border text-muted-foreground text-sm font-medium hover:bg-muted transition-colors"
-                            >
-                                Cancelar
-                            </button>
-                            <button
-                                onClick={handleSave}
-                                disabled={isPending || isEnhancing}
-                                className="flex items-center gap-2 px-6 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 transition-opacity disabled:opacity-50"
-                            >
-                                {isPending && <Loader2 className="w-4 h-4 animate-spin" />}
-                                Salvar Prompt
-                            </button>
-                        </div>
                     </div>
                 </div>
             )}
-        </>
+        </div>
     );
 }

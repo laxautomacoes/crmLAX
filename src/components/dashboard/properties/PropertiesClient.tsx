@@ -439,46 +439,46 @@ export default function PropertiesClient({
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     {/* Linha 1 mobile: Busca + Toggle */}
                     <div className="flex items-center gap-2 w-full md:w-auto order-1 md:order-first">
-                        <div className="flex-1 md:w-64 md:flex-none">
+                        <div className="flex-1 md:w-[320px] md:flex-none">
                             <FormInput
                                 placeholder="Buscar imóveis..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 icon={Search}
-                                className="w-full md:w-[320px] h-[42px]"
+                                className="w-full md:w-[320px] h-[34px]"
                             />
                         </div>
 
-                        <div className="h-[42px] flex items-center bg-card border border-muted-foreground/30 rounded-lg p-1 shadow-sm shrink-0">
+                        <div className="h-[34px] flex items-center bg-card border border-muted-foreground/30 rounded-lg p-1 shadow-sm shrink-0">
                             <button
                                 onClick={() => setViewMode('list')}
                                 className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
                                 title="Visualização em Lista"
                             >
-                                <List size={16} />
+                                <List size={14} strokeWidth={1} />
                             </button>
                             <button
                                 onClick={() => setViewMode('gallery')}
                                 className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'gallery' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
                                 title="Visualização em Galeria"
                             >
-                                <LayoutGrid size={16} />
+                                <LayoutGrid size={14} strokeWidth={1} />
                             </button>
                             <button
                                 onClick={() => setViewMode('map')}
                                 className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'map' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
                                 title="Visualização em Mapa"
                             >
-                                <Map size={16} />
+                                <Map size={14} strokeWidth={1} />
                             </button>
                         </div>
                     </div>
 
                     {/* Linha 2 mobile: Filtrar + Novo Imóvel */}
-                    <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max order-2">
+                    <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max order-2">
                         <button
                             onClick={() => setIsFiltersOpen(true)}
-                            className={`h-[38px] flex items-center justify-center gap-2 px-4 rounded-lg border transition-all text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 shadow-sm ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest' && v !== false)
+                            className={`min-w-[130px] h-[34px] flex items-center justify-center gap-2 px-4 rounded-lg border transition-all text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 shadow-sm ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest' && v !== false)
                                 ? 'bg-secondary/10 text-secondary-foreground border-secondary hover:bg-secondary/20 focus:ring-secondary/50'
                                 : 'bg-card border-muted-foreground/30 text-foreground hover:bg-muted/50 focus:ring-ring/50'
                                 }`}
@@ -489,7 +489,7 @@ export default function PropertiesClient({
 
                         <button
                             onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                            className="h-[38px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 transition-all text-sm font-bold uppercase tracking-wide shadow-sm active:scale-[0.99] whitespace-nowrap"
+                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 transition-all text-sm font-bold uppercase tracking-wide shadow-sm active:scale-[0.99] whitespace-nowrap"
                         >
                             <Plus size={14} strokeWidth={1} />
                             Novo Imóvel

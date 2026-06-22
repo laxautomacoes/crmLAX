@@ -175,6 +175,37 @@ export async function POST(req: Request) {
             }
         }
 
+        if (event.type === 'invoice.payment_succeeded') {
+            const invoice = event.data.object as Stripe.Invoice;
+            
+            // Tenta pegar o tenant via subscription_id ou customer_id
+            let tenantId = null;
+            if ((invoice as any).subscription) {
+                const { data } = await adminSupabase.from('tenants').select('id').eq('stripe_subscription_id', (invoice as any).subscription as string).single();
+                if (data) tenantId = data.id;
+            }
+            if (!tenantId && invoice.customer) {
+                const { data } = await adminSupabase.from('tenants').select('id').eq('stripe_customer_id', invoice.customer as string).single();
+                if (data) tenantId = data.id;
+            }
+
+            if (tenantId) {
+                // amount_paid está em centavos.
+                const amount = invoice.amount_paid ? invoice.amount_paid / 100 : 0;
+                
+                await adminSupabase.from('tenant_invoices' as any).insert({
+                    tenant_id: tenantId,
+                    gateway: 'stripe',
+                    gateway_invoice_id: invoice.id || `invoice_${Date.now()}`,
+                    amount: amount,
+                    status: 'paid',
+                    payment_method: 'credit_card', // Stripe usa cartão 99% das vezes aqui, o ideal seria pegar via payment_intent
+                    paid_at: new Date().toISOString(),
+                    invoice_url: invoice.hosted_invoice_url || null
+                });
+            }
+        }
+
         return NextResponse.json({ received: true });
     } catch (error: any) {
         console.error('Erro ao processar Webhook:', error);

@@ -219,13 +219,13 @@ export default function CalendarGrid({ events, onAddEvent, onEditEvent, onEventM
                                 onClick={prevMonth}
                                 className="p-1.5 hover:bg-background rounded-md transition-colors"
                             >
-                                <ChevronLeft size={18} />
+                                <ChevronLeft size={18} strokeWidth={1} />
                             </button>
                             <button
                                 onClick={nextMonth}
                                 className="p-1.5 hover:bg-background rounded-md transition-colors"
                             >
-                                <ChevronRight size={18} />
+                                <ChevronRight size={18} strokeWidth={1} />
                             </button>
                         </div>
                     </div>

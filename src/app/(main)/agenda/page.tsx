@@ -169,16 +169,22 @@ export default function AgendaPage() {
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <PageHeader title="Agenda">
-                <div className="flex items-center gap-2">
+            <PageHeader 
+                title="Agenda"
+                subtitle="Gerencie seus compromissos, visitas e plantões de venda."
+            >
+                <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max">
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
-                            <button className="flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 py-3 md:py-2 rounded-lg hover:bg-muted/50 transition-colors text-sm font-medium whitespace-nowrap flex-1 md:flex-none outline-none focus:ring-2 focus:ring-ring/50 data-[state=open]:bg-muted/50">
-                                <Filter size={18} />
+                            <button 
+                                className={`h-[34px] min-w-[130px] flex items-center justify-center gap-2 px-4 rounded-lg text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 shadow-sm transition-all ${
+                                    filterType !== 'all'
+                                        ? 'bg-secondary/10 border border-secondary text-secondary-foreground hover:bg-secondary/20 focus:ring-secondary/50'
+                                        : 'bg-card border border-muted-foreground/30 text-foreground hover:bg-muted/50 focus:ring-ring/50 data-[state=open]:bg-muted/50'
+                                }`}
+                            >
+                                <Filter size={14} strokeWidth={1} />
                                 Filtrar
-                                {filterType !== 'all' && (
-                                    <div className="w-1.5 h-1.5 rounded-full bg-secondary ml-1" />
-                                )}
                             </button>
                         </DropdownMenuTrigger>
                         <DropdownMenuContent align="end" className="w-48 p-1">
@@ -202,9 +208,9 @@ export default function AgendaPage() {
                     </DropdownMenu>
                     <button
                         onClick={() => handleAddEvent(new Date())}
-                        className="bg-secondary hover:opacity-90 text-secondary-foreground text-sm font-bold px-4 py-3 md:py-2 rounded-lg flex items-center gap-2 transition-all transform active:scale-[0.99] shadow-sm w-fit whitespace-nowrap"
+                        className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
                     >
-                        <Plus size={18} />
+                        <Plus size={14} strokeWidth={1} />
                         Agendar
                     </button>
                 </div>

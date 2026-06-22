@@ -111,7 +111,7 @@ export function FilterSettingsPanel({ branding, setBranding, tenantId, embedded 
         <div className="bg-card border border-border rounded-md p-6 space-y-6">
             <div>
                 <h3 className="text-lg font-bold text-foreground">Seção de Busca / Filtros (Homepage)</h3>
-                <p className="text-sm text-muted-foreground">Personalize o banner de busca exibido no topo da página inicial do site vitrine.</p>
+                <p className="text-sm text-muted-foreground">Personalize o banner de busca exibido no topo da página inicial do site.</p>
             </div>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">

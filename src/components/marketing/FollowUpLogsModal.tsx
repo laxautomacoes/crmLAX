@@ -144,28 +144,27 @@ export default function FollowUpLogsModal({ isOpen, onClose, sequenceId, sequenc
                     </div>
                 </div>
 
-                {/* Tabs */}
-                <div className="flex gap-1 bg-gray-100 rounded-xl p-1">
+                <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar mb-4">
                     {(['logs', 'enrolled'] as const).map(tab => (
                         <button
                             key={tab}
                             onClick={() => setActiveTab(tab)}
-                            className={`flex-1 py-2 rounded-lg text-xs font-bold transition-all ${
+                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
                                 activeTab === tab
-                                    ? 'bg-white text-[#404F4F] shadow-sm'
-                                    : 'text-muted-foreground hover:text-[#404F4F]'
+                                    ? 'text-foreground border-b-[3px] active-tab-indicator'
+                                    : 'text-muted-foreground hover:text-foreground'
                             }`}
                         >
                             {tab === 'logs' ? (
-                                <span className="flex items-center justify-center gap-1.5">
-                                    <BarChart3 className="h-3.5 w-3.5" />
+                                <>
+                                    <BarChart3 size={18} strokeWidth={1} />
                                     Logs de Envio ({logs.length})
-                                </span>
+                                </>
                             ) : (
-                                <span className="flex items-center justify-center gap-1.5">
-                                    <User className="h-3.5 w-3.5" />
+                                <>
+                                    <User size={18} strokeWidth={1} />
                                     Leads Inscritos ({enrollments.length})
-                                </span>
+                                </>
                             )}
                         </button>
                     ))}

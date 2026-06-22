@@ -29,35 +29,40 @@ export function SupportModal({ isOpen, onClose }: SupportModalProps) {
     ];
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Suporte ao Cliente" size="sm">
-            <div className="space-y-4">
-                <p className="text-muted-foreground text-sm text-center mb-6">
-                    Precisa de ajuda? Entre em contato conosco através de um dos canais abaixo.
+        <Modal isOpen={isOpen} onClose={onClose} title={<h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">Suporte Clientes</h3>} size="sm">
+            <div className="flex flex-col">
+                <p className="text-muted-foreground text-sm text-center mb-4">
+                    Precisa de ajuda?<br />
+                    Entre em contato conosco através de um dos canais abaixo:
                 </p>
                 
-                {contactOptions.map((option) => (
-                    <a
-                        key={option.name}
-                        href={option.href}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex items-center gap-4 p-4 rounded-xl border border-border bg-card hover:bg-accent/50 transition-all group"
-                    >
-                        <div className={`w-12 h-12 rounded-lg ${option.bgColor} flex items-center justify-center ${option.color} group-hover:scale-110 transition-transform`}>
-                            <option.icon size={24} />
-                        </div>
-                        <div className="flex flex-col">
-                            <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                                {option.name}
-                            </span>
-                            <span className="text-base font-medium text-foreground">
-                                {option.value}
-                            </span>
-                        </div>
-                    </a>
-                ))}
+                <div className="flex flex-col gap-1 w-full">
+                    {contactOptions.map((option) => (
+                        <a
+                            key={option.name}
+                            href={option.href}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="flex items-center justify-center gap-4 py-3 px-2 rounded-lg hover:bg-muted/50 transition-all group"
+                        >
+                            <div className={`w-8 h-8 rounded-full ${option.bgColor} flex items-center justify-center ${option.color} group-hover:scale-110 transition-transform`}>
+                                <option.icon size={16} />
+                            </div>
+                            <div className="flex flex-col">
+                                <span className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                                    {option.name}
+                                </span>
+                                <span className="text-base font-medium text-foreground">
+                                    {option.value}
+                                </span>
+                            </div>
+                        </a>
+                    ))}
+                </div>
                 
-                <div className="pt-4 text-center">
+                <hr className="border-border my-4" />
+
+                <div className="text-center">
                     <p className="text-[10px] text-muted-foreground uppercase tracking-[0.2em]">
                         LAX Automações © 2026
                     </p>

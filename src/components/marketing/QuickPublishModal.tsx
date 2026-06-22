@@ -176,19 +176,18 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                     </div>
                 ) : (
                     <>
-                        {/* Abas */}
-                        <div className="flex gap-1 p-1 bg-muted rounded-lg w-fit">
+                        <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar mb-4">
                             {tabs.map(tab => (
                                 <button
                                     key={tab.id}
                                     onClick={() => handleTabChange(tab.id)}
-                                    className={`flex items-center gap-2 px-5 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
                                         activeTab === tab.id
-                                            ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                            ? 'text-foreground border-b-[3px] active-tab-indicator'
                                             : 'text-muted-foreground hover:text-foreground'
                                     }`}
                                 >
-                                    <tab.icon size={14} />
+                                    <tab.icon size={18} strokeWidth={1} />
                                     {tab.label}
                                 </button>
                             ))}

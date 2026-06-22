@@ -7,6 +7,7 @@ import { AIUsageTable } from "@/components/settings/ias/AIUsageTable";
 import { AISystemPromptManager } from "@/components/settings/ias/AISystemPromptManager";
 import { getAIPrompts } from "@/app/_actions/ai-prompts";
 import { redirect } from "next/navigation";
+import { PageHeader } from "@/components/shared/PageHeader";
 
 export default async function AIConfigurationPage() {
     const supabase = await createClient();
@@ -34,17 +35,13 @@ export default async function AIConfigurationPage() {
     ]);
 
     return (
-        <div className="flex-1 min-h-screen bg-background p-8 pt-12">
-            <div className="max-w-7xl mx-auto space-y-12">
-                {/* Header Section */}
-                <div className="space-y-1">
-                    <h2 className="text-3xl font-bold tracking-tight text-foreground font-outfit">Inteligência Artificial</h2>
-                    <p className="text-sm text-muted-foreground font-medium">
-                        Gestão centralizada de infraestrutura neural e monitoramento de consumo.
-                    </p>
-                </div>
+        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8">
+            <PageHeader 
+                title="Inteligência Artificial"
+                subtitle="Gestão centralizada de infraestrutura neural e monitoramento de consumo."
+            />
 
-                <hr className="hidden md:block border-border" />
+            <hr className="hidden md:block border-border -mt-2" />
 
                 {/* Stats Grid */}
                 <AIUsageStats stats={stats} />
@@ -61,16 +58,23 @@ export default async function AIConfigurationPage() {
                 )}
 
                 {/* Activity & Performance Section */}
-                <div className="space-y-8">
-
-                    <AISystemPromptManager prompts={tenantPrompts} tenantId={profile.tenant_id} isSuperadmin={false} />
-                    
-                    <div className="grid grid-cols-1 gap-12">
-                        <AIUsageChart data={stats.usage_by_day} />
-                        <AIUsageTable records={detailedUsage as any[]} isSuperadmin={isSuperadmin} />
-                    </div>
+                <div className="py-2 md:py-4">
+                    <hr className="border-border/60" />
                 </div>
-            </div>
+
+                <AISystemPromptManager prompts={tenantPrompts} tenantId={profile.tenant_id} isSuperadmin={false} />
+                
+                <div className="py-2 md:py-4">
+                    <hr className="border-border/60" />
+                </div>
+
+                <AIUsageChart data={stats.usage_by_day} />
+
+                <div className="py-2 md:py-4">
+                    <hr className="border-border/60" />
+                </div>
+
+                <AIUsageTable records={detailedUsage as any[]} isSuperadmin={isSuperadmin} />
         </div>
     );
 }

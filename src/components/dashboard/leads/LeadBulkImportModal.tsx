@@ -4,7 +4,7 @@ import { useState, useRef, useEffect, useCallback } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import {
     Upload, Loader2, CheckCircle2, Cpu, Globe, Image as ImageIcon,
-    User, Phone, Mail, FileText, Sparkles, ClipboardList, AlertCircle, Trash2, ArrowRight
+    User, Phone, Mail, FileText, Sparkles, ClipboardList, AlertCircle, Trash2, ArrowRight, Table, Pencil, Save, X
 } from 'lucide-react'
 import { toast } from 'sonner'
 import * as XLSX from 'xlsx'
@@ -455,32 +455,35 @@ export function LeadBulkImportModal({
                     <div className="space-y-5">
                         
                         {/* Seletor de Abas (Tipo de Arquivo) */}
-                        <div className="flex bg-muted/50 p-1 rounded-lg border border-border">
+                        <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar mb-4">
                             <button
                                 type="button"
                                 onClick={() => { setActiveTab('print'); setFile(null); setPreviewUrl(null) }}
-                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                                    activeTab === 'print' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
+                                    activeTab === 'print' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'
                                 }`}
                             >
+                                <ImageIcon size={18} strokeWidth={1} />
                                 Print / Imagem
                             </button>
                             <button
                                 type="button"
                                 onClick={() => { setActiveTab('pdf'); setFile(null) }}
-                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                                    activeTab === 'pdf' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
+                                    activeTab === 'pdf' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'
                                 }`}
                             >
+                                <FileText size={18} strokeWidth={1} />
                                 PDF
                             </button>
                             <button
                                 type="button"
                                 onClick={() => { setActiveTab('spreadsheet'); setFile(null) }}
-                                className={`flex-1 py-1.5 text-xs font-bold rounded-md transition-all ${
-                                    activeTab === 'spreadsheet' ? 'bg-card text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
+                                    activeTab === 'spreadsheet' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'
                                 }`}
                             >
+                                <Table size={18} strokeWidth={1} />
                                 Planilha Excel/CSV
                             </button>
                         </div>

@@ -259,18 +259,22 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
-            <PageHeader title="Configurações do Site">
+            <PageHeader 
+                title="Configurações Site" 
+                subtitle="Gerencie a identidade visual, temas e seções do seu site"
+            >
                 <div className="flex items-center gap-3">
                     {activeTab === 'sections' && (
                         <button
                             onClick={handleSaveMain}
                             disabled={saving || !isSectionsTabEdited()}
-                            className={`h-[42px] min-w-[130px] flex items-center justify-center px-12 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap ${
+                            className={`h-[34px] min-w-[130px] flex items-center justify-center gap-2 text-secondary-foreground border border-transparent px-4 rounded-lg transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap ${
                                 isSectionsTabEdited()
-                                    ? 'bg-secondary hover:opacity-90 cursor-pointer'
+                                    ? 'bg-secondary hover:opacity-90 cursor-pointer active:scale-[0.99]'
                                     : 'bg-secondary opacity-30 cursor-not-allowed pointer-events-none'
                             }`}
                         >
+                            {saving ? <Loader2 size={14} className="animate-spin" /> : <CheckCircle2 size={14} strokeWidth={1} />}
                             {saving ? 'Salvando...' : 'Salvar'}
                         </button>
                     )}
@@ -279,8 +283,9 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
                             href={siteUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="h-[42px] min-w-[130px] flex items-center justify-center px-12 bg-secondary hover:opacity-90 text-secondary-foreground rounded-lg transition-all text-sm font-bold shadow-sm active:scale-[0.99] whitespace-nowrap"
+                            className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
                         >
+                            <ExternalLink size={14} strokeWidth={1} />
                             Ver site
                         </a>
                     )}
@@ -359,30 +364,30 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
             <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar">
                 <button
                     onClick={() => setActiveTab('branding')}
-                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'branding' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'branding' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                    <Palette size={16} />
+                    <Palette size={18} strokeWidth={1} />
                     Identidade
                 </button>
                 <button
                     onClick={() => setActiveTab('appearance')}
-                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'appearance' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'appearance' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                    <Sun size={16} />
+                    <Sun size={18} strokeWidth={1} />
                     Aparência
                 </button>
                 <button
                     onClick={() => setActiveTab('sections')}
-                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'sections' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'sections' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                    <LayoutGrid size={16} />
+                    <LayoutGrid size={18} strokeWidth={1} />
                     Seções
                 </button>
                 <button
                     onClick={() => setActiveTab('footer')}
-                    className={`px-6 py-3 text-sm font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'footer' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'footer' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                 >
-                    <MapPin size={16} />
+                    <MapPin size={18} strokeWidth={1} />
                     Rodapé
                 </button>
             </div>
@@ -486,7 +491,7 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
                         <div className="bg-card border border-border rounded-xl p-6">
                             <div className="mb-6">
                                 <h3 className="text-lg font-bold text-foreground">Cores do Site</h3>
-                                <p className="text-sm text-muted-foreground">Defina as cores que serão usadas em todo o seu site vitrine.</p>
+                                <p className="text-sm text-muted-foreground">Defina as cores que serão usadas em todo o seu site.</p>
                             </div>
 
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
@@ -910,7 +915,7 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
                                 <div className="space-y-1">
                                     <label className="text-sm font-bold text-foreground/80 ml-1 block uppercase tracking-wider">Termos de Serviço</label>
                                     <textarea
-                                        value={branding.terms_of_service || 'Ao utilizar nosso site vitrine, você concorda com os seguintes termos: 1. As informações dos properties (preços, disponibilidade e características) estão sujeitas a alterações sem aviso prévio. 2. O conteúdo deste site é para fins informativos e não constitui uma proposta jurídica vinculante até a assinatura de contrato formal. 3. O uso de robôs ou scripts para extração de dados é proibido. 4. Todas as imagens e logotipos são protegidos por direitos autorais. Nos reservamos o direito de atualizar estes termos periodicamente para melhor atender nossos usuários.'}
+                                        value={branding.terms_of_service || 'Ao utilizar nosso site, você concorda com os seguintes termos: 1. As informações dos properties (preços, disponibilidade e características) estão sujeitas a alterações sem aviso prévio. 2. O conteúdo deste site é para fins informativos e não constitui uma proposta jurídica vinculante até a assinatura de contrato formal. 3. O uso de robôs ou scripts para extração de dados é proibido. 4. Todas as imagens e logotipos são protegidos por direitos autorais. Nos reservamos o direito de atualizar estes termos periodicamente para melhor atender nossos usuários.'}
                                         onChange={(e) => setBranding(prev => ({ ...prev, terms_of_service: e.target.value }))}
                                         placeholder="Insira o texto dos seus Termos de Serviço aqui..."
                                         rows={4}

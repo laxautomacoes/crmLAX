@@ -17,13 +17,15 @@ export function AIUsageChart({ data }: ChartProps) {
         .sort((a, b) => a.fullDate.localeCompare(b.fullDate));
 
     return (
-        <div className="bg-card p-8 rounded-xl border border-border shadow-sm">
-            <div className="flex items-center justify-between mb-10">
+        <div className="space-y-6">
+            <div className="flex items-center justify-between px-1">
                 <div className="space-y-1">
-                    <h3 className="text-lg font-semibold text-foreground">Histórico de Atividade</h3>
-                    <p className="text-xs text-muted-foreground font-medium uppercase tracking-wider">REQUISIÇÕES DOS ÚLTIMOS 15 DIAS</p>
+                    <h3 className="text-lg font-bold text-foreground">Histórico de Atividade</h3>
+                    <p className="text-sm text-muted-foreground">Requisições diárias dos últimos 15 dias.</p>
                 </div>
             </div>
+
+            <div className="bg-card p-8 rounded-lg border border-border shadow-sm">
 
             <div className="h-[350px] w-full">
                 <ResponsiveContainer width="100%" height="100%">
@@ -92,6 +94,7 @@ export function AIUsageChart({ data }: ChartProps) {
                         />
                     </AreaChart>
                 </ResponsiveContainer>
+            </div>
             </div>
         </div>
     );

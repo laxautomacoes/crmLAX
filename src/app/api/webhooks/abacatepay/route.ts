@@ -155,7 +155,6 @@ export async function POST(req: Request) {
                     });
                 }
 
-                // WhatsApp (se houver número)
                 if (customerPhone) {
                     const waMessage = `Olá ${customerName}! Bem-vindo ao CRM LAX. \n\nSeu acesso foi liberado: \nLogin: ${customerEmail} \nSenha: ${tempPassword} \n\nAcesse aqui: ${loginUrl}`;
                     try {
@@ -166,16 +165,54 @@ export async function POST(req: Request) {
                     }
                 }
             }
+
+            // Gerar fatura inicial
+            const finalTenantId = tenantId || (metadata.origin === 'landing_page' ? customerEmail : null); // We need the tenant ID. For new ones we already created it.
+            
+            // To ensure we have the correct tenantId for new clients
+            let activeTenantId = tenantId;
+            if (!activeTenantId && customerEmail) {
+                 const { data: tData } = await adminSupabase.from('tenants').select('id').eq('abacatepay_subscription_id', subscriptionId).single();
+                 if (tData) activeTenantId = tData.id;
+            }
+
+            if (activeTenantId) {
+                await adminSupabase.from('tenant_invoices' as any).insert({
+                    tenant_id: activeTenantId,
+                    gateway: 'abacatepay',
+                    gateway_invoice_id: eventData.id || `sub_comp_${Date.now()}`,
+                    amount: eventData.amount || eventData.price || 0,
+                    status: 'paid',
+                    payment_method: eventData.paymentMethod || 'abacatepay',
+                    paid_at: new Date().toISOString(),
+                    invoice_url: eventData.receiptUrl || eventData.url || null
+                });
+            }
         }
 
         // ─── SUBSCRIPTION RENEWED ───
         if (eventType === 'subscription.renewed') {
             const subscriptionId = eventData.id || eventData.subscriptionId;
             if (subscriptionId) {
-                await adminSupabase
+                const { data: tenant } = await adminSupabase
                     .from('tenants')
                     .update({ subscription_status: 'active' } as any)
-                    .eq('abacatepay_subscription_id', subscriptionId);
+                    .eq('abacatepay_subscription_id', subscriptionId)
+                    .select('id')
+                    .single();
+                
+                if (tenant) {
+                    await adminSupabase.from('tenant_invoices' as any).insert({
+                        tenant_id: tenant.id,
+                        gateway: 'abacatepay',
+                        gateway_invoice_id: eventData.id || `sub_ren_${Date.now()}`,
+                        amount: eventData.amount || eventData.price || 0,
+                        status: 'paid',
+                        payment_method: eventData.paymentMethod || 'abacatepay',
+                        paid_at: new Date().toISOString(),
+                        invoice_url: eventData.receiptUrl || eventData.url || null
+                    });
+                }
             }
         }
 

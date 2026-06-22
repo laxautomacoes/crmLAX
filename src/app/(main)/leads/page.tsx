@@ -257,7 +257,7 @@ export default function LeadsPage() {
                     >
                         <button
                             onClick={() => handleOpenLeadModal()}
-                            className="h-[38px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
                         >
                             <Plus size={14} strokeWidth={1} />
                             Novo Lead
