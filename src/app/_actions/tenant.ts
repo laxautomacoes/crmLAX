@@ -983,3 +983,405 @@ export async function deleteTenantCustomAmenity(tenantId: string, amenityId: str
     if (error) return { success: false, error: error.message }
     return { success: true }
 }
+
+export interface CustomFeature {
+    id: string;
+    label: string;
+    status: 'pending' | 'approved';
+    created_by: string;
+}
+
+export async function getTenantCustomFeatures(tenantId: string) {
+    const supabase = await createClient()
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_features')
+        .eq('id', tenantId)
+        .single()
+
+    return { success: true, data: (tenant?.custom_features || []) as CustomFeature[] }
+}
+
+export async function addTenantCustomFeature(tenantId: string, label: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', user.id)
+        .single()
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_features')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_features || []) as CustomFeature[]
+    const newId = `feature_${label.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Math.floor(Math.random() * 1000)}`
+    
+    if (current.some(a => a.label.toLowerCase() === label.toLowerCase())) {
+        return { success: false, error: 'Esta característica já existe.' }
+    }
+
+    const newFeature: CustomFeature = {
+        id: newId,
+        label,
+        status: 'pending',
+        created_by: user.id
+    }
+
+    const updated = [...current, newFeature]
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_features: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+
+    // Notificar os admins do tenant sobre a nova característica pendente
+    try {
+        const { data: admins } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .in('role', ['admin', 'superadmin'])
+
+        if (admins && admins.length > 0) {
+            const userName = profile?.full_name || 'Um colaborador'
+            const { notificationService } = await import('@/services/notification-service')
+            
+            const notificationPromises = admins.map((admin: { id: string }) =>
+                notificationService.create({
+                    user_id: admin.id,
+                    tenant_id: tenantId,
+                    title: 'Nova Característica Pendente',
+                    message: `${userName} criou a característica "${label}". Acesse Editar Imóvel para aprovar.`,
+                    type: 'warning'
+                })
+            )
+            await Promise.all(notificationPromises)
+        }
+    } catch (e) {
+        console.error('Erro ao enviar notificações para admins:', e)
+    }
+
+    return { success: true, data: newFeature }
+}
+
+export async function approveTenantCustomFeature(tenantId: string, featureId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem aprovar.' }
+    }
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_features')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_features || []) as CustomFeature[]
+    const updated = current.map(a => 
+        a.id === featureId ? { ...a, status: 'approved' as const } : a
+    )
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_features: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}
+
+export async function editTenantCustomFeature(tenantId: string, featureId: string, newLabel: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem editar características.' }
+    }
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_features')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_features || []) as CustomFeature[]
+    
+    if (current.some(a => a.id !== featureId && a.label.toLowerCase() === newLabel.toLowerCase())) {
+        return { success: false, error: 'Já existe outra característica com este nome.' }
+    }
+
+    const updated = current.map(a => 
+        a.id === featureId ? { ...a, label: newLabel } : a
+    )
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_features: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}
+
+export async function deleteTenantCustomFeature(tenantId: string, featureId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem excluir características.' }
+    }
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_features')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_features || []) as CustomFeature[]
+    const updated = current.filter(a => a.id !== featureId)
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_features: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}
+
+export interface CustomCondo {
+    id: string;
+    label: string;
+    status: 'pending' | 'approved';
+    created_by: string;
+}
+
+export async function getTenantCustomCondo(tenantId: string) {
+    const supabase = await createClient()
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_condo')
+        .eq('id', tenantId)
+        .single()
+
+    return { success: true, data: (tenant?.custom_condo || []) as CustomCondo[] }
+}
+
+export async function addTenantCustomCondo(tenantId: string, label: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('full_name, role')
+        .eq('id', user.id)
+        .single()
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_condo')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_condo || []) as CustomCondo[]
+    const newId = `condo_${label.toLowerCase().replace(/[^a-z0-9]/g, '_')}_${Math.floor(Math.random() * 1000)}`
+    
+    if (current.some(a => a.label.toLowerCase() === label.toLowerCase())) {
+        return { success: false, error: 'Este item já existe.' }
+    }
+
+    const newCondo: CustomCondo = {
+        id: newId,
+        label,
+        status: 'pending',
+        created_by: user.id
+    }
+
+    const updated = [...current, newCondo]
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_condo: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+
+    // Notificar os admins do tenant sobre o novo item pendente
+    try {
+        const { data: admins } = await supabase
+            .from('profiles')
+            .select('id')
+            .eq('tenant_id', tenantId)
+            .in('role', ['admin', 'superadmin'])
+
+        if (admins && admins.length > 0) {
+            const userName = profile?.full_name || 'Um colaborador'
+            const { notificationService } = await import('@/services/notification-service')
+            
+            const notificationPromises = admins.map((admin: { id: string }) =>
+                notificationService.create({
+                    user_id: admin.id,
+                    tenant_id: tenantId,
+                    title: 'Novo Item de Condomínio Pendente',
+                    message: `${userName} criou o item "${label}". Acesse Editar Imóvel para aprovar.`,
+                    type: 'warning'
+                })
+            )
+            await Promise.all(notificationPromises)
+        }
+    } catch (e) {
+        console.error('Erro ao enviar notificações para admins:', e)
+    }
+
+    return { success: true, data: newCondo }
+}
+
+export async function approveTenantCustomCondo(tenantId: string, condoId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem aprovar.' }
+    }
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_condo')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_condo || []) as CustomCondo[]
+    const updated = current.map(a => 
+        a.id === condoId ? { ...a, status: 'approved' as const } : a
+    )
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_condo: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}
+
+export async function editTenantCustomCondo(tenantId: string, condoId: string, newLabel: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem editar itens de condomínio.' }
+    }
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_condo')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_condo || []) as CustomCondo[]
+    
+    if (current.some(a => a.id !== condoId && a.label.toLowerCase() === newLabel.toLowerCase())) {
+        return { success: false, error: 'Já existe outro item com este nome.' }
+    }
+
+    const updated = current.map(a => 
+        a.id === condoId ? { ...a, label: newLabel } : a
+    )
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_condo: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}
+
+export async function deleteTenantCustomCondo(tenantId: string, condoId: string) {
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+    if (!user) return { success: false, error: 'Não autorizado.' }
+
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', user.id)
+        .single()
+
+    if (profile?.role !== 'admin' && profile?.role !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem excluir itens de condomínio.' }
+    }
+
+    const { data: tenant } = await supabase
+        .from('tenants')
+        .select('custom_condo')
+        .eq('id', tenantId)
+        .single()
+
+    const current = (tenant?.custom_condo || []) as CustomCondo[]
+    const updated = current.filter(a => a.id !== condoId)
+
+    const supabaseAdmin = createAdminClient()
+    const { error } = await supabaseAdmin
+        .from('tenants')
+        .update({ custom_condo: updated } as any)
+        .eq('id', tenantId)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}

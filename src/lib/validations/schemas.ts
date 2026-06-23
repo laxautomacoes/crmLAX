@@ -31,13 +31,41 @@ const jsonObject = z.record(z.string(), z.any()).optional()
 // Properties (Properties)
 // ============================================================
 
+const propertyEnderecoSchema = z.object({
+    rua: z.string().max(500).optional().default(''),
+    numero: z.string().max(50).optional().default(''),
+    complemento: z.string().max(200).optional().default(''),
+    apto: z.string().max(50).optional().default(''),
+    bairro: z.string().max(200).optional().default(''),
+    cidade: z.string().max(200).optional().default(''),
+    estado: z.string().max(2).optional().default(''),
+    cep: z.string().max(20).optional().default(''),
+    latitude: z.number().optional().nullable(),
+    longitude: z.number().optional().nullable(),
+}).optional().default({ rua: '', numero: '', complemento: '', apto: '', bairro: '', cidade: '', estado: '', cep: '' })
+
+const propertyDetailsSchema = z.object({
+    endereco: propertyEnderecoSchema,
+    quartos: z.union([z.string(), z.number()]).optional().default(''),
+    suites: z.union([z.string(), z.number()]).optional().default(''),
+    banheiros: z.union([z.string(), z.number()]).optional().default(''),
+    vagas: z.union([z.string(), z.number()]).optional().default(''),
+    situacao: z.string().max(50).optional().default(''),
+    area_privativa: z.string().max(50).optional().default(''),
+    area_total: z.string().max(50).optional().default(''),
+    area_terreno: z.string().max(50).optional().default(''),
+    area_construida: z.string().max(50).optional().default(''),
+    valor_condominio: z.union([z.string(), z.number()]).optional().default(''),
+    valor_iptu: z.union([z.string(), z.number()]).optional().default(''),
+}).passthrough()
+
 export const createPropertySchema = z.object({
     title: nonEmpty,
     type: z.string().min(1).max(50),
     price: price,
     status: z.string().max(50).optional().default('Available'),
     description: optionalText,
-    details: jsonObject,
+    details: propertyDetailsSchema.optional(),
     images: jsonArray,
     videos: jsonArray,
     documents: jsonArray,

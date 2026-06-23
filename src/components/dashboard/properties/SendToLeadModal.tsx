@@ -833,7 +833,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             <button
                                                 onClick={() => handleSendEmail(null)}
                                                 disabled={sending}
-                                                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-border hover:bg-blue-500/5 hover:border-blue-500/20 transition-all group"
+                                                className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border hover:bg-blue-500/5 hover:border-blue-500/20 transition-all group"
                                             >
                                                 <Mail size={16} className="text-blue-500 group-hover:scale-110 transition-transform" />
                                                 <p className="font-bold text-foreground text-xs">E-mail</p>
@@ -841,7 +841,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             <button
                                                 onClick={() => handleSendWhatsApp(null)}
                                                 disabled={sending}
-                                                className="flex items-center justify-center gap-2 p-2.5 rounded-xl border border-border hover:bg-[#25D366]/5 hover:border-[#25D366]/20 transition-all group"
+                                                className="flex items-center justify-center gap-2 p-2.5 rounded-lg border border-border hover:bg-[#25D366]/5 hover:border-[#25D366]/20 transition-all group"
                                             >
                                                 <MessageCircle size={16} className="text-[#25D366] group-hover:scale-110 transition-transform" />
                                                 <p className="font-bold text-foreground text-xs">WhatsApp</p>
@@ -1499,7 +1499,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <button
                                 onClick={() => handleSendEmail(selectedLead)}
                                 disabled={sending || isGeneratingPDF || !selectedLead.email}
-                                className="flex items-center gap-2 p-2.5 rounded-xl bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
+                                className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
                                 <div className="w-7 h-7 rounded-full bg-blue-500/20 flex-shrink-0 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
                                     <Mail size={14} />
@@ -1513,7 +1513,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <button
                                 onClick={() => handleSendWhatsApp(selectedLead)}
                                 disabled={sending || isGeneratingPDF || !selectedLead.phone}
-                                className="flex items-center gap-2 p-2.5 rounded-xl bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
+                                className="flex items-center gap-2 p-2.5 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
                                 <div className="w-7 h-7 rounded-full bg-[#25D366]/20 flex-shrink-0 flex items-center justify-center text-[#25D366] group-hover:scale-110 transition-transform">
                                     <MessageCircle size={14} />
@@ -1527,7 +1527,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <button
                                 onClick={handleGeneratePDF}
                                 disabled={sending || isGeneratingPDF}
-                                className="flex items-center gap-2 p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left cursor-pointer animate-in fade-in"
+                                className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left cursor-pointer animate-in fade-in"
                             >
                                 <div className="w-7 h-7 rounded-full bg-amber-500/20 flex-shrink-0 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
                                     {isGeneratingPDF ? (

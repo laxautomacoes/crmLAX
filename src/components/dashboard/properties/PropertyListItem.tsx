@@ -92,7 +92,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-4 py-5 text-center">
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-xs font-medium text-foreground">{translatePropertyType(prop.type)}</span>
+                    <span className="text-[10px] font-bold text-muted-foreground">{translatePropertyType(prop.type)}</span>
                     {prop.details?.situacao && (
                         <div className={`px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-sm w-fit ${getSituacaoStyles(prop.details.situacao)}`}>
                             {prop.details.situacao}
@@ -128,7 +128,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                         if (type === 'land') {
                             return (d.area_total || d.area_terreno) ? (
                                 <div className="flex items-center gap-1 text-foreground" title="Área do Terreno">
-                                    <Maximize2 size={12} />
+                                    <span className="text-[10px] font-bold text-muted-foreground">TT</span>
                                     <span className="text-[10px] font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
                                 </div>
                             ) : null
@@ -138,13 +138,13 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                                 <>
                                     {(d.area_construida || d.area_util) ? (
                                         <div className="flex items-center gap-1 text-foreground" title="Área Construída">
-                                            <Maximize2 size={12} />
+                                            <span className="text-[10px] font-bold text-muted-foreground">AC</span>
                                             <span className="text-[10px] font-semibold">{fmt(d.area_construida || d.area_util)}</span>
                                         </div>
                                     ) : null}
                                     {(d.area_total || d.area_terreno) ? (
-                                        <div className="flex items-center gap-1 text-foreground/50" title="Área Terreno">
-                                            <Maximize2 size={10} />
+                                        <div className="flex items-center gap-1 text-foreground" title="Área do Terreno">
+                                            <span className="text-[10px] font-bold text-muted-foreground">TT</span>
                                             <span className="text-[10px] font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
                                         </div>
                                     ) : null}
@@ -156,13 +156,13 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                             <>
                                 {(d.area_privativa || d.area_util) ? (
                                     <div className="flex items-center gap-1 text-foreground" title="Área Privativa">
-                                        <Maximize2 size={12} />
+                                        <span className="text-[10px] font-bold text-muted-foreground">PV</span>
                                         <span className="text-[10px] font-semibold">{fmt(d.area_privativa || d.area_util)}</span>
                                     </div>
                                 ) : null}
                                 {d.area_total ? (
-                                    <div className="flex items-center gap-1 text-foreground/50" title="Área Total">
-                                        <Maximize2 size={10} />
+                                    <div className="flex items-center gap-1 text-foreground" title="Área Total">
+                                        <span className="text-[10px] font-bold text-muted-foreground">TT</span>
                                         <span className="text-[10px] font-semibold">{fmt(d.area_total)}</span>
                                     </div>
                                 ) : null}

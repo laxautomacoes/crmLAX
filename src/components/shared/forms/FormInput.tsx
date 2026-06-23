@@ -25,7 +25,7 @@ export function FormInput({ label, error, icon: Icon, iconSize = 18, iconStrokeW
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-sm font-bold text-foreground ml-1 mb-1 tracking-tight">
+                <label className="block text-xs font-bold text-foreground ml-1 mb-2">
                     {label}
                 </label>
             )}

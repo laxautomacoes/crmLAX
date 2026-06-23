@@ -195,23 +195,23 @@ export function PropertyScrapingModal({ isOpen, onClose, tenantId, onScrapingSuc
     const selected = scrapedProperties[selectedIndex]
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Importar via URL" size="lg">
+        <Modal isOpen={isOpen} onClose={handleClose} title={<h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">Importar via URL</h3>} size="lg">
             <div className="space-y-5">
 
                 {/* ── STEP 1: Input ── */}
                 {step === 'input' && (
                     <>
                         {/* Toggle URL / Texto */}
-                        <div className="relative flex p-1 bg-muted/50 rounded-lg border border-border">
+                        <div className="relative flex bg-muted/50 rounded-lg border border-border overflow-hidden">
                             <div
-                                className="absolute inset-y-1 bg-card rounded-md shadow-sm border border-border/50 transition-all duration-300 ease-out pointer-events-none"
-                                style={{ width: 'calc(50% - 4px)', transform: `translateX(${inputMode === 'url' ? '0' : 'calc(100% + 4px)'})` }}
+                                className="absolute inset-y-0 bg-secondary shadow-sm transition-all duration-300 ease-out pointer-events-none"
+                                style={{ width: '50%', transform: `translateX(${inputMode === 'url' ? '0' : '100%'})` }}
                             />
                             <button onClick={() => setInputMode('url')} disabled={isProcessing}
-                                className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors ${inputMode === 'url' ? 'text-foreground' : 'text-muted-foreground'}`}
+                                className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors ${inputMode === 'url' ? 'text-secondary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                             ><Link2 className="w-3.5 h-3.5" /> Colar URL</button>
                             <button onClick={() => setInputMode('text')} disabled={isProcessing}
-                                className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors ${inputMode === 'text' ? 'text-foreground' : 'text-muted-foreground'}`}
+                                className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 py-2.5 text-[10px] font-black uppercase tracking-wider transition-colors ${inputMode === 'text' ? 'text-secondary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                             ><FileText className="w-3.5 h-3.5" /> Colar Texto</button>
                         </div>
 
@@ -244,15 +244,15 @@ export function PropertyScrapingModal({ isOpen, onClose, tenantId, onScrapingSuc
 
                         {/* AI Engine selector */}
                         <div className="space-y-2">
-                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Motor de IA</label>
+                            <label className="text-xs font-bold text-muted-foreground uppercase tracking-wider ml-1">Modelo IA</label>
                             <div className="flex gap-2">
-                                <div className="relative flex flex-1 p-1 bg-muted/50 rounded-lg border border-border h-9">
-                                    <div className={`absolute inset-y-1 w-[calc(50%-4px)] bg-card rounded-md shadow-sm border border-border/50 transition-all duration-300 ease-out pointer-events-none ${selectedProvider === 'openai' ? 'translate-x-[calc(100%+4px)]' : 'translate-x-0'}`} />
+                                <div className="relative flex flex-1 bg-muted/50 rounded-lg border border-border h-9 overflow-hidden">
+                                    <div className={`absolute inset-y-0 w-1/2 bg-secondary shadow-sm transition-all duration-300 ease-out pointer-events-none ${selectedProvider === 'openai' ? 'translate-x-full' : 'translate-x-0'}`} />
                                     <button onClick={() => handleProviderChange('gemini')} disabled={isProcessing}
-                                        className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 text-[10px] font-black transition-colors ${selectedProvider === 'gemini' ? 'text-foreground' : 'text-muted-foreground'}`}
+                                        className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 text-[10px] font-black transition-colors ${selectedProvider === 'gemini' ? 'text-secondary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                     ><Cpu className="w-3 h-3" /> GEMINI</button>
                                     <button onClick={() => handleProviderChange('openai')} disabled={isProcessing}
-                                        className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 text-[10px] font-black transition-colors ${selectedProvider === 'openai' ? 'text-foreground' : 'text-muted-foreground'}`}
+                                        className={`relative z-10 flex-1 flex items-center justify-center gap-1.5 text-[10px] font-black transition-colors ${selectedProvider === 'openai' ? 'text-secondary-foreground' : 'text-muted-foreground hover:text-foreground'}`}
                                     ><Globe className="w-3 h-3" /> GPT</button>
                                 </div>
                                 <select value={selectedModel} onChange={e => setSelectedModel(e.target.value)} disabled={isProcessing}
@@ -268,21 +268,19 @@ export function PropertyScrapingModal({ isOpen, onClose, tenantId, onScrapingSuc
                         </div>
 
                         {/* Buttons */}
-                        <div className="flex gap-3 pt-1">
+                        <div className="flex gap-3 pt-4 sticky bottom-0 bg-card pb-2">
                             <button onClick={handleClose} disabled={isProcessing}
-                                className="flex-1 px-4 py-3 md:py-2 text-sm font-bold text-foreground hover:bg-muted/50 rounded-lg transition-colors disabled:opacity-50">
+                                className="flex-1 px-4 py-2.5 rounded-lg font-bold border border-border bg-muted text-foreground hover:bg-muted/80 transition-all text-sm flex items-center justify-center gap-2 disabled:opacity-50">
                                 Cancelar
                             </button>
                             <button onClick={handleExtract}
                                 disabled={isProcessing || (inputMode === 'url' ? !urlValue.trim() : !textValue.trim())}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 md:py-2 text-sm font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
-                                {isProcessing ? (<><Loader2 className="animate-spin" size={16} /> Extraindo...</>) : (<><CheckCircle2 size={16} /> Extrair Dados</>)}
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed whitespace-nowrap">
+                                {isProcessing ? (<><Loader2 className="animate-spin" size={16} /> Extraindo...</>) : "Extrair Dados"}
                             </button>
                         </div>
 
-                        {isProcessing && processingStep && (
-                            <p className="text-[10px] text-center text-muted-foreground animate-pulse">{processingStep}</p>
-                        )}
+
                     </>
                 )}
 
@@ -347,7 +345,7 @@ export function PropertyScrapingModal({ isOpen, onClose, tenantId, onScrapingSuc
                             {/* Details grid */}
                             <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
                                 {[
-                                    { label: 'Quartos', value: selected.details?.quartos, icon: BedDouble },
+                                    { label: 'Dormitórios', value: selected.details?.quartos, icon: BedDouble },
                                     { label: 'Suítes', value: selected.details?.suites, icon: BedDouble },
                                     { label: 'Banheiros', value: selected.details?.banheiros, icon: Bath },
                                     { label: 'Vagas', value: selected.details?.vagas, icon: Car },
@@ -423,14 +421,14 @@ export function PropertyScrapingModal({ isOpen, onClose, tenantId, onScrapingSuc
                         </div>
 
                         {/* Action buttons */}
-                        <div className="flex gap-3 pt-1">
+                        <div className="flex gap-3 pt-4 sticky bottom-0 bg-card pb-2 mt-4">
                             <button onClick={() => scrapedProperties.length > 1 ? setStep('list') : setStep('input')}
-                                className="flex-1 px-4 py-3 md:py-2 text-sm font-bold text-foreground hover:bg-muted/50 rounded-lg transition-colors">
+                                className="flex-1 px-4 py-2.5 rounded-lg font-bold border border-border bg-muted text-foreground hover:bg-muted/80 transition-all text-sm flex items-center justify-center gap-2">
                                 Voltar
                             </button>
                             <button onClick={handleUseData}
-                                className="flex-1 flex items-center justify-center gap-2 px-4 py-3 md:py-2 text-sm font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all active:scale-[0.98] whitespace-nowrap">
-                                <Building2 size={16} /> Usar Dados
+                                className="flex-1 flex items-center justify-center gap-2 px-4 py-2.5 text-sm font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-lg shadow-sm transition-all active:scale-[0.98] whitespace-nowrap">
+                                Usar Dados
                             </button>
                         </div>
                     </>

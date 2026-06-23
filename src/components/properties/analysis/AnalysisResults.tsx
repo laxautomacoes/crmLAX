@@ -85,7 +85,7 @@ function SingleResult({ data, neighborhood, formatCurrency }: { data: MarketAnal
                 <div className="lg:col-span-2 bg-card border border-border p-6 rounded-xl shadow-sm">
                     <div className="flex items-center justify-between mb-6">
                         <h3 className="text-base font-bold text-foreground">
-                            Valor Médio/m² por Número de Quartos
+                            Valor Médio/m² por Número de Dormitórios
                         </h3>
                     </div>
                     <div className="h-[300px] w-full">
@@ -116,7 +116,7 @@ function SingleResult({ data, neighborhood, formatCurrency }: { data: MarketAnal
                                     }}
                                     itemStyle={{ color: 'var(--foreground)' }}
                                     formatter={(value: any) => [formatCurrency(Number(value) || 0), 'Valor Médio/m²']}
-                                    labelFormatter={(label) => `${label} Quarto(s)`}
+                                    labelFormatter={(label) => `${label} Dormitório(s)`}
                                 />
                                 <Bar 
                                     dataKey="averageValue" 
@@ -158,7 +158,7 @@ function SingleResult({ data, neighborhood, formatCurrency }: { data: MarketAnal
                             >
                                 <div className="flex justify-between items-start mb-1">
                                     <p className="text-[10px] font-black text-foreground uppercase tracking-wider">
-                                        {prop.bedrooms} Quartos • {prop.area}m²
+                                        {prop.bedrooms} Dormitórios • {prop.area}m²
                                     </p>
                                     <ArrowUpRight size={12} className="text-muted-foreground group-hover:text-foreground opacity-0 group-hover:opacity-100 transition-all" />
                                 </div>
@@ -301,7 +301,7 @@ function ComparisonResults({ entries, formatCurrency }: { entries: ComparisonEnt
             >
                 <div className="flex items-center justify-between mb-6">
                     <h3 className="text-base font-bold text-foreground">
-                        Comparação de Valor Médio/m² por Quartos
+                        Comparação de Valor Médio/m² por Dormitórios
                     </h3>
                 </div>
                 <div className="h-[300px] w-full">
@@ -334,7 +334,7 @@ function ComparisonResults({ entries, formatCurrency }: { entries: ComparisonEnt
                                     const idx = parseInt(name.split('_')[1]);
                                     return [formatCurrency(Number(value) || 0), entries[idx]?.neighborhood || name];
                                 }) as any}
-                                labelFormatter={(label) => `${label} Quarto(s)`}
+                                labelFormatter={(label) => `${label} Dormitório(s)`}
                             />
                             <Legend 
                                 formatter={(value: string) => {
@@ -410,7 +410,7 @@ function ComparisonResults({ entries, formatCurrency }: { entries: ComparisonEnt
                                     <p className="text-[10px] font-black uppercase tracking-wider"
                                        style={{ color: entries[activeTab].color }}
                                     >
-                                        {prop.bedrooms} Quartos • {prop.area}m²
+                                        {prop.bedrooms} Dormitórios • {prop.area}m²
                                     </p>
                                     <ArrowUpRight size={12} className="text-muted-foreground group-hover:opacity-100 opacity-0 transition-all" />
                                 </div>

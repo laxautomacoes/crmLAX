@@ -1136,14 +1136,14 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                                         <option value="any">Qualquer dormitório</option>
                                         {filterSuggestions.bedroomOptions.length > 0 ? (
                                             filterSuggestions.bedroomOptions.map(b => (
-                                                <option key={b} value={b}>{b} {parseInt(b) === 1 ? 'Quarto' : 'Quartos'}</option>
+                                                <option key={b} value={b}>{b} {parseInt(b) === 1 ? 'Dormitório' : 'Dormitórios'}</option>
                                             ))
                                         ) : (
                                             <>
-                                                <option value="1">1 Quarto</option>
-                                                <option value="2">2 Quartos</option>
-                                                <option value="3">3 Quartos</option>
-                                                <option value="4+">4+ Quartos</option>
+                                                <option value="1">1 Dormitório</option>
+                                                <option value="2">2 Dormitórios</option>
+                                                <option value="3">3 Dormitórios</option>
+                                                <option value="4+">4+ Dormitórios</option>
                                             </>
                                         )}
                                     </select>

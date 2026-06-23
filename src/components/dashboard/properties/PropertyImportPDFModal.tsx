@@ -38,7 +38,7 @@ const MODE_CONFIG = {
         icon: ClipboardList,
         label: 'Cadastro',
         sublabel: 'Rápido',
-        description: 'A IA vai ler o PDF e criar um novo imóvel com os dados extraídos (título, preço, área, quartos, endereço).',
+        description: 'A IA vai ler o PDF e criar um novo imóvel com os dados extraídos (título, preço, área, dormitórios, endereço).',
         color: 'text-blue-500',
     },
     tabela: {
@@ -236,7 +236,16 @@ export function PropertyImportPDFModal({
     )
 
     return (
-        <Modal isOpen={isOpen} onClose={handleClose} title="Importar PDF (IA)" size="lg">
+        <Modal 
+            isOpen={isOpen} 
+            onClose={handleClose} 
+            title={
+                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                    Importar PDF (IA)
+                </h3>
+            } 
+            size="lg"
+        >
             <div className="space-y-5">
 
                 {/* ── Toggle 3 Modos ── */}

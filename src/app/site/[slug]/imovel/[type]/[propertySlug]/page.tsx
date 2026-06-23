@@ -35,7 +35,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
     // Construir título SEO-friendly
     const titleParts = [property.title];
-    if (dormitorios > 0) titleParts.push(`${dormitorios} quartos`);
+    if (dormitorios > 0) titleParts.push(`${dormitorios} dormitórios`);
     if (property.price && Number(property.price) > 0) {
         titleParts.push(`R$ ${Number(property.price).toLocaleString('pt-BR')}`);
     }
@@ -43,7 +43,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
 
     // Construir description SEO-friendly
     const descParts = [`${tipoTraduzido}`];
-    if (dormitorios > 0) descParts.push(`com ${dormitorios} quartos`);
+    if (dormitorios > 0) descParts.push(`com ${dormitorios} dormitórios`);
     if (area > 0) descParts.push(`${area}m²`);
     if (details.vagas > 0) descParts.push(`${details.vagas} vagas`);
     if (bairro) descParts.push(`no ${bairro}`);
@@ -71,7 +71,7 @@ export async function generateMetadata({ params }: { params: Promise<{ slug: str
         'imóvel',
         'comprar',
         'alugar',
-        dormitorios > 0 ? `${dormitorios} quartos` : '',
+        dormitorios > 0 ? `${dormitorios} dormitórios` : '',
     ].filter(Boolean);
 
     return {

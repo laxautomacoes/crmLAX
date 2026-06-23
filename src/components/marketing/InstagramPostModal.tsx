@@ -95,7 +95,16 @@ export function InstagramPostModal({ isOpen, onClose, prop, tenantId, profileId 
     };
 
     return (
-        <Modal isOpen={isOpen} onClose={onClose} title="Postar no Instagram" size="md">
+        <Modal 
+            isOpen={isOpen} 
+            onClose={onClose} 
+            title={
+                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                    Postar no Instagram
+                </h3>
+            } 
+            size="md"
+        >
             <div className="space-y-6">
                 {isSuccess ? (
                     <div className="flex flex-col items-center justify-center py-12 text-center space-y-4 animate-in zoom-in duration-300">

@@ -40,21 +40,6 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
         // Obter a cor padrão do editor para comparar
         const defaultColor = editorRef.current ? window.getComputedStyle(editorRef.current).color : ''
 
-        // Limpar spans de cor inicial/inherit/currentColor para evitar que persistam no Markdown
-        const spans = tempDiv.querySelectorAll('span')
-        spans.forEach(span => {
-            const color = span.style.color
-            if (!color || color === 'initial' || color === 'inherit' || color === 'currentColor' || color === 'transparent' || color === defaultColor) {
-                const parent = span.parentNode
-                if (parent) {
-                    while (span.firstChild) {
-                        parent.insertBefore(span.firstChild, span)
-                    }
-                    parent.removeChild(span)
-                }
-            }
-        })
-
         // Função recursiva para converter nós
         const convertNode = (node: Node): string => {
             if (node.nodeType === Node.TEXT_NODE) {
@@ -134,11 +119,13 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                     return content
                 case 'br':
                     return '\n'
+                case 'p':
+                case 'div':
+                    return content + '\n'
                 case 'a':
                     return `[${content}](${element.getAttribute('href')})`
                 case 'img':
                     return `![${element.getAttribute('alt') || ''}](${element.getAttribute('src')})`
-                case 'div':
                 default:
                     return content
             }

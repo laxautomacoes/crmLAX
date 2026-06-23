@@ -65,18 +65,32 @@ export default function PropertiesClient({
     const [columnSort, setColumnSort] = useState<{ column: 'title' | 'type' | 'price' | null, direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' })
 
     const [filters, setFilters] = useState({
-        status: 'all',
-        type: 'all',
-        minPrice: '',
-        maxPrice: '',
-        bedrooms: 'all',
-        bathrooms: 'all',
-        parking: 'all',
-        sortBy: 'newest',
         city: '',
         neighborhood: '',
-        ownerType: 'all',
-        archived: false
+        type: 'all',
+        bedrooms: 'all',
+        bathrooms: 'all',
+        garages: 'all',
+        minPrice: '',
+        maxPrice: '',
+        status: 'all',
+        origin: 'all',
+        situacao: 'all',
+        suites: 'all',
+        minArea: '',
+        maxArea: '',
+        published: 'all',
+        empreendimento: 'all',
+        sortBy: 'newest',
+        archived: false,
+        // Filtros avançados
+        has_dependencia_empregada: false,
+        has_despensa: false,
+        has_escritorio: false,
+        has_lavabo: false,
+        has_sacada_sem_churrasqueira: false,
+        has_sacada_com_churrasqueira: false,
+        has_vista_livre: false
     })
 
     // Abre modal de edição automaticamente via query param ?edit={id}
@@ -306,7 +320,7 @@ export default function PropertiesClient({
                 d.area_total || '',
                 d.area_terreno || '',
                 d.area_construida || '',
-                d.dormitorios || d.quartos || 0,
+                d.quartos || d.dormitorios || 0,
                 d.suites || 0,
                 d.banheiros || 0,
                 d.vagas || 0,
@@ -366,10 +380,16 @@ export default function PropertiesClient({
     }
 
     const filteredProperties = properties.filter(prop => {
-        const matchesSearch = prop.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        const matchesSearch = (prop.title || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
             (prop.description || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-            prop.details?.endereco?.bairro?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-            prop.details?.endereco?.cidade?.toLowerCase().includes(searchTerm.toLowerCase())
+            (prop.details?.endereco?.bairro || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+            (prop.details?.endereco?.cidade || '').toLowerCase().includes(searchTerm.toLowerCase())
+
+        const matchesCity = !filters.city ||
+            (prop.details?.endereco?.cidade || '').toLowerCase().includes(filters.city.toLowerCase())
+
+        const matchesNeighborhood = !filters.neighborhood ||
+            (prop.details?.endereco?.bairro || '').toLowerCase().includes(filters.neighborhood.toLowerCase())
 
         const matchesType = filters.type === 'all' || prop.type === filters.type
 
@@ -384,22 +404,45 @@ export default function PropertiesClient({
         const matchesBathrooms = filters.bathrooms === 'all' || bathrooms >= parseInt(filters.bathrooms)
 
         const parking = prop.details?.vagas || 0
-        const matchesParking = filters.parking === 'all' || parking >= parseInt(filters.parking)
+        const matchesGarages = filters.garages === 'all' || parking >= parseInt(filters.garages)
 
-        const matchesCity = !filters.city ||
-            prop.details?.endereco?.cidade?.toLowerCase().includes(filters.city.toLowerCase())
+        const matchesStatus = filters.status === 'all' || prop.status === filters.status
+        const matchesOrigin = filters.origin === 'all' || prop.origin === filters.origin
 
-        const matchesNeighborhood = !filters.neighborhood ||
-            prop.details?.endereco?.bairro?.toLowerCase().includes(filters.neighborhood.toLowerCase())
+        const matchesSituacao = filters.situacao === 'all' || prop.details?.situacao === filters.situacao
+        
+        const propertySuites = parseInt(String(prop.details?.suites || '0'))
+        const matchesSuites = filters.suites === 'all' || propertySuites >= parseInt(filters.suites)
+        
+        const areaPrivativa = parseFloat(String(prop.details?.area_privativa || prop.details?.area_total || '0').replace(/\./g, '').replace(',', '.')) || 0
+        const minAreaNum = parseFloat(filters.minArea.replace(/\./g, '').replace(',', '.')) || 0
+        const maxAreaNum = parseFloat(filters.maxArea.replace(/\./g, '').replace(',', '.')) || 0
+        
+        const matchesMinArea = !filters.minArea || areaPrivativa >= minAreaNum
+        const matchesMaxArea = !filters.maxArea || areaPrivativa <= maxAreaNum
+        
+        const matchesPublished = filters.published === 'all' || 
+            (filters.published === 'yes' && prop.is_published) || 
+            (filters.published === 'no' && !prop.is_published)
+            
+        const matchesEmpreendimento = filters.empreendimento === 'all' || 
+            (filters.empreendimento === 'sim' && prop.details?.is_empreendimento) || 
+            (filters.empreendimento === 'nao' && !prop.details?.is_empreendimento)
 
-        const matchesOwnerType = filters.ownerType === 'all' || 
-            (filters.ownerType === 'vendedor' && prop.details?.proprietario?.nome && !prop.details?.proprietario?.is_construtora) ||
-            (filters.ownerType === 'construtora' && prop.details?.proprietario?.is_construtora) ||
-            (filters.ownerType === 'sem_proprietario' && !prop.details?.proprietario?.nome)
+        const matchesAdvFilters = 
+            (!filters.has_dependencia_empregada || prop.details?.has_dependencia_empregada) &&
+            (!filters.has_despensa || prop.details?.has_despensa) &&
+            (!filters.has_escritorio || prop.details?.has_escritorio) &&
+            (!filters.has_lavabo || prop.details?.has_lavabo) &&
+            (!filters.has_sacada_sem_churrasqueira || prop.details?.has_sacada_sem_churrasqueira) &&
+            (!filters.has_sacada_com_churrasqueira || prop.details?.has_sacada_com_churrasqueira) &&
+            (!filters.has_vista_livre || prop.details?.has_vista_livre)
 
-        return matchesSearch && matchesType && matchesMinPrice && matchesMaxPrice &&
-            matchesBedrooms && matchesBathrooms && matchesParking &&
-            matchesCity && matchesNeighborhood && matchesOwnerType
+        return matchesSearch && matchesCity && matchesNeighborhood && matchesType &&
+            matchesBedrooms && matchesBathrooms && matchesGarages &&
+            matchesMinPrice && matchesMaxPrice && matchesStatus && matchesOrigin &&
+            matchesSituacao && matchesSuites && matchesMinArea && matchesMaxArea &&
+            matchesPublished && matchesEmpreendimento && matchesAdvFilters
     }).sort((a, b) => {
         // Ordenação por coluna tem prioridade
         if (columnSort.column) {
@@ -420,6 +463,19 @@ export default function PropertiesClient({
             default: return new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         }
     })
+
+    const availableCities = Array.from(new Set(
+        properties
+            .map(p => p.details?.endereco?.cidade?.trim())
+            .filter(Boolean)
+    )).sort() as string[]
+
+    const availableNeighborhoods = Array.from(new Set(
+        properties
+            .filter(p => !filters.city || p.details?.endereco?.cidade?.trim().toLowerCase() === filters.city.toLowerCase())
+            .map(p => p.details?.endereco?.bairro?.trim())
+            .filter(Boolean)
+    )).sort() as string[]
 
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
@@ -602,6 +658,8 @@ export default function PropertiesClient({
                 tenantId={tenantId}
                 onImportSuccess={() => refreshProperties(filters.status)}
                 userRole={userRole}
+                availableCities={availableCities}
+                availableNeighborhoods={availableNeighborhoods}
             />
 
             <PropertyImportPDFModal

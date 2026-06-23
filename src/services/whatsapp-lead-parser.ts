@@ -106,7 +106,7 @@ function detectFieldByContent(value: string): keyof Pick<ParsedLeadData, 'name' 
  *   João Silva
  *   48999999999
  *   joao@email.com
- *   Apartamento 2 quartos
+ *   Apartamento 2 dormitórios
  */
 export function parseStructured(text: string): ParseResult {
     const lines = text.split('\n').map(l => l.trim()).filter(l => l);
@@ -174,7 +174,7 @@ export function parseStructured(text: string): ParseResult {
         if (!data.phone) missing.push('telefone');
         return {
             success: false,
-            error: `Campos obrigatórios faltando: ${missing.join(', ')}\n\nFormato aceito:\n#lead\nJoão Silva\n48999999999\njoao@email.com\nApartamento 2 quartos`
+            error: `Campos obrigatórios faltando: ${missing.join(', ')}\n\nFormato aceito:\n#lead\nJoão Silva\n48999999999\njoao@email.com\nApartamento 2 dormitórios`
         };
     }
 
@@ -209,7 +209,7 @@ export async function parseWithAI(text: string): Promise<ParseResult> {
     if (!text.trim()) {
         return {
             success: false,
-            error: 'Mensagem vazia. Envie o texto com os dados do lead após o comando.\n\n📝 *Exemplos:*\n\n#ia João Silva quer um apartamento de 2 quartos, tel 48999887766, email joao@gmail.com\n\n/lead Maria Santos, 11988776655, procura casa 3 quartos em Florianópolis'
+            error: 'Mensagem vazia. Envie o texto com os dados do lead após o comando.\n\n📝 *Exemplos:*\n\n#ia João Silva quer um apartamento de 2 dormitórios, tel 48999887766, email joao@gmail.com\n\n/lead Maria Santos, 11988776655, procura casa 3 dormitórios em Florianópolis'
         };
     }
 
@@ -238,7 +238,7 @@ export async function parseWithAI(text: string): Promise<ParseResult> {
             if (!parsed.phone) missing.push('telefone');
             return {
                 success: false,
-                error: `A IA não conseguiu identificar: ${missing.join(', ')}\n\n📝 *Dica:* Mencione claramente o nome e telefone do lead.\n\n*Exemplo:*\n#ia Cliente João Silva, telefone 48999887766, quer apartamento 2 quartos`
+                error: `A IA não conseguiu identificar: ${missing.join(', ')}\n\n📝 *Dica:* Mencione claramente o nome e telefone do lead.\n\n*Exemplo:*\n#ia Cliente João Silva, telefone 48999887766, quer apartamento 2 dormitórios`
             };
         }
 
@@ -256,7 +256,7 @@ export async function parseWithAI(text: string): Promise<ParseResult> {
         console.error('[WhatsAppLeadParser] Erro no parsing com IA:', error.message);
         return {
             success: false,
-            error: 'Erro ao processar com IA. Tente o formato estruturado:\n\n📝 *Formato alternativo:*\n#lead\nJoão Silva\n48999999999\njoao@email.com\nApartamento 2 quartos'
+            error: 'Erro ao processar com IA. Tente o formato estruturado:\n\n📝 *Formato alternativo:*\n#lead\nJoão Silva\n48999999999\njoao@email.com\nApartamento 2 dormitórios'
         };
     }
 }

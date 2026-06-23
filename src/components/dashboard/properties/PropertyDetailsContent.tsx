@@ -20,8 +20,8 @@ import PlanGate from '@/components/ui/PlanGate';
 import PropertyCopyCard from '@/components/ai/PropertyCopyCard';
 import { FullscreenMediaViewer } from '@/components/shared/FullscreenMediaViewer';
 import { SafeMarkdownRenderer } from '@/components/shared/SafeMarkdownRenderer';
-import { getTenantCustomAmenities } from '@/app/_actions/tenant';
-import type { CustomAmenity } from '@/app/_actions/tenant';
+import { getTenantCustomAmenities, getTenantCustomCondo } from '@/app/_actions/tenant';
+import type { CustomAmenity, CustomCondo } from '@/app/_actions/tenant';
 
 interface PropertyDetailsContentProps {
     prop: any;
@@ -50,17 +50,22 @@ export function PropertyDetailsContent({
     const [isInstagramModalOpen, setIsInstagramModalOpen] = useState(false);
     const thumbnailRefs = useRef<(HTMLButtonElement | null)[]>([]);
     const [customAmenities, setCustomAmenities] = useState<CustomAmenity[]>([]);
+    const [customCondo, setCustomCondo] = useState<CustomCondo[]>([]);
 
     // Carregar áreas customizadas do tenant
     useEffect(() => {
-        async function loadCustomAmenities() {
+        async function loadCustomData() {
             if (!tenantId) return;
-            const res = await getTenantCustomAmenities(tenantId);
-            if (res.success) {
-                setCustomAmenities(res.data || []);
+            const resAmenities = await getTenantCustomAmenities(tenantId);
+            if (resAmenities.success) {
+                setCustomAmenities(resAmenities.data || []);
+            }
+            const resCondo = await getTenantCustomCondo(tenantId);
+            if (resCondo.success) {
+                setCustomCondo(resCondo.data || []);
             }
         }
-        loadCustomAmenities();
+        loadCustomData();
     }, [tenantId]);
 
 
@@ -97,23 +102,38 @@ export function PropertyDetailsContent({
     const details = prop.details || {};
 
     const amenities = [
-        { id: 'portaria_24h', icon: <Shield size={16} />, label: 'Portaria 24h' },
-        { id: 'portaria_virtual', icon: <Shield size={16} />, label: 'Portaria Virtual' },
+        { id: 'academia', icon: <Dumbbell size={16} />, label: 'Academia' },
+        { id: 'brinquedoteca', icon: <Baby size={16} />, label: 'Brinquedoteca' },
+        { id: 'espaco_gourmet', icon: <Utensils size={16} />, label: 'Espaço Gourmet' },
+        { id: 'sala_estudos_coworking', icon: <BookOpen size={16} />, label: 'Estudos/Coworking' },
         { id: 'piscina', icon: <Waves size={16} />, label: 'Piscina' },
         { id: 'piscina_aquecida', icon: <Waves size={16} />, label: 'Piscina Aquecida' },
-        { id: 'espaco_gourmet', icon: <Utensils size={16} />, label: 'Espaço Gourmet' },
-        { id: 'salao_festas', icon: <PartyPopper size={16} />, label: 'Salão de Festas' },
-        { id: 'academia', icon: <Dumbbell size={16} />, label: 'Academia' },
-        { id: 'sala_jogos', icon: <Gamepad2 size={16} />, label: 'Sala de Jogos' },
-        { id: 'sala_estudos_coworking', icon: <BookOpen size={16} />, label: 'Estudos/Coworking' },
-        { id: 'sala_cinema', icon: <Film size={16} />, label: 'Sala de Cinema' },
         { id: 'playground', icon: <Baby size={16} />, label: 'Playground' },
-        { id: 'brinquedoteca', icon: <Baby size={16} />, label: 'Brinquedoteca' },
+        { id: 'sala_cinema', icon: <Film size={16} />, label: 'Sala de Cinema' },
+        { id: 'sala_jogos', icon: <Gamepad2 size={16} />, label: 'Sala de Jogos' },
+        { id: 'salao_festas', icon: <PartyPopper size={16} />, label: 'Salão de Festas' }
+    ].filter(a => details[a.id]);
+
+    const condominio = [
         { id: 'home_market', icon: <Home size={16} />, label: 'Home Market' },
+        { id: 'portaria_24h', icon: <Shield size={16} />, label: 'Portaria 24h' },
+        { id: 'portaria_virtual', icon: <Shield size={16} />, label: 'Portaria Virtual' },
+        { id: 'smart_locker', icon: <Square size={16} />, label: 'Smart Locker' },
+        { id: 'vagas_visitantes', icon: <Car size={16} />, label: 'Vagas Visitantes' },
+        { id: 'zeladoria', icon: <User size={16} />, label: 'Zeladoria' }
     ].filter(a => details[a.id]);
 
     // Áreas customizadas ativas neste imóvel
     const activeCustomAmenities = customAmenities
+        .filter(a => (a.status === 'approved' || isAdmin) && details[a.id])
+        .map(a => ({
+            id: a.id,
+            icon: <Star size={16} />,
+            label: a.label,
+            isPending: a.status === 'pending'
+        }));
+
+    const activeCustomCondo = customCondo
         .filter(a => (a.status === 'approved' || isAdmin) && details[a.id])
         .map(a => ({
             id: a.id,
@@ -453,7 +473,7 @@ export function PropertyDetailsContent({
                                                         <InfoRow icon={<Home size={14} />} label="Sacada com churrasqueira" value="Sim" />
                                                     )}
                                                     {details.has_sacada_sem_churrasqueira && (
-                                                        <InfoRow icon={<Home size={14} />} label="Sacada sem churrasqueira" value="Sim" />
+                                                        <InfoRow icon={<Home size={14} />} label="Sacada" value="Sim" />
                                                     )}
                                                     {details.has_lavabo && (
                                                         <InfoRow icon={<Bath size={14} />} label="Lavabo" value="Sim" />
@@ -555,6 +575,53 @@ export function PropertyDetailsContent({
                                                                     </div>
                                                                 ))}
                                                             </div>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </div>
+                                        </>
+                                    )}
+
+                                    {/* Condomínio */}
+                                    {(condominio.length > 0 || activeCustomCondo.length > 0 || details.has_elevadores || details.numero_torres || details.aptos_por_torre) && (
+                                        <>
+                                            <div className="border-t border-border/60 my-8" />
+                                            <div className="space-y-4">
+                                                <h4 className="text-lg font-black text-foreground uppercase tracking-widest">
+                                                    Condomínio
+                                                </h4>
+                                                <div className="text-foreground bg-background p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
+                                                    {details.numero_torres && (
+                                                        <div className="flex items-center gap-3 py-3">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-foreground flex-shrink-0" />
+                                                            <span className="text-base font-semibold text-foreground">Número de Torres: {details.numero_torres}</span>
+                                                        </div>
+                                                    )}
+                                                    {details.aptos_por_torre && (
+                                                        <div className="flex items-center gap-3 py-3">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-foreground flex-shrink-0" />
+                                                            <span className="text-base font-semibold text-foreground">Aptos / Torre: {details.aptos_por_torre}</span>
+                                                        </div>
+                                                    )}
+                                                    {details.has_elevadores && (
+                                                        <div className="flex items-center gap-3 py-3">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-foreground flex-shrink-0" />
+                                                            <span className="text-base font-semibold text-foreground">Elevadores{details.numero_elevadores ? `: ${details.numero_elevadores}` : ''}</span>
+                                                        </div>
+                                                    )}
+                                                    {condominio.map(a => (
+                                                        <div key={a.id} className="flex items-center gap-3 py-3">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-foreground flex-shrink-0" />
+                                                            <span className="text-base font-semibold text-foreground">{a.label}</span>
+                                                        </div>
+                                                    ))}
+                                                    {activeCustomCondo.map(a => (
+                                                        <div key={a.id} className="flex items-center gap-3 py-3">
+                                                            <div className="w-1.5 h-1.5 rounded-full bg-foreground flex-shrink-0" />
+                                                            <span className="text-base font-semibold text-foreground">{a.label}</span>
+                                                            {a.isPending && isAdmin && (
+                                                                <span className="text-[10px] font-bold uppercase tracking-wider text-amber-600 bg-amber-500/15 px-2 py-0.5 rounded-md whitespace-nowrap">Pendente</span>
+                                                            )}
                                                         </div>
                                                     ))}
                                                 </div>

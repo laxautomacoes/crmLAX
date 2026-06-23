@@ -28,7 +28,7 @@ function getAnalyzerPrompt(templateType: string) {
   - 'property.title' (Título do anúncio/imóvel), 'property.type' (Tipo: casa, apartamento)
   - 'property.price' (Valor de venda ou locação), 'property.commission' (Comissão)
   - 'property.address_street', 'property.address_number', 'property.address_neighborhood', 'property.address_city', 'property.address_state', 'property.address_zip_code'
-  - 'property.bedrooms' (Quartos), 'property.suites' (Suítes), 'property.bathrooms' (Banheiros), 'property.garages' (Vagas)
+  - 'property.bedrooms' (Dormitórios), 'property.suites' (Suítes), 'property.bathrooms' (Banheiros), 'property.garages' (Vagas)
   - 'property.useful_area' (Área útil/privativa), 'property.total_area' (Área total)
   - 'property.iptu' (Valor do IPTU), 'property.condominium' (Valor do Condomínio)
   - 'property.owner_name' (Nome do Proprietário), 'property.owner_phone', 'property.owner_cpf'

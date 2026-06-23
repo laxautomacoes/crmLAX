@@ -7,9 +7,14 @@ export const propertyTypes: Record<string, string> = {
     'studio': 'Studio',
     'rural': 'Rural',
     'warehouse': 'Galpão',
-    'office': 'Escritório',
+    'office': 'Sala/Escritório',
     'store': 'Loja'
 };
+
+/** Array de options pronto para usar em FormSelect */
+export const propertyTypeOptions = Object.entries(propertyTypes).map(
+    ([value, label]) => ({ value, label })
+)
 
 export function translatePropertyType(type: string): string {
     if (!type) return 'Imóvel';

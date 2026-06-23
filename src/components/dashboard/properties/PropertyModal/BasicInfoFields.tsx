@@ -4,6 +4,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { Switch } from '@/components/ui/Switch'
 import { formatCurrencyBRL } from '@/lib/utils/currency'
+import { propertyTypeOptions } from '@/utils/property-translations'
 
 interface BasicInfoFieldsProps {
     formData: any
@@ -89,8 +90,8 @@ export function BasicInfoFields({
                         )}
                     </div>
                 </div>
-                <div className="flex gap-3 items-end">
-                    <div className="flex-1 min-w-0">
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6 items-end">
+                    <div className="sm:col-span-2">
                         <FormInput
                             label="Nome"
                             value={formData.title}
@@ -98,18 +99,8 @@ export function BasicInfoFields({
                             placeholder={isEmpreendimento ? 'Ex: WOA SKY Towers' : 'Ex: Apartamento 3 suítes Beira Mar'}
                         />
                     </div>
-                    {!isEmpreendimento && (
-                        <div className="w-[100px] shrink-0">
-                            <FormInput
-                                label="Apartamento"
-                                value={formData.details?.endereco?.apto || ''}
-                                onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, apto: e.target.value } } })}
-                                placeholder="Apto"
-                            />
-                        </div>
-                    )}
                     {isAdmin && brokers.length > 0 ? (
-                        <div className="shrink-0 min-w-[180px]">
+                        <div>
                             <FormSelect
                                 label="Responsável"
                                 value={formData.created_by || 'all'}
@@ -122,7 +113,7 @@ export function BasicInfoFields({
                         </div>
                     ) : (
                         currentProfile?.full_name && (
-                            <div className="shrink-0 min-w-[140px]">
+                            <div>
                                 <FormInput
                                     label="Responsável"
                                     value={currentProfile.full_name}
@@ -133,6 +124,37 @@ export function BasicInfoFields({
                         )
                     )}
                 </div>
+                {!isEmpreendimento && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-x-3 gap-y-6 mt-4 items-end">
+                        <div className="grid grid-cols-2 gap-3">
+                            <FormInput
+                                label="Apartamento"
+                                value={formData.details?.endereco?.apto || ''}
+                                onChange={(e) => setFormData({ ...formData, details: { ...formData.details, endereco: { ...formData.details.endereco, apto: e.target.value } } })}
+                                placeholder="Apto"
+                            />
+                            <FormInput
+                                label="Nº Torre"
+                                value={formData.details?.torre_bloco || ''}
+                                onChange={(e) => setFormData({ ...formData, details: { ...formData.details, torre_bloco: e.target.value } })}
+                                placeholder="Nº"
+                            />
+                        </div>
+                        <FormInput
+                            label="Nome Torre"
+                            value={formData.details?.nome_torre_bloco || ''}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, nome_torre_bloco: e.target.value } })}
+                            placeholder="Nome"
+                        />
+                        <FormInput
+                            label="Idade (anos)"
+                            type="number"
+                            value={formData.details.idade_imovel || ''}
+                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, idade_imovel: e.target.value } })}
+                            placeholder="Ex: 5"
+                        />
+                    </div>
+                )}
                 {imagesChildren && (
                     <div className="pt-2">
                         {imagesChildren}
@@ -206,18 +228,7 @@ export function BasicInfoFields({
                             label="Tipo"
                             value={formData.type}
                             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                            options={[
-                                { value: 'house', label: 'Casa' },
-                                { value: 'apartment', label: 'Apartamento' },
-                                { value: 'land', label: 'Terreno' },
-                                { value: 'commercial', label: 'Comercial' },
-                                { value: 'penthouse', label: 'Cobertura' },
-                                { value: 'studio', label: 'Studio' },
-                                { value: 'rural', label: 'Rural' },
-                                { value: 'warehouse', label: 'Galpão' },
-                                { value: 'office', label: 'Sala/Escritório' },
-                                { value: 'store', label: 'Loja' }
-                            ]}
+                            options={propertyTypeOptions}
                         />
                         <FormSelect
                             label="Situação"
@@ -252,7 +263,7 @@ export function BasicInfoFields({
 
             {!isEmpreendimento && (
                 <>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-x-3 gap-y-6">
+                    <div className="grid grid-cols-1 sm:grid-cols-3 lg:grid-cols-3 gap-x-3 gap-y-6">
                         <FormInput
                             label="Preço (R$)"
                             value={formData.price}
@@ -271,13 +282,6 @@ export function BasicInfoFields({
                             onChange={(e) => setFormData({ ...formData, details: { ...formData.details, valor_iptu: formatCurrencyBRL(e.target.value) } })}
                             placeholder="0,00"
                         />
-                        <FormInput
-                            label="Idade do Imóvel (anos)"
-                            type="number"
-                            value={formData.details.idade_imovel || ''}
-                            onChange={(e) => setFormData({ ...formData, details: { ...formData.details, idade_imovel: e.target.value } })}
-                            placeholder="Ex: 5"
-                        />
                     </div>
 
                     <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
@@ -285,18 +289,7 @@ export function BasicInfoFields({
                             label="Tipo"
                             value={formData.type}
                             onChange={(e) => setFormData({ ...formData, type: e.target.value })}
-                            options={[
-                                { value: 'house', label: 'Casa' },
-                                { value: 'apartment', label: 'Apartamento' },
-                                { value: 'land', label: 'Terreno' },
-                                { value: 'commercial', label: 'Comercial' },
-                                { value: 'penthouse', label: 'Cobertura' },
-                                { value: 'studio', label: 'Studio' },
-                                { value: 'rural', label: 'Rural' },
-                                { value: 'warehouse', label: 'Galpão' },
-                                { value: 'office', label: 'Sala/Escritório' },
-                                { value: 'store', label: 'Loja' }
-                            ]}
+                            options={propertyTypeOptions}
                         />
                         <FormSelect
                             label="Situação"

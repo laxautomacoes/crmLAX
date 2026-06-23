@@ -4,11 +4,13 @@ import { useState, useRef } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { FormInput } from '@/components/shared/forms/FormInput'
-import { Download, Upload, Filter, ArrowUpDown, Archive } from 'lucide-react'
+import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
+import { Download, Upload, ChevronDown } from 'lucide-react'
 import { propertyTypes } from '@/utils/property-translations'
 import { toast } from 'sonner'
 import { bulkCreateProperties } from '@/app/_actions/properties'
 import { formatCurrencyBRL } from '@/lib/utils/currency'
+import { toTitleCase } from '@/lib/utils/normalize'
 
 interface PropertyFiltersModalProps {
     isOpen: boolean
@@ -19,6 +21,8 @@ interface PropertyFiltersModalProps {
     tenantId: string | null
     onImportSuccess: () => void
     userRole?: string
+    availableCities?: string[]
+    availableNeighborhoods?: string[]
 }
 
 export function PropertyFiltersModal({
@@ -29,7 +33,9 @@ export function PropertyFiltersModal({
     onExport,
     tenantId,
     onImportSuccess,
-    userRole
+    userRole,
+    availableCities = [],
+    availableNeighborhoods = []
 }: PropertyFiltersModalProps) {
     const [isImporting, setIsImporting] = useState(false)
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
@@ -43,12 +49,26 @@ export function PropertyFiltersModal({
             maxPrice: '',
             bedrooms: 'all',
             bathrooms: 'all',
-            parking: 'all',
-            sortBy: 'newest',
+            garages: 'all',
             city: '',
             neighborhood: '',
             ownerType: 'all',
-            archived: false
+            situacao: 'all',
+            suites: 'all',
+            minArea: '',
+            maxArea: '',
+            published: 'all',
+            empreendimento: 'all',
+            sortBy: 'newest',
+            archived: false,
+            // Filtros avançados
+            has_dependencia_empregada: false,
+            has_despensa: false,
+            has_escritorio: false,
+            has_lavabo: false,
+            has_sacada_sem_churrasqueira: false,
+            has_sacada_com_churrasqueira: false,
+            has_vista_livre: false
         })
     }
 
@@ -98,8 +118,8 @@ export function PropertyFiltersModal({
                         
                         const details: any = {
                             endereco: {
-                                bairro: clean(values[5]),
-                                cidade: clean(values[6]),
+                                bairro: toTitleCase(clean(values[5])),
+                                cidade: toTitleCase(clean(values[6])),
                                 rua: clean(values[7]),
                                 numero: clean(values[8]),
                                 cep: clean(values[9])
@@ -155,19 +175,20 @@ export function PropertyFiltersModal({
         <Modal 
             isOpen={isOpen} 
             onClose={onClose} 
-            title={<h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">Filtros e Ações</h3>}
+            title={<h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">Filtrar Imóvel</h3>}
             size="xl"
             extraHeaderContent={
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     <button
                         onClick={handleClearFilters}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold text-foreground border border-border hover:bg-foreground/5 rounded-md transition-colors"
+                        title="Limpar filtros"
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-lg border border-border text-muted-foreground hover:text-destructive hover:border-destructive/50 transition-all text-sm font-medium"
                     >
-                        Limpar
+                        <span className="hidden sm:inline">Limpar</span>
                     </button>
                     <button
                         onClick={onClose}
-                        className="px-4 py-1.5 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all active:scale-95"
+                        className="px-4 py-2 bg-secondary text-secondary-foreground rounded-lg font-bold shadow-sm active:scale-[0.99] transition-all text-sm whitespace-nowrap hover:opacity-90 min-w-[120px] text-center"
                     >
                         Aplicar Filtros
                     </button>
@@ -175,133 +196,35 @@ export function PropertyFiltersModal({
             }
         >
             <div className="space-y-8">
-                <div className="space-y-4">
-                    <div className="flex items-center gap-2 text-foreground font-bold">
-                        <ArrowUpDown size={18} />
-                        <h4 className="text-sm uppercase tracking-wider">Ordenação</h4>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <FormSelect
-                            label="Ordenar por"
-                            value={filters.sortBy}
-                            onChange={(e) => setFilters({ ...filters, sortBy: e.target.value })}
-                            options={[
-                                { value: 'newest', label: 'Mais recente' },
-                                { value: 'oldest', label: 'Mais antigo' },
-                                { value: 'price_high', label: 'Maior valor' },
-                                { value: 'price_low', label: 'Menor valor' },
-                                { value: 'az', label: 'A - Z' }
-                            ]}
-                        />
-                    </div>
-                </div>
-
                 {/* Seção de Filtros */}
-                <div className="space-y-4 pt-6">
-                    <div className="flex items-center gap-2 text-foreground font-bold">
-                        <Filter size={18} />
-                        <h4 className="text-sm uppercase tracking-wider">Filtros de Busca</h4>
-                    </div>
-                    
+                <div className="space-y-4">
+                    <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
+                        Filtros Principais
+                    </h4>
+                    {/* Localização */}
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-foreground uppercase ml-1">Cidade</label>
-                            <FormInput
-                                placeholder="Filtrar por cidade"
-                                value={filters.city}
-                                onChange={(e) => setFilters({ ...filters, city: e.target.value })}
-                            />
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-foreground uppercase ml-1">Bairro</label>
-                            <FormInput
-                                placeholder="Filtrar por bairro"
-                                value={filters.neighborhood}
-                                onChange={(e) => setFilters({ ...filters, neighborhood: e.target.value })}
-                            />
-                        </div>
-
-                        {isAdmin && (
-                            <FormSelect
-                                label="Status"
-                                value={filters.status}
-                                onChange={(e) => setFilters({ ...filters, status: e.target.value })}
-                                options={[
-                                    { value: 'all', label: 'Todos os Status' },
-                                    { value: 'Pending', label: 'Pendente' },
-                                    { value: 'Available', label: 'Disponível' },
-                                    { value: 'Vendido', label: 'Vendido' },
-                                    { value: 'Reservado', label: 'Reservado' },
-                                    { value: 'Suspenso', label: 'Suspenso' }
-                                ]}
-                            />
-                        )}
-
-                        {/* Toggle: Exibir Arquivados */}
-                        <div className="col-span-full">
-                            <button
-                                onClick={() => setFilters({ ...filters, archived: !filters.archived, status: 'all' })}
-                                className={`flex items-center gap-3 w-full p-3 rounded-xl border transition-all ${
-                                    filters.archived
-                                        ? 'bg-amber-500/10 border-amber-500/40 text-amber-500'
-                                        : 'bg-card border-border text-foreground hover:bg-muted/50'
-                                }`}
-                            >
-                                <Archive size={16} className={filters.archived ? 'text-amber-500' : 'text-muted-foreground'} />
-                                <div className="text-left">
-                                    <p className="text-sm font-bold">{filters.archived ? 'Exibindo Arquivados' : 'Exibir Arquivados'}</p>
-                                    <p className="text-xs text-muted-foreground">Imóveis removidos da lista ativa</p>
-                                </div>
-                                <div className={`ml-auto w-4 h-4 rounded-full border-2 transition-all ${
-                                    filters.archived ? 'bg-amber-500 border-amber-500' : 'border-border'
-                                }`} />
-                            </button>
-                        </div>
-
                         <FormSelect
-                            label="Tipo de Imóvel"
-                            value={filters.type}
-                            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                            label="Cidade"
+                            value={filters.city}
+                            onChange={(e) => setFilters({ ...filters, city: e.target.value })}
                             options={[
-                                { value: 'all', label: 'Todos os Tipos' },
-                                ...Object.entries(propertyTypes).map(([val, label]) => ({ value: val, label }))
+                                { value: '', label: 'Todas as Cidades' },
+                                ...availableCities.map(c => ({ value: c, label: c }))
                             ]}
                         />
-
                         <FormSelect
-                            label="Origem"
-                            value={filters.ownerType}
-                            onChange={(e) => setFilters({ ...filters, ownerType: e.target.value })}
+                            label="Bairro"
+                            value={filters.neighborhood}
+                            onChange={(e) => setFilters({ ...filters, neighborhood: e.target.value })}
                             options={[
-                                { value: 'all', label: 'Todos' },
-                                { value: 'vendedor', label: 'Vendedor (PF)' },
-                                { value: 'construtora', label: 'Construtora' },
-                                { value: 'sem_proprietario', label: 'Sem Proprietário' }
+                                { value: '', label: 'Todos os Bairros' },
+                                ...availableNeighborhoods.map(n => ({ value: n, label: n }))
                             ]}
                         />
-
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-foreground uppercase ml-1">Preço Mínimo</label>
-                            <FormInput
-                                placeholder="0,00"
-                                value={filters.minPrice}
-                                onChange={(e) => setFilters({ ...filters, minPrice: formatCurrencyBRL(e.target.value) })}
-                            />
-                        </div>
-
-                        <div className="space-y-1">
-                            <label className="text-xs font-bold text-foreground uppercase ml-1">Preço Máximo</label>
-                            <FormInput
-                                placeholder="0,00"
-                                value={filters.maxPrice}
-                                onChange={(e) => setFilters({ ...filters, maxPrice: formatCurrencyBRL(e.target.value) })}
-                            />
-                        </div>
                     </div>
 
-                    <div className="grid grid-cols-3 gap-4">
+                    {/* Ambientes */}
+                    <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                         <FormSelect
                             label="Dormitórios"
                             value={filters.bedrooms}
@@ -313,6 +236,18 @@ export function PropertyFiltersModal({
                                 { value: '3', label: '3+' },
                                 { value: '4', label: '4+' },
                                 { value: '5', label: '5+' }
+                            ]}
+                        />
+                        <FormSelect
+                            label="Suítes"
+                            value={filters.suites}
+                            onChange={(e) => setFilters({ ...filters, suites: e.target.value })}
+                            options={[
+                                { value: 'all', label: 'Qualquer' },
+                                { value: '1', label: '1+' },
+                                { value: '2', label: '2+' },
+                                { value: '3', label: '3+' },
+                                { value: '4', label: '4+' }
                             ]}
                         />
                         <FormSelect
@@ -329,8 +264,8 @@ export function PropertyFiltersModal({
                         />
                         <FormSelect
                             label="Vagas"
-                            value={filters.parking}
-                            onChange={(e) => setFilters({ ...filters, parking: e.target.value })}
+                            value={filters.garages}
+                            onChange={(e) => setFilters({ ...filters, garages: e.target.value })}
                             options={[
                                 { value: 'all', label: 'Qualquer' },
                                 { value: '1', label: '1+' },
@@ -340,19 +275,144 @@ export function PropertyFiltersModal({
                             ]}
                         />
                     </div>
+
+                    {/* Classificação */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormSelect
+                            label="Tipo de Imóvel"
+                            value={filters.type}
+                            onChange={(e) => setFilters({ ...filters, type: e.target.value })}
+                            options={[
+                                { value: 'all', label: 'Todos os Tipos' },
+                                ...Object.entries(propertyTypes).map(([val, label]) => ({ value: val, label }))
+                            ]}
+                        />
+                        <FormSelect
+                            label="Categoria"
+                            value={filters.empreendimento}
+                            onChange={(e) => setFilters({ ...filters, empreendimento: e.target.value })}
+                            options={[
+                                { value: 'all', label: 'Todos' },
+                                { value: 'sim', label: 'Apenas Empreendimentos' },
+                                { value: 'nao', label: 'Apenas Imóveis Avulsos' }
+                            ]}
+                        />
+                        <FormSelect
+                            label="Origem"
+                            value={filters.ownerType}
+                            onChange={(e) => setFilters({ ...filters, ownerType: e.target.value })}
+                            options={[
+                                { value: 'all', label: 'Todos' },
+                                { value: 'vendedor', label: 'Vendedor (PF)' },
+                                { value: 'construtora', label: 'Construtora' },
+                                { value: 'sem_proprietario', label: 'Sem Proprietário' }
+                            ]}
+                        />
+                    </div>
+
+                    {/* Status e Administrativo */}
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                        <FormSelect
+                            label="Situação"
+                            value={filters.situacao}
+                            onChange={(e) => setFilters({ ...filters, situacao: e.target.value })}
+                            options={[
+                                { value: 'all', label: 'Qualquer' },
+                                { value: 'lançamento', label: 'Lançamento' },
+                                { value: 'em construção', label: 'Em construção' },
+                                { value: 'novo', label: 'Novo' },
+                                { value: 'revenda', label: 'Revenda' }
+                            ]}
+                        />
+                        {isAdmin && (
+                            <>
+                                <FormSelect
+                                    label="Status"
+                                    value={filters.status}
+                                    onChange={(e) => setFilters({ ...filters, status: e.target.value })}
+                                    options={[
+                                        { value: 'all', label: 'Todos os Status' },
+                                        { value: 'Pending', label: 'Pendente' },
+                                        { value: 'Available', label: 'Disponível' },
+                                        { value: 'Vendido', label: 'Vendido' },
+                                        { value: 'Reservado', label: 'Reservado' },
+                                        { value: 'Suspenso', label: 'Suspenso' }
+                                    ]}
+                                />
+                                <FormSelect
+                                    label="Publicado no Site"
+                                    value={filters.published}
+                                    onChange={(e) => setFilters({ ...filters, published: e.target.value })}
+                                    options={[
+                                        { value: 'all', label: 'Todos' },
+                                        { value: 'yes', label: 'Apenas Publicados' },
+                                        { value: 'no', label: 'Não Publicados' }
+                                    ]}
+                                />
+                            </>
+                        )}
+                    </div>
+
+                    {/* Preços */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormInput
+                            label="Preço Mínimo"
+                            placeholder="0,00"
+                            value={filters.minPrice}
+                            onChange={(e) => setFilters({ ...filters, minPrice: formatCurrencyBRL(e.target.value) })}
+                        />
+                        <FormInput
+                            label="Preço Máximo"
+                            placeholder="0,00"
+                            value={filters.maxPrice}
+                            onChange={(e) => setFilters({ ...filters, maxPrice: formatCurrencyBRL(e.target.value) })}
+                        />
+                    </div>
+
+                    {/* Áreas */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <FormInput
+                            label="Área Mín. (m²)"
+                            placeholder="Ex: 50"
+                            value={filters.minArea}
+                            onChange={(e) => setFilters({ ...filters, minArea: e.target.value })}
+                        />
+                        <FormInput
+                            label="Área Máx. (m²)"
+                            placeholder="Ex: 200"
+                            value={filters.maxArea}
+                            onChange={(e) => setFilters({ ...filters, maxArea: e.target.value })}
+                        />
+                    </div>
+
+                </div>
+
+                {/* Filtros Avançados */}
+                <div className="pt-6 space-y-4 border-t border-border/50">
+                    <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
+                        Filtros Avançados
+                    </h4>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-x-4 gap-y-4">
+                        <FormCheckbox label="Dependência de Empregada" checked={filters.has_dependencia_empregada || false} onChange={(e) => setFilters({ ...filters, has_dependencia_empregada: e.target.checked })} />
+                        <FormCheckbox label="Despensa" checked={filters.has_despensa || false} onChange={(e) => setFilters({ ...filters, has_despensa: e.target.checked })} />
+                        <FormCheckbox label="Escritório" checked={filters.has_escritorio || false} onChange={(e) => setFilters({ ...filters, has_escritorio: e.target.checked })} />
+                        <FormCheckbox label="Lavabo" checked={filters.has_lavabo || false} onChange={(e) => setFilters({ ...filters, has_lavabo: e.target.checked })} />
+                        <FormCheckbox label="Sacada" checked={filters.has_sacada_sem_churrasqueira || false} onChange={(e) => setFilters({ ...filters, has_sacada_sem_churrasqueira: e.target.checked })} />
+                        <FormCheckbox label="Sacada c/ Churrasqueira" checked={filters.has_sacada_com_churrasqueira || false} onChange={(e) => setFilters({ ...filters, has_sacada_com_churrasqueira: e.target.checked })} />
+                        <FormCheckbox label="Vista Livre" checked={filters.has_vista_livre || false} onChange={(e) => setFilters({ ...filters, has_vista_livre: e.target.checked })} />
+                    </div>
                 </div>
 
                 {/* Seção de Ações */}
                 <div className="pt-6 space-y-4">
-                    <div className="flex items-center gap-2 text-foreground font-bold">
-                        <Download size={18} />
-                        <h4 className="text-sm uppercase tracking-wider">Importação e Exportação</h4>
-                    </div>
+                    <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
+                        Importação e Exportação
+                    </h4>
 
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                         <button
                             onClick={onExport}
-                            className="flex items-center justify-center gap-2 p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors group"
+                            className="flex items-center justify-center gap-2 p-4 bg-background border border-border/40 rounded-lg hover:bg-gray-50 dark:hover:bg-muted/30 transition-all group"
                         >
                             <div className="p-2 bg-foreground/10 rounded-md group-hover:bg-foreground/20 transition-colors">
                                 <Download size={20} className="text-foreground" />
@@ -366,7 +426,7 @@ export function PropertyFiltersModal({
                         <button
                             onClick={() => fileInputRef.current?.click()}
                             disabled={isImporting}
-                            className="flex items-center justify-center gap-2 p-4 bg-card border border-border rounded-lg hover:bg-muted/50 transition-colors group disabled:opacity-50"
+                            className="flex items-center justify-center gap-2 p-4 bg-background border border-border/40 rounded-lg hover:bg-gray-50 dark:hover:bg-muted/30 transition-all group disabled:opacity-50"
                         >
                             <div className="p-2 bg-foreground/10 rounded-md group-hover:bg-foreground/20 transition-colors">
                                 <Upload size={20} className="text-foreground" />

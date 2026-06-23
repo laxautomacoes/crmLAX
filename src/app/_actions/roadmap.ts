@@ -290,7 +290,7 @@ export async function duplicateRoadmapStage(stageId: string) {
         let copyNumber = 1
         let newName = `${baseName} (Cópia ${copyNumber})`
 
-        const existingNames = allStages?.map(s => s.name) || []
+        const existingNames = allStages?.map((s: any) => s.name) || []
         while (existingNames.includes(newName)) {
             copyNumber++
             newName = `${baseName} (Cópia ${copyNumber})`

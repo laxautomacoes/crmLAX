@@ -22,6 +22,7 @@ interface RoomsDetailsSlice {
     has_lavabo: boolean
     has_escritorio: boolean
     has_dependencia_empregada: boolean
+    has_despensa: boolean
     has_elevadores: boolean
     numero_elevadores: string
     hobby_box?: string
@@ -42,7 +43,7 @@ export function DormitoriosVagasFields<T extends FormWithRoomsDetails>({ formDat
     return (
         <div className="space-y-4">
             <h4 className="text-base font-black text-foreground uppercase tracking-widest mb-4">
-                Dormitórios e Vagas
+                Especificações
             </h4>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-x-3 gap-y-6">
                 <FormInput
@@ -65,35 +66,36 @@ export function DormitoriosVagasFields<T extends FormWithRoomsDetails>({ formDat
                 />
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-4 py-2 ml-1 items-center">
-                <FormCheckbox
-                    label="Sacada com churrasqueira"
-                    checked={formData.details.has_sacada_com_churrasqueira}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_sacada_com_churrasqueira: e.target.checked } })}
-                />
-                <FormCheckbox
-                    label="Sacada sem churrasqueira"
-                    checked={formData.details.has_sacada_sem_churrasqueira}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_sacada_sem_churrasqueira: e.target.checked } })}
-                />
-                <div className="lg:justify-self-center lg:-translate-x-6">
-                    <FormCheckbox
-                        label="Lavabo"
-                        checked={formData.details.has_lavabo}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_lavabo: e.target.checked } })}
-                    />
-                </div>
-                <div className="lg:justify-self-center lg:-translate-x-6">
-                    <FormCheckbox
-                        label="Escritório"
-                        checked={formData.details.has_escritorio}
-                        onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_escritorio: e.target.checked } })}
-                    />
-                </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
                 <FormCheckbox
                     label="Dependência empregada"
                     checked={formData.details.has_dependencia_empregada}
                     onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_dependencia_empregada: e.target.checked } })}
+                />
+                <FormCheckbox
+                    label="Despensa"
+                    checked={formData.details.has_despensa}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_despensa: e.target.checked } })}
+                />
+                <FormCheckbox
+                    label="Escritório"
+                    checked={formData.details.has_escritorio}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_escritorio: e.target.checked } })}
+                />
+                <FormCheckbox
+                    label="Lavabo"
+                    checked={formData.details.has_lavabo}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_lavabo: e.target.checked } })}
+                />
+                <FormCheckbox
+                    label="Sacada"
+                    checked={formData.details.has_sacada_sem_churrasqueira}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_sacada_sem_churrasqueira: e.target.checked } })}
+                />
+                <FormCheckbox
+                    label="Sacada com churrasqueira"
+                    checked={formData.details.has_sacada_com_churrasqueira}
+                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, has_sacada_com_churrasqueira: e.target.checked } })}
                 />
             </div>
 
@@ -143,20 +145,6 @@ export function DormitoriosVagasFields<T extends FormWithRoomsDetails>({ formDat
                 </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-3 gap-y-6 pt-2">
-                <FormInput
-                    label="Número de Torre | Bloco"
-                    type="text"
-                    value={formData.details.torre_bloco}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, torre_bloco: e.target.value } })}
-                />
-                <FormInput
-                    label="Nome Torre | Bloco"
-                    type="text"
-                    value={formData.details.nome_torre_bloco}
-                    onChange={(e) => setFormData({ ...formData, details: { ...formData.details, nome_torre_bloco: e.target.value } })}
-                />
-            </div>
         </div>
     )
 }

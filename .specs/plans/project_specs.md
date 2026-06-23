@@ -106,6 +106,9 @@ Padrões de Cards de DNS (Configurações de Domínio):
 Uso de Ícones em Botões e Elementos:
 - Não há necessidade de inserir ícones em botões e demais itens do sistema, salvo em casos onde seja estritamente necessário para compreensão (como setas de paginação ou ícones de menu hambúrguer).
 - O objetivo é manter o sistema com uma estética mais *clean* e evitar a poluição visual decorativa. Botões de ação, como "Confirmar Exclusão", "Salvar" e "Cancelar", devem conter apenas o texto.
+
+Ordenação de Listas e Checkboxes:
+- Checkboxes, listas de seleção e modais que contenham atributos (ex: Amenidades, Condomínio, Especificações, Características) DEVEM ser sempre organizados em ordem alfabética para facilitar a leitura e busca pelo usuário.
 8. REQUISITOS DE MONETIZAÇÃO
 - Freemium: Limite de 30 leads/mês.
 - Starter: Domínio crmlax.com/sualoja.

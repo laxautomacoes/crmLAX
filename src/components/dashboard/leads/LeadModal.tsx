@@ -589,7 +589,7 @@ export function LeadModal({
                                     label="Imóvel de Interesse (texto livre)"
                                     value={leadData.property_interest}
                                     onChange={(e) => setLeadData({ ...leadData, property_interest: e.target.value })}
-                                    placeholder="Ex: Apto 3 quartos na praia..."
+                                    placeholder="Ex: Apto 3 dormitórios na praia..."
                                 />
                             </div>
                         </div>

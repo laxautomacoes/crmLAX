@@ -341,6 +341,17 @@ function filterPropertyImages(urls: string[]): string[] {
 }
 
 /**
+ * Extrai URLs de imagem brutas via expressão regular global no HTML.
+ * Captura URLs embutidas em blocos de <script> (JSON de estado, Kenlo/MarkoJS, etc.)
+ * que não são acessíveis pelas funções de extração por tags HTML.
+ */
+function extractRegexImageURLs(html: string, baseUrl: string): string[] {
+  const regex = /https?:\/\/[^\s"'<>()]+\.(?:jpg|jpeg|png|webp|avif|gif)(?:[^\s"'<>()]*)?/gi;
+  const raw = html.match(regex) || [];
+  return resolveAndDedupe(raw, baseUrl);
+}
+
+/**
  * Extração inteligente de imagens: prioriza galeria principal e exclui sugeridos.
  */
 function extractImageURLs(html: string, baseUrl: string): string[] {
@@ -357,24 +368,34 @@ function extractImageURLs(html: string, baseUrl: string): string[] {
   const imgUrls = extractImgSrcURLs(mainHtml, baseUrl);
   console.log(`[Scrape] Img src images: ${imgUrls.length}`);
 
-  // 4. Mesclar priorizando lazy (mais completas), depois img src
+  // 4. Extrair URLs via regex global no HTML COMPLETO (captura imagens em <script> JSON/JS)
+  const regexUrls = extractRegexImageURLs(html, baseUrl);
+  console.log(`[Scrape] Regex global images: ${regexUrls.length}`);
+
+  // 5. Mesclar priorizando lazy, depois img src, depois regex
   const merged = [...lazyUrls];
   for (const url of imgUrls) {
     if (!merged.includes(url)) {
       merged.push(url);
     }
   }
+  for (const url of regexUrls) {
+    if (!merged.includes(url)) {
+      merged.push(url);
+    }
+  }
 
-  // 5. Filtrar ícones, logos, SVGs, placeholders
+  // 6. Filtrar ícones, logos, SVGs, placeholders
   const filtered = filterPropertyImages(merged);
   console.log(`[Scrape] Filtered property images: ${filtered.length}`);
 
-  // 6. Se após a filtragem não encontrou nada, usar fallback com HTML completo
+  // 7. Se após a filtragem não encontrou nada, usar fallback global completo
   if (filtered.length === 0) {
-    console.log('[Scrape] Nenhuma imagem na seção principal, usando fallback global...');
+    console.log('[Scrape] Nenhuma imagem encontrada, usando fallback global...');
     const allLazy = extractLazyImageURLs(html, baseUrl);
     const allImg = extractImgSrcURLs(html, baseUrl);
-    const allMerged = [...new Set([...allLazy, ...allImg])];
+    const allRegex = extractRegexImageURLs(html, baseUrl);
+    const allMerged = [...new Set([...allLazy, ...allImg, ...allRegex])];
     return filterPropertyImages(allMerged).slice(0, 150);
   }
 

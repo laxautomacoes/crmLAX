@@ -118,10 +118,10 @@ export function LocationFilters({ onSearch, loading, children }: LocationFilters
                     onChange={(e) => setBedrooms(e.target.value)}
                     options={[
                         { value: '', label: 'Qualquer' },
-                        { value: '1', label: '1 Quarto' },
-                        { value: '2', label: '2 Quartos' },
-                        { value: '3', label: '3 Quartos' },
-                        { value: '4 ou mais', label: '4+ Quartos' }
+                        { value: '1', label: '1 Dormitório' },
+                        { value: '2', label: '2 Dormitórios' },
+                        { value: '3', label: '3 Dormitórios' },
+                        { value: '4 ou mais', label: '4+ Dormitórios' }
                     ]}
                 />
                 <FormSelect

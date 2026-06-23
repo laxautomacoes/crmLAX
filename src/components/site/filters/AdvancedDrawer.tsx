@@ -36,7 +36,7 @@ export function AdvancedDrawer({ filters, onFieldChange }: AdvancedDrawerProps) 
     return (
         <div className="pt-6 border-t border-border/40 mt-6 animate-in fade-in slide-in-from-top-4 duration-300">
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6">
-                {renderButtonGroup('Quartos', 'quartos')}
+                {renderButtonGroup('Dormitórios', 'quartos')}
                 {renderButtonGroup('Suítes', 'suites', true)}
                 {renderButtonGroup('Banheiros', 'banheiros', true)}
                 {renderButtonGroup('Vagas', 'vagas', true)}

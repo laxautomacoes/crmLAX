@@ -49,7 +49,7 @@ export async function analyzeMarketValue(filters: SearchFilters) {
 
         // Condicionais do prompt baseados nos filtros
         const typeCondition = filters.propertyType ? `O TIPO DE IMÓVEL DEVE SER ESTRITAMENTE: ${filters.propertyType}.` : '';
-        const bedroomsCondition = filters.bedrooms ? `OS IMÓVEIS DEVEM TER ESTRITAMENTE ${filters.bedrooms} QUARTO(S).` : '';
+        const bedroomsCondition = filters.bedrooms ? `OS IMÓVEIS DEVEM TER ESTRITAMENTE ${filters.bedrooms} DORMITÓRIO(S).` : '';
         
         let priceCondition = '';
         if (filters.priceMin || filters.priceMax) {
@@ -64,7 +64,7 @@ export async function analyzeMarketValue(filters: SearchFilters) {
 
         // 1. Construir query de busca com localidade explícita para forçar relevância geográfica
         const locationStr = `${filters.neighborhood}, ${filters.city} - ${filters.uf}`;
-        const bedroomsStr = filters.bedrooms ? `${filters.bedrooms} quartos` : '';
+        const bedroomsStr = filters.bedrooms ? `${filters.bedrooms} dormitórios` : '';
         const searchQuery = `${filters.neighborhood} ${filters.city} ${filters.uf} comprar ${filters.propertyType || 'imóvel'} ${bedroomsStr} venda valor m2`.trim().replace(/\s+/g, ' ');
         
         // 2. Chamar API Serper.dev com mais resultados para compensar filtros rigorosos
@@ -111,7 +111,7 @@ ${bedroomsCondition}
 ${priceCondition}
 
 REGRAS ESTRITAS (OBEDEÇA TODAS SEM EXCEÇÃO):
-1. Leia o 'title' e o 'snippet' de cada resultado e extraia: Preço total, Área (m²) e Quartos.
+1. Leia o 'title' e o 'snippet' de cada resultado e extraia: Preço total, Área (m²) e Dormitórios.
    - Se o anúncio exibir DUAS medidas de m² (ex: área privativa e área total), use sempre o MENOR valor.
    - Se o anúncio exibir apenas UMA medida de m², use esse valor.
 2. Se a string contiver "R$ 500.000", extraia o number 500000.
@@ -135,7 +135,7 @@ Retorne EXATAMENTE um objeto JSON (e nada mais) com a seguinte estrutura:
     {
       "price": number, // Preço total do imóvel
       "area": number,  // Área PRIVATIVA/ÚTIL em m² (não a área total)
-      "bedrooms": number, // Número de quartos (se não tiver, use 0 ou null, mas prefira inferir do texto)
+      "bedrooms": number, // Número de dormitórios (se não tiver, use 0 ou null, mas prefira inferir do texto)
       "title": "string", // Título resumido
       "url": "string"    // LINK REAL extraído
     }
@@ -153,7 +153,7 @@ NÃO adicione formatações markdown (\`\`\`json) se puder evitar. Retorne apena
 
         // Verificar flag de zero resultados
         if (data.noResults === true || !data.properties || data.properties.length === 0) {
-            throw new Error(`Não encontramos imóveis à venda em ${filters.neighborhood}, ${filters.city}/${filters.uf} com os filtros selecionados. Tente ajustar o tipo de imóvel ou número de quartos.`);
+            throw new Error(`Não encontramos imóveis à venda em ${filters.neighborhood}, ${filters.city}/${filters.uf} com os filtros selecionados. Tente ajustar o tipo de imóvel ou número de dormitórios.`);
         }
 
         const properties: MarketProperty[] = data.properties;
@@ -184,7 +184,7 @@ NÃO adicione formatações markdown (\`\`\`json) se puder evitar. Retorne apena
         const minPrice = Math.min(...valuesPerM2);
         const maxPrice = Math.max(...valuesPerM2);
 
-        // Agrupamento para o gráfico por número de quartos
+        // Agrupamento para o gráfico por número de dormitórios
         const bedroomGroups: Record<number, number[]> = {};
         validProperties.forEach((p: MarketProperty) => {
             const val = p.price / p.area;

@@ -252,7 +252,11 @@ export function LeadImportImageModal({
         <Modal 
             isOpen={isOpen} 
             onClose={handleClose} 
-            title={step === 'review' ? "Revisar Lead da IA" : "Importar Lead por Print (IA)"} 
+            title={
+                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                    {step === 'review' ? "Revisar Lead da IA" : "Importar Lead por Print (IA)"}
+                </h3>
+            } 
             size={step === 'review' ? 'xl' : 'md'}
         >
             <div className="space-y-5 animate-in fade-in slide-in-from-bottom-4 duration-300">

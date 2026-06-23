@@ -5,14 +5,16 @@ import { Modal } from '@/components/shared/Modal'
 import { createClient } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
-import { getTenantCustomAmenities } from '@/app/_actions/tenant'
-import type { CustomAmenity } from '@/app/_actions/tenant'
+import { getTenantCustomAmenities, getTenantCustomFeatures, getTenantCustomCondo } from '@/app/_actions/tenant'
+import type { CustomAmenity, CustomFeature, CustomCondo } from '@/app/_actions/tenant'
 import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
 import { AreaFields } from './PropertyModal/AreaFields'
 import { DormitoriosVagasFields } from './PropertyModal/RoomsFields'
 import { TowersFields } from './PropertyModal/TowersFields'
 import { PriceTableUploadField } from './PropertyModal/PriceTableUploadField'
 import { AmenitiesFields } from './PropertyModal/AmenitiesFields'
+import { FeaturesFields } from './PropertyModal/FeaturesFields'
+import { CondominioFields } from './PropertyModal/CondominioFields'
 import { DescriptionField } from './PropertyModal/DescriptionField'
 import { MediaFields } from './PropertyModal/MediaFields'
 import { AddressFields } from './PropertyModal/AddressFields'
@@ -20,6 +22,7 @@ import { OwnerFields } from './PropertyModal/OwnerFields'
 import { Switch } from '@/components/ui/Switch'
 import { Eraser, Globe, FileText, ClipboardPaste, PenLine, ChevronRight } from 'lucide-react'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
+import { normalizePropertyAddress } from '@/lib/utils/normalize'
 
 const DRAFT_KEY = 'crm_new_property_draft'
 
@@ -61,8 +64,16 @@ function getEmptyFormData() {
             has_lavabo: false,
             has_escritorio: false,
             has_dependencia_empregada: false,
-            is_empreendimento: false,
+            has_despensa: false,
+            has_vista_livre: false,
+            face_solar: '',
+            zeladoria: false,
+            vagas_visitantes: false,
+            smart_locker: false,
+            numero_torres: '',
+            aptos_por_torre: '',
             idade_imovel: '',
+            is_empreendimento: false,
             empreendimento: {
                 construtora: '',
                 previsao_entrega: '',
@@ -193,8 +204,16 @@ interface EditingPropertyDetails {
     has_lavabo?: boolean
     has_escritorio?: boolean
     has_dependencia_empregada?: boolean
-    is_empreendimento?: boolean
+    has_despensa?: boolean
+    has_vista_livre?: boolean
+    face_solar?: string
+    zeladoria?: boolean
+    vagas_visitantes?: boolean
+    smart_locker?: boolean
+    numero_torres?: string
+    aptos_por_torre?: string
     idade_imovel?: string
+    is_empreendimento?: boolean
     empreendimento?: EmpreendimentoData
     portaria_24h?: boolean
     portaria_virtual?: boolean
@@ -349,6 +368,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const [sourceImages, setSourceImages] = useState<string[]>([])
     const [isImportingImages, setIsImportingImages] = useState(false)
     const [customAmenities, setCustomAmenities] = useState<CustomAmenity[]>([])
+    const [customFeatures, setCustomFeatures] = useState<CustomFeature[]>([])
+    const [customCondo, setCustomCondo] = useState<CustomCondo[]>([])
 
     useEffect(() => {
         async function loadData() {
@@ -360,6 +381,16 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 const amenitiesRes = await getTenantCustomAmenities(profile.tenant_id)
                 if (amenitiesRes.success) {
                     setCustomAmenities(amenitiesRes.data || [])
+                }
+
+                const featuresRes = await getTenantCustomFeatures(profile.tenant_id)
+                if (featuresRes.success) {
+                    setCustomFeatures(featuresRes.data || [])
+                }
+
+                const condoRes = await getTenantCustomCondo(profile.tenant_id)
+                if (condoRes.success) {
+                    setCustomCondo(condoRes.data || [])
                 }
 
                 const roleLower = profile.role?.toLowerCase();
@@ -419,6 +450,14 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     has_lavabo: editingProperty.details?.has_lavabo || false,
                     has_escritorio: editingProperty.details?.has_escritorio || false,
                     has_dependencia_empregada: editingProperty.details?.has_dependencia_empregada || false,
+                    has_despensa: editingProperty.details?.has_despensa || false,
+                    has_vista_livre: editingProperty.details?.has_vista_livre || false,
+                    face_solar: editingProperty.details?.face_solar || '',
+                    zeladoria: editingProperty.details?.zeladoria || false,
+                    vagas_visitantes: editingProperty.details?.vagas_visitantes || false,
+                    smart_locker: editingProperty.details?.smart_locker || false,
+                    numero_torres: editingProperty.details?.numero_torres || '',
+                    aptos_por_torre: editingProperty.details?.aptos_por_torre || '',
                     is_empreendimento: editingProperty.details?.is_empreendimento || false,
                     idade_imovel: editingProperty.details?.idade_imovel || '',
                     empreendimento: editingProperty.details?.empreendimento || {
@@ -625,13 +664,18 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
         const parsedPrice = parseCurrencyBRL(formData.price || '0')
         let finalTitle = formData.title?.trim() || ''
         const { created_by: _omit, ...restData } = formData
+        // Normaliza details: garante que dormitorios → quartos (fonte única)
+        const { dormitorios: _dorm, ...cleanDetails } = formData.details as any
+        
         return {
             ...restData,
             title: finalTitle,
             price: isNaN(parsedPrice) ? 0 : parsedPrice,
             description: formData.description || '',
             details: {
-                ...formData.details,
+                ...cleanDetails,
+                endereco: cleanDetails.endereco ? normalizePropertyAddress(cleanDetails.endereco) : {},
+                quartos: formData.details.quartos || _dorm || '',
                 valor_condominio: parseCurrencyBRL(formData.details.valor_condominio || '0'),
                 valor_iptu: parseCurrencyBRL(formData.details.valor_iptu || '0'),
                 description: formData.description || ''
@@ -723,7 +767,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 </div>
                 )
             }
-            size={showMethodSelection ? 'xl' : '2xl'}
+            size="xl"
             align="top"
         >
             {showMethodSelection ? (
@@ -839,9 +883,28 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                             <div className="border-t border-border/60" />
                             <DormitoriosVagasFields formData={formData} setFormData={setFormData} isEmpreendimento={formData.details.is_empreendimento} />
                             <div className="border-t border-border/60" />
+                            <FeaturesFields 
+                                formData={formData} 
+                                setFormData={setFormData}
+                                tenantId={tenantId}
+                                isAdmin={isAdmin}
+                                customFeatures={customFeatures}
+                                onCustomFeaturesChange={setCustomFeatures}
+                            />
+                            <div className="border-t border-border/60" />
                             <AreaFields formData={formData} setFormData={setFormData} />
                         </>
                     )}
+
+                    <div className="border-t border-border/60" />
+                    <CondominioFields
+                        formData={formData} 
+                        setFormData={setFormData}
+                        tenantId={tenantId}
+                        isAdmin={isAdmin}
+                        customCondo={customCondo}
+                        onCustomCondoChange={setCustomCondo}
+                    />
 
                     <div className="border-t border-border/60" />
                     <AmenitiesFields 
