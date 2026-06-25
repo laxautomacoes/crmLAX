@@ -3,6 +3,14 @@
 import { createClient } from '@/lib/supabase/server';
 import { evolutionService } from '@/lib/evolution';
 import { revalidatePath } from 'next/cache';
+import { headers } from 'next/headers';
+
+async function getDynamicWebhookUrl() {
+    const headersList = await headers();
+    const host = headersList.get('x-forwarded-host') || headersList.get('host') || process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
+    const protocol = host.includes('localhost') ? 'http' : 'https';
+    return `${protocol}://${host}/api/webhooks/evolution`;
+}
 
 export async function getWhatsAppInstance() {
     const supabase = await createClient();
@@ -65,15 +73,8 @@ export async function setupWhatsAppInstance() {
     if (!instanceName) instanceName = `tenant${Date.now()}`;
     
     try {
-        // Montar URL do webhook para a Evolution API
-        const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
-        const protocol = rootDomain.includes('localhost') ? 'http' : 'https';
-        let webhookUrl: string;
-        if (tenantSlug && !rootDomain.includes('localhost')) {
-            webhookUrl = `${protocol}://${tenantSlug}.${rootDomain}/api/webhooks/evolution`;
-        } else {
-            webhookUrl = `${protocol}://${rootDomain}/api/webhooks/evolution`;
-        }
+        // Montar URL do webhook dinamicamente para a Evolution API
+        const webhookUrl = await getDynamicWebhookUrl();
 
         let initialStatus = 'disconnected';
         let connectedPhone = null;
@@ -152,15 +153,8 @@ export async function getQrCode() {
                 ? await supabase.from('tenants').select('slug').eq('id', profile.tenant_id).single()
                 : { data: null };
 
-            const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
-            const protocol = rootDomain.includes('localhost') ? 'http' : 'https';
-            const tenantSlug = tenant?.slug;
-            let webhookUrl: string;
-            if (tenantSlug && !rootDomain.includes('localhost')) {
-                webhookUrl = `${protocol}://${tenantSlug}.${rootDomain}/api/webhooks/evolution`;
-            } else {
-                webhookUrl = `${protocol}://${rootDomain}/api/webhooks/evolution`;
-            }
+            // Montar URL do webhook dinamicamente para a Evolution API
+            const webhookUrl = await getDynamicWebhookUrl();
 
             console.log('[WhatsApp] Recriando instância:', data.instance_name, 'webhook:', webhookUrl);
             await evolutionService.createInstance(data.instance_name, webhookUrl);
@@ -184,6 +178,14 @@ export async function refreshInstanceStatus() {
     if (error || !data) return { error: 'No instance found' };
 
     try {
+        // Garantir que o webhook esteja atualizado silenciosamente com base no domínio atual
+        try {
+            const webhookUrl = await getDynamicWebhookUrl();
+            await evolutionService.setWebhook(data.instance_name, webhookUrl);
+        } catch (webhookErr: any) {
+            console.error('[WhatsApp] Falha ao atualizar webhook silenciosamente em refreshInstanceStatus:', webhookErr.message);
+        }
+
         const statusData = await evolutionService.getInstanceStatus(data.instance_name);
         const status = statusData.instance.state === 'open' ? 'connected' : 'disconnected';
 
@@ -288,36 +290,8 @@ export async function configureWebhook() {
     const { data, error } = await getWhatsAppInstance();
     if (error || !data) return { error: 'Nenhuma instância encontrada' };
 
-    const supabase = await createClient();
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return { error: 'Not authenticated' };
-
-    const { data: profile } = await supabase
-        .from('profiles')
-        .select('tenant_id')
-        .eq('id', user.id)
-        .single();
-
-    let tenantSlug: string | null = null;
-    if (profile?.tenant_id) {
-        const { data: tenant } = await supabase
-            .from('tenants')
-            .select('slug')
-            .eq('id', profile.tenant_id)
-            .single();
-        tenantSlug = tenant?.slug || null;
-    }
-
-    const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || 'localhost:3000';
-    const protocol = rootDomain.includes('localhost') ? 'http' : 'https';
-    let webhookUrl: string;
-    if (tenantSlug && !rootDomain.includes('localhost')) {
-        webhookUrl = `${protocol}://${tenantSlug}.${rootDomain}/api/webhooks/evolution`;
-    } else {
-        webhookUrl = `${protocol}://${rootDomain}/api/webhooks/evolution`;
-    }
-
     try {
+        const webhookUrl = await getDynamicWebhookUrl();
         await evolutionService.setWebhook(data.instance_name, webhookUrl);
         return { success: true, webhookUrl };
     } catch (err: any) {
