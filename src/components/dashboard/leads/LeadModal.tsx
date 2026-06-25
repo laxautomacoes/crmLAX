@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { formatPhone } from '@/lib/utils/phone'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
@@ -14,7 +14,8 @@ import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
 import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle } from 'lucide-react'
 import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
-import { sendWhatsAppMessage, getWhatsAppChat } from '@/app/_actions/whatsapp'
+import { sendWhatsAppMessage, getWhatsAppChat, sendWhatsAppMedia, refreshInstanceStatus } from '@/app/_actions/whatsapp'
+import { createClient } from '@/lib/supabase/client'
 import type { Lead } from './PipelineBoard'
 
 interface Broker {
@@ -80,6 +81,7 @@ export function LeadModal({
     const [isAvatarZoomed, setIsAvatarZoomed] = useState(false)
     const [brokers, setBrokers] = useState<Broker[]>([])
     const [whatsappChat, setWhatsappChat] = useState<any[]>([])
+    const [instanceStatus, setInstanceStatus] = useState<'connected' | 'disconnected' | 'loading'>('loading')
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -154,6 +156,57 @@ export function LeadModal({
             (editingLead as any).whatsapp_chat = [...((editingLead as any).whatsapp_chat || []), newMsg];
         }
     }
+
+    const handleSendWhatsAppMedia = useCallback(async (file: File) => {
+        if (!editingLead?.phone) {
+            throw new Error('Lead não possui telefone cadastrado');
+        }
+
+        const supabase = createClient();
+        const fileExt = file.name.split('.').pop();
+        const fileName = `${Date.now()}-${Math.random().toString(36).substring(2, 15)}.${fileExt}`;
+        const filePath = `whatsapp-media/${fileName}`;
+
+        // Upload para Supabase Storage
+        const { error: uploadError } = await supabase.storage
+            .from('crm-attachments')
+            .upload(filePath, file, { cacheControl: '3600' });
+
+        if (uploadError) throw new Error(`Falha no upload: ${uploadError.message}`);
+
+        const { data: { publicUrl } } = supabase.storage
+            .from('crm-attachments')
+            .getPublicUrl(filePath);
+
+        // Determinar tipo da mídia
+        let mediaType: 'image' | 'video' | 'document' | 'audio' = 'document';
+        if (file.type.startsWith('image/')) mediaType = 'image';
+        else if (file.type.startsWith('video/')) mediaType = 'video';
+        else if (file.type.startsWith('audio/')) mediaType = 'audio';
+
+        const res = await sendWhatsAppMedia(
+            editingLead.phone,
+            publicUrl,
+            mediaType,
+            file.name,
+            undefined,
+            editingLead.id
+        );
+
+        if (res.error) throw new Error(res.error);
+
+        // Atualizar chat local com a mídia enviada
+        const newMsg = {
+            id: `local-media-${Date.now()}`,
+            text: '',
+            fromMe: true,
+            timestamp: new Date().toISOString(),
+            mediaType,
+            mediaUrl: publicUrl,
+            mediaName: file.name
+        };
+        setWhatsappChat(prev => [...prev, newMsg]);
+    }, [editingLead])
 
     const firstStageId = stages[0]?.id ?? ''
 
@@ -267,6 +320,31 @@ export function LeadModal({
         return () => clearInterval(interval);
     }, [isOpen, editingLead?.id]);
 
+    // Polling de status da instância WhatsApp (a cada 30s)
+    useEffect(() => {
+        if (!isOpen || !editingLead) return;
+
+        setInstanceStatus('loading');
+
+        const fetchStatus = async () => {
+            try {
+                const res = await refreshInstanceStatus();
+                if (res.error) {
+                    setInstanceStatus('disconnected');
+                } else {
+                    setInstanceStatus(res.status === 'connected' ? 'connected' : 'disconnected');
+                }
+            } catch {
+                setInstanceStatus('disconnected');
+            }
+        };
+
+        fetchStatus();
+        const interval = setInterval(fetchStatus, 30000);
+
+        return () => clearInterval(interval);
+    }, [isOpen, editingLead?.id]);
+
     const handleMediaUpload = (type: 'images' | 'videos' | 'documents', files: string[] | { name: string; url: string }[]) => {
         setLeadData(prev => ({
             ...prev,
@@ -363,6 +441,7 @@ export function LeadModal({
             size={editingLead ? '2xl' : (showMethodSelection ? 'md' : 'xl')}
             align={editingLead ? 'center' : 'top'}
             fullHeight={!!editingLead}
+            className={editingLead ? "md:h-[94vh] md:max-h-[94vh]" : ""}
             extraHeaderContent={
                 showMethodSelection ? undefined : (
                 <div className="flex items-center gap-3">
@@ -448,8 +527,8 @@ export function LeadModal({
                     </div>
                 </div>
             ) : (
-            <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 max-h-[calc(90vh-120px)] overflow-hidden" : "space-y-6"}>
-                <div className={editingLead ? "space-y-6 overflow-y-auto max-h-[calc(90vh-120px)] pr-2 no-scrollbar" : "space-y-6"}>
+            <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 max-h-[calc(94vh-120px)] overflow-visible" : "space-y-6"}>
+                <div className={editingLead ? "space-y-6 overflow-y-auto max-h-[calc(94vh-120px)] pr-2 no-scrollbar" : "space-y-6"}>
                     <div className="space-y-8 pb-4">
                     {/* Seção: Dados Pessoais */}
                     <div className="space-y-4">
@@ -707,13 +786,15 @@ export function LeadModal({
 
                 {/* Coluna Direita: Emulador WhatsApp */}
                 {editingLead && (
-                    <div className="hidden lg:flex flex-col h-full max-h-[calc(90vh-120px)] overflow-hidden shrink-0">
+                    <div className="hidden lg:flex flex-col h-full max-h-[calc(94vh-120px)] shrink-0 pb-1">
                         <LeadWhatsAppConversation 
                             chat={whatsappChat} 
                             leadName={editingLead.name}
                             avatarUrl={editingLead.avatar_url || undefined}
                             phone={editingLead.phone}
                             onSendMessage={handleSendWhatsAppMessage}
+                            onSendMedia={handleSendWhatsAppMedia}
+                            instanceStatus={instanceStatus}
                         />
                     </div>
                 )}

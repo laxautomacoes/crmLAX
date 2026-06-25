@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Phone, Video, MoreVertical, Paperclip, Mic, Smile, User } from 'lucide-react';
+import { Send, Phone, Video, MoreVertical, Paperclip, Mic, Smile, User, Image, FileText, Music, X, Loader2 } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
@@ -22,12 +22,19 @@ interface LeadWhatsAppConversationProps {
     avatarUrl?: string;
     phone?: string;
     onSendMessage?: (text: string) => Promise<void>;
+    onSendMedia?: (file: File) => Promise<void>;
+    instanceStatus?: 'connected' | 'disconnected' | 'loading';
 }
 
-export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onSendMessage }: LeadWhatsAppConversationProps) {
+export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onSendMessage, onSendMedia, instanceStatus = 'loading' }: LeadWhatsAppConversationProps) {
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
+    const [isUploading, setIsUploading] = useState(false);
+    const [showAttachMenu, setShowAttachMenu] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
+    const attachMenuRef = useRef<HTMLDivElement>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [fileAccept, setFileAccept] = useState('');
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -35,6 +42,19 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
             scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
         }
     }, [chat]);
+
+    // Close attach menu on click outside
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (attachMenuRef.current && !attachMenuRef.current.contains(e.target as Node)) {
+                setShowAttachMenu(false);
+            }
+        }
+        if (showAttachMenu) {
+            document.addEventListener('mousedown', handleClickOutside);
+            return () => document.removeEventListener('mousedown', handleClickOutside);
+        }
+    }, [showAttachMenu]);
 
     const handleSend = async () => {
         if (!newMessage.trim() || !onSendMessage) return;
@@ -49,6 +69,37 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
             setIsSending(false);
         }
     };
+
+    const handleFileSelect = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !onSendMedia) return;
+
+        setIsUploading(true);
+        setShowAttachMenu(false);
+        try {
+            await onSendMedia(file);
+            toast.success('Mídia enviada com sucesso!');
+        } catch (error: any) {
+            console.error('Erro ao enviar mídia:', error);
+            toast.error(error.message || 'Erro ao enviar mídia');
+        } finally {
+            setIsUploading(false);
+            // Reset input
+            if (fileInputRef.current) fileInputRef.current.value = '';
+        }
+    };
+
+    const openFilePicker = (accept: string) => {
+        setFileAccept(accept);
+        setShowAttachMenu(false);
+        // Delay to allow state update before triggering click
+        setTimeout(() => {
+            fileInputRef.current?.click();
+        }, 50);
+    };
+
+    const statusLabel = instanceStatus === 'connected' ? 'online' : instanceStatus === 'disconnected' ? 'offline' : 'verificando...';
+    const statusColor = instanceStatus === 'connected' ? 'text-emerald-300' : instanceStatus === 'disconnected' ? 'text-white/40' : 'text-yellow-300';
 
     return (
         <div className="flex flex-col h-full max-h-full bg-[#EFEAE2] dark:bg-[#0b141a] border-[8px] border-border rounded-[2rem] overflow-hidden shadow-2xl relative w-full max-w-[340px] mx-auto shrink-0 flex-1">
@@ -69,7 +120,9 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                     </div>
                     <div className="flex flex-col min-w-0">
                         <span className="text-white font-semibold text-base truncate leading-tight">{leadName || phone || 'Lead'}</span>
-                        <span className="text-white/70 text-xs truncate">online</span>
+                        <span className={`text-xs truncate ${statusColor} ${instanceStatus === 'loading' ? 'animate-pulse' : ''}`}>
+                            {statusLabel}
+                        </span>
                     </div>
                 </div>
                 <div className="flex items-center gap-5 text-white shrink-0 ml-2">
@@ -153,8 +206,27 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                             </div>
                         ))
                     )}
+
+                    {/* Upload indicator */}
+                    {isUploading && (
+                        <div className="flex flex-col items-end">
+                            <div className="max-w-[85%] p-3 rounded-lg text-[14px] shadow-sm bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111B21] dark:text-[#e9edef] rounded-tr-none flex items-center gap-2">
+                                <Loader2 size={16} className="animate-spin" />
+                                <span className="text-xs">Enviando mídia...</span>
+                            </div>
+                        </div>
+                    )}
                 </div>
             </div>
+
+            {/* Hidden file input */}
+            <input
+                ref={fileInputRef}
+                type="file"
+                accept={fileAccept}
+                onChange={handleFileSelect}
+                className="hidden"
+            />
 
             {/* Input Area */}
             <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-2 flex items-end gap-2 shrink-0 z-10">
@@ -174,14 +246,45 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                         placeholder="Mensagem"
                         className="w-full bg-transparent border-none focus:ring-0 outline-none focus:outline-none resize-none py-3 px-1 max-h-24 text-[15px] dark:text-[#d1d7db] placeholder:text-gray-400 dark:placeholder:text-[#8696a0]"
                         rows={1}
-                        disabled={isSending || !onSendMessage}
+                        disabled={isSending || !onSendMessage || isUploading}
                     />
-                    <button 
-                        className="p-3 text-gray-500 hover:text-gray-700 dark:text-[#8696a0] dark:hover:text-[#d1d7db] transition-colors shrink-0"
-                        title="Neste momento o envio de mídias nativo ainda será implementado. Use o WhatsApp para isso."
-                    >
-                        <Paperclip size={24} />
-                    </button>
+                    <div className="relative" ref={attachMenuRef}>
+                        <button 
+                            className="p-3 text-gray-500 hover:text-gray-700 dark:text-[#8696a0] dark:hover:text-[#d1d7db] transition-colors shrink-0"
+                            onClick={() => onSendMedia && setShowAttachMenu(!showAttachMenu)}
+                            disabled={!onSendMedia || isUploading}
+                            title={onSendMedia ? 'Enviar anexo' : 'Envio de mídias não disponível'}
+                        >
+                            {isUploading ? <Loader2 size={24} className="animate-spin" /> : <Paperclip size={24} />}
+                        </button>
+
+                        {/* Attach menu popup */}
+                        {showAttachMenu && (
+                            <div className="absolute bottom-full right-0 mb-2 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 w-48 animate-in fade-in slide-in-from-bottom-2 duration-150">
+                                <button
+                                    onClick={() => openFilePicker('image/*,video/*')}
+                                    className="w-full px-4 py-3 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
+                                >
+                                    <Image size={18} className="text-blue-500" />
+                                    <span>Foto / Vídeo</span>
+                                </button>
+                                <button
+                                    onClick={() => openFilePicker('.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar')}
+                                    className="w-full px-4 py-3 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
+                                >
+                                    <FileText size={18} className="text-amber-500" />
+                                    <span>Documento</span>
+                                </button>
+                                <button
+                                    onClick={() => openFilePicker('audio/*')}
+                                    className="w-full px-4 py-3 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
+                                >
+                                    <Music size={18} className="text-purple-500" />
+                                    <span>Áudio</span>
+                                </button>
+                            </div>
+                        )}
+                    </div>
                 </div>
                 
                 {newMessage.trim() ? (

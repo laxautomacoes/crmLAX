@@ -451,3 +451,76 @@ export async function getWhatsAppChat(leadId: string) {
 
     return { chat: (data?.whatsapp_chat as any[]) || [], error: error?.message };
 }
+
+/** Envia uma mídia (imagem, vídeo, documento ou áudio) para um lead via WhatsApp */
+export async function sendWhatsAppMedia(
+    targetPhone: string,
+    mediaUrl: string,
+    mediaType: 'image' | 'video' | 'document' | 'audio',
+    fileName?: string,
+    caption?: string,
+    leadId?: string
+) {
+    const { data, error } = await getWhatsAppInstance();
+    if (error || !data) return { error: 'Nenhuma instância conectada encontrada' };
+    if (data.status !== 'connected') return { error: 'Instância desconectada' };
+
+    try {
+        const formattedPhone = targetPhone.replace(/\D/g, '');
+        const fullPhone = formattedPhone.length <= 11 && !formattedPhone.startsWith('55')
+            ? `55${formattedPhone}`
+            : formattedPhone;
+
+        if (mediaType === 'document') {
+            await evolutionService.sendDocument(data.instance_name, fullPhone, mediaUrl, fileName || 'documento', caption);
+        } else {
+            await evolutionService.sendMedia(data.instance_name, fullPhone, mediaUrl, mediaType as 'image' | 'video', caption);
+        }
+
+        // Salvar no chat do lead
+        if (leadId) {
+            const supabase = await createClient();
+            const { data: lead } = await supabase
+                .from('leads')
+                .select('id, whatsapp_chat')
+                .eq('id', leadId)
+                .maybeSingle();
+
+            if (lead) {
+                const newMessage = {
+                    id: `local-media-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                    text: caption || '',
+                    fromMe: true,
+                    timestamp: new Date().toISOString(),
+                    senderName: 'Você',
+                    mediaType,
+                    mediaUrl,
+                    mediaName: fileName || undefined
+                };
+
+                const currentChat = Array.isArray(lead.whatsapp_chat) ? lead.whatsapp_chat : [];
+                const updatedChat = [...currentChat, newMessage].slice(-20);
+
+                await supabase
+                    .from('leads')
+                    .update({ whatsapp_chat: updatedChat })
+                    .eq('id', leadId);
+
+                await supabase.from('interactions').insert({
+                    lead_id: leadId,
+                    type: 'whatsapp',
+                    content: caption || `[Mídia: ${mediaType}]`,
+                    metadata: { fromMe: true, messageId: newMessage.id, mediaType, mediaName: fileName }
+                });
+            }
+        }
+
+        revalidatePath('/settings/integrations');
+        return { success: true };
+    } catch (err: any) {
+        if (err.message && err.message.includes('Connection Closed')) {
+            return { error: 'Conexão com o WhatsApp perdida. Reconecte na página de Integrações.' };
+        }
+        return { error: err.message };
+    }
+}
