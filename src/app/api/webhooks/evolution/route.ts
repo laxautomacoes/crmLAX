@@ -24,11 +24,22 @@ export async function POST(req: Request) {
     const remoteJid = message.key.remoteJid;
     const fromMe = message.key.fromMe;
     const pushName = message.pushName;
-    const text = message.message?.conversation || message.message?.extendedTextMessage?.text || '';
+    const imageMessage = message.message?.imageMessage;
+    const videoMessage = message.message?.videoMessage;
     const audioMessage = message.message?.audioMessage;
+    const documentMessage = message.message?.documentMessage;
 
-    // Se não tem texto nem áudio, ignorar
-    if (!text && !audioMessage) return NextResponse.json({ received: true });
+    // Extrair o texto da mensagem ou da legenda
+    const text = message.message?.conversation 
+        || message.message?.extendedTextMessage?.text 
+        || imageMessage?.caption 
+        || videoMessage?.caption 
+        || '';
+
+    const hasMedia = !!(imageMessage || videoMessage || audioMessage || documentMessage);
+
+    // Se não tem texto nem mídia, ignorar
+    if (!text && !hasMedia) return NextResponse.json({ received: true });
 
     // 1. Find the instance to get tenant_id, user_id and connected_phone
     const { data: instance } = await supabase
@@ -341,13 +352,61 @@ export async function POST(req: Request) {
 
     if (!lead) return NextResponse.json({ received: true });
 
+    // Se a mensagem contiver mídia, buscar o base64
+    let mediaBase64: string | null = null;
+    let mediaType: 'image' | 'video' | 'audio' | 'document' | null = null;
+    let mediaName: string | null = null;
+    let mediaMimeType: string | null = null;
+
+    if (hasMedia) {
+        if (imageMessage) {
+            mediaType = 'image';
+            mediaMimeType = imageMessage.mimetype || 'image/jpeg';
+            mediaBase64 = imageMessage.base64 || null;
+        } else if (videoMessage) {
+            mediaType = 'video';
+            mediaMimeType = videoMessage.mimetype || 'video/mp4';
+            mediaBase64 = videoMessage.base64 || null;
+        } else if (audioMessage) {
+            mediaType = 'audio';
+            mediaMimeType = audioMessage.mimetype || 'audio/ogg';
+            mediaBase64 = audioMessage.base64 || null;
+        } else if (documentMessage) {
+            mediaType = 'document';
+            mediaMimeType = documentMessage.mimetype || 'application/octet-stream';
+            mediaBase64 = documentMessage.base64 || null;
+            mediaName = documentMessage.title || documentMessage.fileName || 'Documento';
+        }
+
+        // Se não tiver base64 embutido, buscar na API da Evolution
+        if (!mediaBase64) {
+            try {
+                const mediaResult = await evolutionService.getBase64FromMediaMessage(
+                    instanceName,
+                    message.key.id
+                );
+                if (mediaResult?.base64) {
+                    mediaBase64 = mediaResult.base64;
+                    if (mediaResult.mimetype) {
+                        mediaMimeType = mediaResult.mimetype;
+                    }
+                }
+            } catch (mediaError: any) {
+                console.error('[Evolution Webhook] Falha ao obter base64 da mídia:', mediaError.message);
+            }
+        }
+    }
+
     // 4. Update the chat history (keep last 20 messages)
     const newMessage = {
         id: message.key.id,
         text,
         fromMe,
         timestamp: new Date().toISOString(),
-        senderName: fromMe ? 'Você' : pushName
+        senderName: fromMe ? 'Você' : pushName,
+        mediaType: mediaType || undefined,
+        mediaUrl: mediaBase64 ? `data:${mediaMimeType};base64,${mediaBase64}` : undefined,
+        mediaName: mediaName || undefined
     };
 
     const currentChat = Array.isArray(lead.whatsapp_chat) ? lead.whatsapp_chat : [];
@@ -362,8 +421,13 @@ export async function POST(req: Request) {
     await supabase.from('interactions').insert({
         lead_id: lead.id,
         type: 'whatsapp',
-        content: text,
-        metadata: { fromMe, messageId: message.key.id }
+        content: text || `[Mídia: ${mediaType}]`,
+        metadata: { 
+            fromMe, 
+            messageId: message.key.id,
+            mediaType: mediaType || undefined,
+            mediaName: mediaName || undefined
+        }
     });
 
     return NextResponse.json({ success: true });

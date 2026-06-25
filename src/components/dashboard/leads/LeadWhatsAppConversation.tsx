@@ -11,6 +11,9 @@ interface Message {
     fromMe?: boolean;
     timestamp?: string;
     senderName?: string;
+    mediaType?: 'image' | 'video' | 'audio' | 'document';
+    mediaUrl?: string;
+    mediaName?: string;
 }
 
 interface LeadWhatsAppConversationProps {
@@ -108,6 +111,40 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                                             : 'bg-white dark:bg-[#202c33] text-[#111B21] dark:text-[#e9edef] rounded-tl-none'
                                     }`}
                                 >
+                                    {msg.mediaType === 'image' && msg.mediaUrl && (
+                                        <div className="mb-2 max-w-full rounded-md overflow-hidden border border-border/10">
+                                            <img src={msg.mediaUrl} alt="Imagem" className="w-full max-h-48 object-cover cursor-pointer" onClick={() => window.open(msg.mediaUrl, '_blank')} />
+                                        </div>
+                                    )}
+                                    {msg.mediaType === 'video' && msg.mediaUrl && (
+                                        <div className="mb-2 max-w-full rounded-md overflow-hidden border border-border/10">
+                                            <video src={msg.mediaUrl} controls className="w-full max-h-48 object-cover" />
+                                        </div>
+                                    )}
+                                    {msg.mediaType === 'audio' && msg.mediaUrl && (
+                                        <div className="mb-2 w-full max-w-[280px]">
+                                            <audio src={msg.mediaUrl} controls className="w-full h-8" />
+                                        </div>
+                                    )}
+                                    {msg.mediaType === 'document' && msg.mediaUrl && (
+                                        <div className="mb-2 p-2 rounded-md bg-black/5 dark:bg-white/5 border border-border/20 flex items-center gap-2 max-w-full">
+                                            <Paperclip size={18} className="text-muted-foreground shrink-0" />
+                                            <div className="flex flex-col min-w-0 flex-1">
+                                                <span className="text-xs font-bold truncate leading-tight">{msg.mediaName || 'Documento'}</span>
+                                                <span className="text-[9px] text-muted-foreground">Documento</span>
+                                            </div>
+                                            <a 
+                                                href={msg.mediaUrl} 
+                                                download={msg.mediaName || 'documento'} 
+                                                target="_blank"
+                                                rel="noreferrer"
+                                                className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded text-xs font-bold text-accent-icon shrink-0"
+                                            >
+                                                Baixar
+                                            </a>
+                                        </div>
+                                    )}
+
                                     <p className="leading-snug break-words pr-12 pb-1 whitespace-pre-wrap">{msg.text || msg.message || ''}</p>
                                     <span className="text-[10px] text-black/40 dark:text-white/60 absolute bottom-1.5 right-2">
                                         {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}

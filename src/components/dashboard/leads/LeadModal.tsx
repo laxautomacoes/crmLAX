@@ -36,6 +36,9 @@ interface ChatMessage {
     fromMe?: boolean
     message?: string
     text?: string
+    mediaType?: 'image' | 'video' | 'audio' | 'document'
+    mediaUrl?: string
+    mediaName?: string
 }
 
 type EditableLead = Partial<Lead> & {
