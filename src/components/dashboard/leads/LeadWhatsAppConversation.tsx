@@ -51,14 +51,14 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
     };
 
     return (
-        <div className="flex flex-col h-full bg-[#EFEAE2] dark:bg-[#0b141a] border-[10px] border-border rounded-[2.5rem] overflow-hidden shadow-2xl relative w-full max-w-[400px] mx-auto shrink-0 flex-1">
+        <div className="flex flex-col h-full max-h-full bg-[#EFEAE2] dark:bg-[#0b141a] border-[8px] border-border rounded-[2rem] overflow-hidden shadow-2xl relative w-full max-w-[340px] mx-auto shrink-0 flex-1">
             {/* Notch / Speaker mockup */}
-            <div className="absolute top-0 inset-x-0 h-7 flex justify-center z-20 pointer-events-none">
-                <div className="w-32 h-7 bg-border rounded-b-3xl"></div>
+            <div className="absolute top-0 inset-x-0 h-6 flex justify-center z-20 pointer-events-none">
+                <div className="w-24 h-6 bg-border rounded-b-2xl"></div>
             </div>
 
             {/* Header */}
-            <div className="bg-[#005C4B] dark:bg-[#202C33] px-4 py-3 flex items-center justify-between pt-9 z-10">
+            <div className="bg-[#005C4B] dark:bg-[#202C33] px-3 py-2 flex items-center justify-between pt-7 z-10">
                 <div className="flex items-center gap-3 min-w-0">
                     <div className="w-10 h-10 rounded-full bg-white/10 overflow-hidden flex items-center justify-center shrink-0">
                         {avatarUrl ? (
@@ -172,7 +172,7 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                             }
                         }}
                         placeholder="Mensagem"
-                        className="w-full bg-transparent border-none focus:ring-0 resize-none py-3 px-1 max-h-24 text-[15px] dark:text-[#d1d7db] placeholder:text-gray-400 dark:placeholder:text-[#8696a0]"
+                        className="w-full bg-transparent border-none focus:ring-0 outline-none focus:outline-none resize-none py-3 px-1 max-h-24 text-[15px] dark:text-[#d1d7db] placeholder:text-gray-400 dark:placeholder:text-[#8696a0]"
                         rows={1}
                         disabled={isSending || !onSendMessage}
                     />

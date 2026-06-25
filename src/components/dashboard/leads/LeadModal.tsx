@@ -361,7 +361,8 @@ export function LeadModal({
                 </h3>
             }
             size={editingLead ? '2xl' : (showMethodSelection ? 'md' : 'xl')}
-            align="top"
+            align={editingLead ? 'center' : 'top'}
+            fullHeight={!!editingLead}
             extraHeaderContent={
                 showMethodSelection ? undefined : (
                 <div className="flex items-center gap-3">
@@ -447,14 +448,15 @@ export function LeadModal({
                     </div>
                 </div>
             ) : (
-            <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6" : "space-y-6"}>
-                <div className="space-y-6">
-                    <div className="space-y-8">
+            <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 max-h-[calc(90vh-120px)] overflow-hidden" : "space-y-6"}>
+                <div className={editingLead ? "space-y-6 overflow-y-auto max-h-[calc(90vh-120px)] pr-2 no-scrollbar" : "space-y-6"}>
+                    <div className="space-y-8 pb-4">
                     {/* Seção: Dados Pessoais */}
                     <div className="space-y-4">
                         <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 items-end">
+                            {/* Linha 1: Avatar + Nome */}
+                            <div className="col-span-1 md:col-span-2 flex items-end gap-4">
                                 {editingLead && (
                                     <button
                                         type="button"
@@ -477,61 +479,63 @@ export function LeadModal({
                                         placeholder="Ex: João Silva"
                                     />
                                 </div>
-                                {(userRole === 'admin' || userRole === 'superadmin') && (
-                                    <div className="w-full md:w-[200px]">
-                                        <FormSelect
-                                            label="Responsável"
-                                            value={leadData.assigned_to}
-                                            onChange={(e) => setLeadData({ ...leadData, assigned_to: e.target.value })}
-                                            options={[
-                                                { value: '', label: 'Não atribuído' },
-                                                ...brokers.filter(b => b.role !== 'admin' && b.role !== 'superadmin').map(b => ({ value: b.id, label: b.full_name }))
-                                            ]}
-                                        />
-                                    </div>
-                                )}
                             </div>
-                            <div className="col-span-1 md:col-span-2 flex flex-col md:flex-row gap-4 items-start">
-                                <div className="flex-1">
-                                    <FormInput
-                                        label="Telefone"
-                                        value={leadData.phone}
-                                        onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
-                                        placeholder="(48) 99999 9999"
-                                        rightElement={
-                                            leadData.phone && (
-                                                <a
-                                                    href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
-                                                    target="_blank"
-                                                    rel="noopener noreferrer"
-                                                    className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
-                                                    title="Conversar WhatsApp"
-                                                >
-                                                    <MessageCircle size={16} />
-                                                </a>
-                                            )
-                                        }
-                                    />
-                                </div>
-                                <div className="flex-1">
-                                    <FormInput
-                                        label="E-mail"
-                                        type="email"
-                                        value={leadData.email}
-                                        onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
-                                        placeholder="joao@email.com"
-                                    />
-                                </div>
-                                <div className="w-full md:w-[130px]">
-                                    <FormInput
-                                        label="Criado em"
-                                        type="date"
-                                        value={leadData.date}
-                                        onChange={(e) => setLeadData({ ...leadData, date: e.target.value })}
-                                    />
-                                </div>
-                            </div>
-                        </div>
+
+                            {/* Linha 2: Telefone e Email */}
+                            <div>
+                                <FormInput
+                                    label="Telefone"
+                                    value={leadData.phone}
+                                    onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
+                                    placeholder="(48) 99999 9999"
+                                    rightElement={
+                                        leadData.phone && (
+                                            <a
+                                                href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
+                                                title="Conversar WhatsApp"
+                                              >
+                                                  <MessageCircle size={16} />
+                                              </a>
+                                          )
+                                      }
+                                  />
+                              </div>
+                              <div>
+                                  <FormInput
+                                      label="E-mail"
+                                      type="email"
+                                      value={leadData.email}
+                                      onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
+                                      placeholder="joao@email.com"
+                                  />
+                              </div>
+
+                              {/* Linha 3: Responsável e Criado em */}
+                              {(userRole === 'admin' || userRole === 'superadmin') && (
+                                  <div>
+                                      <FormSelect
+                                          label="Responsável"
+                                          value={leadData.assigned_to}
+                                          onChange={(e) => setLeadData({ ...leadData, assigned_to: e.target.value })}
+                                          options={[
+                                              { value: '', label: 'Não atribuído' },
+                                              ...brokers.filter(b => b.role !== 'admin' && b.role !== 'superadmin').map(b => ({ value: b.id, label: b.full_name }))
+                                          ]}
+                                      />
+                                  </div>
+                              )}
+                              <div>
+                                  <FormInput
+                                      label="Criado em"
+                                      type="date"
+                                      value={leadData.date}
+                                      onChange={(e) => setLeadData({ ...leadData, date: e.target.value })}
+                                  />
+                              </div>
+                          </div>
                     </div>
 
                     {/* Seção: Captação */}
@@ -703,7 +707,7 @@ export function LeadModal({
 
                 {/* Coluna Direita: Emulador WhatsApp */}
                 {editingLead && (
-                    <div className="hidden lg:flex flex-col h-full sticky top-4 max-h-[85vh]">
+                    <div className="hidden lg:flex flex-col h-full max-h-[calc(90vh-120px)] overflow-hidden shrink-0">
                         <LeadWhatsAppConversation 
                             chat={whatsappChat} 
                             leadName={editingLead.name}
