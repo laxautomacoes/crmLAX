@@ -89,6 +89,7 @@ export async function getPipelineData(tenantId: string) {
         `)
         .eq('tenant_id', tenantId)
         .eq('is_archived', false)
+        .order('last_interaction_at', { ascending: false })
 
     if (!isAdmin && profile?.id) {
         query = query.eq('assigned_to', profile.id)

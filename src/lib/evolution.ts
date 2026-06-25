@@ -38,8 +38,8 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
                 rawError = rawError.message || JSON.stringify(rawError);
             }
             const errorMessage = Array.isArray(rawError)
-                ? rawError.join(', ')
-                : rawError || `Evolution API error: ${response.statusText}`;
+                ? JSON.stringify(rawError)
+                : (typeof rawError === 'object' ? JSON.stringify(rawError) : rawError) || `Evolution API error: ${response.statusText}`;
             
             console.error('Evolution API Error Details:', {
                 status: response.status,
@@ -127,7 +127,7 @@ export const evolutionService = {
     },
 
     async deleteInstance(instanceName: string) {
-        return evolutionFetch(`/instance/delete/${instanceName}`, {
+        return evolutionFetch(`/instance/delete/${instanceName}?force=true`, {
             method: 'DELETE',
         });
     },

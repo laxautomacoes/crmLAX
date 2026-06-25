@@ -145,7 +145,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
         return sortedClients.slice(start, end)
     }, [sortedClients, currentPage])
 
-    const SortIcon = ({ field }: { field: 'name' | 'created_at' }) => {
+    const renderSortIcon = (field: 'name' | 'created_at') => {
         if (sortField !== field) return <ArrowUpDown size={12} className="opacity-40 ml-1" />
         return sortDirection === 'asc'
             ? <ArrowUp size={12} className="text-accent-icon ml-1" />
@@ -249,7 +249,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                     >
                                         <span className="inline-flex items-center justify-center">
                                             Cliente
-                                            <SortIcon field="name" />
+                                            {renderSortIcon('name')}
                                         </span>
                                     </th>
                                     <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '20%' }}>Contato</th>
@@ -262,7 +262,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                                     >
                                         <span className="inline-flex items-center justify-center">
                                             Criado em
-                                            <SortIcon field="created_at" />
+                                            {renderSortIcon('created_at')}
                                         </span>
                                     </th>
                                     <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center" style={{ width: '10%' }}>Ações</th>

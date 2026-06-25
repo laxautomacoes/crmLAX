@@ -111,7 +111,10 @@ export default function LeadsPage() {
             result = result.filter(lead => 
                 lead.name.toLowerCase().includes(term) || 
                 lead.phone.includes(term) ||
-                lead.interest?.toLowerCase().includes(term)
+                lead.interest?.toLowerCase().includes(term) ||
+                lead.campaign?.toLowerCase().includes(term) ||
+                lead.lead_source?.toLowerCase().includes(term) ||
+                lead.email?.toLowerCase().includes(term)
             )
         }
 

@@ -13,6 +13,8 @@ import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampai
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
 import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle } from 'lucide-react'
+import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
+import { sendWhatsAppMessage, getWhatsAppChat } from '@/app/_actions/whatsapp'
 import type { Lead } from './PipelineBoard'
 
 interface Broker {
@@ -74,6 +76,7 @@ export function LeadModal({
     const [isLoading, setIsLoading] = useState(false)
     const [isAvatarZoomed, setIsAvatarZoomed] = useState(false)
     const [brokers, setBrokers] = useState<Broker[]>([])
+    const [whatsappChat, setWhatsappChat] = useState<any[]>([])
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -123,6 +126,32 @@ export function LeadModal({
         }
     }, [isOpen, editingLead])
 
+    const handleSendWhatsAppMessage = async (text: string) => {
+        if (!editingLead?.phone) {
+            toast.error('Lead não possui telefone cadastrado');
+            return;
+        }
+        const res = await sendWhatsAppMessage(editingLead.phone, text, editingLead.id);
+        if (res.error) {
+            throw new Error(res.error);
+        }
+        
+        const newMsg = {
+            id: Math.random().toString(),
+            text: text,
+            fromMe: true,
+            timestamp: new Date().toISOString()
+        };
+        
+        // Atualizar de forma reativa o chat local
+        setWhatsappChat(prev => [...prev, newMsg]);
+
+        // Atualizar prop na memória
+        if (editingLead) {
+            (editingLead as any).whatsapp_chat = [...((editingLead as any).whatsapp_chat || []), newMsg];
+        }
+    }
+
     const firstStageId = stages[0]?.id ?? ''
 
     useEffect(() => {
@@ -171,6 +200,7 @@ export function LeadModal({
         if (!isOpen) return;
 
         if (editingLead) {
+            setWhatsappChat((editingLead as any).whatsapp_chat || [])
             setLeadData({
                 name: editingLead.name || '',
                 phone: editingLead.phone ? formatPhone(editingLead.phone) : '',
@@ -191,6 +221,7 @@ export function LeadModal({
                 documents: Array.isArray(editingLead.documents) ? editingLead.documents : []
             })
         } else {
+            setWhatsappChat([])
             setLeadData({
                 name: '',
                 phone: '',
@@ -212,6 +243,26 @@ export function LeadModal({
             })
         }
     }, [editingLead, isOpen, firstStageId])
+
+    // Polling de atualização do histórico do chat no emulador
+    useEffect(() => {
+        if (!isOpen || !editingLead?.id) return;
+
+        const interval = setInterval(async () => {
+            const { chat, error } = await getWhatsAppChat(editingLead.id!);
+            if (!error && chat) {
+                // Atualiza de forma reativa apenas se o chat local diferir do banco
+                setWhatsappChat(prev => {
+                    if (JSON.stringify(prev) !== JSON.stringify(chat)) {
+                        return chat;
+                    }
+                    return prev;
+                });
+            }
+        }, 4000); // Executa a cada 4 segundos
+
+        return () => clearInterval(interval);
+    }, [isOpen, editingLead?.id]);
 
     const handleMediaUpload = (type: 'images' | 'videos' | 'documents', files: string[] | { name: string; url: string }[]) => {
         setLeadData(prev => ({
@@ -306,11 +357,11 @@ export function LeadModal({
                     {editingLead ? "Editar Lead" : "Novo Lead"}
                 </h3>
             }
-            size={showMethodSelection ? 'md' : 'xl'}
+            size={editingLead ? '2xl' : (showMethodSelection ? 'md' : 'xl')}
             align="top"
             extraHeaderContent={
                 showMethodSelection ? undefined : (
-                <div className="flex items-center gap-2">
+                <div className="flex items-center gap-3">
                     {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
                         editingLead.has_proposal ? (
                             <button
@@ -331,7 +382,7 @@ export function LeadModal({
                             <button
                                 type="button"
                                 onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
-                                className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
                             >
                                 Fazer Proposta
                             </button>
@@ -393,9 +444,8 @@ export function LeadModal({
                     </div>
                 </div>
             ) : (
-            <div className="space-y-6">
-                {/* Tabs for IA if editing */}
-
+            <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_380px] gap-6" : "space-y-6"}>
+                <div className="space-y-6">
                     <div className="space-y-8">
                     {/* Seção: Dados Pessoais */}
                     <div className="space-y-4">
@@ -528,7 +578,7 @@ export function LeadModal({
                             <div>
                                 {!isAddingCampaign ? (
                                     <FormSelect
-                                        label="Campanha"
+                                        label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou?' : 'Campanha'}
                                         value={leadData.campaign}
                                         disabled={!leadData.lead_source}
                                         onChange={(e) => {
@@ -539,17 +589,17 @@ export function LeadModal({
                                             }
                                         }}
                                         options={[
-                                            { value: '', label: leadData.lead_source ? 'Selecione a campanha' : 'Selecione uma origem primeiro' },
+                                            { value: '', label: leadData.lead_source ? (leadData.lead_source.toLowerCase().includes('indica') ? 'Selecione quem indicou' : 'Selecione a campanha') : 'Selecione uma origem primeiro' },
                                             ...campaigns.map(c => ({ value: c, label: c })),
                                             { value: 'ADD_NEW', label: 'Outra' }
                                         ]}
                                     />
                                 ) : (
                                     <FormInput
-                                        label="Campanha (Nova)"
+                                        label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou? (Novo)' : 'Campanha (Nova)'}
                                         value={newCampaign}
                                         onChange={(e) => setNewCampaign(e.target.value)}
-                                        placeholder="Ex: Verão 2026"
+                                        placeholder={leadData.lead_source.toLowerCase().includes('indica') ? 'Ex: João Silva' : 'Ex: Verão 2026'}
                                         rightElement={
                                             <button 
                                                 type="button"
@@ -647,6 +697,20 @@ export function LeadModal({
 
                     </div>
                 </div>
+
+                {/* Coluna Direita: Emulador WhatsApp */}
+                {editingLead && (
+                    <div className="hidden lg:flex flex-col h-full sticky top-4 max-h-[85vh]">
+                        <LeadWhatsAppConversation 
+                            chat={whatsappChat} 
+                            leadName={editingLead.name}
+                            avatarUrl={editingLead.avatar_url || undefined}
+                            phone={editingLead.phone}
+                            onSendMessage={handleSendWhatsAppMessage}
+                        />
+                    </div>
+                )}
+            </div>
             )}
 
             {/* Modal de Zoom do Avatar */}

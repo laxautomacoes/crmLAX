@@ -244,7 +244,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
 
         if (draggedLead.status !== newStageId) {
             const oldLeads = [...leads]
-            setLeads(leads.map(l => l.id === activeId ? { ...l, status: newStageId } : l))
+            setLeads(leads.map(l => l.id === activeId ? { ...l, status: newStageId, last_interaction_at: new Date().toISOString() } : l))
 
             const result = await updateLeadStage(activeId.toString(), newStageId)
             if (!result.success) {
@@ -272,7 +272,11 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
                         <SortableStageColumn
                             key={stage.id}
                             stage={stage}
-                            leads={leads.filter((l) => l.status === stage.id)}
+                            leads={leads.filter((l) => l.status === stage.id).sort((a, b) => {
+                                const dateA = new Date(a.last_interaction_at || 0).getTime()
+                                const dateB = new Date(b.last_interaction_at || 0).getTime()
+                                return dateB - dateA
+                            })}
                             onAddLead={onAddLead}
                             onDeleteStage={onDeleteStage}
                             onDuplicateStage={onDuplicateStage}
@@ -313,7 +317,11 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
                             id={activeStage.id}
                             title={activeStage.name}
                             color={activeStage.color}
-                            leads={leads.filter((l) => l.status === activeStage.id)}
+                            leads={leads.filter((l) => l.status === activeStage.id).sort((a, b) => {
+                                const dateA = new Date(a.last_interaction_at || 0).getTime()
+                                const dateB = new Date(b.last_interaction_at || 0).getTime()
+                                return dateB - dateA
+                            })}
                             count={leads.filter((l) => l.status === activeStage.id).length}
                             onAddLead={() => {}}
                             onDeleteStage={() => {}}

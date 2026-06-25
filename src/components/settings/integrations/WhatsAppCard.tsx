@@ -20,12 +20,14 @@ import {
     refreshInstanceStatus, 
     disconnectWhatsApp,
     deleteWhatsAppInstance,
-    sendTestMessage
+    sendTestMessage,
+    reportWhatsAppDeleteError
 } from '@/app/_actions/whatsapp';
 import { toast } from 'sonner';
 import { Switch } from '@/components/ui/Switch';
 import { getIntegration, updateIntegrationStatus } from '@/app/_actions/integrations';
 import { Modal } from '@/components/shared/Modal';
+import { ConfirmModal } from '@/components/shared/ConfirmModal';
 
 /** Formata telefone para exibição: 5548999887766 → (48) 99988-7766 */
 function formatPhoneDisplay(phone: string | null | undefined): string {
@@ -54,6 +56,8 @@ export function WhatsAppCard() {
     const [liveStatus, setLiveStatus] = useState<'checking' | 'connected' | 'disconnected' | null>(null);
     const [qrError, setQrError] = useState<string | null>(null);
     const [showQr, setShowQr] = useState(false);
+    const [showDisconnectConfirm, setShowDisconnectConfirm] = useState(false);
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     const loadData = async () => {
         setLoading(true);
@@ -178,14 +182,20 @@ export function WhatsAppCard() {
             });
         } else {
             setInstance(data);
-            setShowQr(true);
-            await fetchQrCode(data.instance_name);
+            if (data.status === 'connected') {
+                setShowQr(false);
+                setLiveStatus('connected');
+                toast.success('WhatsApp conectado e sincronizado com sucesso!');
+            } else {
+                setShowQr(true);
+                await fetchQrCode(data.instance_name);
+            }
         }
         setRefreshing(false);
     };
 
     const handleDisconnect = async () => {
-        if (!confirm('Tem certeza que deseja desconectar o WhatsApp?')) return;
+        setShowDisconnectConfirm(false);
         setRefreshing(true);
         await disconnectWhatsApp();
         setInstance((prev: any) => prev ? { ...prev, status: 'disconnected', connected_phone: null } : prev);
@@ -197,18 +207,44 @@ export function WhatsAppCard() {
     };
 
     const handleDelete = async () => {
-        if (!confirm('Tem certeza que deseja EXCLUIR a instância? Esta ação é irreversível e removerá toda a configuração.')) return;
+        if (!instance) return;
+        const currentInstanceName = instance.instance_name;
+        setShowDeleteConfirm(false);
         setRefreshing(true);
-        const { error } = await deleteWhatsAppInstance();
+        const { error, warning } = await deleteWhatsAppInstance();
         if (error) {
             toast.error('Erro ao excluir instância: ' + error);
         } else {
             setInstance(null);
             setQrCode(null);
             setLiveStatus(null);
-            toast.success('Instância excluída com sucesso');
+            if (warning) {
+                toast.warning('Excluída localmente', {
+                    description: 'A instância foi removida do sistema local, mas não pôde ser desativada no servidor de WhatsApp.',
+                    action: {
+                        label: 'Reportar Suporte',
+                        onClick: () => handleReportError(currentInstanceName, warning)
+                    },
+                    duration: 15000
+                });
+            } else {
+                toast.success('Instância excluída com sucesso');
+            }
         }
         setRefreshing(false);
+    };
+
+    const handleReportError = async (instanceName: string, errorMsg: string) => {
+        const { success } = await reportWhatsAppDeleteError(instanceName, errorMsg);
+        if (success) {
+            toast.success('Problema reportado!', {
+                description: 'O suporte técnico foi notificado e fará a remoção manual na Evolution API.'
+            });
+        } else {
+            toast.error('Erro ao reportar', {
+                description: 'Não foi possível enviar o relatório. Tente novamente mais tarde.'
+            });
+        }
     };
 
     const handleRefresh = async () => {
@@ -388,16 +424,16 @@ export function WhatsAppCard() {
                                         Verificar Status
                                     </button>
                                     <button
-                                        onClick={handleDisconnect}
-                                        disabled={refreshing}
+                                        onClick={() => setShowDisconnectConfirm(true)}
+                                        disabled={refreshing || isTesting}
                                         className="w-full px-4 py-2.5 bg-orange-500/10 text-orange-500 border border-orange-500/20 rounded-lg font-bold hover:bg-orange-500 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 text-xs"
                                     >
                                         <Power size={14} />
                                         Desconectar
                                     </button>
                                     <button
-                                        onClick={handleDelete}
-                                        disabled={refreshing}
+                                        onClick={() => setShowDeleteConfirm(true)}
+                                        disabled={refreshing || isTesting}
                                         className="w-full px-4 py-2.5 bg-red-500/10 text-red-500 border border-red-500/20 rounded-lg font-bold hover:bg-red-500 hover:text-white transition-all flex items-center justify-center gap-2 active:scale-95 text-xs"
                                     >
                                         <Trash2 size={14} />
@@ -486,8 +522,8 @@ export function WhatsAppCard() {
                                 Reconectar WhatsApp
                             </button>
                             <button
-                                onClick={handleDelete}
-                                disabled={refreshing}
+                                onClick={() => setShowDeleteConfirm(true)}
+                                disabled={refreshing || isTesting}
                                 className="text-xs text-muted-foreground hover:text-red-500 transition-colors font-medium w-full block text-center"
                             >
                                 <span className="flex items-center justify-center gap-1.5"><Trash2 size={14} /> Excluir instância</span>
@@ -496,6 +532,28 @@ export function WhatsAppCard() {
                     )}
                 </div>
             </Modal>
+
+            <ConfirmModal
+                isOpen={showDisconnectConfirm}
+                title="Desconectar WhatsApp"
+                message="Tem certeza que deseja desconectar o WhatsApp? Você precisará ler o QR Code novamente para se conectar."
+                confirmLabel="Desconectar"
+                cancelLabel="Cancelar"
+                onConfirm={handleDisconnect}
+                onCancel={() => setShowDisconnectConfirm(false)}
+                isLoading={refreshing}
+            />
+
+            <ConfirmModal
+                isOpen={showDeleteConfirm}
+                title="Excluir Instância"
+                message="Tem certeza que deseja excluir esta instância? Esta ação apagará as credenciais de conexão do banco de dados e do servidor Evolution API de forma definitiva."
+                confirmLabel="Excluir"
+                cancelLabel="Cancelar"
+                onConfirm={handleDelete}
+                onCancel={() => setShowDeleteConfirm(false)}
+                isLoading={refreshing}
+            />
         </>
     );
 }

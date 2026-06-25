@@ -75,7 +75,33 @@ export async function setupWhatsAppInstance() {
             webhookUrl = `${protocol}://${rootDomain}/api/webhooks/evolution`;
         }
 
-        const evolution = await evolutionService.createInstance(instanceName, webhookUrl);
+        let initialStatus = 'disconnected';
+        let connectedPhone = null;
+
+        try {
+            await evolutionService.createInstance(instanceName, webhookUrl);
+        } catch (createErr: any) {
+            if (createErr.message && createErr.message.includes('already in use')) {
+                // Instância já existe na Evolution API, então apenas re-adotamos ela e reconfiguramos o webhook
+                console.log('[WhatsApp] Instância já existia, reconfigurando webhook...');
+                await evolutionService.setWebhook(instanceName, webhookUrl);
+                
+                try {
+                    const statusData = await evolutionService.getInstanceStatus(instanceName);
+                    if (statusData?.instance?.state === 'open') {
+                        initialStatus = 'connected';
+                        const instanceInfo = await evolutionService.fetchInstanceInfo(instanceName);
+                        const info = Array.isArray(instanceInfo) ? instanceInfo[0] : instanceInfo;
+                        const ownerJid = info?.instance?.ownerJid || info?.ownerJid || '';
+                        connectedPhone = ownerJid.split('@')[0].replace(/\D/g, '') || null;
+                    }
+                } catch (e) {
+                    console.error('[WhatsApp] Falha ao recuperar status da instância existente', e);
+                }
+            } else {
+                throw createErr;
+            }
+        }
 
         const { data, error } = await supabase
             .from('whatsapp_instances')
@@ -83,7 +109,8 @@ export async function setupWhatsAppInstance() {
                 user_id: user.id,
                 tenant_id: profile?.tenant_id,
                 instance_name: instanceName,
-                status: 'disconnected'
+                status: initialStatus,
+                connected_phone: connectedPhone
             })
             .select()
             .single();
@@ -222,16 +249,28 @@ export async function deleteWhatsAppInstance() {
     const { data, error } = await getWhatsAppInstance();
     if (error || !data) return { error: 'No instance found' };
 
+    let warningMessage: string | undefined = undefined;
+
     // Tentar logout + delete na Evolution API (não bloqueia se falhar)
     try {
         await evolutionService.logoutInstance(data.instance_name);
     } catch (e: any) {
         console.log('[WhatsApp] logout antes de delete falhou (ok):', e.message);
     }
+
     try {
         await evolutionService.deleteInstance(data.instance_name);
     } catch (e: any) {
-        console.log('[WhatsApp] delete na Evolution falhou (ok):', e.message);
+        console.log('[WhatsApp] delete na Evolution falhou:', e.message);
+        const msg = e.message.toLowerCase();
+        
+        // Se for um erro [object Object] ou similar, significa que a Evolution falhou internamente
+        if (msg.includes('[object object]')) {
+            warningMessage = `Evolution API returned Bad Request (object Object) for instance: ${data.instance_name}`;
+        } else if (!msg.includes('not found') && !msg.includes("doesn't exist")) {
+            // Se for outro tipo de erro real, bloqueia a deleção para segurança
+            return { error: `Falha ao excluir na Evolution: ${e.message}` };
+        }
     }
 
     // Sempre deletar do banco local
@@ -242,7 +281,7 @@ export async function deleteWhatsAppInstance() {
         .eq('id', data.id);
 
     revalidatePath('/settings/integrations');
-    return { success: true };
+    return { success: true, warning: warningMessage };
 }
 
 export async function configureWebhook() {
@@ -298,6 +337,143 @@ export async function sendTestMessage() {
         await evolutionService.sendMessage(data.instance_name, data.connected_phone, testMsg);
         return { success: true };
     } catch (err: any) {
+        if (err.message && err.message.includes('Connection Closed')) {
+            return { error: 'O servidor perdeu a conexão com o seu celular. Por favor, clique em "Excluir Instância" e leia o QR Code novamente para reconectar.' };
+        }
         return { error: err.message };
     }
+}
+
+/** Envia uma mensagem para um lead específico através da instância conectada. */
+export async function sendWhatsAppMessage(targetPhone: string, message: string, leadId?: string) {
+    const { data, error } = await getWhatsAppInstance();
+    if (error || !data) return { error: 'Nenhuma instância conectada encontrada' };
+    if (data.status !== 'connected') return { error: 'Instância desconectada' };
+
+    try {
+        const formattedPhone = targetPhone.replace(/\D/g, '');
+        // Se número tem 11 ou 10 digitos sem DDI, adiciona 55
+        const fullPhone = formattedPhone.length <= 11 && !formattedPhone.startsWith('55') 
+            ? `55${formattedPhone}` 
+            : formattedPhone;
+
+        await evolutionService.sendMessage(data.instance_name, fullPhone, message);
+
+        // Se passamos leadId, gravar no banco de dados local do Supabase na hora
+        if (leadId) {
+            const supabase = await createClient();
+            const { data: lead } = await supabase
+                .from('leads')
+                .select('id, whatsapp_chat')
+                .eq('id', leadId)
+                .maybeSingle();
+
+            if (lead) {
+                const newMessage = {
+                    id: `local-${Date.now()}-${Math.random().toString(36).substring(2, 11)}`,
+                    text: message,
+                    fromMe: true,
+                    timestamp: new Date().toISOString(),
+                    senderName: 'Você'
+                };
+
+                const currentChat = Array.isArray(lead.whatsapp_chat) ? lead.whatsapp_chat : [];
+                const updatedChat = [...currentChat, newMessage].slice(-20);
+
+                await supabase
+                    .from('leads')
+                    .update({ whatsapp_chat: updatedChat })
+                    .eq('id', leadId);
+
+                // Registrar interação
+                await supabase.from('interactions').insert({
+                    lead_id: leadId,
+                    type: 'whatsapp',
+                    content: message,
+                    metadata: { fromMe: true, messageId: newMessage.id }
+                });
+            }
+        }
+
+        revalidatePath('/settings/integrations');
+        return { success: true };
+    } catch (err: any) {
+        if (err.message && err.message.includes('Connection Closed')) {
+            return { error: 'Conexão com o WhatsApp perdida. Acesse Configurações > Integrações, exclua a instância atual e leia o QR Code novamente.' };
+        }
+        return { error: err.message };
+    }
+}
+
+/** Reporta o erro de exclusão da Evolution API para os desenvolvedores (superadmins) e gera log do sistema. */
+export async function reportWhatsAppDeleteError(instanceName: string, errorMessage: string) {
+    const supabase = await createClient();
+    const { data: { user } } = await supabase.auth.getUser();
+    if (!user) return { error: 'Not authenticated' };
+
+    // Buscar dados do usuário logado (nome, tenant)
+    const { data: profile } = await supabase
+        .from('profiles')
+        .select('tenant_id, full_name')
+        .eq('id', user.id)
+        .single();
+
+    let tenantName = 'Inquilino desconhecido';
+    if (profile?.tenant_id) {
+        const { data: tenant } = await supabase
+            .from('tenants')
+            .select('name')
+            .eq('id', profile.tenant_id)
+            .single();
+        if (tenant?.name) tenantName = tenant.name;
+    }
+
+    const title = '⚠️ Falha na exclusão de Instância WhatsApp';
+    const message = `O usuário ${profile?.full_name || 'Desconhecido'} (${tenantName}) solicitou a exclusão da instância "${instanceName}" no CRM, mas a API da Evolution retornou erro ao deletar. Erro: ${errorMessage}. É necessária a remoção manual no painel da Evolution.`;
+
+    // Buscar todos os superadmins do sistema
+    const { data: superadmins } = await supabase
+        .from('profiles')
+        .select('id')
+        .eq('role', 'superadmin');
+
+    if (superadmins && superadmins.length > 0) {
+        const notificationsToInsert = superadmins.map((admin: { id: string }) => ({
+            user_id: admin.id,
+            tenant_id: profile?.tenant_id || null,
+            title,
+            message,
+            type: 'system_error',
+            read: false
+        }));
+
+        await supabase.from('notifications').insert(notificationsToInsert);
+    }
+
+    // Gravar log de sistema
+    await supabase.from('system_logs').insert({
+        tenant_id: profile?.tenant_id || null,
+        profile_id: user.id,
+        action: 'whatsapp_delete_failed_report',
+        entity_type: 'whatsapp_instance',
+        details: {
+            instance_name: instanceName,
+            error: errorMessage,
+            reporter: profile?.full_name
+        }
+    });
+
+    return { success: true };
+}
+
+/** Recupera as mensagens do WhatsApp do lead atual */
+export async function getWhatsAppChat(leadId: string) {
+    const supabase = await createClient();
+    const { data, error } = await supabase
+        .from('leads')
+        .select('whatsapp_chat')
+        .eq('id', leadId)
+        .maybeSingle();
+
+    return { chat: (data?.whatsapp_chat as any[]) || [], error: error?.message };
 }
