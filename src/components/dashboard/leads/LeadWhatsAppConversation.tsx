@@ -26,6 +26,55 @@ interface LeadWhatsAppConversationProps {
     instanceStatus?: 'connected' | 'disconnected' | 'loading';
 }
 
+function getContactStatus(chat: Message[]) {
+    if (!chat || chat.length === 0) return null;
+
+    // Achar a última mensagem recebida do lead (não enviada por mim)
+    const leadMessages = chat.filter(msg => !msg.fromMe && (msg.timestamp || (msg as any).created_at));
+    if (leadMessages.length === 0) return null;
+
+    // Pegar a última mensagem do lead
+    const lastMsg = leadMessages[leadMessages.length - 1];
+    const timestampStr = lastMsg.timestamp || (lastMsg as any).created_at;
+    if (!timestampStr) return null;
+
+    const msgDate = new Date(timestampStr);
+    if (isNaN(msgDate.getTime())) return null;
+
+    const now = new Date();
+    const diffMs = now.getTime() - msgDate.getTime();
+    const diffMins = diffMs / (1000 * 60);
+
+    // Se a última mensagem foi recebida há menos de 1 minuto, consideramos online
+    if (diffMins >= 0 && diffMins < 1) {
+        return { label: 'online', color: 'text-emerald-300 font-medium' };
+    }
+
+    // Formatar "visto por último..."
+    const formatTime = (date: Date) => {
+        return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+    };
+
+    const formatDate = (date: Date) => {
+        return date.toLocaleDateString([], { day: '2-digit', month: '2-digit', year: 'numeric' });
+    };
+
+    // Verificar se é hoje, ontem ou outro dia
+    const isToday = now.toDateString() === msgDate.toDateString();
+    
+    const yesterday = new Date(now);
+    yesterday.setDate(now.getDate() - 1);
+    const isYesterday = yesterday.toDateString() === msgDate.toDateString();
+
+    if (isToday) {
+        return { label: `visto por último hoje às ${formatTime(msgDate)}`, color: 'text-white/60' };
+    } else if (isYesterday) {
+        return { label: `visto por último ontem às ${formatTime(msgDate)}`, color: 'text-white/60' };
+    } else {
+        return { label: `visto por último em ${formatDate(msgDate)} às ${formatTime(msgDate)}`, color: 'text-white/60' };
+    }
+}
+
 export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onSendMessage, onSendMedia, instanceStatus = 'loading' }: LeadWhatsAppConversationProps) {
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
@@ -98,8 +147,23 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
         }, 50);
     };
 
-    const statusLabel = instanceStatus === 'connected' ? 'online' : instanceStatus === 'disconnected' ? 'offline' : 'verificando...';
-    const statusColor = instanceStatus === 'connected' ? 'text-emerald-300' : instanceStatus === 'disconnected' ? 'text-white/40' : 'text-yellow-300';
+    // Determinar status dinâmico do contato ou de conexão da instância
+    let statusLabel = '';
+    let statusColor = 'text-white/60';
+
+    if (instanceStatus === 'disconnected') {
+        statusLabel = 'WhatsApp desconectado';
+        statusColor = 'text-red-300 font-medium';
+    } else if (instanceStatus === 'loading') {
+        statusLabel = 'conectando...';
+        statusColor = 'text-yellow-300 animate-pulse';
+    } else {
+        const contactStatus = getContactStatus(chat);
+        if (contactStatus) {
+            statusLabel = contactStatus.label;
+            statusColor = contactStatus.color;
+        }
+    }
 
     return (
         <div className="flex flex-col h-full max-h-full bg-[#EFEAE2] dark:bg-[#0b141a] border-[8px] border-border rounded-[2rem] overflow-hidden shadow-2xl relative w-full max-w-[340px] mx-auto shrink-0 flex-1">
