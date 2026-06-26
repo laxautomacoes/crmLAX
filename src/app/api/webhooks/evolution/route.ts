@@ -413,7 +413,7 @@ export async function POST(req: Request) {
         mediaName: mediaName || undefined
     };
 
-    const currentChat = Array.isArray(lead.whatsapp_chat) ? lead.whatsapp_chat : [];
+    const currentChat = Array.isArray(lead.whatsapp_chat) ? (lead.whatsapp_chat as any[]) : [];
     
     // Evitar duplicidade de mensagens enviadas pelo CRM que já foram inseridas localmente
     let updatedChat = [...currentChat];
