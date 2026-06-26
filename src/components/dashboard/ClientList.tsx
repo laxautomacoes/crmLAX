@@ -312,7 +312,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                 </div>
 
             {filteredClients.length === 0 && (
-                <div className="text-center py-20 bg-card rounded-xl border border-dashed border-border">
+                <div className="text-center py-20 bg-card rounded-lg border border-border/40">
                     <p className="text-muted-foreground font-medium">Nenhum cliente disponível para exibição.</p>
                 </div>
             )}

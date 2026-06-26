@@ -107,6 +107,21 @@ export const evolutionService = {
         });
     },
 
+    async setSettings(instanceName: string, settings: {
+        rejectCall?: boolean;
+        msgCall?: string;
+        groupsIgnore?: boolean;
+        alwaysOnline?: boolean;
+        readMessages?: boolean;
+        readStatus?: boolean;
+        syncFullHistory?: boolean;
+    }) {
+        return evolutionFetch(`/settings/set/${instanceName}`, {
+            method: 'POST',
+            body: JSON.stringify(settings),
+        });
+    },
+
     async getQrCode(instanceName: string) {
         return evolutionFetch(`/instance/connect/${instanceName}`);
     },

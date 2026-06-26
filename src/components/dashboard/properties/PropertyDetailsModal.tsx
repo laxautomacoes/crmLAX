@@ -52,7 +52,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, onEdit, us
                 canEdit ? (
                     <button
                         onClick={handleEdit}
-                        className="px-8 py-2 bg-[#FFE600] hover:bg-[#F2DB00] text-[#404F4F] rounded-lg font-bold text-sm shadow-sm transition-all whitespace-nowrap"
+                        className="bg-secondary text-secondary-foreground font-bold px-4 py-1.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-sm whitespace-nowrap"
                     >
                         Editar
                     </button>
@@ -73,7 +73,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, onEdit, us
                 <div className="flex gap-3 pt-8 border-t mt-8">
                     <button
                         onClick={() => onSend(prop)}
-                        className="flex-1 py-3 bg-secondary text-secondary-foreground rounded-xl font-bold hover:opacity-90 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
+                        className="flex-1 py-2.5 bg-secondary text-secondary-foreground rounded-lg font-bold hover:opacity-90 shadow-sm transition-all active:scale-[0.98] flex items-center justify-center gap-2"
                     >
                         <Send size={18} />
                         Enviar para Lead

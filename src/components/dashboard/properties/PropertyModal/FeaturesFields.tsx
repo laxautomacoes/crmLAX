@@ -154,7 +154,7 @@ export function FeaturesFields({ formData, setFormData, tenantId, isAdmin, custo
             </div>
 
             {isAddingNew && (
-                <div className="flex items-center gap-2 p-3 rounded-xl bg-muted/30 border border-border/50 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-white dark:bg-card border border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
                     <input
                         type="text"
                         value={newFeatureName}
@@ -178,7 +178,7 @@ export function FeaturesFields({ formData, setFormData, tenantId, isAdmin, custo
                         type="button"
                         onClick={handleAddNew}
                         disabled={isSaving || !newFeatureName.trim()}
-                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-[#00B087] text-white hover:bg-[#00B087]/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                        className="flex items-center justify-center w-8 h-8 rounded-lg bg-secondary text-secondary-foreground hover:bg-secondary/90 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
                     >
                         <Check size={16} />
                     </button>

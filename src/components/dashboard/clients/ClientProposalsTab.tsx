@@ -648,7 +648,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             {/* Lista de Propostas */}
             {!showNewForm && (
                 activeProposals.length === 0 ? (
-                    <div className="bg-muted/50 p-8 rounded-xl border border-dashed border-border text-center">
+                    <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-8 rounded-lg border border-border/40 text-center transition-all">
                         <FileText size={28} className="mx-auto text-muted-foreground/40 mb-2" />
                         <p className="text-xs text-muted-foreground">Nenhuma proposta criada para este cliente.</p>
                         <p className="text-[10px] text-muted-foreground/60 mt-0.5">Clique em "Nova Proposta" para começar.</p>

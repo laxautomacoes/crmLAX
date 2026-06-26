@@ -247,7 +247,7 @@ export function PropertyDetailsContent({
                                         <PlanGate hasAccess={hasMarketingAccess} feature="Módulo de Marketing (Instagram)">
                                             <button
                                                 onClick={() => setIsInstagramModalOpen(true)}
-                                                className="flex items-center gap-2 px-5 py-2 bg-[#404F4F] text-white rounded-xl font-bold hover:bg-[#2d3939] transition-all shadow-sm border border-border/10 whitespace-nowrap"
+                                                className="flex items-center gap-2 px-5 py-2 bg-[#404F4F] text-white rounded-lg font-bold hover:bg-[#2d3939] transition-all shadow-sm border border-border/10 whitespace-nowrap"
                                             >
                                                 <Instagram size={18} className="text-[#FFE600]" />
                                                 Instagram
@@ -256,7 +256,7 @@ export function PropertyDetailsContent({
                                     )}
                                     <button
                                         onClick={() => onSend(prop)}
-                                        className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-xl font-bold hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 whitespace-nowrap"
+                                        className="flex items-center gap-2 px-6 py-2 bg-emerald-600 text-white rounded-lg font-bold hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-200 whitespace-nowrap"
                                     >
                                         <Send size={18} />
                                         Enviar

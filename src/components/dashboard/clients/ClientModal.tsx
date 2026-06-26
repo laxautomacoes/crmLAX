@@ -605,11 +605,11 @@ export function ClientModal({
             <div className="space-y-6">
                 {/* Tabs — só para clientes existentes */}
                 {isEditing && (
-                    <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar mb-6">
+                    <div className="w-full flex items-center border-b border-border overflow-x-auto no-scrollbar mb-6">
                         <button
                             type="button"
                             onClick={() => setActiveTab('info')}
-                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'info' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'info' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                             <User size={18} strokeWidth={1} />
                             Informações
@@ -617,7 +617,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('leads')}
-                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'leads' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'leads' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                             <Filter size={18} strokeWidth={1} />
                             Leads
@@ -625,7 +625,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('proposals')}
-                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'proposals' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'proposals' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                             <Pen size={18} strokeWidth={1} className="-scale-x-100" />
                             Propostas
@@ -633,7 +633,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('documents')}
-                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'documents' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'documents' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                             <FileText size={18} strokeWidth={1} />
                             Documentos
@@ -641,7 +641,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('financeiro')}
-                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'financeiro' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'financeiro' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                             <DollarSign size={18} strokeWidth={1} />
                             Financeiro
@@ -649,7 +649,7 @@ export function ClientModal({
                         <button
                             type="button"
                             onClick={() => setActiveTab('ai')}
-                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'ai' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'ai' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
                         >
                             <Sparkles size={18} strokeWidth={1} />
                             Análise IA
@@ -1394,7 +1394,7 @@ function ClientLeadSelectorTab({
     return (
         <div className="space-y-4 px-1 pb-4">
             {leads.length === 0 ? (
-                <div className="bg-muted/50 p-8 rounded-xl border border-dashed border-border text-center">
+                <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-8 rounded-lg border border-border/40 text-center transition-all">
                     <FileText size={28} className="mx-auto text-muted-foreground/40 mb-2" />
                     <p className="text-xs text-muted-foreground">Nenhum lead vinculado a este cliente.</p>
                 </div>
@@ -1429,7 +1429,7 @@ function ClientLeadSelectorTab({
                             selectedLead.assigned_to
                         )
                     ) : leads.length > 1 ? (
-                        <div className="bg-muted/50 p-6 rounded-xl border border-dashed border-border text-center">
+                        <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-6 rounded-lg border border-border/40 text-center transition-all">
                             <p className="text-xs text-muted-foreground">{emptyMessage}</p>
                         </div>
                     ) : null}
@@ -1452,7 +1452,7 @@ function ClientLeadsTab({ client, onMakeProposal }: { client: any; onMakeProposa
                             <LeadCardDropdown key={lead.id} lead={lead} onMakeProposal={onMakeProposal} />
                         ))
                     ) : (
-                        <div className="bg-muted/50 p-6 rounded-xl border border-dashed border-border text-center">
+                        <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-6 rounded-lg border border-border/40 text-center transition-all">
                             <p className="text-xs text-muted-foreground">Nenhum lead vinculado a este cliente ainda.</p>
                         </div>
                     )}

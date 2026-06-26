@@ -82,6 +82,18 @@ export async function setupWhatsAppInstance() {
 
         try {
             await evolutionService.createInstance(instanceName, isLocalWebhook ? undefined : webhookUrl);
+            try {
+                await evolutionService.setSettings(instanceName, {
+                    rejectCall: false,
+                    groupsIgnore: false,
+                    alwaysOnline: false,
+                    readMessages: false,
+                    readStatus: false,
+                    syncFullHistory: false
+                });
+            } catch (settingsErr) {
+                console.error('[WhatsApp] Falha ao definir settings na criação da instância:', settingsErr);
+            }
         } catch (createErr: any) {
             if (createErr.message && createErr.message.includes('already in use')) {
                 // Instância já existe na Evolution API, então apenas re-adotamos ela e reconfiguramos o webhook
@@ -90,6 +102,14 @@ export async function setupWhatsAppInstance() {
                     await evolutionService.setWebhook(instanceName, webhookUrl);
                 } else {
                     console.log('[WhatsApp] Ignorando setWebhook para URL local em setup:', webhookUrl);
+                }
+                
+                try {
+                    await evolutionService.setSettings(instanceName, {
+                        syncFullHistory: false
+                    });
+                } catch (settingsErr) {
+                    console.error('[WhatsApp] Falha ao definir settings na instância existente:', settingsErr);
                 }
                 
                 try {
@@ -164,6 +184,19 @@ export async function getQrCode() {
 
             console.log('[WhatsApp] Recriando instância:', data.instance_name, 'webhook:', isLocalWebhook ? 'ignorado (local)' : webhookUrl);
             await evolutionService.createInstance(data.instance_name, isLocalWebhook ? undefined : webhookUrl);
+            
+            try {
+                await evolutionService.setSettings(data.instance_name, {
+                    rejectCall: false,
+                    groupsIgnore: false,
+                    alwaysOnline: false,
+                    readMessages: false,
+                    readStatus: false,
+                    syncFullHistory: false
+                });
+            } catch (settingsErr) {
+                console.error('[WhatsApp] Falha ao definir settings na recriação da instância:', settingsErr);
+            }
             
             // Tentar obter QR code novamente após recriar
             const retryQr = await evolutionService.getQrCode(data.instance_name);
