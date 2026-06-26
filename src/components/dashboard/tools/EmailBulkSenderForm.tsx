@@ -624,9 +624,18 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                                                     value={propertySearchTerm}
                                                     onChange={e => setPropertySearchTerm(e.target.value)}
                                                     placeholder="Buscar imóvel por nome, bairro ou cidade..."
-                                                    className="w-full h-9 pl-8 pr-3 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs"
+                                                    className="w-full h-9 pl-8 pr-8 bg-foreground/5 border border-border/40 rounded-lg focus:outline-none focus:ring-1 focus:ring-ring/50 text-xs"
                                                     autoFocus
                                                 />
+                                                {propertySearchTerm && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setPropertySearchTerm('')}
+                                                        className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground outline-none"
+                                                    >
+                                                        <X size={14} strokeWidth={1.5} />
+                                                    </button>
+                                                )}
                                             </div>
                                         </div>
 

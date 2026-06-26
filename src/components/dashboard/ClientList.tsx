@@ -200,6 +200,7 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
                             placeholder="Buscar por nome ou email..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
+                            onClear={() => setSearchTerm('')}
                             icon={Search}
                             iconSize={14}
                             iconStrokeWidth={1}

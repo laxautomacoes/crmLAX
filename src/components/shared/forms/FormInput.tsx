@@ -1,7 +1,7 @@
 'use client'
 
 import { InputHTMLAttributes } from 'react'
-import { LucideIcon, Calendar } from 'lucide-react'
+import { LucideIcon, Calendar, X } from 'lucide-react'
 
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
     label?: React.ReactNode
@@ -11,12 +11,23 @@ interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
     iconStrokeWidth?: number
     roundedClassName?: string
     rightElement?: React.ReactNode
+    onClear?: () => void
 }
 
-export function FormInput({ label, error, icon: Icon, iconSize = 18, iconStrokeWidth, roundedClassName, rightElement, className = '', ...props }: FormInputProps) {
+export function FormInput({ label, error, icon: Icon, iconSize = 18, iconStrokeWidth, roundedClassName, rightElement, onClear, className = '', ...props }: FormInputProps) {
     // Se for um input de data e não tiver rightElement, adiciona o ícone de calendário
     const isDateInput = props.type === 'date' || props.type === 'datetime-local' || props.type === 'time'
-    const finalRightElement = rightElement || (isDateInput ? (
+    const showClearButton = onClear && props.value && String(props.value).length > 0
+    const finalRightElement = rightElement || (showClearButton ? (
+        <button
+            type="button"
+            onClick={onClear}
+            className="p-1 text-muted-foreground hover:text-foreground transition-colors outline-none"
+            title="Limpar"
+        >
+            <X size={14} strokeWidth={1.5} />
+        </button>
+    ) : isDateInput ? (
         <div className="p-1 text-foreground">
             <Calendar size={16} />
         </div>

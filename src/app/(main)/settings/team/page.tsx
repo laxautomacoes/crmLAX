@@ -84,6 +84,7 @@ export default function TeamSettingsPage() {
                         placeholder="Buscar colaborador..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onClear={() => setSearchTerm('')}
                         icon={Search}
                         iconSize={14}
                         iconStrokeWidth={1}

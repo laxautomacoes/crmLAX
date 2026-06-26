@@ -5,7 +5,7 @@ import { createClient } from '@/lib/supabase/client'
 import {
     Building2, Calendar, TrendingUp, Hash, Filter, Search,
     DollarSign, Maximize2, Car, Layers, Send, Eye,
-    ChevronDown, ChevronUp, Loader2, AlertCircle, ClipboardList, Upload, RefreshCw, ArrowUpDown
+    ChevronDown, ChevronUp, Loader2, AlertCircle, ClipboardList, Upload, RefreshCw, ArrowUpDown, X
 } from 'lucide-react'
 import { getPropertyUnits, getPriceTableInfo, updateUnitStatus } from '@/app/_actions/property-units'
 import type { PropertyUnit, PriceTableInfo } from '@/app/_actions/property-units'
@@ -352,8 +352,17 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole }:
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                             placeholder="Buscar apto, torre, HB..."
-                            className="w-full bg-foreground/5 border border-border/40 rounded-lg pl-10 pr-4 py-2.5 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
+                            className="w-full bg-foreground/5 border border-border/40 rounded-lg pl-10 pr-10 py-2.5 text-sm font-medium text-foreground placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring/50 transition-all"
                         />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground outline-none"
+                            >
+                                <X size={14} strokeWidth={1.5} />
+                            </button>
+                        )}
                     </div>
                 </div>
                 {towers.length > 0 && (

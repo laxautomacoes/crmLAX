@@ -316,12 +316,14 @@ export async function POST(req: Request) {
         .filter('contact_id', 'not.is', null as any);
 
     // Since phone is in contacts, we need to join or filter
-    const { data: contact } = await supabase
+    const { data: contacts } = await supabase
         .from('contacts')
         .select('id, avatar_url')
         .eq('tenant_id', instance.tenant_id!)
         .ilike('phone', `%${phone.slice(-8)}%`) // Match last 8 digits for safety
-        .maybeSingle();
+        .limit(1);
+
+    const contact = contacts?.[0];
 
     if (!contact) return NextResponse.json({ received: true });
 
@@ -344,11 +346,14 @@ export async function POST(req: Request) {
         })();
     }
 
-    const { data: lead } = await supabase
+    const { data: leads } = await supabase
         .from('leads')
         .select('id, whatsapp_chat')
         .eq('contact_id', contact.id)
-        .maybeSingle();
+        .order('created_at', { ascending: false })
+        .limit(1);
+
+    const lead = leads?.[0];
 
     if (!lead) return NextResponse.json({ received: true });
 

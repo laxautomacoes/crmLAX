@@ -27,6 +27,7 @@ import {
     EyeOff,
     Video,
     Check,
+    Globe,
     X,
     Link
 } from 'lucide-react';
@@ -242,15 +243,24 @@ function PropertyPicker({
                 {/* Dropdown list */}
                 {isOpen && (
                     <div className="absolute z-20 mt-1 w-full bg-card border border-border rounded-md shadow-xl overflow-hidden">
-                        <div className="p-2 border-b border-border">
+                        <div className="p-2 border-b border-border relative">
                             <input
                                 type="text"
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
                                 placeholder="Filtrar por nome..."
-                                className="w-full px-3 py-2 bg-foreground/5 border border-border rounded-md text-sm focus:ring-2 focus:ring-secondary/50 outline-none"
+                                className="w-full px-3 py-2 pr-8 bg-foreground/5 border border-border rounded-md text-sm focus:ring-2 focus:ring-secondary/50 outline-none"
                                 autoFocus
                             />
+                            {searchTerm && (
+                                <button
+                                    type="button"
+                                    onClick={() => setSearchTerm('')}
+                                    className="absolute right-4 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground outline-none"
+                                >
+                                    <X size={14} strokeWidth={1.5} />
+                                </button>
+                            )}
                         </div>
                         <div className="max-h-[240px] overflow-y-auto">
                             {filteredProperties.length === 0 ? (

@@ -857,6 +857,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 placeholder="Buscar lead por nome, email ou telefone..."
                                                 value={searchTerm}
                                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                                onClear={() => setSearchTerm('')}
                                                 icon={Search}
                                                 className="h-11"
                                             />

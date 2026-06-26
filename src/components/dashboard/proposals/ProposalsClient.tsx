@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from 'react'
 import { getAllProposals, updateProposalStatus, archiveProposal, deleteProposal } from '@/app/_actions/proposals'
 import { getProfile } from '@/app/_actions/profile'
 import { PageHeader } from '@/components/shared/PageHeader'
-import { FileText, Search, Filter, Loader2, Eye, ChevronDown, List, Columns3, Archive, Trash2, MoreVertical } from 'lucide-react'
+import { FileText, Search, Filter, Loader2, Eye, ChevronDown, List, Columns3, Archive, Trash2, MoreVertical, X } from 'lucide-react'
 import { toast } from 'sonner'
 import { useRouter } from 'next/navigation'
 import {
@@ -338,8 +338,17 @@ export default function ProposalsClient() {
                             placeholder="Buscar por cliente ou imóvel..."
                             value={searchTerm}
                             onChange={e => setSearchTerm(e.target.value)}
-                            className="w-full h-full pl-9 pr-3 text-sm font-medium bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/30"
+                            className="w-full h-full pl-9 pr-8 text-sm font-medium bg-card border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-secondary/30"
                         />
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={() => setSearchTerm('')}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground outline-none"
+                            >
+                                <X size={14} strokeWidth={1.5} />
+                            </button>
+                        )}
                     </div>
 
                     {/* Status Filter */}

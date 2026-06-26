@@ -500,6 +500,7 @@ export default function PropertiesClient({
                                 placeholder="Buscar imóveis..."
                                 value={searchTerm}
                                 onChange={(e) => setSearchTerm(e.target.value)}
+                                onClear={() => setSearchTerm('')}
                                 icon={Search}
                                 className="w-full md:w-[320px] h-[34px]"
                             />

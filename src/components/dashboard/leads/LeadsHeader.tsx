@@ -21,12 +21,21 @@ interface LeadsHeaderProps {
 
 export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin, selectedBroker = 'all', children }: LeadsHeaderProps) {
     const [isFilterOpen, setIsFilterOpen] = useState(false)
+    const [searchTerm, setSearchTerm] = useState('')
 
     return (
         <div className="flex items-center gap-2 w-full md:w-auto">
             <FormInput
+                value={searchTerm}
                 placeholder="Pesquisar leads..."
-                onChange={(e) => onSearch(e.target.value)}
+                onChange={(e) => {
+                    setSearchTerm(e.target.value)
+                    onSearch(e.target.value)
+                }}
+                onClear={() => {
+                    setSearchTerm('')
+                    onSearch('')
+                }}
                 icon={Search}
                 iconSize={14}
                 iconStrokeWidth={1}

@@ -35,6 +35,7 @@ export function Autocomplete({
     const [isLoading, setIsLoading] = useState(false)
     const [isOpen, setIsOpen] = useState(false)
     const containerRef = useRef<HTMLDivElement>(null)
+    const inputRef = useRef<HTMLInputElement>(null)
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -92,15 +93,16 @@ export function Autocomplete({
                         </button>
                     </div>
                 ) : (
-                    <>
+                    <div className={`relative flex items-center w-full bg-input border border-muted-foreground/30 rounded-lg focus-within:ring-2 focus-within:ring-secondary/50 focus-within:border-secondary transition-all ${showIcon && Icon ? 'pl-10' : 'pl-4'}`}>
                         {showIcon && Icon && (
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
                                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Icon size={16} />}
                             </div>
                         )}
                         <input
+                            ref={inputRef}
                             type="text"
-                            className={`w-full pr-4 py-2 bg-input border border-muted-foreground/30 rounded-lg text-sm text-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all placeholder:text-muted-foreground/50 ${showIcon && Icon ? 'pl-10' : 'pl-4'}`}
+                            className="w-full pr-8 py-2 bg-transparent border-none outline-none text-sm text-foreground placeholder:text-muted-foreground/50"
                             placeholder={placeholder}
                             value={searchTerm}
                             onChange={(e) => {
@@ -109,7 +111,20 @@ export function Autocomplete({
                             }}
                             onFocus={() => setIsOpen(true)}
                         />
-                    </>
+                        {searchTerm && (
+                            <button
+                                type="button"
+                                onClick={(e) => {
+                                    e.stopPropagation()
+                                    setSearchTerm('')
+                                    if (inputRef.current) inputRef.current.focus()
+                                }}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground outline-none"
+                            >
+                                <X size={14} strokeWidth={1.5} />
+                            </button>
+                        )}
+                    </div>
                 )}
 
                 {isOpen && !selectedItem && searchTerm.length >= 2 && (

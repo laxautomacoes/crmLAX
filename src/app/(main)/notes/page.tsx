@@ -148,6 +148,7 @@ export default function NotesPage() {
                         placeholder="Buscar notas..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
+                        onClear={() => setSearchTerm('')}
                         icon={Search}
                         iconSize={14}
                         iconStrokeWidth={1}

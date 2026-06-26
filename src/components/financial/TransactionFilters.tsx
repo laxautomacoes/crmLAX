@@ -1,6 +1,6 @@
 'use client'
 
-import { Search, Calendar, Filter as FilterIcon } from 'lucide-react'
+import { Search, Calendar, Filter as FilterIcon, X } from 'lucide-react'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import type { FinancialCategory } from '@/app/_actions/financial'
 
@@ -38,8 +38,17 @@ export function TransactionFilters({
                         value={search}
                         onChange={(e) => onSearchChange(e.target.value)}
                         placeholder="Buscar por descrição..."
-                        className="w-full pl-9 pr-4 py-2.5 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+                        className="w-full pl-9 pr-8 py-2.5 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
                     />
+                    {search && (
+                        <button
+                            type="button"
+                            onClick={() => onSearchChange('')}
+                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground outline-none"
+                        >
+                            <X size={14} strokeWidth={1.5} />
+                        </button>
+                    )}
                 </div>
 
                 {/* Selects - grid on mobile, flex row on desktop */}
