@@ -75,17 +75,22 @@ export async function setupWhatsAppInstance() {
     try {
         // Montar URL do webhook dinamicamente para a Evolution API
         const webhookUrl = await getDynamicWebhookUrl();
+        const isLocalWebhook = webhookUrl.includes('localhost') || webhookUrl.includes('127.0.0.1');
 
         let initialStatus = 'disconnected';
         let connectedPhone = null;
 
         try {
-            await evolutionService.createInstance(instanceName, webhookUrl);
+            await evolutionService.createInstance(instanceName, isLocalWebhook ? undefined : webhookUrl);
         } catch (createErr: any) {
             if (createErr.message && createErr.message.includes('already in use')) {
                 // Instância já existe na Evolution API, então apenas re-adotamos ela e reconfiguramos o webhook
                 console.log('[WhatsApp] Instância já existia, reconfigurando webhook...');
-                await evolutionService.setWebhook(instanceName, webhookUrl);
+                if (!isLocalWebhook) {
+                    await evolutionService.setWebhook(instanceName, webhookUrl);
+                } else {
+                    console.log('[WhatsApp] Ignorando setWebhook para URL local em setup:', webhookUrl);
+                }
                 
                 try {
                     const statusData = await evolutionService.getInstanceStatus(instanceName);
@@ -155,9 +160,10 @@ export async function getQrCode() {
 
             // Montar URL do webhook dinamicamente para a Evolution API
             const webhookUrl = await getDynamicWebhookUrl();
+            const isLocalWebhook = webhookUrl.includes('localhost') || webhookUrl.includes('127.0.0.1');
 
-            console.log('[WhatsApp] Recriando instância:', data.instance_name, 'webhook:', webhookUrl);
-            await evolutionService.createInstance(data.instance_name, webhookUrl);
+            console.log('[WhatsApp] Recriando instância:', data.instance_name, 'webhook:', isLocalWebhook ? 'ignorado (local)' : webhookUrl);
+            await evolutionService.createInstance(data.instance_name, isLocalWebhook ? undefined : webhookUrl);
             
             // Tentar obter QR code novamente após recriar
             const retryQr = await evolutionService.getQrCode(data.instance_name);
@@ -181,7 +187,11 @@ export async function refreshInstanceStatus() {
         // Garantir que o webhook esteja atualizado silenciosamente com base no domínio atual
         try {
             const webhookUrl = await getDynamicWebhookUrl();
-            await evolutionService.setWebhook(data.instance_name, webhookUrl);
+            if (!webhookUrl.includes('localhost') && !webhookUrl.includes('127.0.0.1')) {
+                await evolutionService.setWebhook(data.instance_name, webhookUrl);
+            } else {
+                console.log('[WhatsApp] Ignorando atualização de webhook para URL local em refreshInstanceStatus:', webhookUrl);
+            }
         } catch (webhookErr: any) {
             console.error('[WhatsApp] Falha ao atualizar webhook silenciosamente em refreshInstanceStatus:', webhookErr.message);
         }

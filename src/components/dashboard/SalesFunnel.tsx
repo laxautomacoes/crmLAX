@@ -47,65 +47,44 @@ export default function SalesFunnel({ funnelSteps }: SalesFunnelProps) {
                     Funil de Vendas
                 </h3>
             </div>
-            <div className="bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm">
-                <div className="overflow-x-auto">
-                    <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
-                        <thead className="bg-gray-200 dark:bg-muted/50 border-b border-muted-foreground/30">
-                            {funnelSteps.length > 0 ? (
-                                <tr>
-                                    {funnelSteps.map((step, index) => (
-                                        <th 
-                                            key={step.stageId || index}
-                                            className="px-4 py-4 text-[10px] font-bold uppercase tracking-wider text-center"
+            <div className="bg-card rounded-xl border border-muted-foreground/30 p-4 shadow-sm">
+                <div className="overflow-x-auto pb-2 md:pb-0">
+                    {funnelSteps.length > 0 ? (
+                        <div 
+                            className="flex gap-4 md:grid"
+                            style={{
+                                gridTemplateColumns: `repeat(${funnelSteps.length}, minmax(0, 1fr))`
+                            }}
+                        >
+                            {funnelSteps.map((step, index) => {
+                                const hasColor = step.color && step.color !== '#FFFFFF';
+                                return (
+                                    <div
+                                        key={step.stageId || index}
+                                        onClick={() => router.push('/leads')}
+                                        className="flex-1 min-w-[130px] flex-shrink-0 md:flex-shrink md:min-w-0 flex flex-col items-center justify-center p-4 border border-muted-foreground/30 rounded-lg bg-background shadow-sm hover:bg-muted/30 transition-all active:scale-[0.99] cursor-pointer"
+                                        style={{
+                                            borderTop: hasColor ? `4px solid ${step.color}` : undefined,
+                                        }}
+                                    >
+                                        <span 
+                                            className="text-[10px] font-bold uppercase tracking-wider text-center mb-1.5"
                                             style={step.color ? { color: getStageColor(step.color) } : undefined}
                                         >
                                             {step.label}
-                                        </th>
-                                    ))}
-                                </tr>
-                            ) : (
-                                <tr>
-                                    <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center">
-                                        Estágios do Funil
-                                    </th>
-                                </tr>
-                            )}
-                        </thead>
-                        <tbody className="divide-y divide-muted-foreground/30">
-                            {funnelSteps.length > 0 ? (
-                                <tr 
-                                    onClick={() => router.push('/leads')}
-                                    className="hover:bg-muted/50 transition-colors cursor-pointer"
-                                >
-                                    {funnelSteps.map((step, index) => {
-                                        const hasColor = step.color && step.color !== '#FFFFFF';
-                                        return (
-                                            <td key={step.stageId || index} className="px-4 py-5 text-center">
-                                                <div className="flex justify-center">
-                                                    <div
-                                                        className="w-full max-w-[160px] flex flex-col items-center justify-center p-4 border border-muted-foreground/30 rounded-lg bg-background shadow-sm"
-                                                        style={{
-                                                            borderTop: hasColor ? `4px solid ${step.color}` : undefined,
-                                                        }}
-                                                    >
-                                                        <span className="text-xl font-bold text-foreground">
-                                                            {step.count}
-                                                        </span>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                        );
-                                    })}
-                                </tr>
-                            ) : (
-                                <tr>
-                                    <td className="text-center text-muted-foreground text-sm py-10 bg-card">
-                                        Nenhum estágio configurado.
-                                    </td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                                        </span>
+                                        <span className="text-xl font-bold text-foreground">
+                                            {step.count}
+                                        </span>
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    ) : (
+                        <div className="text-center text-muted-foreground text-sm py-10 bg-card">
+                            Nenhum estágio configurado.
+                        </div>
+                    )}
                 </div>
             </div>
         </div>

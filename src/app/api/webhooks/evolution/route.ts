@@ -303,6 +303,11 @@ export async function POST(req: Request) {
 
     // ─── FLUXO ORIGINAL: SALVAR MENSAGEM NO CHAT ────────────────────────
 
+    // 1.5. Filtrar apenas conversas diretas (individuais), ignorando grupos e transmissões
+    if (!remoteJid || !remoteJid.endsWith('@s.whatsapp.net')) {
+        return NextResponse.json({ received: true, note: 'not a direct chat' });
+    }
+
     // 2. Clean the phone number from remoteJid (e.g., 5548999999999@s.whatsapp.net)
     const phone = remoteJid.split('@')[0].replace(/\D/g, '');
     // Remove '55' if it exists to match our format if needed, but leads might store it with 55.
@@ -409,7 +414,38 @@ export async function POST(req: Request) {
     };
 
     const currentChat = Array.isArray(lead.whatsapp_chat) ? lead.whatsapp_chat : [];
-    const updatedChat = [...currentChat, newMessage].slice(-20);
+    
+    // Evitar duplicidade de mensagens enviadas pelo CRM que já foram inseridas localmente
+    let updatedChat = [...currentChat];
+    let wasLocalReplaced = false;
+    let localMsgId: string | undefined = undefined;
+
+    if (fromMe) {
+        // Tenta encontrar uma mensagem local provisória com o mesmo conteúdo/mídia
+        const localIndex = updatedChat.findIndex(
+            msg => msg.fromMe && msg.id?.startsWith('local-') && 
+            (text ? msg.text === text : msg.mediaType === mediaType)
+        );
+        if (localIndex !== -1) {
+            localMsgId = updatedChat[localIndex].id;
+            updatedChat[localIndex] = newMessage;
+            wasLocalReplaced = true;
+        } else {
+            // Se não encontrar provisória, apenas adiciona se já não existir o ID real
+            const exists = updatedChat.some(msg => msg.id === newMessage.id);
+            if (!exists) {
+                updatedChat.push(newMessage);
+            }
+        }
+    } else {
+        // Mensagem recebida do lead: adiciona se já não existir o ID
+        const exists = updatedChat.some(msg => msg.id === newMessage.id);
+        if (!exists) {
+            updatedChat.push(newMessage);
+        }
+    }
+    
+    updatedChat = updatedChat.slice(-20);
 
     await supabase
         .from('leads')
@@ -417,17 +453,45 @@ export async function POST(req: Request) {
         .eq('id', lead.id);
 
     // 5. Log interaction
-    await supabase.from('interactions').insert({
-        lead_id: lead.id,
-        type: 'whatsapp',
-        content: text || `[Mídia: ${mediaType}]`,
-        metadata: { 
-            fromMe, 
-            messageId: message.key.id,
-            mediaType: mediaType || undefined,
-            mediaName: mediaName || undefined
+    if (!wasLocalReplaced) {
+        // Se for uma mensagem nova (celular ou vinda do disparador), verificar se já está logada pelo ID real
+        const { data: existingInteraction } = await supabase
+            .from('interactions')
+            .select('id')
+            .eq('lead_id', lead.id)
+            .eq('type', 'whatsapp')
+            .eq('metadata->>messageId', message.key.id)
+            .maybeSingle();
+
+        if (!existingInteraction) {
+            await supabase.from('interactions').insert({
+                lead_id: lead.id,
+                type: 'whatsapp',
+                content: text || `[Mídia: ${mediaType}]`,
+                metadata: { 
+                    fromMe, 
+                    messageId: message.key.id,
+                    mediaType: mediaType || undefined,
+                    mediaName: mediaName || undefined
+                }
+            });
         }
-    });
+    } else if (localMsgId) {
+        // Se substituiu um placeholder local, atualizar o messageId do log correspondente para o ID real
+        await supabase
+            .from('interactions')
+            .update({ 
+                metadata: { 
+                    fromMe, 
+                    messageId: message.key.id,
+                    mediaType: mediaType || undefined,
+                    mediaName: mediaName || undefined
+                } 
+            })
+            .eq('lead_id', lead.id)
+            .eq('type', 'whatsapp')
+            .eq('metadata->>messageId', localMsgId);
+    }
 
     return NextResponse.json({ success: true });
 
