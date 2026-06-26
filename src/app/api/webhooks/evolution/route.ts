@@ -308,13 +308,7 @@ export async function POST(req: Request) {
     // Remove '55' if it exists to match our format if needed, but leads might store it with 55.
     // Let's assume we search for the phone containing these digits.
 
-    // 3. Find the lead
-    const { data: leads } = await supabase
-        .from('leads')
-        .select('id, whatsapp_chat, contact_id')
-        .eq('tenant_id', instance.tenant_id!)
-        .filter('contact_id', 'not.is', null as any);
-
+    // 3. Find the contact by phone
     // Since phone is in contacts, we need to join or filter
     const { data: contacts } = await supabase
         .from('contacts')
