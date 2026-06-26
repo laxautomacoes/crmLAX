@@ -55,7 +55,7 @@ function SortableImage({ url, index, onRemove, isSelected, onToggleSelect, onPre
         <div 
             ref={setNodeRef} 
             style={style} 
-            className={`relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 border ${isSelected ? 'ring-2 ring-[#FFE600] ring-inset border-[#FFE600]/50' : 'border-muted-foreground/30'} transition-all`}
+            className={`relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 border ${isSelected ? 'ring-2 ring-[#FFE600] ring-inset border-[#FFE600]/50' : 'border-border/40'} transition-all`}
             onDoubleClick={(e) => { e.stopPropagation(); onPreview?.(url); }}
         >
             <div {...attributes} {...listeners} className="w-full h-full cursor-grab active:cursor-grabbing">
@@ -162,7 +162,7 @@ function SortableVideo({ url, index, onRemove, onPreview }: SortableVideoProps) 
         <div
             ref={setNodeRef}
             style={style}
-            className="relative aspect-video rounded-lg overflow-hidden group bg-black flex items-center justify-center border border-muted-foreground/30"
+            className="relative aspect-video rounded-lg overflow-hidden group bg-black flex items-center justify-center border border-border/40"
             onDoubleClick={(e) => { e.stopPropagation(); onPreview?.(url); }}
         >
             {/* Drag handle — área superior */}
@@ -244,7 +244,7 @@ function SortableDocument({ doc, index, onRemove, onPreview }: SortableDocumentP
         <div
             ref={setNodeRef}
             style={style}
-            className="flex items-center justify-between p-2 rounded-lg bg-background border border-muted-foreground/30 group"
+            className="flex items-center justify-between p-2 rounded-lg bg-background border border-border/40 group"
             onDoubleClick={(e) => { e.stopPropagation(); onPreview?.(doc.url); }}
         >
             <div className="flex items-center gap-2 min-w-0 flex-1">
@@ -704,7 +704,7 @@ export function MediaFields({
                                 <span className="text-[10px] font-bold text-secondary">Soltar aqui</span>
                             </div>
                         ) : (
-                            <label className="aspect-square rounded-lg bg-background hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
+                            <label className="aspect-square rounded-lg bg-background hover:bg-gray-50 dark:hover:bg-muted/30 flex flex-col items-center justify-center cursor-pointer transition-all border border-border/40">
                                 {isUploading === 'images' ? (
                                     <Loader2 className="w-6 h-6 text-foreground animate-spin" />
                                 ) : (
@@ -729,7 +729,7 @@ export function MediaFields({
                         type="button"
                         onClick={handleDownloadImages}
                         disabled={isDownloading}
-                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-muted-foreground/30 text-muted-foreground hover:bg-foreground/5 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                        className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-border/40 text-muted-foreground hover:bg-gray-50 dark:hover:bg-muted/30 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                     >
                         {isDownloading ? (
                             <>
@@ -746,7 +746,7 @@ export function MediaFields({
                 )}
                 <DragOverlay>
                     {activeImageId ? (
-                        <div className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 cursor-grabbing opacity-80 shadow-2xl scale-105 border border-muted-foreground/30">
+                        <div className="relative aspect-square rounded-lg overflow-hidden group bg-foreground/5 cursor-grabbing opacity-80 shadow-2xl scale-105 border border-border/40">
                             <img src={activeImageId} alt="Arrastando" className="w-full h-full object-cover pointer-events-none" />
                         </div>
                     ) : null}
@@ -792,7 +792,7 @@ export function MediaFields({
                                 <span className="text-[10px] font-bold text-secondary">Soltar aqui</span>
                             </div>
                         ) : (
-                            <label className="aspect-video rounded-lg bg-background hover:bg-foreground/10 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30">
+                            <label className="aspect-video rounded-lg bg-background hover:bg-gray-50 dark:hover:bg-muted/30 flex flex-col items-center justify-center cursor-pointer transition-all border border-border/40">
                                 {isUploading === 'videos' ? (
                                     <Loader2 className="w-6 h-6 text-foreground animate-spin" />
                                 ) : (
@@ -814,7 +814,7 @@ export function MediaFields({
                     </div>
                     <DragOverlay>
                         {activeVideoId ? (
-                            <div className="relative aspect-video rounded-lg overflow-hidden bg-black cursor-grabbing opacity-80 shadow-2xl scale-105 border border-muted-foreground/30">
+                            <div className="relative aspect-video rounded-lg overflow-hidden bg-black cursor-grabbing opacity-80 shadow-2xl scale-105 border border-border/40">
                                 <video
                                     src={`${activeVideoId}#t=0.5`}
                                     preload="metadata"
@@ -864,7 +864,7 @@ export function MediaFields({
                                 <span className="text-sm font-medium text-secondary">Soltar documento aqui</span>
                             </div>
                         ) : (
-                            <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-background border border-muted-foreground/30 hover:bg-foreground/10 cursor-pointer transition-all">
+                            <label className="flex items-center justify-center gap-2 p-3 rounded-lg bg-background border border-border/40 hover:bg-gray-50 dark:hover:bg-muted/30 cursor-pointer transition-all">
                                 {isUploading === 'documents' ? (
                                     <Loader2 className="w-5 h-5 text-foreground animate-spin" />
                                 ) : (

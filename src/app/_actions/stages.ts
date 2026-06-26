@@ -178,18 +178,29 @@ export async function updateStageColor(stageId: string, color: string) {
 export async function reorderStages(orderedIds: string[]) {
     const supabase = await createClient();
 
-    // Atualizar order_index de cada estágio conforme a nova ordem
-    const updates = orderedIds.map((id, index) =>
+    // 1. Atualizar temporariamente para valores altos fora da faixa para evitar colisão do índice único (tenant_id, order_index)
+    const tempUpdates = orderedIds.map((id, index) =>
+        supabase
+            .from('lead_stages')
+            .update({ order_index: index + 1000 })
+            .eq('id', id)
+    );
+
+    const tempResults = await Promise.all(tempUpdates);
+    const tempFailed = tempResults.find(r => r.error);
+    if (tempFailed?.error) return { success: false, error: tempFailed.error.message };
+
+    // 2. Agora atualizar para a ordem final real
+    const finalUpdates = orderedIds.map((id, index) =>
         supabase
             .from('lead_stages')
             .update({ order_index: index })
             .eq('id', id)
     );
 
-    const results = await Promise.all(updates);
-    const failed = results.find(r => r.error);
-
-    if (failed?.error) return { success: false, error: failed.error.message };
+    const finalResults = await Promise.all(finalUpdates);
+    const finalFailed = finalResults.find(r => r.error);
+    if (finalFailed?.error) return { success: false, error: finalFailed.error.message };
 
     revalidatePath('/leads');
     return { success: true };

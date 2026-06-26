@@ -67,27 +67,30 @@ export async function updateLead(tenantId: string, leadId: string, data: unknown
     }
 
     // 3. Atualizar lead
-    const { error: leadError } = await supabase
-        .from('leads')
-        .update({
-            stage_id: input.stage_id || null,
-            notes: input.notes,
-            value: input.value,
-            source: input.interest,
-            lead_source: input.lead_source,
-            campaign: input.campaign || null,
-            property_id: input.property_id || null,
-            property_interest: input.property_interest || null,
-            date: input.date || null,
-            assigned_to: input.assigned_to,
-            images: input.images,
-            videos: input.videos,
-            documents: input.documents
-        })
-        .eq('id', leadId)
-        .eq('tenant_id', tenantId)
+    const leadUpdate: Record<string, any> = {}
+    if (input.stage_id !== undefined) leadUpdate.stage_id = input.stage_id || null
+    if (input.notes !== undefined) leadUpdate.notes = input.notes
+    if (input.value !== undefined) leadUpdate.value = input.value
+    if (input.interest !== undefined) leadUpdate.source = input.interest
+    if (input.lead_source !== undefined) leadUpdate.lead_source = input.lead_source
+    if (input.campaign !== undefined) leadUpdate.campaign = input.campaign || null
+    if (input.property_id !== undefined) leadUpdate.property_id = input.property_id || null
+    if (input.property_interest !== undefined) leadUpdate.property_interest = input.property_interest || null
+    if (input.date !== undefined) leadUpdate.date = input.date || null
+    if (input.assigned_to !== undefined) leadUpdate.assigned_to = input.assigned_to
+    if (input.images !== undefined) leadUpdate.images = input.images
+    if (input.videos !== undefined) leadUpdate.videos = input.videos
+    if (input.documents !== undefined) leadUpdate.documents = input.documents
 
-    if (leadError) return { success: false, error: leadError.message }
+    if (Object.keys(leadUpdate).length > 0) {
+        const { error: leadError } = await supabase
+            .from('leads')
+            .update(leadUpdate)
+            .eq('id', leadId)
+            .eq('tenant_id', tenantId)
+
+        if (leadError) return { success: false, error: leadError.message }
+    }
 
     await createLog({ action: 'update_lead', entityType: 'lead', entityId: leadId, details: { name: input.name } })
 

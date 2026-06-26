@@ -117,6 +117,19 @@ export async function createLead(tenantId: string, data: unknown) {
         .single()
 
     if (leadError) return { success: false, error: leadError.message }
+
+    // Se houver notas na criação do lead, criar um registro de nota associado
+    if (input.notes) {
+        const { profile } = await getProfile()
+        await supabase.from('notes').insert({
+            tenant_id: tenantId,
+            profile_id: profile?.id || user?.id,
+            content: input.notes,
+            lead_id: leadData.id,
+            date: new Date().toISOString().split('T')[0]
+        })
+    }
+
     const newLead = {
         ...leadData,
         name: (leadData.contact as any).name,

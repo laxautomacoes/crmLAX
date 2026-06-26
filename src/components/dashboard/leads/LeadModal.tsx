@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { Modal } from '@/components/shared/Modal'
 import { formatPhone } from '@/lib/utils/phone'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
@@ -11,8 +11,9 @@ import { MediaUpload } from '@/components/shared/MediaUpload'
 import { toast } from 'sonner'
 import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
+import { getNotesByLeadId, createNote, deleteNote, updateNote } from '@/app/_actions/notes'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
-import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle, Trash2, MoreVertical } from 'lucide-react'
 import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
 import { sendWhatsAppMessage, getWhatsAppChat, sendWhatsAppMedia, refreshInstanceStatus } from '@/app/_actions/whatsapp'
 import { createClient } from '@/lib/supabase/client'
@@ -66,6 +67,84 @@ interface LeadModalProps {
     onMakeProposal?: (contactId: string, leadId: string) => void
 }
 
+interface NoteActionsDropdownProps {
+    onEdit: () => void
+    onDelete: () => void
+}
+
+function NoteActionsDropdown({ onEdit, onDelete }: NoteActionsDropdownProps) {
+    const [isOpen, setIsOpen] = useState(false)
+    const [openDirection, setOpenDirection] = useState<'down' | 'up'>('down')
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleToggle = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!isOpen && dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect()
+            const spaceBelow = window.innerHeight - rect.bottom
+            if (spaceBelow < 120) {
+                setOpenDirection('up')
+            } else {
+                setOpenDirection('down')
+            }
+        }
+        setIsOpen(o => !o)
+    }
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                type="button"
+                onClick={handleToggle}
+                className="p-1 bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors cursor-pointer"
+                title="Ações"
+            >
+                <MoreVertical size={14} />
+            </button>
+            {isOpen && (
+                <div className={`absolute right-0 w-32 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 ${
+                    openDirection === 'up' ? 'bottom-full mb-1' : 'mt-1'
+                }`}>
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setIsOpen(false)
+                            onEdit()
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-muted/50 transition-colors text-left"
+                    >
+                        <PenLine size={12} className="text-blue-500" />
+                        <span>Editar</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setIsOpen(false)
+                            onDelete()
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-red-500/10 transition-colors text-left"
+                    >
+                        <Trash2 size={12} className="text-red-500" />
+                        <span>Excluir</span>
+                    </button>
+                </div>
+            )}
+        </div>
+    )
+}
+
 export function LeadModal({
     isOpen,
     onClose,
@@ -82,6 +161,158 @@ export function LeadModal({
     const [brokers, setBrokers] = useState<Broker[]>([])
     const [whatsappChat, setWhatsappChat] = useState<any[]>([])
     const [instanceStatus, setInstanceStatus] = useState<'connected' | 'disconnected' | 'loading'>('loading')
+    const [leadNotes, setLeadNotes] = useState<any[]>([])
+    const [newNoteContent, setNewNoteContent] = useState('')
+    const [isSavingNote, setIsSavingNote] = useState(false)
+    const [showNotesHistory, setShowNotesHistory] = useState(true)
+    const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({})
+    const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+    const [editingNoteText, setEditingNoteText] = useState('')
+    const [isSavingEditedNote, setIsSavingEditedNote] = useState(false)
+    const [activeTab, setActiveTab] = useState<'info' | 'whatsapp'>('info')
+
+    const toggleNoteExpanded = (noteId: string) => {
+        setExpandedNotes(prev => ({
+            ...prev,
+            [noteId]: !prev[noteId]
+        }))
+    }
+
+    const formatNoteDate = (dateStr: string) => {
+        try {
+            const date = new Date(dateStr)
+            return date.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+                hour: '2-digit',
+                minute: '2-digit'
+            })
+        } catch {
+            return dateStr
+        }
+    }
+
+    const getFirstSentence = (text: string) => {
+        if (!text) return ''
+        const firstLine = text.split('\n')[0].trim()
+        return firstLine || 'Nota...'
+    }
+
+    const loadLeadNotes = useCallback(async () => {
+        if (!editingLead?.id) return
+        const res = await getNotesByLeadId(editingLead.id)
+        if (res.success && res.data) {
+            setLeadNotes(res.data)
+        }
+    }, [editingLead?.id])
+
+    useEffect(() => {
+        if (isOpen) {
+            setActiveTab('info')
+            if (editingLead?.id) {
+                loadLeadNotes()
+            }
+        } else {
+            setLeadNotes([])
+        }
+    }, [isOpen, editingLead?.id, loadLeadNotes])
+
+    const handleAddNote = async () => {
+        if (!newNoteContent.trim() || !editingLead?.id || !tenantId) return
+        setIsSavingNote(true)
+        try {
+            const res = await createNote(tenantId, {
+                content: newNoteContent.trim(),
+                lead_id: editingLead.id,
+                date: new Date().toISOString().split('T')[0]
+            })
+            if (res.success) {
+                toast.success('Nota adicionada com sucesso!')
+                setNewNoteContent('')
+                loadLeadNotes()
+            } else {
+                toast.error('Erro ao adicionar nota: ' + res.error)
+            }
+        } catch (error) {
+            console.error('Erro ao adicionar nota:', error)
+            toast.error('Ocorreu um erro ao salvar a nota')
+        } finally {
+            setIsSavingNote(false)
+        }
+    }
+
+    const handleDeleteNote = async (noteId: string) => {
+        if (noteId === 'legacy') {
+            if (!confirm('Deseja realmente excluir a observação de cadastro do lead?')) return
+            try {
+                const res = await updateLead(tenantId, editingLead!.id!, { notes: '' })
+                if (res.success) {
+                    toast.success('Observações do lead excluídas!')
+                    setLeadData(prev => ({ ...prev, notes: '' }))
+                    if (editingLead) {
+                        editingLead.notes = ''
+                    }
+                    onSuccess()
+                } else {
+                    toast.error('Erro ao excluir observações: ' + res.error)
+                }
+            } catch (error) {
+                console.error('Erro ao excluir observações:', error)
+                toast.error('Ocorreu um erro ao excluir as observações')
+            }
+            return
+        }
+
+        if (!confirm('Deseja realmente excluir esta nota?')) return
+        try {
+            const res = await deleteNote(noteId)
+            if (res.success) {
+                toast.success('Nota excluída com sucesso!')
+                loadLeadNotes()
+            } else {
+                toast.error('Erro ao excluir nota: ' + res.error)
+            }
+        } catch (error) {
+            console.error('Erro ao excluir nota:', error)
+            toast.error('Ocorreu um erro ao excluir a nota')
+        }
+    }
+
+    const handleSaveEditedNote = async (noteId: string) => {
+        if (!editingNoteText.trim()) return
+        setIsSavingEditedNote(true)
+        try {
+            if (noteId === 'legacy') {
+                const res = await updateLead(tenantId, editingLead!.id!, { notes: editingNoteText.trim() })
+                if (res.success) {
+                    toast.success('Observações do lead atualizadas!')
+                    setLeadData(prev => ({ ...prev, notes: editingNoteText.trim() }))
+                    if (editingLead) {
+                        editingLead.notes = editingNoteText.trim()
+                    }
+                    setEditingNoteId(null)
+                    onSuccess()
+                } else {
+                    toast.error('Erro ao atualizar observações: ' + res.error)
+                }
+            } else {
+                const res = await updateNote(noteId, { content: editingNoteText.trim() })
+                if (res.success) {
+                    toast.success('Nota atualizada com sucesso!')
+                    setEditingNoteId(null)
+                    loadLeadNotes()
+                } else {
+                    toast.error('Erro ao atualizar nota: ' + res.error)
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao atualizar nota:', error)
+            toast.error('Ocorreu um erro ao atualizar a nota')
+        } finally {
+            setIsSavingEditedNote(false)
+        }
+    }
 
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
@@ -366,7 +597,7 @@ export function LeadModal({
         }
 
         if (!leadData.stage_id) {
-            toast.error('Por favor, selecione um estágio inicial')
+            toast.error('Por favor, selecione um estágio')
             return
         }
 
@@ -434,7 +665,7 @@ export function LeadModal({
             isOpen={isOpen}
             onClose={() => { setCreationMethod(null); onClose() }}
             title={
-                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                <h3 className="text-sm md:text-base font-black text-foreground uppercase tracking-wider md:tracking-widest truncate">
                     {editingLead ? "Editar Lead" : "Novo Lead"}
                 </h3>
             }
@@ -459,7 +690,8 @@ export function LeadModal({
                                 >
                                     P
                                 </span>
-                                Em Proposta
+                                <span className="hidden sm:inline">Em Proposta</span>
+                                <span className="sm:hidden">Proposta</span>
                             </button>
                         ) : (
                             <button
@@ -467,7 +699,8 @@ export function LeadModal({
                                 onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
                                 className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
                             >
-                                Fazer Proposta
+                                <span className="hidden sm:inline">Fazer Proposta</span>
+                                <span className="sm:hidden">Proposta</span>
                             </button>
                         )
                     )}
@@ -476,7 +709,19 @@ export function LeadModal({
                         disabled={isLoading}
                         className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
                     >
-                        {isLoading ? "Processando..." : (editingLead ? "Salvar Alterações" : "Criar Lead")}
+                        {isLoading ? "Processando..." : (
+                            editingLead ? (
+                                <>
+                                    <span className="hidden sm:inline">Salvar Alterações</span>
+                                    <span className="sm:hidden">Salvar</span>
+                                </>
+                            ) : (
+                                <>
+                                    <span className="hidden sm:inline">Criar Lead</span>
+                                    <span className="sm:hidden">Criar</span>
+                                </>
+                            )
+                        )}
                     </button>
                 </div>
                 )
@@ -527,8 +772,33 @@ export function LeadModal({
                     </div>
                 </div>
             ) : (
-            <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 max-h-[calc(94vh-120px)] overflow-visible" : "space-y-6"}>
-                <div className={editingLead ? "space-y-6 overflow-y-auto max-h-[calc(94vh-120px)] pr-2 no-scrollbar" : "space-y-6"}>
+            <div className="space-y-4">
+                {editingLead && (
+                    <div className="flex items-center border-b border-border lg:hidden shrink-0">
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('info')}
+                            className={`flex-1 py-2.5 text-xs font-bold transition-all relative flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                                activeTab === 'info' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                            <FileText size={14} />
+                            Informações
+                        </button>
+                        <button
+                            type="button"
+                            onClick={() => setActiveTab('whatsapp')}
+                            className={`flex-1 py-2.5 text-xs font-bold transition-all relative flex items-center justify-center gap-1.5 whitespace-nowrap ${
+                                activeTab === 'whatsapp' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'
+                            }`}
+                        >
+                            <MessageCircle size={14} />
+                            WhatsApp
+                        </button>
+                    </div>
+                )}
+                <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 lg:max-h-[calc(94vh-120px)] overflow-visible" : "space-y-6"}>
+                    <div className={editingLead ? `space-y-6 lg:overflow-y-auto lg:max-h-[calc(94vh-120px)] pr-2 no-scrollbar ${activeTab === 'info' ? 'block' : 'hidden lg:block'}` : "space-y-6"}>
                     <div className="space-y-8 pb-4">
                     {/* Seção: Dados Pessoais */}
                     <div className="space-y-4">
@@ -737,7 +1007,7 @@ export function LeadModal({
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                             <div>
                                 <FormSelect
-                                    label="Estágio Inicial *"
+                                    label="Estágio"
                                     value={leadData.stage_id}
                                     onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
                                     options={[
@@ -759,13 +1029,193 @@ export function LeadModal({
 
                     {/* Seção: Notas */}
                     <div className="space-y-4 pt-8 border-t border-border/50">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
-                        <FormTextarea
-                            value={leadData.notes}
-                            onChange={(e) => setLeadData({ ...leadData, notes: e.target.value })}
-                            rows={3}
-                            placeholder="Alguma observação importante sobre o lead..."
-                        />
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas / Histórico</h3>
+                            {editingLead && (
+                                <button
+                                    type="button"
+                                    onClick={handleAddNote}
+                                    disabled={isSavingNote || !newNoteContent.trim()}
+                                    className="px-3 py-1.5 bg-[#FFE600] text-[#1a1a1a] rounded-lg font-bold text-xs hover:bg-[#F2DB00] transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
+                                >
+                                    {isSavingNote ? 'Adicionando...' : 'Adicionar Nota'}
+                                </button>
+                            )}
+                        </div>
+                        
+                        {!editingLead ? (
+                            <FormTextarea
+                                value={leadData.notes}
+                                onChange={(e) => setLeadData({ ...leadData, notes: e.target.value })}
+                                rows={3}
+                                placeholder="Alguma observação importante sobre o lead (será salva como primeira nota)..."
+                            />
+                        ) : (
+                            <div className="space-y-4">
+                                {/* Campo para adicionar nova nota */}
+                                <div className="space-y-2">
+                                    <textarea
+                                        value={newNoteContent}
+                                        onChange={(e) => setNewNoteContent(e.target.value)}
+                                        rows={2}
+                                        placeholder="Escreva uma nova nota sobre o lead..."
+                                        className="w-full bg-background border border-muted-foreground/30 rounded-lg p-3 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
+                                    />
+                                </div>
+
+                                {/* Timeline das Notas (Collapsible Dropdown) */}
+                                <div className="space-y-3">
+                                    <button
+                                        type="button"
+                                        onClick={() => setShowNotesHistory(!showNotesHistory)}
+                                        className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-foreground uppercase tracking-wider transition-colors cursor-pointer"
+                                    >
+                                        <span>Notas salvas ({leadNotes.length + (leadData.notes ? 1 : 0)})</span>
+                                        <div className="flex items-center gap-1">
+                                            {showNotesHistory ? <ChevronRight className="rotate-90 transition-transform" size={14} /> : <ChevronRight size={14} />}
+                                        </div>
+                                    </button>
+ 
+                                    {showNotesHistory && (() => {
+                                        const sortedNotes = [...leadNotes]
+                                        if (leadData.notes) {
+                                            sortedNotes.push({
+                                                id: 'legacy',
+                                                content: leadData.notes,
+                                                created_at: editingLead?.date || new Date(0).toISOString(),
+                                                profiles: {
+                                                    full_name: 'Observação de Cadastro'
+                                                }
+                                            })
+                                        }
+                                        sortedNotes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+                                        return (
+                                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 no-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                                                {sortedNotes.length === 0 && (
+                                                    <p className="text-xs text-muted-foreground text-center py-4">
+                                                        Nenhuma nota registrada para este lead ainda.
+                                                    </p>
+                                                )}
+
+                                                {sortedNotes.map((note) => {
+                                                    const isExpanded = !!expandedNotes[note.id]
+                                                    const isEditing = editingNoteId === note.id
+                                                    const isLegacy = note.id === 'legacy'
+
+                                                    if (isEditing) {
+                                                        return (
+                                                            <div
+                                                                key={note.id}
+                                                                className="p-3 bg-background border border-border/40 rounded-lg space-y-2"
+                                                            >
+                                                                <textarea
+                                                                    value={editingNoteText}
+                                                                    onChange={(e) => setEditingNoteText(e.target.value)}
+                                                                    disabled={isSavingEditedNote}
+                                                                    rows={6}
+                                                                    className="w-full text-sm p-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-secondary/50 resize-y font-medium text-foreground"
+                                                                />
+                                                                <div className="flex items-center justify-end gap-2">
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setEditingNoteId(null)}
+                                                                        disabled={isSavingEditedNote}
+                                                                        className="px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                                                                    >
+                                                                        Cancelar
+                                                                    </button>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => handleSaveEditedNote(note.id)}
+                                                                        disabled={isSavingEditedNote || !editingNoteText.trim()}
+                                                                        className="px-2.5 py-1.5 text-[10px] font-bold bg-[#FFE600] text-[#404F4F] hover:bg-[#F2DB00] rounded-lg transition-colors cursor-pointer"
+                                                                    >
+                                                                        {isSavingEditedNote ? 'Salvando...' : 'Salvar'}
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+                                                        )
+                                                    }
+
+                                                    return (
+                                                        <div 
+                                                            key={note.id} 
+                                                            onClick={() => toggleNoteExpanded(note.id)}
+                                                            className="p-3 bg-background border border-border/40 rounded-lg hover:border-muted-foreground/20 transition-all relative group cursor-pointer"
+                                                        >
+                                                            {!isExpanded ? (
+                                                                <div className="flex items-center justify-between gap-3">
+                                                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                                        <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                                                                        <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
+                                                                            {getFirstSentence(note.content)}
+                                                                        </span>
+                                                                    </div>
+                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                        <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
+                                                                            {formatNoteDate(note.created_at)}
+                                                                        </span>
+                                                                        <NoteActionsDropdown
+                                                                            onEdit={() => {
+                                                                                setEditingNoteId(note.id)
+                                                                                setEditingNoteText(note.content)
+                                                                            }}
+                                                                            onDelete={() => handleDeleteNote(note.id)}
+                                                                        />
+                                                                    </div>
+                                                                </div>
+                                                            ) : (
+                                                                 <div className="flex gap-2 items-start">
+                                                                     <ChevronRight 
+                                                                         size={14} 
+                                                                         className="text-muted-foreground transition-transform rotate-90 shrink-0 mt-0.5"
+                                                                     />
+                                                                     <div className="flex-1 min-w-0 space-y-2">
+                                                                         <div className="flex items-center justify-between mb-1.5 select-none">
+                                                                             <div className="flex items-center gap-2">
+                                                                                 <span className={isLegacy ? "text-[10px] font-bold text-muted-foreground uppercase tracking-wider" : "text-[10px] font-bold text-accent-icon"}>
+                                                                                     {isLegacy ? "Observação de Cadastro" : (note.profiles?.full_name || 'Corretor')}
+                                                                                 </span>
+                                                                             </div>
+                                                                             <div className="flex items-center gap-2">
+                                                                                 <span className="text-[10px] text-muted-foreground font-medium">
+                                                                                     {formatNoteDate(note.created_at)}
+                                                                                 </span>
+                                                                                 <NoteActionsDropdown
+                                                                                     onEdit={() => {
+                                                                                         setEditingNoteId(note.id)
+                                                                                         setEditingNoteText(note.content)
+                                                                                     }}
+                                                                                     onDelete={() => handleDeleteNote(note.id)}
+                                                                                 />
+                                                                             </div>
+                                                                         </div>
+                                                                         <p className="text-sm text-foreground whitespace-pre-line leading-relaxed font-medium">
+                                                                             {note.content}
+                                                                         </p>
+                                                                         <button
+                                                                             type="button"
+                                                                             onClick={(e) => {
+                                                                                 e.stopPropagation()
+                                                                                 toggleNoteExpanded(note.id)
+                                                                             }}
+                                                                             className={isLegacy ? "text-[10px] font-bold text-muted-foreground mt-1 hover:underline cursor-pointer block" : "text-[10px] font-bold text-accent-icon mt-1 hover:underline cursor-pointer block"}
+                                                                         >
+                                                                             Ver menos
+                                                                         </button>
+                                                                     </div>
+                                                                 </div>
+                                                            )}
+                                                        </div>
+                                                    )
+                                                })}
+                                            </div>
+                                        )
+                                    })()}
+                                </div>
+                            </div>
+                        )}
                     </div>
 
                     {/* Seção: Mídias e Docs */}
@@ -786,7 +1236,7 @@ export function LeadModal({
 
                 {/* Coluna Direita: Emulador WhatsApp */}
                 {editingLead && (
-                    <div className="hidden lg:flex flex-col h-full max-h-[calc(94vh-120px)] shrink-0 pb-1">
+                    <div className={`flex flex-col h-[500px] lg:h-full lg:max-h-[calc(94vh-120px)] shrink-0 pb-1 mt-6 lg:mt-0 ${activeTab === 'whatsapp' ? 'flex' : 'hidden lg:flex'}`}>
                         <LeadWhatsAppConversation 
                             chat={whatsappChat} 
                             leadName={editingLead.name}
@@ -798,6 +1248,7 @@ export function LeadModal({
                         />
                     </div>
                 )}
+            </div>
             </div>
             )}
 

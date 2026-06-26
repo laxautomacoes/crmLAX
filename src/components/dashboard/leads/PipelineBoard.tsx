@@ -193,11 +193,23 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
         }
 
         const activeIdStr = active.id.toString()
-        const overIdStr = over.id.toString()
+        let overIdStr = over.id.toString()
 
         // --- Stage drag ---
         if (activeIdStr.startsWith('stage-')) {
             setActiveStage(null)
+            
+            // Se caiu em cima de um card de Lead, descobrir a qual estágio ele pertence
+            const overLead = leads.find(l => l.id === overIdStr)
+            if (overLead) {
+                overIdStr = overLead.status
+            }
+
+            // Normalizar overId para o formato 'stage-ID' caso tenha caído no droppable cru do PipelineColumn ou resolvido do Lead
+            if (stages.some(s => s.id === overIdStr)) {
+                overIdStr = `stage-${overIdStr}`
+            }
+
             if (activeIdStr === overIdStr) return
 
             if (!overIdStr.startsWith('stage-')) return
@@ -229,16 +241,21 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
         // --- Lead drag ---
         setActiveLead(null)
         const activeId = active.id
-        const overId = over.id
+        
+        // Se overId começar com 'stage-', extrair o ID cru do estágio
+        let targetStageId = over.id.toString()
+        if (targetStageId.startsWith('stage-')) {
+            targetStageId = targetStageId.replace('stage-', '')
+        }
 
         const draggedLead = leads.find(l => l.id === activeId)
         if (!draggedLead) return
 
-        let newStageId = overId.toString()
-        const isOverStage = stages.some(s => s.id === overId)
+        let newStageId = targetStageId
+        const isOverStage = stages.some(s => s.id === targetStageId)
 
         if (!isOverStage) {
-            const overLead = leads.find(l => l.id === overId)
+            const overLead = leads.find(l => l.id === targetStageId)
             if (overLead) newStageId = overLead.status
         }
 

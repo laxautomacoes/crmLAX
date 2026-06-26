@@ -25,6 +25,24 @@ export async function getNotes(tenantId: string) {
     }
 }
 
+export async function getNotesByLeadId(leadId: string) {
+    const supabase = await createClient()
+    
+    try {
+        const { data, error } = await supabase
+            .from('notes')
+            .select('*, profiles:profile_id(full_name)')
+            .eq('lead_id', leadId)
+            .order('created_at', { ascending: false })
+
+        if (error) throw error
+        return { success: true, data }
+    } catch (error: any) {
+        console.error('Error fetching lead notes:', error)
+        return { success: false, error: error.message }
+    }
+}
+
 export async function createNote(tenantId: string, noteData: any) {
     const supabase = await createClient()
     const { profile } = await getProfile()

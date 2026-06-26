@@ -1,6 +1,6 @@
 'use client'
 
-import { MoreVertical, Plus, Copy, Trash2, Edit2, Palette, Check } from 'lucide-react'
+import { MoreVertical, Plus, Copy, Trash2, Edit2, Palette } from 'lucide-react'
 import { useDroppable } from '@dnd-kit/core'
 import {
     SortableContext,
@@ -8,6 +8,7 @@ import {
 } from '@dnd-kit/sortable'
 import { motion, AnimatePresence } from 'framer-motion'
 import { useState, useRef, useEffect } from 'react'
+import { ColorPicker } from '@/components/shared/ColorPicker'
 import { LeadCard } from './LeadCard'
 import { Lead } from './PipelineBoard'
 
@@ -42,7 +43,6 @@ export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDe
     const [showColorPicker, setShowColorPicker] = useState(false)
     const [isEditing, setIsEditing] = useState(false)
     const [editValue, setEditValue] = useState(title)
-    const [customColor, setCustomColor] = useState('')
     const dropdownRef = useRef<HTMLDivElement>(null)
     const inputRef = useRef<HTMLInputElement>(null)
     const colorPickerRef = useRef<HTMLDivElement>(null)
@@ -90,13 +90,6 @@ export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDe
         onUpdateColor(id, hex)
         setShowColorPicker(false)
         setShowDropdown(false)
-    }
-
-    const handleCustomColorSubmit = () => {
-        if (customColor && /^#[0-9A-Fa-f]{6}$/.test(customColor)) {
-            handleColorSelect(customColor)
-            setCustomColor('')
-        }
     }
 
     const currentColor = color || null
@@ -189,85 +182,12 @@ export function PipelineColumn({ id, title, color, leads, count, onAddLead, onDe
                         )}
 
                         {showDropdown && showColorPicker && (
-                            <motion.div
-                                ref={colorPickerRef}
-                                initial={{ opacity: 0, scale: 0.95, y: -10 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: -10 }}
-                                className="absolute right-0 mt-1 w-48 bg-card border border-muted-foreground/30 rounded-lg shadow-xl z-20 p-3"
-                            >
-                                <div className="flex items-center justify-between mb-3">
-                                    <span className="text-[11px] font-bold text-foreground uppercase tracking-wider">Cor do Estágio</span>
-                                    <button
-                                        onClick={() => setShowColorPicker(false)}
-                                        className="text-muted-foreground hover:text-foreground text-[10px] font-bold"
-                                    >
-                                        ← Voltar
-                                    </button>
-                                </div>
-
-                                {/* Bolinhas de cores predefinidas */}
-                                <div className="flex flex-wrap gap-2 mb-3">
-                                    {PRESET_COLORS.map((preset) => (
-                                        <button
-                                            key={preset.hex}
-                                            onClick={() => handleColorSelect(preset.hex)}
-                                            title={preset.label}
-                                            className="w-7 h-7 rounded-full border-2 flex items-center justify-center transition-all hover:scale-110"
-                                            style={{
-                                                backgroundColor: preset.hex,
-                                                borderColor: currentColor === preset.hex
-                                                    ? 'var(--foreground)'
-                                                    : preset.hex === '#FFFFFF'
-                                                        ? 'var(--muted-foreground)'
-                                                        : preset.hex,
-                                            }}
-                                        >
-                                            {currentColor === preset.hex && (
-                                                <Check
-                                                    size={12}
-                                                    style={{
-                                                        color: preset.hex === '#FFFFFF' || preset.hex === '#FACC15'
-                                                            ? '#404F4F'
-                                                            : '#FFFFFF'
-                                                    }}
-                                                    strokeWidth={3}
-                                                />
-                                            )}
-                                        </button>
-                                    ))}
-                                </div>
-
-                                {/* Input de cor customizada */}
-                                <div className="border-t border-muted-foreground/30 pt-2">
-                                    <label className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider mb-1 block">
-                                        Cor personalizada
-                                    </label>
-                                    <div className="flex items-center gap-1.5">
-                                        <input
-                                            type="color"
-                                            value={customColor || currentColor || '#FFFFFF'}
-                                            onChange={(e) => setCustomColor(e.target.value)}
-                                            className="w-7 h-7 rounded-md border border-muted-foreground/30 cursor-pointer p-0.5"
-                                        />
-                                        <input
-                                            type="text"
-                                            placeholder="#HEX"
-                                            value={customColor}
-                                            onChange={(e) => setCustomColor(e.target.value)}
-                                            onKeyDown={(e) => e.key === 'Enter' && handleCustomColorSubmit()}
-                                            className="flex-1 bg-background border border-muted-foreground/30 rounded-md px-2 py-1 text-[10px] text-foreground outline-none focus:border-primary font-mono"
-                                        />
-                                        <button
-                                            onClick={handleCustomColorSubmit}
-                                            disabled={!customColor || !/^#[0-9A-Fa-f]{6}$/.test(customColor)}
-                                            className="px-2 py-1 bg-primary text-primary-foreground rounded-md text-[9px] font-bold hover:opacity-90 disabled:opacity-40 transition-all"
-                                        >
-                                            OK
-                                        </button>
-                                    </div>
-                                </div>
-                            </motion.div>
+                            <ColorPicker
+                                currentColor={currentColor}
+                                onColorSelect={handleColorSelect}
+                                onClose={() => setShowColorPicker(false)}
+                                colorPickerRef={colorPickerRef}
+                            />
                         )}
                     </AnimatePresence>
                 </div>

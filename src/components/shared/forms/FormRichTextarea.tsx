@@ -284,7 +284,7 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                 </label>
             )}
             
-            <div className="border border-muted-foreground/30 rounded-lg bg-background focus-within:ring-2 focus-within:ring-secondary/50 focus-within:border-secondary transition-all relative">
+            <div className="border border-border/40 rounded-lg bg-background focus-within:ring-2 focus-within:ring-secondary/50 focus-within:border-secondary transition-all relative">
                 {/* Toolbar */}
                 <div className="flex flex-wrap items-center gap-1 p-1 bg-background border-b border-muted-foreground/20 rounded-t-lg">
                     <button

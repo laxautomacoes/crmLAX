@@ -70,14 +70,14 @@ export function Autocomplete({
     return (
         <div className="space-y-1 relative" ref={containerRef}>
             {label && (
-                <label className="block text-sm font-bold text-foreground ml-1 mb-1 whitespace-nowrap overflow-hidden text-ellipsis tracking-tight">
+                <label className="block text-xs font-bold text-foreground ml-1 mb-2">
                     {label}
                 </label>
             )}
 
             <div className="relative">
                 {selectedItem ? (
-                    <div className="flex items-center justify-between w-full py-2 pl-3 pr-2 bg-muted/40 border border-muted-foreground/30 rounded-lg group">
+                    <div className="flex items-center justify-between w-full py-2 pl-3 pr-2 bg-muted/40 border border-border/40 rounded-lg group">
                         <div className="flex items-center gap-2 truncate">
                             {showIcon && Icon && <Icon size={16} className="text-muted-foreground shrink-0" />}
                             <span className="text-sm font-medium text-foreground truncate">
@@ -93,7 +93,7 @@ export function Autocomplete({
                         </button>
                     </div>
                 ) : (
-                    <div className={`relative flex items-center w-full bg-input border border-muted-foreground/30 rounded-lg focus-within:ring-2 focus-within:ring-secondary/50 focus-within:border-secondary transition-all ${showIcon && Icon ? 'pl-10' : 'pl-4'}`}>
+                    <div className={`relative flex items-center w-full bg-input border border-border/40 rounded-lg focus-within:ring-2 focus-within:ring-secondary/50 focus-within:border-secondary transition-all ${showIcon && Icon ? 'pl-10' : 'pl-4'}`}>
                         {showIcon && Icon && (
                             <div className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none">
                                 {isLoading ? <Loader2 size={16} className="animate-spin" /> : <Icon size={16} />}

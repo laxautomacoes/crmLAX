@@ -220,7 +220,6 @@ export async function refreshInstanceStatus() {
             .update({ status, connected_phone: connectedPhone })
             .eq('id', data.id);
 
-        revalidatePath('/settings/integrations');
         return { status, connectedPhone };
     } catch (err: any) {
         return { error: err.message };
