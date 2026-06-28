@@ -154,7 +154,7 @@ function ClientProposalActionsDropdown({
     )
 }
 
-export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeInitialLead }: ClientProposalsTabProps) {
+export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeInitialLead, onSuccess }: ClientProposalsTabProps) {
     const [proposals, setProposals] = useState<ProposalItem[]>([])
     const [loading, setLoading] = useState(true)
     const [showNewForm, setShowNewForm] = useState(false)
