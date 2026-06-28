@@ -277,9 +277,11 @@ interface EditingPropertyDetails {
 }
 
 interface EditingProperty {
+    id?: string
     title?: string
     description?: string
     price?: number | string
+    commission_rate?: number | string | null
     type?: string
     status?: string
     created_by?: string | null
@@ -289,6 +291,9 @@ interface EditingProperty {
     documents?: PropertyDocument[]
     is_published?: boolean
     is_featured?: boolean
+    partner_id?: string | null
+    partner_commission_split?: number | string | null
+    main_image_url?: string | null
     details?: EditingPropertyDetails
 }
 
@@ -453,13 +458,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 created_by: editingProperty.created_by || null,
                 owner_contact_id: editingProperty.owner_contact_id || null,
                 images: editingProperty.images || [],
-                main_image_url: (editingProperty as any).main_image_url || '',
+                main_image_url: editingProperty.main_image_url || '',
                 videos: editingProperty.videos || [],
                 documents: editingProperty.documents || [],
                 is_published: editingProperty.is_published || false,
-                is_featured: (editingProperty as any).is_featured || false,
-                partner_id: (editingProperty as any).partner_id || null,
-                partner_commission_split: (editingProperty as any).partner_commission_split ? (editingProperty as any).partner_commission_split.toString() : '',
+                is_featured: editingProperty.is_featured || false,
+                partner_id: editingProperty.partner_id || null,
+                partner_commission_split: editingProperty.partner_commission_split ? editingProperty.partner_commission_split.toString() : '',
                 details: {
                     situacao: editingProperty.details?.situacao || 'lançamento',
                     area_privativa: editingProperty.details?.area_privativa || '',
