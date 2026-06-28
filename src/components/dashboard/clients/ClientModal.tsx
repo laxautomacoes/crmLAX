@@ -1740,8 +1740,8 @@ export function ClientModal({
                 isOpen={!!noteToDelete}
                 title="Excluir Nota"
                 message={noteToDelete === 'legacy' ? "Deseja realmente excluir a observação de cadastro do cliente?" : "Deseja realmente excluir esta nota?"}
-                confirmText="Excluir"
-                cancelText="Cancelar"
+                confirmLabel="Excluir"
+                cancelLabel="Cancelar"
                 onConfirm={async () => {
                     if (noteToDelete) {
                         await executeDeleteNote(noteToDelete)
@@ -1749,7 +1749,6 @@ export function ClientModal({
                     }
                 }}
                 onCancel={() => setNoteToDelete(null)}
-                variant="danger"
             />
         </Modal>
     )
