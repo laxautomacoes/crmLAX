@@ -1223,7 +1223,15 @@ export function LeadModal({
 
                                 {/* Seção: Acompanhamento (Follow-up) */}
                                 <div className="space-y-4 pt-8 border-t border-border/50">
-                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Acompanhamento (Follow-up)</h3>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Acompanhamento (Follow-up)</h3>
+                                        <Link
+                                            href="/marketing/follow-up"
+                                            className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                        >
+                                            Gerenciar
+                                        </Link>
+                                    </div>
 
                                     {editingLead ? (
                                         <div className="space-y-4">
@@ -1259,11 +1267,11 @@ export function LeadModal({
                                             )}
 
                                             {/* Lista de Inscrições Ativas */}
-                                            {leadEnrollments.length > 0 ? (
+                                            {leadEnrollments.filter((e: any) => e.status !== 'cancelled' && e.status !== 'paused').length > 0 ? (
                                                 <div className="space-y-2">
                                                     <label className="block text-xs font-bold text-foreground ml-1 mb-2">Inscrições Ativas</label>
                                                     <div className="space-y-2">
-                                                        {leadEnrollments.map((enrollment: any) => {
+                                                        {leadEnrollments.filter((e: any) => e.status !== 'cancelled' && e.status !== 'paused').map((enrollment: any) => {
                                                             const isActive = enrollment.status === 'active';
                                                             return (
                                                                 <div

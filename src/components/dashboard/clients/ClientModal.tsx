@@ -16,11 +16,90 @@ import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, Filter, Sparkles, MessageCircle, Search, Loader2,
-    ChevronDown, MapPin, FileText, Image as ImageIcon, Video, DollarSign, Pen
+    ChevronDown, MapPin, FileText, Image as ImageIcon, Video, DollarSign, Pen,
+    ChevronRight, PenLine, Trash2, MoreVertical
 } from 'lucide-react'
 import { ClientProposalsTab } from './ClientProposalsTab'
 import { LeadDocumentsTab } from '@/components/dashboard/leads/LeadDocumentsTab'
 import { LeadFinanceTab } from '@/components/dashboard/leads/LeadFinanceTab'
+import { ConfirmModal } from '@/components/shared/ConfirmModal'
+import { getNotesByContactId, createNote, deleteNote, updateNote } from '@/app/_actions/notes'
+
+interface NoteActionsDropdownProps {
+    onEdit: () => void
+    onDelete: () => void
+}
+
+function NoteActionsDropdown({ onEdit, onDelete }: NoteActionsDropdownProps) {
+    const [isOpen, setIsOpen] = useState(false)
+    const [openDirection, setOpenDirection] = useState<'down' | 'up'>('down')
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleToggle = (e: React.MouseEvent) => {
+        e.stopPropagation()
+        if (!isOpen && dropdownRef.current) {
+            const rect = dropdownRef.current.getBoundingClientRect()
+            const spaceBelow = window.innerHeight - rect.bottom
+            if (spaceBelow < 120) {
+                setOpenDirection('up')
+            } else {
+                setOpenDirection('down')
+            }
+        }
+        setIsOpen(o => !o)
+    }
+
+    return (
+        <div className="relative" ref={dropdownRef}>
+            <button
+                type="button"
+                onClick={handleToggle}
+                className="p-1 bg-transparent text-muted-foreground hover:text-foreground hover:bg-muted/50 rounded-lg transition-colors cursor-pointer"
+                title="Ações"
+            >
+                <MoreVertical size={14} />
+            </button>
+            {isOpen && (
+                <div className={`absolute right-0 w-32 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 ${openDirection === 'up' ? 'bottom-full mb-1' : 'mt-1'}`}>
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setIsOpen(false)
+                            onEdit()
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-muted/50 transition-colors text-left"
+                    >
+                        <PenLine size={12} className="text-blue-500" />
+                        <span>Editar</span>
+                    </button>
+                    <button
+                        type="button"
+                        onClick={(e) => {
+                            e.stopPropagation()
+                            setIsOpen(false)
+                            onDelete()
+                        }}
+                        className="w-full flex items-center gap-2 px-3 py-2 text-xs text-foreground hover:bg-red-500/10 transition-colors text-left"
+                    >
+                        <Trash2 size={12} className="text-red-500" />
+                        <span>Excluir</span>
+                    </button>
+                </div>
+            )}
+        </div>
+    )
+}
 
 interface ClientModalProps {
     isOpen: boolean
@@ -64,6 +143,136 @@ export function ClientModal({
     const [isAnalyzed, setIsAnalyzed] = useState(false)
     const [analysisLoading, setAnalysisLoading] = useState(false)
     const [analysisResult, setAnalysisResult] = useState<string | null>(null)
+
+    const [clientNotes, setClientNotes] = useState<any[]>([])
+    const [newNoteContent, setNewNoteContent] = useState('')
+    const [isSavingNote, setIsSavingNote] = useState(false)
+    const [showNotesHistory, setShowNotesHistory] = useState(true)
+    const [expandedNotes, setExpandedNotes] = useState<Record<string, boolean>>({})
+    const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
+    const [editingNoteText, setEditingNoteText] = useState('')
+    const [isSavingEditedNote, setIsSavingEditedNote] = useState(false)
+    const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
+
+    const toggleNoteExpanded = (noteId: string) => {
+        setExpandedNotes(prev => ({ ...prev, [noteId]: !prev[noteId] }))
+    }
+
+    const formatNoteDate = (dateStr: string) => {
+        try {
+            const date = new Date(dateStr)
+            return date.toLocaleDateString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' })
+        } catch { return dateStr }
+    }
+
+    const getFirstSentence = (text: string) => {
+        if (!text) return ''
+        const firstLine = text.split('\n')[0].trim()
+        return firstLine || 'Nota...'
+    }
+
+    const loadClientNotes = async () => {
+        if (!editingClient?.id) return
+        const res = await getNotesByContactId(editingClient.id)
+        if (res.success && res.data) {
+            setClientNotes(res.data)
+        }
+    }
+
+    useEffect(() => {
+        if (isOpen && editingClient?.id) {
+            loadClientNotes()
+        } else {
+            setClientNotes([])
+        }
+    }, [isOpen, editingClient?.id])
+
+    const handleAddNote = async () => {
+        if (!newNoteContent.trim() || !editingClient?.id || !tenantId) return
+        setIsSavingNote(true)
+        try {
+            const res = await createNote(tenantId, {
+                content: newNoteContent.trim(),
+                contact_id: editingClient.id,
+                date: new Date().toISOString().split('T')[0]
+            })
+            if (res.success) {
+                toast.success('Nota adicionada com sucesso!')
+                setNewNoteContent('')
+                loadClientNotes()
+            } else {
+                toast.error('Erro ao adicionar nota: ' + res.error)
+            }
+        } catch (error) {
+            toast.error('Ocorreu um erro ao salvar a nota')
+        } finally {
+            setIsSavingNote(false)
+        }
+    }
+
+    const handleDeleteNote = (noteId: string) => setNoteToDelete(noteId)
+
+    const executeDeleteNote = async (noteId: string) => {
+        if (noteId === 'legacy') {
+            try {
+                const res = await updateClient(editingClient!.id!, { notes: '' })
+                if (res.success) {
+                    toast.success('Observações do cliente excluídas!')
+                    setFormData(prev => ({ ...prev, notes: '' }))
+                    if (editingClient) editingClient.notes = ''
+                    onSuccess()
+                } else {
+                    toast.error('Erro ao excluir observações: ' + res.error)
+                }
+            } catch (error) {
+                toast.error('Ocorreu um erro ao excluir as observações')
+            }
+            return
+        }
+        try {
+            const res = await deleteNote(noteId)
+            if (res.success) {
+                toast.success('Nota excluída com sucesso!')
+                loadClientNotes()
+            } else {
+                toast.error('Erro ao excluir nota: ' + res.error)
+            }
+        } catch (error) {
+            toast.error('Ocorreu um erro ao excluir a nota')
+        }
+    }
+
+    const handleSaveEditedNote = async (noteId: string) => {
+        if (!editingNoteText.trim()) return
+        setIsSavingEditedNote(true)
+        try {
+            if (noteId === 'legacy') {
+                const res = await updateClient(editingClient!.id!, { notes: editingNoteText.trim() })
+                if (res.success) {
+                    toast.success('Observações atualizadas!')
+                    setFormData(prev => ({ ...prev, notes: editingNoteText.trim() }))
+                    if (editingClient) editingClient.notes = editingNoteText.trim()
+                    setEditingNoteId(null)
+                    onSuccess()
+                } else {
+                    toast.error('Erro ao atualizar observações: ' + res.error)
+                }
+            } else {
+                const res = await updateNote(noteId, { content: editingNoteText.trim() })
+                if (res.success) {
+                    toast.success('Nota atualizada com sucesso!')
+                    setEditingNoteId(null)
+                    loadClientNotes()
+                } else {
+                    toast.error('Erro ao atualizar nota: ' + res.error)
+                }
+            }
+        } catch (error) {
+            toast.error('Ocorreu um erro ao atualizar a nota')
+        } finally {
+            setIsSavingEditedNote(false)
+        }
+    }
 
     const [formData, setFormData] = useState({
         name: '',
@@ -1265,13 +1474,176 @@ export function ClientModal({
 
                                     {/* Notas */}
                                     <div className="space-y-4 pt-8 border-t border-border/50">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
-                                        <FormTextarea
-                                            value={formData.notes}
-                                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                            placeholder="Alguma observação importante sobre o cliente..."
-                                            rows={3}
-                                        />
+                                        <div className="flex items-center justify-between">
+                                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
+                                            {editingClient && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleAddNote}
+                                                    disabled={isSavingNote || !newNoteContent.trim()}
+                                                    className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
+                                                >
+                                                    {isSavingNote ? 'Adicionando...' : 'Adicionar Nota'}
+                                                </button>
+                                            )}
+                                        </div>
+
+                                        {!editingClient ? (
+                                            <FormTextarea
+                                                value={formData.notes}
+                                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                                placeholder="Alguma observação importante sobre o cliente (será salva como primeira nota)..."
+                                                rows={3}
+                                            />
+                                        ) : (
+                                            <div className="space-y-4">
+                                                <div className="space-y-2">
+                                                    <textarea
+                                                        value={newNoteContent}
+                                                        onChange={(e) => setNewNoteContent(e.target.value)}
+                                                        rows={2}
+                                                        placeholder="Escreva uma nova nota sobre o cliente..."
+                                                        className="w-full bg-background border border-muted-foreground/30 rounded-lg p-3 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
+                                                    />
+                                                </div>
+
+                                                <div className="space-y-3">
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setShowNotesHistory(!showNotesHistory)}
+                                                        className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-foreground uppercase tracking-wider transition-colors cursor-pointer"
+                                                    >
+                                                        <span>Notas salvas ({clientNotes.length + (formData.notes ? 1 : 0)})</span>
+                                                        <div className="flex items-center gap-1">
+                                                            {showNotesHistory ? <ChevronRight className="rotate-90 transition-transform" size={14} /> : <ChevronRight size={14} />}
+                                                        </div>
+                                                    </button>
+
+                                                    {showNotesHistory && (() => {
+                                                        const sortedNotes = [...clientNotes]
+                                                        if (formData.notes) {
+                                                            sortedNotes.push({
+                                                                id: 'legacy',
+                                                                content: formData.notes,
+                                                                created_at: editingClient?.created_at || new Date(0).toISOString(),
+                                                                profiles: { full_name: 'Observação de Cadastro' }
+                                                            })
+                                                        }
+                                                        sortedNotes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+                                                        return (
+                                                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 no-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                                                                {sortedNotes.length === 0 && (
+                                                                    <p className="text-xs text-muted-foreground text-center py-4">
+                                                                        Nenhuma nota registrada para este cliente ainda.
+                                                                    </p>
+                                                                )}
+
+                                                                {sortedNotes.map((note) => {
+                                                                    const isExpanded = !!expandedNotes[note.id]
+                                                                    const isEditing = editingNoteId === note.id
+                                                                    const isLegacy = note.id === 'legacy'
+
+                                                                    if (isEditing) {
+                                                                        return (
+                                                                            <div key={note.id} className="p-3 bg-background border border-border/40 rounded-lg space-y-2">
+                                                                                <textarea
+                                                                                    value={editingNoteText}
+                                                                                    onChange={(e) => setEditingNoteText(e.target.value)}
+                                                                                    disabled={isSavingEditedNote}
+                                                                                    rows={6}
+                                                                                    className="w-full text-sm p-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-secondary/50 resize-y font-medium text-foreground"
+                                                                                />
+                                                                                <div className="flex items-center justify-end gap-2">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => setEditingNoteId(null)}
+                                                                                        disabled={isSavingEditedNote}
+                                                                                        className="px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                                                                                    >
+                                                                                        Cancelar
+                                                                                    </button>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => handleSaveEditedNote(note.id)}
+                                                                                        disabled={isSavingEditedNote || !editingNoteText.trim()}
+                                                                                        className="px-2.5 py-1.5 text-[10px] font-bold bg-secondary text-secondary-foreground hover:opacity-90 active:scale-[0.97] rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                                                                                    >
+                                                                                        {isSavingEditedNote ? 'Salvando...' : 'Salvar'}
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        )
+                                                                    }
+
+                                                                    return (
+                                                                        <div
+                                                                            key={note.id}
+                                                                            onClick={() => toggleNoteExpanded(note.id)}
+                                                                            className="p-3 bg-background border border-border/40 rounded-lg hover:border-muted-foreground/20 transition-all relative group cursor-pointer"
+                                                                        >
+                                                                            {!isExpanded ? (
+                                                                                <div className="flex items-center justify-between gap-3">
+                                                                                    <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                                                        <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                                                                                        <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
+                                                                                            {getFirstSentence(note.content)}
+                                                                                        </span>
+                                                                                    </div>
+                                                                                    <div className="flex items-center gap-2 shrink-0">
+                                                                                        <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
+                                                                                            {formatNoteDate(note.created_at)}
+                                                                                        </span>
+                                                                                        <NoteActionsDropdown
+                                                                                            onEdit={() => {
+                                                                                                setEditingNoteId(note.id)
+                                                                                                setEditingNoteText(note.content)
+                                                                                            }}
+                                                                                            onDelete={() => handleDeleteNote(note.id)}
+                                                                                        />
+                                                                                    </div>
+                                                                                </div>
+                                                                            ) : (
+                                                                                <div className="flex gap-2 items-start">
+                                                                                    <ChevronRight
+                                                                                        size={14}
+                                                                                        className="text-muted-foreground transition-transform rotate-90 shrink-0 mt-0.5"
+                                                                                    />
+                                                                                    <div className="flex-1 min-w-0 space-y-2">
+                                                                                        <div className="flex items-center justify-between mb-1.5 select-none">
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <span className={isLegacy ? "text-[10px] font-bold text-muted-foreground uppercase tracking-wider" : "text-[10px] font-bold text-accent-icon"}>
+                                                                                                    {isLegacy ? "Observação de Cadastro" : (note.profiles?.full_name || 'Corretor')}
+                                                                                                </span>
+                                                                                            </div>
+                                                                                            <div className="flex items-center gap-2">
+                                                                                                <span className="text-[10px] text-muted-foreground font-medium">
+                                                                                                    {formatNoteDate(note.created_at)}
+                                                                                                </span>
+                                                                                                <NoteActionsDropdown
+                                                                                                    onEdit={() => {
+                                                                                                        setEditingNoteId(note.id)
+                                                                                                        setEditingNoteText(note.content)
+                                                                                                    }}
+                                                                                                    onDelete={() => handleDeleteNote(note.id)}
+                                                                                                />
+                                                                                            </div>
+                                                                                        </div>
+                                                                                        <p className="text-sm text-foreground whitespace-pre-line leading-relaxed font-medium">
+                                                                                            {note.content}
+                                                                                        </p>
+                                                                                    </div>
+                                                                                </div>
+                                                                            )}
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        )
+                                                    })()}
+                                                </div>
+                                            </div>
+                                        )}
                                     </div>
 
                                     {/* Mídias e Docs */}
@@ -1362,6 +1734,22 @@ export function ClientModal({
                     </div>
                 )}
             </div>
+
+            <ConfirmModal
+                isOpen={!!noteToDelete}
+                title="Excluir Nota"
+                message={noteToDelete === 'legacy' ? "Deseja realmente excluir a observação de cadastro do cliente?" : "Deseja realmente excluir esta nota?"}
+                confirmText="Excluir"
+                cancelText="Cancelar"
+                onConfirm={async () => {
+                    if (noteToDelete) {
+                        await executeDeleteNote(noteToDelete)
+                        setNoteToDelete(null)
+                    }
+                }}
+                onCancel={() => setNoteToDelete(null)}
+                variant="danger"
+            />
         </Modal>
     )
 }
@@ -1467,7 +1855,7 @@ function LeadCardDropdown({ lead, onMakeProposal }: { lead: any; onMakeProposal?
     const hasAttachments = lead.images?.length > 0 || lead.videos?.length > 0 || lead.documents?.length > 0
 
     return (
-        <div className="bg-card rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="bg-background rounded-xl border border-border shadow-sm overflow-hidden">
             <button
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors text-left"
