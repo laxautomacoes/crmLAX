@@ -9,7 +9,7 @@ interface FormSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
     icon?: LucideIcon
     iconSize?: number
     roundedClassName?: string
-    options: Array<{ value: string; label: string }>
+    options: Array<{ value: string; label: string; disabled?: boolean }>
 }
 
 export function FormSelect({ label, error, icon: Icon, iconSize = 18, roundedClassName, options, className = '', ...props }: FormSelectProps) {
@@ -26,11 +26,11 @@ export function FormSelect({ label, error, icon: Icon, iconSize = 18, roundedCla
                         <Icon size={iconSize} />
                     </div>
                 )}
-                <select
-                    className={`
-                        w-full ${roundedClassName || 'rounded-lg'} border border-border bg-background text-foreground text-sm outline-none transition-all
-                        focus:ring-2 focus:ring-secondary/50 focus:border-secondary
-                        disabled:opacity-50 disabled:cursor-not-allowed
+                    <select
+                        className={`
+                            w-full ${roundedClassName || 'rounded-lg'} border border-border bg-white dark:bg-background text-foreground text-sm outline-none transition-all
+                            focus:ring-2 focus:ring-secondary/50 focus:border-secondary
+                            disabled:opacity-50 disabled:cursor-not-allowed
                         appearance-none pr-10
                         ${Icon ? 'pl-10' : 'px-3'}
                         py-2
@@ -40,7 +40,7 @@ export function FormSelect({ label, error, icon: Icon, iconSize = 18, roundedCla
                     {...props}
                 >
                     {options.map((option) => (
-                        <option key={option.value} value={option.value}>
+                        <option key={option.value} value={option.value} disabled={option.disabled}>
                             {option.label}
                         </option>
                     ))}

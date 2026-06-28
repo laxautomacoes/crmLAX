@@ -83,7 +83,21 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
     const scrollRef = useRef<HTMLDivElement>(null);
     const attachMenuRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLTextAreaElement>(null);
     const [fileAccept, setFileAccept] = useState('');
+
+    // Auto-resize input
+    useEffect(() => {
+        if (inputRef.current) {
+            inputRef.current.style.height = 'auto';
+            inputRef.current.style.height = `${inputRef.current.scrollHeight}px`;
+            
+            // Scroll to bottom when input height changes to avoid hiding messages
+            if (scrollRef.current) {
+                scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
+            }
+        }
+    }, [newMessage]);
 
     // Auto-scroll to bottom
     useEffect(() => {
@@ -192,21 +206,25 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                 </div>
             </div>
 
-            {/* Chat Area */}
-            <div
-                ref={scrollRef}
-                className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar relative"
-                style={{
-                    backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")',
-                    backgroundSize: 'contain',
-                    backgroundRepeat: 'repeat',
-                    backgroundPosition: 'center'
-                }}
-            >
-                {/* Background overlay for dark mode to tint the wallpaper */}
-                <div className="absolute inset-0 bg-[#EFEAE2]/60 dark:bg-[#0b141a]/80 pointer-events-none" />
-
-                <div className="relative z-10 flex flex-col justify-end min-h-full space-y-3 pb-2">
+            {/* Chat Area Wrapper */}
+            <div className="flex-1 relative overflow-hidden bg-[#EFEAE2] dark:bg-[#0b141a]">
+                {/* Background Image fixed */}
+                <div 
+                    className="absolute inset-0 opacity-60 dark:opacity-[0.07] dark:invert pointer-events-none"
+                    style={{
+                        backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")',
+                        backgroundSize: '300px',
+                        backgroundRepeat: 'repeat',
+                        backgroundPosition: 'center'
+                    }}
+                />
+                
+                {/* Scrollable Content */}
+                <div
+                    ref={scrollRef}
+                    className="absolute inset-0 overflow-y-auto p-4 space-y-3 custom-scrollbar"
+                >
+                    <div className="flex flex-col justify-end min-h-full space-y-3 pb-2 relative z-10">
                     {(!chat || chat.length === 0) ? (
                         <div className="bg-[#FFEECD] dark:bg-[#182229] text-[#544837] dark:text-[#ffca48] p-3 rounded-lg text-[11px] text-center self-center max-w-[85%] shadow-sm leading-relaxed font-medium">
                             As mensagens e chamadas são protegidas com a criptografia de ponta a ponta. Ninguém fora desta conversa, nem mesmo o WhatsApp, pode ler ou ouvi-las.
@@ -277,6 +295,7 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                     )}
                 </div>
             </div>
+            </div>
 
             {/* Hidden file input */}
             <input
@@ -294,6 +313,7 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                         <Smile size={20} />
                     </button>
                     <textarea
+                        ref={inputRef}
                         value={newMessage}
                         onChange={(e) => setNewMessage(e.target.value)}
                         onKeyDown={(e) => {
@@ -303,7 +323,7 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                             }
                         }}
                         placeholder="Mensagem"
-                        className="w-full bg-transparent border-none focus:ring-0 outline-none focus:outline-none resize-none py-3 px-1 max-h-24 text-[13px] dark:text-[#d1d7db] placeholder:text-gray-400 dark:placeholder:text-[#8696a0]"
+                        className="w-full bg-transparent border-none focus:ring-0 outline-none focus:outline-none resize-none py-3 px-1 max-h-[100px] overflow-y-auto text-[13px] dark:text-[#d1d7db] placeholder:text-gray-400 dark:placeholder:text-[#8696a0]"
                         rows={1}
                         disabled={isSending || !onSendMessage || isUploading}
                     />

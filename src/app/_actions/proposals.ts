@@ -43,7 +43,7 @@ export async function getProposal(leadId: string) {
 
 // ─── Salvar/Atualizar proposta ───
 export async function saveProposal(
-    leadId: string,
+    leadId: string | null,
     tenantId: string,
     proposalData: {
         value: number
@@ -53,6 +53,8 @@ export async function saveProposal(
         property_id?: string
         buyer_data?: any
         template_id?: string
+        unit?: string
+        create_lead?: boolean
     }
 ) {
     const supabase = await createClient()
@@ -62,11 +64,15 @@ export async function saveProposal(
 
     try {
         // Verificar se já existe proposta para o lead
-        const { data: existing } = await supabase
-            .from('proposals')
-            .select('id')
-            .eq('lead_id', leadId)
-            .maybeSingle()
+        let existing: any = null
+        if (leadId) {
+            const { data } = await supabase
+                .from('proposals')
+                .select('id')
+                .eq('lead_id', leadId)
+                .maybeSingle()
+            existing = data
+        }
 
         const payload = {
             value: proposalData.value,
@@ -92,7 +98,7 @@ export async function saveProposal(
             result = await supabase
                 .from('proposals')
                 .insert([{
-                    lead_id: leadId,
+                    lead_id: leadId || null,
                     tenant_id: tenantId,
                     created_by: profile.id,
                     ...payload
@@ -102,6 +108,95 @@ export async function saveProposal(
         }
 
         if (result.error) throw result.error
+
+        // Atualiza a etapa do lead para Negociação se o lead estiver em etapas anteriores (ex: Novo, Atendimento)
+        if (result.data?.id && leadId) {
+            // Busca o estágio atual do lead
+            const { data: lead } = await supabase.from('leads').select('stage_id').eq('id', leadId).single()
+            
+            if (lead) {
+                const { data: stages } = await supabase
+                    .from('lead_stages')
+                    .select('id, name, order_index')
+                    .eq('tenant_id', tenantId)
+                    .order('order_index', { ascending: true })
+                
+                if (stages && stages.length > 0) {
+                    const currentStage = stages.find((s: any) => s.id === lead.stage_id)
+                    const negociacaoStage = stages.find((s: any) => s.name.toLowerCase().includes('negocia'))
+                    
+                    // Só move se encontrou a Negociação e se o estágio atual é anterior à Negociação
+                    if (negociacaoStage && currentStage && currentStage.order_index < negociacaoStage.order_index) {
+                        await supabase
+                            .from('leads')
+                            .update({ stage_id: negociacaoStage.id })
+                            .eq('id', leadId)
+                    }
+                }
+            }
+        }
+
+        // --- MARCAÇÃO DE IMÓVEL (Em Proposta) ---
+        if (proposalData.property_id) {
+            if (proposalData.unit) {
+                // Empreendimento: atualizar status da unidade no price_table
+                const { data: propData } = await supabase.from('properties').select('details').eq('id', proposalData.property_id).single()
+                if (propData && propData.details?.price_table) {
+                    const priceTable = propData.details.price_table
+                    const updatedPriceTable = priceTable.map((u: any) => {
+                        if (u.unit === proposalData.unit) {
+                            return { ...u, status: 'Em Proposta' }
+                        }
+                        return u
+                    })
+                    
+                    await supabase
+                        .from('properties')
+                        .update({ 
+                            details: { ...propData.details, price_table: updatedPriceTable } 
+                        })
+                        .eq('id', proposalData.property_id)
+                }
+            } else {
+                // Imóvel Avulso: atualizar status direto
+                await supabase
+                    .from('properties')
+                    .update({ status: 'Em Proposta' })
+                    .eq('id', proposalData.property_id)
+            }
+        }
+
+        // --- CRIAÇÃO DE LEAD (Se solicitado via NEW_PROPERTY sem lead_id) ---
+        if (proposalData.create_lead && !leadId && proposalData.contact_id) {
+            const { data: stages } = await supabase
+                .from('lead_stages')
+                .select('id, name')
+                .eq('tenant_id', tenantId)
+                .order('order_index', { ascending: true })
+                
+            const negociacaoStage = stages?.find((s: any) => s.name.toLowerCase().includes('negocia'))
+            const stageId = negociacaoStage?.id || stages?.[0]?.id
+            
+            if (stageId) {
+                const { data: newLead } = await supabase
+                    .from('leads')
+                    .insert([{
+                        tenant_id: tenantId,
+                        contact_id: proposalData.contact_id,
+                        stage_id: stageId,
+                        source: 'Proposta',
+                        property_id: proposalData.property_id || null,
+                        created_by: profile.id
+                    }])
+                    .select()
+                    .single()
+                    
+                if (newLead && result.data?.id) {
+                    // Atualiza a proposta recém criada para linkar ao novo lead
+                    await supabase.from('proposals').update({ lead_id: newLead.id }).eq('id', result.data.id)
+                }
+            }
+        }
 
         revalidatePath('/leads')
         revalidatePath('/proposals')

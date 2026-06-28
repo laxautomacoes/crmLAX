@@ -1,7 +1,10 @@
 export function autoFillProposalFields(
     fields: any[],
     client: any,
-    leadId: string
+    leadId: string,
+    systemProperty?: any,
+    selectedUnit?: string,
+    availableUnits?: any[]
 ): Record<string, string> {
     const responses: Record<string, string> = {};
     if (!fields || !client) return responses;
@@ -15,9 +18,19 @@ export function autoFillProposalFields(
         let val = '';
         switch (field.crm_binding) {
             case 'property.title': {
-                const title = property?.title || lead?.property_interest || '';
-                if (property) {
-                    const details = property.details || {};
+                let activeProperty = property;
+                let title = activeProperty?.title || lead?.property_interest || '';
+                
+                if (systemProperty) {
+                    activeProperty = systemProperty;
+                    title = systemProperty.title || '';
+                    if (selectedUnit && (systemProperty.type === 'Empreendimento' || systemProperty.details?.is_empreendimento)) {
+                        title += ` - Unidade ${selectedUnit}`;
+                    }
+                }
+                
+                if (activeProperty) {
+                    const details = activeProperty.details || {};
                     const parts = [title];
                     
                     const apto = details.endereco?.apto || details.apto;
@@ -44,20 +57,28 @@ export function autoFillProposalFields(
                 break;
             }
             case 'property.price':
-                val = property?.price
-                    ? parseFloat(property.price).toLocaleString('pt-BR', {
-                          minimumFractionDigits: 2,
-                      })
-                    : '';
+                if (systemProperty) {
+                    if ((systemProperty.type === 'Empreendimento' || systemProperty.details?.is_empreendimento) && selectedUnit && availableUnits && availableUnits.length > 0) {
+                        const unitInfo = availableUnits.find((u: any) => u.unit_number === selectedUnit);
+                        if (unitInfo?.valor_total) {
+                            val = parseFloat(unitInfo.valor_total.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                        }
+                    }
+                    if (!val && systemProperty.price) {
+                        val = parseFloat(systemProperty.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                    }
+                } else if (property?.price) {
+                    val = parseFloat(property.price).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+                }
                 break;
             case 'property.type':
-                val = property?.type || '';
+                val = systemProperty?.type || property?.type || '';
                 break;
             case 'property.address_city':
-                val = property?.address_city || '';
+                val = systemProperty?.address_city || property?.address_city || '';
                 break;
             case 'property.address_state':
-                val = property?.address_state || '';
+                val = systemProperty?.address_state || property?.address_state || '';
                 break;
             default:
                 if (field.crm_binding.startsWith('contact.')) {
@@ -66,8 +87,12 @@ export function autoFillProposalFields(
                     const rawValStr = rawVal !== null && rawVal !== undefined ? String(rawVal) : '';
                     
                     if (propName.includes('date') && /^\d{4}-\d{2}-\d{2}$/.test(rawValStr)) {
-                        const [year, month, day] = rawValStr.split('-');
-                        val = `${day}/${month}/${year}`;
+                        if (field.type === 'date') {
+                            val = rawValStr;
+                        } else {
+                            const [year, month, day] = rawValStr.split('-');
+                            val = `${day}/${month}/${year}`;
+                        }
                     } else {
                         val = rawValStr;
                     }

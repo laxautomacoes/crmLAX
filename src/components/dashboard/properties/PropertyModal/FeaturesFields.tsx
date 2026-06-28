@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
+import { ConfirmModal } from '@/components/shared/ConfirmModal'
 import { Plus, Check, Clock, X, Pencil, Trash2 } from 'lucide-react'
 import { addTenantCustomFeature, approveTenantCustomFeature, editTenantCustomFeature, deleteTenantCustomFeature } from '@/app/_actions/tenant'
 import type { CustomFeature } from '@/app/_actions/tenant'
@@ -25,6 +26,8 @@ export function FeaturesFields({ formData, setFormData, tenantId, isAdmin, custo
     const [editingId, setEditingId] = useState<string | null>(null)
     const [editingName, setEditingName] = useState('')
     const [isEditingSaving, setIsEditingSaving] = useState(false)
+    const [deleteModal, setDeleteModal] = useState<{ isOpen: boolean, featureId: string, label: string }>({ isOpen: false, featureId: '', label: '' })
+    const [isDeleting, setIsDeleting] = useState(false)
 
     const handleEditSave = async (featureId: string) => {
         const trimmed = editingName.trim()
@@ -57,8 +60,12 @@ export function FeaturesFields({ formData, setFormData, tenantId, isAdmin, custo
     }
 
     const handleDelete = async (featureId: string, label: string) => {
-        if (!confirm(`Tem certeza que deseja excluir a característica "${label}" permanentemente?`)) return
+        setDeleteModal({ isOpen: true, featureId, label })
+    }
 
+    const confirmDelete = async () => {
+        const { featureId } = deleteModal
+        setIsDeleting(true)
         try {
             const result = await deleteTenantCustomFeature(tenantId, featureId)
             if (result.success) {
@@ -77,6 +84,9 @@ export function FeaturesFields({ formData, setFormData, tenantId, isAdmin, custo
             }
         } catch {
             toast.error('Erro ao excluir característica.')
+        } finally {
+            setIsDeleting(false)
+            setDeleteModal({ isOpen: false, featureId: '', label: '' })
         }
     }
 
@@ -154,7 +164,7 @@ export function FeaturesFields({ formData, setFormData, tenantId, isAdmin, custo
             </div>
 
             {isAddingNew && (
-                <div className="flex items-center gap-2 p-3 rounded-lg bg-white dark:bg-card border border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="flex items-center gap-2 p-3 rounded-lg bg-white dark:bg-background border border-border/40 animate-in fade-in slide-in-from-top-2 duration-200">
                     <input
                         type="text"
                         value={newFeatureName}
@@ -192,47 +202,21 @@ export function FeaturesFields({ formData, setFormData, tenantId, isAdmin, custo
                 </div>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                <FormCheckbox
-                    label="Vista livre"
-                    checked={formData.details.has_vista_livre || false}
-                    onChange={(e) => setFormData({
-                        ...formData,
-                        details: { ...formData.details, has_vista_livre: e.target.checked }
-                    })}
-                />
-            </div>
+            <div className="flex flex-col gap-2 pt-2">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                    <div className="flex items-center p-1.5 -ml-1.5 min-h-[36px]">
+                        <FormCheckbox
+                            label="Vista livre"
+                            checked={formData.details.has_vista_livre || false}
+                            onChange={(e) => setFormData({
+                                ...formData,
+                                details: { ...formData.details, has_vista_livre: e.target.checked }
+                            })}
+                        />
+                    </div>
 
-            <div className="w-full sm:w-1/3 pt-2">
-                <FormSelect
-                    label="Face Solar"
-                    value={formData.details.face_solar || ''}
-                    onChange={(e) => setFormData({
-                        ...formData,
-                        details: { ...formData.details, face_solar: e.target.value }
-                    })}
-                    options={[
-                        { value: '', label: 'Não informado' },
-                        { value: 'Norte', label: 'Norte' },
-                        { value: 'Sul', label: 'Sul' },
-                        { value: 'Leste', label: 'Leste' },
-                        { value: 'Oeste', label: 'Oeste' },
-                        { value: 'Noroeste', label: 'Noroeste' },
-                        { value: 'Nordeste', label: 'Nordeste' },
-                        { value: 'Sudoeste', label: 'Sudoeste' },
-                        { value: 'Sudeste', label: 'Sudeste' }
-                    ]}
-                />
-            </div>
-
-            {visibleCustom.length > 0 && (
-                <div className="space-y-2 pt-2">
-                    <h4 className="text-base font-black text-foreground uppercase tracking-widest">
-                        Características Personalizadas
-                    </h4>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
-                        {visibleCustom.map((feature) => (
-                            <div key={feature.id} className="flex items-center justify-between group p-1.5 rounded-lg hover:bg-muted/10 transition-all min-h-[36px]">
+                    {visibleCustom.map((feature) => (
+                        <div key={feature.id} className="flex items-center justify-between group p-1.5 -ml-1.5 rounded-lg hover:bg-muted/10 transition-all min-h-[36px]">
                                 {editingId === feature.id ? (
                                     <div className="flex items-center gap-2 w-full animate-in fade-in duration-200">
                                         <input
@@ -276,7 +260,7 @@ export function FeaturesFields({ formData, setFormData, tenantId, isAdmin, custo
                                     <>
                                         <div className="flex items-center gap-2">
                                             <FormCheckbox
-                                                label={feature.label}
+                                                label={feature.label.charAt(0).toUpperCase() + feature.label.slice(1)}
                                                 checked={(formData.details as any)[feature.id] || false}
                                                 onChange={(e) => setFormData({
                                                     ...formData,
@@ -329,9 +313,48 @@ export function FeaturesFields({ formData, setFormData, tenantId, isAdmin, custo
                                 )}
                             </div>
                         ))}
+                </div>
+
+                <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">Face Solar</span>
+                    <div className="w-48">
+                        <FormSelect
+                            value={formData.details.face_solar || ''}
+                            onChange={(e) => setFormData({
+                                ...formData,
+                                details: { ...formData.details, face_solar: e.target.value }
+                            })}
+                            options={[
+                                { value: '', label: 'Não informado' },
+                                { value: 'Norte', label: 'Norte' },
+                                { value: 'Sul', label: 'Sul' },
+                                { value: 'Leste', label: 'Leste' },
+                                { value: 'Oeste', label: 'Oeste' },
+                                { value: 'Noroeste', label: 'Noroeste' },
+                                { value: 'Nordeste', label: 'Nordeste' },
+                                { value: 'Sudoeste', label: 'Sudoeste' },
+                                { value: 'Sudeste', label: 'Sudeste' }
+                            ]}
+                        />
                     </div>
                 </div>
-            )}
+            </div>
+
+            <ConfirmModal
+                isOpen={deleteModal.isOpen}
+                onCancel={() => setDeleteModal({ isOpen: false, featureId: '', label: '' })}
+                onConfirm={confirmDelete}
+                title="EXCLUIR CARACTERÍSTICA"
+                message={
+                    <>
+                        Tem certeza que deseja excluir a característica "{deleteModal.label}"?
+                        <br />
+                        Essa ação não pode ser desfeita.
+                    </>
+                }
+                confirmLabel="Excluir"
+                isLoading={isDeleting}
+            />
         </div>
     )
 }

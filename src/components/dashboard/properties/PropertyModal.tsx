@@ -35,6 +35,7 @@ function getEmptyFormData() {
         title: '',
         description: '',
         price: '',
+        commission_rate: '',
         type: 'apartment',
         status: 'Pending',
         created_by: null as string | null,
@@ -64,6 +65,8 @@ function getEmptyFormData() {
             numero_elevadores: '',
             valor_condominio: '',
             valor_iptu: '',
+            valor_proprietario: '',
+            valor_comissao: '',
             obs_dormitorios: '',
             has_sacada_com_churrasqueira: false,
             has_sacada_sem_churrasqueira: false,
@@ -140,6 +143,7 @@ function isFormEmpty(data: ReturnType<typeof getEmptyFormData>): boolean {
     return data.title === empty.title &&
         data.description === empty.description &&
         data.price === empty.price &&
+        data.commission_rate === empty.commission_rate &&
         data.type === empty.type &&
         data.images.length === 0 &&
         data.videos.length === 0 &&
@@ -204,6 +208,8 @@ interface EditingPropertyDetails {
     numero_elevadores?: string
     valor_condominio?: string
     valor_iptu?: string
+    valor_proprietario?: string
+    valor_comissao?: string
     obs_dormitorios?: string
     has_sacada_com_churrasqueira?: boolean
     has_sacada_sem_churrasqueira?: boolean
@@ -441,6 +447,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 title: editingProperty.title || '',
                 description: editingProperty.description || editingProperty.details?.description || '',
                 price: editingProperty.price ? formatCurrencyBRL(Math.round(Number(editingProperty.price) * 100).toString()) : '',
+                commission_rate: editingProperty.commission_rate ? editingProperty.commission_rate.toString().replace('.', ',') : '',
                 type: editingProperty.type || 'apartment',
                 status: editingProperty.status || 'Pending',
                 created_by: editingProperty.created_by || null,
@@ -470,6 +477,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     numero_elevadores: editingProperty.details?.numero_elevadores || '',
                     valor_condominio: editingProperty.details?.valor_condominio ? formatCurrencyBRL(Math.round(Number(editingProperty.details.valor_condominio) * 100).toString()) : '',
                     valor_iptu: editingProperty.details?.valor_iptu ? formatCurrencyBRL(Math.round(Number(editingProperty.details.valor_iptu) * 100).toString()) : '',
+                    valor_proprietario: editingProperty.details?.valor_proprietario ? formatCurrencyBRL(Math.round(Number(editingProperty.details.valor_proprietario) * 100).toString()) : '',
+                    valor_comissao: editingProperty.details?.valor_comissao ? formatCurrencyBRL(Math.round(Number(editingProperty.details.valor_comissao) * 100).toString()) : '',
                     obs_dormitorios: editingProperty.details?.obs_dormitorios || '',
                     has_sacada_com_churrasqueira: editingProperty.details?.has_sacada_com_churrasqueira || false,
                     has_sacada_sem_churrasqueira: editingProperty.details?.has_sacada_sem_churrasqueira || false,
@@ -698,6 +707,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             title: finalTitle,
             price: isNaN(parsedPrice) ? 0 : parsedPrice,
             description: formData.description || '',
+            commission_rate: formData.commission_rate ? parseFloat(formData.commission_rate.replace(',', '.')) : null,
             partner_id: formData.partner_id || null,
             partner_commission_split: formData.partner_commission_split ? Number(formData.partner_commission_split) : null,
             details: {
@@ -706,6 +716,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 quartos: formData.details.quartos || _dorm || '',
                 valor_condominio: parseCurrencyBRL(formData.details.valor_condominio || '0'),
                 valor_iptu: parseCurrencyBRL(formData.details.valor_iptu || '0'),
+                valor_proprietario: formData.details.valor_proprietario || '',
+                valor_comissao: formData.details.valor_comissao || '',
                 description: formData.description || ''
             }
         }

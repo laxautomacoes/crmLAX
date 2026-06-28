@@ -240,7 +240,21 @@ export function LeadModal({
         try {
             const res = await enrollLeadInSequence(editingLead.id, selectedSequenceId)
             if (res.success) {
-                toast.success('Lead inscrito na sequência com sucesso!')
+                const followupStage = stages.find(s => s.name.toLowerCase().includes('follow'))
+                
+                if (followupStage && leadData.stage_id !== followupStage.id) {
+                    const updateRes = await updateLead(tenantId, editingLead.id, { stage_id: followupStage.id })
+                    if (updateRes.success) {
+                        setLeadData(prev => ({ ...prev, stage_id: followupStage.id }))
+                        toast.success('Sequência iniciada! O lead foi movido para a etapa de Follow-up.')
+                        onSuccess() // To refresh the Kanban board
+                    } else {
+                        toast.success('Lead inscrito na sequência com sucesso!')
+                    }
+                } else {
+                    toast.success('Lead inscrito na sequência com sucesso!')
+                }
+                
                 setSelectedSequenceId('')
                 loadFollowupData()
             } else {
@@ -752,6 +766,12 @@ export function LeadModal({
             if (editingLead?.id) {
                 result = await updateLead(tenantId, editingLead.id, dataToSubmit)
             } else {
+                if (selectedSequenceId) {
+                    const followupStage = stages.find(s => s.name.toLowerCase().includes('follow'))
+                    if (followupStage) {
+                        dataToSubmit.stage_id = followupStage.id
+                    }
+                }
                 result = await createLead(tenantId, dataToSubmit)
                 if (result.success && result.data?.id && selectedSequenceId) {
                     try {

@@ -50,7 +50,7 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
                     <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border shrink-0 gap-3 md:gap-4">
                         <div className={`flex-1 min-w-0 ${titleClassName || ''}`}>
                             {typeof title === 'string' ? (
-                                <h3 className="text-lg font-semibold text-foreground truncate">{title}</h3>
+                                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">{title}</h3>
                             ) : (
                                 title
                             )}

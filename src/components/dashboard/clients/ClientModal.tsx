@@ -1679,6 +1679,7 @@ export function ClientModal({
                             tenantId={tenantId}
                             initialLeadId={pendingProposalLeadId}
                             onConsumeInitialLead={() => setPendingProposalLeadId(null)}
+                            onSuccess={onSuccess}
                         />
                     </div>
                 )}

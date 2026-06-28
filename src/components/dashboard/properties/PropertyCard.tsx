@@ -165,6 +165,11 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                         <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
                             {translatePropertyType(prop.type)}
                         </div>
+                        {prop.status === 'Em Proposta' && (
+                            <div className={`px-2 py-0.5 rounded-full text-[10px] font-black uppercase tracking-widest shadow-sm ${getStatusStyles(prop.status)}`}>
+                                {translateStatus(prop.status)}
+                            </div>
+                        )}
                         {prop.videos?.length > 0 && (
                             <div className="px-1.5 py-0.5 bg-foreground/10 rounded flex items-center gap-1 text-[10px] font-black text-foreground shadow-sm" title={`${prop.videos.length} vídeo(s)`}>
                                 <Video size={10} strokeWidth={3} />

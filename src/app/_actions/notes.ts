@@ -7,7 +7,7 @@ import { getProfile } from './profile'
 export async function getNotes(tenantId: string) {
     const supabase = await createClient()
     const { profile } = await getProfile()
-    
+
     try {
         const { data, error } = await supabase
             .from('notes')
@@ -27,7 +27,7 @@ export async function getNotes(tenantId: string) {
 
 export async function getNotesByLeadId(leadId: string) {
     const supabase = await createClient()
-    
+
     try {
         const { data, error } = await supabase
             .from('notes')
@@ -45,7 +45,7 @@ export async function getNotesByLeadId(leadId: string) {
 
 export async function getNotesByContactId(contactId: string) {
     const supabase = await createClient()
-    
+
     try {
         const { data, error } = await supabase
             .from('notes')
@@ -81,7 +81,7 @@ export async function createNote(tenantId: string, noteData: any) {
             .single()
 
         if (error) throw error
-        
+
         revalidatePath('/notes')
         return { success: true, data }
     } catch (error: any) {
@@ -96,7 +96,7 @@ export async function updateNote(noteId: string, noteData: any) {
     if ('property_id' in noteData) {
         noteData.property_id = noteData.property_id || null;
     }
-    
+
     try {
         const { data, error } = await supabase
             .from('notes')
@@ -106,7 +106,7 @@ export async function updateNote(noteId: string, noteData: any) {
             .single()
 
         if (error) throw error
-        
+
         revalidatePath('/notes')
         return { success: true, data }
     } catch (error: any) {
@@ -117,7 +117,7 @@ export async function updateNote(noteId: string, noteData: any) {
 
 export async function deleteNote(noteId: string) {
     const supabase = await createClient()
-    
+
     try {
         const { error } = await supabase
             .from('notes')
@@ -125,7 +125,7 @@ export async function deleteNote(noteId: string) {
             .eq('id', noteId)
 
         if (error) throw error
-        
+
         revalidatePath('/notes')
         return { success: true }
     } catch (error: any) {

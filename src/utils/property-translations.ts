@@ -40,6 +40,7 @@ export function getStatusStyles(status: string): string {
         case 'disponível':
         case 'disponivel':
         case 'ativo': return 'bg-emerald-500/10 text-emerald-600';
+        case 'em proposta': return 'bg-amber-500/10 text-amber-600';
         case 'pending':
         case 'pendente': return 'bg-secondary text-secondary-foreground';
         case 'inativo': return 'bg-red-500/10 text-red-600';
@@ -53,6 +54,7 @@ export function translateStatus(status: string): string {
     switch (normalizedStatus) {
         case 'available': return 'Disponível';
         case 'pending': return 'Pendente';
+        case 'em proposta': return 'Em Proposta';
         default: return status;
     }
 }

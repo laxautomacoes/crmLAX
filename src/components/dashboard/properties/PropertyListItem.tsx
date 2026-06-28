@@ -180,7 +180,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-4 py-5">
                 <div className="flex flex-col gap-1.5 items-center">
-                    {(isAdmin || prop.status === 'Pending') && (
+                    {(isAdmin || prop.status === 'Pending' || prop.status === 'Em Proposta') && (
                         <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
                             {translateStatus(prop.status)}
                         </span>

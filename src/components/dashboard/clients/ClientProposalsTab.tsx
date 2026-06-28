@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef, Fragment } from 'react'
 import { getProposalsByContact, saveProposal, updateProposalStatus, getProposalTemplates, archiveProposal, deleteProposal } from '@/app/_actions/proposals'
+import { getPropertyUnits } from '@/app/_actions/property-units'
 import { generateProposalPdf } from '@/app/_actions/generate-proposal-pdf'
 import { getWhatsAppInstance } from '@/app/_actions/whatsapp'
 import { evolutionService } from '@/lib/evolution'
@@ -9,17 +10,20 @@ import { createClient } from '@/lib/supabase/client'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { Plus, FileText, Home, Loader2, ChevronDown, ChevronUp, X, Archive, Trash2, MoreVertical, Eye, Send, MessageSquare } from 'lucide-react'
+import { Plus, FileText, Home, Loader2, ChevronDown, ChevronUp, X, Archive, Trash2, MoreVertical, Eye, Send, MessageSquare, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 import { autoFillProposalFields } from '@/lib/utils/proposal-autofill'
 import { ProposalDynamicForm } from './ProposalDynamicForm'
+import { Modal } from '@/components/shared/Modal'
+import { translatePropertyType } from '@/utils/property-translations'
 
 interface ClientProposalsTabProps {
     client: any
     tenantId: string
     initialLeadId?: string | null
     onConsumeInitialLead?: () => void
+    onSuccess?: () => void
 }
 
 interface ProposalItem {
@@ -160,6 +164,17 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
     const [isEditing, setIsEditing] = useState(false)
     const [editingProposalId, setEditingProposalId] = useState<string | null>(null)
 
+    // Estados para seleção de imóvel do sistema
+    const [propertySearchTerm, setPropertySearchTerm] = useState('')
+    const [propertySearchResults, setPropertySearchResults] = useState<any[]>([])
+    const [isSearchingProperty, setIsSearchingProperty] = useState(false)
+    const [selectedSystemProperty, setSelectedSystemProperty] = useState<any>(null)
+    const [createLeadForProperty, setCreateLeadForProperty] = useState(false)
+    const [selectedUnit, setSelectedUnit] = useState('')
+    const [isPropertySelectorModalOpen, setIsPropertySelectorModalOpen] = useState(false)
+    const [availableUnits, setAvailableUnits] = useState<any[]>([])
+    const [isLoadingUnits, setIsLoadingUnits] = useState(false)
+
     // Configurações do WhatsApp
     const [waInstance, setWaInstance] = useState<any>(null)
     const [waLoading, setWaLoading] = useState(false)
@@ -216,7 +231,8 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         if (initialLeadId && proposals.length > 0) {
             const existingProposal = proposals.find(p => p.lead_id === initialLeadId)
             if (existingProposal) {
-                setExpandedId(existingProposal.id)
+                // Removemos o auto-expand a pedido do usuário
+                // setExpandedId(existingProposal.id) 
                 setShowNewForm(false)
             } else {
                 setSelectedLeadId(initialLeadId)
@@ -252,9 +268,59 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         }
     }, [selectedLeadId, selectedTemplateId, templates, client])
 
+    useEffect(() => {
+        if (!isPropertySelectorModalOpen) return
+
+        const timer = setTimeout(async () => {
+            setIsSearchingProperty(true)
+            const supabase = createClient()
+            let query = supabase
+                .from('properties')
+                .select('id, title, type, price, details, status, created_at')
+                .eq('tenant_id', tenantId)
+                .eq('is_archived', false)
+
+            if (propertySearchTerm && propertySearchTerm.length >= 2) {
+                query = query.or(`title.ilike.%${propertySearchTerm}%,details->>address_city.ilike.%${propertySearchTerm}%,details->>address_neighborhood.ilike.%${propertySearchTerm}%`)
+            }
+
+            const { data, error } = await query.order('created_at', { ascending: false }).limit(20)
+            
+            if (error) {
+                console.error('Error fetching properties:', error)
+            }
+            if (data) {
+                setPropertySearchResults(data)
+            } else {
+                setPropertySearchResults([])
+            }
+            setIsSearchingProperty(false)
+        }, 500)
+
+        return () => clearTimeout(timer)
+    }, [propertySearchTerm, tenantId, isPropertySelectorModalOpen])
+
+    useEffect(() => {
+        async function fetchUnits() {
+            if (selectedSystemProperty?.id && (selectedSystemProperty?.type === 'Empreendimento' || selectedSystemProperty?.details?.is_empreendimento)) {
+                setIsLoadingUnits(true)
+                const res = await getPropertyUnits(selectedSystemProperty.id)
+                if (res.success && res.data) {
+                    setAvailableUnits(res.data)
+                } else {
+                    setAvailableUnits([])
+                }
+                setIsLoadingUnits(false)
+            } else {
+                setAvailableUnits([])
+            }
+        }
+        fetchUnits()
+    }, [selectedSystemProperty])
+
     const handleTemplateChange = (templateId: string) => {
         setSelectedTemplateId(templateId)
-        if (!templateId) {
+        if (!templateId || templateId === 'simple') {
             setDynamicFields([])
             setDynamicResponses({})
             return
@@ -265,13 +331,25 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             const fields = template.mapped_fields || []
             setDynamicFields(fields)
             if (selectedLeadId) {
-                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId)
+                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId, selectedSystemProperty, selectedUnit, availableUnits)
                 setDynamicResponses(autoFilled)
             } else {
                 setDynamicResponses({})
             }
         }
     }
+
+    // Re-trigger autofill if property/unit changes while template is selected
+    useEffect(() => {
+        if (selectedTemplateId && selectedTemplateId !== 'simple' && selectedLeadId) {
+            const template = templates.find(t => t.id === selectedTemplateId)
+            if (template) {
+                const fields = template.mapped_fields || []
+                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId, selectedSystemProperty, selectedUnit, availableUnits)
+                setDynamicResponses(prev => ({ ...prev, ...autoFilled }))
+            }
+        }
+    }, [selectedSystemProperty, selectedUnit, availableUnits, selectedLeadId])
 
     const resetForm = () => {
         setFormData({ value: '', down_payment: '', financing: '', installments: '', permutas: '', notes: '' })
@@ -282,6 +360,10 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         setShowNewForm(false)
         setIsEditing(false)
         setEditingProposalId(null)
+        setPropertySearchTerm('')
+        setSelectedSystemProperty(null)
+        setCreateLeadForProperty(false)
+        setSelectedUnit('')
     }
 
     const handleStartEdit = (proposal: ProposalItem) => {
@@ -306,7 +388,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             }
             setDynamicResponses(proposal.buyer_data || {})
         } else {
-            setSelectedTemplateId('')
+            setSelectedTemplateId('simple')
             setDynamicFields([])
             setDynamicResponses({})
         }
@@ -320,6 +402,16 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
     const handleCreateProposal = async () => {
         if (!selectedLeadId) {
             toast.error('Selecione um lead/imóvel para criar a proposta.')
+            return
+        }
+
+        if (selectedLeadId === 'NEW_PROPERTY' && !selectedSystemProperty) {
+            toast.error('Selecione um imóvel do sistema.')
+            return
+        }
+
+        if (selectedLeadId === 'NEW_PROPERTY' && selectedSystemProperty?.type === 'Empreendimento' && !selectedUnit) {
+            toast.error('Selecione a unidade do empreendimento.')
             return
         }
 
@@ -337,18 +429,23 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             },
             status: 'criada',
             contact_id: client.id,
-            property_id: lead?.property_id || undefined,
-            template_id: selectedTemplateId || undefined,
-            buyer_data: selectedTemplateId ? dynamicResponses : undefined
+            property_id: selectedLeadId === 'NEW_PROPERTY' ? selectedSystemProperty.id : (lead?.property_id || undefined),
+            template_id: selectedTemplateId && selectedTemplateId !== 'simple' ? selectedTemplateId : undefined,
+            buyer_data: selectedTemplateId && selectedTemplateId !== 'simple' ? dynamicResponses : undefined,
+            unit: selectedLeadId === 'NEW_PROPERTY' ? selectedUnit : undefined,
+            create_lead: selectedLeadId === 'NEW_PROPERTY' ? createLeadForProperty : undefined
         }
 
-        const res = await saveProposal(selectedLeadId, tenantId, payload)
+        const leadIdToSave = selectedLeadId === 'NEW_PROPERTY' ? null : selectedLeadId
+
+        const res = await saveProposal(leadIdToSave, tenantId, payload)
         if (res.success) {
             toast.success(isEditing ? 'Proposta salva com sucesso!' : 'Proposta criada com sucesso!')
             resetForm()
             // Recarregar
             const updated = await getProposalsByContact(client.id)
             if (updated.success && updated.data) setProposals(updated.data as ProposalItem[])
+            if (onSuccess) onSuccess()
         } else {
             toast.error('Erro ao salvar proposta: ' + res.error)
         }
@@ -360,6 +457,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         if (res.success) {
             setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: newStatus } : p))
             toast.success(`Status atualizado para "${STATUS_OPTIONS.find(s => s.value === newStatus)?.label}"`)
+            if (onSuccess) onSuccess()
         } else {
             toast.error('Erro ao atualizar status')
         }
@@ -386,6 +484,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             setProposals(prev => prev.filter(p => p.id !== proposalToDelete.id))
             toast.success('Proposta excluída com sucesso!')
             setProposalToDelete(null)
+            if (onSuccess) onSuccess()
         } else {
             toast.error('Erro ao excluir proposta: ' + res.error)
         }
@@ -400,6 +499,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             setProposals(prev => prev.map(p => p.id === proposalToArchive.id ? { ...p, is_archived: true } : p))
             toast.success('Proposta arquivada com sucesso!')
             setProposalToArchive(null)
+            if (onSuccess) onSuccess()
         } else {
             toast.error('Erro ao arquivar proposta: ' + res.error)
         }
@@ -480,10 +580,10 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
         }
     }
 
-    const renderProposalForm = (isInline = false) => {
+    const renderProposalForm = (isInline = false, inModal = false) => {
         return (
             <div className={`${isInline ? 'bg-muted/10 p-5 rounded-lg border border-border/30' : 'bg-white dark:bg-muted/10 p-5 rounded-lg border border-border/40'} space-y-4 animate-in fade-in duration-200 text-left`}>
-                {!isInline && (
+                {!isInline && !inModal && (
                     <div className="flex items-center justify-end">
                         <button onClick={resetForm} className="p-1 hover:bg-muted rounded-md transition-colors">
                             <X size={14} className="text-muted-foreground" />
@@ -492,29 +592,181 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                 )}
 
                 {/* Seletor de Lead/Imóvel */}
-                <div className="grid grid-cols-1 gap-3">
+                {!(selectedLeadId === 'NEW_PROPERTY' && selectedSystemProperty) && (
+                    <div className="grid grid-cols-1 gap-3">
+                        <FormSelect
+                            label="Lead / Imóvel de Interesse"
+                            value={selectedLeadId}
+                            disabled={isEditing}
+                            onChange={e => {
+                                const val = e.target.value
+                                setSelectedLeadId(val)
+                                if (val === 'NEW_PROPERTY' && !selectedSystemProperty) {
+                                    setIsPropertySelectorModalOpen(true)
+                                }
+                            }}
+                            options={[
+                                { value: '', label: 'Selecione o lead...' },
+                                ...clientLeads.map((lead: any) => {
+                                    const hasProposal = lead.proposals?.length > 0 || lead.properties?.status === 'Em Proposta'
+                                    const label = lead.property_interest || lead.properties?.title || lead.source || `Lead ${new Date(lead.created_at).toLocaleDateString('pt-BR')}`
+                                    return {
+                                        value: lead.id,
+                                        label: hasProposal ? `${label} (Já possui proposta)` : label,
+                                        disabled: hasProposal
+                                    }
+                                }),
+                                { value: 'NEW_PROPERTY', label: '+ Escolher Imóvel' }
+                            ]}
+                        />
+                    </div>
+                )}
+
+                {/* Seleção de Imóvel do Sistema */}
+                {selectedLeadId === 'NEW_PROPERTY' && selectedSystemProperty && (
+                    <div className="space-y-4">
+                        {selectedSystemProperty && (
+                            <div>
+                                <label className="block text-xs font-bold text-foreground ml-1 mb-2">Imóvel</label>
+                                <div className="bg-background p-3 rounded-lg border border-border flex items-start justify-between gap-3">
+                                <div>
+                                    <span className="block text-sm font-bold text-foreground">{selectedSystemProperty.title}</span>
+                                    {!(selectedSystemProperty?.type === 'Empreendimento' || selectedSystemProperty?.details?.is_empreendimento) && (
+                                        <span className="block text-xs text-muted-foreground">Valor: {selectedSystemProperty.price ? `R$ ${selectedSystemProperty.price.toLocaleString('pt-BR')}` : '—'}</span>
+                                    )}
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedSystemProperty(null)
+                                        setIsPropertySelectorModalOpen(true)
+                                    }}
+                                    className="text-xs text-red-500 hover:underline"
+                                >
+                                    Trocar
+                                </button>
+                            </div>
+                        </div>
+                        )}
+                        
+                        {/* Seleção de Unidade se for Empreendimento */}
+                        {(selectedSystemProperty?.type === 'Empreendimento' || selectedSystemProperty?.details?.is_empreendimento) && (
+                            availableUnits.length > 0 ? (
+                                <FormSelect
+                                    label="Unidade"
+                                    value={selectedUnit}
+                                    onChange={e => setSelectedUnit(e.target.value)}
+                                    options={[
+                                        { value: '', label: 'Selecione a unidade...' },
+                                        ...availableUnits
+                                            .filter((u: any) => {
+                                                if (!u.status) return true;
+                                                const s = u.status.toLowerCase();
+                                                return s === 'disponível' || s === 'disponivel' || s === 'available' || s === 'ativo';
+                                            })
+                                            .sort((a: any, b: any) => {
+                                                const aNum = parseInt(a.unit_number?.replace(/\D/g, '') || '0', 10);
+                                                const bNum = parseInt(b.unit_number?.replace(/\D/g, '') || '0', 10);
+                                                if (aNum !== bNum) return aNum - bNum;
+                                                const aTower = a.block_tower || '';
+                                                const bTower = b.block_tower || '';
+                                                return aTower.localeCompare(bTower);
+                                            })
+                                            .map((u: any) => {
+                                                let towerStr = '';
+                                                if (u.block_tower) {
+                                                    const t = u.block_tower.trim();
+                                                    if (t.toLowerCase().includes('torre') || t.toLowerCase().includes('bloco')) {
+                                                        towerStr = ` (${t})`;
+                                                    } else {
+                                                        towerStr = ` (Torre ${t})`;
+                                                    }
+                                                }
+                                                return {
+                                                    value: u.unit_number,
+                                                    label: `${u.unit_number}${towerStr} - ${u.valor_total ? `R$ ${parseFloat(u.valor_total).toLocaleString('pt-BR')}` : 'Sob Consulta'}`
+                                                };
+                                            })
+                                    ]}
+                                />
+                            ) : (
+                                <div className="relative">
+                                    <FormInput
+                                        label="Unidade"
+                                        value={selectedUnit}
+                                        onChange={e => setSelectedUnit(e.target.value)}
+                                        placeholder="Ex: Apto 101, Torre B"
+                                        disabled={isLoadingUnits}
+                                    />
+                                    {isLoadingUnits && (
+                                        <Loader2 size={14} className="absolute right-3 top-[34px] animate-spin text-muted-foreground" />
+                                    )}
+                                </div>
+                            )
+                        )}
+
+                        {selectedSystemProperty && (
+                            <label className="flex items-center gap-2 cursor-pointer mt-2">
+                                <input
+                                    type="checkbox"
+                                    checked={createLeadForProperty}
+                                    onChange={e => setCreateLeadForProperty(e.target.checked)}
+                                    className="rounded border-border text-secondary focus:ring-secondary/20"
+                                />
+                                <span className="text-sm text-foreground">Criar lead para esta negociação</span>
+                            </label>
+                        )}
+                    </div>
+                )}
+
+                {/* Modelo de Ficha de Proposta */}
+                <div className="pt-2 border-t border-border/30">
                     <FormSelect
-                        label="Lead / Imóvel de Interesse"
-                        value={selectedLeadId}
-                        disabled={isEditing}
-                        onChange={e => setSelectedLeadId(e.target.value)}
+                        label="Modelo de Ficha de Proposta"
+                        value={selectedTemplateId}
+                        onChange={e => handleTemplateChange(e.target.value)}
                         options={[
-                            { value: '', label: 'Selecione o lead...' },
-                            ...clientLeads.map((lead: any) => ({
-                                value: lead.id,
-                                label: lead.property_interest || lead.properties?.title || lead.source || `Lead ${new Date(lead.created_at).toLocaleDateString('pt-BR')}`
+                            { value: '', label: 'Selecione um modelo...' },
+                            { value: 'simple', label: 'Ficha Simples (Sem Modelo)' },
+                            ...templates.map((t: any) => ({
+                                value: t.id,
+                                label: t.name
                             }))
                         ]}
                     />
                 </div>
 
-                {/* Condições e Valor Cadastrado */}
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
+                {selectedTemplateId !== '' && (
+                    <div className="space-y-4 animate-in fade-in duration-300 slide-in-from-top-2">
+                        {/* Campos dinâmicos do modelo de proposta */}
+                        {selectedTemplateId !== 'simple' && (
+                            <ProposalDynamicForm
+                                fields={dynamicFields}
+                                responses={dynamicResponses}
+                                onChange={(name, val) => setDynamicResponses(prev => ({ ...prev, [name]: val }))}
+                            />
+                        )}
+
+
+
+                {/* Condições e Valor Cadastrado (Apenas para Ficha Simples) */}
+                {selectedTemplateId === 'simple' && (
+                    <>
+                        <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
                     <div>
                         <FormInput
                             label="Valor Cadastrado (R$)"
                             value={(() => {
-                                if (!selectedLeadId) return ''
+                                if (selectedSystemProperty) {
+                                    if ((selectedSystemProperty?.type === 'Empreendimento' || selectedSystemProperty?.details?.is_empreendimento) && selectedUnit && availableUnits.length > 0) {
+                                        const unitInfo = availableUnits.find((u: any) => u.unit_number === selectedUnit)
+                                        if (unitInfo?.valor_total) {
+                                            return parseFloat(unitInfo.valor_total.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+                                        }
+                                    }
+                                    return selectedSystemProperty.price ? parseFloat(selectedSystemProperty.price).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '—'
+                                }
+                                if (!selectedLeadId || selectedLeadId === 'NEW_PROPERTY') return ''
                                 const lead = clientLeads.find((l: any) => l.id === selectedLeadId)
                                 const price = lead?.properties?.price
                                 return price ? parseFloat(price).toLocaleString('pt-BR', { minimumFractionDigits: 2 }) : '—'
@@ -564,54 +816,35 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                     placeholder="Ex: Carro avaliado em R$ 120.000"
                 />
 
-                <FormTextarea
-                    label="Observações"
-                    value={formData.notes}
-                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                    rows={2}
-                    placeholder="Detalhes específicos..."
-                />
-
-                {/* Modelo de Ficha de Proposta (Abaixo do separador após Observações) */}
-                <div className="pt-4 border-t border-border/30">
-                    <FormSelect
-                        label="Modelo de Ficha de Proposta"
-                        value={selectedTemplateId}
-                        onChange={e => handleTemplateChange(e.target.value)}
-                        options={[
-                            { value: '', label: 'Ficha Simples (Sem Modelo)' },
-                            ...templates.map((t: any) => ({
-                                value: t.id,
-                                label: t.name
-                            }))
-                        ]}
-                    />
-                </div>
-
-                {/* Campos dinâmicos do modelo de proposta */}
-                {selectedTemplateId && (
-                    <ProposalDynamicForm
-                        fields={dynamicFields}
-                        responses={dynamicResponses}
-                        onChange={(name, val) => setDynamicResponses(prev => ({ ...prev, [name]: val }))}
-                    />
+                        <FormTextarea
+                            label="Observações"
+                            value={formData.notes}
+                            onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                            rows={2}
+                            placeholder="Detalhes específicos..."
+                        />
+                    </>
                 )}
 
-                <div className="flex justify-end gap-2 pt-1">
-                    <button
-                        onClick={resetForm}
-                        className="px-4 py-2 text-xs font-bold text-muted-foreground hover:text-foreground border border-border/40 rounded-md transition-all"
-                    >
-                        Cancelar
-                    </button>
-                    <button
-                        onClick={handleCreateProposal}
-                        disabled={!selectedLeadId || saving}
-                        className="px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all disabled:opacity-50"
-                    >
-                        {saving ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Criar Proposta')}
-                    </button>
-                </div>
+                {!inModal && (
+                    <div className="flex justify-end gap-2 pt-1">
+                        <button
+                            onClick={resetForm}
+                            className="px-4 py-2 text-xs font-bold text-muted-foreground hover:text-foreground border border-border/40 rounded-md transition-all"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            onClick={handleCreateProposal}
+                            disabled={!selectedLeadId || saving || selectedTemplateId === ''}
+                            className="px-4 py-2 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all disabled:opacity-50"
+                        >
+                            {saving ? 'Salvando...' : (isEditing ? 'Salvar Alterações' : 'Criar Proposta')}
+                        </button>
+                    </div>
+                )}
+                    </div>
+                )}
             </div>
         )
     }
@@ -631,30 +864,52 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             {/* Header */}
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Propostas</h3>
-                {!showNewForm && (
-                    <button
-                        onClick={() => setShowNewForm(true)}
-                        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all"
-                    >
-                        <Plus size={14} />
-                        Nova Proposta
-                    </button>
-                )}
+                <button
+                    onClick={() => setShowNewForm(true)}
+                    className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-bold bg-secondary text-secondary-foreground hover:bg-secondary/90 rounded-md shadow-sm transition-all"
+                >
+                    <Plus size={14} />
+                    Nova Proposta
+                </button>
             </div>
 
             {/* Formulário de Nova Proposta */}
-            {showNewForm && !isEditing && renderProposalForm(false)}
+            {showNewForm && !isEditing && (
+                <Modal
+                    isOpen={showNewForm}
+                    onClose={resetForm}
+                    title={<h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">Nova Proposta</h3>}
+                    size="2xl"
+                    extraHeaderContent={
+                        <button
+                            onClick={handleCreateProposal}
+                            disabled={!selectedLeadId || saving || selectedTemplateId === ''}
+                            className="bg-secondary text-secondary-foreground font-bold px-4 py-1.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-sm whitespace-nowrap disabled:opacity-50 flex items-center gap-2"
+                        >
+                            {saving ? (
+                                <>
+                                    <Loader2 size={16} className="animate-spin" />
+                                    <span>Salvando...</span>
+                                </>
+                            ) : (
+                                'Criar Proposta'
+                            )}
+                        </button>
+                    }
+                >
+                    {renderProposalForm(false, true)}
+                </Modal>
+            )}
 
             {/* Lista de Propostas */}
-            {!showNewForm && (
-                activeProposals.length === 0 ? (
-                    <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-8 rounded-lg border border-border/40 text-center transition-all">
-                        <FileText size={28} className="mx-auto text-muted-foreground/40 mb-2" />
-                        <p className="text-xs text-muted-foreground">Nenhuma proposta criada para este cliente.</p>
-                        <p className="text-[10px] text-muted-foreground/60 mt-0.5">Clique em "Nova Proposta" para começar.</p>
-                    </div>
-                ) : (
-                    <div className="bg-white dark:bg-card rounded-lg border border-muted-foreground/30 overflow-hidden shadow-sm">
+            {activeProposals.length === 0 ? (
+                <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-8 rounded-lg border border-border/40 text-center transition-all">
+                    <FileText size={28} className="mx-auto text-muted-foreground/40 mb-2" />
+                    <p className="text-xs text-muted-foreground">Nenhuma proposta criada para este cliente.</p>
+                    <p className="text-[10px] text-muted-foreground/60 mt-0.5">Clique em "Nova Proposta" para começar.</p>
+                </div>
+            ) : (
+                <div className="bg-white dark:bg-card rounded-lg border border-muted-foreground/30 overflow-hidden shadow-sm">
                         <div className="overflow-x-auto min-h-[500px]">
                             <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
                                 <colgroup>
@@ -777,23 +1032,6 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                                 renderProposalForm(true)
                                                             ) : (
                                                                 <div className="space-y-4 animate-in fade-in duration-200">
-                                                                {/* Imóvel */}
-                                                                {property && (
-                                                                    <div className="flex items-center gap-2 text-xs text-muted-foreground">
-                                                                        <Home size={12} />
-                                                                        <span>{property.title}</span>
-                                                                        {property.address_city && (
-                                                                            <span>• {property.address_city}{property.address_state ? ` - ${property.address_state}` : ''}</span>
-                                                                        )}
-                                                                        {property.price && (
-                                                                            <span className="font-bold text-foreground ml-auto">
-                                                                                R$ {parseFloat(property.price.toString()).toLocaleString('pt-BR')}
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                )}
-                                                                
-                                                                
                                                                 {/* Valores */}
                                                                 <div className="grid grid-cols-3 gap-3">
                                                                     <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
@@ -858,7 +1096,6 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                             </table>
                         </div>
                     </div>
-                )
             )}
             {/* Modal de Confirmação de Exclusão */}
             {proposalToDelete && (
@@ -1003,6 +1240,81 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                     </div>
                 </div>
             )}
+
+            {/* Modal para Buscar Imóvel do Sistema */}
+            <Modal
+                isOpen={isPropertySelectorModalOpen}
+                onClose={() => {
+                    setIsPropertySelectorModalOpen(false)
+                    if (!selectedSystemProperty && selectedLeadId === 'NEW_PROPERTY') {
+                        setSelectedLeadId('')
+                    }
+                }}
+                title={
+                    <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                        Buscar Imóvel
+                    </h3>
+                }
+                size="lg"
+            >
+                <div className="space-y-4">
+                    <div className="relative">
+                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <input
+                            type="text"
+                            value={propertySearchTerm}
+                            onChange={e => setPropertySearchTerm(e.target.value)}
+                            placeholder="Buscar imóvel por nome ou cidade..."
+                            className="w-full h-10 pl-9 pr-10 text-sm bg-background border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-secondary"
+                        />
+                        <div className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center gap-2">
+                            {isSearchingProperty && <Loader2 size={14} className="animate-spin text-muted-foreground" />}
+                            {propertySearchTerm && !isSearchingProperty && (
+                                <button
+                                    type="button"
+                                    onClick={() => setPropertySearchTerm('')}
+                                    className="text-muted-foreground hover:text-foreground transition-colors"
+                                    title="Limpar busca"
+                                >
+                                    <X size={14} />
+                                </button>
+                            )}
+                        </div>
+                    </div>
+
+                    {propertySearchResults.length > 0 ? (
+                        <div className="space-y-3">
+                            <div className="text-xs text-muted-foreground font-medium px-1">
+                                {propertySearchResults.length} {propertySearchResults.length === 1 ? 'imóvel encontrado' : 'imóveis encontrados'}
+                            </div>
+                            <div className="max-h-60 overflow-y-auto bg-white dark:bg-background border border-border rounded-lg shadow-sm">
+                            {propertySearchResults.map(prop => (
+                                <button
+                                    key={prop.id}
+                                    type="button"
+                                    onClick={() => {
+                                        setSelectedSystemProperty(prop)
+                                        setIsPropertySelectorModalOpen(false)
+                                    }}
+                                    className="w-full flex flex-col items-start p-3 bg-white dark:bg-background hover:bg-muted/50 border-b border-border last:border-0 transition-colors"
+                                >
+                                    <span className="text-sm font-bold text-foreground text-left">{prop.title}</span>
+                                    <span className="text-xs text-muted-foreground">
+                                        {translatePropertyType(prop.type)}
+                                        {prop.details?.address_city ? ` • ${prop.details.address_city}` : ''}
+                                        {prop.details?.address_state ? ` - ${prop.details.address_state}` : ''}
+                                    </span>
+                                </button>
+                            ))}
+                        </div>
+                        </div>
+                    ) : (
+                        <div className="text-center text-sm text-muted-foreground py-8">
+                            {isSearchingProperty ? 'Buscando imóveis...' : 'Nenhum imóvel encontrado.'}
+                        </div>
+                    )}
+                </div>
+            </Modal>
         </div>
     )
 }

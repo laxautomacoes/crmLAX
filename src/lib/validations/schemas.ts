@@ -71,6 +71,7 @@ const propertyDetailsSchema = z.object({
     area_construida: z.string().max(50).optional().default(''),
     valor_condominio: z.union([z.string(), z.number()]).optional().default(''),
     valor_iptu: z.union([z.string(), z.number()]).optional().default(''),
+    valor_proprietario: z.union([z.string(), z.number()]).optional().default(''),
 }).passthrough()
 
 export const createPropertySchema = z.object({
@@ -89,6 +90,7 @@ export const createPropertySchema = z.object({
     main_image_url: optionalText,
     partner_id: optionalUuid,
     partner_commission_split: z.number().min(0).max(100).optional().nullable(),
+    commission_rate: z.number().min(0).max(100).optional().nullable(),
 })
 
 export const updatePropertySchema = createPropertySchema.partial()
