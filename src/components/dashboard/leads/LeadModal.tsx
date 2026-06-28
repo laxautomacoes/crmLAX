@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import { Modal } from '@/components/shared/Modal'
+import { ConfirmModal } from '@/components/shared/ConfirmModal'
 import { formatPhone } from '@/lib/utils/phone'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 import { FormInput } from '@/components/shared/forms/FormInput'
@@ -13,11 +15,19 @@ import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampai
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { getNotesByLeadId, createNote, deleteNote, updateNote } from '@/app/_actions/notes'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
-import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle, Trash2, MoreVertical } from 'lucide-react'
+import { getPartners } from '@/app/_actions/partners'
+import { PartnerQuickModal } from '@/components/dashboard/shared/PartnerQuickModal'
+import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle, Trash2, MoreVertical, Loader2 } from 'lucide-react'
 import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
 import { sendWhatsAppMessage, getWhatsAppChat, sendWhatsAppMedia, refreshInstanceStatus } from '@/app/_actions/whatsapp'
 import { createClient } from '@/lib/supabase/client'
 import type { Lead } from './PipelineBoard'
+import {
+    getLeadEnrollments,
+    getFollowupSequences,
+    enrollLeadInSequence,
+    cancelEnrollment
+} from '@/app/_actions/followup'
 
 interface Broker {
     id: string
@@ -112,9 +122,8 @@ function NoteActionsDropdown({ onEdit, onDelete }: NoteActionsDropdownProps) {
                 <MoreVertical size={14} />
             </button>
             {isOpen && (
-                <div className={`absolute right-0 w-32 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 ${
-                    openDirection === 'up' ? 'bottom-full mb-1' : 'mt-1'
-                }`}>
+                <div className={`absolute right-0 w-32 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 ${openDirection === 'up' ? 'bottom-full mb-1' : 'mt-1'
+                    }`}>
                     <button
                         type="button"
                         onClick={(e) => {
@@ -207,6 +216,73 @@ export function LeadModal({
         }
     }, [editingLead?.id])
 
+    const loadFollowupData = useCallback(async () => {
+        if (!tenantId) return
+        try {
+            const seqRes = await getFollowupSequences()
+            if (seqRes.success && seqRes.data) {
+                setFollowupSequences(seqRes.data)
+            }
+            if (editingLead?.id) {
+                const enrollRes = await getLeadEnrollments(editingLead.id)
+                if (enrollRes.success && enrollRes.data) {
+                    setLeadEnrollments(enrollRes.data)
+                }
+            }
+        } catch (error) {
+            console.error('Erro ao carregar dados de follow-up:', error)
+        }
+    }, [tenantId, editingLead?.id])
+
+    const handleEnrollInSequence = async () => {
+        if (!selectedSequenceId || !editingLead?.id) return
+        setIsProcessingFollowup(true)
+        try {
+            const res = await enrollLeadInSequence(editingLead.id, selectedSequenceId)
+            if (res.success) {
+                toast.success('Lead inscrito na sequência com sucesso!')
+                setSelectedSequenceId('')
+                loadFollowupData()
+            } else {
+                toast.error('Erro ao inscrever lead: ' + res.error)
+            }
+        } catch (error) {
+            console.error('Erro ao inscrever lead:', error)
+            toast.error('Ocorreu um erro ao inscrever o lead.')
+        } finally {
+            setIsProcessingFollowup(false)
+        }
+    }
+
+    const handleCancelEnrollment = async (enrollmentId: string) => {
+        setIsProcessingFollowup(true)
+        try {
+            const res = await cancelEnrollment(enrollmentId)
+            if (res.success) {
+                toast.success('Inscrição cancelada com sucesso!')
+                loadFollowupData()
+            } else {
+                toast.error('Erro ao cancelar inscrição: ' + res.error)
+            }
+        } catch (error) {
+            console.error('Erro ao cancelar inscrição:', error)
+            toast.error('Ocorreu um erro ao cancelar a inscrição.')
+        } finally {
+            setIsProcessingFollowup(false)
+        }
+    }
+
+    useEffect(() => {
+        if (isOpen) {
+            loadFollowupData()
+            setSelectedSequenceId('')
+        } else {
+            setLeadEnrollments([])
+            setFollowupSequences([])
+        }
+    }, [isOpen, loadFollowupData])
+
+
     useEffect(() => {
         if (isOpen) {
             setActiveTab('info')
@@ -242,9 +318,12 @@ export function LeadModal({
         }
     }
 
-    const handleDeleteNote = async (noteId: string) => {
+    const handleDeleteNote = (noteId: string) => {
+        setNoteToDelete(noteId)
+    }
+
+    const executeDeleteNote = async (noteId: string) => {
         if (noteId === 'legacy') {
-            if (!confirm('Deseja realmente excluir a observação de cadastro do lead?')) return
             try {
                 const res = await updateLead(tenantId, editingLead!.id!, { notes: '' })
                 if (res.success) {
@@ -264,7 +343,6 @@ export function LeadModal({
             return
         }
 
-        if (!confirm('Deseja realmente excluir esta nota?')) return
         try {
             const res = await deleteNote(noteId)
             if (res.success) {
@@ -334,6 +412,16 @@ export function LeadModal({
     const [isAddingCampaign, setIsAddingCampaign] = useState(false)
     const [newSource, setNewSource] = useState('')
     const [newCampaign, setNewCampaign] = useState('')
+    const [partners, setPartners] = useState<any[]>([])
+    const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false)
+
+    const [followupSequences, setFollowupSequences] = useState<any[]>([])
+    const [leadEnrollments, setLeadEnrollments] = useState<any[]>([])
+    const [selectedSequenceId, setSelectedSequenceId] = useState<string>('')
+    const [isProcessingFollowup, setIsProcessingFollowup] = useState(false)
+    const [enrollmentToCancel, setEnrollmentToCancel] = useState<string | null>(null)
+    const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
+
     const [leadData, setLeadData] = useState({
         name: '',
         phone: '',
@@ -351,8 +439,31 @@ export function LeadModal({
         assigned_to: '',
         images: [] as string[],
         videos: [] as string[],
-        documents: [] as { name: string; url: string }[]
+        documents: [] as { name: string; url: string }[],
+        partner_id: '',
+        partner_split: '',
+        partner_role: ''
     })
+
+    useEffect(() => {
+        async function fetchPartners() {
+            if (isOpen && tenantId) {
+                const res = await getPartners(tenantId)
+                if (res.success && res.data) {
+                    setPartners(res.data)
+                }
+            }
+        }
+        fetchPartners()
+    }, [isOpen, tenantId])
+
+    const handlePartnerCreated = (newPartner: any) => {
+        setPartners(prev => [...prev, newPartner].sort((a, b) => a.name.localeCompare(b.name)))
+        setLeadData(prev => ({
+            ...prev,
+            partner_id: newPartner.id
+        }))
+    }
 
 
     // Quando o modal abre para novo lead, reseta o método de criação
@@ -371,14 +482,14 @@ export function LeadModal({
         if (res.error) {
             throw new Error(res.error);
         }
-        
+
         const newMsg = {
             id: Math.random().toString(),
             text: text,
             fromMe: true,
             timestamp: new Date().toISOString()
         };
-        
+
         // Atualizar de forma reativa o chat local
         setWhatsappChat(prev => [...prev, newMsg]);
 
@@ -505,7 +616,10 @@ export function LeadModal({
                 assigned_to: editingLead.assigned_to || '',
                 images: Array.isArray(editingLead.images) ? editingLead.images : [],
                 videos: Array.isArray(editingLead.videos) ? editingLead.videos : [],
-                documents: Array.isArray(editingLead.documents) ? editingLead.documents : []
+                documents: Array.isArray(editingLead.documents) ? editingLead.documents : [],
+                partner_id: (editingLead as any).partner_id || '',
+                partner_split: (editingLead as any).partner_split ? (editingLead as any).partner_split.toString() : '',
+                partner_role: (editingLead as any).partner_role || ''
             })
         } else {
             setWhatsappChat([])
@@ -526,7 +640,10 @@ export function LeadModal({
                 assigned_to: '',
                 images: [],
                 videos: [],
-                documents: []
+                documents: [],
+                partner_id: '',
+                partner_split: '',
+                partner_role: ''
             })
         }
     }, [editingLead, isOpen, firstStageId])
@@ -625,7 +742,10 @@ export function LeadModal({
                 ...leadData,
                 lead_source: finalSource,
                 campaign: finalCampaign,
-                value: leadData.value ? parseCurrencyBRL(leadData.value) : 0
+                value: leadData.value ? parseCurrencyBRL(leadData.value) : 0,
+                partner_split: leadData.partner_split ? Number(leadData.partner_split) : null,
+                partner_id: leadData.partner_id || null,
+                partner_role: leadData.partner_role || null
             }
 
             let result;
@@ -633,6 +753,17 @@ export function LeadModal({
                 result = await updateLead(tenantId, editingLead.id, dataToSubmit)
             } else {
                 result = await createLead(tenantId, dataToSubmit)
+                if (result.success && result.data?.id && selectedSequenceId) {
+                    try {
+                        const enrollRes = await enrollLeadInSequence(result.data.id, selectedSequenceId)
+                        if (!enrollRes.success) {
+                            console.error('Erro ao inscrever lead criado na sequência:', enrollRes.error)
+                            toast.error(`Lead criado, mas falhou ao inscrever na sequência: ${enrollRes.error}`)
+                        }
+                    } catch (enrollErr) {
+                        console.error('Erro ao inscrever lead criado na sequência:', enrollErr)
+                    }
+                }
             }
 
             if (result.success) {
@@ -672,58 +803,68 @@ export function LeadModal({
             size={editingLead ? '2xl' : (showMethodSelection ? 'md' : 'xl')}
             align={editingLead ? 'center' : 'top'}
             fullHeight={!!editingLead}
-            className={editingLead ? "md:h-[94vh] md:max-h-[94vh]" : ""}
+            className={editingLead ? "md:h-[94vh] md:max-h-[94vh] [&>div:last-child]:!pb-2 md:[&>div:last-child]:!pb-3 [&>div:last-child]:!pt-2 md:[&>div:last-child]:!pt-3" : ""}
             extraHeaderContent={
                 showMethodSelection ? undefined : (
-                <div className="flex items-center gap-3">
-                    {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
-                        editingLead.has_proposal ? (
-                            <button
-                                type="button"
-                                onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
-                                className="px-4 py-1.5 border border-foreground/30 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-lg font-bold text-sm whitespace-nowrap flex items-center gap-1.5 transition-all shadow-sm active:scale-[0.97]"
-                                title="Ver Proposta"
-                            >
-                                <span
-                                    className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded-full shrink-0"
-                                    style={{ backgroundColor: '#FFE600', color: '#1a1a1a' }}
-                                >
-                                    P
-                                </span>
-                                <span className="hidden sm:inline">Em Proposta</span>
-                                <span className="sm:hidden">Proposta</span>
-                            </button>
-                        ) : (
-                            <button
-                                type="button"
-                                onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
+                    <div className="flex items-center gap-3">
+                        {editingLead?.id && editingLead?.contact_id && (
+                            <Link
+                                href={`/clients?openId=${editingLead.contact_id}`}
                                 className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                title="Ver ficha completa do cliente"
                             >
-                                <span className="hidden sm:inline">Fazer Proposta</span>
-                                <span className="sm:hidden">Proposta</span>
-                            </button>
-                        )
-                    )}
-                    <button
-                        onClick={handleSubmit}
-                        disabled={isLoading}
-                        className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
-                    >
-                        {isLoading ? "Processando..." : (
-                            editingLead ? (
-                                <>
-                                    <span className="hidden sm:inline">Salvar Alterações</span>
-                                    <span className="sm:hidden">Salvar</span>
-                                </>
+                                <span className="hidden sm:inline">Ver Cliente</span>
+                                <span className="sm:hidden">Cliente</span>
+                            </Link>
+                        )}
+                        {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
+                            editingLead.has_proposal ? (
+                                <button
+                                    type="button"
+                                    onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
+                                    className="px-4 py-1.5 border border-foreground/30 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-lg font-bold text-sm whitespace-nowrap flex items-center gap-1.5 transition-all shadow-sm active:scale-[0.97]"
+                                    title="Ver Proposta"
+                                >
+                                    <span
+                                        className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded-full shrink-0"
+                                        style={{ backgroundColor: '#FFE600', color: '#1a1a1a' }}
+                                    >
+                                        P
+                                    </span>
+                                    <span className="hidden sm:inline">Em Proposta</span>
+                                    <span className="sm:hidden">Proposta</span>
+                                </button>
                             ) : (
-                                <>
-                                    <span className="hidden sm:inline">Criar Lead</span>
-                                    <span className="sm:hidden">Criar</span>
-                                </>
+                                <button
+                                    type="button"
+                                    onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
+                                    className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                >
+                                    <span className="hidden sm:inline">Fazer Proposta</span>
+                                    <span className="sm:hidden">Proposta</span>
+                                </button>
                             )
                         )}
-                    </button>
-                </div>
+                        <button
+                            onClick={handleSubmit}
+                            disabled={isLoading}
+                            className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
+                        >
+                            {isLoading ? "Processando..." : (
+                                editingLead ? (
+                                    <>
+                                        <span className="hidden sm:inline">Salvar Alterações</span>
+                                        <span className="sm:hidden">Salvar</span>
+                                    </>
+                                ) : (
+                                    <>
+                                        <span className="hidden sm:inline">Criar Lead</span>
+                                        <span className="sm:hidden">Criar</span>
+                                    </>
+                                )
+                            )}
+                        </button>
+                    </div>
                 )
             }
         >
@@ -749,7 +890,7 @@ export function LeadModal({
                             </div>
                             <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
                         </button>
- 
+
                         {/* Importação com IA ou Planilha */}
                         <button
                             onClick={() => handleSelectMethod('import_bulk')}
@@ -772,484 +913,644 @@ export function LeadModal({
                     </div>
                 </div>
             ) : (
-            <div className="space-y-4">
-                {editingLead && (
-                    <div className="flex items-center border-b border-border lg:hidden shrink-0">
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('info')}
-                            className={`flex-1 py-2.5 text-xs font-bold transition-all relative flex items-center justify-center gap-1.5 whitespace-nowrap ${
-                                activeTab === 'info' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                        >
-                            <FileText size={14} />
-                            Informações
-                        </button>
-                        <button
-                            type="button"
-                            onClick={() => setActiveTab('whatsapp')}
-                            className={`flex-1 py-2.5 text-xs font-bold transition-all relative flex items-center justify-center gap-1.5 whitespace-nowrap ${
-                                activeTab === 'whatsapp' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'
-                            }`}
-                        >
-                            <MessageCircle size={14} />
-                            WhatsApp
-                        </button>
-                    </div>
-                )}
-                <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 lg:max-h-[calc(94vh-120px)] overflow-visible" : "space-y-6"}>
-                    <div className={editingLead ? `space-y-6 lg:overflow-y-auto lg:max-h-[calc(94vh-120px)] pr-2 no-scrollbar ${activeTab === 'info' ? 'block' : 'hidden lg:block'}` : "space-y-6"}>
-                    <div className="space-y-8 pb-4">
-                    {/* Seção: Dados Pessoais */}
-                    <div className="space-y-4">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            {/* Linha 1: Avatar + Nome */}
-                            <div className="col-span-1 md:col-span-2 flex items-end gap-4">
-                                {editingLead && (
-                                    <button
-                                        type="button"
-                                        onClick={() => setIsAvatarZoomed(true)}
-                                        className="w-11 h-11 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10 mb-1 cursor-zoom-in hover:opacity-90 active:scale-[0.97] transition-all focus:outline-none"
-                                        title="Clique para ampliar a foto"
-                                    >
-                                        {editingLead.avatar_url ? (
-                                            <img src={editingLead.avatar_url} alt={leadData.name} className="w-full h-full object-cover" />
-                                        ) : (
-                                            <User size={20} />
-                                        )}
-                                    </button>
-                                )}
-                                <div className="flex-1">
-                                    <FormInput
-                                        label="Nome completo"
-                                        value={leadData.name}
-                                        onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
-                                        placeholder="Ex: João Silva"
-                                    />
-                                </div>
-                            </div>
-
-                            {/* Linha 2: Telefone e Email */}
-                            <div>
-                                <FormInput
-                                    label="Telefone"
-                                    value={leadData.phone}
-                                    onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
-                                    placeholder="(48) 99999 9999"
-                                    rightElement={
-                                        leadData.phone && (
-                                            <a
-                                                href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
-                                                title="Conversar WhatsApp"
-                                              >
-                                                  <MessageCircle size={16} />
-                                              </a>
-                                          )
-                                      }
-                                  />
-                              </div>
-                              <div>
-                                  <FormInput
-                                      label="E-mail"
-                                      type="email"
-                                      value={leadData.email}
-                                      onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
-                                      placeholder="joao@email.com"
-                                  />
-                              </div>
-
-                              {/* Linha 3: Responsável e Criado em */}
-                              {(userRole === 'admin' || userRole === 'superadmin') && (
-                                  <div>
-                                      <FormSelect
-                                          label="Responsável"
-                                          value={leadData.assigned_to}
-                                          onChange={(e) => setLeadData({ ...leadData, assigned_to: e.target.value })}
-                                          options={[
-                                              { value: '', label: 'Não atribuído' },
-                                              ...brokers.filter(b => b.role !== 'admin' && b.role !== 'superadmin').map(b => ({ value: b.id, label: b.full_name }))
-                                          ]}
-                                      />
-                                  </div>
-                              )}
-                              <div>
-                                  <FormInput
-                                      label="Criado em"
-                                      type="date"
-                                      value={leadData.date}
-                                      onChange={(e) => setLeadData({ ...leadData, date: e.target.value })}
-                                  />
-                              </div>
-                          </div>
-                    </div>
-
-                    {/* Seção: Captação */}
-                    <div className="space-y-4 pt-8 border-t border-border/50">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Captação</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                {!isAddingSource ? (
-                                    <FormSelect
-                                        label="Origem"
-                                        value={leadData.lead_source}
-                                        onChange={(e) => {
-                                            if (e.target.value === 'ADD_NEW') {
-                                                setIsAddingSource(true)
-                                            } else {
-                                                setLeadData({ ...leadData, lead_source: e.target.value })
-                                            }
-                                        }}
-                                        options={[
-                                            { value: '', label: 'Selecione a origem' },
-                                            ...sources.map(s => ({ value: s, label: s })),
-                                            { value: 'ADD_NEW', label: 'Outra' }
-                                        ]}
-                                    />
-                                ) : (
-                                    <FormInput
-                                        label="Origem (Nova)"
-                                        value={newSource}
-                                        onChange={(e) => setNewSource(e.target.value)}
-                                        placeholder="Ex: WhatsApp"
-                                        rightElement={
-                                            <button 
-                                                type="button"
-                                                onClick={() => {
-                                                    setIsAddingSource(false)
-                                                    setNewSource('')
-                                                }}
-                                                className="text-muted-foreground hover:text-foreground p-1"
-                                                title="Cancelar"
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        }
-                                    />
-                                )}
-                            </div>
-                            <div>
-                                {!isAddingCampaign ? (
-                                    <FormSelect
-                                        label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou?' : 'Campanha'}
-                                        value={leadData.campaign}
-                                        disabled={!leadData.lead_source}
-                                        onChange={(e) => {
-                                            if (e.target.value === 'ADD_NEW') {
-                                                setIsAddingCampaign(true)
-                                            } else {
-                                                setLeadData({ ...leadData, campaign: e.target.value })
-                                            }
-                                        }}
-                                        options={[
-                                            { value: '', label: leadData.lead_source ? (leadData.lead_source.toLowerCase().includes('indica') ? 'Selecione quem indicou' : 'Selecione a campanha') : 'Selecione uma origem primeiro' },
-                                            ...campaigns.map(c => ({ value: c, label: c })),
-                                            { value: 'ADD_NEW', label: 'Outra' }
-                                        ]}
-                                    />
-                                ) : (
-                                    <FormInput
-                                        label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou? (Novo)' : 'Campanha (Nova)'}
-                                        value={newCampaign}
-                                        onChange={(e) => setNewCampaign(e.target.value)}
-                                        placeholder={leadData.lead_source.toLowerCase().includes('indica') ? 'Ex: João Silva' : 'Ex: Verão 2026'}
-                                        rightElement={
-                                            <button 
-                                                type="button"
-                                                onClick={() => {
-                                                    setIsAddingCampaign(false)
-                                                    setNewCampaign('')
-                                                }}
-                                                className="text-muted-foreground hover:text-foreground p-1"
-                                                title="Cancelar"
-                                            >
-                                                <X size={14} />
-                                            </button>
-                                        }
-                                    />
-                                )}
-                            </div>
+                <div className="space-y-4">
+                    {editingLead && (
+                        <div className="flex items-center border-b border-border lg:hidden shrink-0">
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('info')}
+                                className={`flex-1 py-2.5 text-xs font-bold transition-all relative flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === 'info' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                <FileText size={14} />
+                                Informações
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('whatsapp')}
+                                className={`flex-1 py-2.5 text-xs font-bold transition-all relative flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === 'whatsapp' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                <MessageCircle size={14} />
+                                WhatsApp
+                            </button>
                         </div>
-                    </div>
-
-                    {/* Seção: Interesse */}
-                    <div className="space-y-4 pt-8 border-t border-border/50">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Interesse</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <PropertyAutocomplete
-                                    tenantId={tenantId}
-                                    label="Imóvel Cadastrado"
-                                    placeholder="Digite o nome do imóvel"
-                                    showIcon={false}
-                                    selectedItem={leadData.selectedProperty}
-                                    onSelect={(property) => setLeadData({ ...leadData, interest: property.title, property_id: property.id, property_interest: property.title, selectedProperty: property })}
-                                    onClear={() => setLeadData({ ...leadData, interest: '', property_id: '', property_interest: '', selectedProperty: null })}
-                                />
-                            </div>
-                            <div>
-                                <FormInput
-                                    label="Imóvel de Interesse (texto livre)"
-                                    value={leadData.property_interest}
-                                    onChange={(e) => setLeadData({ ...leadData, property_interest: e.target.value })}
-                                    placeholder="Ex: Apto 3 dormitórios na praia..."
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Seção: Negociação */}
-                    <div className="space-y-4 pt-8 border-t border-border/50">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Negociação</h3>
-                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                            <div>
-                                <FormSelect
-                                    label="Estágio"
-                                    value={leadData.stage_id}
-                                    onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
-                                    options={[
-                                        { value: '', label: 'Selecione um estágio' },
-                                        ...stages.map(s => ({ value: s.id, label: s.name }))
-                                    ]}
-                                />
-                            </div>
-                            <div>
-                                <FormInput
-                                    label="Valor Estimado"
-                                    value={leadData.value}
-                                    onChange={(e) => setLeadData({ ...leadData, value: formatCurrencyBRL(e.target.value) })}
-                                    placeholder="0,00"
-                                />
-                            </div>
-                        </div>
-                    </div>
-
-                    {/* Seção: Notas */}
-                    <div className="space-y-4 pt-8 border-t border-border/50">
-                        <div className="flex items-center justify-between">
-                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas / Histórico</h3>
-                            {editingLead && (
-                                <button
-                                    type="button"
-                                    onClick={handleAddNote}
-                                    disabled={isSavingNote || !newNoteContent.trim()}
-                                    className="px-3 py-1.5 bg-[#FFE600] text-[#1a1a1a] rounded-lg font-bold text-xs hover:bg-[#F2DB00] transition-all disabled:opacity-50 cursor-pointer flex items-center gap-1.5"
-                                >
-                                    {isSavingNote ? 'Adicionando...' : 'Adicionar Nota'}
-                                </button>
-                            )}
-                        </div>
-                        
-                        {!editingLead ? (
-                            <FormTextarea
-                                value={leadData.notes}
-                                onChange={(e) => setLeadData({ ...leadData, notes: e.target.value })}
-                                rows={3}
-                                placeholder="Alguma observação importante sobre o lead (será salva como primeira nota)..."
-                            />
-                        ) : (
-                            <div className="space-y-4">
-                                {/* Campo para adicionar nova nota */}
-                                <div className="space-y-2">
-                                    <textarea
-                                        value={newNoteContent}
-                                        onChange={(e) => setNewNoteContent(e.target.value)}
-                                        rows={2}
-                                        placeholder="Escreva uma nova nota sobre o lead..."
-                                        className="w-full bg-background border border-muted-foreground/30 rounded-lg p-3 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
-                                    />
-                                </div>
-
-                                {/* Timeline das Notas (Collapsible Dropdown) */}
-                                <div className="space-y-3">
-                                    <button
-                                        type="button"
-                                        onClick={() => setShowNotesHistory(!showNotesHistory)}
-                                        className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-foreground uppercase tracking-wider transition-colors cursor-pointer"
-                                    >
-                                        <span>Notas salvas ({leadNotes.length + (leadData.notes ? 1 : 0)})</span>
-                                        <div className="flex items-center gap-1">
-                                            {showNotesHistory ? <ChevronRight className="rotate-90 transition-transform" size={14} /> : <ChevronRight size={14} />}
+                    )}
+                    <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 lg:max-h-[calc(94vh-90px)] overflow-visible" : "space-y-6"}>
+                        <div className={editingLead ? `space-y-6 lg:overflow-y-auto lg:max-h-[calc(94vh-90px)] pr-2 no-scrollbar ${activeTab === 'info' ? 'block' : 'hidden lg:block'}` : "space-y-6"}>
+                            <div className="space-y-8 pb-4">
+                                {/* Seção: Dados Pessoais */}
+                                <div className="space-y-4">
+                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        {/* Linha 1: Avatar + Nome */}
+                                        <div className="col-span-1 md:col-span-2 flex items-end gap-4">
+                                            {editingLead && (
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setIsAvatarZoomed(true)}
+                                                    className="w-11 h-11 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground flex-shrink-0 border border-border/10 mb-1 cursor-zoom-in hover:opacity-90 active:scale-[0.97] transition-all focus:outline-none"
+                                                    title="Clique para ampliar a foto"
+                                                >
+                                                    {editingLead.avatar_url ? (
+                                                        <img src={editingLead.avatar_url} alt={leadData.name} className="w-full h-full object-cover" />
+                                                    ) : (
+                                                        <User size={20} />
+                                                    )}
+                                                </button>
+                                            )}
+                                            <div className="flex-1">
+                                                <FormInput
+                                                    label="Nome completo"
+                                                    value={leadData.name}
+                                                    onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
+                                                    placeholder="Ex: João Silva"
+                                                />
+                                            </div>
                                         </div>
-                                    </button>
- 
-                                    {showNotesHistory && (() => {
-                                        const sortedNotes = [...leadNotes]
-                                        if (leadData.notes) {
-                                            sortedNotes.push({
-                                                id: 'legacy',
-                                                content: leadData.notes,
-                                                created_at: editingLead?.date || new Date(0).toISOString(),
-                                                profiles: {
-                                                    full_name: 'Observação de Cadastro'
+
+                                        {/* Linha 2: Telefone e Email */}
+                                        <div>
+                                            <FormInput
+                                                label="Telefone"
+                                                value={leadData.phone}
+                                                onChange={(e) => setLeadData({ ...leadData, phone: formatPhone(e.target.value) })}
+                                                placeholder="(48) 99999 9999"
+                                                rightElement={
+                                                    leadData.phone && (
+                                                        <a
+                                                            href={`https://wa.me/55${leadData.phone.replace(/\D/g, '')}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
+                                                            title="Conversar WhatsApp"
+                                                        >
+                                                            <MessageCircle size={16} />
+                                                        </a>
+                                                    )
                                                 }
-                                            })
-                                        }
-                                        sortedNotes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormInput
+                                                label="E-mail"
+                                                type="email"
+                                                value={leadData.email}
+                                                onChange={(e) => setLeadData({ ...leadData, email: e.target.value })}
+                                                placeholder="joao@email.com"
+                                            />
+                                        </div>
 
-                                        return (
-                                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 no-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
-                                                {sortedNotes.length === 0 && (
-                                                    <p className="text-xs text-muted-foreground text-center py-4">
-                                                        Nenhuma nota registrada para este lead ainda.
-                                                    </p>
-                                                )}
+                                        {/* Linha 3: Responsável e Criado em */}
+                                        {(userRole === 'admin' || userRole === 'superadmin') && (
+                                            <div>
+                                                <FormSelect
+                                                    label="Responsável"
+                                                    value={leadData.assigned_to}
+                                                    onChange={(e) => setLeadData({ ...leadData, assigned_to: e.target.value })}
+                                                    options={[
+                                                        { value: '', label: 'Não atribuído' },
+                                                        ...brokers.filter(b => b.role !== 'admin' && b.role !== 'superadmin').map(b => ({ value: b.id, label: b.full_name }))
+                                                    ]}
+                                                />
+                                            </div>
+                                        )}
+                                        <div>
+                                            <FormInput
+                                                label="Criado em"
+                                                type="date"
+                                                value={leadData.date}
+                                                onChange={(e) => setLeadData({ ...leadData, date: e.target.value })}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
 
-                                                {sortedNotes.map((note) => {
-                                                    const isExpanded = !!expandedNotes[note.id]
-                                                    const isEditing = editingNoteId === note.id
-                                                    const isLegacy = note.id === 'legacy'
-
-                                                    if (isEditing) {
-                                                        return (
-                                                            <div
-                                                                key={note.id}
-                                                                className="p-3 bg-background border border-border/40 rounded-lg space-y-2"
-                                                            >
-                                                                <textarea
-                                                                    value={editingNoteText}
-                                                                    onChange={(e) => setEditingNoteText(e.target.value)}
-                                                                    disabled={isSavingEditedNote}
-                                                                    rows={6}
-                                                                    className="w-full text-sm p-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-secondary/50 resize-y font-medium text-foreground"
-                                                                />
-                                                                <div className="flex items-center justify-end gap-2">
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => setEditingNoteId(null)}
-                                                                        disabled={isSavingEditedNote}
-                                                                        className="px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
-                                                                    >
-                                                                        Cancelar
-                                                                    </button>
-                                                                    <button
-                                                                        type="button"
-                                                                        onClick={() => handleSaveEditedNote(note.id)}
-                                                                        disabled={isSavingEditedNote || !editingNoteText.trim()}
-                                                                        className="px-2.5 py-1.5 text-[10px] font-bold bg-[#FFE600] text-[#404F4F] hover:bg-[#F2DB00] rounded-lg transition-colors cursor-pointer"
-                                                                    >
-                                                                        {isSavingEditedNote ? 'Salvando...' : 'Salvar'}
-                                                                    </button>
-                                                                </div>
-                                                            </div>
-                                                        )
+                                {/* Seção: Captação */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Captação</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            {!isAddingSource ? (
+                                                <FormSelect
+                                                    label="Origem"
+                                                    value={leadData.lead_source}
+                                                    onChange={(e) => {
+                                                        if (e.target.value === 'ADD_NEW') {
+                                                            setIsAddingSource(true)
+                                                        } else {
+                                                            setLeadData({ ...leadData, lead_source: e.target.value })
+                                                        }
+                                                    }}
+                                                    options={[
+                                                        { value: '', label: 'Selecione a origem' },
+                                                        ...sources.map(s => ({ value: s, label: s })),
+                                                        { value: 'ADD_NEW', label: 'Outra' }
+                                                    ]}
+                                                />
+                                            ) : (
+                                                <FormInput
+                                                    label="Origem (Nova)"
+                                                    value={newSource}
+                                                    onChange={(e) => setNewSource(e.target.value)}
+                                                    placeholder="Ex: WhatsApp"
+                                                    rightElement={
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setIsAddingSource(false)
+                                                                setNewSource('')
+                                                            }}
+                                                            className="text-muted-foreground hover:text-foreground p-1"
+                                                            title="Cancelar"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
                                                     }
+                                                />
+                                            )}
+                                        </div>
+                                        <div>
+                                            {!isAddingCampaign ? (
+                                                <FormSelect
+                                                    label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou?' : 'Campanha'}
+                                                    value={leadData.campaign}
+                                                    disabled={!leadData.lead_source}
+                                                    onChange={(e) => {
+                                                        if (e.target.value === 'ADD_NEW') {
+                                                            setIsAddingCampaign(true)
+                                                        } else {
+                                                            setLeadData({ ...leadData, campaign: e.target.value })
+                                                        }
+                                                    }}
+                                                    options={[
+                                                        { value: '', label: leadData.lead_source ? (leadData.lead_source.toLowerCase().includes('indica') ? 'Selecione quem indicou' : 'Selecione a campanha') : 'Selecione uma origem primeiro' },
+                                                        ...campaigns.map(c => ({ value: c, label: c })),
+                                                        { value: 'ADD_NEW', label: 'Outra' }
+                                                    ]}
+                                                />
+                                            ) : (
+                                                <FormInput
+                                                    label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou? (Novo)' : 'Campanha (Nova)'}
+                                                    value={newCampaign}
+                                                    onChange={(e) => setNewCampaign(e.target.value)}
+                                                    placeholder={leadData.lead_source.toLowerCase().includes('indica') ? 'Ex: João Silva' : 'Ex: Verão 2026'}
+                                                    rightElement={
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => {
+                                                                setIsAddingCampaign(false)
+                                                                setNewCampaign('')
+                                                            }}
+                                                            className="text-muted-foreground hover:text-foreground p-1"
+                                                            title="Cancelar"
+                                                        >
+                                                            <X size={14} />
+                                                        </button>
+                                                    }
+                                                />
+                                            )}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Seção: Interesse */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Interesse</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <PropertyAutocomplete
+                                                tenantId={tenantId}
+                                                label="Imóvel Cadastrado"
+                                                placeholder="Digite o nome do imóvel"
+                                                showIcon={false}
+                                                selectedItem={leadData.selectedProperty}
+                                                onSelect={(property) => setLeadData({ ...leadData, interest: property.title, property_id: property.id, property_interest: property.title, selectedProperty: property })}
+                                                onClear={() => setLeadData({ ...leadData, interest: '', property_id: '', property_interest: '', selectedProperty: null })}
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormInput
+                                                label="Imóvel de Interesse (texto livre)"
+                                                value={leadData.property_interest}
+                                                onChange={(e) => setLeadData({ ...leadData, property_interest: e.target.value })}
+                                                placeholder="Ex: Apto 3 dormitórios na praia..."
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Seção: Parceria Comercial */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Parceria Comercial</h3>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPartnerModalOpen(true)}
+                                            className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
+                                        >
+                                            Novo Parceiro
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <FormSelect
+                                                label="Parceiro / Imobiliária"
+                                                value={leadData.partner_id}
+                                                onChange={(e) => setLeadData({ ...leadData, partner_id: e.target.value })}
+                                                options={[
+                                                    { value: '', label: 'Nenhum (Sem Parceria)' },
+                                                    ...partners.map(p => ({
+                                                        value: p.id,
+                                                        label: p.company ? `${p.name} (${p.company})` : p.name
+                                                    }))
+                                                ]}
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormInput
+                                                label="Comissão do Parceiro (Split %)"
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                value={leadData.partner_split}
+                                                onChange={(e) => setLeadData({ ...leadData, partner_split: e.target.value })}
+                                                placeholder="Ex: 50"
+                                                disabled={!leadData.partner_id}
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormSelect
+                                                label="Papel do Parceiro"
+                                                value={leadData.partner_role}
+                                                onChange={(e) => setLeadData({ ...leadData, partner_role: e.target.value })}
+                                                disabled={!leadData.partner_id}
+                                                options={[
+                                                    { value: '', label: 'Selecione o papel' },
+                                                    { value: 'buyer_agent', label: 'Trouxe o Comprador (Lead)' },
+                                                    { value: 'seller_agent', label: 'Trouxe o Imóvel (Captação)' }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Seção: Negociação */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Negociação</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <FormSelect
+                                                label="Estágio"
+                                                value={leadData.stage_id}
+                                                onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
+                                                options={[
+                                                    { value: '', label: 'Selecione um estágio' },
+                                                    ...stages.map(s => ({ value: s.id, label: s.name }))
+                                                ]}
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormInput
+                                                label="Valor Estimado"
+                                                value={leadData.value}
+                                                onChange={(e) => setLeadData({ ...leadData, value: formatCurrencyBRL(e.target.value) })}
+                                                placeholder="0,00"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Seção: Acompanhamento (Follow-up) */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Acompanhamento (Follow-up)</h3>
+
+                                    {editingLead ? (
+                                        <div className="space-y-4">
+                                            {/* Nova Inscrição */}
+                                            {followupSequences.length > 0 && (
+                                                <div className="flex items-end gap-3 pt-2">
+                                                    <div className="flex-1">
+                                                        <FormSelect
+                                                            label="Inscrever em nova sequência"
+                                                            value={selectedSequenceId}
+                                                            onChange={(e) => setSelectedSequenceId(e.target.value)}
+                                                            options={[
+                                                                { value: '', label: 'Selecione uma sequência...' },
+                                                                ...followupSequences
+                                                                    .filter((s: any) => !leadEnrollments.some((e: any) => e.sequence_id === s.id && e.status === 'active'))
+                                                                    .map((s: any) => ({ value: s.id, label: s.name + (s.is_active ? '' : ' (Inativa)') }))
+                                                            ]}
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleEnrollInSequence}
+                                                        disabled={isProcessingFollowup || !selectedSequenceId}
+                                                        className="px-4 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 w-[120px]"
+                                                    >
+                                                        {isProcessingFollowup ? (
+                                                            <Loader2 size={14} className="animate-spin" />
+                                                        ) : (
+                                                            'Inscrever'
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* Lista de Inscrições Ativas */}
+                                            {leadEnrollments.length > 0 ? (
+                                                <div className="space-y-2">
+                                                    <label className="block text-xs font-bold text-foreground ml-1 mb-2">Inscrições Ativas</label>
+                                                    <div className="space-y-2">
+                                                        {leadEnrollments.map((enrollment: any) => {
+                                                            const isActive = enrollment.status === 'active';
+                                                            return (
+                                                                <div
+                                                                    key={enrollment.id}
+                                                                    className="flex items-center justify-between p-3 bg-background rounded-lg border border-border/40 text-sm"
+                                                                >
+                                                                    <div>
+                                                                        <p className="font-semibold text-foreground">
+                                                                            {enrollment.followup_sequences?.name || 'Sequência'}
+                                                                        </p>
+                                                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                                                            Status: <span className={`font-bold ${isActive ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                                                                                {isActive ? 'Ativo' : enrollment.status === 'completed' ? 'Concluído' : 'Cancelado'}
+                                                                            </span>
+                                                                            {isActive && enrollment.next_action_at && (
+                                                                                <>
+                                                                                    {' • '}Próximo envio: <span className="font-medium text-foreground">
+                                                                                        {new Date(enrollment.next_action_at).toLocaleString('pt-BR', {
+                                                                                            day: '2-digit',
+                                                                                            month: '2-digit',
+                                                                                            hour: '2-digit',
+                                                                                            minute: '2-digit'
+                                                                                        })}
+                                                                                    </span>
+                                                                                </>
+                                                                            )}
+                                                                        </p>
+                                                                    </div>
+                                                                    {isActive && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleCancelEnrollment(enrollment.id)}
+                                                                            disabled={isProcessingFollowup}
+                                                                            className="p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors cursor-pointer"
+                                                                            title="Cancelar acompanhamento"
+                                                                        >
+                                                                            <X size={16} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-muted-foreground italic">Nenhum acompanhamento ativo para este lead no momento.</p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        /* Modo de Criação: Campo único opcional */
+                                        <div>
+                                            <FormSelect
+                                                label="Inscrever em sequência de follow-up (Opcional)"
+                                                value={selectedSequenceId}
+                                                onChange={(e) => setSelectedSequenceId(e.target.value)}
+                                                options={[
+                                                    { value: '', label: 'Nenhuma sequência' },
+                                                    ...followupSequences.map((s: any) => ({ value: s.id, label: s.name + (s.is_active ? '' : ' (Inativa)') }))
+                                                ]}
+                                            />
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Seção: Notas */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
+                                        {editingLead && (
+                                            <button
+                                                type="button"
+                                                onClick={handleAddNote}
+                                                disabled={isSavingNote || !newNoteContent.trim()}
+                                                className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
+                                            >
+                                                {isSavingNote ? 'Adicionando...' : 'Adicionar Nota'}
+                                            </button>
+                                        )}
+                                    </div>
+
+                                    {!editingLead ? (
+                                        <FormTextarea
+                                            value={leadData.notes}
+                                            onChange={(e) => setLeadData({ ...leadData, notes: e.target.value })}
+                                            rows={3}
+                                            placeholder="Alguma observação importante sobre o lead (será salva como primeira nota)..."
+                                        />
+                                    ) : (
+                                        <div className="space-y-4">
+                                            {/* Campo para adicionar nova nota */}
+                                            <div className="space-y-2">
+                                                <textarea
+                                                    value={newNoteContent}
+                                                    onChange={(e) => setNewNoteContent(e.target.value)}
+                                                    rows={2}
+                                                    placeholder="Escreva uma nova nota sobre o lead..."
+                                                    className="w-full bg-background border border-muted-foreground/30 rounded-lg p-3 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
+                                                />
+                                            </div>
+
+                                            {/* Timeline das Notas (Collapsible Dropdown) */}
+                                            <div className="space-y-3">
+                                                <button
+                                                    type="button"
+                                                    onClick={() => setShowNotesHistory(!showNotesHistory)}
+                                                    className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-foreground uppercase tracking-wider transition-colors cursor-pointer"
+                                                >
+                                                    <span>Notas salvas ({leadNotes.length + (leadData.notes ? 1 : 0)})</span>
+                                                    <div className="flex items-center gap-1">
+                                                        {showNotesHistory ? <ChevronRight className="rotate-90 transition-transform" size={14} /> : <ChevronRight size={14} />}
+                                                    </div>
+                                                </button>
+
+                                                {showNotesHistory && (() => {
+                                                    const sortedNotes = [...leadNotes]
+                                                    if (leadData.notes) {
+                                                        sortedNotes.push({
+                                                            id: 'legacy',
+                                                            content: leadData.notes,
+                                                            created_at: editingLead?.date || new Date(0).toISOString(),
+                                                            profiles: {
+                                                                full_name: 'Observação de Cadastro'
+                                                            }
+                                                        })
+                                                    }
+                                                    sortedNotes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
                                                     return (
-                                                        <div 
-                                                            key={note.id} 
-                                                            onClick={() => toggleNoteExpanded(note.id)}
-                                                            className="p-3 bg-background border border-border/40 rounded-lg hover:border-muted-foreground/20 transition-all relative group cursor-pointer"
-                                                        >
-                                                            {!isExpanded ? (
-                                                                <div className="flex items-center justify-between gap-3">
-                                                                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                                        <ChevronRight size={14} className="text-muted-foreground shrink-0" />
-                                                                        <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
-                                                                            {getFirstSentence(note.content)}
-                                                                        </span>
-                                                                    </div>
-                                                                    <div className="flex items-center gap-2 shrink-0">
-                                                                        <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
-                                                                            {formatNoteDate(note.created_at)}
-                                                                        </span>
-                                                                        <NoteActionsDropdown
-                                                                            onEdit={() => {
-                                                                                setEditingNoteId(note.id)
-                                                                                setEditingNoteText(note.content)
-                                                                            }}
-                                                                            onDelete={() => handleDeleteNote(note.id)}
-                                                                        />
-                                                                    </div>
-                                                                </div>
-                                                            ) : (
-                                                                 <div className="flex gap-2 items-start">
-                                                                     <ChevronRight 
-                                                                         size={14} 
-                                                                         className="text-muted-foreground transition-transform rotate-90 shrink-0 mt-0.5"
-                                                                     />
-                                                                     <div className="flex-1 min-w-0 space-y-2">
-                                                                         <div className="flex items-center justify-between mb-1.5 select-none">
-                                                                             <div className="flex items-center gap-2">
-                                                                                 <span className={isLegacy ? "text-[10px] font-bold text-muted-foreground uppercase tracking-wider" : "text-[10px] font-bold text-accent-icon"}>
-                                                                                     {isLegacy ? "Observação de Cadastro" : (note.profiles?.full_name || 'Corretor')}
-                                                                                 </span>
-                                                                             </div>
-                                                                             <div className="flex items-center gap-2">
-                                                                                 <span className="text-[10px] text-muted-foreground font-medium">
-                                                                                     {formatNoteDate(note.created_at)}
-                                                                                 </span>
-                                                                                 <NoteActionsDropdown
-                                                                                     onEdit={() => {
-                                                                                         setEditingNoteId(note.id)
-                                                                                         setEditingNoteText(note.content)
-                                                                                     }}
-                                                                                     onDelete={() => handleDeleteNote(note.id)}
-                                                                                 />
-                                                                             </div>
-                                                                         </div>
-                                                                         <p className="text-sm text-foreground whitespace-pre-line leading-relaxed font-medium">
-                                                                             {note.content}
-                                                                         </p>
-                                                                         <button
-                                                                             type="button"
-                                                                             onClick={(e) => {
-                                                                                 e.stopPropagation()
-                                                                                 toggleNoteExpanded(note.id)
-                                                                             }}
-                                                                             className={isLegacy ? "text-[10px] font-bold text-muted-foreground mt-1 hover:underline cursor-pointer block" : "text-[10px] font-bold text-accent-icon mt-1 hover:underline cursor-pointer block"}
-                                                                         >
-                                                                             Ver menos
-                                                                         </button>
-                                                                     </div>
-                                                                 </div>
+                                                        <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 no-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                                                            {sortedNotes.length === 0 && (
+                                                                <p className="text-xs text-muted-foreground text-center py-4">
+                                                                    Nenhuma nota registrada para este lead ainda.
+                                                                </p>
                                                             )}
+
+                                                            {sortedNotes.map((note) => {
+                                                                const isExpanded = !!expandedNotes[note.id]
+                                                                const isEditing = editingNoteId === note.id
+                                                                const isLegacy = note.id === 'legacy'
+
+                                                                if (isEditing) {
+                                                                    return (
+                                                                        <div
+                                                                            key={note.id}
+                                                                            className="p-3 bg-background border border-border/40 rounded-lg space-y-2"
+                                                                        >
+                                                                            <textarea
+                                                                                value={editingNoteText}
+                                                                                onChange={(e) => setEditingNoteText(e.target.value)}
+                                                                                disabled={isSavingEditedNote}
+                                                                                rows={6}
+                                                                                className="w-full text-sm p-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-secondary/50 resize-y font-medium text-foreground"
+                                                                            />
+                                                                            <div className="flex items-center justify-end gap-2">
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => setEditingNoteId(null)}
+                                                                                    disabled={isSavingEditedNote}
+                                                                                    className="px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                                                                                >
+                                                                                    Cancelar
+                                                                                </button>
+                                                                                <button
+                                                                                    type="button"
+                                                                                    onClick={() => handleSaveEditedNote(note.id)}
+                                                                                    disabled={isSavingEditedNote || !editingNoteText.trim()}
+                                                                                    className="px-2.5 py-1.5 text-[10px] font-bold bg-secondary text-secondary-foreground hover:opacity-90 active:scale-[0.97] rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                                                                                >
+                                                                                    {isSavingEditedNote ? 'Salvando...' : 'Salvar'}
+                                                                                </button>
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                }
+
+                                                                return (
+                                                                    <div
+                                                                        key={note.id}
+                                                                        onClick={() => toggleNoteExpanded(note.id)}
+                                                                        className="p-3 bg-background border border-border/40 rounded-lg hover:border-muted-foreground/20 transition-all relative group cursor-pointer"
+                                                                    >
+                                                                        {!isExpanded ? (
+                                                                            <div className="flex items-center justify-between gap-3">
+                                                                                <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                                                    <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                                                                                    <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
+                                                                                        {getFirstSentence(note.content)}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="flex items-center gap-2 shrink-0">
+                                                                                    <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
+                                                                                        {formatNoteDate(note.created_at)}
+                                                                                    </span>
+                                                                                    <NoteActionsDropdown
+                                                                                        onEdit={() => {
+                                                                                            setEditingNoteId(note.id)
+                                                                                            setEditingNoteText(note.content)
+                                                                                        }}
+                                                                                        onDelete={() => handleDeleteNote(note.id)}
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+                                                                        ) : (
+                                                                            <div className="flex gap-2 items-start">
+                                                                                <ChevronRight
+                                                                                    size={14}
+                                                                                    className="text-muted-foreground transition-transform rotate-90 shrink-0 mt-0.5"
+                                                                                />
+                                                                                <div className="flex-1 min-w-0 space-y-2">
+                                                                                    <div className="flex items-center justify-between mb-1.5 select-none">
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <span className={isLegacy ? "text-[10px] font-bold text-muted-foreground uppercase tracking-wider" : "text-[10px] font-bold text-accent-icon"}>
+                                                                                                {isLegacy ? "Observação de Cadastro" : (note.profiles?.full_name || 'Corretor')}
+                                                                                            </span>
+                                                                                        </div>
+                                                                                        <div className="flex items-center gap-2">
+                                                                                            <span className="text-[10px] text-muted-foreground font-medium">
+                                                                                                {formatNoteDate(note.created_at)}
+                                                                                            </span>
+                                                                                            <NoteActionsDropdown
+                                                                                                onEdit={() => {
+                                                                                                    setEditingNoteId(note.id)
+                                                                                                    setEditingNoteText(note.content)
+                                                                                                }}
+                                                                                                onDelete={() => handleDeleteNote(note.id)}
+                                                                                            />
+                                                                                        </div>
+                                                                                    </div>
+                                                                                    <p className="text-sm text-foreground whitespace-pre-line leading-relaxed font-medium">
+                                                                                        {note.content}
+                                                                                    </p>
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={(e) => {
+                                                                                            e.stopPropagation()
+                                                                                            toggleNoteExpanded(note.id)
+                                                                                        }}
+                                                                                        className={isLegacy ? "text-[10px] font-bold text-muted-foreground mt-1 hover:underline cursor-pointer block" : "text-[10px] font-bold text-accent-icon mt-1 hover:underline cursor-pointer block"}
+                                                                                    >
+                                                                                        Ver menos
+                                                                                    </button>
+                                                                                </div>
+                                                                            </div>
+                                                                        )}
+                                                                    </div>
+                                                                )
+                                                            })}
                                                         </div>
                                                     )
-                                                })}
+                                                })()}
                                             </div>
-                                        )
-                                    })()}
+                                        </div>
+                                    )}
                                 </div>
+
+                                {/* Seção: Mídias e Docs */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Mídias e Docs</h3>
+                                    <MediaUpload
+                                        pathPrefix={`leads/${tenantId}`}
+                                        images={leadData.images}
+                                        videos={leadData.videos}
+                                        documents={leadData.documents}
+                                        onUpload={handleMediaUpload}
+                                        onRemove={handleMediaRemove}
+                                    />
+                                </div>
+
+                            </div>
+                        </div>
+
+                        {/* Coluna Direita: Emulador WhatsApp */}
+                        {editingLead && (
+                            <div className={`flex flex-col h-[500px] lg:h-full lg:max-h-[calc(94vh-90px)] shrink-0 pb-1 mt-6 lg:mt-0 ${activeTab === 'whatsapp' ? 'flex' : 'hidden lg:flex'}`}>
+                                <LeadWhatsAppConversation
+                                    chat={whatsappChat}
+                                    leadName={editingLead.name}
+                                    avatarUrl={editingLead.avatar_url || undefined}
+                                    phone={editingLead.phone}
+                                    onSendMessage={handleSendWhatsAppMessage}
+                                    onSendMedia={handleSendWhatsAppMedia}
+                                    instanceStatus={instanceStatus}
+                                />
                             </div>
                         )}
                     </div>
-
-                    {/* Seção: Mídias e Docs */}
-                    <div className="space-y-4 pt-8 border-t border-border/50">
-                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Mídias e Docs</h3>
-                        <MediaUpload
-                            pathPrefix={`leads/${tenantId}`}
-                            images={leadData.images}
-                            videos={leadData.videos}
-                            documents={leadData.documents}
-                            onUpload={handleMediaUpload}
-                            onRemove={handleMediaRemove}
-                        />
-                    </div>
-
-                    </div>
                 </div>
-
-                {/* Coluna Direita: Emulador WhatsApp */}
-                {editingLead && (
-                    <div className={`flex flex-col h-[500px] lg:h-full lg:max-h-[calc(94vh-120px)] shrink-0 pb-1 mt-6 lg:mt-0 ${activeTab === 'whatsapp' ? 'flex' : 'hidden lg:flex'}`}>
-                        <LeadWhatsAppConversation 
-                            chat={whatsappChat} 
-                            leadName={editingLead.name}
-                            avatarUrl={editingLead.avatar_url || undefined}
-                            phone={editingLead.phone}
-                            onSendMessage={handleSendWhatsAppMessage}
-                            onSendMedia={handleSendWhatsAppMedia}
-                            instanceStatus={instanceStatus}
-                        />
-                    </div>
-                )}
-            </div>
-            </div>
             )}
 
             {/* Modal de Zoom do Avatar */}
@@ -1289,6 +1590,44 @@ export function LeadModal({
                     </div>
                 </div>
             )}
+
+            {isPartnerModalOpen && (
+                <PartnerQuickModal
+                    isOpen={isPartnerModalOpen}
+                    onClose={() => setIsPartnerModalOpen(false)}
+                    onSuccess={handlePartnerCreated}
+                    tenantId={tenantId}
+                />
+            )}
+
+            <ConfirmModal
+                isOpen={!!enrollmentToCancel}
+                title="Cancelar Acompanhamento"
+                message="Deseja realmente cancelar esta inscrição de follow-up?"
+                confirmLabel="Confirmar"
+                onConfirm={async () => {
+                    if (enrollmentToCancel) {
+                        await handleCancelEnrollment(enrollmentToCancel)
+                        setEnrollmentToCancel(null)
+                    }
+                }}
+                onCancel={() => setEnrollmentToCancel(null)}
+                isLoading={isProcessingFollowup}
+            />
+
+            <ConfirmModal
+                isOpen={!!noteToDelete}
+                title="Excluir Nota"
+                message={noteToDelete === 'legacy' ? "Deseja realmente excluir a observação de cadastro do lead?" : "Deseja realmente excluir esta nota?"}
+                confirmLabel="Excluir"
+                onConfirm={async () => {
+                    if (noteToDelete) {
+                        await executeDeleteNote(noteToDelete)
+                        setNoteToDelete(null)
+                    }
+                }}
+                onCancel={() => setNoteToDelete(null)}
+            />
         </Modal>
     )
 }

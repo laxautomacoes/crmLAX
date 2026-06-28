@@ -67,12 +67,14 @@ export default function SalesFunnel({ funnelSteps }: SalesFunnelProps) {
                                             borderTop: hasColor ? `4px solid ${step.color}` : undefined,
                                         }}
                                     >
-                                        <span 
-                                            className="text-[10px] font-bold uppercase tracking-wider text-center mb-1.5"
-                                            style={step.color ? { color: getStageColor(step.color) } : undefined}
-                                        >
-                                            {step.label}
-                                        </span>
+                                        <div className="h-8 flex items-center justify-center mb-1.5 w-full">
+                                            <span 
+                                                className="text-[10px] font-bold uppercase tracking-wider text-center leading-tight"
+                                                style={step.color ? { color: getStageColor(step.color) } : undefined}
+                                            >
+                                                {step.label}
+                                            </span>
+                                        </div>
                                         <span className="text-xl font-bold text-foreground">
                                             {step.count}
                                         </span>

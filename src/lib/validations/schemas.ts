@@ -28,6 +28,20 @@ const jsonArray = z.array(z.any()).optional()
 const jsonObject = z.record(z.string(), z.any()).optional()
 
 // ============================================================
+// Partners (Parceiros)
+// ============================================================
+
+export const createPartnerSchema = z.object({
+    name: nonEmpty,
+    phone: z.string().max(20).optional().nullable(),
+    email: optionalEmail,
+    company: z.string().max(200).optional().nullable(),
+    creci: z.string().max(50).optional().nullable(),
+})
+
+export const updatePartnerSchema = createPartnerSchema.partial()
+
+// ============================================================
 // Properties (Properties)
 // ============================================================
 
@@ -73,6 +87,8 @@ export const createPropertySchema = z.object({
     is_archived: z.boolean().optional().default(false),
     owner_contact_id: optionalUuid,
     main_image_url: optionalText,
+    partner_id: optionalUuid,
+    partner_commission_split: z.number().min(0).max(100).optional().nullable(),
 })
 
 export const updatePropertySchema = createPropertySchema.partial()
@@ -110,6 +126,9 @@ export const createLeadSchema = z.object({
     images: jsonArray,
     videos: jsonArray,
     documents: jsonArray,
+    partner_id: optionalUuid,
+    partner_split: z.number().min(0).max(100).optional().nullable(),
+    partner_role: z.enum(['buyer_agent', 'seller_agent']).optional().nullable(),
 })
 
 export const updateLeadSchema = createLeadSchema.partial()

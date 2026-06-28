@@ -3,6 +3,8 @@
 import { useState, useEffect } from 'react';
 import { getLeadFinancials, invoiceLeadCommission } from '@/app/_actions/leads-finance';
 import { getBrokers } from '@/app/_actions/profile';
+import { createClient } from '@/lib/supabase/client';
+import { getPartners } from '@/app/_actions/partners';
 import { FormInput } from '@/components/shared/forms/FormInput';
 import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { DollarSign, Loader2, Calendar, Check, AlertTriangle, ArrowUpRight, ArrowDownRight } from 'lucide-react';
@@ -45,12 +47,42 @@ export function LeadFinanceTab({ leadId, tenantId, assignedToId }: LeadFinanceTa
     const [brokerId, setBrokerId] = useState(assignedToId || '');
     const [brokerRate, setBrokerRate] = useState('30.00'); // Padrão 30% do corretor
 
+    // Parcerias
+    const [partners, setPartners] = useState<any[]>([]);
+    const [hasPartner, setHasPartner] = useState(false);
+    const [partnerId, setPartnerId] = useState('');
+    const [partnerRate, setPartnerRate] = useState('50.00'); // Padrão 50%
+
     const loadFinancialData = async () => {
         setLoading(true);
-        const [finRes, brokerRes] = await Promise.all([
+        const supabase = createClient();
+        const [finRes, brokerRes, partnerRes, leadRes] = await Promise.all([
             getLeadFinancials(leadId),
-            getBrokers(tenantId)
+            getBrokers(tenantId),
+            getPartners(tenantId),
+            supabase.from('leads').select('partner_id, partner_split, sale_value, final_commission_rate').eq('id', leadId).single()
         ]);
+
+        if (partnerRes.success && partnerRes.data) {
+            setPartners(partnerRes.data);
+        }
+
+        if (leadRes.data) {
+            const lead = leadRes.data;
+            if (lead.partner_id) {
+                setPartnerId(lead.partner_id);
+                setHasPartner(true);
+            }
+            if (lead.partner_split) {
+                setPartnerRate(Number(lead.partner_split).toFixed(2));
+            }
+            if (lead.sale_value) {
+                setSaleValue(formatCurrencyBRL((Number(lead.sale_value) * 100).toString()));
+            }
+            if (lead.final_commission_rate) {
+                setCommissionRate(Number(lead.final_commission_rate).toFixed(2));
+            }
+        }
 
         if (finRes.success && finRes.data) {
             const data = finRes.data as Installment[];
@@ -99,7 +131,9 @@ export function LeadFinanceTab({ leadId, tenantId, assignedToId }: LeadFinanceTa
             installmentsCount: parseInt(installmentsCount),
             firstDueDate,
             brokerId: brokerId || undefined,
-            brokerRate: brokerId ? parseFloat(brokerRate) : undefined
+            brokerRate: brokerId ? parseFloat(brokerRate) : undefined,
+            partnerId: hasPartner && partnerId ? partnerId : undefined,
+            partnerRate: hasPartner && partnerId ? parseFloat(partnerRate) : undefined
         });
 
         if (res.success) {
@@ -121,6 +155,10 @@ export function LeadFinanceTab({ leadId, tenantId, assignedToId }: LeadFinanceTa
     const taxaBroker = parseFloat(brokerRate) || 0;
     const totalBroker = brokerId ? (totalComm * taxaBroker) / 100 : 0;
     const valorParcelaBroker = brokerId ? totalBroker / numParcelas : 0;
+
+    const taxaPartner = parseFloat(partnerRate) || 0;
+    const totalPartner = hasPartner && partnerId ? (totalComm * taxaPartner) / 100 : 0;
+    const valorParcelaPartner = hasPartner && partnerId ? totalPartner / numParcelas : 0;
 
     return (
         <div className="space-y-6">
@@ -195,6 +233,46 @@ export function LeadFinanceTab({ leadId, tenantId, assignedToId }: LeadFinanceTa
                             />
                         </div>
 
+                        {/* Parceria Comercial */}
+                        <div className="border-t border-dashed border-border/40 pt-3 flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="hasPartnerCheckbox"
+                                checked={hasPartner}
+                                onChange={(e) => setHasPartner(e.target.checked)}
+                                className="w-4 h-4 rounded border-gray-300 text-secondary focus:ring-secondary cursor-pointer"
+                            />
+                            <label htmlFor="hasPartnerCheckbox" className="text-xs font-bold text-foreground cursor-pointer select-none">
+                                Adicionar Repasse de Parceria Comercial (Split)
+                            </label>
+                        </div>
+
+                        {hasPartner && (
+                            <div className="grid grid-cols-2 gap-3 animate-in fade-in duration-200">
+                                <FormSelect
+                                    label="Parceiro Comercial"
+                                    value={partnerId}
+                                    onChange={(e) => setPartnerId(e.target.value)}
+                                    options={[
+                                        { value: '', label: 'Selecione um parceiro' },
+                                        ...partners.map(p => ({ 
+                                            value: p.id, 
+                                            label: p.company ? `${p.name} (${p.company})` : p.name 
+                                        }))
+                                    ]}
+                                />
+                                <FormInput
+                                    label="Percentual de Parceria (%)"
+                                    type="number"
+                                    value={partnerRate}
+                                    onChange={(e) => setPartnerRate(e.target.value)}
+                                    placeholder="50.00"
+                                    step="0.1"
+                                    required={hasPartner}
+                                />
+                            </div>
+                        )}
+ 
                         <button
                             type="submit"
                             disabled={saving || valVenda <= 0}
@@ -240,10 +318,25 @@ export function LeadFinanceTab({ leadId, tenantId, assignedToId }: LeadFinanceTa
                                 <ArrowDownRight className="text-red-500 shrink-0" size={24} />
                             </div>
                         )}
+
+                        {hasPartner && partnerId && (
+                            <div className="bg-muted/30 dark:bg-muted/10 rounded-xl p-3.5 border border-border/40 flex items-center justify-between">
+                                <div>
+                                    <p className="text-[10px] text-muted-foreground font-bold uppercase tracking-wider">Repasse Parceria</p>
+                                    <p className="text-base font-black text-foreground mt-0.5">
+                                        R$ {totalPartner.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </p>
+                                    <p className="text-[9px] text-muted-foreground mt-0.5 font-medium">
+                                        {numParcelas}x de R$ {valorParcelaPartner.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}
+                                    </p>
+                                </div>
+                                <ArrowDownRight className="text-red-500 shrink-0" size={24} />
+                            </div>
+                        )}
  
                         <div className="pt-2 flex justify-between font-bold text-foreground border-t border-border/40">
                             <span>Margem Imobiliária:</span>
-                            <span>R$ {(totalComm - totalBroker).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
+                            <span>R$ {(totalComm - totalBroker - totalPartner).toLocaleString('pt-BR', { minimumFractionDigits: 2 })}</span>
                         </div>
                     </div>
                 </div>

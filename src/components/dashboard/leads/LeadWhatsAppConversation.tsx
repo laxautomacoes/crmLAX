@@ -61,7 +61,7 @@ function getContactStatus(chat: Message[]) {
 
     // Verificar se é hoje, ontem ou outro dia
     const isToday = now.toDateString() === msgDate.toDateString();
-    
+
     const yesterday = new Date(now);
     yesterday.setDate(now.getDate() - 1);
     const isYesterday = yesterday.toDateString() === msgDate.toDateString();
@@ -175,28 +175,28 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                         {avatarUrl ? (
                             <img src={avatarUrl} alt="Avatar" className="w-full h-full object-cover" />
                         ) : (
-                            <User size={24} className="text-white/70" />
+                            <User size={20} className="text-white/70" />
                         )}
                     </div>
                     <div className="flex flex-col min-w-0">
-                        <span className="text-white font-semibold text-base truncate leading-tight">{leadName || phone || 'Lead'}</span>
-                        <span className={`text-xs truncate ${statusColor} ${instanceStatus === 'loading' ? 'animate-pulse' : ''}`}>
+                        <span className="text-white font-semibold text-sm truncate leading-tight">{leadName || phone || 'Lead'}</span>
+                        <span className={`text-[11px] truncate ${statusColor} ${instanceStatus === 'loading' ? 'animate-pulse' : ''}`}>
                             {statusLabel}
                         </span>
                     </div>
                 </div>
                 <div className="flex items-center gap-5 text-white shrink-0 ml-2">
-                    <Video size={20} className="cursor-pointer" />
-                    <Phone size={18} className="cursor-pointer" />
-                    <MoreVertical size={20} className="cursor-pointer" />
+                    <Video size={16} className="cursor-pointer" />
+                    <Phone size={14} className="cursor-pointer" />
+                    <MoreVertical size={16} className="cursor-pointer" />
                 </div>
             </div>
 
             {/* Chat Area */}
-            <div 
+            <div
                 ref={scrollRef}
                 className="flex-1 overflow-y-auto p-4 space-y-3 custom-scrollbar relative"
-                style={{ 
+                style={{
                     backgroundImage: 'url("https://user-images.githubusercontent.com/15075759/28719144-86dc0f70-73b1-11e7-911d-60d70fcded21.png")',
                     backgroundSize: 'contain',
                     backgroundRepeat: 'repeat',
@@ -205,10 +205,10 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
             >
                 {/* Background overlay for dark mode to tint the wallpaper */}
                 <div className="absolute inset-0 bg-[#EFEAE2]/60 dark:bg-[#0b141a]/80 pointer-events-none" />
-                
+
                 <div className="relative z-10 flex flex-col justify-end min-h-full space-y-3 pb-2">
                     {(!chat || chat.length === 0) ? (
-                        <div className="bg-[#FFEECD] dark:bg-[#182229] text-[#544837] dark:text-[#ffca48] p-3 rounded-lg text-xs text-center self-center max-w-[85%] shadow-sm leading-relaxed font-medium">
+                        <div className="bg-[#FFEECD] dark:bg-[#182229] text-[#544837] dark:text-[#ffca48] p-3 rounded-lg text-[11px] text-center self-center max-w-[85%] shadow-sm leading-relaxed font-medium">
                             As mensagens e chamadas são protegidas com a criptografia de ponta a ponta. Ninguém fora desta conversa, nem mesmo o WhatsApp, pode ler ou ouvi-las.
                         </div>
                     ) : (
@@ -218,11 +218,10 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                                 className={`flex flex-col ${msg.fromMe ? 'items-end' : 'items-start'}`}
                             >
                                 <div
-                                    className={`max-w-[85%] p-2 rounded-lg text-[14px] shadow-sm relative group ${
-                                        msg.fromMe
+                                    className={`max-w-[85%] p-2 rounded-lg text-[13px] shadow-sm relative group ${msg.fromMe
                                             ? 'bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111B21] dark:text-[#e9edef] rounded-tr-none'
                                             : 'bg-white dark:bg-[#202c33] text-[#111B21] dark:text-[#e9edef] rounded-tl-none'
-                                    }`}
+                                        }`}
                                 >
                                     {msg.mediaType === 'image' && msg.mediaUrl && (
                                         <div className="mb-2 max-w-full rounded-md overflow-hidden border border-border/10">
@@ -241,17 +240,17 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                                     )}
                                     {msg.mediaType === 'document' && msg.mediaUrl && (
                                         <div className="mb-2 p-2 rounded-md bg-black/5 dark:bg-white/5 border border-border/20 flex items-center gap-2 max-w-full">
-                                            <Paperclip size={18} className="text-muted-foreground shrink-0" />
+                                            <Paperclip size={16} className="text-muted-foreground shrink-0" />
                                             <div className="flex flex-col min-w-0 flex-1">
                                                 <span className="text-xs font-bold truncate leading-tight">{msg.mediaName || 'Documento'}</span>
                                                 <span className="text-[9px] text-muted-foreground">Documento</span>
                                             </div>
-                                            <a 
-                                                href={msg.mediaUrl} 
-                                                download={msg.mediaName || 'documento'} 
+                                            <a
+                                                href={msg.mediaUrl}
+                                                download={msg.mediaName || 'documento'}
                                                 target="_blank"
                                                 rel="noreferrer"
-                                                className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded text-xs font-bold text-accent-icon shrink-0"
+                                                className="p-1 hover:bg-black/10 dark:hover:bg-white/10 rounded text-[11px] font-bold text-accent-icon shrink-0"
                                             >
                                                 Baixar
                                             </a>
@@ -270,8 +269,8 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                     {/* Upload indicator */}
                     {isUploading && (
                         <div className="flex flex-col items-end">
-                            <div className="max-w-[85%] p-3 rounded-lg text-[14px] shadow-sm bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111B21] dark:text-[#e9edef] rounded-tr-none flex items-center gap-2">
-                                <Loader2 size={16} className="animate-spin" />
+                            <div className="max-w-[85%] p-3 rounded-lg text-[13px] shadow-sm bg-[#d9fdd3] dark:bg-[#005c4b] text-[#111B21] dark:text-[#e9edef] rounded-tr-none flex items-center gap-2">
+                                <Loader2 size={14} className="animate-spin" />
                                 <span className="text-xs">Enviando mídia...</span>
                             </div>
                         </div>
@@ -290,9 +289,9 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
 
             {/* Input Area */}
             <div className="bg-[#f0f2f5] dark:bg-[#202c33] p-2 flex items-end gap-2 shrink-0 z-10">
-                <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-3xl overflow-hidden shadow-sm flex items-end min-h-[44px]">
+                <div className="flex-1 bg-white dark:bg-[#2a3942] rounded-3xl shadow-sm flex items-end min-h-[44px] relative">
                     <button className="p-3 text-gray-500 hover:text-gray-700 dark:text-[#8696a0] dark:hover:text-[#d1d7db] transition-colors shrink-0">
-                        <Smile size={24} />
+                        <Smile size={20} />
                     </button>
                     <textarea
                         value={newMessage}
@@ -304,18 +303,18 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                             }
                         }}
                         placeholder="Mensagem"
-                        className="w-full bg-transparent border-none focus:ring-0 outline-none focus:outline-none resize-none py-3 px-1 max-h-24 text-[15px] dark:text-[#d1d7db] placeholder:text-gray-400 dark:placeholder:text-[#8696a0]"
+                        className="w-full bg-transparent border-none focus:ring-0 outline-none focus:outline-none resize-none py-3 px-1 max-h-24 text-[13px] dark:text-[#d1d7db] placeholder:text-gray-400 dark:placeholder:text-[#8696a0]"
                         rows={1}
                         disabled={isSending || !onSendMessage || isUploading}
                     />
                     <div className="relative" ref={attachMenuRef}>
-                        <button 
+                        <button
                             className="p-3 text-gray-500 hover:text-gray-700 dark:text-[#8696a0] dark:hover:text-[#d1d7db] transition-colors shrink-0"
                             onClick={() => onSendMedia && setShowAttachMenu(!showAttachMenu)}
                             disabled={!onSendMedia || isUploading}
                             title={onSendMedia ? 'Enviar anexo' : 'Envio de mídias não disponível'}
                         >
-                            {isUploading ? <Loader2 size={24} className="animate-spin" /> : <Paperclip size={24} />}
+                            {isUploading ? <Loader2 size={20} className="animate-spin" /> : <Paperclip size={20} />}
                         </button>
 
                         {/* Attach menu popup */}
@@ -325,42 +324,42 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                                     onClick={() => openFilePicker('image/*,video/*')}
                                     className="w-full px-4 py-3 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
                                 >
-                                    <Image size={18} className="text-blue-500" />
+                                    <Image size={16} className="text-blue-500" />
                                     <span>Foto / Vídeo</span>
                                 </button>
                                 <button
                                     onClick={() => openFilePicker('.pdf,.doc,.docx,.xls,.xlsx,.ppt,.pptx,.txt,.csv,.zip,.rar')}
                                     className="w-full px-4 py-3 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
                                 >
-                                    <FileText size={18} className="text-amber-500" />
+                                    <FileText size={16} className="text-amber-500" />
                                     <span>Documento</span>
                                 </button>
                                 <button
                                     onClick={() => openFilePicker('audio/*')}
                                     className="w-full px-4 py-3 text-sm text-foreground hover:bg-muted/50 flex items-center gap-3 transition-colors"
                                 >
-                                    <Music size={18} className="text-purple-500" />
+                                    <Music size={16} className="text-purple-500" />
                                     <span>Áudio</span>
                                 </button>
                             </div>
                         )}
                     </div>
                 </div>
-                
+
                 {newMessage.trim() ? (
-                    <button 
+                    <button
                         onClick={handleSend}
                         disabled={isSending}
                         className="w-[44px] h-[44px] bg-[#00a884] hover:bg-[#008f6f] text-white rounded-full flex items-center justify-center shrink-0 transition-colors shadow-sm disabled:opacity-50"
                     >
-                        <Send size={20} className="ml-1" />
+                        <Send size={18} className="ml-1" />
                     </button>
                 ) : (
-                    <button 
+                    <button
                         className="w-[44px] h-[44px] bg-[#00a884] hover:bg-[#008f6f] text-white rounded-full flex items-center justify-center shrink-0 transition-colors shadow-sm"
                         title="Neste momento o envio de áudio nativo ainda será implementado."
                     >
-                        <Mic size={24} />
+                        <Mic size={20} />
                     </button>
                 )}
             </div>

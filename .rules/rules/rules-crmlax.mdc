@@ -70,3 +70,7 @@ alwaysApply: true
     - Aba Ativa (selecionada): `text-foreground border-b-[3px] active-tab-indicator` (ou variante específica com `border-b-[3px]`).
     - Aba Inativa: `text-muted-foreground hover:text-foreground`
     - Ícones (Lucide-React): `size={18} strokeWidth={1}`
+
+14. Padrão de Modais de Confirmação (Dialogs de Ação):
+    - É estritamente proibido o uso da função nativa do navegador `confirm()` (ex: `if (!confirm(...)) return`).
+    - Em vez disso, utilize sempre o componente padrão `ConfirmModal` localizado em `@/components/shared/ConfirmModal` para garantir consistência visual e compatibilidade com o design system do CRM LAX.

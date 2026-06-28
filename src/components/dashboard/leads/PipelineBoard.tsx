@@ -47,6 +47,9 @@ export interface Lead {
     whatsapp_chat?: Array<{ fromMe?: boolean; message?: string; text?: string }>
     last_interaction_at?: string | null
     has_proposal?: boolean
+    partner_id?: string | null
+    partner_split?: number | null
+    partner_role?: string | null
 }
 
 interface Stage {

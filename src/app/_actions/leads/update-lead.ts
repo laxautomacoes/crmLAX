@@ -81,6 +81,9 @@ export async function updateLead(tenantId: string, leadId: string, data: unknown
     if (input.images !== undefined) leadUpdate.images = input.images
     if (input.videos !== undefined) leadUpdate.videos = input.videos
     if (input.documents !== undefined) leadUpdate.documents = input.documents
+    if (input.partner_id !== undefined) leadUpdate.partner_id = input.partner_id || null
+    if (input.partner_split !== undefined) leadUpdate.partner_split = input.partner_split || null
+    if (input.partner_role !== undefined) leadUpdate.partner_role = input.partner_role || null
 
     if (Object.keys(leadUpdate).length > 0) {
         const { error: leadError } = await supabase

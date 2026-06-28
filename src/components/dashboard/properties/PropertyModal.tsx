@@ -22,6 +22,10 @@ import { OwnerFields } from './PropertyModal/OwnerFields'
 import { Switch } from '@/components/ui/Switch'
 import { Eraser, Globe, FileText, ClipboardPaste, PenLine, ChevronRight } from 'lucide-react'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
+import { getPartners } from '@/app/_actions/partners'
+import { PartnerQuickModal } from '@/components/dashboard/shared/PartnerQuickModal'
+import { FormSelect } from '@/components/shared/forms/FormSelect'
+import { FormInput } from '@/components/shared/forms/FormInput'
 import { normalizePropertyAddress } from '@/lib/utils/normalize'
 
 const DRAFT_KEY = 'crm_new_property_draft'
@@ -40,6 +44,8 @@ function getEmptyFormData() {
         videos: [] as string[],
         documents: [] as { name: string, url: string }[],
         is_published: false,
+        partner_id: null as string | null,
+        partner_commission_split: '',
         is_featured: false,
         details: {
             situacao: 'lançamento',
@@ -298,6 +304,17 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const [tenantId, setTenantId] = useState<string>('')
     const [currentProfile, setCurrentProfile] = useState<CurrentProfile | null>(null)
     const [hasDraft, setHasDraft] = useState(false)
+    const [partners, setPartners] = useState<any[]>([])
+    const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false)
+    
+    const handlePartnerCreated = (newPartner: any) => {
+        setPartners(prev => [...prev, newPartner].sort((a, b) => a.name.localeCompare(b.name)))
+        setFormData(prev => ({
+            ...prev,
+            partner_id: newPartner.id
+        }))
+    }
+
     const [formData, setFormData] = useState(getEmptyFormData())
     const draftTimerRef = useRef<NodeJS.Timeout | null>(null)
     const autoSaveTimerRef = useRef<NodeJS.Timeout | null>(null)
@@ -377,6 +394,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             if (profile) {
                 setCurrentProfile(profile)
                 setTenantId(profile.tenant_id)
+                
+                // Carregar parceiros
+                const partnersRes = await getPartners(profile.tenant_id)
+                if (partnersRes.success && partnersRes.data) {
+                    setPartners(partnersRes.data)
+                }
+
                 // Carregar áreas customizadas do tenant
                 const amenitiesRes = await getTenantCustomAmenities(profile.tenant_id)
                 if (amenitiesRes.success) {
@@ -427,6 +451,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 documents: editingProperty.documents || [],
                 is_published: editingProperty.is_published || false,
                 is_featured: (editingProperty as any).is_featured || false,
+                partner_id: (editingProperty as any).partner_id || null,
+                partner_commission_split: (editingProperty as any).partner_commission_split ? (editingProperty as any).partner_commission_split.toString() : '',
                 details: {
                     situacao: editingProperty.details?.situacao || 'lançamento',
                     area_privativa: editingProperty.details?.area_privativa || '',
@@ -672,6 +698,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
             title: finalTitle,
             price: isNaN(parsedPrice) ? 0 : parsedPrice,
             description: formData.description || '',
+            partner_id: formData.partner_id || null,
+            partner_commission_split: formData.partner_commission_split ? Number(formData.partner_commission_split) : null,
             details: {
                 ...cleanDetails,
                 endereco: cleanDetails.endereco ? normalizePropertyAddress(cleanDetails.endereco) : {},
@@ -949,8 +977,60 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     <AddressFields formData={formData} setFormData={setFormData} />
                     <div className="border-t border-border/60" />
                     <OwnerFields formData={formData} setFormData={setFormData} tenantId={tenantId} />
+                    
+                    {/* Seção: Captação Externa / Parceria */}
+                    <div className="border-t border-border/60" />
+                    <div className="space-y-4 pt-8">
+                        <div className="flex items-center justify-between">
+                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Captação Externa / Parceria</h3>
+                            <button
+                                type="button"
+                                onClick={() => setIsPartnerModalOpen(true)}
+                                className="text-xs font-bold text-accent-icon hover:underline cursor-pointer"
+                            >
+                                + Novo Parceiro
+                            </button>
+                        </div>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <FormSelect
+                                    label="Parceiro Comercial (Corretor/Imobiliária detentora)"
+                                    value={formData.partner_id || ''}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, partner_id: e.target.value || null }))}
+                                    options={[
+                                        { value: '', label: 'Imóvel Próprio / Exclusivo' },
+                                        ...partners.map(p => ({
+                                            value: p.id,
+                                            label: p.company ? `${p.name} (${p.company})` : p.name
+                                        }))
+                                    ]}
+                                />
+                            </div>
+                            <div>
+                                <FormInput
+                                    label="Comissão do Parceiro (Split %)"
+                                    type="number"
+                                    min="0"
+                                    max="100"
+                                    value={formData.partner_commission_split}
+                                    onChange={(e) => setFormData(prev => ({ ...prev, partner_commission_split: e.target.value }))}
+                                    placeholder="Ex: 50"
+                                    disabled={!formData.partner_id}
+                                />
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
+            )}
+
+            {isPartnerModalOpen && (
+                <PartnerQuickModal
+                    isOpen={isPartnerModalOpen}
+                    onClose={() => setIsPartnerModalOpen(false)}
+                    onSuccess={handlePartnerCreated}
+                    tenantId={tenantId}
+                />
             )}
         </Modal>
     )

@@ -105,7 +105,10 @@ export async function createLead(tenantId: string, data: unknown) {
             assigned_to: assignedTo,
             images: input.images || [],
             videos: input.videos || [],
-            documents: input.documents || []
+            documents: input.documents || [],
+            partner_id: input.partner_id || null,
+            partner_split: input.partner_split || null,
+            partner_role: input.partner_role || null
         })
         .select(`
             id,

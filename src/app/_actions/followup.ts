@@ -557,3 +557,27 @@ export async function getLeadsForFollowup(sequenceId?: string) {
 
     return { success: true, data: leads }
 }
+
+export async function getLeadEnrollments(leadId: string) {
+    const ctx = await getAuthContext()
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    const { supabase, tenantId } = ctx
+
+    const { data, error } = await supabase
+        .from('followup_enrollments')
+        .select(`
+            *,
+            followup_sequences!inner (
+                id,
+                name
+            )
+        `)
+        .eq('lead_id', leadId)
+        .eq('tenant_id', tenantId)
+        .order('enrolled_at', { ascending: false })
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data }
+}
+

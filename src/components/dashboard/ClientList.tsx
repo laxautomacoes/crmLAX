@@ -16,9 +16,10 @@ interface ClientListProps {
     initialClients: any[]
     tenantId: string
     profileId: string
+    openId?: string
 }
 
-export default function ClientList({ initialClients, tenantId, profileId }: ClientListProps) {
+export default function ClientList({ initialClients, tenantId, profileId, openId }: ClientListProps) {
     const [clients, setClients] = useState(initialClients)
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedBroker, setSelectedBroker] = useState('all')
@@ -68,6 +69,16 @@ export default function ClientList({ initialClients, tenantId, profileId }: Clie
     useEffect(() => {
         setCurrentPage(1)
     }, [searchTerm, filters, sortField, sortDirection])
+
+    useEffect(() => {
+        if (openId && clients.length > 0) {
+            const clientToOpen = clients.find(c => c.id === openId)
+            if (clientToOpen) {
+                setSelectedClient(clientToOpen)
+                setIsClientModalOpen(true)
+            }
+        }
+    }, [openId, clients])
 
     const filteredClients = clients.filter(client => {
         // Filtro de status (ativo/arquivado)

@@ -32,6 +32,8 @@ interface InvoiceData {
     firstDueDate: string; // YYYY-MM-DD
     brokerId?: string; // Corretor que receberá o repasse
     brokerRate?: number; // ex: 30% do valor da comissão da imobiliária
+    partnerId?: string; // ID do parceiro
+    partnerRate?: number; // ex: 50% de repasse
 }
 
 export async function invoiceLeadCommission(leadId: string, tenantId: string, data: InvoiceData) {
@@ -56,6 +58,7 @@ export async function invoiceLeadCommission(leadId: string, tenantId: string, da
             .update({
                 sale_value: data.saleValue,
                 final_commission_rate: data.commissionRate,
+                lead_source: lead?.lead_source || 'Direto', // Preserva origem
                 finance_installments_count: data.installmentsCount
             })
             .eq('id', leadId)
@@ -77,6 +80,11 @@ export async function invoiceLeadCommission(leadId: string, tenantId: string, da
             ? (totalCommission * data.brokerRate) / 100 
             : 0
         const brokerInstallmentValue = brokerCommissionTotal / data.installmentsCount
+
+        const partnerCommissionTotal = data.partnerId && data.partnerRate
+            ? (totalCommission * data.partnerRate) / 100
+            : 0
+        const partnerInstallmentValue = partnerCommissionTotal / data.installmentsCount
 
         const startDate = new Date(data.firstDueDate)
 
@@ -117,6 +125,23 @@ export async function invoiceLeadCommission(leadId: string, tenantId: string, da
                     fonte: 'CRM'
                 })
             }
+
+            // C. Lançamento do Repasse do Parceiro (Despesa, se houver)
+            if (partnerCommissionTotal > 0 && data.partnerId) {
+                transactionsToInsert.push({
+                    tenant_id: tenantId,
+                    profile_id: profile.id,
+                    lead_id: leadId,
+                    valor: parseFloat(partnerInstallmentValue.toFixed(2)),
+                    tipo: 'Despesa',
+                    categoria: 'Repasse de Comissão Parceria',
+                    descricao: `Repasse Parceria Parcela ${i}/${data.installmentsCount} - Venda ${leadName}`,
+                    data_transacao: isoDueDate,
+                    status: 'pendente',
+                    fonte: 'CRM',
+                    metadata: { partner_id: data.partnerId }
+                })
+            }
         }
 
         const { error: insertError } = await supabase
@@ -126,12 +151,20 @@ export async function invoiceLeadCommission(leadId: string, tenantId: string, da
         if (insertError) throw insertError
 
         // Registrar uma interação no histórico do Lead
+        let contentMsg = `Comissão faturada no financeiro: R$ ${totalCommission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em ${data.installmentsCount}x.`
+        if (brokerCommissionTotal > 0) {
+            contentMsg += ` Com repasse ao corretor (R$ ${brokerCommissionTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`
+        }
+        if (partnerCommissionTotal > 0) {
+            contentMsg += ` Com repasse ao parceiro comercial (R$ ${partnerCommissionTotal.toLocaleString('pt-BR', { minimumFractionDigits: 2 })}).`
+        }
+
         await supabase
             .from('interactions')
             .insert([{
                 lead_id: leadId,
                 type: 'system',
-                content: `Comissão faturada no financeiro: R$ ${totalCommission.toLocaleString('pt-BR', { minimumFractionDigits: 2 })} em ${data.installmentsCount}x.`
+                content: contentMsg
             }])
 
         revalidatePath(`/leads`)

@@ -45,6 +45,9 @@ interface LeadRecord {
     whatsapp_chat?: Array<{ fromMe?: boolean; message?: string; text?: string }> | null
     date?: string | null
     last_interaction_at?: string | null
+    partner_id?: string | null
+    partner_split?: number | null
+    partner_role?: string | null
 }
 
 type PipelineLead = Lead & {
@@ -125,7 +128,10 @@ export async function getPipelineData(tenantId: string) {
         documents: lead.documents || [],
         whatsapp_chat: lead.whatsapp_chat || [],
         last_interaction_at: lead.last_interaction_at || lead.created_at || null,
-        has_proposal: ((lead as any).proposals && (lead as any).proposals.length > 0)
+        has_proposal: ((lead as any).proposals && (lead as any).proposals.length > 0),
+        partner_id: lead.partner_id || null,
+        partner_split: lead.partner_split || null,
+        partner_role: lead.partner_role || null
     })) as PipelineLead[]
 
     return {

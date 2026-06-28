@@ -1462,6 +1462,9 @@ export type Database = {
           value: number | null
           videos: Json | null
           whatsapp_chat: Json | null
+          partner_id: string | null
+          partner_split: number | null
+          partner_role: string | null
         }
         Insert: {
           assigned_to?: string | null
@@ -1493,6 +1496,9 @@ export type Database = {
           value?: number | null
           videos?: Json | null
           whatsapp_chat?: Json | null
+          partner_id?: string | null
+          partner_split?: number | null
+          partner_role?: string | null
         }
         Update: {
           assigned_to?: string | null
@@ -1524,6 +1530,9 @@ export type Database = {
           value?: number | null
           videos?: Json | null
           whatsapp_chat?: Json | null
+          partner_id?: string | null
+          partner_split?: number | null
+          partner_role?: string | null
         }
         Relationships: [
           {
@@ -1559,6 +1568,13 @@ export type Database = {
             columns: ["tenant_id"]
             isOneToOne: false
             referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "leads_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
@@ -1785,6 +1801,50 @@ export type Database = {
           },
         ]
       }
+      partners: {
+        Row: {
+          id: string
+          tenant_id: string
+          name: string
+          phone: string | null
+          email: string | null
+          company: string | null
+          creci: string | null
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          id?: string
+          tenant_id: string
+          name: string
+          phone?: string | null
+          email?: string | null
+          company?: string | null
+          creci?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          id?: string
+          tenant_id?: string
+          name?: string
+          phone?: string | null
+          email?: string | null
+          company?: string | null
+          creci?: string | null
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "partners_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       plan_limits: {
         Row: {
           ai_features_list: string[] | null
@@ -1944,6 +2004,8 @@ export type Database = {
           title: string
           type: Database["public"]["Enums"]["asset_type"] | null
           videos: Json | null
+          partner_id: string | null
+          partner_commission_split: number | null
         }
         Insert: {
           commission_rate?: number | null
@@ -1969,6 +2031,8 @@ export type Database = {
           title: string
           type?: Database["public"]["Enums"]["asset_type"] | null
           videos?: Json | null
+          partner_id?: string | null
+          partner_commission_split?: number | null
         }
         Update: {
           commission_rate?: number | null
@@ -1994,6 +2058,8 @@ export type Database = {
           title?: string
           type?: Database["public"]["Enums"]["asset_type"] | null
           videos?: Json | null
+          partner_id?: string | null
+          partner_commission_split?: number | null
         }
         Relationships: [
           {
@@ -2015,6 +2081,13 @@ export type Database = {
             columns: ["owner_contact_id"]
             isOneToOne: false
             referencedRelation: "contacts"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "properties_partner_id_fkey"
+            columns: ["partner_id"]
+            isOneToOne: false
+            referencedRelation: "partners"
             referencedColumns: ["id"]
           },
         ]
