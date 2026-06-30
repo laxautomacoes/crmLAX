@@ -49,30 +49,36 @@ export interface PriceTableInfo {
 }
 
 // ─── Buscar unidades de um empreendimento ─────────────────────
-export async function getPropertyUnits(propertyId: string) {
+export async function getPropertyUnits(propertyId: string, priceTableId?: string) {
     const supabase = await createClient()
 
     try {
-        // Buscar todas as tabelas de preços ativas (ex: uma para cada torre)
-        const { data: priceTables, error: tablesError } = await supabase
-            .from('property_price_tables')
-            .select('id')
-            .eq('property_id', propertyId)
-            .eq('is_active', true)
+        let targetTableIds: string[] = []
 
-        if (tablesError) throw tablesError
+        if (priceTableId) {
+            targetTableIds = [priceTableId]
+        } else {
+            // Buscar todas as tabelas de preços ativas (ex: uma para cada torre)
+            const { data: priceTables, error: tablesError } = await supabase
+                .from('property_price_tables')
+                .select('id')
+                .eq('property_id', propertyId)
+                .eq('is_active', true)
 
-        if (!priceTables || priceTables.length === 0) {
-            return { success: true, data: [] }
+            if (tablesError) throw tablesError
+
+            if (!priceTables || priceTables.length === 0) {
+                return { success: true, data: [] }
+            }
+
+            targetTableIds = priceTables.map((t: any) => t.id)
         }
-
-        const activeTableIds = priceTables.map((t: any) => t.id)
 
         const { data, error } = await supabase
             .from('property_units')
             .select('*')
             .eq('property_id', propertyId)
-            .in('price_table_id', activeTableIds)
+            .in('price_table_id', targetTableIds)
             .order('unit_number', { ascending: true })
 
         if (error) throw error
@@ -112,7 +118,7 @@ export async function getPriceTableHistory(propertyId: string) {
     try {
         const { data, error } = await supabase
             .from('property_price_tables')
-            .select('id, reference_month, index_type, index_value, total_units, available_units, is_active, created_at')
+            .select('*')
             .eq('property_id', propertyId)
             .order('created_at', { ascending: false })
 
@@ -186,6 +192,32 @@ export async function uploadPriceTableTemplate(
         return { success: true, data }
     } catch (error: any) {
         console.error('Error uploading price table template:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+// ─── Excluir tabela de preços ──────────────────────────────────
+export async function deletePriceTable(tableId: string) {
+    const supabase = await createClient()
+    const { profile } = await getProfile()
+    const userRole = profile?.role?.toLowerCase()
+
+    if (userRole !== 'admin' && userRole !== 'superadmin') {
+        return { success: false, error: 'Apenas administradores podem excluir tabelas de preços.' }
+    }
+
+    try {
+        // Exclui as unidades atreladas a esta tabela (se não houver cascade)
+        await supabase.from('property_units').delete().eq('price_table_id', tableId)
+
+        // Exclui a tabela
+        const { error } = await supabase.from('property_price_tables').delete().eq('id', tableId)
+        if (error) throw error
+
+        revalidatePath('/properties')
+        return { success: true }
+    } catch (error: any) {
+        console.error('Error deleting price table:', error)
         return { success: false, error: error.message }
     }
 }

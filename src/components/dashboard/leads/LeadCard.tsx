@@ -76,7 +76,7 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive, onPropo
                             )}
                             {lead.partner_id && (
                                 <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 rounded-full text-[10px] font-bold border border-blue-200/60 dark:border-blue-500/20 whitespace-nowrap">
-                                    Parceiro
+                                    Parceria
                                 </span>
                             )}
                         </div>

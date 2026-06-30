@@ -63,17 +63,37 @@ Deno.serve(async (req: Request) => {
     // Obter dados do empreendimento pai se for modo tabela
     let parentPropertyTitle = "";
     let templateMapping = null;
+    let columnMapping: Record<string, string> | null = null;
     if (mode === 'tabela' && property_id) {
       const { data: parentProperty } = await supabaseClient
         .from('properties')
-        .select('title, price_table_template_mapping')
+        .select('title, price_table_template_mapping, details')
         .eq('id', property_id)
         .single();
       if (parentProperty) {
         parentPropertyTitle = parentProperty.title;
         templateMapping = parentProperty.price_table_template_mapping;
+        // Extrair mapeamento de colunas definido pelo admin
+        const details = parentProperty.details as Record<string, any> | null;
+        if (details?.empreendimento?.column_mapping) {
+          const cm = details.empreendimento.column_mapping;
+          // Verificar se pelo menos um campo foi preenchido
+          const hasValues = Object.values(cm).some((v: any) => v && v.trim() !== '');
+          if (hasValues) columnMapping = cm;
+        }
       }
     }
+
+    const hasTorre = !!(columnMapping && (columnMapping as any).torre?.trim() && (columnMapping as any).torre?.trim() !== '-');
+    const hasTipo = !!(columnMapping && (columnMapping as any).tipo?.trim() && (columnMapping as any).tipo?.trim() !== '-');
+    const hasVaga = !!(columnMapping && (columnMapping as any).vaga?.trim() && (columnMapping as any).vaga?.trim() !== '-');
+    const hasHB = !!(columnMapping && (columnMapping as any).hb?.trim() && (columnMapping as any).hb?.trim() !== '-');
+    const hasAto = !!(columnMapping && (columnMapping as any).ato?.trim() && (columnMapping as any).ato?.trim() !== '-');
+    const hasMensais = !!(columnMapping && (columnMapping as any).mensais?.trim() && (columnMapping as any).mensais?.trim() !== '-');
+    const hasReforcos = !!(columnMapping && (columnMapping as any).reforcos?.trim() && (columnMapping as any).reforcos?.trim() !== '-');
+    const hasChaves = !!(columnMapping && (columnMapping as any).chaves?.trim() && (columnMapping as any).chaves?.trim() !== '-');
+    const hasSaldo = !!(columnMapping && (columnMapping as any).saldo?.trim() && (columnMapping as any).saldo?.trim() !== '-');
+    const hasFinanciamento = !!(columnMapping && (columnMapping as any).financiamento?.trim() && (columnMapping as any).financiamento?.trim() !== '-');
 
     // 1. Preparar Prompt específico para cada modo
     let prompt = "";
@@ -104,50 +124,193 @@ Deno.serve(async (req: Request) => {
       const templateHint = templateMapping && Object.keys(templateMapping).length > 0
         ? `\nMAPEAMENTO ANTERIOR (use como referência): ${JSON.stringify(templateMapping)}`
         : '';
-      prompt = `Você é um especialista em OCR imobiliário e extração de dados estruturados. Sua missão é ler as tabelas de preços da imagem com **EXTREMA CONSTÂNCIA E PRECISÃO**. Analise a TABELA DE PREÇOS do empreendimento "${parentPropertyTitle}".${templateHint}
+
+      // Construir bloco de instruções de mapeamento
+      let columnMappingBlock = '';
+      if (columnMapping) {
+        const mappingLines: string[] = [];
+        const cm = columnMapping as any;
+
+        // Mapeamento de nomes de colunas
+        if (cm.apto?.trim() && cm.apto.trim() !== '-') {
+          mappingLines.push(`- A coluna de **Número do Apartamento/Unidade** na tabela se chama: "${cm.apto.trim()}"`);
+        }
+        if (cm.torre?.trim() === '-') {
+          mappingLines.push(`- **TORRE/BLOCO: NÃO EXISTE** neste empreendimento. Este empreendimento possui APENAS UMA torre/bloco. Portanto, "block_tower" DEVE SER SEMPRE null para TODAS as unidades.`);
+        } else if (cm.torre?.trim()) {
+          mappingLines.push(`- A coluna de **Torre/Bloco** na tabela se chama: "${cm.torre.trim()}"`);
+        }
+        if (cm.tipo?.trim() === '-') {
+          mappingLines.push(`- **TIPOLOGIA/TIPO: NÃO possui coluna dedicada.** As tipologias aparecem como LINHAS DE SEÇÃO (linhas que abrangem toda a largura da tabela e não possuem dados numéricos). Essas linhas devem ser lidas como o campo "extra_data.secao" de todas as unidades que aparecem ABAIXO delas, até a próxima linha de seção. ATENÇÃO: Extraia APENAS a tipologia e OMITA o indicador de final/posição (ex: "FINAL 01 - 2 SUÍTES", extraia apenas "2 SUÍTES").`);
+        } else if (cm.tipo?.trim()) {
+          mappingLines.push(`- A coluna de **Tipologia** na tabela se chama: "${cm.tipo.trim()}". ATENÇÃO: Extraia APENAS a tipologia e OMITA o indicador de final/posição (ex: "FINAL 01 - 2 SUÍTES", extraia apenas "2 SUÍTES").`);
+        }
+        if (cm.vaga?.trim() === '-') {
+          mappingLines.push(`- **VAGA/GARAGEM: NÃO EXISTE** nesta tabela. Deixe "garage_number" como null.`);
+        } else if (cm.vaga?.trim()) {
+          mappingLines.push(`- A coluna de **Vaga/Garagem** na tabela se chama: "${cm.vaga.trim()}"`);
+        }
+        if (cm.hb?.trim() === '-') {
+          mappingLines.push(`- **HOBBY BOX/DEPÓSITO: NÃO EXISTE** nesta tabela. Deixe "hobby_box" como null.`);
+        } else if (cm.hb?.trim()) {
+          mappingLines.push(`- A coluna de **Hobby Box/Depósito** na tabela se chama: "${cm.hb.trim()}"`);
+        }
+        if (cm.area_privativa?.trim() && cm.area_privativa.trim() !== '-') {
+          mappingLines.push(`- A coluna de **Área Privativa** na tabela se chama: "${cm.area_privativa.trim()}"`);
+        }
+        if (cm.valor_total?.trim() && cm.valor_total.trim() !== '-') {
+          mappingLines.push(`- A coluna de **Valor Total** na tabela se chama: "${cm.valor_total.trim()}"`);
+        }
+        if (cm.ato?.trim() === '-') {
+          mappingLines.push(`- **ATO/ENTRADA: NÃO EXISTE** nesta tabela. Deixe "valor_ato" como null.`);
+        } else if (cm.ato?.trim()) {
+          mappingLines.push(`- A coluna de **Ato / Entrada** na tabela se chama: "${cm.ato.trim()}"`);
+        }
+        if (cm.mensais?.trim() === '-') {
+          mappingLines.push(`- **MENSAIS: NÃO EXISTE** nesta tabela. Deixe "valor_mensais" como null.`);
+        } else if (cm.mensais?.trim()) {
+          mappingLines.push(`- A coluna de **Mensais** na tabela se chama: "${cm.mensais.trim()}"`);
+        }
+        if (cm.reforcos?.trim() === '-') {
+          mappingLines.push(`- **REFORÇOS/INTERMEDIÁRIAS: NÃO EXISTE** nesta tabela. Deixe "valor_reforcos" como null.`);
+        } else if (cm.reforcos?.trim()) {
+          mappingLines.push(`- A coluna de **Reforços / Intermediárias** na tabela se chama: "${cm.reforcos.trim()}"`);
+        }
+        if (cm.chaves?.trim() === '-') {
+          mappingLines.push(`- **CHAVES: NÃO EXISTE** nesta tabela. Deixe "valor_chaves" como null.`);
+        } else if (cm.chaves?.trim()) {
+          mappingLines.push(`- A coluna de **Chaves** na tabela se chama: "${cm.chaves.trim()}"`);
+        }
+        if (cm.saldo?.trim() === '-') {
+          mappingLines.push(`- **SALDO DEVEDOR / POUPANÇA: NÃO EXISTE** nesta tabela. Deixe "soma_poupanca" como null.`);
+        } else if (cm.saldo?.trim()) {
+          mappingLines.push(`- A coluna de **Saldo devedor / Poupança** na tabela se chama: "${cm.saldo.trim()}"`);
+        }
+        if (cm.financiamento?.trim() === '-') {
+          mappingLines.push(`- **FINANCIAMENTO: NÃO EXISTE** nesta tabela. Deixe "valor_financiamento" como null.`);
+        } else if (cm.financiamento?.trim()) {
+          mappingLines.push(`- A coluna de **Financiamento** na tabela se chama: "${cm.financiamento.trim()}"`);
+        }
+
+        if (mappingLines.length > 0) {
+          columnMappingBlock = `\n\n## ⚠️ MAPEAMENTO DE COLUNAS (OBRIGATÓRIO — DEFINIDO PELO ADMINISTRADOR)
+O administrador deste empreendimento definiu as seguintes regras MANDATÓRIAS para a leitura desta tabela. Estas regras TÊM PRIORIDADE ABSOLUTA sobre qualquer inferência sua:
+${mappingLines.join('\n')}
+
+**IMPORTANTE**: Respeite rigorosamente este mapeamento. Se o administrador diz que um campo NÃO EXISTE, ele NÃO EXISTE — não tente inferir ou preencher com dados de outra coluna.`;
+        }
+      }
+
+      // Construir PASSO 1 condicional (com ou sem torres)
+      let passo1Text = '';
+      let passo1Example = '';
+      if (hasTorre) {
+        passo1Text = `## PASSO 1: O Checklist das Torres
+Faça uma varredura estritamente VERTICAL de cima a baixo nas colunas da tabela que contém a palavra "Torre" (ou equivalente definido no mapeamento acima). 
+Liste exaustivamente **TODOS os números de apartamentos visíveis** embaixo de cada torre na imagem, não importa a linha. Se houver células mescladas como "301 401 402", adicione "301", "401" e "402" na lista daquela torre.
+**REGRA DE OURO:** NUNCA confunda vagas de garagem (que frequentemente possuem barras ou letras, como "99/99V", "101/101L") com números de apartamentos. Liste no checklist APENAS os números que representam genuinamente os apartamentos reais (números puros).
+Isso formará o "passo1_checklist_torres_e_apartamentos".`;
+        passo1Example = `"passo1_checklist_torres_e_apartamentos": [
+     { "torre": "Torre 01", "apartamentos": ["301", "501", "502", "701"] },
+     { "torre": "Torre 02", "apartamentos": ["201", "301", "401", "601"] }
+  ]`;
+      } else {
+        passo1Text = `## PASSO 1: O Checklist de Seções e Apartamentos
+⚠️ Este empreendimento NÃO possui múltiplas torres. A tabela está organizada por **SEÇÕES DE TIPOLOGIA** — linhas que abrangem toda a largura da tabela e funcionam como cabeçalhos/divisórias.
+ATENÇÃO: Você DEVE OMITIR o indicador de posição/final. Se a seção for "FINAL 01 - 2 SUÍTES + LAVABO", considere apenas "2 SUÍTES + LAVABO".
+
+Faça uma varredura de CIMA PARA BAIXO na tabela e:
+1. Identifique cada **LINHA DE SEÇÃO** (linha que abrange todas as colunas e NÃO contém dados numéricos de apartamento — ela contém apenas o nome/descrição da tipologia). OMITA O FINAL.
+2. Abaixo de cada seção, liste TODOS os números de apartamentos/unidades visíveis.
+**REGRA DE OURO:** NUNCA confunda vagas de garagem (barras, letras como "99/99V") com números de apartamentos.
+Isso formará o "passo1_checklist_torres_e_apartamentos" — mas usando a descrição limpa da seção no lugar de "torre".`;
+        passo1Example = `"passo1_checklist_torres_e_apartamentos": [
+     { "torre": "2 SUÍTES + LAVABO", "apartamentos": ["201"] },
+     { "torre": "2 DORMITÓRIOS SENDO 1 SUÍTE", "apartamentos": ["206", "306"] },
+     { "torre": "LOJAS", "apartamentos": ["4", "5", "6", "7", "8"] }
+  ]`;
+      }
+
+      // Construir PASSO 2 condicional
+      let passo2BlockTower = '';
+      let passo2Example = '';
+      if (hasTorre) {
+        passo2BlockTower = `- \`block_tower\`: A torre correspondente (ex: "Torre 02").`;
+        passo2Example = `{
+         "unit_number": "301",
+         "block_tower": "Torre 01",
+         "floor": 3,
+         "garage_number": "67/118L",
+         "garage_type": null,
+         "hobby_box": "12",
+         "area_privativa": 122.42,
+         "area_total": 223.48,
+         "valor_ato": 120000.00,
+         "valor_mensais": 8500.00,
+         "valor_reforcos": 25000.00,
+         "valor_chaves": 80000.00,
+         "soma_poupanca": 450000.00,
+         "valor_financiamento": 1163753.44,
+         "valor_total": 1613753.44,
+         "extra_data": { "secao": "3 Dormitórios (2 Suítes) + Dependência" }
+      }`;
+      } else {
+        passo2BlockTower = `- \`block_tower\`: DEVE SER SEMPRE null (este empreendimento não possui múltiplas torres).`;
+        passo2Example = `{
+         "unit_number": "201",
+         "block_tower": null,
+         "floor": 2,
+         "garage_number": "45",
+         "garage_type": null,
+         "hobby_box": "56",
+         "area_privativa": 81.45,
+         "area_total": 121.78,
+         "valor_ato": null,
+         "valor_mensais": 4500.00,
+         "valor_reforcos": null,
+         "valor_chaves": 50000.00,
+         "soma_poupanca": 350000.00,
+         "valor_financiamento": 969714.64,
+         "valor_total": 1319714.64,
+         "extra_data": { "secao": "2 SUÍTES + LAVABO" }
+      }`;
+      }
+
+      prompt = `Você é um especialista em OCR imobiliário e extração de dados estruturados. Sua missão é ler as tabelas de preços da imagem com **EXTREMA CONSTÂNCIA E PRECISÃO**. Analise a TABELA DE PREÇOS do empreendimento "${parentPropertyTitle}".${templateHint}${columnMappingBlock}
 
 Para garantir que você não omita apartamentos devido ao layout confuso ou buracos na tabela, você aplicará o método **Chain-of-Thought (Checklist CoT)** em 2 passos obrigatórios.
 
-## PASSO 1: O Checklist das Torres
-Faça uma varredura estritamente VERTICAL de cima a baixo nas colunas da tabela que contém a palavra "Torre" (ex: "Torre 01", "Torre 02"). 
-Liste exaustivamente **TODOS os números de apartamentos visíveis** embaixo de cada torre na imagem, não importa a linha. Se houver células mescladas como "301 401 402", adicione "301", "401" e "402" na lista daquela torre.
-**REGRA DE OURO:** NUNCA confunda vagas de garagem (que frequentemente possuem barras ou letras, como "99/99V", "101/101L") com números de apartamentos. Liste no checklist APENAS os números que representam genuinamente os apartamentos reais (números puros).
-Isso formará o "passo1_checklist_torres_e_apartamentos".
+${passo1Text}
 
 ## PASSO 2: A Extração Baseada no Checklist
 Agora, você usará o array gerado no PASSO 1 como seu guia. **Para CADA apartamento listado no seu checklist**, você vai olhar a linha horizontal a que ele pertence e extrair os detalhes (vagas e preços).
 - Nunca omita um apartamento listado no checklist. Se você listou 20 apartamentos no passo 1, o array "passo2_unidades_detalhadas" DEVE conter exatamente 20 objetos.
 - \`unit_number\`: O número do apartamento extraído do checklist (ex: "402").
-- \`block_tower\`: A torre correspondente (ex: "Torre 02").
+${passo2BlockTower}
 - \`floor\`: Inferido pelo apartamento (ex: "402" -> 4).
-- \`garage_number\`: O número da vaga na mesma linha. Atenção aos emparelhamentos (ex: se o apartamento é o segundo do agrupamento "401 402", pegue a segunda vaga do agrupamento correspondente "84/85L - 82/83L" -> "82/83L").
+- \`garage_number\`: O número da vaga na mesma linha.${!hasVaga ? ' (Este empreendimento não possui coluna de vaga — use null)' : ' Atenção aos emparelhamentos (ex: se o apartamento é o segundo do agrupamento "401 402", pegue a segunda vaga do agrupamento correspondente "84/85L - 82/83L" -> "82/83L").'}
 - \`garage_type\`: "Coberta" ou "Descoberta" (Preencha apenas se a classificação estiver explicitamente escrita na tabela, caso contrário deixe null).
+- \`hobby_box\`: O número do hobby box ou depósito na mesma linha.${!hasHB ? ' (Este empreendimento não possui coluna de hobby box — use null)' : ' Atenção: extraia o hobby box de CADA unidade individualmente. Se houver células mescladas (ex: vários apartamentos agrupados compartilhando hobby boxes), distribua cada hobby box ao apartamento correspondente na mesma ordem de cima para baixo. NUNCA deixe hobby_box como null se a coluna existe e contém dados — leia atentamente CADA célula.'}
 - \`area_privativa\` e \`area_total\`: Valores com ponto flutuante.
-- Valores Financeiros: Extraia APENAS os valores explicitamente presentes na tabela. Se o empreendimento não possuir "Ato", "Mensais" ou "Chaves" (por exemplo, se estiver pronto e tiver apenas "Valor Total"), preencha esses campos ausentes com null. NUNCA invente ou deduza valores. (Porém, lembre-se: se vários apartamentos estiverem agrupados na mesma célula compartilhando os preços à direita, você DEVE repetir o exato mesmo valor para TODOS os apartamentos desse grupo, não deixando nulo por estarem agrupados).
-- \`extra_data.secao\`: O título da tipologia.
+- Valores Financeiros: Extraia os valores financeiros de cada unidade nos seguintes campos (retorne null caso a coluna correspondente não exista ou o valor seja nulo):
+  - \`valor_ato\`: O valor do ato/entrada.
+  - \`valor_mensais\`: O valor das parcelas mensais.
+  - \`valor_reforcos\`: O valor das parcelas de reforço/intermediárias.
+  - \`valor_chaves\`: O valor das parcelas de chaves/entrega.
+  - \`soma_poupanca\`: O valor do saldo devedor/poupança.
+  - \`valor_financiamento\`: O valor a ser financiado.
+  - \`valor_total\`: O valor total do imóvel.
+  NUNCA invente ou deduza valores. Se múltiplos apartamentos compartilham a mesma célula de preços, repita o exato valor para todos os apartamentos do grupo.
+- \`extra_data.secao\`: A tipologia à qual este apartamento pertence. ATENÇÃO: Extraia APENAS a descrição do tipo de imóvel e OMITA indicadores de final/posição (como "FINAL 01 - ", etc.), pois essa informação já está implícita no número do apto. Exemplo: se na tabela diz "FINAL 01 - 2 SUÍTES + LAVABO", retorne APENAS "2 SUÍTES + LAVABO".
 
 Retorne APENAS um JSON válido seguindo a estrutura:
 {
   "payment_structure": {
     "ato": { "pct": null, "parcelas": null, "label": "Ato/Entrada" }
   },
-  "passo1_checklist_torres_e_apartamentos": [
-     { "torre": "Torre 01", "apartamentos": ["301", "501", "502", "701", "702", "801", "1001", "1002"] },
-     { "torre": "Torre 02", "apartamentos": ["201", "202", "301", "401", "402", "601", "602", "801", "802", "901", "1001", "1002"] }
-  ],
+  ${passo1Example},
   "passo2_unidades_detalhadas": [
-     {
-        "unit_number": "301",
-        "block_tower": "Torre 01",
-        "floor": 3,
-        "garage_number": "67/118L",
-        "garage_type": null,
-        "area_privativa": 122.42,
-        "area_total": 223.48,
-        "valor_ato": 120000.00,
-        "valor_total": 1613753.44,
-        "extra_data": { "secao": "3 Dormitórios (2 Suítes) + Dependência" }
-     }
+     ${passo2Example}
   ]
 }
 
@@ -304,6 +467,23 @@ Seja metódico. Não engula nenhum apartamento.`;
         extractedData.units = extractedData.passo2_unidades_detalhadas;
       }
       if (extractedData.units && Array.isArray(extractedData.units)) {
+        extractedData.units.forEach((u: any) => {
+          if (!hasTorre) u.block_tower = null;
+          if (!hasTipo) {
+             if (u.extra_data) u.extra_data.secao = null;
+          }
+          if (!hasVaga) {
+             u.garage_number = null;
+             u.garage_type = null;
+          }
+          if (!hasHB) u.hobby_box = null;
+          if (!hasAto) u.valor_ato = null;
+          if (!hasMensais) u.valor_mensais = null;
+          if (!hasReforcos) u.valor_reforcos = null;
+          if (!hasChaves) u.valor_chaves = null;
+          if (!hasSaldo) u.soma_poupanca = null;
+          if (!hasFinanciamento) u.valor_financiamento = null;
+        });
         extractedData.units = deduplicateUnits(extractedData.units);
       }
     }
@@ -341,6 +521,22 @@ Seja metódico. Não engula nenhum apartamento.`;
     } else if (mode === 'tabela' && property_id) {
       const unitsList = extractedData.units || [];
       const paymentStructure = extractedData.payment_structure || {};
+      if (columnMapping) {
+        const cm = columnMapping as any;
+        if (cm.mensais_meses) {
+          if (!paymentStructure.mensais) paymentStructure.mensais = {};
+          paymentStructure.mensais.parcelas = parseInt(cm.mensais_meses) || paymentStructure.mensais.parcelas || null;
+        }
+        if (cm.reforcos_periodo) {
+          if (!paymentStructure.reforcos) paymentStructure.reforcos = {};
+          paymentStructure.reforcos.periodo = cm.reforcos_periodo;
+          paymentStructure.reforcos.label = cm.reforcos_periodo === 'semestral' ? 'Semestrais' : (cm.reforcos_periodo === 'anual' ? 'Anuais' : cm.reforcos_periodo);
+        }
+        if (cm.financiamento_meses) {
+          if (!paymentStructure.financiamento) paymentStructure.financiamento = {};
+          paymentStructure.financiamento.parcelas = parseInt(cm.financiamento_meses) || paymentStructure.financiamento.parcelas || null;
+        }
+      }
 
       // Upload do PDF para o Storage (se houver arquivo)
       let fileUrl = null;

@@ -265,39 +265,42 @@ export function PropertyDetailsContent({
                             )}
                         </div>
                     </div>
+                    {activeTab === 'details' && (
+                        <>
+                            <div className="border-t border-border/60 my-6" />
 
-                    <div className="border-t border-border/60 my-6" />
-
-                    <div className="space-y-4">
-                        <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
-                            Endereço
-                        </h4>
-                        <div className="bg-background border border-border/50 p-6 rounded-xl">
-                            <div
-                                onClick={handleScrollToLocation}
-                                className={cn(
-                                    "flex items-center gap-1.5 text-base font-semibold text-foreground",
-                                    hasCoordinates && "cursor-pointer hover:text-accent-icon hover:underline transition-colors"
-                                )}
-                            >
-                                {fullAddress || 'Endereço não informado'}
+                            <div className="space-y-4">
+                                <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
+                                    Endereço
+                                </h4>
+                                <div className="bg-background border border-border/50 p-6 rounded-xl">
+                                    <div
+                                        onClick={handleScrollToLocation}
+                                        className={cn(
+                                            "flex items-center gap-1.5 text-base font-semibold text-foreground",
+                                            hasCoordinates && "cursor-pointer hover:text-accent-icon hover:underline transition-colors"
+                                        )}
+                                    >
+                                        {fullAddress || 'Endereço não informado'}
+                                    </div>
+                                </div>
                             </div>
-                        </div>
-                    </div>
 
-                    <div className="border-t border-border/60 my-6" />
+                            <div className="border-t border-border/60 my-6" />
 
-                    {/* Valores */}
-                    <div className="space-y-4">
-                        <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
-                            Valores
-                        </h4>
-                        <div className="text-foreground bg-background p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
-                            <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
-                            <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
-                            <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
-                        </div>
-                    </div>
+                            {/* Valores */}
+                            <div className="space-y-4">
+                                <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
+                                    Valores
+                                </h4>
+                                <div className="text-foreground bg-background p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
+                                    <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
+                                    <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
+                                    <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
+                                </div>
+                            </div>
+                        </>
+                    )}
                 </div>
 
                 <div className="border-t border-border/60 my-8" />

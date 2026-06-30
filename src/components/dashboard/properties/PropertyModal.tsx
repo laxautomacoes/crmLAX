@@ -20,7 +20,9 @@ import { MediaFields } from './PropertyModal/MediaFields'
 import { AddressFields } from './PropertyModal/AddressFields'
 import { OwnerFields } from './PropertyModal/OwnerFields'
 import { Switch } from '@/components/ui/Switch'
-import { Eraser, Globe, FileText, ClipboardPaste, PenLine, ChevronRight } from 'lucide-react'
+import { Eraser, Globe, FileText, ClipboardPaste, PenLine, ChevronRight, RefreshCw, Plus } from 'lucide-react'
+import { PropertyImportPDFModal } from './PropertyImportPDFModal'
+import { PriceTableTab } from './PriceTableTab'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 import { getPartners } from '@/app/_actions/partners'
 import { PartnerQuickModal } from '@/components/dashboard/shared/PartnerQuickModal'
@@ -86,7 +88,27 @@ function getEmptyFormData() {
             empreendimento: {
                 construtora: '',
                 previsao_entrega: '',
-                torres: [] as { nome: string, tipologias: { tipo: string, dormitorios: string, suites: string, area_privativa: string, vagas: string, preco_a_partir: string, unidades_por_andar: string }[] }[]
+                torres: [] as { nome: string, tipologias: { tipo: string, dormitorios: string, suites: string, area_privativa: string, vagas: string, preco_a_partir: string, unidades_por_andar: string }[] }[],
+                column_mapping: {
+                    apto: '',
+                    torre: '',
+                    tipo: '',
+                    vaga: '',
+                    hb: '',
+                    area_privativa: '',
+                    valor_total: '',
+                    ato: '',
+                    mensais: '',
+                    mensais_meses: '',
+                    reforcos: '',
+                    reforcos_periodo: '',
+                    chaves: '',
+                    saldo: '',
+                    financiamento: '',
+                    financiamento_meses: ''
+                },
+                tabela_modelo_url: '',
+                tabela_modelo_nome: ''
             },
             portaria_24h: false,
             portaria_virtual: false,
@@ -182,10 +204,32 @@ export interface EmpreendimentoTorre {
     tipologias: EmpreendimentoTipologia[]
 }
 
+export interface ColumnMapping {
+    apto: string
+    torre: string
+    tipo: string
+    vaga: string
+    hb: string
+    area_privativa: string
+    valor_total: string
+    ato?: string
+    mensais?: string
+    mensais_meses?: string
+    reforcos?: string
+    reforcos_periodo?: string
+    chaves?: string
+    saldo?: string
+    financiamento?: string
+    financiamento_meses?: string
+}
+
 export interface EmpreendimentoData {
     construtora: string
     previsao_entrega: string
     torres: EmpreendimentoTorre[]
+    column_mapping?: ColumnMapping
+    tabela_modelo_url?: string
+    tabela_modelo_nome?: string
 }
 
 interface EditingPropertyDetails {
@@ -317,6 +361,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const [hasDraft, setHasDraft] = useState(false)
     const [partners, setPartners] = useState<any[]>([])
     const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false)
+    const [isImportOpen, setIsImportOpen] = useState(false)
     
     const handlePartnerCreated = (newPartner: any) => {
         setPartners(prev => [...prev, newPartner].sort((a, b) => a.name.localeCompare(b.name)))
@@ -334,6 +379,8 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
     const [creationMethod, setCreationMethod] = useState<CreationMethod>(initialCreationMethod ?? null)
     const isDraggingRef = useRef(false)
     const [isDragging, setIsDragging] = useState(false)
+    const [importKey, setImportKey] = useState(0)
+    const [hasPriceTables, setHasPriceTables] = useState(false)
 
     // Gera um snapshot dos dados relevantes para comparação
     const getFormSnapshot = useCallback((data: typeof formData) => {
@@ -500,10 +547,31 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     aptos_por_torre: editingProperty.details?.aptos_por_torre || '',
                     is_empreendimento: editingProperty.details?.is_empreendimento || false,
                     idade_imovel: editingProperty.details?.idade_imovel || '',
-                    empreendimento: editingProperty.details?.empreendimento || {
-                        construtora: '',
-                        previsao_entrega: '',
-                        torres: []
+                    empreendimento: {
+                        construtora: editingProperty.details?.empreendimento?.construtora || '',
+                        previsao_entrega: editingProperty.details?.empreendimento?.previsao_entrega || '',
+                        torres: editingProperty.details?.empreendimento?.torres || [],
+                        column_mapping: {
+                            apto: '',
+                            torre: '',
+                            tipo: '',
+                            vaga: '',
+                            hb: '',
+                            area_privativa: '',
+                            valor_total: '',
+                            ato: '',
+                            mensais: '',
+                            mensais_meses: '',
+                            reforcos: '',
+                            reforcos_periodo: '',
+                            chaves: '',
+                            saldo: '',
+                            financiamento: '',
+                            financiamento_meses: '',
+                            ...(editingProperty.details?.empreendimento?.column_mapping || {})
+                        },
+                        tabela_modelo_url: editingProperty.details?.empreendimento?.tabela_modelo_url || '',
+                        tabela_modelo_nome: editingProperty.details?.empreendimento?.tabela_modelo_nome || ''
                     },
                     portaria_24h: editingProperty.details?.portaria_24h || false,
                     portaria_virtual: editingProperty.details?.portaria_virtual || false,
@@ -812,8 +880,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 </div>
                 )
             }
-            size="xl"
-            align="top"
+            size="2xl"
         >
             {showMethodSelection ? (
                 <div className="py-1">
@@ -900,7 +967,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     </div>
                 </div>
             ) : (
-            <div className="space-y-6 max-h-[70vh] overflow-y-auto px-1 no-scrollbar">
+            <div className="space-y-6 px-1">
                 <div className="flex flex-col gap-8">
                     <BasicInfoFields 
                         formData={formData} 
@@ -919,6 +986,45 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                                         tenantId={tenantId}
                                         propertyId={(editingProperty as any)?.id}
                                     />
+
+                                    {/* ── Atualizar Tabela de Preços ── */}
+                                    {(editingProperty as any)?.id && (
+                                        <div className="space-y-4 pt-6 border-t border-border/60">
+                                            <div className="flex items-start justify-between gap-4">
+                                                <div>
+                                                    <h4 className="text-base font-black text-foreground uppercase tracking-widest">
+                                                        Atualizar Tabela
+                                                    </h4>
+                                                    <p className="text-xs text-muted-foreground leading-snug mt-1">
+                                                        <span className="block">Importe uma nova tabela de preços mensal para este empreendimento.</span>
+                                                        <span className="block">A IA usará o mapeamento e a tabela-modelo acima como referência.</span>
+                                                    </p>
+                                                </div>
+
+                                                {hasPriceTables && (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => setIsImportOpen(true)}
+                                                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-widest bg-secondary text-secondary-foreground hover:opacity-90 transition-all active:scale-[0.98] shadow-sm shrink-0"
+                                                    >
+                                                        <Plus size={14} />
+                                                        Atualizar
+                                                    </button>
+                                                )}
+                                            </div>
+
+                                            <div className="mt-6">
+                                                <PriceTableTab 
+                                                    key={importKey}
+                                                    propertyId={(editingProperty as any).id} 
+                                                    propertyTitle={(editingProperty as any).title} 
+                                                    tenantId={tenantId} 
+                                                    userRole={userRole} 
+                                                    onHasTablesChange={setHasPriceTables}
+                                                />
+                                            </div>
+                                        </div>
+                                    )}
                                 </div>
                             )
                         }
@@ -1047,6 +1153,21 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                     onClose={() => setIsPartnerModalOpen(false)}
                     onSuccess={handlePartnerCreated}
                     tenantId={tenantId}
+                />
+            )}
+
+            {isImportOpen && (editingProperty as any)?.id && (
+                <PropertyImportPDFModal
+                    isOpen={isImportOpen}
+                    onClose={() => setIsImportOpen(false)}
+                    tenantId={tenantId}
+                    onImportSuccess={() => {
+                        setIsImportOpen(false)
+                        setImportKey(prev => prev + 1)
+                    }}
+                    properties={[{ id: (editingProperty as any).id, title: (editingProperty as any).title || '' }]}
+                    initialMode="tabela"
+                    initialPropertyId={(editingProperty as any).id}
                 />
             )}
         </Modal>

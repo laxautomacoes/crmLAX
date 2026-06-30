@@ -142,22 +142,22 @@ export async function generatePropertyPDF(params: {
 
     // Helper: Print a section separator line
     function printSectionHeader(title: string) {
+        // Exige espaço suficiente para a linha separadora, o título e pelo menos uma linha de conteúdo (aprox 100pt)
+        if (currentY + 100 > 790) {
+            addNewPage();
+        }
+
         if (!isFirstSection) {
-            if (currentY + 50 > 790) {
-                addNewPage();
-            } else {
+            // Se não for a primeira seção E não estiver no exato início de uma nova página
+            if (currentY > 50) {
                 doc.setDrawColor('#404F4F'); // Mesma cor do separador do cabeçalho
                 doc.setLineWidth(0.5); // Mesma espessura fina (0.5)
                 doc.line(margin, currentY, 595 - margin, currentY); // Desenha a linha exatamente em currentY
                 currentY += 20; // Espaço após a linha antes do título (exatamente 20pt)
             }
-        } else {
-            isFirstSection = false;
         }
-
-        if (currentY + 38 > 790) {
-            addNewPage();
-        }
+        
+        isFirstSection = false;
         
         doc.setFont('helvetica', 'bold');
         doc.setFontSize(18);

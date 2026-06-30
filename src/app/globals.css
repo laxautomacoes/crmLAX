@@ -635,3 +635,31 @@ input[type="range"]::-moz-range-thumb:hover {
   --radius-2xl: var(--site-radius-lg, 12px);
   --radius-3xl: var(--site-radius-lg, 12px);
 }
+
+/* ═══════════════════════════════════════════════
+   PADRONIZAÇÃO GLOBAL DE BOTÕES (EXCETO HEADERS)
+   Aplica a todos os botões de ação o estilo do botão FLUXO.
+   ═══════════════════════════════════════════════ */
+button:not(.page-header button):not(header button):not(.sidebar button):not([role="tab"]):not([role="menuitem"]):not(.avatar-button):not(.close-button):not([class*="rounded-full"]):is(.bg-secondary, .bg-primary, .bg-destructive, .bg-red-600, .border-border, [class*="border-"]) {
+  border-radius: 0.25rem !important; /* rounded (4px) */
+  font-size: 10px !important; /* text-[10px] */
+  font-weight: 700 !important; /* font-bold */
+  text-transform: uppercase !important; /* uppercase */
+  letter-spacing: 0.05em !important; /* tracking-wider */
+  padding-top: 0.375rem !important; /* py-1.5 */
+  padding-bottom: 0.375rem !important; /* py-1.5 */
+  padding-left: 0.75rem !important; /* px-3 */
+  padding-right: 0.75rem !important; /* px-3 */
+  line-height: 1.5 !important;
+  transition: all 0.2s ease-in-out !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  gap: 0.375rem !important;
+  height: auto !important;
+}
+
+button:not(.page-header button):not(header button):not(.sidebar button):is(.bg-secondary, .bg-primary, .bg-destructive, .bg-red-600, .border-border, [class*="border-"]) svg {
+  width: 12px !important;
+  height: 12px !important;
+}

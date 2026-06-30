@@ -212,7 +212,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                 </div>
             </td>
             <td className="px-4 py-5 text-center">
-                <div className="flex items-center justify-center" ref={dropdownRef}>
+                <div className="relative flex items-center justify-center" ref={dropdownRef}>
                     {isAdmin && prop.status === 'Pending' && onApprove && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onApprove(prop.id) }}
@@ -239,7 +239,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                         <MoreVertical size={16} />
                     </button>
                     {dropdownOpen && (
-                        <div className="absolute right-6 mt-1 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-30">
+                        <div className="absolute right-0 top-full mt-1 w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30">
                             <button
                                 onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onSend(prop) }}
                                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
