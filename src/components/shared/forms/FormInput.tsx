@@ -14,7 +14,7 @@ interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
     onClear?: () => void
 }
 
-export function FormInput({ label, error, icon: Icon, iconSize = 18, iconStrokeWidth, roundedClassName, rightElement, onClear, className = '', ...props }: FormInputProps) {
+export function FormInput({ label, error, icon: Icon, iconSize = 14, iconStrokeWidth = 1, roundedClassName, rightElement, onClear, className = '', ...props }: FormInputProps) {
     // Se for um input de data e não tiver rightElement, adiciona o ícone de calendário
     const isDateInput = props.type === 'date' || props.type === 'datetime-local' || props.type === 'time'
     const showClearButton = onClear && props.value && String(props.value).length > 0

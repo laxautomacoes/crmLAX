@@ -32,7 +32,7 @@ export function TransactionFilters({
             <div className="flex flex-col gap-3">
                 {/* Busca - always full width */}
                 <div className="relative w-full">
-                    <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                    <Search size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"
                         value={search}

@@ -22,10 +22,10 @@ interface PriceTableTabProps {
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string }> = {
-    available: { label: 'Disponível', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30' },
-    reserved: { label: 'Reservado', color: 'bg-amber-500/15 text-amber-600 border-amber-500/30' },
-    proposal: { label: 'Em Proposta', color: 'bg-blue-500/15 text-blue-600 border-blue-500/30' },
-    sold: { label: 'Vendido', color: 'bg-red-500/15 text-red-600 border-red-500/30' },
+    available: { label: 'Disponível', color: 'bg-emerald-500/15 text-emerald-600 border-emerald-500/30 hover:border-emerald-500/60 focus:border-emerald-500' },
+    reserved: { label: 'Reservado', color: 'bg-amber-500/15 text-amber-600 border-amber-500/30 hover:border-amber-500/60 focus:border-amber-500' },
+    proposal: { label: 'Em Proposta', color: 'bg-blue-500/15 text-blue-600 border-blue-500/30 hover:border-blue-500/60 focus:border-blue-500' },
+    sold: { label: 'Vendido', color: 'bg-red-500/15 text-red-600 border-red-500/30 hover:border-red-500/60 focus:border-red-500' },
 }
 
 function formatBRL(value: number | null | undefined) {
@@ -334,7 +334,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
         : availableTables.find(t => t.is_active)
     
     const activeTableLabel = activeTableToDisplay 
-        ? (activeTableToDisplay.is_active ? '[VIGENTE] ' : 'Histórico: ') + formatMonth(activeTableToDisplay.reference_month) + (activeTableToDisplay.block_tower ? ` - ${activeTableToDisplay.block_tower}` : '')
+        ? formatMonth(activeTableToDisplay.reference_month) + (activeTableToDisplay.block_tower ? ` - ${activeTableToDisplay.block_tower}` : '') + (activeTableToDisplay.is_active ? ' (Atual)' : '')
         : 'Selecione...'
 
     return (
@@ -348,7 +348,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
                         <div className="relative inline-flex items-center" ref={dropdownRef}>
                             <button
                                 onClick={() => setIsDropdownOpen(!isDropdownOpen)}
-                                className="appearance-none bg-card border border-border rounded-lg pl-4 pr-10 py-2 text-sm font-bold text-foreground cursor-pointer hover:border-foreground/30 transition-colors focus:outline-none focus:border-secondary shadow-sm min-w-[200px] text-left relative"
+                                className="appearance-none bg-card border border-border rounded-full !rounded-lg pl-4 pr-10 py-2 text-sm font-bold text-foreground cursor-pointer hover:border-foreground/30 transition-colors focus:outline-none focus:border-secondary shadow-sm min-w-[200px] flex items-center justify-start !text-left relative"
                             >
                                 {activeTableLabel}
                                 <ChevronDown size={16} className={`absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none transition-transform ${isDropdownOpen ? 'rotate-180' : ''}`} />
@@ -358,7 +358,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
                                 <div className="absolute top-full left-0 mt-2 min-w-full bg-card border border-border rounded-lg shadow-xl overflow-hidden z-[60] py-1">
                                     <button 
                                         onClick={() => { setSelectedTableId(''); setIsDropdownOpen(false) }}
-                                        className="w-full text-left px-4 py-2.5 text-sm font-bold hover:bg-muted/50 text-foreground transition-colors"
+                                        className="w-full !text-left px-4 py-2.5 text-sm font-bold hover:bg-muted/50 text-foreground transition-colors"
                                     >
                                         Selecione...
                                     </button>
@@ -366,11 +366,11 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
                                         <div key={t.id} className="flex items-center justify-between hover:bg-muted/50 transition-colors group">
                                             <button
                                                 onClick={() => { setSelectedTableId(t.id); setIsDropdownOpen(false) }}
-                                                className="flex-1 text-left px-4 py-2.5 text-sm font-bold text-foreground truncate"
+                                                className="flex-1 !text-left px-4 py-2.5 text-sm font-bold text-foreground truncate"
                                             >
-                                                {t.is_active ? '[VIGENTE] ' : 'Histórico: '} 
                                                 {formatMonth(t.reference_month)}
                                                 {t.block_tower ? ` - ${t.block_tower}` : ''}
+                                                {t.is_active ? ' (Atual)' : ''}
                                             </button>
                                             {isAdmin && (
                                                 <button
@@ -380,7 +380,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
                                                         setIsDropdownOpen(false); 
                                                         setIsDeleteDialogOpen(true); 
                                                     }}
-                                                    className="p-2 mr-2 text-muted-foreground hover:text-red-500 hover:bg-red-500/10 rounded-md transition-all"
+                                                    className="p-1 mr-3 text-muted-foreground hover:text-red-500 transition-all"
                                                     title="Excluir Tabela"
                                                 >
                                                     <Trash2 size={16} strokeWidth={1.5} />
@@ -432,14 +432,14 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
             {tipologias.length > 0 && (
                 <div className="flex flex-col gap-2">
                     <span className="text-[10px] font-black text-muted-foreground uppercase tracking-widest ml-1">
-                        Selecione a Planta / Tipologia
+                        Selecione Tipologia
                     </span>
-                    <div className="flex flex-wrap gap-1.5 p-1 bg-background border border-border/40 rounded-xl max-w-max shadow-sm">
+                    <div className="h-[34px] flex items-center bg-background border border-border/40 rounded-lg max-w-max shadow-sm overflow-hidden">
                         <button
                             onClick={() => setSelectedTipologia('all')}
-                            className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                            className={`px-4 h-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center rounded-full !rounded-none ${
                                 selectedTipologia === 'all'
-                                    ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                    ? 'bg-secondary text-secondary-foreground'
                                     : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                             }`}
                         >
@@ -451,9 +451,9 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
                                 <button
                                     key={t}
                                     onClick={() => setSelectedTipologia(t)}
-                                    className={`px-4 py-2 text-[10px] font-black uppercase tracking-wider rounded-lg transition-all ${
+                                    className={`px-4 h-full text-[10px] font-black uppercase tracking-wider transition-all flex items-center justify-center rounded-full !rounded-none ${
                                         selectedTipologia === t
-                                            ? 'bg-secondary text-secondary-foreground shadow-sm'
+                                            ? 'bg-secondary text-secondary-foreground'
                                             : 'text-muted-foreground hover:text-foreground hover:bg-muted/50'
                                     }`}
                                 >
@@ -470,7 +470,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
                 <div className="flex flex-col gap-1.5 flex-1 w-full">
                     <span className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Buscar Unidade</span>
                     <div className="relative w-full">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground pointer-events-none" />
+                        <Search size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
                         <input
                             type="text"
                             value={searchTerm}
@@ -529,7 +529,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
             {/* ── Tabela de Unidades ── */}
             <div className="bg-background border border-border/40 rounded-lg overflow-hidden">
                 <div className="overflow-x-auto">
-                    <table className="w-full">
+                    <table className="w-full md:min-w-[1000px] lg:min-w-[1400px]">
                         <thead>
                             <tr className="bg-foreground/5 border-b border-border/30 whitespace-nowrap">
                                 <th 
@@ -733,7 +733,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
                                                     <select
                                                         value={unit.status}
                                                         onChange={(e) => handleStatusChange(unit.id, e.target.value as any)}
-                                                        className={`appearance-none text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded border cursor-pointer text-center ${statusCfg.color}`}
+                                                        className={`appearance-none text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border cursor-pointer text-center focus:outline-none focus:ring-0 transition-colors ${statusCfg.color}`}
                                                     >
                                                         <option value="available">Disponível</option>
                                                         <option value="reserved">Reservado</option>
@@ -742,7 +742,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
                                                     </select>
                                                 </div>
                                             ) : (
-                                                <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-3 py-1.5 rounded border text-center ${statusCfg.color}`}>
+                                                <span className={`inline-block text-[10px] font-bold uppercase tracking-wider px-2 py-1 rounded border text-center ${statusCfg.color}`}>
                                                     {statusCfg.label}
                                                 </span>
                                             )}

@@ -210,35 +210,12 @@ export function PropertyDetailsContent({
                                         )}
                                     </div>
 
-                                    {/* ── Toggle Detalhes / Tabela de Preços (Extrema direita) ── */}
-                                    {details.is_empreendimento && (
-                                        <div className="ml-auto flex items-center gap-1 p-0.5 bg-white dark:bg-background border border-border/40 rounded-lg shadow-sm">
-                                            <button
-                                                onClick={() => setActiveTab('details')}
-                                                className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all ${activeTab === 'details'
-                                                        ? 'bg-secondary text-secondary-foreground shadow-sm'
-                                                        : 'text-muted-foreground hover:bg-muted/50'
-                                                    }`}
-                                            >
-                                                Detalhes
-                                            </button>
-                                            <button
-                                                onClick={() => setActiveTab('price_table')}
-                                                className={`px-2.5 py-1 text-[10px] font-black uppercase tracking-wider rounded-md transition-all ${activeTab === 'price_table'
-                                                        ? 'bg-secondary text-secondary-foreground shadow-sm'
-                                                        : 'text-muted-foreground hover:bg-muted/50'
-                                                    }`}
-                                            >
-                                                Tabela de Preços
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
                                 <h4 className="text-lg font-black uppercase tracking-widest text-foreground pt-4">
                                     {details.is_empreendimento ? 'Empreendimento' : 'Imóvel'}
                                 </h4>
                                 <div className="bg-background border border-border/50 p-6 rounded-xl">
-                                    <h2 className="text-3xl font-black text-foreground tracking-tight">{prop.title}</h2>
+                                    <h2 className="text-xl font-black text-foreground tracking-tight">{prop.title}</h2>
                                 </div>
                             </div>
                             {onSend && (
@@ -294,27 +271,36 @@ export function PropertyDetailsContent({
                                     Valores
                                 </h4>
                                 <div className="text-foreground bg-background p-6 rounded-xl border border-border/50 flex flex-col gap-0 divide-y divide-border/30">
-                                    <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={formattedPrice} />
+                                    <InfoRow icon={<DollarSign size={14} />} label="Valor do Imóvel" value={details.is_empreendimento ? 'Sob consulta' : formattedPrice} />
                                     <InfoRow icon={<DollarSign size={14} />} label="Condomínio" value={formattedCondo} />
                                     <InfoRow icon={<DollarSign size={14} />} label="IPTU" value={formattedIptu} />
                                 </div>
                             </div>
+
+                            {/* Tabela de Preços se for Empreendimento */}
+                            {details.is_empreendimento && (
+                                <>
+                                    <div className="border-t border-border/60 my-6" />
+                                    <div className="space-y-4">
+                                        <h4 className="text-lg font-black uppercase tracking-widest text-foreground">
+                                            Tabela de Preços
+                                        </h4>
+                                        <PriceTableTab
+                                            propertyId={prop.id}
+                                            propertyTitle={prop.title}
+                                            tenantId={tenantId}
+                                            userRole={isAdmin ? 'admin' : 'user'}
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </>
                     )}
                 </div>
 
                 <div className="border-t border-border/60 my-8" />
 
-                {activeTab === 'price_table' && details.is_empreendimento ? (
-                    <div className="animate-in fade-in slide-in-from-right-4 duration-300">
-                        <PriceTableTab
-                            propertyId={prop.id}
-                            propertyTitle={prop.title}
-                            tenantId={tenantId}
-                            userRole={isAdmin ? 'admin' : 'user'}
-                        />
-                    </div>
-                ) : activeTab === 'details' ? (
+                {activeTab === 'details' ? (
                     <>
                         {onSend && (
                             <button

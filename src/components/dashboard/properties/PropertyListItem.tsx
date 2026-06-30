@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, MoreVertical, Archive, Globe, XCircle, AlertTriangle } from 'lucide-react'
-import { translatePropertyType, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
+import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
     prop: any
@@ -72,7 +72,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             <td className="px-4 py-5 min-w-[250px] md:min-w-0">
                 <div className="flex items-center gap-4">
                     <div className="text-left max-w-md">
-                        <div className="font-bold text-foreground text-sm line-clamp-1">
+                        <div className="font-bold text-foreground text-base line-clamp-1">
                             {prop.title ? prop.title.replace(/\s*-\s*Apto\s+.*/i, '') : ''}
                         </div>
                         {prop.details?.endereco?.apto && (
@@ -92,9 +92,16 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-4 py-5 text-center">
                 <div className="flex flex-col items-center gap-1">
-                    <span className="text-[10px] font-bold text-muted-foreground">{translatePropertyType(prop.type)}</span>
+                    <div className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider w-fit ${getPropertyTypeStyles(prop.type)}`}>
+                        {translatePropertyType(prop.type)}
+                    </div>
+                    {prop.details?.is_empreendimento && (
+                        <div className="px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider w-fit bg-indigo-500/10 text-indigo-600">
+                            Empreendimento
+                        </div>
+                    )}
                     {prop.details?.situacao && (
-                        <div className={`px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-widest shadow-sm w-fit ${getSituacaoStyles(prop.details.situacao)}`}>
+                        <div className={`px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider w-fit ${getSituacaoStyles(prop.details.situacao)}`}>
                             {prop.details.situacao}
                         </div>
                     )}
@@ -102,70 +109,72 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-4 py-5">
                 <div className="flex flex-col gap-1 items-center">
-                    <div className="flex items-center gap-1 text-foreground" title="Dormitórios">
-                        <BedDouble size={12} />
-                        <span className="text-[11px] font-semibold">{prop.details?.dormitorios || prop.details?.quartos || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-foreground" title="Banheiros">
-                        <Bath size={14} />
-                        <span className="text-[11px] font-semibold">{prop.details?.banheiros || 0}</span>
-                    </div>
-                    <div className="flex items-center gap-1 text-foreground" title="Vagas">
-                        <Car size={14} />
-                        <span className="text-[11px] font-semibold">
-                            {prop.details?.vagas || 0}
-                            {prop.details?.vagas_numeracao && <span className="ml-1 text-[9px] text-foreground">({prop.details.vagas_numeracao})</span>}
-                        </span>
-                    </div>
-                </div>
-            </td>
-            <td className="px-4 py-5">
-                <div className="flex flex-col gap-1 items-center">
                     {(() => {
-                        const type = (prop.type || prop.details?.type || '').toLowerCase()
-                        const d = prop.details || {}
-                        const fmt = (v: any) => v ? String(v).replace(/\s*m[²2]/gi, '') + 'm²' : null
-                        if (type === 'land') {
-                            return (d.area_total || d.area_terreno) ? (
-                                <div className="flex items-center gap-1 text-foreground" title="Área do Terreno">
-                                    <span className="text-[10px] font-bold text-muted-foreground">TT</span>
-                                    <span className="text-[10px] font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
-                                </div>
-                            ) : null
-                        }
-                        if (type === 'house' || type === 'rural') {
+                        const isEmp = prop.details?.is_empreendimento
+                        const torres = prop.details?.empreendimento?.torres || []
+                        const allTipos = torres.flatMap((t: any) => t.tipologias || [])
+                        if (isEmp && allTipos.length > 0) {
+                            // Dormitórios: listar valores únicos (1, 2 e 3)
+                            const dormsSet = [...new Set(
+                                allTipos
+                                    .map((t: any) => t.dormitorios !== undefined && t.dormitorios !== null && t.dormitorios !== '' ? parseInt(t.dormitorios) : NaN)
+                                    .filter((n: number) => !isNaN(n))
+                            )].sort((a: number, b: number) => a - b)
+                            const dormsLabel = dormsSet.length === 1 ? String(dormsSet[0]) : dormsSet.length === 2 ? `${dormsSet[0]} e ${dormsSet[1]}` : dormsSet.slice(0, -1).join(', ') + ` e ${dormsSet[dormsSet.length - 1]}`
+
+                            // Banheiros: faixa min-max (usando suites como proxy se banheiros não existir na tipologia)
+                            const banhVals = allTipos
+                                .map((t: any) => {
+                                    const val = t.suites || t.banheiros
+                                    return val !== undefined && val !== null && val !== '' ? parseInt(val) : NaN
+                                })
+                                .filter((n: number) => !isNaN(n))
+                            const banhMin = banhVals.length ? Math.min(...banhVals) : 0
+                            const banhMax = banhVals.length ? Math.max(...banhVals) : 0
+                            const banhLabel = banhMin === banhMax ? String(banhMin) : `${banhMin} a ${banhMax}`
+
+                            // Vagas: faixa min-max
+                            const vagasVals = allTipos
+                                .map((t: any) => t.vagas !== undefined && t.vagas !== null && t.vagas !== '' ? parseInt(t.vagas) : NaN)
+                                .filter((n: number) => !isNaN(n))
+                            const vagasMin = vagasVals.length ? Math.min(...vagasVals) : 0
+                            const vagasMax = vagasVals.length ? Math.max(...vagasVals) : 0
+                            const vagasLabel = vagasMin === vagasMax ? String(vagasMin) : `${vagasMin} a ${vagasMax}`
+
                             return (
                                 <>
-                                    {(d.area_construida || d.area_util) ? (
-                                        <div className="flex items-center gap-1 text-foreground" title="Área Construída">
-                                            <span className="text-[10px] font-bold text-muted-foreground">AC</span>
-                                            <span className="text-[10px] font-semibold">{fmt(d.area_construida || d.area_util)}</span>
-                                        </div>
-                                    ) : null}
-                                    {(d.area_total || d.area_terreno) ? (
-                                        <div className="flex items-center gap-1 text-foreground" title="Área do Terreno">
-                                            <span className="text-[10px] font-bold text-muted-foreground">TT</span>
-                                            <span className="text-[10px] font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
-                                        </div>
-                                    ) : null}
+                                    <div className="flex items-center gap-1 text-foreground" title="Dormitórios">
+                                        <BedDouble size={12} strokeWidth={1.5} />
+                                        <span className="text-[11px] font-semibold">{dormsSet.length > 0 ? dormsLabel : '-'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-foreground" title="Banheiros">
+                                        <Bath size={14} strokeWidth={1.5} />
+                                        <span className="text-[11px] font-semibold">{banhVals.length > 0 ? banhLabel : '-'}</span>
+                                    </div>
+                                    <div className="flex items-center gap-1 text-foreground" title="Vagas">
+                                        <Car size={14} strokeWidth={1.5} />
+                                        <span className="text-[11px] font-semibold">{vagasVals.length > 0 ? vagasLabel : '-'}</span>
+                                    </div>
                                 </>
                             )
                         }
-                        // apartment, penthouse, studio, commercial, etc.
                         return (
                             <>
-                                {(d.area_privativa || d.area_util) ? (
-                                    <div className="flex items-center gap-1 text-foreground" title="Área Privativa">
-                                        <span className="text-[10px] font-bold text-muted-foreground">PV</span>
-                                        <span className="text-[10px] font-semibold">{fmt(d.area_privativa || d.area_util)}</span>
-                                    </div>
-                                ) : null}
-                                {d.area_total ? (
-                                    <div className="flex items-center gap-1 text-foreground" title="Área Total">
-                                        <span className="text-[10px] font-bold text-muted-foreground">TT</span>
-                                        <span className="text-[10px] font-semibold">{fmt(d.area_total)}</span>
-                                    </div>
-                                ) : null}
+                                <div className="flex items-center gap-1 text-foreground" title="Dormitórios">
+                                    <BedDouble size={12} strokeWidth={1.5} />
+                                    <span className="text-[11px] font-semibold">{prop.details?.dormitorios || prop.details?.quartos || '-'}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-foreground" title="Banheiros">
+                                    <Bath size={14} strokeWidth={1.5} />
+                                    <span className="text-[11px] font-semibold">{prop.details?.banheiros || '-'}</span>
+                                </div>
+                                <div className="flex items-center gap-1 text-foreground" title="Vagas">
+                                    <Car size={14} strokeWidth={1.5} />
+                                    <span className="text-[11px] font-semibold">
+                                        {prop.details?.vagas !== undefined && prop.details?.vagas !== null && prop.details?.vagas !== '' ? prop.details.vagas : '-'}
+                                        {prop.details?.vagas_numeracao && <span className="ml-1 text-[9px] text-foreground">({prop.details.vagas_numeracao})</span>}
+                                    </span>
+                                </div>
                             </>
                         )
                     })()}
@@ -173,15 +182,106 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-4 py-5">
                 <div className="flex flex-col gap-1 items-center">
-                    <div className="font-bold text-foreground text-sm whitespace-nowrap">{formattedPrice}</div>
-                    {formattedCondo && <div className="text-[10px] text-foreground font-medium">{formattedCondo}</div>}
-                    {formattedIptu && <div className="text-[10px] text-foreground font-medium">{formattedIptu}</div>}
+                    {(() => {
+                        const d = prop.details || {}
+                        const fmt = (v: any) => v ? String(v).replace(/\s*m[²2]/gi, '') + 'm²' : null
+
+                        // Empreendimento: calcular faixa de área privativa das tipologias
+                        if (d.is_empreendimento) {
+                            const torres = d.empreendimento?.torres || []
+                            const allTipos = torres.flatMap((t: any) => t.tipologias || [])
+                            const areaVals = allTipos.map((t: any) => parseFloat(String(t.area_privativa || '').replace(',', '.').replace(/\s*m[²2]/gi, ''))).filter((n: number) => !isNaN(n) && n > 0)
+                            if (areaVals.length > 0) {
+                                const minA = Math.min(...areaVals)
+                                const maxA = Math.max(...areaVals)
+                                const fmtArea = (v: number) => v.toLocaleString('pt-BR', { minimumFractionDigits: 0, maximumFractionDigits: 2 }) + 'm²'
+                                return (
+                                    <div className="flex items-center gap-1 text-foreground" title="Área Privativa">
+                                        <span className="text-[10px] font-bold text-muted-foreground">PV</span>
+                                        <span className="text-[10px] font-semibold">{minA === maxA ? fmtArea(minA) : `${fmtArea(minA)} a ${fmtArea(maxA)}`}</span>
+                                    </div>
+                                )
+                            }
+                            return <span className="text-xs text-muted-foreground font-medium">-</span>
+                        }
+
+                        const type = (prop.type || d.type || '').toLowerCase()
+                        let hasAreaInfo = false
+                        let content = null
+
+                        if (type === 'land') {
+                            if (d.area_total || d.area_terreno) {
+                                hasAreaInfo = true
+                                content = (
+                                    <div className="flex items-center gap-1 text-foreground" title="Área do Terreno">
+                                        <span className="text-[10px] font-bold text-muted-foreground">TT</span>
+                                        <span className="text-[10px] font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
+                                    </div>
+                                )
+                            }
+                        } else if (type === 'house' || type === 'rural') {
+                            if (d.area_construida || d.area_util || d.area_total || d.area_terreno) {
+                                hasAreaInfo = true
+                                content = (
+                                    <>
+                                        {(d.area_construida || d.area_util) ? (
+                                            <div className="flex items-center gap-1 text-foreground" title="Área Construída">
+                                                <span className="text-[10px] font-bold text-muted-foreground">AC</span>
+                                                <span className="text-[10px] font-semibold">{fmt(d.area_construida || d.area_util)}</span>
+                                            </div>
+                                        ) : null}
+                                        {(d.area_total || d.area_terreno) ? (
+                                            <div className="flex items-center gap-1 text-foreground" title="Área do Terreno">
+                                                <span className="text-[10px] font-bold text-muted-foreground">TT</span>
+                                                <span className="text-[10px] font-semibold">{fmt(d.area_total || d.area_terreno)}</span>
+                                            </div>
+                                        ) : null}
+                                    </>
+                                )
+                            }
+                        } else {
+                            if (d.area_privativa || d.area_util || d.area_total) {
+                                hasAreaInfo = true
+                                content = (
+                                    <>
+                                        {(d.area_privativa || d.area_util) ? (
+                                            <div className="flex items-center gap-1 text-foreground" title="Área Privativa">
+                                                <span className="text-[10px] font-bold text-muted-foreground">PV</span>
+                                                <span className="text-[10px] font-semibold">{fmt(d.area_privativa || d.area_util)}</span>
+                                            </div>
+                                        ) : null}
+                                        {d.area_total ? (
+                                            <div className="flex items-center gap-1 text-foreground" title="Área Total">
+                                                <span className="text-[10px] font-bold text-muted-foreground">TT</span>
+                                                <span className="text-[10px] font-semibold">{fmt(d.area_total)}</span>
+                                            </div>
+                                        ) : null}
+                                    </>
+                                )
+                            }
+                        }
+
+                        return hasAreaInfo ? content : <span className="text-xs text-muted-foreground font-medium">-</span>
+                    })()}
+                </div>
+            </td>
+            <td className="px-4 py-5">
+                <div className="flex flex-col gap-1 items-center">
+                    {prop.details?.is_empreendimento ? (
+                        <div className="font-bold text-foreground text-sm whitespace-nowrap">Consultar</div>
+                    ) : (
+                        <>
+                            <div className="font-bold text-foreground text-sm whitespace-nowrap">{formattedPrice}</div>
+                            {formattedCondo && <div className="text-[10px] text-foreground font-medium">{formattedCondo}</div>}
+                            {formattedIptu && <div className="text-[10px] text-foreground font-medium">{formattedIptu}</div>}
+                        </>
+                    )}
                 </div>
             </td>
             <td className="px-4 py-5">
                 <div className="flex flex-col gap-1.5 items-center">
                     {(isAdmin || prop.status === 'Pending' || prop.status === 'Em Proposta') && (
-                        <span className={`text-[10px] font-black px-2 py-0.5 rounded-full uppercase whitespace-nowrap w-fit tracking-wider shadow-sm ${getStatusStyles(prop.status)}`}>
+                        <span className={`text-[9px] font-black px-3 py-0.5 rounded-full uppercase whitespace-nowrap w-fit tracking-wider ${getStatusStyles(prop.status)}`}>
                             {translateStatus(prop.status)}
                         </span>
                     )}
@@ -198,14 +298,14 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                                 e.stopPropagation()
                                 onTogglePublish(prop.id, !prop.is_published)
                             }}
-                            className={`flex items-center gap-1 px-1.5 py-0.5 rounded-full text-[8px] font-black uppercase tracking-wider transition-all ${
+                            className={`flex items-center gap-1 px-3 py-0.5 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${
                                 prop.is_published
                                     ? 'bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25'
                                     : 'bg-foreground/5 text-muted-foreground hover:bg-foreground/10'
                             }`}
                             title={prop.is_published ? 'Publicado no site – clique para remover' : 'Não publicado – clique para publicar no site'}
                         >
-                            <Globe size={9} strokeWidth={2.5} />
+                            <Globe size={10} strokeWidth={1.5} />
                             Site
                         </button>
                     )}

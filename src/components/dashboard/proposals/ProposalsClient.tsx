@@ -332,7 +332,7 @@ export default function ProposalsClient() {
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     {/* Search */}
                     <div className="relative flex-1 md:flex-none w-full md:w-[320px] h-[34px] order-1">
-                        <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Search size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
                             placeholder="Buscar por cliente ou imóvel..."
@@ -367,17 +367,17 @@ export default function ProposalsClient() {
                     </div>
 
                     {/* View Toggle */}
-                    <div className="h-[34px] flex items-center bg-card border border-muted-foreground/30 rounded-lg p-1 shadow-sm shrink-0 order-2">
+                    <div className="h-[34px] flex items-center bg-card border border-muted-foreground/30 rounded-lg shadow-sm shrink-0 order-2 overflow-hidden">
                         <button
                             onClick={() => setViewMode('pipeline')}
-                            className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'pipeline' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                            className={`h-full px-3 flex items-center justify-center transition-all ${viewMode === 'pipeline' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Pipeline"
                         >
                             <Columns3 size={14} strokeWidth={1} />
                         </button>
                         <button
                             onClick={() => setViewMode('list')}
-                            className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                            className={`h-full px-3 flex items-center justify-center transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Lista"
                         >
                             <List size={14} strokeWidth={1} />

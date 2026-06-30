@@ -43,7 +43,7 @@ export default function TenantsPage() {
             >
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto">
                     <div className="relative w-full md:w-72 order-2 md:order-1">
-                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                        <Search size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input 
                             type="text"
                             placeholder="Buscar por nome ou slug..."

@@ -506,24 +506,24 @@ export default function PropertiesClient({
                             />
                         </div>
 
-                        <div className="h-[34px] flex items-center bg-card border border-muted-foreground/30 rounded-lg p-1 shadow-sm shrink-0">
+                        <div className="h-[34px] flex items-center bg-card border border-muted-foreground/30 rounded-lg shadow-sm shrink-0 overflow-hidden">
                             <button
                                 onClick={() => setViewMode('list')}
-                                className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                                className={`h-full px-3 flex items-center justify-center transition-all ${viewMode === 'list' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                                 title="Visualização em Lista"
                             >
                                 <List size={14} strokeWidth={1} />
                             </button>
                             <button
                                 onClick={() => setViewMode('gallery')}
-                                className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'gallery' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                                className={`h-full px-3 flex items-center justify-center transition-all ${viewMode === 'gallery' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                                 title="Visualização em Galeria"
                             >
                                 <LayoutGrid size={14} strokeWidth={1} />
                             </button>
                             <button
                                 onClick={() => setViewMode('map')}
-                                className={`h-full px-3 flex items-center justify-center rounded-md transition-all ${viewMode === 'map' ? 'bg-secondary text-secondary-foreground shadow-sm' : 'text-foreground hover:bg-muted'}`}
+                                className={`h-full px-3 flex items-center justify-center transition-all ${viewMode === 'map' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                                 title="Visualização em Mapa"
                             >
                                 <Map size={14} strokeWidth={1} />

@@ -52,7 +52,7 @@ export function PropertyDetailsModal({ isOpen, onClose, prop, onSend, onEdit, us
                 canEdit ? (
                     <button
                         onClick={handleEdit}
-                        className="bg-secondary text-secondary-foreground font-bold px-8 py-1.5 rounded-lg hover:opacity-90 transition-all text-sm shadow-sm whitespace-nowrap"
+                        className="bg-secondary text-secondary-foreground font-bold rounded-full !rounded-lg hover:opacity-90 transition-all text-sm shadow-sm whitespace-nowrap !px-12 py-1.5"
                     >
                         Editar
                     </button>

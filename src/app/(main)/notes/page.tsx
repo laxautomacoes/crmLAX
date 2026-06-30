@@ -156,17 +156,17 @@ export default function NotesPage() {
                     />
                     
                     {/* View Toggle */}
-                    <div className="flex items-center bg-card border border-border rounded-lg p-1 shadow-sm h-[34px]">
+                    <div className="flex items-center bg-card border border-border rounded-lg shadow-sm h-[34px] overflow-hidden">
                         <button
                             onClick={() => setViewMode('grid')}
-                            className={`p-1 rounded-md transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'grid' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
+                            className={`transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'grid' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Grade"
                         >
                             <LayoutGrid size={14} strokeWidth={1} />
                         </button>
                         <button
                             onClick={() => setViewMode('table')}
-                            className={`p-1 rounded-md transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'table' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
+                            className={`transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'table' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
                             title="Visualização em Tabela"
                         >
                             <TableIcon size={14} strokeWidth={1} />

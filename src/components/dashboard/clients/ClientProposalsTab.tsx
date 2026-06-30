@@ -1259,7 +1259,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             >
                 <div className="space-y-4">
                     <div className="relative">
-                        <Search size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                        <Search size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                         <input
                             type="text"
                             value={propertySearchTerm}

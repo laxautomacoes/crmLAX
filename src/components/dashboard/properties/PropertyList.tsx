@@ -66,13 +66,13 @@ export function PropertyList({ properties, onEdit, onDelete, onView, onSend, onA
                                 </span>
                             </th>
                             <th className={staticThClass}>Detalhes</th>
-                            <th className={staticThClass}>Áreas</th>
+                            <th className={staticThClass}>Áreas (m²)</th>
                             <th
                                 className={sortableThClass}
                                 onClick={() => onSort?.('price')}
                             >
                                 <span className="inline-flex items-center gap-1.5">
-                                    Valores
+                                    Valores (R$)
                                     <SortIcon column="price" activeColumn={sortColumn} direction={sortDirection} />
                                 </span>
                             </th>

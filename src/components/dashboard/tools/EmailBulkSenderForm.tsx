@@ -618,7 +618,7 @@ export function EmailBulkSenderForm({ tenantId, profileId, isAdmin }: EmailBulkS
                                     <div className="absolute z-30 top-full mt-1 left-0 w-full bg-card border border-border rounded-xl shadow-xl overflow-hidden animate-in zoom-in-95 duration-200">
                                         <div className="p-3 border-b border-border">
                                             <div className="relative">
-                                                <Search size={14} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                                                <Search size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                                                 <input
                                                     type="text"
                                                     value={propertySearchTerm}

@@ -275,23 +275,23 @@ export function MarketingStudio({ tenantId, profileId, variant = 'default' }: Ma
             <div className="grid grid-cols-1 xl:grid-cols-2 gap-8 h-full min-h-[500px]">
                 {/* Toggle de Modo — alinhado com coluna 1 */}
                 <div className="flex justify-center xl:col-span-1">
-                    <div className="flex gap-2 p-1 bg-card border border-border/40 rounded-lg w-fit">
+                    <div className="h-[34px] flex bg-card border border-border/40 rounded-lg w-fit overflow-hidden">
                         <button
                             onClick={() => setMode('livre')}
-                            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                            className={`px-6 h-full text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center ${
                                 mode === 'livre' 
-                                ? 'bg-secondary text-secondary-foreground shadow-sm' 
-                                : 'text-muted-foreground hover:bg-foreground/5'
+                                ? 'bg-secondary text-secondary-foreground' 
+                                : 'text-muted-foreground hover:bg-muted'
                             }`}
                         >
                             Post Livre
                         </button>
                         <button
                             onClick={() => setMode('imovel')}
-                            className={`px-6 py-2 rounded-lg text-xs font-bold uppercase tracking-wider transition-all ${
+                            className={`px-6 h-full text-xs font-bold uppercase tracking-wider transition-all flex items-center justify-center ${
                                 mode === 'imovel' 
-                                ? 'bg-secondary text-secondary-foreground shadow-sm' 
-                                : 'text-muted-foreground hover:bg-foreground/5'
+                                ? 'bg-secondary text-secondary-foreground' 
+                                : 'text-muted-foreground hover:bg-muted'
                             }`}
                         >
                             Post Imóvel

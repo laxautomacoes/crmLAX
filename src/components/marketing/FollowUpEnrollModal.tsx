@@ -114,7 +114,7 @@ export default function FollowUpEnrollModal({ isOpen, onClose, sequenceId, onEnr
             <div className="space-y-4">
                 {/* Busca */}
                 <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+                    <Search size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
                     <input
                         type="text"
                         placeholder="Buscar por nome ou telefone..."
