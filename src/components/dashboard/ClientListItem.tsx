@@ -35,7 +35,17 @@ export function ClientListItem({
                             <User size={16} />
                         )}
                     </div>
-                    <span className="font-bold text-foreground">{client.name}</span>
+                    <div className="flex items-center gap-2">
+                        <span className="font-bold text-foreground">{client.name}</span>
+                        {client.leads?.some((l: any) => l.partner_id) && (
+                            <span 
+                                className="flex items-center justify-center w-[18px] h-[18px] bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 rounded-full border border-blue-200/60 dark:border-blue-500/20 text-[10px] font-bold"
+                                title="Cliente de Parceria"
+                            >
+                                P
+                            </span>
+                        )}
+                    </div>
                 </div>
             </td>
             <td className="px-4 py-5">
@@ -74,7 +84,7 @@ export function ClientListItem({
                 <div className="flex flex-col gap-0.5 items-center">
                     {client.leads && client.leads.length > 0 ? (
                         client.leads.map((lead: any, i: number) => (
-                            <span key={i} className="text-sm font-medium text-foreground truncate max-w-[200px] block">
+                            <span key={i} className="text-sm font-medium text-foreground truncate max-w-[200px] block mb-1 last:mb-0">
                                 {lead.property_interest || lead.properties?.title || lead.source || 'Sem interesse'}
                             </span>
                         ))

@@ -222,6 +222,7 @@ export async function getClients(tenantId: string, includeArchived = false) {
         assigned_to,
         property_interest,
         contact_id,
+        partner_id,
         assigned_user:profiles!leads_assigned_to_fkey (
             full_name
         ),

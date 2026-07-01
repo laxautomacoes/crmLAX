@@ -1532,7 +1532,7 @@ export function ClientModal({
                                                         sortedNotes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
 
                                                         return (
-                                                            <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 no-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                                                            <div className="space-y-3 pr-1 animate-in fade-in slide-in-from-top-1 duration-200">
                                                                 {sortedNotes.length === 0 && (
                                                                     <p className="text-xs text-muted-foreground text-center py-4">
                                                                         Nenhuma nota registrada para este cliente ainda.
@@ -1860,10 +1860,15 @@ function LeadCardDropdown({ lead, onMakeProposal }: { lead: any; onMakeProposal?
                 onClick={() => setIsOpen(!isOpen)}
                 className="w-full p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors text-left"
             >
-                <div className="flex-1 min-w-0">
+                <div className="flex-1 min-w-0 flex items-center gap-2">
                     <span className="text-base font-bold text-foreground truncate block">
                         {lead.property_interest || lead.properties?.title || lead.source || 'Interesse não especificado'}
                     </span>
+                    {lead.partner_id && (
+                        <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 rounded-full text-[10px] font-bold border border-blue-200/60 dark:border-blue-500/20 whitespace-nowrap">
+                            Parceria
+                        </span>
+                    )}
                 </div>
                 <div className="flex items-center gap-2 shrink-0">
                     {lead.has_proposal && (
