@@ -126,7 +126,7 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
     }
 
     const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
-    const [sortColumn, setSortColumn] = useState<'apto' | 'torre' | 'valor'>('apto')
+    const [sortColumn, setSortColumn] = useState<'apto' | 'torre' | 'tipo' | 'valor' | 'valor_m2'>('apto')
 
     const towers = useMemo(() => {
         const list = priceTables
