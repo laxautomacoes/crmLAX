@@ -115,11 +115,11 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                         const allTipos = torres.flatMap((t: any) => t.tipologias || [])
                         if (isEmp && allTipos.length > 0) {
                             // Dormitórios: listar valores únicos (1, 2 e 3)
-                            const dormsSet = [...new Set(
+                            const dormsSet = [...new Set<number>(
                                 allTipos
                                     .map((t: any) => t.dormitorios !== undefined && t.dormitorios !== null && t.dormitorios !== '' ? parseInt(t.dormitorios) : NaN)
                                     .filter((n: number) => !isNaN(n))
-                            )].sort((a: number, b: number) => a - b)
+                            )].sort((a, b) => a - b)
                             const dormsLabel = dormsSet.length === 1 ? String(dormsSet[0]) : dormsSet.length === 2 ? `${dormsSet[0]} e ${dormsSet[1]}` : dormsSet.slice(0, -1).join(', ') + ` e ${dormsSet[dormsSet.length - 1]}`
 
                             // Banheiros: faixa min-max (usando suites como proxy se banheiros não existir na tipologia)
