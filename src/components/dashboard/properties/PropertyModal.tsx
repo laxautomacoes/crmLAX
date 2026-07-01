@@ -1166,7 +1166,6 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                         setImportKey(prev => prev + 1)
                     }}
                     properties={[{ id: (editingProperty as any).id, title: (editingProperty as any).title || '' }]}
-                    initialMode="tabela"
                     initialPropertyId={(editingProperty as any).id}
                 />
             )}

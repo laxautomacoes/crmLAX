@@ -319,7 +319,6 @@ export function PriceTableTab({ propertyId, propertyTitle, tenantId, userRole, o
                         tenantId={tenantId}
                         onImportSuccess={() => { setIsImportOpen(false); loadData() }}
                         properties={[{ id: propertyId, title: propertyTitle }]}
-                        initialMode="tabela"
                         initialPropertyId={propertyId}
                     />
                 )}
