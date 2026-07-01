@@ -215,8 +215,14 @@ export async function getClients(tenantId: string, includeArchived = false) {
         .select(`
       *,
       leads (
-        * ,
-        profiles:assigned_to (
+        id,
+        created_at,
+        status,
+        source,
+        assigned_to,
+        property_interest,
+        contact_id,
+        assigned_user:profiles!leads_assigned_to_fkey (
             full_name
         ),
         properties (
@@ -252,6 +258,9 @@ export async function getClients(tenantId: string, includeArchived = false) {
 
     if (error) {
         console.error('Error fetching clients:', error)
+        try {
+            require('fs').writeFileSync(require('path').join(process.cwd(), 'debug_clients_error.txt'), JSON.stringify(error, null, 2));
+        } catch (e) {}
         return { success: false, error: error.message }
     }
 
@@ -334,7 +343,7 @@ export async function getClients(tenantId: string, includeArchived = false) {
             images: contact.images || [],
             videos: contact.videos || [],
             documents: contact.documents || [],
-            broker_name: (activeLead as any)?.profiles?.full_name || 'Não atribuído',
+            broker_name: (activeLead as any)?.assigned_user?.full_name || 'Não atribuído',
             assigned_to: activeLead?.assigned_to,
             leads: ((contact.leads as any[]) || [])
                 .sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
@@ -358,9 +367,38 @@ export async function getClients(tenantId: string, includeArchived = false) {
 
     // Filtrar por colaborador: apenas clientes com leads atribuídos ao usuário
     if (!isAdmin && userId) {
+        const beforeFilter = clients.length;
+        const sampleClientLeads = clients[0]?.leads?.map((l:any) => l.assigned_to) || [];
+        
         clients = clients.filter((client: any) => 
             client.leads.some((lead: any) => lead.assigned_to === userId)
         )
+        
+        try {
+            require('fs').writeFileSync(require('path').join(process.cwd(), 'debug_corretor_filter.txt'), JSON.stringify({
+                userId,
+                beforeFilter,
+                afterFilter: clients.length,
+                sampleClientLeads
+            }, null, 2));
+        } catch (e) {}
+    }
+
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        const logContent = JSON.stringify({
+            timestamp: new Date().toISOString(),
+            tenantId,
+            isAdmin,
+            userId,
+            userAuthenticated: !!user,
+            contactsCount: contacts?.length || 0,
+            clientsAfterMapCount: clients?.length || 0,
+        }, null, 2);
+        fs.writeFileSync(path.join(process.cwd(), 'debug_clients.txt'), logContent);
+    } catch (e) {
+        console.error("Failed to write debug file", e);
     }
 
     return { success: true, data: clients }

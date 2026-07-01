@@ -1,0 +1,9 @@
+{
+  "timestamp": "2026-07-01T02:36:43.693Z",
+  "tenantId": "fab0d1cb-a25f-46b6-a8a1-3b153cd8f743",
+  "isAdmin": true,
+  "userId": "fd5bf0ca-be6f-4c3c-84b3-a056442afdf8",
+  "userAuthenticated": true,
+  "contactsCount": 142,
+  "clientsAfterMapCount": 142
+}

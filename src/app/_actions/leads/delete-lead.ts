@@ -12,6 +12,25 @@ export async function deleteLead(leadId: string) {
 
     if (!profile?.tenant_id) return { success: false, error: 'Tenant não identificado' }
 
+    const { error: deleteDependenciesError } = await Promise.all([
+        supabase.from('calendar_events').delete().eq('lead_id', leadId),
+        supabase.from('email_campaign_logs').delete().eq('lead_id', leadId),
+        supabase.from('followup_enrollments').delete().eq('lead_id', leadId),
+        supabase.from('interactions').delete().eq('lead_id', leadId),
+        supabase.from('lead_documents').delete().eq('lead_id', leadId),
+        supabase.from('lead_properties').delete().eq('lead_id', leadId),
+        supabase.from('notes').delete().eq('lead_id', leadId),
+        supabase.from('proposals').delete().eq('lead_id', leadId),
+        supabase.from('transacoes_financeiras').delete().eq('lead_id', leadId)
+    ])
+    .then(() => ({ error: null }))
+    .catch((err) => ({ error: err }))
+
+    if (deleteDependenciesError) {
+        console.error('Erro ao deletar dependências do lead:', deleteDependenciesError)
+        return { success: false, error: 'Erro ao remover dados relacionados ao lead' }
+    }
+
     const { error } = await supabase
         .from('leads')
         .delete()

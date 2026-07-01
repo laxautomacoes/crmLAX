@@ -12,7 +12,7 @@ import { toast } from 'sonner'
 import { formatPhone } from '@/lib/utils/phone'
 import { getPropertyUrl } from '@/lib/utils/url'
 import { createClient } from '@/lib/supabase/client'
-import { UserPlus, ArrowLeft, Check, FileDown } from 'lucide-react'
+import { UserPlus, ArrowLeft, Check, FileDown, ArrowUpDown } from 'lucide-react'
 import type { Lead } from '@/components/dashboard/leads/PipelineBoard'
 import { getPropertyUnits, type PropertyUnit } from '@/app/_actions/property-units'
 
@@ -69,6 +69,11 @@ interface TenantRecord {
     slug?: string
     custom_domain?: string | null
     custom_domain_verified?: boolean
+    branding?: {
+        logo_full?: string
+        logo_icon?: string
+        logo_height?: number
+    }
 }
 
 interface SendToLeadModalProps {
@@ -131,25 +136,25 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 const url = config.selectedImages[i]
                 const response = await fetch(url)
                 const blob = await response.blob()
-                
+
                 const contentType = response.headers.get('content-type')
                 let ext = 'jpg'
                 if (contentType?.includes('image/png')) ext = 'png'
                 else if (contentType?.includes('image/webp')) ext = 'webp'
-                
+
                 const blobUrl = URL.createObjectURL(blob)
                 const link = document.createElement("a")
                 link.href = blobUrl
-                
+
                 const cleanTitle = property.title.toLowerCase().replace(/[^a-z0-9]+/g, '-')
                 link.download = `${cleanTitle}-foto-${i + 1}.${ext}`
-                
+
                 document.body.appendChild(link)
                 link.click()
-                
+
                 document.body.removeChild(link)
                 URL.revokeObjectURL(blobUrl)
-                
+
                 await new Promise(resolve => setTimeout(resolve, 150))
             }
             toast.success("Download das fotos iniciado!")
@@ -160,7 +165,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             setIsDownloading(false)
         }
     }
-    
+
     // Configuration State
     const [config, setConfig] = useState<{
         title: boolean;
@@ -251,11 +256,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const supabase = createClient()
         const { data } = await supabase
             .from('tenants')
-            .select('name, slug, custom_domain, custom_domain_verified')
+            .select('name, slug, custom_domain, custom_domain_verified, branding')
             .eq('id', tenantId)
             .single()
-        
-        if (data) setTenant(data)
+
+        if (data) setTenant(data as any)
     }
 
     const fetchCurrentBroker = async () => {
@@ -285,9 +290,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                     setLeads(prev => prev.map(l =>
                         l.id === lead.id ? { ...l, avatar_url: res.avatar_url } : l
                     ))
-                    setSelectedLead(prev => 
-                        prev && prev.id === lead.id 
-                            ? { ...prev, avatar_url: res.avatar_url } 
+                    setSelectedLead(prev =>
+                        prev && prev.id === lead.id
+                            ? { ...prev, avatar_url: res.avatar_url }
                             : prev
                     )
                 }
@@ -324,7 +329,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     const filteredUnits = useMemo(() => {
         let result = [...units]
         if (unitFilter) {
-            result = result.filter(unit => 
+            result = result.filter(unit =>
                 unit.unit_number.toLowerCase().includes(unitFilter.toLowerCase()) ||
                 (unit.block_tower && unit.block_tower.toLowerCase().includes(unitFilter.toLowerCase()))
             )
@@ -361,7 +366,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         return result
     }, [units, unitFilter, sortColumn, sortDirection])
 
-    const filteredLeads = leads.filter(lead => 
+    const filteredLeads = leads.filter(lead =>
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
         lead.phone.includes(searchTerm)
@@ -402,7 +407,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             documents: config.selectedDocs,
             selectedUnit: selectedUnit
         })
-        
+
         if (result.success) {
             toast.success('E-mail enviado com sucesso!')
             onClose()
@@ -441,12 +446,12 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
         setSending(true)
         const cleanPhone = currentLead.phone.replace(/\D/g, '')
-        
+
         // Build config query params
         const queryParams = new URLSearchParams()
         if (currentBroker) queryParams.set('b', currentBroker.id)
         if (selectedUnit) queryParams.set('u', selectedUnit.id)
-        
+
         // Add display toggles (only if false, to keep URL short, but let's be explicit for now)
         if (!config.title) queryParams.set('ct', '0')
         if (!config.price) queryParams.set('cp', '0')
@@ -466,7 +471,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (!config.showEscritorio) queryParams.set('ces', '0')
         if (!config.showDependencia) queryParams.set('cde', '0')
         if (!config.showObservations) queryParams.set('cob', '0')
-        
+
         // Add media selections as indices
         const imageIndices = config.selectedImages
             .map(url => (property.images || []).indexOf(url))
@@ -491,11 +496,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
         const queryString = queryParams.toString()
         const propertyUrl = getPropertyUrl(tenant ? { slug: tenant.slug || tenantSlug, custom_domain: tenant.custom_domain, custom_domain_verified: tenant.custom_domain_verified } : { slug: tenantSlug }, property.id, property.slug, property.type) + (queryString ? `?${queryString}` : '')
-        
+
         // Build dynamic message
         const firstName = currentLead.name.split(' ')[0]
         let message = `Olá ${firstName}! Tudo bem?\n\nEstou enviando os detalhes deste imóvel que pode te interessar:\n\n`
-        
+
         // 0. Unidade Selecionada integrada ao bloco IMÓVEL
         if (config.title || config.location !== 'none' || selectedUnit) {
             message += `*IMÓVEL*\n`
@@ -540,7 +545,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         let banheiros = parseInt(String(property.details?.banheiros || '0'))
         let vegasVal = parseInt(String(property.details?.vagas || '0'))
         const posicaoSolar = property.details?.posicao_solar || property.details?.posicao || property.details?.solar || ''
-        
+
         let hasSacadaChurras = property.details?.has_sacada_com_churrasqueira
         let hasSacadaSem = property.details?.has_sacada_sem_churrasqueira
         let hasLavabo = property.details?.has_lavabo
@@ -566,12 +571,12 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 hobbyBox = 'Sim'
                 hobbyBoxNum = selectedUnit.hobby_box
             }
-            
+
             const secao = selectedUnit.extra_data?.secao || selectedUnit.extra_data?.tipologia
             if (secao) {
                 tipologiaUnidade = String(secao)
                 const textUpper = tipologiaUnidade.toUpperCase()
-                
+
                 if (textUpper.includes('SUÍTE') || textUpper.includes('SUITES')) {
                     const matchSuites = textUpper.match(/(\d+)\s*SUÍTE/i) || textUpper.match(/(\d+)\s*SUITES/i)
                     if (matchSuites) {
@@ -580,7 +585,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                         suites = 1
                     }
                 }
-                
+
                 if (textUpper.includes('DORMITÓRIO') || textUpper.includes('DORMITORIOS') || textUpper.includes('QUARTO')) {
                     const matchDorms = textUpper.match(/(\d+)\s*DORMITÓRIO/i) || textUpper.match(/(\d+)\s*DORMITORIOS/i) || textUpper.match(/(\d+)\s*QUARTO/i)
                     if (matchDorms) {
@@ -591,7 +596,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 } else if (suites > 0) {
                     dorms = Math.max(dorms, suites)
                 }
-                
+
                 if (textUpper.includes('LAVABO')) {
                     hasLavabo = true
                 }
@@ -630,8 +635,8 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 message += `• Banheiros: ${banheiros}\n`
             }
             if (showVagas) {
-                const vagaIdentificacao = (selectedUnit && selectedUnit.garage_number) 
-                    ? selectedUnit.garage_number 
+                const vagaIdentificacao = (selectedUnit && selectedUnit.garage_number)
+                    ? selectedUnit.garage_number
                     : (property.details?.vagas_numeracao || (vegasVal > 0 ? String(vegasVal) : ''))
                 if (vagaIdentificacao) {
                     message += `• Vaga: ${vagaIdentificacao}\n`
@@ -660,8 +665,8 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 message += `• Observações: ${property.details?.obs_dormitorios}\n`
             }
             if (showHobbyBox) {
-                const hbNum = (selectedUnit && selectedUnit.hobby_box) 
-                    ? selectedUnit.hobby_box 
+                const hbNum = (selectedUnit && selectedUnit.hobby_box)
+                    ? selectedUnit.hobby_box
                     : (hobbyBoxNum || (hobbyBox !== 'Sim' ? hobbyBox : ''))
                 if (hbNum) {
                     message += `• Hobby Box: ${hbNum}\n`
@@ -681,7 +686,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const hasCondo = config.showCondo && property.details?.valor_condominio
         const hasIptu = config.showIptu && property.details?.valor_iptu
         const hasPaymentCond = selectedUnit && (selectedUnit.valor_ato || selectedUnit.valor_mensais || selectedUnit.valor_reforcos || selectedUnit.valor_chaves || selectedUnit.soma_poupanca || selectedUnit.valor_financiamento)
-        
+
         if (hasPrice || hasCondo || hasIptu || hasPaymentCond || (selectedUnit && selectedUnit.valor_total)) {
             message += `*VALOR*\n`
             if (selectedUnit) {
@@ -711,7 +716,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             } else if (hasPrice) {
                 message += `• Imóvel: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(property.price)}\n`
             }
-            
+
             if (hasCondo) {
                 const condoNum = parseFloat(String(property.details?.valor_condominio))
                 if (!isNaN(condoNum) && condoNum > 0) {
@@ -805,13 +810,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         }
 
         message += `Confira imagens e mais informações em:\n\n• ${propertyUrl}\n\nQualquer dúvida, estou à disposição!`
-        
+
         const whatsappUrl = `https://wa.me/55${cleanPhone}?text=${encodeURIComponent(message)}`
-        
+
         window.open(whatsappUrl, '_blank')
-        
+
         await logInteraction(currentLead.id, 'whatsapp', `Enviado link do property via WhatsApp: ${property.title}`)
-        
+
         toast.success('WhatsApp aberto!')
         setSending(false)
         onClose()
@@ -821,9 +826,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         setIsGeneratingPDF(true)
         try {
             const { generatePropertyPDF } = await import('@/lib/utils/generatePropertyPDF')
-            
+
             let brokerProfile = property.created_by_profile
-            
+
             if (!brokerProfile && currentBroker) {
                 brokerProfile = {
                     id: currentBroker.id,
@@ -844,9 +849,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                     ...config,
                     selectedUnit: selectedUnit
                 } as any,
-                tenantName: tenant?.name || 'CRM LAX'
+                tenantName: tenant?.name || 'CRM LAX',
+                tenantLogoUrl: tenant?.branding?.logo_full
             })
-            
+
             toast.success('PDF gerado com sucesso!')
         } catch (error) {
             console.error('Erro ao gerar PDF:', error)
@@ -978,7 +984,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 <h3 className="text-lg font-black text-foreground uppercase tracking-widest truncate">
                     Enviar para Lead
                 </h3>
-            }            size="xl"
+            } size="xl"
         >
             <div className="flex flex-col max-h-[calc(90vh-120px)]">
                 <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-6 min-h-0">
@@ -987,7 +993,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             {isManualMode ? (
                                 <div className="space-y-4 animate-in fade-in slide-in-from-left-2 duration-300">
                                     <div className="flex items-center gap-2 mb-2">
-                                        <button 
+                                        <button
                                             onClick={() => setIsManualMode(false)}
                                             className="p-2 hover:bg-foreground/5 rounded-full transition-colors"
                                         >
@@ -999,21 +1005,21 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         label="Nome Completo"
                                         placeholder="Ex: João Silva"
                                         value={manualLead.name}
-                                        onChange={(e) => setManualLead({...manualLead, name: e.target.value})}
+                                        onChange={(e) => setManualLead({ ...manualLead, name: e.target.value })}
                                     />
                                     <FormInput
                                         label="Telefone (WhatsApp)"
                                         placeholder="(00) 00000-0000"
                                         value={manualLead.phone}
-                                        onChange={(e) => setManualLead({...manualLead, phone: e.target.value})}
+                                        onChange={(e) => setManualLead({ ...manualLead, phone: e.target.value })}
                                     />
                                     <FormInput
                                         label="E-mail (Opcional)"
                                         placeholder="joao@exemplo.com"
                                         value={manualLead.email}
-                                        onChange={(e) => setManualLead({...manualLead, email: e.target.value})}
+                                        onChange={(e) => setManualLead({ ...manualLead, email: e.target.value })}
                                     />
-                                    
+
                                     <div className="pt-4 border-t">
                                         <p className="text-xs text-muted-foreground mb-4">O lead será cadastrado automaticamente ao enviar o imóvel.</p>
                                         <div className="grid grid-cols-2 gap-2">
@@ -1050,7 +1056,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 roundedClassName="rounded-md"
                                             />
                                         </div>
-                                        <button 
+                                        <button
                                             onClick={() => {
                                                 setIsManualMode(true)
                                                 setManualLead({ name: searchTerm, email: '', phone: '' })
@@ -1076,10 +1082,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 >
                                                     <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground group-hover:bg-foreground/10 transition-colors flex-shrink-0">
                                                         {lead.avatar_url ? (
-                                                            <img 
-                                                                src={lead.avatar_url} 
-                                                                alt={lead.name} 
-                                                                className="w-full h-full object-cover" 
+                                                            <img
+                                                                src={lead.avatar_url}
+                                                                alt={lead.name}
+                                                                className="w-full h-full object-cover"
                                                             />
                                                         ) : (
                                                             <User size={20} />
@@ -1096,7 +1102,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             <div className="text-center py-8 space-y-4">
                                                 <p className="text-foreground">Nenhum lead encontrado.</p>
                                                 {searchTerm && (
-                                                    <button 
+                                                    <button
                                                         onClick={() => {
                                                             setIsManualMode(true)
                                                             setManualLead({ name: searchTerm, email: '', phone: '' })
@@ -1119,10 +1125,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <div className="flex items-center gap-4 p-4 rounded-xl bg-[#404F4F] text-white border border-[#404F4F]/10">
                                 <div className="w-12 h-12 rounded-full overflow-hidden bg-white/10 flex items-center justify-center text-white flex-shrink-0">
                                     {selectedLead.avatar_url ? (
-                                        <img 
-                                            src={selectedLead.avatar_url} 
-                                            alt={selectedLead.name} 
-                                            className="w-full h-full object-cover" 
+                                        <img
+                                            src={selectedLead.avatar_url}
+                                            alt={selectedLead.name}
+                                            className="w-full h-full object-cover"
                                         />
                                     ) : (
                                         <User size={24} />
@@ -1132,7 +1138,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     <p className="text-sm font-bold text-white/70 uppercase tracking-wider">Lead Selecionado</p>
                                     <p className="text-xl font-bold text-white">{selectedLead.name}</p>
                                 </div>
-                                <button 
+                                <button
                                     onClick={() => setSelectedLead(null)}
                                     className="text-base font-bold text-white hover:text-white/80 hover:underline"
                                 >
@@ -1141,12 +1147,12 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             </div>
 
                             {/* Configuration Options */}
-                            <div className="space-y-0 rounded-xl overflow-hidden bg-card divide-y divide-border/50">
+                            <div className="space-y-3">
                                 {/* 1. Imóvel */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('basic')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.basic ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.basic ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <Home size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1155,22 +1161,24 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         {expandedSections.basic ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.basic && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
-                                            <FormCheckbox labelClassName="text-base" 
-                                                label="Nome imóvel" 
-                                                checked={config.title} 
-                                                onChange={(e) => setConfig({...config, title: e.target.checked})} 
-                                            />
+                                        <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <div className="pl-4">
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Nome imóvel"
+                                                    checked={config.title}
+                                                    onChange={(e) => setConfig({ ...config, title: e.target.checked })}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* 1.1. Apartamento Escolhido */}
                                 {units.length > 0 && (
-                                    <div className="">
-                                        <button 
+                                    <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                        <button
                                             onClick={() => toggleSection('units')}
-                                            className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.units ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                            className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.units ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                         >
                                             <div className="flex items-center gap-2">
                                                 <Building2 size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1181,14 +1189,14 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             {expandedSections.units ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                         </button>
                                         {expandedSections.units && (
-                                            <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-4 border-t border-border/40">
+                                            <div className="p-4 bg-white dark:bg-muted/30 space-y-4 border-t border-border/40">
                                                 <div className="relative">
                                                     <input
                                                         type="text"
                                                         placeholder="Buscar unidade (ex: 101, bloco A...)"
                                                         value={unitFilter}
                                                         onChange={(e) => setUnitFilter(e.target.value)}
-                                                        className="w-full pl-3 pr-8 py-2 text-sm bg-muted/50 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-ring/50 focus:border-ring outline-none"
+                                                        className="w-full pl-3 pr-8 py-2 text-sm bg-white dark:bg-muted/50 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-ring/50 focus:border-ring outline-none"
                                                     />
                                                     {unitFilter && (
                                                         <button
@@ -1199,17 +1207,19 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                         </button>
                                                     )}
                                                 </div>
-                                                <div className="border border-border rounded-lg overflow-hidden bg-muted/10">
+                                                <div className="border border-border rounded-lg overflow-hidden bg-white dark:bg-muted/10">
                                                     {/* Header */}
-                                                    <div className="grid grid-cols-12 px-3 py-2 text-base font-bold text-foreground uppercase tracking-wider border-b border-border/40 bg-muted/20 text-center select-none">
+                                                    <div className="grid grid-cols-12 px-3 py-2 text-base font-bold text-foreground uppercase tracking-wider border-b border-border/40 bg-gray-100/50 dark:bg-muted/20 text-center select-none">
                                                         <button
                                                             type="button"
                                                             onClick={() => handleSort('apto')}
                                                             className="col-span-3 text-center flex items-center justify-center gap-1 hover:text-foreground/80 focus:outline-none w-full"
                                                         >
                                                             Apto
-                                                            {sortColumn === 'apto' && (
+                                                            {sortColumn === 'apto' ? (
                                                                 sortDirection === 'asc' ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />
+                                                            ) : (
+                                                                <ArrowUpDown size={14} strokeWidth={1.5} className="text-muted-foreground/40" />
                                                             )}
                                                         </button>
                                                         <button
@@ -1218,8 +1228,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                             className="col-span-5 text-center flex items-center justify-center gap-1 hover:text-foreground/80 focus:outline-none w-full"
                                                         >
                                                             Tipo
-                                                            {sortColumn === 'tipo' && (
+                                                            {sortColumn === 'tipo' ? (
                                                                 sortDirection === 'asc' ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />
+                                                            ) : (
+                                                                <ArrowUpDown size={14} strokeWidth={1.5} className="text-muted-foreground/40" />
                                                             )}
                                                         </button>
                                                         <button
@@ -1227,13 +1239,15 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                             onClick={() => handleSort('valor')}
                                                             className="col-span-4 text-center flex items-center justify-center gap-1 hover:text-foreground/80 focus:outline-none w-full"
                                                         >
-                                                            Valor total R$
-                                                            {sortColumn === 'valor' && (
+                                                            Valor total (R$)
+                                                            {sortColumn === 'valor' ? (
                                                                 sortDirection === 'asc' ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />
+                                                            ) : (
+                                                                <ArrowUpDown size={14} strokeWidth={1.5} className="text-muted-foreground/40" />
                                                             )}
                                                         </button>
                                                     </div>
-                                                    
+
                                                     {/* Scrollable list */}
                                                     <div className="max-h-[200px] overflow-y-auto divide-y divide-border/50">
                                                         {filteredUnits.length > 0 ? (
@@ -1271,9 +1285,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                         )}
                                                     </div>
                                                 </div>
-                                                
+
                                                 {selectedUnit && (
-                                                    <div className="p-3 bg-muted/15 dark:bg-muted/30 border border-border/50 rounded-lg space-y-2 text-sm">
+                                                    <div className="p-3 bg-white dark:bg-muted/30 border border-border/50 rounded-lg space-y-2 text-sm">
                                                         <p className="font-bold text-foreground uppercase tracking-wider text-xs">Resumo de Condições (Unidade {selectedUnit.unit_number})</p>
                                                         <div className="grid grid-cols-2 gap-2 text-foreground">
                                                             {selectedUnit.valor_total && <p><strong>Valor total:</strong> R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_total))}</p>}
@@ -1292,10 +1306,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 )}
 
                                 {/* 2. Endereço */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('location')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.location ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.location ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <MapPin size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1304,22 +1318,22 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         {expandedSections.location ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.location && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 border-t border-border/40">
-                                            <div className="flex flex-col gap-3">
-                                                <FormCheckbox labelClassName="text-base" 
-                                                    label="Endereço Exato" 
-                                                    checked={config.location === 'exact'} 
-                                                    onChange={() => setConfig({...config, location: 'exact'})} 
+                                        <div className="p-4 bg-white dark:bg-muted/30 border-t border-border/40">
+                                            <div className="flex flex-col gap-3 pl-4">
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Endereço Exato"
+                                                    checked={config.location === 'exact'}
+                                                    onChange={() => setConfig({ ...config, location: 'exact' })}
                                                 />
-                                                <FormCheckbox labelClassName="text-base" 
-                                                    label="Aproximada (Bairro)" 
-                                                    checked={config.location === 'approximate'} 
-                                                    onChange={() => setConfig({...config, location: 'approximate'})} 
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Aproximada (Bairro)"
+                                                    checked={config.location === 'approximate'}
+                                                    onChange={() => setConfig({ ...config, location: 'approximate' })}
                                                 />
-                                                <FormCheckbox labelClassName="text-base" 
-                                                    label="Não enviar" 
-                                                    checked={config.location === 'none'} 
-                                                    onChange={() => setConfig({...config, location: 'none'})} 
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Não enviar"
+                                                    checked={config.location === 'none'}
+                                                    onChange={() => setConfig({ ...config, location: 'none' })}
                                                 />
                                             </div>
                                         </div>
@@ -1327,10 +1341,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 </div>
 
                                 {/* 3. Valores */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('valores')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.valores ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.valores ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <DollarSign size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1339,13 +1353,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         <div className="flex items-center gap-3">
                                             {expandedSections.valores && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleSelectAll('valores')}
                                                         className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleDeselectAll('valores')}
                                                         className={hasSelectedItems('valores')
                                                             ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
@@ -1360,31 +1374,33 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         </div>
                                     </button>
                                     {expandedSections.valores && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
-                                            <FormCheckbox labelClassName="text-base" 
-                                                label="Preço" 
-                                                checked={config.price} 
-                                                onChange={(e) => setConfig({...config, price: e.target.checked})} 
-                                            />
-                                            <FormCheckbox labelClassName="text-base" 
-                                                label="Condomínio" 
-                                                checked={config.showCondo} 
-                                                onChange={(e) => setConfig({...config, showCondo: e.target.checked})} 
-                                            />
-                                            <FormCheckbox labelClassName="text-base" 
-                                                label="IPTU" 
-                                                checked={config.showIptu} 
-                                                onChange={(e) => setConfig({...config, showIptu: e.target.checked})} 
-                                            />
+                                        <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <div className="space-y-3 pl-4">
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Preço"
+                                                    checked={config.price}
+                                                    onChange={(e) => setConfig({ ...config, price: e.target.checked })}
+                                                />
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Condomínio"
+                                                    checked={config.showCondo}
+                                                    onChange={(e) => setConfig({ ...config, showCondo: e.target.checked })}
+                                                />
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="IPTU"
+                                                    checked={config.showIptu}
+                                                    onChange={(e) => setConfig({ ...config, showIptu: e.target.checked })}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* 4. Imagens */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('images')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.images ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.images ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <ImageIcon size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1393,13 +1409,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         <div className="flex items-center gap-3">
                                             {expandedSections.images && (property.images?.length ?? 0) > 1 && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleSelectAll('images')}
                                                         className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleDeselectAll('images')}
                                                         className={hasSelectedItems('images')
                                                             ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
@@ -1414,7 +1430,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         </div>
                                     </button>
                                     {expandedSections.images && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                        <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
                                             {config.selectedImages.length > 0 && (
                                                 <button
                                                     onClick={handleDownloadImages}
@@ -1437,19 +1453,19 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             {(property.images?.length ?? 0) > 0 ? (
                                                 <div className="grid grid-cols-4 gap-2 max-h-[300px] overflow-y-auto pr-1">
                                                     {(property.images ?? []).map((img: string, idx: number) => (
-                                                        <div 
-                                                            key={idx} 
+                                                        <div
+                                                            key={idx}
                                                             onClick={() => {
                                                                 const newImages = selectedImagesSet.has(img)
                                                                     ? config.selectedImages.filter((i: string) => i !== img)
                                                                     : [...config.selectedImages, img]
-                                                                setConfig({...config, selectedImages: newImages})
+                                                                setConfig({ ...config, selectedImages: newImages })
                                                             }}
                                                             className={`relative aspect-square rounded-lg overflow-hidden cursor-pointer transition-opacity ${selectedImagesSet.has(img) ? 'ring-2 ring-[#FFE600] ring-inset' : 'opacity-60 hover:opacity-100'}`}
                                                         >
-                                                            <img 
-                                                                src={img} 
-                                                                className="w-full h-full object-cover" 
+                                                            <img
+                                                                src={img}
+                                                                className="w-full h-full object-cover"
                                                                 loading="lazy"
                                                                 alt={`Foto ${idx + 1}`}
                                                             />
@@ -1471,10 +1487,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 </div>
 
                                 {/* 5. Vídeos */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('videos')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.videos ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.videos ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <Video size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1483,13 +1499,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         <div className="flex items-center gap-3">
                                             {expandedSections.videos && (property.videos?.length ?? 0) > 1 && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleSelectAll('videos')}
                                                         className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleDeselectAll('videos')}
                                                         className={hasSelectedItems('videos')
                                                             ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
@@ -1504,20 +1520,20 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         </div>
                                     </button>
                                     {expandedSections.videos && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-4 border-t border-border/40">
+                                        <div className="p-4 bg-white dark:bg-muted/30 space-y-4 border-t border-border/40">
                                             {(property.videos?.length ?? 0) > 0 ? (
-                                                <div className="space-y-1">
+                                                <div className="space-y-1 pl-4">
                                                     {(property.videos ?? []).map((video: string, idx: number) => (
-                                                        <FormCheckbox labelClassName="text-base" 
+                                                        <FormCheckbox labelClassName="text-base"
                                                             key={idx}
                                                             label={`Vídeo ${idx + 1}`}
                                                             checked={selectedVideosSet.has(video)}
                                                             onChange={(e) => {
                                                                 const checked = e.target.checked
-                                                                 const newVideos = checked
+                                                                const newVideos = checked
                                                                     ? [...config.selectedVideos, video]
                                                                     : config.selectedVideos.filter((v: string) => v !== video)
-                                                                setConfig({...config, selectedVideos: newVideos})
+                                                                setConfig({ ...config, selectedVideos: newVideos })
                                                             }}
                                                         />
                                                     ))}
@@ -1530,10 +1546,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 </div>
 
                                 {/* 6. Documentos */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('docs')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.docs ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.docs ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <FileText size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1542,13 +1558,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         <div className="flex items-center gap-3">
                                             {expandedSections.docs && (property.documents?.length ?? 0) > 1 && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleSelectAll('docs')}
                                                         className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleDeselectAll('docs')}
                                                         className={hasSelectedItems('docs')
                                                             ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
@@ -1563,11 +1579,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         </div>
                                     </button>
                                     {expandedSections.docs && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-4 border-t border-border/40">
+                                        <div className="p-4 bg-white dark:bg-muted/30 space-y-4 border-t border-border/40">
                                             {(property.documents?.length ?? 0) > 0 ? (
-                                                <div className="space-y-1">
+                                                <div className="space-y-1 pl-4">
                                                     {(property.documents ?? []).map((doc: PropertyDocument, idx: number) => (
-                                                        <FormCheckbox labelClassName="text-base" 
+                                                        <FormCheckbox labelClassName="text-base"
                                                             key={idx}
                                                             label={doc.name || `Documento ${idx + 1}`}
                                                             checked={selectedDocsSet.has(doc.url)}
@@ -1576,7 +1592,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                                 const newDocs = checked
                                                                     ? [...config.selectedDocs, doc]
                                                                     : config.selectedDocs.filter((d) => d.url !== doc.url)
-                                                                setConfig({...config, selectedDocs: newDocs})
+                                                                setConfig({ ...config, selectedDocs: newDocs })
                                                             }}
                                                         />
                                                     ))}
@@ -1589,10 +1605,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 </div>
 
                                 {/* 7. Informações */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('details')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.details ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.details ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <Info size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1601,13 +1617,13 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         <div className="flex items-center gap-3">
                                             {expandedSections.details && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleSelectAll('details')}
                                                         className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
-                                                    <button 
+                                                    <button
                                                         onClick={() => handleDeselectAll('details')}
                                                         className={hasSelectedItems('details')
                                                             ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
@@ -1634,76 +1650,76 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         const obs = !!property.details?.obs_dormitorios
 
                                         return (
-                                            <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
-                                                <div className="grid grid-cols-2 gap-3">
+                                            <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                                <div className="grid grid-cols-2 gap-3 pl-4">
                                                     {dorms > 0 && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Dormitórios" 
-                                                            checked={config.showBedrooms} 
-                                                            onChange={(e) => setConfig({...config, showBedrooms: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Dormitórios"
+                                                            checked={config.showBedrooms}
+                                                            onChange={(e) => setConfig({ ...config, showBedrooms: e.target.checked })}
                                                         />
                                                     )}
                                                     {suites > 0 && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Suítes" 
-                                                            checked={config.showSuites} 
-                                                            onChange={(e) => setConfig({...config, showSuites: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Suítes"
+                                                            checked={config.showSuites}
+                                                            onChange={(e) => setConfig({ ...config, showSuites: e.target.checked })}
                                                         />
                                                     )}
                                                     {sacada && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Sacada" 
-                                                            checked={config.showSacada} 
-                                                            onChange={(e) => setConfig({...config, showSacada: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Sacada"
+                                                            checked={config.showSacada}
+                                                            onChange={(e) => setConfig({ ...config, showSacada: e.target.checked })}
                                                         />
                                                     )}
                                                     {escritorio && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Escritório" 
-                                                            checked={config.showEscritorio} 
-                                                            onChange={(e) => setConfig({...config, showEscritorio: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Escritório"
+                                                            checked={config.showEscritorio}
+                                                            onChange={(e) => setConfig({ ...config, showEscritorio: e.target.checked })}
                                                         />
                                                     )}
                                                     {dependencia && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Dependência" 
-                                                            checked={config.showDependencia} 
-                                                            onChange={(e) => setConfig({...config, showDependencia: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Dependência"
+                                                            checked={config.showDependencia}
+                                                            onChange={(e) => setConfig({ ...config, showDependencia: e.target.checked })}
                                                         />
                                                     )}
                                                     {vagas && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Vagas" 
-                                                            checked={config.showVagas} 
-                                                            onChange={(e) => setConfig({...config, showVagas: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Vagas"
+                                                            checked={config.showVagas}
+                                                            onChange={(e) => setConfig({ ...config, showVagas: e.target.checked })}
                                                         />
                                                     )}
                                                     {hobby && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Hobby Box" 
-                                                            checked={config.showHobbyBox} 
-                                                            onChange={(e) => setConfig({...config, showHobbyBox: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Hobby Box"
+                                                            checked={config.showHobbyBox}
+                                                            onChange={(e) => setConfig({ ...config, showHobbyBox: e.target.checked })}
                                                         />
                                                     )}
                                                     {areaPrivativa && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Área Privativa" 
-                                                            checked={config.showAreaPrivativa} 
-                                                            onChange={(e) => setConfig({...config, showAreaPrivativa: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Área Privativa"
+                                                            checked={config.showAreaPrivativa}
+                                                            onChange={(e) => setConfig({ ...config, showAreaPrivativa: e.target.checked })}
                                                         />
                                                     )}
                                                     {areaTotal && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Área Total" 
-                                                            checked={config.showAreaTotal} 
-                                                            onChange={(e) => setConfig({...config, showAreaTotal: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Área Total"
+                                                            checked={config.showAreaTotal}
+                                                            onChange={(e) => setConfig({ ...config, showAreaTotal: e.target.checked })}
                                                         />
                                                     )}
                                                     {obs && (
-                                                        <FormCheckbox labelClassName="text-base" 
-                                                            label="Observações" 
-                                                            checked={config.showObservations} 
-                                                            onChange={(e) => setConfig({...config, showObservations: e.target.checked})} 
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Observações"
+                                                            checked={config.showObservations}
+                                                            onChange={(e) => setConfig({ ...config, showObservations: e.target.checked })}
                                                         />
                                                     )}
                                                 </div>
@@ -1713,10 +1729,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 </div>
 
                                 {/* 8. Área comum | Lazer */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('amenities')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.amenities ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.amenities ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <Waves size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1725,21 +1741,23 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         {expandedSections.amenities ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.amenities && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
-                                            <FormCheckbox labelClassName="text-base" 
-                                                label="Incluir área de lazer" 
-                                                checked={config.showAmenities} 
-                                                onChange={(e) => setConfig({...config, showAmenities: e.target.checked})} 
-                                            />
+                                        <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <div className="pl-4">
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Incluir área de lazer"
+                                                    checked={config.showAmenities}
+                                                    onChange={(e) => setConfig({ ...config, showAmenities: e.target.checked })}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* 9. Descrição */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('descricao')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.descricao ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.descricao ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <FileText size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1748,21 +1766,23 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         {expandedSections.descricao ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.descricao && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
-                                            <FormCheckbox labelClassName="text-base" 
-                                                label="Incluir descrição" 
-                                                checked={config.description === 'full'} 
-                                                onChange={(e) => setConfig({...config, description: e.target.checked ? 'full' : 'none'})} 
-                                            />
+                                        <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <div className="pl-4">
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Incluir descrição"
+                                                    checked={config.description === 'full'}
+                                                    onChange={(e) => setConfig({ ...config, description: e.target.checked ? 'full' : 'none' })}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* 10. Responsável */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('responsavel')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.responsavel ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.responsavel ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <UserCheck size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1771,21 +1791,23 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         {expandedSections.responsavel ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.responsavel && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
-                                            <FormCheckbox labelClassName="text-base" 
-                                                label="Incluir dados do responsável" 
-                                                checked={config.showResponsavel} 
-                                                onChange={(e) => setConfig({...config, showResponsavel: e.target.checked})} 
-                                            />
+                                        <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <div className="pl-4">
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Incluir dados do responsável"
+                                                    checked={config.showResponsavel}
+                                                    onChange={(e) => setConfig({ ...config, showResponsavel: e.target.checked })}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>
 
                                 {/* 11. Proprietário | Construtora */}
-                                <div className="">
-                                    <button 
+                                <div className="bg-card border border-border rounded-lg overflow-hidden">
+                                    <button
                                         onClick={() => toggleSection('construtora')}
-                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.construtora ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.construtora ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
                                             <Building2 size={16} strokeWidth={1.2} className="text-foreground" />
@@ -1794,12 +1816,14 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         {expandedSections.construtora ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.construtora && (
-                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
-                                            <FormCheckbox labelClassName="text-base" 
-                                                label="Incluir dados do proprietário/construtora" 
-                                                checked={config.showConstrutora} 
-                                                onChange={(e) => setConfig({...config, showConstrutora: e.target.checked})} 
-                                            />
+                                        <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <div className="pl-4">
+                                                <FormCheckbox labelClassName="text-base"
+                                                    label="Incluir dados do proprietário/construtora"
+                                                    checked={config.showConstrutora}
+                                                    onChange={(e) => setConfig({ ...config, showConstrutora: e.target.checked })}
+                                                />
+                                            </div>
                                         </div>
                                     )}
                                 </div>

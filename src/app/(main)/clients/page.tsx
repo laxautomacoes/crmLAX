@@ -23,10 +23,25 @@ export default async function ClientsPage({
     const tenantId = profile.tenant_id
     const profileId = profile.id
 
-    const { data: clients, success } = await getClients(tenantId, true)
+    const res = await getClients(tenantId, true)
+    if (!res.success) {
+        console.error("GET CLIENTS ACTION FAILED:", res.error)
+    }
+    const initialClients = res.success && res.data ? res.data : []
 
-    // Se falhar ou estiver vazio, passa array vazio para não quebrar a UI
-    const initialClients = success && clients ? clients : []
+    try {
+        const fs = require('fs');
+        const path = require('path');
+        fs.writeFileSync(path.join(process.cwd(), 'debug_page_clients.txt'), JSON.stringify({
+            timestamp: new Date().toISOString(),
+            tenantId,
+            profileId,
+            initialClientsCount: initialClients.length,
+            firstClientName: initialClients[0]?.name || null
+        }, null, 2));
+    } catch (e) {
+        console.error(e);
+    }
 
     const resolvedParams = await searchParams
     const openId = resolvedParams?.openId || ''

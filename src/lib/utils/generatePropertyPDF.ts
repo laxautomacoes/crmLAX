@@ -120,8 +120,9 @@ export async function generatePropertyPDF(params: {
     property: PropertyData;
     config: SendConfig;
     tenantName: string;
+    tenantLogoUrl?: string;
 }) {
-    const { property, config, tenantName } = params;
+    const { property, config, tenantName, tenantLogoUrl } = params;
     
     // Create new PDF (A4 size, vertical)
     const doc = new jsPDF({
@@ -136,11 +137,37 @@ export async function generatePropertyPDF(params: {
     let isFirstSection = true;
 
     // Helper: Header for the first page
-    function drawFirstPageHeader() {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(14);
-        doc.setTextColor('#404F4F');
-        doc.text(tenantName.toUpperCase(), 595 - margin, currentY, { align: 'right' });
+    async function drawFirstPageHeader(logoBase64?: string) {
+        if (logoBase64 && tenantLogoUrl) {
+            try {
+                let format = 'JPEG';
+                if (tenantLogoUrl.toLowerCase().endsWith('.png')) {
+                    format = 'PNG';
+                } else if (tenantLogoUrl.toLowerCase().endsWith('.webp')) {
+                    format = 'WEBP';
+                }
+                const { width: logoW, height: logoH } = await getImageDimensions(logoBase64);
+                const fit = calculateAspectRatioFit(logoW, logoH, 150, 32);
+                
+                // Mover a logo para a DIREITA
+                // Alinha o canto direito da imagem na margem direita (595 - margin)
+                const logoX = 595 - margin - fit.width;
+                doc.addImage(logoBase64, format, logoX, currentY - fit.height + 4, fit.width, fit.height, undefined, 'FAST');
+            } catch (e) {
+                console.error('Error drawing logo in header:', e);
+                // Fallback para o nome escrito caso ocorra erro ao carregar a imagem
+                doc.setFont('helvetica', 'bold');
+                doc.setFontSize(14);
+                doc.setTextColor('#404F4F');
+                doc.text(tenantName.toUpperCase(), 595 - margin, currentY, { align: 'right' });
+            }
+        } else {
+            // Se não houver logo no sistema, exibe o nome do admin/inquilino no lado direito
+            doc.setFont('helvetica', 'bold');
+            doc.setFontSize(14);
+            doc.setTextColor('#404F4F');
+            doc.text(tenantName.toUpperCase(), 595 - margin, currentY, { align: 'right' });
+        }
         
         currentY += 24;
         doc.setDrawColor('#404F4F');
@@ -229,8 +256,18 @@ export async function generatePropertyPDF(params: {
         });
     }
 
+    // Fetch tenant logo base64 if available
+    let logoBase64 = '';
+    if (tenantLogoUrl) {
+        try {
+            logoBase64 = await getBase64ImageFromUrl(tenantLogoUrl);
+        } catch (e) {
+            console.error('Error fetching tenant logo:', e);
+        }
+    }
+
     // Render Page 1 Header
-    drawFirstPageHeader();
+    await drawFirstPageHeader(logoBase64);
 
     // 1. Title of the Property
     if (config.title) {
@@ -247,23 +284,7 @@ export async function generatePropertyPDF(params: {
             currentY += 40;
         });
         currentY += 5;
-    }
-
-    if (config.selectedUnit) {
-        doc.setFont('helvetica', 'bold');
-        doc.setFontSize(18);
-        doc.setTextColor('#404F4F');
-        
-        const typeLabel = getPropertyTypeName(property.type);
-        let unitText = `${typeLabel}: ${config.selectedUnit.unit_number}`;
-        if (config.selectedUnit.block_tower) unitText += ` - Bloco/Torre: ${config.selectedUnit.block_tower}`;
-        if (config.selectedUnit.floor) unitText += ` - ${config.selectedUnit.floor}º Andar`;
-        
-        if (currentY + 24 > 790) {
-            addNewPage();
-        }
-        doc.text(unitText, margin, currentY);
-        currentY += 24;
+        isFirstSection = false;
     }
 
     // 2. Address/Location
@@ -321,7 +342,7 @@ export async function generatePropertyPDF(params: {
         currentY += 10;
     }
 
-    // 4. Informações
+    // Cálculos lógicos das informações do imóvel e unidade
     let dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'));
     let suites = parseInt(String(property.details?.suites || '0'));
     let banheiros = parseInt(String(property.details?.banheiros || '0'));
@@ -380,6 +401,21 @@ export async function generatePropertyPDF(params: {
         }
     }
 
+    // ── Seção Imóvel ──
+    if (config.selectedUnit) {
+        printSectionHeader('Imóvel');
+        
+        const typeLabel = getPropertyTypeName(property.type);
+        let unitText = `${typeLabel}: ${config.selectedUnit.unit_number}`;
+        if (config.selectedUnit.block_tower) unitText += ` - Bloco/Torre: ${config.selectedUnit.block_tower}`;
+        
+        printBullet(unitText);
+        
+        if (tipologiaUnidade) {
+            printBullet(`Tipologia: ${tipologiaUnidade}`);
+        }
+    }
+
     const showBedrooms = config.showBedrooms && dorms > 0;
     const showSuites = config.showSuites && suites > 0;
     const showAreaPrivativa = config.showAreaPrivativa;
@@ -391,20 +427,22 @@ export async function generatePropertyPDF(params: {
     const showDependencia = config.showDependencia;
     const showObservations = config.showObservations && property.details?.obs_dormitorios;
 
-    // Condição para exibir a seção
-    const hasAnyInfo = showBedrooms || showSuites || banheiros > 0 || posicaoSolar ||
-        (showSacada && (hasSacadaChurras || hasSacadaSem)) ||
-        hasLavabo || (showEscritorio && hasEscritorio) || (showDependencia && hasDependencia) ||
-        showObservations || (showVagas && vegasVal > 0) || (showHobbyBox && (hobbyBox || hobbyBoxNum)) ||
-        (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal) || !!tipologiaUnidade;
+    // Banheiros, lavabo e posição solar dependem de flags gerais para evitar exibição quando o usuário desmarca tudo
+    const showBanheiros = banheiros > 0 && (showBedrooms || showSuites);
+    const showLavabo = hasLavabo && (showBedrooms || showSuites);
+    const showPosicaoSolar = !!posicaoSolar && (showBedrooms || showSuites || showAreaPrivativa || showAreaTotal);
 
+    // Condição para exibir a seção Informações
+    const hasAnyInfo = showBedrooms || showSuites || showBanheiros || showPosicaoSolar ||
+        (showSacada && (hasSacadaChurras || hasSacadaSem)) ||
+        showLavabo || (showEscritorio && hasEscritorio) || (showDependencia && hasDependencia) ||
+        showObservations || (showVagas && vegasVal > 0) || (showHobbyBox && (hobbyBox || hobbyBoxNum)) ||
+        (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal);
+
+    // 4. Informações
     if (hasAnyInfo) {
         printSectionHeader('Informações');
         
-        if (tipologiaUnidade) {
-            printBullet(`Tipologia: ${tipologiaUnidade}`);
-        }
-
         // Dormitórios
         if (showBedrooms) {
             printBullet(`Dormitórios: ${dorms}`);
@@ -416,23 +454,13 @@ export async function generatePropertyPDF(params: {
         }
 
         // Banheiros
-        if (banheiros > 0) {
+        if (showBanheiros) {
             printBullet(`Banheiros: ${banheiros}`);
         }
 
-        // Vagas (logo abaixo de Banheiros!)
-        if (showVagas) {
-            const vagaIdentificacao = (config.selectedUnit && config.selectedUnit.garage_number) 
-                ? config.selectedUnit.garage_number 
-                : (property.details?.vagas_numeracao || (vegasVal > 0 ? String(vegasVal) : ''));
-            if (vagaIdentificacao) {
-                printBullet(`Vaga: ${vagaIdentificacao}`);
-            }
-        }
-
-        // Posição solar
-        if (posicaoSolar) {
-            printBullet(`Posição solar: ${posicaoSolar}`);
+        // Lavabo (Somente se tiver o check)
+        if (showLavabo) {
+            printBullet('Lavabo: Sim');
         }
 
         // Sacada (Somente se tiver o check)
@@ -442,11 +470,6 @@ export async function generatePropertyPDF(params: {
             } else if (hasSacadaSem) {
                 printBullet('Sacada: Sim');
             }
-        }
-
-        // Lavabo (Somente se tiver o check)
-        if (hasLavabo) {
-            printBullet('Lavabo: Sim');
         }
 
         // Escritório (Somente se tiver o check)
@@ -459,9 +482,24 @@ export async function generatePropertyPDF(params: {
             printBullet('Dependência de empregada: Sim');
         }
 
+        // Posição solar
+        if (showPosicaoSolar) {
+            printBullet(`Posição solar: ${posicaoSolar}`);
+        }
+
         // Observações
         if (showObservations) {
             printBullet(`Observações: ${property.details?.obs_dormitorios}`);
+        }
+
+        // Vagas (depois de lavabo, escritório, etc)
+        if (showVagas) {
+            const vagaIdentificacao = (config.selectedUnit && config.selectedUnit.garage_number) 
+                ? config.selectedUnit.garage_number 
+                : (property.details?.vagas_numeracao || (vegasVal > 0 ? String(vegasVal) : ''));
+            if (vagaIdentificacao) {
+                printBullet(`Vaga: ${vagaIdentificacao}`);
+            }
         }
 
         // Hobby Box
@@ -476,12 +514,12 @@ export async function generatePropertyPDF(params: {
 
         // Área Privativa
         if (showAreaPrivativa && areaPrivativa) {
-            printBullet(`Área privativa: ${areaPrivativa} m²`);
+            printBullet(`Área privativa: ${String(areaPrivativa).replace('.', ',')} m²`);
         }
 
         // Área Total
         if (showAreaTotal && areaTotal && parseFloat(String(areaTotal)) > 0) {
-            printBullet(`Área total: ${areaTotal} m²`);
+            printBullet(`Área total: ${String(areaTotal).replace('.', ',')} m²`);
         }
     }
 
@@ -496,7 +534,7 @@ export async function generatePropertyPDF(params: {
         
         if (config.selectedUnit) {
             if (config.selectedUnit.valor_total) {
-                printBullet(`Valor da Unidade: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_total))}`);
+                printBullet(`Valor total: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_total))}`);
             }
             if (hasPaymentCond) {
                 printBullet('Condições de Pagamento:');
@@ -571,8 +609,11 @@ export async function generatePropertyPDF(params: {
     if (config.description === 'full' && property.description?.trim()) {
         printSectionHeader('Descrição');
         
-        // Strip markdown if any, keeping it clean for the PDF
+        // Strip markdown, HTML tags, and inline formatting like <color:rgb(...)>
         const cleanDesc = property.description
+            .replace(/<br\s*\/?>/gi, '\n')
+            .replace(/<\/p>/gi, '\n')
+            .replace(/<[^>]*>/g, '')
             .replace(/\*\*/g, '')
             .replace(/\*/g, '')
             .replace(/#/g, '')
@@ -726,8 +767,7 @@ export async function generatePropertyPDF(params: {
         doc.setFontSize(12);
         doc.setTextColor('#8E9A9A');
         
-        // Left footer
-        doc.text('CRM LAX', margin, 822);
+        // Left footer (removed CRM LAX text to reduce clutter)
         
         // Right footer
         const pageText = `Página ${pageNum} de ${totalPages}`;

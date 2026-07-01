@@ -21,6 +21,11 @@ interface ClientListProps {
 
 export default function ClientList({ initialClients, tenantId, profileId, openId }: ClientListProps) {
     const [clients, setClients] = useState(initialClients)
+
+    useEffect(() => {
+        setClients(initialClients)
+    }, [initialClients])
+
     const [searchTerm, setSearchTerm] = useState('')
     const [selectedBroker, setSelectedBroker] = useState('all')
     const [brokers, setBrokers] = useState<any[]>([])
@@ -115,6 +120,30 @@ export default function ClientList({ initialClients, tenantId, profileId, openId
 
         return matchesSearch && matchesBroker && matchesInterest && matchesContactType && matchesMaritalStatus && matchesDate
     })
+
+    useEffect(() => {
+        if (clients.length > 0) {
+            fetch('/api/debug-front', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clientsLength: clients.length,
+                    filteredClientsLength: filteredClients.length,
+                    searchTerm,
+                    filters,
+                    firstClient: clients[0] ? {
+                        id: clients[0].id,
+                        name: clients[0].name,
+                        is_archived: clients[0].is_archived,
+                        assigned_to: clients[0].assigned_to,
+                        contact_type: clients[0].contact_type,
+                        marital_status: clients[0].marital_status,
+                        created_at: clients[0].created_at
+                    } : null
+                })
+            }).catch(console.error);
+        }
+    }, [clients, filteredClients, searchTerm, filters]);
 
     const toggleSort = (field: 'name' | 'created_at') => {
         if (sortField === field) {
