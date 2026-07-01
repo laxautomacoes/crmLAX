@@ -7,10 +7,10 @@ export async function POST(request: Request) {
         const body = await request.json();
         const logPath = path.join(process.cwd(), 'debug_front.txt');
         
-        fs.writeFileSync(logPath, JSON.stringify({
-            timestamp: new Date().toISOString(),
-            ...body
-        }, null, 2));
+        // fs.writeFileSync(logPath, JSON.stringify({
+        //     timestamp: new Date().toISOString(),
+        //     ...body
+        // }, null, 2));
         
         return NextResponse.json({ success: true });
     } catch (error: any) {

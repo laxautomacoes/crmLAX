@@ -1,7 +1,7 @@
 {
-  "timestamp": "2026-07-01T02:50:50.622Z",
+  "timestamp": "2026-07-01T04:41:26.502Z",
   "tenantId": "fab0d1cb-a25f-46b6-a8a1-3b153cd8f743",
   "profileId": "fd5bf0ca-be6f-4c3c-84b3-a056442afdf8",
-  "initialClientsCount": 142,
-  "firstClientName": "Marcelo"
+  "initialClientsCount": 143,
+  "firstClientName": "Zenir Zulma Elias"
 }

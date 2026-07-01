@@ -2,22 +2,25 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 import { Modal } from '@/components/shared/Modal'
 import { ConfirmModal } from '@/components/shared/ConfirmModal'
 import { formatPhone } from '@/lib/utils/phone'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
+import { FormActionSelect } from '@/components/shared/forms/FormActionSelect'
+import type { FormActionSelectOption } from '@/components/shared/forms/FormActionSelect'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { MediaUpload } from '@/components/shared/MediaUpload'
 import { toast } from 'sonner'
-import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign } from '@/app/_actions/leads'
+import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign, updateLeadSource, deleteLeadSource, updateLeadCampaign, deleteLeadCampaign } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { getNotesByLeadId, createNote, deleteNote, updateNote } from '@/app/_actions/notes'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
-import { getPartners } from '@/app/_actions/partners'
+import { getPartners, createPartner } from '@/app/_actions/partners'
 import { PartnerQuickModal } from '@/components/dashboard/shared/PartnerQuickModal'
-import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle, Trash2, MoreVertical, Loader2 } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle, Trash2, MoreVertical, Loader2, AlertTriangle } from 'lucide-react'
 import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
 import { sendWhatsAppMessage, getWhatsAppChat, sendWhatsAppMedia, refreshInstanceStatus } from '@/app/_actions/whatsapp'
 import { createClient } from '@/lib/supabase/client'
@@ -36,6 +39,7 @@ interface Broker {
 }
 
 interface NamedOption {
+    id: string
     name: string
 }
 
@@ -62,7 +66,7 @@ type EditableLead = Partial<Lead> & {
     date?: string | null
 }
 
-const LEAD_MODAL_INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira'] as const
+const LEAD_MODAL_INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira', 'Parceria'] as const
 
 export type LeadCreationMethod = 'manual' | 'import_bulk' | null
 
@@ -164,6 +168,7 @@ export function LeadModal({
     onSelectImportBulk,
     onMakeProposal
 }: LeadModalProps) {
+    const router = useRouter()
     const [creationMethod, setCreationMethod] = useState<LeadCreationMethod>(null)
     const [isLoading, setIsLoading] = useState(false)
     const [isAvatarZoomed, setIsAvatarZoomed] = useState(false)
@@ -421,11 +426,18 @@ export function LeadModal({
     }, [isAvatarZoomed])
     const [userRole, setUserRole] = useState<string>('user')
     const [sources, setSources] = useState<string[]>([])
+    const [sourcesRaw, setSourcesRaw] = useState<NamedOption[]>([])
     const [campaigns, setCampaigns] = useState<string[]>([])
+    const [campaignsRaw, setCampaignsRaw] = useState<NamedOption[]>([])
     const [isAddingSource, setIsAddingSource] = useState(false)
     const [isAddingCampaign, setIsAddingCampaign] = useState(false)
     const [newSource, setNewSource] = useState('')
     const [newCampaign, setNewCampaign] = useState('')
+    const [editingSourceOption, setEditingSourceOption] = useState<FormActionSelectOption | null>(null)
+    const [editingCampaignOption, setEditingCampaignOption] = useState<FormActionSelectOption | null>(null)
+    const [deletingSourceOption, setDeletingSourceOption] = useState<FormActionSelectOption | null>(null)
+    const [deletingCampaignOption, setDeletingCampaignOption] = useState<FormActionSelectOption | null>(null)
+    const [editName, setEditName] = useState('')
     const [partners, setPartners] = useState<any[]>([])
     const [isPartnerModalOpen, setIsPartnerModalOpen] = useState(false)
 
@@ -471,11 +483,26 @@ export function LeadModal({
         fetchPartners()
     }, [isOpen, tenantId])
 
-    const handlePartnerCreated = (newPartner: any) => {
+    const handlePartnerCreated = async (newPartner: any) => {
         setPartners(prev => [...prev, newPartner].sort((a, b) => a.name.localeCompare(b.name)))
+        
+        let updatedCampaign = leadData.campaign
+        if (leadData.lead_source.toLowerCase().includes('parceria')) {
+            updatedCampaign = newPartner.name
+            if (!campaigns.includes(newPartner.name)) {
+                setCampaigns(prev => [...prev, newPartner.name])
+                await createLeadCampaign(tenantId, leadData.lead_source, newPartner.name)
+                const campRes = await getLeadCampaigns(tenantId, leadData.lead_source)
+                if (campRes.success) {
+                    setCampaignsRaw((campRes.data || []) as NamedOption[])
+                }
+            }
+        }
+
         setLeadData(prev => ({
             ...prev,
-            partner_id: newPartner.id
+            partner_id: newPartner.id,
+            campaign: updatedCampaign
         }))
     }
 
@@ -582,10 +609,13 @@ export function LeadModal({
             const sourcesRes = await getLeadSources(tenantId)
             if (sourcesRes.success) {
                 // Mesclar iniciais com as do banco
-                const dbSources = ((sourcesRes.data || []) as NamedOption[]).map((s) => s.name)
+                const dbSourcesData = (sourcesRes.data || []) as NamedOption[]
+                setSourcesRaw(dbSourcesData)
+                const dbSources = dbSourcesData.map((s) => s.name)
                 const merged = Array.from(new Set([...LEAD_MODAL_INITIAL_SOURCES, ...dbSources]))
                 setSources(merged)
             } else {
+                setSourcesRaw([])
                 setSources([...LEAD_MODAL_INITIAL_SOURCES])
             }
         }
@@ -597,11 +627,15 @@ export function LeadModal({
             if (leadData.lead_source) {
                 const res = await getLeadCampaigns(tenantId, leadData.lead_source)
                 if (res.success) {
-                    setCampaigns(((res.data || []) as NamedOption[]).map((c) => c.name))
+                    const dbCampaignsData = (res.data || []) as NamedOption[]
+                    setCampaignsRaw(dbCampaignsData)
+                    setCampaigns(dbCampaignsData.map((c) => c.name))
                 } else {
+                    setCampaignsRaw([])
                     setCampaigns([])
                 }
             } else {
+                setCampaignsRaw([])
                 setCampaigns([])
             }
         }
@@ -752,14 +786,37 @@ export function LeadModal({
                 }
             }
 
+            let finalPartnerId = leadData.partner_id || null
+            let finalPartnerRole = leadData.partner_role || null
+            
+            if (finalSource.toLowerCase().includes('parceria') && finalCampaign) {
+                const matchedPartner = partners.find(p => p.name.toLowerCase().trim() === finalCampaign.toLowerCase().trim())
+                if (matchedPartner) {
+                    finalPartnerId = matchedPartner.id
+                    if (!finalPartnerRole) {
+                        finalPartnerRole = 'buyer_agent'
+                    }
+                } else {
+                    const partnerRes = await createPartner(tenantId, {
+                        name: finalCampaign
+                    })
+                    if (partnerRes.success && partnerRes.data) {
+                        finalPartnerId = partnerRes.data.id
+                        if (!finalPartnerRole) {
+                            finalPartnerRole = 'buyer_agent'
+                        }
+                    }
+                }
+            }
+
             const dataToSubmit = {
                 ...leadData,
                 lead_source: finalSource,
                 campaign: finalCampaign,
                 value: leadData.value ? parseCurrencyBRL(leadData.value) : 0,
                 partner_split: leadData.partner_split ? Number(leadData.partner_split) : null,
-                partner_id: leadData.partner_id || null,
-                partner_role: leadData.partner_role || null
+                partner_id: finalPartnerId,
+                partner_role: finalPartnerRole
             }
 
             let result;
@@ -789,7 +846,9 @@ export function LeadModal({
             if (result.success) {
                 toast.success(editingLead ? 'Lead atualizado com sucesso!' : 'Lead criado com sucesso!')
                 onSuccess()
-                onClose()
+                if (!editingLead) {
+                    onClose()
+                }
             } else {
                 toast.error('Erro ao processar lead: ' + result.error)
             }
@@ -828,14 +887,19 @@ export function LeadModal({
                 showMethodSelection ? undefined : (
                     <div className="flex items-center gap-3">
                         {editingLead?.id && editingLead?.contact_id && (
-                            <Link
-                                href={`/clients?openId=${editingLead.contact_id}`}
-                                className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setCreationMethod(null)
+                                    onClose()
+                                    router.push(`/clients?openId=${editingLead.contact_id}`)
+                                }}
+                                className="px-4 py-1.5 border border-border bg-card text-foreground rounded font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
                                 title="Ver ficha completa do cliente"
                             >
                                 <span className="hidden sm:inline">Ver Cliente</span>
                                 <span className="sm:hidden">Cliente</span>
-                            </Link>
+                            </button>
                         )}
                         {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
                             editingLead.has_proposal ? (
@@ -895,26 +959,32 @@ export function LeadModal({
                     </p>
                     <div className="flex flex-col gap-2">
                         {/* Preenchimento Manual */}
-                        <button
+                        <div
+                            role="button"
+                            tabIndex={0}
                             onClick={() => handleSelectMethod('manual')}
-                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-emerald-500/30 rounded-lg px-4 py-4 transition-all text-left"
+                            onKeyDown={(e) => e.key === 'Enter' && handleSelectMethod('manual')}
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-emerald-500/30 rounded-lg px-4 py-4 transition-all text-left cursor-pointer"
                         >
                             <div className="p-2.5 bg-emerald-500/10 rounded-lg group-hover:bg-emerald-500/20 transition-colors shrink-0">
                                 <PenLine size={20} className="text-emerald-500" />
                             </div>
                             <div className="flex-1 min-w-0">
                                 <p className="text-sm font-bold text-foreground">Preenchimento Manual</p>
-                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed font-normal normal-case tracking-normal">
                                     Preencha todos os campos do lead manualmente
                                 </p>
                             </div>
                             <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
-                        </button>
+                        </div>
 
                         {/* Importação com IA ou Planilha */}
-                        <button
+                        <div
+                            role="button"
+                            tabIndex={0}
                             onClick={() => handleSelectMethod('import_bulk')}
-                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-purple-500/30 rounded-lg px-4 py-4 transition-all text-left"
+                            onKeyDown={(e) => e.key === 'Enter' && handleSelectMethod('import_bulk')}
+                            className="group flex items-center gap-4 bg-foreground/5 hover:bg-foreground/10 border border-border/40 hover:border-purple-500/30 rounded-lg px-4 py-4 transition-all text-left cursor-pointer"
                         >
                             <div className="p-2.5 bg-purple-500/10 rounded-lg group-hover:bg-purple-500/20 transition-colors shrink-0">
                                 <Sparkles size={20} className="text-purple-500" />
@@ -924,12 +994,12 @@ export function LeadModal({
                                     <p className="text-sm font-bold text-foreground">Importar com IA ou Planilha</p>
                                     <span className="px-1.5 py-0.5 bg-purple-500/10 text-purple-400 text-[9px] font-black uppercase tracking-wider rounded-md">IA</span>
                                 </div>
-                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed">
+                                <p className="text-[11px] text-muted-foreground mt-0.5 leading-relaxed font-normal normal-case tracking-normal">
                                     Importe um ou múltiplos leads a partir de prints (fotos), PDFs ou planilhas
                                 </p>
                             </div>
                             <ChevronRight size={16} className="text-muted-foreground/50 group-hover:text-foreground/70 transition-colors shrink-0" />
-                        </button>
+                        </div>
                     </div>
                 </div>
             ) : (
@@ -1052,21 +1122,37 @@ export function LeadModal({
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         <div>
                                             {!isAddingSource ? (
-                                                <FormSelect
+                                                <FormActionSelect
                                                     label="Origem"
                                                     value={leadData.lead_source}
-                                                    onChange={(e) => {
-                                                        if (e.target.value === 'ADD_NEW') {
+                                                    placeholder="Selecionar origem"
+                                                    onChange={(val) => {
+                                                        if (val === 'ADD_NEW') {
                                                             setIsAddingSource(true)
                                                         } else {
-                                                            setLeadData({ ...leadData, lead_source: e.target.value })
+                                                            setLeadData({ ...leadData, lead_source: val })
                                                         }
                                                     }}
                                                     options={[
-                                                        { value: '', label: 'Selecione a origem' },
-                                                        ...sources.map(s => ({ value: s, label: s })),
-                                                        { value: 'ADD_NEW', label: 'Outra' }
+                                                        ...sources.map(s => {
+                                                            const rawMatch = sourcesRaw.find(r => r.name === s)
+                                                            const isInitial = (LEAD_MODAL_INITIAL_SOURCES as readonly string[]).includes(s)
+                                                            return {
+                                                                value: s,
+                                                                label: s,
+                                                                id: rawMatch?.id,
+                                                                isCustom: !isInitial && !!rawMatch
+                                                            }
+                                                        }),
+                                                        { value: 'ADD_NEW', label: '+ Outra' }
                                                     ]}
+                                                    onEdit={(option) => {
+                                                        setEditingSourceOption(option)
+                                                        setEditName(option.label)
+                                                    }}
+                                                    onDelete={(option) => {
+                                                        setDeletingSourceOption(option)
+                                                    }}
                                                 />
                                             ) : (
                                                 <FormInput
@@ -1092,29 +1178,62 @@ export function LeadModal({
                                         </div>
                                         <div>
                                             {!isAddingCampaign ? (
-                                                <FormSelect
-                                                    label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou?' : 'Campanha'}
+                                                <FormActionSelect
+                                                    label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou?' : leadData.lead_source.toLowerCase().includes('parceria') ? 'Qual parceiro?' : 'Campanha'}
                                                     value={leadData.campaign}
                                                     disabled={!leadData.lead_source}
-                                                    onChange={(e) => {
-                                                        if (e.target.value === 'ADD_NEW') {
+                                                    placeholder={leadData.lead_source ? (leadData.lead_source.toLowerCase().includes('indica') ? 'Selecionar quem indicou' : leadData.lead_source.toLowerCase().includes('parceria') ? 'Selecionar parceiro' : 'Selecionar Campanha') : 'Selecionar origem primeiro'}
+                                                    onChange={(val) => {
+                                                        if (val === 'ADD_NEW') {
                                                             setIsAddingCampaign(true)
                                                         } else {
-                                                            setLeadData({ ...leadData, campaign: e.target.value })
+                                                            let matchedPartnerId = leadData.partner_id
+                                                            let matchedPartnerRole = leadData.partner_role
+                                                            if (leadData.lead_source.toLowerCase().includes('parceria')) {
+                                                                const matchedPartner = partners.find(p => p.name.toLowerCase().trim() === val.toLowerCase().trim())
+                                                                if (matchedPartner) {
+                                                                    matchedPartnerId = matchedPartner.id
+                                                                    if (!matchedPartnerRole) {
+                                                                        matchedPartnerRole = 'buyer_agent'
+                                                                    }
+                                                                } else {
+                                                                    matchedPartnerId = ''
+                                                                }
+                                                            }
+                                                            setLeadData({ 
+                                                                ...leadData, 
+                                                                campaign: val,
+                                                                partner_id: matchedPartnerId,
+                                                                partner_role: matchedPartnerRole
+                                                            })
                                                         }
                                                     }}
                                                     options={[
-                                                        { value: '', label: leadData.lead_source ? (leadData.lead_source.toLowerCase().includes('indica') ? 'Selecione quem indicou' : 'Selecione a campanha') : 'Selecione uma origem primeiro' },
-                                                        ...campaigns.map(c => ({ value: c, label: c })),
-                                                        { value: 'ADD_NEW', label: 'Outra' }
+                                                        ...campaigns.map(c => {
+                                                            const rawMatch = campaignsRaw.find(r => r.name === c)
+                                                            return {
+                                                                value: c,
+                                                                label: c,
+                                                                id: rawMatch?.id,
+                                                                isCustom: !!rawMatch
+                                                            }
+                                                        }),
+                                                        { value: 'ADD_NEW', label: '+ Outra' }
                                                     ]}
+                                                    onEdit={(option) => {
+                                                        setEditingCampaignOption(option)
+                                                        setEditName(option.label)
+                                                    }}
+                                                    onDelete={(option) => {
+                                                        setDeletingCampaignOption(option)
+                                                    }}
                                                 />
                                             ) : (
                                                 <FormInput
-                                                    label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou? (Novo)' : 'Campanha (Nova)'}
+                                                    label={leadData.lead_source.toLowerCase().includes('indica') ? 'Quem indicou? (Novo)' : leadData.lead_source.toLowerCase().includes('parceria') ? 'Qual parceiro? (Novo)' : 'Campanha (Nova)'}
                                                     value={newCampaign}
                                                     onChange={(e) => setNewCampaign(e.target.value)}
-                                                    placeholder={leadData.lead_source.toLowerCase().includes('indica') ? 'Ex: João Silva' : 'Ex: Verão 2026'}
+                                                    placeholder={leadData.lead_source.toLowerCase().includes('indica') ? 'Ex: João Silva' : leadData.lead_source.toLowerCase().includes('parceria') ? 'Ex: CR Ronaldo' : 'Ex: Verão 2026'}
                                                     rightElement={
                                                         <button
                                                             type="button"
@@ -1175,9 +1294,37 @@ export function LeadModal({
                                     <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                                         <div>
                                             <FormSelect
-                                                label="Parceiro / Imobiliária"
+                                                label="Parceiro"
                                                 value={leadData.partner_id}
-                                                onChange={(e) => setLeadData({ ...leadData, partner_id: e.target.value })}
+                                                onChange={async (e) => {
+                                                    const partnerId = e.target.value
+                                                    let updatedCampaign = leadData.campaign
+                                                    
+                                                    if (leadData.lead_source.toLowerCase().includes('parceria')) {
+                                                        const p = partners.find(part => part.id === partnerId)
+                                                        if (p) {
+                                                            updatedCampaign = p.name
+                                                            // Se a campanha correspondente ainda não existir nas opções, criar no BD e na lista local
+                                                            if (!campaigns.includes(p.name)) {
+                                                                setCampaigns(prev => [...prev, p.name])
+                                                                await createLeadCampaign(tenantId, leadData.lead_source, p.name)
+                                                                // Atualiza também campaignsRaw para ter o id correto da campanha
+                                                                const campRes = await getLeadCampaigns(tenantId, leadData.lead_source)
+                                                                if (campRes.success) {
+                                                                    setCampaignsRaw((campRes.data || []) as NamedOption[])
+                                                                }
+                                                            }
+                                                        } else {
+                                                            updatedCampaign = ''
+                                                        }
+                                                    }
+                                                    
+                                                    setLeadData(prev => ({ 
+                                                        ...prev, 
+                                                        partner_id: partnerId,
+                                                        campaign: updatedCampaign
+                                                    }))
+                                                }}
                                                 options={[
                                                     { value: '', label: 'Nenhum (Sem Parceria)' },
                                                     ...partners.map(p => ({
@@ -1189,7 +1336,7 @@ export function LeadModal({
                                         </div>
                                         <div>
                                             <FormInput
-                                                label="Comissão do Parceiro (Split %)"
+                                                label="Comissão (%)"
                                                 type="number"
                                                 min="0"
                                                 max="100"
@@ -1201,14 +1348,14 @@ export function LeadModal({
                                         </div>
                                         <div>
                                             <FormSelect
-                                                label="Papel do Parceiro"
+                                                label="Ativo"
                                                 value={leadData.partner_role}
                                                 onChange={(e) => setLeadData({ ...leadData, partner_role: e.target.value })}
                                                 disabled={!leadData.partner_id}
                                                 options={[
                                                     { value: '', label: 'Selecione o papel' },
-                                                    { value: 'buyer_agent', label: 'Trouxe o Comprador (Lead)' },
-                                                    { value: 'seller_agent', label: 'Trouxe o Imóvel (Captação)' }
+                                                    { value: 'buyer_agent', label: 'Trouxe Lead' },
+                                                    { value: 'seller_agent', label: 'Trouxe Imóvel' }
                                                 ]}
                                             />
                                         </div>
@@ -1630,6 +1777,7 @@ export function LeadModal({
 
             <ConfirmModal
                 isOpen={!!enrollmentToCancel}
+                zIndex={110}
                 title="Cancelar Acompanhamento"
                 message="Deseja realmente cancelar esta inscrição de follow-up?"
                 confirmLabel="Confirmar"
@@ -1645,6 +1793,7 @@ export function LeadModal({
 
             <ConfirmModal
                 isOpen={!!noteToDelete}
+                zIndex={110}
                 title="Excluir Nota"
                 message={noteToDelete === 'legacy' ? "Deseja realmente excluir a observação de cadastro do lead?" : "Deseja realmente excluir esta nota?"}
                 confirmLabel="Excluir"
@@ -1655,6 +1804,188 @@ export function LeadModal({
                     }
                 }}
                 onCancel={() => setNoteToDelete(null)}
+            />
+
+            {/* Modal Editar Origem */}
+            <Modal
+                isOpen={!!editingSourceOption}
+                onClose={() => setEditingSourceOption(null)}
+                title="Editar Origem"
+                size="sm"
+                zIndex={110}
+                footer={
+                    <div className="flex w-full gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setEditingSourceOption(null)}
+                            className="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors font-medium border border-border"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                if (!editingSourceOption?.id || !editName.trim()) return
+                                const res = await updateLeadSource(editingSourceOption.id, editName.trim())
+                                if (res.success) {
+                                    toast.success('Origem atualizada com sucesso!')
+                                    // Se estava selecionada, atualiza o valor
+                                    if (leadData.lead_source === editingSourceOption.value) {
+                                        setLeadData({ ...leadData, lead_source: editName.trim() })
+                                    }
+                                    // Refresh sources
+                                    const sourcesRes = await getLeadSources(tenantId)
+                                    if (sourcesRes.success) {
+                                        const dbSourcesData = (sourcesRes.data || []) as NamedOption[]
+                                        setSourcesRaw(dbSourcesData)
+                                        const dbSources = dbSourcesData.map((s) => s.name)
+                                        const merged = Array.from(new Set([...LEAD_MODAL_INITIAL_SOURCES, ...dbSources]))
+                                        setSources(merged)
+                                    }
+                                } else {
+                                    toast.error('Erro ao atualizar origem')
+                                }
+                                setEditingSourceOption(null)
+                            }}
+                            className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors font-medium"
+                        >
+                            Salvar
+                        </button>
+                    </div>
+                }
+            >
+                <div className="py-2">
+                    <FormInput
+                        label="Nome da Origem"
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Ex: WhatsApp"
+                    />
+                </div>
+            </Modal>
+
+            {/* Modal Excluir Origem */}
+            <ConfirmModal
+                isOpen={!!deletingSourceOption}
+                zIndex={110}
+                title="Excluir Origem"
+                message={
+                    <span>
+                        <span className="block">Deseja realmente excluir a origem "{deletingSourceOption?.label}"?</span>
+                        <span className="block">Leads já cadastrados com essa origem não serão afetados.</span>
+                    </span>
+                }
+                confirmLabel="Excluir"
+                onConfirm={async () => {
+                    if (!deletingSourceOption?.id) return
+                    const res = await deleteLeadSource(deletingSourceOption.id)
+                    if (res.success) {
+                        toast.success('Origem excluída com sucesso!')
+                        if (leadData.lead_source === deletingSourceOption.value) {
+                            setLeadData({ ...leadData, lead_source: '' })
+                        }
+                        const sourcesRes = await getLeadSources(tenantId)
+                        if (sourcesRes.success) {
+                            const dbSourcesData = (sourcesRes.data || []) as NamedOption[]
+                            setSourcesRaw(dbSourcesData)
+                            const dbSources = dbSourcesData.map((s) => s.name)
+                            const merged = Array.from(new Set([...LEAD_MODAL_INITIAL_SOURCES, ...dbSources]))
+                            setSources(merged)
+                        }
+                    } else {
+                        toast.error('Erro ao excluir origem')
+                    }
+                    setDeletingSourceOption(null)
+                }}
+                onCancel={() => setDeletingSourceOption(null)}
+            />
+
+            {/* Modal Editar Campanha */}
+            <Modal
+                isOpen={!!editingCampaignOption}
+                onClose={() => setEditingCampaignOption(null)}
+                title={leadData.lead_source.toLowerCase().includes('indica') ? 'Editar Indicação' : leadData.lead_source.toLowerCase().includes('parceria') ? 'Editar Parceiro' : 'Editar Campanha'}
+                size="sm"
+                zIndex={110}
+                footer={
+                    <div className="flex w-full gap-3">
+                        <button
+                            type="button"
+                            onClick={() => setEditingCampaignOption(null)}
+                            className="flex-1 px-4 py-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors font-medium border border-border"
+                        >
+                            Cancelar
+                        </button>
+                        <button
+                            type="button"
+                            onClick={async () => {
+                                if (!editingCampaignOption?.id || !editName.trim()) return
+                                const res = await updateLeadCampaign(editingCampaignOption.id, editName.trim())
+                                if (res.success) {
+                                    toast.success('Atualizado com sucesso!')
+                                    if (leadData.campaign === editingCampaignOption.value) {
+                                        setLeadData({ ...leadData, campaign: editName.trim() })
+                                    }
+                                    const campRes = await getLeadCampaigns(tenantId, leadData.lead_source)
+                                    if (campRes.success) {
+                                        const dbCampaignsData = (campRes.data || []) as NamedOption[]
+                                        setCampaignsRaw(dbCampaignsData)
+                                        setCampaigns(dbCampaignsData.map((c) => c.name))
+                                    }
+                                } else {
+                                    toast.error('Erro ao atualizar')
+                                }
+                                setEditingCampaignOption(null)
+                            }}
+                            className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors font-medium"
+                        >
+                            Salvar
+                        </button>
+                    </div>
+                }
+            >
+                <div className="py-2">
+                    <FormInput
+                        label={leadData.lead_source.toLowerCase().includes('indica') ? 'Nome de quem indicou' : leadData.lead_source.toLowerCase().includes('parceria') ? 'Nome do parceiro' : 'Nome da campanha'}
+                        value={editName}
+                        onChange={(e) => setEditName(e.target.value)}
+                        placeholder="Novo nome"
+                    />
+                </div>
+            </Modal>
+
+            {/* Modal Excluir Campanha */}
+            <ConfirmModal
+                isOpen={!!deletingCampaignOption}
+                zIndex={110}
+                title={leadData.lead_source.toLowerCase().includes('indica') ? 'Excluir Indicação' : leadData.lead_source.toLowerCase().includes('parceria') ? 'Excluir Parceiro' : 'Excluir Campanha'}
+                message={
+                    <span>
+                        <span className="block">Deseja realmente excluir "{deletingCampaignOption?.label}"?</span>
+                        <span className="block">Leads já cadastrados não serão afetados.</span>
+                    </span>
+                }
+                confirmLabel="Excluir"
+                onConfirm={async () => {
+                    if (!deletingCampaignOption?.id) return
+                    const res = await deleteLeadCampaign(deletingCampaignOption.id)
+                    if (res.success) {
+                        toast.success('Excluído com sucesso!')
+                        if (leadData.campaign === deletingCampaignOption.value) {
+                            setLeadData({ ...leadData, campaign: '' })
+                        }
+                        const campRes = await getLeadCampaigns(tenantId, leadData.lead_source)
+                        if (campRes.success) {
+                            const dbCampaignsData = (campRes.data || []) as NamedOption[]
+                            setCampaignsRaw(dbCampaignsData)
+                            setCampaigns(dbCampaignsData.map((c) => c.name))
+                        }
+                    } else {
+                        toast.error('Erro ao excluir')
+                    }
+                    setDeletingCampaignOption(null)
+                }}
+                onCancel={() => setDeletingCampaignOption(null)}
             />
         </Modal>
     )

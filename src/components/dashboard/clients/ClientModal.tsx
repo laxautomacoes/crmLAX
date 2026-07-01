@@ -10,7 +10,7 @@ import { MediaPreviewModal } from '@/components/shared/MediaPreviewModal'
 import { LeadTemperatureBadge } from '@/components/dashboard/leads/LeadTemperatureBadge'
 import { formatPhone } from '@/lib/utils/phone'
 import { fetchAddressByCep, formatCEP, fetchCepByAddress, ViaCEPResponse } from '@/lib/utils/cep'
-import { createNewClient, updateClient } from '@/app/_actions/clients'
+import { createNewClient, updateClient, clearContactNotes } from '@/app/_actions/clients'
 import { analyzeLeadProbability } from '@/app/_actions/ai-analysis'
 import { toast } from 'sonner'
 import { motion, AnimatePresence } from 'framer-motion'
@@ -210,12 +210,18 @@ export function ClientModal({
         }
     }
 
-    const handleDeleteNote = (noteId: string) => setNoteToDelete(noteId)
+    const handleDeleteNote = async (noteId: string) => {
+        const msg = noteId === 'legacy'
+            ? 'Deseja realmente excluir a observação de cadastro do cliente?'
+            : 'Deseja realmente excluir esta nota?'
+        if (!window.confirm(msg)) return
+        await executeDeleteNote(noteId)
+    }
 
     const executeDeleteNote = async (noteId: string) => {
         if (noteId === 'legacy') {
             try {
-                const res = await updateClient(editingClient!.id!, { notes: '' })
+                const res = await clearContactNotes(editingClient!.id!)
                 if (res.success) {
                     toast.success('Observações do cliente excluídas!')
                     setFormData(prev => ({ ...prev, notes: '' }))
@@ -230,14 +236,18 @@ export function ClientModal({
             return
         }
         try {
+            console.log('[DEBUG] Tentando excluir nota com ID:', noteId)
             const res = await deleteNote(noteId)
+            console.log('[DEBUG] Resultado deleteNote:', res)
             if (res.success) {
                 toast.success('Nota excluída com sucesso!')
                 loadClientNotes()
             } else {
                 toast.error('Erro ao excluir nota: ' + res.error)
+                console.error('[DEBUG] Erro na exclusão:', res.error)
             }
         } catch (error) {
+            console.error('[DEBUG] Exceção ao excluir nota:', error)
             toast.error('Ocorreu um erro ao excluir a nota')
         }
     }
@@ -1736,20 +1746,6 @@ export function ClientModal({
                 )}
             </div>
 
-            <ConfirmModal
-                isOpen={!!noteToDelete}
-                title="Excluir Nota"
-                message={noteToDelete === 'legacy' ? "Deseja realmente excluir a observação de cadastro do cliente?" : "Deseja realmente excluir esta nota?"}
-                confirmLabel="Excluir"
-                cancelLabel="Cancelar"
-                onConfirm={async () => {
-                    if (noteToDelete) {
-                        await executeDeleteNote(noteToDelete)
-                        setNoteToDelete(null)
-                    }
-                }}
-                onCancel={() => setNoteToDelete(null)}
-            />
         </Modal>
     )
 }

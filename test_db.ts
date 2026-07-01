@@ -6,43 +6,15 @@ const supabase = createClient(process.env.NEXT_PUBLIC_SUPABASE_URL!, process.env
 
 async function run() {
   const { data, error } = await supabase
-    .from('contacts')
-    .select(`
-      *,
-      leads (
-        * ,
-        profiles:assigned_to (
-            full_name
-        ),
-        properties (
-            id,
-            title,
-            price,
-            type,
-            details
-        ),
-        lead_stages (
-            name,
-            color
-        ),
-        interactions (
-            content,
-            type,
-            created_at
-        ),
-        proposals ( id )
-      )
-    `)
-    .eq('tenant_id', 'fab0d1cb-a25f-46b6-a8a1-3b153cd8f743')
-    .eq('is_owner_only', false)
-    .eq('is_archived', false)
-    .limit(3);
+    .from('leads')
+    .update({ source: 'Parceria', lead_source: 'Parceria' })
+    .eq('campaign', 'CR Ronaldo')
+    .in('source', ['Indicação', 'Indicacao', 'indicação', 'indicacao']);
 
   if (error) {
-    console.error("ERROR FETCHING CLIENTS:", error);
+    console.error("ERROR UPDATING LEADS:", error);
   } else {
-    console.log("SUCCESS FETCHING CLIENTS:", data?.length);
-    console.dir(data, { depth: null });
+    console.log("SUCCESS UPDATING LEADS:", data);
   }
 }
 run();

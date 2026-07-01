@@ -10,6 +10,7 @@ interface ConfirmModalProps {
     onConfirm: () => void;
     onCancel: () => void;
     isLoading?: boolean;
+    zIndex?: number;
 }
 
 export function ConfirmModal({
@@ -20,10 +21,11 @@ export function ConfirmModal({
     cancelLabel = 'Cancelar',
     onConfirm,
     onCancel,
-    isLoading = false
+    isLoading = false,
+    zIndex
 }: ConfirmModalProps) {
     return (
-        <Modal isOpen={isOpen} onClose={onCancel} title={title} size="md">
+        <Modal isOpen={isOpen} onClose={onCancel} title={title} size="md" zIndex={zIndex}>
             <div className="flex flex-col items-center text-center p-4">
                 <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
                     <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />

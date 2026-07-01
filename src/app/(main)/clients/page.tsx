@@ -29,19 +29,19 @@ export default async function ClientsPage({
     }
     const initialClients = res.success && res.data ? res.data : []
 
-    try {
-        const fs = require('fs');
-        const path = require('path');
-        fs.writeFileSync(path.join(process.cwd(), 'debug_page_clients.txt'), JSON.stringify({
-            timestamp: new Date().toISOString(),
-            tenantId,
-            profileId,
-            initialClientsCount: initialClients.length,
-            firstClientName: initialClients[0]?.name || null
-        }, null, 2));
-    } catch (e) {
-        console.error(e);
-    }
+    // try {
+    //     const fs = require('fs');
+    //     const path = require('path');
+    //     fs.writeFileSync(path.join(process.cwd(), 'debug_page_clients.txt'), JSON.stringify({
+    //         timestamp: new Date().toISOString(),
+    //         tenantId,
+    //         profileId,
+    //         initialClientsCount: initialClients.length,
+    //         firstClientName: initialClients[0]?.name || null
+    //     }, null, 2));
+    // } catch (e) {
+    //     console.error(e);
+    // }
 
     const resolvedParams = await searchParams
     const openId = resolvedParams?.openId || ''

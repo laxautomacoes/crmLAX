@@ -72,6 +72,19 @@ export async function createLeadCampaign(tenantId: string, sourceName: string, n
     return { success: true, data }
 }
 
+export async function updateLeadSource(id: string, name: string) {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('lead_sources')
+        .update({ name })
+        .eq('id', id)
+        .select()
+        .single()
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data }
+}
+
 export async function deleteLeadSource(id: string) {
     const supabase = await createClient()
     const { error } = await supabase
@@ -82,3 +95,28 @@ export async function deleteLeadSource(id: string) {
     if (error) return { success: false, error: error.message }
     return { success: true }
 }
+
+export async function updateLeadCampaign(id: string, name: string) {
+    const supabase = await createClient()
+    const { data, error } = await supabase
+        .from('lead_campaigns')
+        .update({ name })
+        .eq('id', id)
+        .select()
+        .single()
+
+    if (error) return { success: false, error: error.message }
+    return { success: true, data }
+}
+
+export async function deleteLeadCampaign(id: string) {
+    const supabase = await createClient()
+    const { error } = await supabase
+        .from('lead_campaigns')
+        .delete()
+        .eq('id', id)
+
+    if (error) return { success: false, error: error.message }
+    return { success: true }
+}
+

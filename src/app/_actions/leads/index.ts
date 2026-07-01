@@ -10,9 +10,12 @@ export {
     getNextBrokerForDistribution,
     getLeadSources,
     createLeadSource,
+    updateLeadSource,
     deleteLeadSource,
     getLeadCampaigns,
-    createLeadCampaign
+    createLeadCampaign,
+    updateLeadCampaign,
+    deleteLeadCampaign
 } from './distribution'
 export { createLeadsBulk } from './bulk-import'
 export { syncContactAvatar, syncAllContactAvatars } from './sync-avatars'

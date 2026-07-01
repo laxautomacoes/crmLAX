@@ -259,9 +259,9 @@ export async function getClients(tenantId: string, includeArchived = false) {
 
     if (error) {
         console.error('Error fetching clients:', error)
-        try {
-            require('fs').writeFileSync(require('path').join(process.cwd(), 'debug_clients_error.txt'), JSON.stringify(error, null, 2));
-        } catch (e) {}
+        // try {
+        //     require('fs').writeFileSync(require('path').join(process.cwd(), 'debug_clients_error.txt'), JSON.stringify(error, null, 2));
+        // } catch (e) {}
         return { success: false, error: error.message }
     }
 
@@ -339,7 +339,7 @@ export async function getClients(tenantId: string, includeArchived = false) {
             is_archived: contact.is_archived || false,
             interest,
             value: 0, // Implementar lógica de valor baseada em properties depois
-            notes: contact.notes || lastInteraction || '',
+            notes: contact.notes || '',
             tags: contact.tags || [],
             images: contact.images || [],
             videos: contact.videos || [],
@@ -375,32 +375,32 @@ export async function getClients(tenantId: string, includeArchived = false) {
             client.leads.some((lead: any) => lead.assigned_to === userId)
         )
         
-        try {
-            require('fs').writeFileSync(require('path').join(process.cwd(), 'debug_corretor_filter.txt'), JSON.stringify({
-                userId,
-                beforeFilter,
-                afterFilter: clients.length,
-                sampleClientLeads
-            }, null, 2));
-        } catch (e) {}
+        // try {
+        //     require('fs').writeFileSync(require('path').join(process.cwd(), 'debug_corretor_filter.txt'), JSON.stringify({
+        //         userId,
+        //         beforeFilter,
+        //         afterFilter: clients.length,
+        //         sampleClientLeads
+        //     }, null, 2));
+        // } catch (e) {}
     }
 
-    try {
-        const fs = require('fs');
-        const path = require('path');
-        const logContent = JSON.stringify({
-            timestamp: new Date().toISOString(),
-            tenantId,
-            isAdmin,
-            userId,
-            userAuthenticated: !!user,
-            contactsCount: contacts?.length || 0,
-            clientsAfterMapCount: clients?.length || 0,
-        }, null, 2);
-        fs.writeFileSync(path.join(process.cwd(), 'debug_clients.txt'), logContent);
-    } catch (e) {
-        console.error("Failed to write debug file", e);
-    }
+    // try {
+    //     const fs = require('fs');
+    //     const path = require('path');
+    //     const logContent = JSON.stringify({
+    //         timestamp: new Date().toISOString(),
+    //         tenantId,
+    //         isAdmin,
+    //         userId,
+    //         userAuthenticated: !!user,
+    //         contactsCount: contacts?.length || 0,
+    //         clientsAfterMapCount: clients?.length || 0,
+    //     }, null, 2);
+    //     fs.writeFileSync(path.join(process.cwd(), 'debug_clients.txt'), logContent);
+    // } catch (e) {
+    //     console.error("Failed to write debug file", e);
+    // }
 
     return { success: true, data: clients }
 }
@@ -416,7 +416,7 @@ export async function createNewClient(tenantId: string, data: ClientData) {
             name: data.name,
             phone: cleanPhone(data.phone),
             email: data.email,
-            tags: data.tags,
+            tags: Array.from(new Set([...(data.tags || []), ...(String(data.interest || '').toLowerCase() === 'parceria' ? ['Parceria'] : [])])),
             cpf: data.cpf,
             address_street: data.address_street,
             address_number: data.address_number,
@@ -500,6 +500,23 @@ export async function createNewClient(tenantId: string, data: ClientData) {
 
     revalidatePath('/clients')
     return { success: true, data: contact }
+}
+
+export async function clearContactNotes(clientId: string) {
+    const supabase = await createClient()
+
+    const { error } = await supabase
+        .from('contacts')
+        .update({ notes: '' })
+        .eq('id', clientId)
+
+    if (error) {
+        console.error('[clearContactNotes] error:', error)
+        return { success: false, error: error.message }
+    }
+
+    revalidatePath('/clients')
+    return { success: true }
 }
 
 export async function updateClient(clientId: string, data: Partial<ClientData>) {

@@ -24,7 +24,7 @@ export async function createLead(tenantId: string, data: unknown) {
                 name: input.name,
                 phone: cleanPhone(input.phone),
                 email: input.email,
-                tags: input.tags || [],
+                tags: Array.from(new Set([...(input.tags || []), ...(String(input.lead_source || input.interest || '').toLowerCase() === 'parceria' ? ['Parceria'] : [])])),
                 cpf: input.cpf,
                 address_street: input.address_street,
                 address_number: input.address_number,
