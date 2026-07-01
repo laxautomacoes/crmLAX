@@ -64,6 +64,7 @@ type EditableLead = Partial<Lead> & {
     property_id?: string
     property_interest?: string
     date?: string | null
+    avatar_url?: string | null
 }
 
 const LEAD_MODAL_INITIAL_SOURCES = ['Meta', 'Google', 'Portal', 'Indicação', 'Carteira', 'Parceria'] as const
@@ -886,21 +887,7 @@ export function LeadModal({
             extraHeaderContent={
                 showMethodSelection ? undefined : (
                     <div className="flex items-center gap-3">
-                        {editingLead?.id && editingLead?.contact_id && (
-                            <button
-                                type="button"
-                                onClick={() => {
-                                    setCreationMethod(null)
-                                    onClose()
-                                    router.push(`/clients?openId=${editingLead.contact_id}`)
-                                }}
-                                className="px-4 py-1.5 border border-border bg-card text-foreground rounded font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
-                                title="Ver ficha completa do cliente"
-                            >
-                                <span className="hidden sm:inline">Ver Cliente</span>
-                                <span className="sm:hidden">Cliente</span>
-                            </button>
-                        )}
+
                         {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
                             editingLead.has_proposal ? (
                                 <button
@@ -1031,10 +1018,34 @@ export function LeadModal({
                             <div className="space-y-8 pb-4">
                                 {/* Seção: Dados Pessoais */}
                                 <div className="space-y-4">
-                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
+                                        {editingLead?.id && editingLead?.contact_id && (
+                                            <button
+                                                type="button"
+                                                onClick={() => {
+                                                    setCreationMethod(null)
+                                                    onClose()
+                                                    router.push(`/clients?openId=${editingLead.contact_id}`)
+                                                }}
+                                                className="px-3 py-1 border border-border bg-card text-foreground rounded-lg font-bold text-xs hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                                title="Ver ficha completa do cliente"
+                                            >
+                                                Cliente
+                                            </button>
+                                        )}
+                                    </div>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        {/* Linha 1: Avatar + Nome */}
+                                        {/* Linha 1: Nome + Avatar */}
                                         <div className="col-span-1 md:col-span-2 flex items-end gap-4">
+                                            <div className="flex-1">
+                                                <FormInput
+                                                    label="Nome completo"
+                                                    value={leadData.name}
+                                                    onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
+                                                    placeholder="Ex: João Silva"
+                                                />
+                                            </div>
                                             {editingLead && (
                                                 <button
                                                     type="button"
@@ -1049,14 +1060,6 @@ export function LeadModal({
                                                     )}
                                                 </button>
                                             )}
-                                            <div className="flex-1">
-                                                <FormInput
-                                                    label="Nome completo"
-                                                    value={leadData.name}
-                                                    onChange={(e) => setLeadData({ ...leadData, name: e.target.value })}
-                                                    placeholder="Ex: João Silva"
-                                                />
-                                            </div>
                                         </div>
 
                                         {/* Linha 2: Telefone e Email */}

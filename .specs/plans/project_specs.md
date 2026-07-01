@@ -1,115 +1,96 @@
-PROJECT SPECIFICATIONS: CRM LAX
+# CRM LAX — Especificações de Produto & Arquitetura
 
-1. VISÃO DO PRODUTO
+Consulte este documento antes de implementar funcionalidades de produto, banco de dados ou arquitetura.
+Para regras visuais e de construção de UI, consulte `AGENTS.md`.
+
+---
+
+## 1. Visão do Produto
+
 O CRM LAX é uma plataforma vertical (SaaS) para imobiliárias e corretores independentes.
 O diferencial é ser um sistema "limpo", focado em automação real e inteligência de dados, eliminando a complexidade genérica de CRMs imobiliários disponíveis no mercado.
 
-2. ARQUITETURA TÉCNICA (CORE STACK)
-- Framework: Next.js 14+ (App Router).
-- Linguagem: TypeScript (Strict Mode).
-- UI/UX: Tailwind CSS, Shadcn/UI, Lucide Icons.
-- Backend: Supabase (PostgreSQL, Auth, Storage, Edge Functions).
-- IA: Google Generative AI (Gemini 2.0 Flash).
-- Integrações: Supabase Edge Functions (Webhooks/Ingestion), Resend (E-mail), API WhatsApp (Oficial/Não-Oficial).
-- Hospedagem: Vercel (Frontend/Middleware).
+---
 
-Regras de Ouro (Engineering Constraints):
-- Regra das 100 Linhas: Nenhum arquivo ou função deve ultrapassar 100 linhas.
-- Refatorar em componentes atômicos é obrigatório.
-- Modularidade: Código reaproveitável entre CRM e Site Vitrine.
-- PWA: O sistema deve ser 100% responsivo e instalável via navegador.
-- Segurança (RLS): Row Level Security rigoroso no Supabase por tenant_id.
+## 2. Arquitetura Técnica (Core Stack)
 
-3. MODELAGEM DE DADOS (SUPABASE SCHEMA)
-Core:
-- tenants: id, name, slug, custom_domain, plan_type, branding (jsonb), api_key.
-- profiles: id (auth), tenant_id, full_name, role (superadmin|admin|user), whatsapp_number.
+- **Framework**: Next.js 14+ (App Router)
+- **Linguagem**: TypeScript (Strict Mode)
+- **UI/UX**: Tailwind CSS, Shadcn/UI, Lucide Icons
+- **Backend**: Supabase (PostgreSQL, Auth, Storage, Edge Functions)
+- **IA**: Google Generative AI (Gemini 2.0 Flash)
+- **Integrações**: Supabase Edge Functions (Webhooks/Ingestion), Resend (E-mail), API WhatsApp (Oficial/Não-Oficial)
+- **Hospedagem**: Vercel (Frontend/Middleware)
 
-CRM & Vendas:
-- contacts: id, tenant_id, name, phone, email, tags (jsonb), created_at. (Dados únicos do cliente).
-- leads: id, contact_id, tenant_id, asset_id (fk), status (kanban_step), source, utm_data (jsonb), assigned_to (profile_id).
-- assets (Estoque): id, tenant_id, type (house|apartment|land|commercial), title, price, status, details (jsonb), images (jsonb).
-- interactions: id, lead_id, type (whatsapp|system|note), content, metadata (jsonb).
+### Regras de Ouro (Engineering Constraints)
 
-IA & Logs:
-- ai_usage: id, tenant_id, profile_id, model, total_tokens, feature_context.
-- updates: id, title, description, type (feature|fix|roadmap), status, published_at. (Público).
+- **Regra das 100 Linhas**: Nenhum arquivo ou função deve ultrapassar 100 linhas. Refatorar em componentes atômicos é obrigatório.
+- **Modularidade**: Código reaproveitável entre CRM e Site.
+- **PWA**: O sistema deve ser 100% responsivo e instalável via navegador.
+- **Segurança (RLS)**: Row Level Security rigoroso no Supabase por `tenant_id`.
 
-4. FLUXO DE LEADS & AUTOMAÇÃO (SUPABASE EDGE FUNCTIONS)
-O sistema utilizará Edge Functions como Ingestion Layer principal.
+---
 
-Endpoint Único: /api/v1/webhooks/leads.
+## 3. Modelagem de Dados (Supabase Schema)
 
-Lógica Interna (CRM):
-- Receber Payload direto nas Edge Functions (Meta, Google, Portais).
-- Upsert no contacts (pelo telefone).
-- Criar nova entrada em leads vinculada ao contato.
-- Aplicar tags de origem automaticamente.
+### Core
+- `tenants`: id, name, slug, custom_domain, plan_type, branding (jsonb), api_key
+- `profiles`: id (auth), tenant_id, full_name, role (superadmin|admin|user), whatsapp_number
 
-5. MÓDULO IA (GEMINI INTEGRATION)
-- Engine: Gemini 2.0 Flash.
-- Monitoramento: Cada requisição deve ser precedida por uma verificação de limites e seguida por um log em ai_usage.
+### CRM & Vendas
+- `contacts`: id, tenant_id, name, phone, email, tags (jsonb), created_at
+- `leads`: id, contact_id, tenant_id, asset_id (fk), status (kanban_step), source, utm_data (jsonb), assigned_to (profile_id)
+- `assets` (Estoque): id, tenant_id, type (house|apartment|land|commercial), title, price, status, details (jsonb), images (jsonb)
+- `interactions`: id, lead_id, type (whatsapp|system|note), content, metadata (jsonb)
+
+### IA & Logs
+- `ai_usage`: id, tenant_id, profile_id, model, total_tokens, feature_context
+- `updates`: id, title, description, type (feature|fix|roadmap), status, published_at (público)
+
+---
+
+## 4. Fluxo de Leads & Automação (Supabase Edge Functions)
+
+Endpoint Único: `/api/v1/webhooks/leads`
+
+Lógica Interna:
+- Receber Payload das Edge Functions (Meta, Google, Portais)
+- Upsert em `contacts` (pelo telefone)
+- Criar nova entrada em `leads` vinculada ao contato
+- Aplicar tags de origem automaticamente
+
+---
+
+## 5. Módulo IA (Gemini Integration)
+
+- **Engine**: Gemini 2.0 Flash
+- **Monitoramento**: Cada requisição verificada por limites e logada em `ai_usage`
 
 Funcionalidades:
-- Análise de probabilidade de fechamento de lead.
-- Geração de copy para anúncios com base nos detalhes do imóvel.
-- Feedback de performance do vendedor.
+- Análise de probabilidade de fechamento de lead
+- Geração de copy para anúncios com base nos detalhes do imóvel
+- Feedback de performance do vendedor
 
-6. MÓDULO SITE VITRINE & DOMÍNIOS
-- Infra: Middleware do Next.js para gerenciar subdomain e custom_domain.
-- Dinâmica: O site deve ler a tabela assets do tenant_id identificado pelo domínio.
-- Conversão: Botão de WhatsApp dinâmico e formulário de lead que injeta dados direto no banco de dados via Server Actions.
+---
 
-7. UI/UX DESIGN SYSTEM
-Cores:
-- Primária: #404F4F (Cinza Petrol).
-- Secundária: #FFE600 (Amarelo).
+## 6. Módulo Site
 
-Regra de Contraste (OBRIGATÓRIA):
-- `text-secondary` (#FFE600 - Amarelo) é PROIBIDO como cor de texto sobre fundos claros (branco, bg-card, bg-muted, bg-background no modo claro). O contraste é insuficiente e o texto fica ilegível.
-- Para textos informativos, labels, badges e valores: usar SEMPRE `text-foreground` ou `text-muted-foreground`.
-- `text-secondary` só é permitido em: (1) botões preenchidos com `bg-secondary` usando `text-secondary-foreground`, (2) hovers em modo escuro, (3) bordas e fundos (`border-secondary`, `bg-secondary/10`).
-- Para ícones de destaque no modo claro, usar `accent-icon` (#404F4F no light, #FFE600 no dark).
-- Na dúvida, usar `text-foreground`. Nunca sacrificar legibilidade por estética.
+- **Infra**: Middleware do Next.js para gerenciar subdomain e custom_domain
+- **Dinâmica**: O site lê a tabela `assets` do `tenant_id` identificado pelo domínio
+- **Conversão**: Botão de WhatsApp dinâmico e formulário de lead via Server Actions
 
-Padrões Mobile:
-- Espaçamento entre Título e Subtítulo: Sempre utilizar `mt-4` no mobile para garantir legibilidade e respiro visual (Padrão de Sistema).
+---
 
-Padrões de Modais (Separadores de Seção):
-- Container principal do formulário: `space-y-8` (32px de gap entre seções filhas).
-- Primeira seção (sem separador): `space-y-4` (16px entre título e conteúdo interno).
-- Demais seções (com separador): `space-y-4 pt-8 border-t border-border/50` (32px padding-top acima do conteúdo + linha separadora).
-- Distância total entre seções: 64px (32px do space-y-8 + 32px do pt-8).
-- Títulos de seção: `<h3 className="text-sm font-bold text-foreground uppercase tracking-widest">`.
-- NÃO usar `<hr>` com `py-3` como separadores. Usar sempre `border-t` no div da seção.
-- Cada seção deve ser filha direta do container `space-y-8` (não aninhar seções dentro de outras).
+## 7. Interface CRM
 
-Interface CRM: Sidebar colapsável, Kanban com Drag & Drop (Touch-friendly).
+- Sidebar colapsável
+- Kanban com Drag & Drop (Touch-friendly)
+- Página de Roadmap: `/updates` — Timeline vertical pública para transparência com o cliente
 
-Interface Site: Galeria de fotos otimizada, busca com filtros (Tipo, Quartos, Preço).
+---
 
-Página de Roadmap: /updates - Timeline vertical pública para transparência com o cliente.
+## 8. Requisitos de Monetização
 
-Padrão de Layout Multicolunas (Configurações / Perfis):
-- Em páginas de configurações que utilizam layouts de múltiplos cards dispostos em colunas (ex: Meu Perfil):
-  - Os títulos e subtítulos das seções devem ficar localizados **fora e acima** de seus respectivos cards de conteúdo.
-  - Título: `<h3 className="text-lg font-bold text-foreground">`. Não utilizar ícones junto a esses títulos.
-  - Subtítulo: `<p className="text-sm text-muted-foreground">` posicionado logo abaixo do título correspondente.
-  - O contêiner de cada coluna deve usar `flex flex-col space-y-3` para agrupar o cabeçalho externo e o card, mantendo o espaçamento padrão de 12px.
-  - O card de conteúdo interno (`bg-card rounded-lg border border-border`) não deve conter cabeçalhos redundantes em seu interior.
-
-Padrões de Cards de DNS (Configurações de Domínio):
-- O rótulo (label) indicando o tipo de dado (ex: Tipo, Host, Valor, Prioridade, TTL) na lista de registros deve possuir largura fixa suficiente para não encavalar com valores e textos.
-- Utilizar OBRIGATORIAMENTE `w-20` (80px) em conjunto com `text-[9px] font-bold text-muted-foreground uppercase tracking-wider` nas spans dos labels. Exemplo: `<span className="text-[9px] font-bold text-muted-foreground uppercase tracking-wider w-20">Prioridade</span>`.
-- Evitar larguras estreitas como `w-8` ou `w-14` nestes cenários para manter a legibilidade, mesmo com nomenclaturas longas.
-
-Uso de Ícones em Botões e Elementos:
-- Não há necessidade de inserir ícones em botões e demais itens do sistema, salvo em casos onde seja estritamente necessário para compreensão (como setas de paginação ou ícones de menu hambúrguer).
-- O objetivo é manter o sistema com uma estética mais *clean* e evitar a poluição visual decorativa. Botões de ação, como "Confirmar Exclusão", "Salvar" e "Cancelar", devem conter apenas o texto.
-
-Ordenação de Listas e Checkboxes:
-- Checkboxes, listas de seleção e modais que contenham atributos (ex: Amenidades, Condomínio, Especificações, Características) DEVEM ser sempre organizados em ordem alfabética para facilitar a leitura e busca pelo usuário.
-8. REQUISITOS DE MONETIZAÇÃO
-- Freemium: Limite de 30 leads/mês.
-- Starter: Domínio crmlax.com/sualoja.
-- Pro: Domínio Próprio, IA ilimitada (ou créditos altos) e Módulo de Site.
+- **Freemium**: Limite de 30 leads/mês
+- **Starter**: Domínio crmlax.com/sualoja
+- **Pro**: Domínio próprio, IA ilimitada (ou créditos altos) e Módulo de Site
