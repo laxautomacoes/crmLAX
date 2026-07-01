@@ -42,7 +42,7 @@ export async function generatePropertyCopy(
 
     const d = property.details || {};
     const price = property.price
-        ? `R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}`
+        ? `R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(property.price)}`
         : 'Preço sob consulta';
 
     const typeLabels: Record<string, string> = {

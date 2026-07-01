@@ -5,7 +5,7 @@ import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormCheckbox } from '@/components/shared/forms/FormCheckbox'
 import { Search, Mail, MessageCircle, Loader2, User, CheckCircle2, ChevronDown, ChevronUp, Image as ImageIcon, Video, FileText, MapPin, Info, Home, Download, Building2, UserCheck, DollarSign, Waves } from 'lucide-react'
-import { getPipelineData, createLead, syncContactAvatar } from '@/app/_actions/leads'
+import { getSimpleLeads, createLead, syncContactAvatar } from '@/app/_actions/leads'
 import { sendPropertyEmail, logInteraction } from '@/app/_actions/messaging'
 import { getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
@@ -14,6 +14,7 @@ import { getPropertyUrl } from '@/lib/utils/url'
 import { createClient } from '@/lib/supabase/client'
 import { UserPlus, ArrowLeft, Check, FileDown } from 'lucide-react'
 import type { Lead } from '@/components/dashboard/leads/PipelineBoard'
+import { getPropertyUnits, type PropertyUnit } from '@/app/_actions/property-units'
 
 interface PropertyDocument {
     name?: string
@@ -78,6 +79,21 @@ interface SendToLeadModalProps {
     tenantSlug: string
 }
 
+function getPropertyTypeName(type: string): string {
+    switch (type?.toLowerCase()) {
+        case 'apartment':
+            return 'Apto';
+        case 'house':
+            return 'Casa';
+        case 'land':
+            return 'Terreno';
+        case 'commercial':
+            return 'Loja';
+        default:
+            return 'Unidade';
+    }
+}
+
 export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlug }: SendToLeadModalProps) {
     const [searchTerm, setSearchTerm] = useState('')
     const [leads, setLeads] = useState<Lead[]>([])
@@ -90,6 +106,23 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
     const [manualLead, setManualLead] = useState({ name: '', email: '', phone: '' })
     const [isDownloading, setIsDownloading] = useState(false)
     const [isGeneratingPDF, setIsGeneratingPDF] = useState(false)
+
+    // States para Unidades do Empreendimento
+    const [units, setUnits] = useState<PropertyUnit[]>([])
+    const [selectedUnit, setSelectedUnit] = useState<PropertyUnit | null>(null)
+    const [isLoadingUnits, setIsLoadingUnits] = useState(false)
+    const [unitFilter, setUnitFilter] = useState('')
+    const [sortColumn, setSortColumn] = useState<'apto' | 'tipo' | 'valor' | null>(null)
+    const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc')
+
+    const handleSort = (column: 'apto' | 'tipo' | 'valor') => {
+        if (sortColumn === column) {
+            setSortDirection(prev => prev === 'asc' ? 'desc' : 'asc')
+        } else {
+            setSortColumn(column)
+            setSortDirection('asc')
+        }
+    }
 
     const handleDownloadImages = async () => {
         setIsDownloading(true)
@@ -188,11 +221,16 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 selectedVideos: [],
                 selectedDocs: []
             }))
+            setSelectedUnit(null)
+            setUnitFilter('')
+            setSortColumn(null)
+            setSortDirection('asc')
         }
     }, [isOpen, property])
 
     const [expandedSections, setExpandedSections] = useState({
         basic: false,
+        units: false,
         location: false,
         valores: false,
         images: false,
@@ -229,37 +267,49 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
     const fetchLeads = async () => {
         setIsLoading(true)
-        const result = await getPipelineData(tenantId)
+        const result = await getSimpleLeads(tenantId)
         if (result.success && result.data) {
-            setLeads(result.data.leads)
-
-            // Sincronizar avatares em background para leads sem foto
-            const leadsWithoutAvatar = result.data.leads.filter(
-                (l: Lead) => !l.avatar_url && l.contact_id
-            )
-            if (leadsWithoutAvatar.length > 0) {
-                ;(async () => {
-                    for (const lead of leadsWithoutAvatar) {
-                        try {
-                            const res = await syncContactAvatar(lead.contact_id!, tenantId)
-                            if (res.success && res.avatar_url) {
-                                setLeads(prev => prev.map(l =>
-                                    l.id === lead.id ? { ...l, avatar_url: res.avatar_url } : l
-                                ))
-                                setSelectedLead(prev => 
-                                    prev && prev.id === lead.id 
-                                        ? { ...prev, avatar_url: res.avatar_url } 
-                                        : prev
-                                )
-                            }
-                        } catch {
-                            // silencioso
-                        }
-                    }
-                })()
-            }
+            setLeads(result.data as any)
         }
         setIsLoading(false)
+    }
+
+    const handleSelectLead = async (lead: any) => {
+        setSelectedLead(lead)
+
+        // Sincroniza o avatar apenas para o lead selecionado se ele não tiver foto salva
+        if (!lead.avatar_url && lead.contact_id) {
+            try {
+                const res = await syncContactAvatar(lead.contact_id, tenantId)
+                if (res.success && res.avatar_url) {
+                    setLeads(prev => prev.map(l =>
+                        l.id === lead.id ? { ...l, avatar_url: res.avatar_url } : l
+                    ))
+                    setSelectedLead(prev => 
+                        prev && prev.id === lead.id 
+                            ? { ...prev, avatar_url: res.avatar_url } 
+                            : prev
+                    )
+                }
+            } catch {
+                // silencioso
+            }
+        }
+    }
+
+    const fetchUnits = async () => {
+        if (!property?.id) return
+        setIsLoadingUnits(true)
+        try {
+            const result = await getPropertyUnits(property.id)
+            if (result.success && result.data) {
+                setUnits(result.data)
+            }
+        } catch (error) {
+            console.error("Erro ao buscar unidades:", error)
+        } finally {
+            setIsLoadingUnits(false)
+        }
     }
 
     useEffect(() => {
@@ -267,8 +317,49 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             void fetchLeads()
             void fetchCurrentBroker()
             void fetchTenant()
+            void fetchUnits()
         }
     }, [isOpen])
+
+    const filteredUnits = useMemo(() => {
+        let result = [...units]
+        if (unitFilter) {
+            result = result.filter(unit => 
+                unit.unit_number.toLowerCase().includes(unitFilter.toLowerCase()) ||
+                (unit.block_tower && unit.block_tower.toLowerCase().includes(unitFilter.toLowerCase()))
+            )
+        }
+
+        if (sortColumn) {
+            result.sort((a, b) => {
+                let valA: any = ''
+                let valB: any = ''
+
+                if (sortColumn === 'apto') {
+                    const numA = parseInt(a.unit_number.replace(/\D/g, ''), 10)
+                    const numB = parseInt(b.unit_number.replace(/\D/g, ''), 10)
+                    if (!isNaN(numA) && !isNaN(numB)) {
+                        return sortDirection === 'asc' ? numA - numB : numB - numA
+                    }
+                    valA = a.unit_number.toLowerCase()
+                    valB = b.unit_number.toLowerCase()
+                } else if (sortColumn === 'tipo') {
+                    valA = (a.extra_data?.secao || '').toLowerCase()
+                    valB = (b.extra_data?.secao || '').toLowerCase()
+                } else if (sortColumn === 'valor') {
+                    valA = Number(a.valor_total || 0)
+                    valB = Number(b.valor_total || 0)
+                    return sortDirection === 'asc' ? valA - valB : valB - valA
+                }
+
+                if (valA < valB) return sortDirection === 'asc' ? -1 : 1
+                if (valA > valB) return sortDirection === 'asc' ? 1 : -1
+                return 0
+            })
+        }
+
+        return result
+    }, [units, unitFilter, sortColumn, sortDirection])
 
     const filteredLeads = leads.filter(lead => 
         lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -308,7 +399,8 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             ...config,
             images: config.selectedImages,
             videos: config.selectedVideos,
-            documents: config.selectedDocs
+            documents: config.selectedDocs,
+            selectedUnit: selectedUnit
         })
         
         if (result.success) {
@@ -353,6 +445,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         // Build config query params
         const queryParams = new URLSearchParams()
         if (currentBroker) queryParams.set('b', currentBroker.id)
+        if (selectedUnit) queryParams.set('u', selectedUnit.id)
         
         // Add display toggles (only if false, to keep URL short, but let's be explicit for now)
         if (!config.title) queryParams.set('ct', '0')
@@ -403,11 +496,18 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const firstName = currentLead.name.split(' ')[0]
         let message = `Olá ${firstName}! Tudo bem?\n\nEstou enviando os detalhes deste imóvel que pode te interessar:\n\n`
         
-        // 1. Título e Endereço do Imóvel
-        if (config.title || config.location !== 'none') {
+        // 0. Unidade Selecionada integrada ao bloco IMÓVEL
+        if (config.title || config.location !== 'none' || selectedUnit) {
             message += `*IMÓVEL*\n`
             if (config.title) {
                 message += `• ${property.title}\n`
+            }
+            if (selectedUnit) {
+                const typeLabel = getPropertyTypeName(property.type)
+                let unitLine = `• ${typeLabel}: ${selectedUnit.unit_number}`
+                if (selectedUnit.block_tower) unitLine += ` - Bloco/Torre: ${selectedUnit.block_tower}`
+                if (selectedUnit.floor) unitLine += ` - ${selectedUnit.floor}º Andar`
+                message += `${unitLine}\n`
             }
             if (config.location !== 'none') {
                 const bairro = property.details?.endereco?.bairro || ''
@@ -434,38 +534,70 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             message += `\n`
         }
 
-        // 2. Valores
-        const hasPrice = config.price
-        const hasCondo = config.showCondo && property.details?.valor_condominio
-        const hasIptu = config.showIptu && property.details?.valor_iptu
-
-        if (hasPrice || hasCondo || hasIptu) {
-            message += `*VALORES*\n`
-            if (hasPrice) {
-                message += `• Imóvel: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}\n`
-            }
-            if (hasCondo) {
-                const condoNum = parseFloat(String(property.details?.valor_condominio))
-                if (!isNaN(condoNum) && condoNum > 0) {
-                    message += `• Condomínio: R$ ${new Intl.NumberFormat('pt-BR').format(condoNum)}\n`
-                }
-            }
-            if (hasIptu) {
-                const iptuNum = parseFloat(String(property.details?.valor_iptu))
-                if (!isNaN(iptuNum) && iptuNum > 0) {
-                    message += `• IPTU: R$ ${new Intl.NumberFormat('pt-BR').format(iptuNum)}\n`
-                }
-            }
-            message += `\n`
-        }
-
         // 3. Informações
-        const dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'))
-        const suites = parseInt(String(property.details?.suites || '0'))
-        const banheiros = parseInt(String(property.details?.banheiros || '0'))
-        const vegasVal = parseInt(String(property.details?.vagas || '0'))
+        let dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'))
+        let suites = parseInt(String(property.details?.suites || '0'))
+        let banheiros = parseInt(String(property.details?.banheiros || '0'))
+        let vegasVal = parseInt(String(property.details?.vagas || '0'))
         const posicaoSolar = property.details?.posicao_solar || property.details?.posicao || property.details?.solar || ''
         
+        let hasSacadaChurras = property.details?.has_sacada_com_churrasqueira
+        let hasSacadaSem = property.details?.has_sacada_sem_churrasqueira
+        let hasLavabo = property.details?.has_lavabo
+        let hasEscritorio = property.details?.has_escritorio
+        let hasDependencia = property.details?.has_dependencia_empregada
+        let hobbyBox = property.details?.hobby_box
+        let hobbyBoxNum = property.details?.hobby_box_numeracao
+        let areaPrivativa = property.details?.area_privativa
+        let areaTotal = property.details?.area_total
+        let tipologiaUnidade = ''
+
+        if (selectedUnit) {
+            if (selectedUnit.area_privativa) {
+                areaPrivativa = Number(selectedUnit.area_privativa)
+            }
+            if (selectedUnit.area_total) {
+                areaTotal = Number(selectedUnit.area_total)
+            }
+            if (selectedUnit.garage_number) {
+                vegasVal = property.details?.vagas ? parseInt(String(property.details.vagas)) : 1
+            }
+            if (selectedUnit.hobby_box) {
+                hobbyBox = 'Sim'
+                hobbyBoxNum = selectedUnit.hobby_box
+            }
+            
+            const secao = selectedUnit.extra_data?.secao || selectedUnit.extra_data?.tipologia
+            if (secao) {
+                tipologiaUnidade = String(secao)
+                const textUpper = tipologiaUnidade.toUpperCase()
+                
+                if (textUpper.includes('SUÍTE') || textUpper.includes('SUITES')) {
+                    const matchSuites = textUpper.match(/(\d+)\s*SUÍTE/i) || textUpper.match(/(\d+)\s*SUITES/i)
+                    if (matchSuites) {
+                        suites = parseInt(matchSuites[1])
+                    } else if (textUpper.includes('UMA SUÍTE') || textUpper.includes('1 SUÍTE')) {
+                        suites = 1
+                    }
+                }
+                
+                if (textUpper.includes('DORMITÓRIO') || textUpper.includes('DORMITORIOS') || textUpper.includes('QUARTO')) {
+                    const matchDorms = textUpper.match(/(\d+)\s*DORMITÓRIO/i) || textUpper.match(/(\d+)\s*DORMITORIOS/i) || textUpper.match(/(\d+)\s*QUARTO/i)
+                    if (matchDorms) {
+                        dorms = parseInt(matchDorms[1])
+                    } else if (textUpper.includes('UM DORMITÓRIO') || textUpper.includes('1 DORMITÓRIO')) {
+                        dorms = 1
+                    }
+                } else if (suites > 0) {
+                    dorms = Math.max(dorms, suites)
+                }
+                
+                if (textUpper.includes('LAVABO')) {
+                    hasLavabo = true
+                }
+            }
+        }
+
         const showBedrooms = config.showBedrooms && dorms > 0
         const showSuites = config.showSuites && suites > 0
         const showAreaPrivativa = config.showAreaPrivativa
@@ -477,24 +609,17 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         const showDependencia = config.showDependencia
         const showObservations = config.showObservations && property.details?.obs_dormitorios
 
-        const hasSacadaChurras = property.details?.has_sacada_com_churrasqueira
-        const hasSacadaSem = property.details?.has_sacada_sem_churrasqueira
-        const hasLavabo = property.details?.has_lavabo
-        const hasEscritorio = property.details?.has_escritorio
-        const hasDependencia = property.details?.has_dependencia_empregada
-        const hobbyBox = property.details?.hobby_box
-        const hobbyBoxNum = property.details?.hobby_box_numeracao
-        const areaPrivativa = property.details?.area_privativa
-        const areaTotal = property.details?.area_total
-
         const hasAnyInfo = showBedrooms || showSuites || banheiros > 0 || posicaoSolar ||
             (showSacada && (hasSacadaChurras || hasSacadaSem)) ||
             hasLavabo || (showEscritorio && hasEscritorio) || (showDependencia && hasDependencia) ||
             showObservations || (showVagas && vegasVal > 0) || (showHobbyBox && (hobbyBox || hobbyBoxNum)) ||
-            (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal)
+            (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal) || !!tipologiaUnidade
 
         if (hasAnyInfo) {
             message += `*INFORMAÇÕES*\n`
+            if (tipologiaUnidade) {
+                message += `• Tipologia: ${tipologiaUnidade}\n`
+            }
             if (showBedrooms) {
                 message += `• Dormitórios: ${dorms}\n`
             }
@@ -503,6 +628,14 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             }
             if (banheiros > 0) {
                 message += `• Banheiros: ${banheiros}\n`
+            }
+            if (showVagas) {
+                const vagaIdentificacao = (selectedUnit && selectedUnit.garage_number) 
+                    ? selectedUnit.garage_number 
+                    : (property.details?.vagas_numeracao || (vegasVal > 0 ? String(vegasVal) : ''))
+                if (vagaIdentificacao) {
+                    message += `• Vaga: ${vagaIdentificacao}\n`
+                }
             }
             if (posicaoSolar) {
                 message += `• Posição solar: ${posicaoSolar}\n`
@@ -526,19 +659,70 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             if (showObservations) {
                 message += `• Observações: ${property.details?.obs_dormitorios}\n`
             }
-            if (showVagas && vegasVal > 0) {
-                const descVagas = property.details?.vagas_numeracao ? `Vagas: ${vegasVal} (${property.details.vagas_numeracao})` : `Vagas: ${vegasVal}`
-                message += `• ${descVagas}\n`
-            }
-            if (showHobbyBox && (hobbyBox || hobbyBoxNum)) {
-                const descHB = hobbyBoxNum ? `Hobby Box: ${hobbyBox || 'Sim'} (${hobbyBoxNum})` : `Hobby Box: ${hobbyBox || 'Sim'}`
-                message += `• ${descHB}\n`
+            if (showHobbyBox) {
+                const hbNum = (selectedUnit && selectedUnit.hobby_box) 
+                    ? selectedUnit.hobby_box 
+                    : (hobbyBoxNum || (hobbyBox !== 'Sim' ? hobbyBox : ''))
+                if (hbNum) {
+                    message += `• Hobby Box: ${hbNum}\n`
+                }
             }
             if (showAreaPrivativa && areaPrivativa) {
                 message += `• Área privativa: ${areaPrivativa} m²\n`
             }
-            if (showAreaTotal && areaTotal) {
+            if (showAreaTotal && areaTotal && parseFloat(String(areaTotal)) > 0) {
                 message += `• Área total: ${areaTotal} m²\n`
+            }
+            message += `\n`
+        }
+
+        // 3. Valor (Abaixo de Informações!)
+        const hasPrice = config.price
+        const hasCondo = config.showCondo && property.details?.valor_condominio
+        const hasIptu = config.showIptu && property.details?.valor_iptu
+        const hasPaymentCond = selectedUnit && (selectedUnit.valor_ato || selectedUnit.valor_mensais || selectedUnit.valor_reforcos || selectedUnit.valor_chaves || selectedUnit.soma_poupanca || selectedUnit.valor_financiamento)
+        
+        if (hasPrice || hasCondo || hasIptu || hasPaymentCond || (selectedUnit && selectedUnit.valor_total)) {
+            message += `*VALOR*\n`
+            if (selectedUnit) {
+                if (selectedUnit.valor_total) {
+                    message += `• Valor da Unidade: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_total))}\n`
+                }
+                if (hasPaymentCond) {
+                    if (selectedUnit.valor_ato) {
+                        message += `  - Ato: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_ato))}\n`
+                    }
+                    if (selectedUnit.valor_mensais) {
+                        message += `  - Mensais: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_mensais))}\n`
+                    }
+                    if (selectedUnit.valor_reforcos) {
+                        message += `  - Reforços: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_reforcos))}\n`
+                    }
+                    if (selectedUnit.valor_chaves) {
+                        message += `  - Chaves: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_chaves))}\n`
+                    }
+                    if (selectedUnit.soma_poupanca) {
+                        message += `  - Valor até a entrega: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.soma_poupanca))}\n`
+                    }
+                    if (selectedUnit.valor_financiamento) {
+                        message += `  - Saldo pós-entrega / Financiamento construtora: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_financiamento))}\n`
+                    }
+                }
+            } else if (hasPrice) {
+                message += `• Imóvel: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(property.price)}\n`
+            }
+            
+            if (hasCondo) {
+                const condoNum = parseFloat(String(property.details?.valor_condominio))
+                if (!isNaN(condoNum) && condoNum > 0) {
+                    message += `• Condomínio: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(condoNum)}\n`
+                }
+            }
+            if (hasIptu) {
+                const iptuNum = parseFloat(String(property.details?.valor_iptu))
+                if (!isNaN(iptuNum) && iptuNum > 0) {
+                    message += `• IPTU: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(iptuNum)}\n`
+                }
             }
             message += `\n`
         }
@@ -656,7 +840,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
             await generatePropertyPDF({
                 property: formattedProperty,
-                config,
+                config: {
+                    ...config,
+                    selectedUnit: selectedUnit
+                } as any,
                 tenantName: tenant?.name || 'CRM LAX'
             })
             
@@ -788,10 +975,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             isOpen={isOpen}
             onClose={onClose}
             title={
-                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
+                <h3 className="text-lg font-black text-foreground uppercase tracking-widest truncate">
                     Enviar para Lead
                 </h3>
-            }            size="lg"
+            }            size="xl"
         >
             <div className="flex flex-col max-h-[calc(90vh-120px)]">
                 <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-6 min-h-0">
@@ -851,7 +1038,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 </div>
                             ) : (
                                 <>
-                                    <div className="flex gap-2">
+                                    <div className="flex items-center gap-2">
                                         <div className="flex-1">
                                             <FormInput
                                                 placeholder="Buscar lead por nome, email ou telefone..."
@@ -860,6 +1047,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 onClear={() => setSearchTerm('')}
                                                 icon={Search}
                                                 className="h-11"
+                                                roundedClassName="rounded-md"
                                             />
                                         </div>
                                         <button 
@@ -867,10 +1055,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                 setIsManualMode(true)
                                                 setManualLead({ name: searchTerm, email: '', phone: '' })
                                             }}
-                                            className="h-11 w-11 flex-shrink-0 flex items-center justify-center bg-[#FFE600] hover:bg-[#F2DB00] rounded-lg transition-all group shadow-sm hover:shadow"
+                                            className="h-11 px-4 flex-shrink-0 flex items-center justify-center bg-[#FFE600] hover:bg-[#FFE600]/90 text-[#404F4F] font-bold text-xs uppercase tracking-widest rounded-md transition-all"
                                             title="Novo Lead"
                                         >
-                                            <UserPlus size={20} className="text-[#404F4F] transition-transform group-hover:scale-110" />
+                                            <span>+ NOVO LEAD</span>
                                         </button>
                                     </div>
 
@@ -883,7 +1071,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             filteredLeads.map(lead => (
                                                 <div
                                                     key={lead.id}
-                                                    onClick={() => setSelectedLead(lead)}
+                                                    onClick={() => handleSelectLead(lead)}
                                                     className="w-full flex items-center gap-3 p-3 rounded-lg hover:bg-foreground/5 transition-all text-left group cursor-pointer"
                                                 >
                                                     <div className="w-10 h-10 rounded-full overflow-hidden bg-muted flex items-center justify-center text-foreground group-hover:bg-foreground/10 transition-colors flex-shrink-0">
@@ -898,9 +1086,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                         )}
                                                     </div>
                                                     <div className="flex-1 min-w-0">
-                                                        <p className="font-bold text-foreground truncate">{lead.name}</p>
-                                                        <p className="text-xs text-foreground truncate">{lead.email || 'Sem e-mail'}</p>
-                                                        <p className="text-[10px] font-medium text-foreground">{formatPhone(lead.phone)}</p>
+                                                        <p className="font-bold text-foreground text-base truncate">{lead.name}</p>
+                                                        <p className="text-xs font-medium text-foreground">{formatPhone(lead.phone)}</p>
+                                                        <p className="text-sm text-foreground truncate">{lead.email || 'Sem e-mail'}</p>
                                                     </div>
                                                 </div>
                                             ))
@@ -941,34 +1129,34 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     )}
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-xs font-bold text-white/70 uppercase tracking-wider">Lead Selecionado</p>
-                                    <p className="text-lg font-bold text-white">{selectedLead.name}</p>
+                                    <p className="text-sm font-bold text-white/70 uppercase tracking-wider">Lead Selecionado</p>
+                                    <p className="text-xl font-bold text-white">{selectedLead.name}</p>
                                 </div>
                                 <button 
                                     onClick={() => setSelectedLead(null)}
-                                    className="text-sm font-bold text-white hover:text-white/80 hover:underline"
+                                    className="text-base font-bold text-white hover:text-white/80 hover:underline"
                                 >
                                     Alterar
                                 </button>
                             </div>
 
                             {/* Configuration Options */}
-                            <div className="space-y-0 rounded-xl overflow-hidden bg-card divide-y divide-border/30">
+                            <div className="space-y-0 rounded-xl overflow-hidden bg-card divide-y divide-border/50">
                                 {/* 1. Imóvel */}
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('basic')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.basic ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Home size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Imóvel</span>
+                                            <Home size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Imóvel</span>
                                         </div>
-                                        {expandedSections.basic ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        {expandedSections.basic ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.basic && (
-                                        <div className="p-4 pt-0 space-y-3">
-                                            <FormCheckbox 
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <FormCheckbox labelClassName="text-base" 
                                                 label="Nome imóvel" 
                                                 checked={config.title} 
                                                 onChange={(e) => setConfig({...config, title: e.target.checked})} 
@@ -977,32 +1165,158 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                     )}
                                 </div>
 
+                                {/* 1.1. Apartamento Escolhido */}
+                                {units.length > 0 && (
+                                    <div className="">
+                                        <button 
+                                            onClick={() => toggleSection('units')}
+                                            className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.units ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
+                                        >
+                                            <div className="flex items-center gap-2">
+                                                <Building2 size={16} strokeWidth={1.2} className="text-foreground" />
+                                                <span className="font-bold text-foreground text-lg">
+                                                    {selectedUnit ? `Unidade Selecionada: ${selectedUnit.unit_number}` : 'Unidade'}
+                                                </span>
+                                            </div>
+                                            {expandedSections.units ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                        </button>
+                                        {expandedSections.units && (
+                                            <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-4 border-t border-border/40">
+                                                <div className="relative">
+                                                    <input
+                                                        type="text"
+                                                        placeholder="Buscar unidade (ex: 101, bloco A...)"
+                                                        value={unitFilter}
+                                                        onChange={(e) => setUnitFilter(e.target.value)}
+                                                        className="w-full pl-3 pr-8 py-2 text-sm bg-muted/50 border border-border rounded-lg text-foreground focus:ring-2 focus:ring-ring/50 focus:border-ring outline-none"
+                                                    />
+                                                    {unitFilter && (
+                                                        <button
+                                                            onClick={() => setUnitFilter('')}
+                                                            className="absolute right-2.5 top-2.5 text-xs text-muted-foreground hover:text-foreground font-bold"
+                                                        >
+                                                            Limpar
+                                                        </button>
+                                                    )}
+                                                </div>
+                                                <div className="border border-border rounded-lg overflow-hidden bg-muted/10">
+                                                    {/* Header */}
+                                                    <div className="grid grid-cols-12 px-3 py-2 text-base font-bold text-foreground uppercase tracking-wider border-b border-border/40 bg-muted/20 text-center select-none">
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSort('apto')}
+                                                            className="col-span-3 text-center flex items-center justify-center gap-1 hover:text-foreground/80 focus:outline-none w-full"
+                                                        >
+                                                            Apto
+                                                            {sortColumn === 'apto' && (
+                                                                sortDirection === 'asc' ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSort('tipo')}
+                                                            className="col-span-5 text-center flex items-center justify-center gap-1 hover:text-foreground/80 focus:outline-none w-full"
+                                                        >
+                                                            Tipo
+                                                            {sortColumn === 'tipo' && (
+                                                                sortDirection === 'asc' ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />
+                                                            )}
+                                                        </button>
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => handleSort('valor')}
+                                                            className="col-span-4 text-center flex items-center justify-center gap-1 hover:text-foreground/80 focus:outline-none w-full"
+                                                        >
+                                                            Valor total R$
+                                                            {sortColumn === 'valor' && (
+                                                                sortDirection === 'asc' ? <ChevronUp size={14} strokeWidth={1.5} /> : <ChevronDown size={14} strokeWidth={1.5} />
+                                                            )}
+                                                        </button>
+                                                    </div>
+                                                    
+                                                    {/* Scrollable list */}
+                                                    <div className="max-h-[200px] overflow-y-auto divide-y divide-border/50">
+                                                        {filteredUnits.length > 0 ? (
+                                                            filteredUnits.map((unit) => (
+                                                                <button
+                                                                    key={unit.id}
+                                                                    onClick={() => {
+                                                                        setSelectedUnit(selectedUnit?.id === unit.id ? null : unit)
+                                                                    }}
+                                                                    className={`w-full text-left px-3 py-2.5 text-base transition-colors grid grid-cols-12 items-center relative ${selectedUnit?.id === unit.id ? 'bg-[#FFE600]/10 hover:bg-[#FFE600]/20' : 'hover:bg-muted/50'}`}
+                                                                >
+                                                                    <div className="col-span-3 flex items-baseline justify-center gap-1.5 text-center">
+                                                                        <span className="text-foreground text-base">{unit.unit_number}</span>
+                                                                        {unit.block_tower && <span className="text-[10px] text-muted-foreground">T: {unit.block_tower}</span>}
+                                                                    </div>
+                                                                    <div className="col-span-5 text-base text-foreground truncate px-2 text-center">
+                                                                        {unit.extra_data?.secao || '-'}
+                                                                    </div>
+                                                                    <div className="col-span-4 text-center">
+                                                                        {unit.valor_total ? (
+                                                                            <span className="text-foreground text-base">{new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(unit.valor_total))}</span>
+                                                                        ) : (
+                                                                            <span className="text-muted-foreground text-sm">-</span>
+                                                                        )}
+                                                                    </div>
+                                                                    {selectedUnit?.id === unit.id && (
+                                                                        <div className="absolute right-2 top-1/2 -translate-y-1/2 flex items-center justify-center">
+                                                                            <Check size={16} className="text-green-500 font-bold" />
+                                                                        </div>
+                                                                    )}
+                                                                </button>
+                                                            ))
+                                                        ) : (
+                                                            <p className="text-sm text-muted-foreground italic p-3 text-center">Nenhuma unidade encontrada.</p>
+                                                        )}
+                                                    </div>
+                                                </div>
+                                                
+                                                {selectedUnit && (
+                                                    <div className="p-3 bg-muted/15 dark:bg-muted/30 border border-border/50 rounded-lg space-y-2 text-sm">
+                                                        <p className="font-bold text-foreground uppercase tracking-wider text-xs">Resumo de Condições (Unidade {selectedUnit.unit_number})</p>
+                                                        <div className="grid grid-cols-2 gap-2 text-foreground">
+                                                            {selectedUnit.valor_total && <p><strong>Valor total:</strong> R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_total))}</p>}
+                                                            {selectedUnit.valor_ato && <p><strong>Ato:</strong> R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_ato))}</p>}
+                                                            {selectedUnit.valor_mensais && <p><strong>Mensais:</strong> R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_mensais))}</p>}
+                                                            {selectedUnit.valor_reforcos && <p><strong>Reforços:</strong> R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_reforcos))}</p>}
+                                                            {selectedUnit.valor_chaves && <p><strong>Chaves:</strong> R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_chaves))}</p>}
+                                                            {selectedUnit.soma_poupanca && <p><strong>Até a entrega:</strong> R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.soma_poupanca))}</p>}
+                                                            {selectedUnit.valor_financiamento && <p><strong>Saldo pós-entrega:</strong> R$ {new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(selectedUnit.valor_financiamento))}</p>}
+                                                        </div>
+                                                    </div>
+                                                )}
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
                                 {/* 2. Endereço */}
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('location')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.location ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <MapPin size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Endereço</span>
+                                            <MapPin size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Endereço</span>
                                         </div>
-                                        {expandedSections.location ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        {expandedSections.location ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.location && (
-                                        <div className="p-4 pt-0">
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 border-t border-border/40">
                                             <div className="flex flex-col gap-3">
-                                                <FormCheckbox 
+                                                <FormCheckbox labelClassName="text-base" 
                                                     label="Endereço Exato" 
                                                     checked={config.location === 'exact'} 
                                                     onChange={() => setConfig({...config, location: 'exact'})} 
                                                 />
-                                                <FormCheckbox 
+                                                <FormCheckbox labelClassName="text-base" 
                                                     label="Aproximada (Bairro)" 
                                                     checked={config.location === 'approximate'} 
                                                     onChange={() => setConfig({...config, location: 'approximate'})} 
                                                 />
-                                                <FormCheckbox 
+                                                <FormCheckbox labelClassName="text-base" 
                                                     label="Não enviar" 
                                                     checked={config.location === 'none'} 
                                                     onChange={() => setConfig({...config, location: 'none'})} 
@@ -1016,48 +1330,48 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('valores')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.valores ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <DollarSign size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Valores</span>
+                                            <DollarSign size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Valores</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             {expandedSections.valores && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                                                     <button 
                                                         onClick={() => handleSelectAll('valores')}
-                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDeselectAll('valores')}
                                                         className={hasSelectedItems('valores')
-                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
-                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-xs px-2 py-0.5 rounded"
                                                         }
                                                     >
                                                         Desmarcar todas
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.valores ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            {expandedSections.valores ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.valores && (
-                                        <div className="p-4 pt-0 space-y-3">
-                                            <FormCheckbox 
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <FormCheckbox labelClassName="text-base" 
                                                 label="Preço" 
                                                 checked={config.price} 
                                                 onChange={(e) => setConfig({...config, price: e.target.checked})} 
                                             />
-                                            <FormCheckbox 
+                                            <FormCheckbox labelClassName="text-base" 
                                                 label="Condomínio" 
                                                 checked={config.showCondo} 
                                                 onChange={(e) => setConfig({...config, showCondo: e.target.checked})} 
                                             />
-                                            <FormCheckbox 
+                                            <FormCheckbox labelClassName="text-base" 
                                                 label="IPTU" 
                                                 checked={config.showIptu} 
                                                 onChange={(e) => setConfig({...config, showIptu: e.target.checked})} 
@@ -1070,42 +1384,42 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('images')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.images ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <ImageIcon size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Imagens ({config.selectedImages.length})</span>
+                                            <ImageIcon size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Imagens ({config.selectedImages.length})</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             {expandedSections.images && (property.images?.length ?? 0) > 1 && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                                                     <button 
                                                         onClick={() => handleSelectAll('images')}
-                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDeselectAll('images')}
                                                         className={hasSelectedItems('images')
-                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
-                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-xs px-2 py-0.5 rounded"
                                                         }
                                                     >
                                                         Desmarcar todas
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.images ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            {expandedSections.images ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.images && (
-                                        <div className="p-4 pt-0 space-y-3">
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
                                             {config.selectedImages.length > 0 && (
                                                 <button
                                                     onClick={handleDownloadImages}
                                                     disabled={isDownloading}
-                                                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-[#404F4F]/20 text-[#404F4F] hover:bg-[#404F4F]/5 text-xs font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
+                                                    className="w-full flex items-center justify-center gap-2 py-2 px-3 rounded-lg border border-[#404F4F]/20 text-[#404F4F] hover:bg-[#404F4F]/5 text-sm font-bold transition-all disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                                                 >
                                                     {isDownloading ? (
                                                         <>
@@ -1150,7 +1464,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-foreground italic">Nenhuma imagem disponível.</p>
+                                                <p className="text-sm text-foreground italic">Nenhuma imagem disponível.</p>
                                             )}
                                         </div>
                                     )}
@@ -1160,41 +1474,41 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('videos')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.videos ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Video size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Vídeos ({config.selectedVideos.length})</span>
+                                            <Video size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Vídeos ({config.selectedVideos.length})</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             {expandedSections.videos && (property.videos?.length ?? 0) > 1 && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                                                     <button 
                                                         onClick={() => handleSelectAll('videos')}
-                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDeselectAll('videos')}
                                                         className={hasSelectedItems('videos')
-                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
-                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-xs px-2 py-0.5 rounded"
                                                         }
                                                     >
                                                         Desmarcar todas
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.videos ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            {expandedSections.videos ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.videos && (
-                                        <div className="p-4 pt-0 space-y-4">
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-4 border-t border-border/40">
                                             {(property.videos?.length ?? 0) > 0 ? (
                                                 <div className="space-y-1">
                                                     {(property.videos ?? []).map((video: string, idx: number) => (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             key={idx}
                                                             label={`Vídeo ${idx + 1}`}
                                                             checked={selectedVideosSet.has(video)}
@@ -1209,7 +1523,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-foreground italic">Nenhum vídeo disponível.</p>
+                                                <p className="text-sm text-foreground italic">Nenhum vídeo disponível.</p>
                                             )}
                                         </div>
                                     )}
@@ -1219,41 +1533,41 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('docs')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.docs ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <FileText size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Documentos ({config.selectedDocs.length})</span>
+                                            <FileText size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Documentos ({config.selectedDocs.length})</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             {expandedSections.docs && (property.documents?.length ?? 0) > 1 && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                                                     <button 
                                                         onClick={() => handleSelectAll('docs')}
-                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDeselectAll('docs')}
                                                         className={hasSelectedItems('docs')
-                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
-                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-xs px-2 py-0.5 rounded"
                                                         }
                                                     >
                                                         Desmarcar todas
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.docs ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            {expandedSections.docs ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.docs && (
-                                        <div className="p-4 pt-0 space-y-4">
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-4 border-t border-border/40">
                                             {(property.documents?.length ?? 0) > 0 ? (
                                                 <div className="space-y-1">
                                                     {(property.documents ?? []).map((doc: PropertyDocument, idx: number) => (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             key={idx}
                                                             label={doc.name || `Documento ${idx + 1}`}
                                                             checked={selectedDocsSet.has(doc.url)}
@@ -1268,7 +1582,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     ))}
                                                 </div>
                                             ) : (
-                                                <p className="text-xs text-foreground italic">Nenhum documento disponível.</p>
+                                                <p className="text-sm text-foreground italic">Nenhum documento disponível.</p>
                                             )}
                                         </div>
                                     )}
@@ -1278,33 +1592,33 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('details')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.details ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Info size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Informações</span>
+                                            <Info size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Informações</span>
                                         </div>
                                         <div className="flex items-center gap-3">
                                             {expandedSections.details && (
                                                 <div className="flex items-center gap-1.5" onClick={(e) => e.stopPropagation()}>
                                                     <button 
                                                         onClick={() => handleSelectAll('details')}
-                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
+                                                        className="bg-[#FFE600] text-[#404F4F] border border-[#FFE600]/30 hover:bg-[#FFE600]/90 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
                                                     >
                                                         Selecionar todas
                                                     </button>
                                                     <button 
                                                         onClick={() => handleDeselectAll('details')}
                                                         className={hasSelectedItems('details')
-                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-[10px] px-2 py-0.5 rounded shadow-sm"
-                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-[10px] px-2 py-0.5 rounded"
+                                                            ? "bg-red-500 text-white border border-red-500 hover:bg-red-600 transition-all font-bold text-xs px-2 py-0.5 rounded shadow-sm"
+                                                            : "bg-red-500/5 text-red-500/50 border border-red-500/10 hover:bg-red-500/10 transition-all font-bold text-xs px-2 py-0.5 rounded"
                                                         }
                                                     >
                                                         Desmarcar todas
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.details ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                            {expandedSections.details ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.details && (() => {
@@ -1320,73 +1634,73 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         const obs = !!property.details?.obs_dormitorios
 
                                         return (
-                                            <div className="p-4 pt-0 space-y-3">
-                                                <div className="grid grid-cols-3 gap-3">
+                                            <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                                <div className="grid grid-cols-2 gap-3">
                                                     {dorms > 0 && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Dormitórios" 
                                                             checked={config.showBedrooms} 
                                                             onChange={(e) => setConfig({...config, showBedrooms: e.target.checked})} 
                                                         />
                                                     )}
                                                     {suites > 0 && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Suítes" 
                                                             checked={config.showSuites} 
                                                             onChange={(e) => setConfig({...config, showSuites: e.target.checked})} 
                                                         />
                                                     )}
                                                     {sacada && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Sacada" 
                                                             checked={config.showSacada} 
                                                             onChange={(e) => setConfig({...config, showSacada: e.target.checked})} 
                                                         />
                                                     )}
                                                     {escritorio && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Escritório" 
                                                             checked={config.showEscritorio} 
                                                             onChange={(e) => setConfig({...config, showEscritorio: e.target.checked})} 
                                                         />
                                                     )}
                                                     {dependencia && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Dependência" 
                                                             checked={config.showDependencia} 
                                                             onChange={(e) => setConfig({...config, showDependencia: e.target.checked})} 
                                                         />
                                                     )}
                                                     {vagas && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Vagas" 
                                                             checked={config.showVagas} 
                                                             onChange={(e) => setConfig({...config, showVagas: e.target.checked})} 
                                                         />
                                                     )}
                                                     {hobby && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Hobby Box" 
                                                             checked={config.showHobbyBox} 
                                                             onChange={(e) => setConfig({...config, showHobbyBox: e.target.checked})} 
                                                         />
                                                     )}
                                                     {areaPrivativa && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Área Privativa" 
                                                             checked={config.showAreaPrivativa} 
                                                             onChange={(e) => setConfig({...config, showAreaPrivativa: e.target.checked})} 
                                                         />
                                                     )}
                                                     {areaTotal && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Área Total" 
                                                             checked={config.showAreaTotal} 
                                                             onChange={(e) => setConfig({...config, showAreaTotal: e.target.checked})} 
                                                         />
                                                     )}
                                                     {obs && (
-                                                        <FormCheckbox 
+                                                        <FormCheckbox labelClassName="text-base" 
                                                             label="Observações" 
                                                             checked={config.showObservations} 
                                                             onChange={(e) => setConfig({...config, showObservations: e.target.checked})} 
@@ -1402,17 +1716,17 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('amenities')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.amenities ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Waves size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Área comum | Lazer</span>
+                                            <Waves size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Área comum | Lazer</span>
                                         </div>
-                                        {expandedSections.amenities ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        {expandedSections.amenities ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.amenities && (
-                                        <div className="p-4 pt-0 space-y-3">
-                                            <FormCheckbox 
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <FormCheckbox labelClassName="text-base" 
                                                 label="Incluir área de lazer" 
                                                 checked={config.showAmenities} 
                                                 onChange={(e) => setConfig({...config, showAmenities: e.target.checked})} 
@@ -1425,17 +1739,17 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('descricao')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.descricao ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <FileText size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Descrição</span>
+                                            <FileText size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Descrição</span>
                                         </div>
-                                        {expandedSections.descricao ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        {expandedSections.descricao ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.descricao && (
-                                        <div className="p-4 pt-0 space-y-3">
-                                            <FormCheckbox 
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <FormCheckbox labelClassName="text-base" 
                                                 label="Incluir descrição" 
                                                 checked={config.description === 'full'} 
                                                 onChange={(e) => setConfig({...config, description: e.target.checked ? 'full' : 'none'})} 
@@ -1448,17 +1762,17 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('responsavel')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.responsavel ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <UserCheck size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Responsável</span>
+                                            <UserCheck size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Responsável</span>
                                         </div>
-                                        {expandedSections.responsavel ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        {expandedSections.responsavel ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.responsavel && (
-                                        <div className="p-4 pt-0 space-y-3">
-                                            <FormCheckbox 
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <FormCheckbox labelClassName="text-base" 
                                                 label="Incluir dados do responsável" 
                                                 checked={config.showResponsavel} 
                                                 onChange={(e) => setConfig({...config, showResponsavel: e.target.checked})} 
@@ -1471,17 +1785,17 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                 <div className="">
                                     <button 
                                         onClick={() => toggleSection('construtora')}
-                                        className="w-full flex items-center justify-between p-4 hover:bg-muted/30 transition-colors"
+                                        className={`w-full flex items-center justify-between p-4 transition-colors ${expandedSections.construtora ? 'bg-muted/30 dark:bg-muted/15' : 'hover:bg-muted/20 dark:hover:bg-muted/30'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Building2 size={18} className="text-foreground" />
-                                            <span className="font-bold text-foreground">Proprietário | Construtora</span>
+                                            <Building2 size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <span className="font-bold text-foreground text-lg">Proprietário | Construtora</span>
                                         </div>
-                                        {expandedSections.construtora ? <ChevronUp size={18} /> : <ChevronDown size={18} />}
+                                        {expandedSections.construtora ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.construtora && (
-                                        <div className="p-4 pt-0 space-y-3">
-                                            <FormCheckbox 
+                                        <div className="p-4 bg-muted/15 dark:bg-muted/30 space-y-3 border-t border-border/40">
+                                            <FormCheckbox labelClassName="text-base" 
                                                 label="Incluir dados do proprietário/construtora" 
                                                 checked={config.showConstrutora} 
                                                 onChange={(e) => setConfig({...config, showConstrutora: e.target.checked})} 
@@ -1500,46 +1814,46 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                             <button
                                 onClick={() => handleSendEmail(selectedLead)}
                                 disabled={sending || isGeneratingPDF || !selectedLead.email}
-                                className="flex items-center gap-2 p-2.5 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
+                                className="flex items-center gap-2 p-3 rounded-lg bg-blue-500/10 border border-blue-500/20 hover:bg-blue-500/20 hover:border-blue-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
-                                <div className="w-7 h-7 rounded-full bg-blue-500/20 flex-shrink-0 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
-                                    <Mail size={14} />
+                                <div className="w-8 h-8 rounded-full bg-blue-500/20 flex-shrink-0 flex items-center justify-center text-blue-500 group-hover:scale-110 transition-transform">
+                                    <Mail size={16} />
                                 </div>
                                 <div className="overflow-hidden min-w-0 flex-1">
-                                    <p className="font-bold text-foreground text-xs truncate">E-mail</p>
-                                    <p className="text-[9px] text-foreground truncate">{selectedLead.email || 'Sem e-mail'}</p>
+                                    <p className="font-bold text-foreground text-sm truncate">E-mail</p>
+                                    <p className="text-xs text-foreground truncate">{selectedLead.email || 'Sem e-mail'}</p>
                                 </div>
                             </button>
 
                             <button
                                 onClick={() => handleSendWhatsApp(selectedLead)}
                                 disabled={sending || isGeneratingPDF || !selectedLead.phone}
-                                className="flex items-center gap-2 p-2.5 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
+                                className="flex items-center gap-2 p-3 rounded-lg bg-[#25D366]/10 border border-[#25D366]/20 hover:bg-[#25D366]/20 hover:border-[#25D366]/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left"
                             >
-                                <div className="w-7 h-7 rounded-full bg-[#25D366]/20 flex-shrink-0 flex items-center justify-center text-[#25D366] group-hover:scale-110 transition-transform">
-                                    <MessageCircle size={14} />
+                                <div className="w-8 h-8 rounded-full bg-[#25D366]/20 flex-shrink-0 flex items-center justify-center text-[#25D366] group-hover:scale-110 transition-transform">
+                                    <MessageCircle size={16} />
                                 </div>
                                 <div className="overflow-hidden min-w-0 flex-1">
-                                    <p className="font-bold text-foreground text-xs truncate">WhatsApp</p>
-                                    <p className="text-[9px] text-foreground truncate">{formatPhone(selectedLead.phone) || 'Sem telefone'}</p>
+                                    <p className="font-bold text-foreground text-sm truncate">WhatsApp</p>
+                                    <p className="text-xs text-foreground truncate">{formatPhone(selectedLead.phone) || 'Sem telefone'}</p>
                                 </div>
                             </button>
 
                             <button
                                 onClick={handleGeneratePDF}
                                 disabled={sending || isGeneratingPDF}
-                                className="flex items-center gap-2 p-2.5 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left cursor-pointer animate-in fade-in"
+                                className="flex items-center gap-2 p-3 rounded-lg bg-amber-500/10 border border-amber-500/20 hover:bg-amber-500/20 hover:border-amber-500/30 transition-all disabled:opacity-50 disabled:cursor-not-allowed group text-left cursor-pointer animate-in fade-in"
                             >
-                                <div className="w-7 h-7 rounded-full bg-amber-500/20 flex-shrink-0 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
+                                <div className="w-8 h-8 rounded-full bg-amber-500/20 flex-shrink-0 flex items-center justify-center text-amber-500 group-hover:scale-110 transition-transform">
                                     {isGeneratingPDF ? (
-                                        <Loader2 className="animate-spin" size={14} />
+                                        <Loader2 className="animate-spin" size={16} />
                                     ) : (
-                                        <FileDown size={14} />
+                                        <FileDown size={16} />
                                     )}
                                 </div>
                                 <div className="overflow-hidden min-w-0 flex-1">
-                                    <p className="font-bold text-foreground text-xs truncate">Gerar PDF</p>
-                                    <p className="text-[9px] text-foreground truncate">Ficha do imóvel</p>
+                                    <p className="font-bold text-foreground text-sm truncate">Gerar PDF</p>
+                                    <p className="text-xs text-foreground truncate">Ficha do imóvel</p>
                                 </div>
                             </button>
                         </div>

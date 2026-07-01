@@ -11,6 +11,7 @@ function ensureBrazilDDI(phone: string): string {
 
 /**
  * Sincroniza o avatar_url de um contato específico a partir do WhatsApp.
+ * (Forçando recompilação para atualizar imports do evolution.ts)
  * Retorna a URL da foto de perfil ou null se não encontrar.
  */
 export async function syncContactAvatar(contactId: string, tenantId: string): Promise<{ success: boolean; avatar_url: string | null }> {

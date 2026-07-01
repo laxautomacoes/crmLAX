@@ -32,7 +32,18 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
         }
 
         if (!response.ok) {
+            // Se for uma consulta de perfil de contato que não existe no WhatsApp,
+            // tratamos como um retorno limpo (sem foto de perfil) em vez de falha no sistema.
+            const isFetchProfile = url.includes('/chat/fetchProfile');
             const nestedMessage = data?.response?.message;
+            const isNumberNotExists = Array.isArray(nestedMessage) && 
+                nestedMessage.length > 0 && 
+                nestedMessage[0]?.exists === false;
+
+            if (isFetchProfile && response.status === 400 && isNumberNotExists) {
+                return { exists: false, ...nestedMessage[0] };
+            }
+
             let rawError = nestedMessage || data?.message || data?.error;
             if (rawError && typeof rawError === 'object') {
                 rawError = rawError.message || JSON.stringify(rawError);

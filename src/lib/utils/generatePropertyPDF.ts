@@ -1,5 +1,20 @@
 import { jsPDF } from 'jspdf'
 
+function getPropertyTypeName(type: string): string {
+    switch (type?.toLowerCase()) {
+        case 'apartment':
+            return 'Apto';
+        case 'house':
+            return 'Casa';
+        case 'land':
+            return 'Terreno';
+        case 'commercial':
+            return 'Loja';
+        default:
+            return 'Unidade';
+    }
+}
+
 interface PropertyDocument {
     name?: string
     url: string
@@ -63,6 +78,7 @@ interface SendConfig {
     showResponsavel: boolean;
     showConstrutora: boolean;
     selectedImages: string[];
+    selectedUnit?: any;
 }
 
 // Convert image URL to Base64
@@ -233,6 +249,23 @@ export async function generatePropertyPDF(params: {
         currentY += 5;
     }
 
+    if (config.selectedUnit) {
+        doc.setFont('helvetica', 'bold');
+        doc.setFontSize(18);
+        doc.setTextColor('#404F4F');
+        
+        const typeLabel = getPropertyTypeName(property.type);
+        let unitText = `${typeLabel}: ${config.selectedUnit.unit_number}`;
+        if (config.selectedUnit.block_tower) unitText += ` - Bloco/Torre: ${config.selectedUnit.block_tower}`;
+        if (config.selectedUnit.floor) unitText += ` - ${config.selectedUnit.floor}º Andar`;
+        
+        if (currentY + 24 > 790) {
+            addNewPage();
+        }
+        doc.text(unitText, margin, currentY);
+        currentY += 24;
+    }
+
     // 2. Address/Location
     if (config.location !== 'none') {
         const bairro = property.details?.endereco?.bairro || '';
@@ -288,38 +321,65 @@ export async function generatePropertyPDF(params: {
         currentY += 10;
     }
 
-    // 3. Valores
-    const hasPrice = config.price;
-    const hasCondo = config.showCondo && property.details?.valor_condominio;
-    const hasIptu = config.showIptu && property.details?.valor_iptu;
+    // 4. Informações
+    let dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'));
+    let suites = parseInt(String(property.details?.suites || '0'));
+    let banheiros = parseInt(String(property.details?.banheiros || '0'));
+    let vegasVal = parseInt(String(property.details?.vagas || '0'));
+    const posicaoSolar = property.details?.posicao_solar || property.details?.posicao || property.details?.solar || '';
+    
+    let hasSacadaChurras = property.details?.has_sacada_com_churrasqueira;
+    let hasSacadaSem = property.details?.has_sacada_sem_churrasqueira;
+    let hasLavabo = property.details?.has_lavabo;
+    let hasEscritorio = property.details?.has_escritorio;
+    let hasDependencia = property.details?.has_dependencia_empregada;
+    let hobbyBox = property.details?.hobby_box;
+    let hobbyBoxNum = property.details?.hobby_box_numeracao;
+    let areaPrivativa = property.details?.area_privativa;
+    let areaTotal = property.details?.area_total;
+    let tipologiaUnidade = '';
 
-    if (hasPrice || hasCondo || hasIptu) {
-        printSectionHeader('Valores');
+    if (config.selectedUnit) {
+        const unit = config.selectedUnit;
+        if (unit.area_privativa) {
+            areaPrivativa = Number(unit.area_privativa);
+        }
+        if (unit.area_total) {
+            areaTotal = Number(unit.area_total);
+        }
+        if (unit.garage_number) {
+            vegasVal = property.details?.vagas ? parseInt(String(property.details.vagas)) : 1;
+        }
+        if (unit.hobby_box) {
+            hobbyBox = 'Sim';
+            hobbyBoxNum = unit.hobby_box;
+        }
         
-        if (hasPrice) {
-            printBullet(`Imóvel: R$ ${new Intl.NumberFormat('pt-BR').format(property.price)}`);
-        }
-        if (hasCondo) {
-            const condoNum = parseFloat(String(property.details?.valor_condominio));
-            if (!isNaN(condoNum) && condoNum > 0) {
-                printBullet(`Condomínio: R$ ${new Intl.NumberFormat('pt-BR').format(condoNum)}`);
+        const secao = unit.extra_data?.secao || unit.extra_data?.tipologia;
+        if (secao) {
+            tipologiaUnidade = String(secao);
+            const textUpper = tipologiaUnidade.toUpperCase();
+            
+            if (textUpper.includes('SUÍTE') || textUpper.includes('SUITES')) {
+                const matchSuites = textUpper.match(/(\d+)\s*SUÍTE/i) || textUpper.match(/(\d+)\s*SUITES/i);
+                if (matchSuites) suites = parseInt(matchSuites[1]);
+                else if (textUpper.includes('UMA SUÍTE') || textUpper.includes('1 SUÍTE')) suites = 1;
             }
-        }
-        if (hasIptu) {
-            const iptuNum = parseFloat(String(property.details?.valor_iptu));
-            if (!isNaN(iptuNum) && iptuNum > 0) {
-                printBullet(`IPTU: R$ ${new Intl.NumberFormat('pt-BR').format(iptuNum)}`);
+            
+            if (textUpper.includes('DORMITÓRIO') || textUpper.includes('DORMITORIOS') || textUpper.includes('QUARTO')) {
+                const matchDorms = textUpper.match(/(\d+)\s*DORMITÓRIO/i) || textUpper.match(/(\d+)\s*DORMITORIOS/i) || textUpper.match(/(\d+)\s*QUARTO/i);
+                if (matchDorms) dorms = parseInt(matchDorms[1]);
+                else if (textUpper.includes('UM DORMITÓRIO') || textUpper.includes('1 DORMITÓRIO')) dorms = 1;
+            } else if (suites > 0) {
+                dorms = Math.max(dorms, suites);
+            }
+            
+            if (textUpper.includes('LAVABO')) {
+                hasLavabo = true;
             }
         }
     }
 
-    // 4. Informações
-    const dorms = parseInt(String(property.details?.dormitorios || property.details?.quartos || '0'));
-    const suites = parseInt(String(property.details?.suites || '0'));
-    const banheiros = parseInt(String(property.details?.banheiros || '0'));
-    const vegasVal = parseInt(String(property.details?.vagas || '0'));
-    const posicaoSolar = property.details?.posicao_solar || property.details?.posicao || property.details?.solar || '';
-    
     const showBedrooms = config.showBedrooms && dorms > 0;
     const showSuites = config.showSuites && suites > 0;
     const showAreaPrivativa = config.showAreaPrivativa;
@@ -331,25 +391,19 @@ export async function generatePropertyPDF(params: {
     const showDependencia = config.showDependencia;
     const showObservations = config.showObservations && property.details?.obs_dormitorios;
 
-    const hasSacadaChurras = property.details?.has_sacada_com_churrasqueira;
-    const hasSacadaSem = property.details?.has_sacada_sem_churrasqueira;
-    const hasLavabo = property.details?.has_lavabo;
-    const hasEscritorio = property.details?.has_escritorio;
-    const hasDependencia = property.details?.has_dependencia_empregada;
-    const hobbyBox = property.details?.hobby_box;
-    const hobbyBoxNum = property.details?.hobby_box_numeracao;
-    const areaPrivativa = property.details?.area_privativa;
-    const areaTotal = property.details?.area_total;
-
     // Condição para exibir a seção
     const hasAnyInfo = showBedrooms || showSuites || banheiros > 0 || posicaoSolar ||
         (showSacada && (hasSacadaChurras || hasSacadaSem)) ||
         hasLavabo || (showEscritorio && hasEscritorio) || (showDependencia && hasDependencia) ||
         showObservations || (showVagas && vegasVal > 0) || (showHobbyBox && (hobbyBox || hobbyBoxNum)) ||
-        (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal);
+        (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal) || !!tipologiaUnidade;
 
     if (hasAnyInfo) {
         printSectionHeader('Informações');
+        
+        if (tipologiaUnidade) {
+            printBullet(`Tipologia: ${tipologiaUnidade}`);
+        }
 
         // Dormitórios
         if (showBedrooms) {
@@ -364,6 +418,16 @@ export async function generatePropertyPDF(params: {
         // Banheiros
         if (banheiros > 0) {
             printBullet(`Banheiros: ${banheiros}`);
+        }
+
+        // Vagas (logo abaixo de Banheiros!)
+        if (showVagas) {
+            const vagaIdentificacao = (config.selectedUnit && config.selectedUnit.garage_number) 
+                ? config.selectedUnit.garage_number 
+                : (property.details?.vagas_numeracao || (vegasVal > 0 ? String(vegasVal) : ''));
+            if (vagaIdentificacao) {
+                printBullet(`Vaga: ${vagaIdentificacao}`);
+            }
         }
 
         // Posição solar
@@ -400,18 +464,14 @@ export async function generatePropertyPDF(params: {
             printBullet(`Observações: ${property.details?.obs_dormitorios}`);
         }
 
-        // ORDEM FINAL: Vagas, Hobby Box, Área Privativa, Área Total
-        
-        // Vagas
-        if (showVagas && vegasVal > 0) {
-            const descVagas = property.details?.vagas_numeracao ? `Vagas: ${vegasVal} (${property.details.vagas_numeracao})` : `Vagas: ${vegasVal}`;
-            printBullet(descVagas);
-        }
-
         // Hobby Box
-        if (showHobbyBox && (hobbyBox || hobbyBoxNum)) {
-            const descHB = hobbyBoxNum ? `Hobby Box: ${hobbyBox || 'Sim'} (${hobbyBoxNum})` : `Hobby Box: ${hobbyBox || 'Sim'}`;
-            printBullet(descHB);
+        if (showHobbyBox) {
+            const hbNum = (config.selectedUnit && config.selectedUnit.hobby_box) 
+                ? config.selectedUnit.hobby_box 
+                : (hobbyBoxNum || (hobbyBox !== 'Sim' ? hobbyBox : ''));
+            if (hbNum) {
+                printBullet(`Hobby Box: ${hbNum}`);
+            }
         }
 
         // Área Privativa
@@ -420,8 +480,61 @@ export async function generatePropertyPDF(params: {
         }
 
         // Área Total
-        if (showAreaTotal && areaTotal) {
+        if (showAreaTotal && areaTotal && parseFloat(String(areaTotal)) > 0) {
             printBullet(`Área total: ${areaTotal} m²`);
+        }
+    }
+
+    // 3. Valor (Abaixo de Informações!)
+    const hasPrice = config.price;
+    const hasCondo = config.showCondo && property.details?.valor_condominio;
+    const hasIptu = config.showIptu && property.details?.valor_iptu;
+    const hasPaymentCond = config.selectedUnit && (config.selectedUnit.valor_ato || config.selectedUnit.valor_mensais || config.selectedUnit.valor_reforcos || config.selectedUnit.valor_chaves || config.selectedUnit.soma_poupanca || config.selectedUnit.valor_financiamento);
+
+    if (hasPrice || hasCondo || hasIptu || hasPaymentCond || (config.selectedUnit && config.selectedUnit.valor_total)) {
+        printSectionHeader('Valor');
+        
+        if (config.selectedUnit) {
+            if (config.selectedUnit.valor_total) {
+                printBullet(`Valor da Unidade: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_total))}`);
+            }
+            if (hasPaymentCond) {
+                printBullet('Condições de Pagamento:');
+                if (config.selectedUnit.valor_ato) {
+                    printBullet(`  • Ato: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_ato))}`);
+                }
+                if (config.selectedUnit.valor_mensais) {
+                    printBullet(`  • Mensais: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_mensais))}`);
+                }
+                if (config.selectedUnit.valor_reforcos) {
+                    printBullet(`  • Reforços: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_reforcos))}`);
+                }
+                if (config.selectedUnit.valor_chaves) {
+                    printBullet(`  • Chaves: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_chaves))}`);
+                }
+                if (config.selectedUnit.soma_poupanca) {
+                    printBullet(`  • Valor até a entrega: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.soma_poupanca))}`);
+                }
+                if (config.selectedUnit.valor_financiamento) {
+                    printBullet(`  • Saldo pós-entrega / Financiamento construtora: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_financiamento))}`);
+                }
+            }
+        } else if (hasPrice) {
+            printBullet(`Imóvel: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(property.price)}`);
+        }
+        
+        if (hasCondo) {
+            const condoNum = parseFloat(String(property.details?.valor_condominio));
+            if (!isNaN(condoNum) && condoNum > 0) {
+                printBullet(`Condomínio: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(condoNum)}`);
+            }
+        }
+        
+        if (hasIptu) {
+            const iptuNum = parseFloat(String(property.details?.valor_iptu));
+            if (!isNaN(iptuNum) && iptuNum > 0) {
+                printBullet(`IPTU: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(iptuNum)}`);
+            }
         }
     }
 

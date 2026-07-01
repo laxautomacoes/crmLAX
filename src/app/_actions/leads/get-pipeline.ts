@@ -139,3 +139,50 @@ export async function getPipelineData(tenantId: string) {
         data: { stages, leads: formattedLeads }
     }
 }
+
+export async function getSimpleLeads(tenantId: string) {
+    const supabase = await createClient()
+    const { profile } = await getProfile()
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+
+    let query = supabase
+        .from('leads')
+        .select(`
+            id,
+            contact_id,
+            assigned_to,
+            contacts!inner (
+                name, phone, email, avatar_url
+            )
+        `)
+        .eq('tenant_id', tenantId)
+        .eq('is_archived', false)
+        .order('last_interaction_at', { ascending: false, nullsFirst: false })
+
+    if (!isAdmin && profile?.id) {
+        query = query.eq('assigned_to', profile.id)
+    }
+
+    const { data: leads, error } = await query
+
+    if (error) {
+        console.error('Error fetching simple leads:', error)
+        return { success: false, error: error.message, data: [] }
+    }
+
+    const formattedLeads = (leads || []).map((lead: any) => ({
+        id: lead.id,
+        contact_id: lead.contact_id,
+        name: lead.contacts?.name || 'Sem nome',
+        phone: lead.contacts?.phone || '',
+        email: lead.contacts?.email || '',
+        avatar_url: lead.contacts?.avatar_url || null,
+        assigned_to: lead.assigned_to
+    }))
+
+    return {
+        success: true,
+        data: formattedLeads
+    }
+}
+
