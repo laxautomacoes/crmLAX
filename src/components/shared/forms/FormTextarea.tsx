@@ -1,6 +1,7 @@
 'use client'
 
 import { TextareaHTMLAttributes, useEffect, useRef } from 'react'
+import { FormLabel } from './FormLabel'
 
 interface FormTextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string
@@ -28,9 +29,9 @@ export function FormTextarea({ label, error, className = '', autoExpand = false,
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-sm font-bold text-foreground ml-1 mb-1">
+                <FormLabel>
                     {label}
-                </label>
+                </FormLabel>
             )}
             <textarea
                 ref={textareaRef}

@@ -2,6 +2,7 @@
 
 import { SelectHTMLAttributes } from 'react'
 import { ChevronDown, LucideIcon } from 'lucide-react'
+import { FormLabel } from './FormLabel'
 
 interface FormSelectProps extends SelectHTMLAttributes<HTMLSelectElement> {
     label?: string
@@ -16,9 +17,9 @@ export function FormSelect({ label, error, icon: Icon, iconSize = 18, roundedCla
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-xs font-bold text-foreground ml-1 mb-2">
+                <FormLabel>
                     {label}
-                </label>
+                </FormLabel>
             )}
             <div className="relative">
                 {Icon && (

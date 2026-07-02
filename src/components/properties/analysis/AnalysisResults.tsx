@@ -109,7 +109,7 @@ function SingleResult({ data, neighborhood, formatCurrency }: { data: MarketAnal
                                     contentStyle={{ 
                                         backgroundColor: 'var(--card)', 
                                         borderColor: 'var(--border)',
-                                        borderRadius: '12px',
+                                        borderRadius: '4px',
                                         fontSize: '12px',
                                         fontWeight: 'bold',
                                         color: 'var(--foreground)'
@@ -120,7 +120,7 @@ function SingleResult({ data, neighborhood, formatCurrency }: { data: MarketAnal
                                 />
                                 <Bar 
                                     dataKey="averageValue" 
-                                    radius={[6, 6, 0, 0]} 
+                                    radius={[4, 4, 0, 0]} 
                                     barSize={40}
                                     activeBar={{ fillOpacity: 1, stroke: 'var(--foreground)', strokeWidth: 2 }}
                                 >
@@ -325,7 +325,7 @@ function ComparisonResults({ entries, formatCurrency }: { entries: ComparisonEnt
                                 contentStyle={{ 
                                     backgroundColor: 'var(--card)', 
                                     borderColor: 'var(--border)',
-                                    borderRadius: '12px',
+                                    borderRadius: '4px',
                                     fontSize: '12px',
                                     fontWeight: 'bold',
                                     color: 'var(--foreground)'
@@ -349,7 +349,7 @@ function ComparisonResults({ entries, formatCurrency }: { entries: ComparisonEnt
                                     key={i}
                                     dataKey={`bairro_${i}`} 
                                     fill={entry.color}
-                                    radius={[6, 6, 0, 0]} 
+                                    radius={[4, 4, 0, 0]} 
                                     barSize={Math.max(20, 40 / entries.length)}
                                 />
                             ))}

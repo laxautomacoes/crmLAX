@@ -16,7 +16,7 @@ export function markdownToHtml(md: string): string {
         .replace(/^- (.*$)/gm, '<ul><li>$1</li></ul>')
         .replace(/^1\. (.*$)/gm, '<ol><li>$1</li></ol>')
         .replace(/<color:\s*([^>]+?)\s*>(.*?)<\/color>/g, '<span style="color: $1">$2</span>')
-        .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 8px;" />')
+        .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 4px;" />')
         .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank">$1</a>')
         .replace(/\n/g, '<br>')
     

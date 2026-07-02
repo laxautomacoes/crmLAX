@@ -168,7 +168,7 @@ export default function AgendaPage() {
     }
 
     return (
-        <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
+        <div className="max-w-[1600px] mx-auto h-auto md:h-[calc(100vh-80px)] pb-2 md:overflow-hidden flex flex-col space-y-4 md:space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader 
                 title="Agenda"
                 subtitle="Gerencie seus compromissos, visitas e plantões de venda."

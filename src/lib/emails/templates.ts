@@ -46,8 +46,8 @@ export function markdownToEmailHtml(md: string, settings?: EmailSettings): strin
         .replace(/^## (.*$)/gm, '<h2>$1</h2>')
         .replace(/^# (.*$)/gm, '<h1>$1</h1>')
         // Links & Images
-        .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 8px; margin: 10px 0; display: block;">')
-        .replace(/\[(.*?)\]\((.*?)\)#button/g, `<div style="text-align: center; margin: 24px 0;"><a href="$2" class="button" style="background-color: ${primaryColor}; color: #000000 !important; padding: 14px 28px; text-decoration: none; border-radius: 8px; font-weight: bold; display: inline-block;">$1</a></div>`)
+        .replace(/!\[(.*?)\]\((.*?)\)/g, '<img src="$2" alt="$1" style="max-width: 100%; border-radius: 4px; margin: 10px 0; display: block;">')
+        .replace(/\[(.*?)\]\((.*?)\)#button/g, `<div style="text-align: center; margin: 24px 0;"><a href="$2" class="button" style="background-color: ${primaryColor}; color: #000000 !important; padding: 14px 28px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">$1</a></div>`)
         .replace(/\[(.*?)\]\((.*?)\)/g, '<a href="$2" target="_blank" style="color: #3b82f6; text-decoration: underline;">$1</a>')
         // Color
         .replace(/<color:\s*([^>]+?)\s*>(.*?)<\/color>/g, '<span style="color: $1">$2</span>')
@@ -96,7 +96,7 @@ function getBaseLayout(content: string, settings?: EmailSettings) {
                 .container { max-width: 600px; margin: 0 auto; padding: 40px 20px; }
                 .card { 
                     background-color: #ffffff; 
-                    border-radius: 16px; 
+                    border-radius: 4px; 
                     border: 1px solid #f0f0f0; 
                     padding: 40px; 
                 }
@@ -105,7 +105,7 @@ function getBaseLayout(content: string, settings?: EmailSettings) {
                     color: #000000 !important; 
                     padding: 14px 28px; 
                     text-decoration: none; 
-                    border-radius: 8px; 
+                    border-radius: 4px; 
                     font-weight: bold; 
                     display: inline-block; 
                     margin: 24px 0; 
@@ -228,7 +228,7 @@ export function getSuspensionEmailTemplate(tenantName: string, settings?: EmailS
         bodyContent = `
             <h2 style="margin-top: 0; color: #EF4444;">Acesso Suspenso</h2>
             <p>Informamos que o acesso da empresa <strong>${tenantName}</strong> ao CRM LAX foi suspenso temporariamente por decisão administrativa.</p>
-            <div style="background: #FFF8F1; padding: 20px; border-radius: 12px; margin: 24px 0; border-left: 4px solid #F59E0B;">
+            <div style="background: #FFF8F1; padding: 20px; border-radius: 4px; margin: 24px 0; border-left: 4px solid #F59E0B;">
                 <p style="margin: 0; color: #B45309; font-size: 14px;"><strong>O que isso significa?</strong></p>
                 <ul style="margin: 8px 0 0 0; color: #B45309; font-size: 14px; padding-left: 20px;">
                     <li>O acesso ao painel está pausado.</li>
@@ -331,7 +331,7 @@ export function getPropertyEmail(property: any, propertyUrl: string, config: any
     }
 
     const bodyContent = `
-        <div style="margin-bottom: 24px; border-radius: 12px; overflow: hidden; background: #f9f9f9;">
+        <div style="margin-bottom: 24px; border-radius: 4px; overflow: hidden; background: #f9f9f9;">
             ${displayImages[0] ? `<img src="${displayImages[0]}" style="width: 100%; height: 300px; object-fit: cover;" />` : ''}
         </div>
 
@@ -374,7 +374,7 @@ export function getPropertyEmail(property: any, propertyUrl: string, config: any
         ` : ''}
 
         ${(config?.price !== false || config?.selectedUnit) ? `
-            <div style="margin-bottom: 24px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 8px; background: #f9fafb;">
+            <div style="margin-bottom: 24px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 4px; background: #f9fafb;">
                 <h2 style="font-size: 14px; color: #404F4F; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px 0; font-weight: 800;">Valor</h2>
                 ${config?.selectedUnit ? `
                     <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: bold; color: ${settings.highlight_color || '#404F4F'};">
@@ -415,7 +415,7 @@ export function getPropertyEmail(property: any, propertyUrl: string, config: any
         ` : ''}
 
         <div style="text-align: center; margin: 32px 0;">
-            <a href="${propertyUrl}" style="background-color: ${settings.highlight_color || '#000'}; color: #fff; padding: 16px 32px; text-decoration: none; border-radius: 12px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+            <a href="${propertyUrl}" style="background-color: ${settings.highlight_color || '#000'}; color: #fff; padding: 16px 32px; text-decoration: none; border-radius: 4px; display: inline-block; font-weight: bold; font-size: 16px; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
                 Ver ficha completa no site
             </a>
         </div>

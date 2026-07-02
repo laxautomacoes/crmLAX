@@ -229,7 +229,7 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
             const result = await onUpload(file)
             if (result && typeof result === 'string') {
                 if (file.type.startsWith('image/')) {
-                    insertHtmlAtCursor(`<img src="${result}" style="max-width: 100%; border-radius: 8px; margin: 10px 0;" />`)
+                    insertHtmlAtCursor(`<img src="${result}" style="max-width: 100%; border-radius: 4px; margin: 10px 0;" />`)
                 } else {
                     insertHtmlAtCursor(`<a href="${result}" target="_blank" style="color: #3b82f6; text-decoration: underline;">📎 ${file.name}</a>`)
                 }
@@ -506,7 +506,7 @@ export function FormRichTextarea({ label, value, onChange, placeholder, error, c
                                                                 {attachments.images.slice(-8).map((url, i) => (
                                                                     <button
                                                                         key={i}
-                                                                        onClick={() => insertHtmlAtCursor(`<img src="${url}" style="max-width: 100%; border-radius: 8px; margin: 10px 0;" />`)}
+                                                                        onClick={() => insertHtmlAtCursor(`<img src="${url}" style="max-width: 100%; border-radius: 4px; margin: 10px 0;" />`)}
                                                                         className="aspect-square bg-muted rounded-md overflow-hidden border border-border hover:border-secondary transition-all"
                                                                     >
                                                                         <img src={url} alt="" className="w-full h-full object-cover" />

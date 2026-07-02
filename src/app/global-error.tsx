@@ -38,7 +38,7 @@ export default function GlobalError({
                         <pre style={{ 
                             background: '#1a1a1a', 
                             padding: '1rem', 
-                            borderRadius: '8px', 
+                            borderRadius: '4px', 
                             fontSize: '12px', 
                             maxWidth: '600px', 
                             overflow: 'auto',
@@ -58,7 +58,7 @@ export default function GlobalError({
                             backgroundColor: '#FFE600',
                             color: '#404F4F',
                             border: 'none',
-                            borderRadius: '8px',
+                            borderRadius: '4px',
                             fontWeight: 'bold',
                             cursor: 'pointer',
                             fontSize: '14px'

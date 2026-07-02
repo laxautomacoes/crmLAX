@@ -91,7 +91,7 @@ export default function PropertyMapInner({
     const containerStyle = useMemo(() => ({
         width: '100%',
         height: '300px',
-        borderRadius: '1rem',
+        borderRadius: '4px',
     }), [])
 
     return (

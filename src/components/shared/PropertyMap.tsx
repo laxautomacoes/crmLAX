@@ -13,7 +13,7 @@ export interface PropertyMapProps {
     zoom?: number
 }
 
-const containerStyle = { width: '100%', height: '300px', borderRadius: '1rem' }
+const containerStyle = { width: '100%', height: '300px', borderRadius: '4px' }
 
 // Carregamento dinâmico (Leaflet precisa do DOM)
 const PropertyMapInner = dynamic(

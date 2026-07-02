@@ -56,7 +56,7 @@ export default function LeadsEvolutionChart({ data }: LeadsEvolutionChartProps) 
                             contentStyle={{
                                 backgroundColor: 'var(--card)',
                                 borderColor: 'var(--border)',
-                                borderRadius: '8px',
+                                borderRadius: '4px',
                                 color: 'var(--foreground)'
                             }}
                             itemStyle={{ color: 'var(--foreground)' }}

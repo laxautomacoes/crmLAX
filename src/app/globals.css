@@ -39,7 +39,7 @@ html {
   --border: #CBD5E1;
   --input: #F9FAFB;
   --ring: #404F4F;
-  --radius: 0.5rem;
+  --radius: 0.25rem;
   --accent-icon: #404F4F;
   --sidebar: #404F4F;
   --sidebar-foreground: #FFFFFF;
@@ -107,8 +107,11 @@ html {
   --color-sidebar-foreground: var(--sidebar-foreground);
   --color-accent-icon: var(--accent-icon);
   --radius-lg: var(--radius);
-  --radius-md: calc(var(--radius) - 2px);
-  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: var(--radius);
+  --radius-sm: calc(var(--radius) - 2px);
+  --radius-xl: var(--radius);
+  --radius-2xl: var(--radius);
+  --radius-3xl: var(--radius);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 
@@ -623,24 +626,24 @@ input[type="range"]::-moz-range-thumb:hover {
 }
 
 /* ═══════════════════════════════════════════════
-   SITE VITRINE — Customização de Arredondamento (Border Radius)
+   SITE — Customização de Arredondamento (Border Radius)
    Mapeia os tokens do Tailwind v4 para as variáveis dinâmicas do tema.
    ═══════════════════════════════════════════════ */
 .site-themed {
   --radius-xs: var(--site-radius-sm, 4px);
-  --radius-sm: var(--site-radius-sm, 6px);
-  --radius-md: var(--site-radius, 8px);
-  --radius-lg: var(--site-radius-lg, 12px);
-  --radius-xl: var(--site-radius-lg, 12px);
-  --radius-2xl: var(--site-radius-lg, 12px);
-  --radius-3xl: var(--site-radius-lg, 12px);
+  --radius-sm: var(--site-radius-sm, 4px);
+  --radius-md: var(--site-radius, 6px);
+  --radius-lg: var(--site-radius-lg, 8px);
+  --radius-xl: var(--site-radius-lg, 8px);
+  --radius-2xl: var(--site-radius-lg, 8px);
+  --radius-3xl: var(--site-radius-lg, 8px);
 }
 
 /* ═══════════════════════════════════════════════
    PADRONIZAÇÃO GLOBAL DE BOTÕES (EXCETO HEADERS)
    Aplica a todos os botões de ação o estilo do botão FLUXO.
    ═══════════════════════════════════════════════ */
-button:not(.page-header button):not(header button):not(.sidebar button):not([role="tab"]):not([role="menuitem"]):not(.avatar-button):not(.close-button):not([class*="rounded-full"]):is(.bg-secondary, .bg-primary, .bg-destructive, .bg-red-600, .border-border, [class*="border-"]) {
+button:not(.page-header button):not(header button):not(.sidebar button):not([role="tab"]):not([role="menuitem"]):not(.avatar-button):not(.close-button):not([class*="rounded-full"]):not([role="dialog"] button):not([class*="modal"] button):is(.bg-secondary, .bg-primary, .bg-destructive, .bg-red-600, .border-border, [class*="border-"]) {
   border-radius: 0.25rem !important; /* rounded (4px) */
   font-size: 10px !important; /* text-[10px] */
   font-weight: 700 !important; /* font-bold */

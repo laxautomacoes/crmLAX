@@ -42,7 +42,7 @@ export default function LeadsBySourceChart({ data }: LeadsBySourceChartProps) {
                             contentStyle={{
                                 backgroundColor: 'var(--card)',
                                 borderColor: 'var(--border)',
-                                borderRadius: '8px',
+                                borderRadius: '4px',
                                 color: 'var(--foreground)'
                             }}
                             itemStyle={{ color: 'var(--foreground)' }}

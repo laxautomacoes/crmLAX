@@ -55,7 +55,7 @@ export function AIUsageChart({ data }: ChartProps) {
                         />
                         <Tooltip 
                             contentStyle={{ 
-                                borderRadius: '16px', 
+                                borderRadius: '4px', 
                                 border: '1px solid var(--border)', 
                                 backgroundColor: 'var(--card)',
                                 color: 'var(--foreground)',

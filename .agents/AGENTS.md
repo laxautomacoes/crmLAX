@@ -55,7 +55,7 @@ Leia antes de qualquer implementação para garantir consistência visual em tod
 
 ## 3. Arredondamentos e Bordas
 
-- **Cards e Containers Principais**: `rounded-lg` (8px). Nunca `rounded-3xl` ou `rounded-xl` sem autorização.
+- **Cards e Containers Principais**: `rounded-lg` (4px). Nunca `rounded-3xl` ou `rounded-xl` sem autorização.
 - **Inputs**: `rounded-lg`.
 - **Botões**: `rounded-lg`.
 - **Modais e Overlays**: `rounded-lg`.
@@ -208,6 +208,7 @@ Estrutura obrigatória:
 - Container: `<div className="flex flex-col">` — nunca `space-y-2` no pai (componentes Headless UI invisíveis quebram esse padrão).
 - Espaçamento direto no label: `<label className="text-xs font-bold text-foreground ml-1 mb-2">`.
 - Distância padrão: `mb-2`.
+- **Unificação e Coesão**: Todos os componentes de entrada compartilhados (`FormInput`, `FormSelect`, `FormTextarea`) devem aplicar obrigatoriamente a mesma estilização para seus labels: `text-xs font-bold text-foreground ml-1 mb-2`. É proibida qualquer discrepância de fonte ou margem inferior entre eles.
 
 ### Upload / Dropzones
 
@@ -240,9 +241,10 @@ Estrutura obrigatória:
 
 ## 12. View Toggle (Lista / Grid)
 
-- **Botão ativo**: `bg-secondary text-secondary-foreground`.
+- **Botão ativo**: `bg-secondary text-secondary-foreground`. O botão ativo deve preencher todo o espaço vertical e lateral destinado a ele na barra, sem margens ou paddings internos no container.
 - **Botão inativo**: `text-muted-foreground hover:bg-muted`.
-- **Container**: `bg-card border border-border rounded-lg p-1 shadow-sm`.
+- **Container**: `bg-card border border-border rounded-lg overflow-hidden shadow-sm flex items-center p-0`. Os botões internos devem preencher 100% da altura da barra, e o arredondamento das pontas é herdado do container por meio da propriedade `overflow-hidden`.
+
 
 ---
 

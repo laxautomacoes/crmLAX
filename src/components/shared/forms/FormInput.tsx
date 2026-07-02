@@ -3,6 +3,8 @@
 import { InputHTMLAttributes } from 'react'
 import { LucideIcon, Calendar, X } from 'lucide-react'
 
+import { FormLabel } from './FormLabel'
+
 interface FormInputProps extends InputHTMLAttributes<HTMLInputElement> {
     label?: React.ReactNode
     error?: string
@@ -36,9 +38,9 @@ export function FormInput({ label, error, icon: Icon, iconSize = 14, iconStrokeW
     return (
         <div className="w-full">
             {label && (
-                <label className="block text-xs font-bold text-foreground ml-1 mb-2">
+                <FormLabel>
                     {label}
-                </label>
+                </FormLabel>
             )}
             <div className="relative">
                 {Icon && (

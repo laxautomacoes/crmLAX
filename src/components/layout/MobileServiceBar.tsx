@@ -23,7 +23,7 @@ function SyncButtonMobile() {
         <button
             onClick={syncData}
             disabled={isSyncing}
-            style={{ 
+            style={{
                 backgroundColor: isSyncedRecently && !isSyncing ? '#3EBC79' : 'var(--secondary)',
                 borderColor: isSyncedRecently && !isSyncing ? '#3EBC79' : 'var(--secondary)',
                 color: isSyncedRecently && !isSyncing ? '#FFFFFF' : 'var(--secondary-foreground)'
@@ -85,9 +85,9 @@ export function MobileServiceBar() {
                 </p>
             )}
             <div className="flex items-center justify-center flex-wrap gap-3">
-                <ServiceQueueToggle 
-                    initialStatus={profile?.is_active_for_service} 
-                    tenantId={profile?.tenant_id} 
+                <ServiceQueueToggle
+                    initialStatus={profile?.is_active_for_service}
+                    tenantId={profile?.tenant_id}
                     companyName={companyName}
                 />
                 <SyncButtonMobile />

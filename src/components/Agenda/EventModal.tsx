@@ -8,6 +8,7 @@ import { FormSelect } from '@/components/shared/forms/FormSelect';
 import { FormTextarea } from '@/components/shared/forms/FormTextarea';
 import { format, addHours, startOfHour } from 'date-fns';
 import { toast } from 'sonner';
+import { ConfirmModal } from '@/components/shared/ConfirmModal';
 
 interface EventModalProps {
     isOpen: boolean;
@@ -40,6 +41,7 @@ export default function EventModal({
         property_id: '',
         metadata: {}
     });
+    const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
 
     useEffect(() => {
         if (editingEvent && isOpen) {
@@ -234,12 +236,8 @@ export default function EventModal({
                 <div className="flex gap-3 pt-4">
                     {editingEvent && onDelete && (
                         <button
-                            onClick={() => {
-                                if (confirm('Tem certeza que deseja excluir este compromisso?')) {
-                                    onDelete(editingEvent.id);
-                                }
-                            }}
-                            className="px-6 py-3 bg-[#EF4444] text-white rounded-lg font-bold hover:bg-[#DC2626] transition-all active:scale-[0.99] shadow-sm"
+                            onClick={() => setShowDeleteConfirm(true)}
+                            className="flex-1 py-3 bg-[#EF4444] text-white rounded-lg font-bold hover:bg-[#DC2626] transition-all active:scale-[0.99] shadow-sm"
                         >
                             Excluir
                         </button>
@@ -260,6 +258,28 @@ export default function EventModal({
                     )}
                 </div>
             </div>
+
+            {editingEvent && onDelete && (
+                <ConfirmModal
+                    isOpen={showDeleteConfirm}
+                    title="Excluir Compromisso"
+                    message={
+                        <span className="block leading-relaxed">
+                            Tem certeza que deseja excluir este compromisso?
+                            <span className="block text-red-500 font-bold mt-1">Esta ação não poderá ser desfeita.</span>
+                        </span>
+                    }
+                    confirmLabel="Excluir"
+                    cancelLabel="Cancelar"
+                    onConfirm={() => {
+                        onDelete(editingEvent.id);
+                        setShowDeleteConfirm(false);
+                        onClose();
+                    }}
+                    onCancel={() => setShowDeleteConfirm(false)}
+                    zIndex={60}
+                />
+            )}
         </Modal>
     );
 }

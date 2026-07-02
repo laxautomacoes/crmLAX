@@ -60,7 +60,7 @@ export function GrowthChart({ data }: GrowthChartProps) {
           <Tooltip 
             contentStyle={{ 
               backgroundColor: '#fff', 
-              borderRadius: '12px', 
+              borderRadius: '4px', 
               border: '1px solid #e2e8f0',
               boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)',
               fontSize: '12px',
