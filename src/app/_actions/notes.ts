@@ -11,7 +11,7 @@ export async function getNotes(tenantId: string) {
     try {
         const { data, error } = await supabase
             .from('notes')
-            .select('*, profiles:profile_id(full_name), leads:lead_id(contacts!inner(name)), properties:property_id(title)')
+            .select('*, profiles:profile_id(full_name), leads:lead_id(contacts!inner(name)), properties:property_id(id, title, type, slug)')
             .eq('tenant_id', tenantId)
             .eq('profile_id', profile?.id)
             .order('date', { ascending: false })
@@ -31,7 +31,7 @@ export async function getNotesByLeadId(leadId: string) {
     try {
         const { data, error } = await supabase
             .from('notes')
-            .select('*, profiles:profile_id(full_name)')
+            .select('*, profiles:profile_id(full_name), properties:property_id(id, title, type, slug)')
             .eq('lead_id', leadId)
             .order('created_at', { ascending: false })
 
@@ -49,7 +49,7 @@ export async function getNotesByContactId(contactId: string) {
     try {
         const { data, error } = await supabase
             .from('notes')
-            .select('*, profiles:profile_id(full_name)')
+            .select('*, profiles:profile_id(full_name), properties:property_id(id, title, type, slug)')
             .eq('contact_id', contactId)
             .order('created_at', { ascending: false })
 

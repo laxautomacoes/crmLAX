@@ -207,10 +207,18 @@ export const createNoteSchema = z.object({
     content: z.string().min(1).max(10000),
     lead_id: optionalUuid,
     property_id: optionalUuid,
+    contact_id: optionalUuid,
+    is_visit: z.boolean().optional(),
+    visit_number: z.number().int().optional().nullable(),
+    visit_unregistered_property: z.string().optional().nullable(),
 })
 
 export const updateNoteSchema = z.object({
-    content: z.string().min(1).max(10000),
+    content: z.string().min(1).max(10000).optional(),
+    property_id: optionalUuid,
+    is_visit: z.boolean().optional(),
+    visit_number: z.number().int().optional().nullable(),
+    visit_unregistered_property: z.string().optional().nullable(),
 })
 
 // ============================================================

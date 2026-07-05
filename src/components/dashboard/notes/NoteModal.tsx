@@ -28,11 +28,16 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
         property_id: null as string | null,
         attachments: [] as any[],
         selectedLead: null as any,
-        selectedProperty: null as any
+        selectedProperty: null as any,
+        is_visit: false,
+        visit_number: 1,
+        visit_unregistered_property: '',
+        isRegisteredProperty: true
     })
 
     useEffect(() => {
         if (editingNote && isOpen) {
+            const hasRegisteredProperty = !!editingNote.property_id || !editingNote.visit_unregistered_property
             setFormData({
                 content: editingNote.content || '',
                 date: editingNote.date || new Date().toISOString().split('T')[0],
@@ -40,7 +45,11 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
                 property_id: editingNote.property_id || null,
                 attachments: editingNote.attachments || [],
                 selectedLead: editingNote.leads || null,
-                selectedProperty: editingNote.properties || null
+                selectedProperty: editingNote.properties || null,
+                is_visit: editingNote.is_visit || false,
+                visit_number: editingNote.visit_number || 1,
+                visit_unregistered_property: editingNote.visit_unregistered_property || '',
+                isRegisteredProperty: hasRegisteredProperty
             })
         } else {
             setFormData({
@@ -50,7 +59,11 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
                 property_id: null,
                 attachments: [],
                 selectedLead: null,
-                selectedProperty: null
+                selectedProperty: null,
+                is_visit: false,
+                visit_number: 1,
+                visit_unregistered_property: '',
+                isRegisteredProperty: true
             })
         }
     }, [editingNote, isOpen])
@@ -60,12 +73,18 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
 
         setIsLoading(true)
         try {
-            const dataToSave = {
+            const dataToSave: any = {
                 content: formData.content,
                 date: formData.date,
                 lead_id: formData.lead_id,
-                property_id: formData.property_id,
-                attachments: formData.attachments
+                property_id: (formData.is_visit && formData.isRegisteredProperty) ? formData.property_id : (!formData.is_visit ? formData.property_id : null),
+                attachments: formData.attachments,
+                is_visit: formData.is_visit,
+                visit_number: formData.is_visit ? formData.visit_number : null,
+                visit_unregistered_property: (formData.is_visit && !formData.isRegisteredProperty) ? formData.visit_unregistered_property.trim() : null
+            }
+            if (formData.selectedLead) {
+                dataToSave.contact_id = formData.selectedLead.contact_id || null
             }
 
             const result = editingNote 
@@ -135,6 +154,77 @@ export function NoteModal({ isOpen, onClose, editingNote, tenantId, onSaveSucces
                         />
                     </div>
                 </div>
+
+                {formData.lead_id && (
+                    <div className="space-y-4 bg-muted/20 p-4 rounded-lg border border-border/50 animate-in fade-in slide-in-from-top-1 duration-200">
+                        <div className="flex items-center gap-2">
+                            <input
+                                type="checkbox"
+                                id="note-is-visit-checkbox"
+                                checked={formData.is_visit}
+                                onChange={(e) => setFormData(prev => ({ ...prev, is_visit: e.target.checked }))}
+                                className="rounded border-muted-foreground/30 text-secondary focus:ring-secondary cursor-pointer h-4 w-4"
+                            />
+                            <label htmlFor="note-is-visit-checkbox" className="text-xs font-bold text-foreground cursor-pointer select-none">
+                                Registrar como Visita
+                            </label>
+                        </div>
+
+                        {formData.is_visit && (
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="flex flex-col">
+                                    <label className="text-xs font-bold text-foreground ml-1 mb-2">Visita</label>
+                                    <select
+                                        value={formData.visit_number}
+                                        onChange={(e) => setFormData(prev => ({ ...prev, visit_number: Number(e.target.value) }))}
+                                        className="h-[38px] w-full bg-background border border-muted-foreground/30 rounded-lg px-3 text-sm text-foreground outline-none focus:border-primary transition-colors"
+                                    >
+                                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                                            <option key={num} value={num}>{num}ª Visita</option>
+                                        ))}
+                                    </select>
+                                </div>
+
+                                <div className="flex flex-col">
+                                    <label className="text-xs font-bold text-foreground ml-1 mb-2">Tipo de Imóvel</label>
+                                    <div className="flex items-center gap-4 h-[38px]">
+                                        <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
+                                            <input
+                                                type="radio"
+                                                name="notePropertyType"
+                                                checked={formData.isRegisteredProperty}
+                                                onChange={() => setFormData(prev => ({ ...prev, isRegisteredProperty: true }))}
+                                                className="text-secondary focus:ring-secondary h-4 w-4"
+                                            />
+                                            Cadastrado (Selecionado acima)
+                                        </label>
+                                        <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
+                                            <input
+                                                type="radio"
+                                                name="notePropertyType"
+                                                checked={!formData.isRegisteredProperty}
+                                                onChange={() => setFormData(prev => ({ ...prev, isRegisteredProperty: false }))}
+                                                className="text-secondary focus:ring-secondary h-4 w-4"
+                                            />
+                                            Não Cadastrado
+                                        </label>
+                                    </div>
+                                </div>
+
+                                {!formData.isRegisteredProperty && (
+                                    <div className="md:col-span-2">
+                                        <FormInput
+                                            label="Nome/Descrição do Imóvel"
+                                            value={formData.visit_unregistered_property}
+                                            onChange={(e) => setFormData(prev => ({ ...prev, visit_unregistered_property: e.target.value }))}
+                                            placeholder="Digite a identificação ou endereço do imóvel..."
+                                        />
+                                    </div>
+                                )}
+                            </div>
+                        )}
+                    </div>
+                )}
 
                 <div className="border-t border-border/60" />
 

@@ -662,7 +662,7 @@ button:not(.page-header button):not(header button):not(.sidebar button):not([rol
   height: auto !important;
 }
 
-button:not(.page-header button):not(header button):not(.sidebar button):is(.bg-secondary, .bg-primary, .bg-destructive, .bg-red-600, .border-border, [class*="border-"]) svg {
+button:not(.page-header button):not(header button):not(.sidebar button):not([role="tab"]):is(.bg-secondary, .bg-primary, .bg-destructive, .bg-red-600, .border-border, [class*="border-"]) svg {
   width: 12px !important;
   height: 12px !important;
 }

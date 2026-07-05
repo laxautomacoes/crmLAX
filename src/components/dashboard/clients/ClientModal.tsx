@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { Modal } from '@/components/shared/Modal'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
@@ -17,13 +18,15 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, Filter, Sparkles, MessageCircle, Search, Loader2,
     ChevronDown, MapPin, FileText, Image as ImageIcon, Video, DollarSign, Pen,
-    ChevronRight, PenLine, Trash2, MoreVertical
+    ChevronRight, PenLine, Trash2, MoreVertical, Building2
 } from 'lucide-react'
+import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
 import { ClientProposalsTab } from './ClientProposalsTab'
 import { LeadDocumentsTab } from '@/components/dashboard/leads/LeadDocumentsTab'
 import { LeadFinanceTab } from '@/components/dashboard/leads/LeadFinanceTab'
 import { ConfirmModal } from '@/components/shared/ConfirmModal'
 import { getNotesByContactId, createNote, deleteNote, updateNote } from '@/app/_actions/notes'
+import { translatePropertyType } from '@/utils/property-translations'
 
 interface NoteActionsDropdownProps {
     onEdit: () => void
@@ -154,6 +157,13 @@ export function ClientModal({
     const [isSavingEditedNote, setIsSavingEditedNote] = useState(false)
     const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
 
+    // States para controle de visitas nas notas
+    const [isVisit, setIsVisit] = useState(false)
+    const [visitNumber, setVisitNumber] = useState<number>(1)
+    const [isRegisteredProperty, setIsRegisteredProperty] = useState(true)
+    const [selectedVisitProperty, setSelectedVisitProperty] = useState<any>(null)
+    const [unregisteredVisitProperty, setUnregisteredVisitProperty] = useState('')
+
     const toggleNoteExpanded = (noteId: string) => {
         setExpandedNotes(prev => ({ ...prev, [noteId]: !prev[noteId] }))
     }
@@ -188,17 +198,40 @@ export function ClientModal({
     }, [isOpen, editingClient?.id])
 
     const handleAddNote = async () => {
-        if (!newNoteContent.trim() || !editingClient?.id || !tenantId) return
+        const contentStr = newNoteContent.trim()
+        const isNoteEmpty = !contentStr
+        if ((isNoteEmpty && !isVisit) || !editingClient?.id || !tenantId) return
         setIsSavingNote(true)
         try {
-            const res = await createNote(tenantId, {
-                content: newNoteContent.trim(),
+            const defaultVisitText = isRegisteredProperty 
+                ? `Visita ao imóvel cadastrada.` 
+                : `Visita ao imóvel cadastrada: ${unregisteredVisitProperty.trim()}`
+
+            const noteData: any = {
+                content: contentStr || defaultVisitText,
                 contact_id: editingClient.id,
-                date: new Date().toISOString().split('T')[0]
-            })
+                date: new Date().toISOString().split('T')[0],
+                is_visit: isVisit
+            }
+
+            if (isVisit) {
+                noteData.visit_number = visitNumber
+                if (isRegisteredProperty && selectedVisitProperty) {
+                    noteData.property_id = selectedVisitProperty.id
+                } else if (!isRegisteredProperty && unregisteredVisitProperty.trim()) {
+                    noteData.visit_unregistered_property = unregisteredVisitProperty.trim()
+                }
+            }
+
+            const res = await createNote(tenantId, noteData)
             if (res.success) {
-                toast.success('Nota adicionada com sucesso!')
+                toast.success(isVisit ? 'Visita registrada com sucesso!' : 'Nota adicionada com sucesso!')
                 setNewNoteContent('')
+                setIsVisit(false)
+                setVisitNumber(1)
+                setIsRegisteredProperty(true)
+                setSelectedVisitProperty(null)
+                setUnregisteredVisitProperty('')
                 loadClientNotes()
             } else {
                 toast.error('Erro ao adicionar nota: ' + res.error)
@@ -210,12 +243,8 @@ export function ClientModal({
         }
     }
 
-    const handleDeleteNote = async (noteId: string) => {
-        const msg = noteId === 'legacy'
-            ? 'Deseja realmente excluir a observação de cadastro do cliente?'
-            : 'Deseja realmente excluir esta nota?'
-        if (!window.confirm(msg)) return
-        await executeDeleteNote(noteId)
+    const handleDeleteNote = (noteId: string) => {
+        setNoteToDelete(noteId)
     }
 
     const executeDeleteNote = async (noteId: string) => {
@@ -827,50 +856,56 @@ export function ClientModal({
                     <div className="w-full flex items-center border-b border-border overflow-x-auto no-scrollbar mb-6">
                         <button
                             type="button"
+                            role="tab"
                             onClick={() => setActiveTab('info')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'info' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'info' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
-                            <User size={18} strokeWidth={1} />
+                            <User size={14} strokeWidth={1} />
                             Informações
                         </button>
                         <button
                             type="button"
+                            role="tab"
                             onClick={() => setActiveTab('leads')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'leads' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'leads' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
-                            <Filter size={18} strokeWidth={1} />
+                            <Filter size={14} strokeWidth={1} />
                             Leads
                         </button>
                         <button
                             type="button"
+                            role="tab"
                             onClick={() => setActiveTab('proposals')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'proposals' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'proposals' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
-                            <Pen size={18} strokeWidth={1} className="-scale-x-100" />
+                            <Pen size={14} strokeWidth={1} className="-scale-x-100" />
                             Propostas
                         </button>
                         <button
                             type="button"
+                            role="tab"
                             onClick={() => setActiveTab('documents')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'documents' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'documents' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
-                            <FileText size={18} strokeWidth={1} />
+                            <FileText size={14} strokeWidth={1} />
                             Documentos
                         </button>
                         <button
                             type="button"
+                            role="tab"
                             onClick={() => setActiveTab('financeiro')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'financeiro' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'financeiro' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
-                            <DollarSign size={18} strokeWidth={1} />
+                            <DollarSign size={14} strokeWidth={1} />
                             Financeiro
                         </button>
                         <button
                             type="button"
+                            role="tab"
                             onClick={() => setActiveTab('ai')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap ${activeTab === 'ai' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'ai' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
-                            <Sparkles size={18} strokeWidth={1} />
+                            <Sparkles size={14} strokeWidth={1} />
                             Análise IA
                         </button>
                     </div>
@@ -1482,6 +1517,101 @@ export function ClientModal({
                                         </div>
                                     </div>
 
+                                    {/* Imóveis Visitados / Interesse */}
+                                    {editingClient && (
+                                        <div className="space-y-4 pt-8 border-t border-border/50">
+                                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Imóveis Visitados / Interesse</h3>
+                                            
+                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* Histórico de Visitas */}
+                                                <div className="space-y-2">
+                                                    <h4 className="text-xs font-bold text-foreground ml-1">Histórico de Visitas</h4>
+                                                    {clientNotes.filter(n => n.is_visit).length === 0 ? (
+                                                        <div className="bg-background/50 p-4 rounded-lg border border-border/40 text-center">
+                                                            <p className="text-xs text-muted-foreground italic">Nenhuma visita registrada para este cliente.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                                                            {clientNotes.filter(n => n.is_visit).map((visit) => (
+                                                                <div key={visit.id} className="p-3 bg-background border border-border/40 rounded-lg flex items-center justify-between gap-3 shadow-sm hover:border-muted-foreground/20 transition-all">
+                                                                    <div className="flex-1 min-w-0">
+                                                                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                                                            <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                                {visit.visit_number}ª Visita
+                                                                            </span>
+                                                                            <span className="text-[10px] text-muted-foreground">
+                                                                                {visit.date ? new Date(visit.date).toLocaleDateString('pt-BR') : '—'}
+                                                                            </span>
+                                                                        </div>
+                                                                        {visit.properties ? (
+                                                                            <Link
+                                                                                href={`/properties/${visit.properties.type}/${visit.properties.slug}`}
+                                                                                target="_blank"
+                                                                                rel="noopener noreferrer"
+                                                                                className="text-xs font-bold text-accent-icon hover:underline truncate block"
+                                                                            >
+                                                                                {visit.properties.title}
+                                                                            </Link>
+                                                                        ) : (
+                                                                            <span className="text-xs font-medium text-muted-foreground italic truncate block">
+                                                                                {visit.visit_unregistered_property} (Não cadastrado)
+                                                                            </span>
+                                                                        )}
+                                                                    </div>
+                                                                </div>
+                                                            ))}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                                
+                                                {/* Interesses dos Leads */}
+                                                <div className="space-y-2">
+                                                    <h4 className="text-xs font-bold text-foreground ml-1">Interesses Registrados (Leads)</h4>
+                                                    {(!editingClient.leads || editingClient.leads.length === 0) ? (
+                                                        <div className="bg-background/50 p-4 rounded-lg border border-border/40 text-center">
+                                                            <p className="text-xs text-muted-foreground italic">Nenhum interesse registrado em leads.</p>
+                                                        </div>
+                                                    ) : (
+                                                        <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                                                            {editingClient.leads.map((lead: any) => {
+                                                                const interestText = lead.property_interest || lead.properties?.title || lead.interest
+                                                                if (!interestText) return null
+                                                                return (
+                                                                    <div key={lead.id} className="p-3 bg-background border border-border/40 rounded-lg flex items-center justify-between gap-3 shadow-sm hover:border-muted-foreground/20 transition-all">
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                                                                <span className="bg-[#404F4F] text-white px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                                    Lead
+                                                                                </span>
+                                                                                <span className="text-[10px] text-muted-foreground">
+                                                                                    Status: {lead.status_name || lead.status}
+                                                                                </span>
+                                                                            </div>
+                                                                            {lead.properties ? (
+                                                                                <Link
+                                                                                    href={`/properties/${lead.properties.type}/${lead.properties.slug}`}
+                                                                                    target="_blank"
+                                                                                    rel="noopener noreferrer"
+                                                                                    className="text-xs font-bold text-accent-icon hover:underline truncate block"
+                                                                                >
+                                                                                    {lead.properties.title}
+                                                                                </Link>
+                                                                            ) : (
+                                                                                <span className="text-xs font-medium text-foreground truncate block">
+                                                                                    {interestText}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                    </div>
+                                                                )
+                                                            })}
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    )}
+
                                     {/* Notas */}
                                     <div className="space-y-4 pt-8 border-t border-border/50">
                                         <div className="flex items-center justify-between">
@@ -1490,7 +1620,7 @@ export function ClientModal({
                                                 <button
                                                     type="button"
                                                     onClick={handleAddNote}
-                                                    disabled={isSavingNote || !newNoteContent.trim()}
+                                                    disabled={isSavingNote || (!newNoteContent.trim() && (!isVisit || (isRegisteredProperty && !selectedVisitProperty) || (!isRegisteredProperty && !unregisteredVisitProperty.trim())))}
                                                     className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
                                                 >
                                                     {isSavingNote ? 'Adicionando...' : 'Adicionar Nota'}
@@ -1512,10 +1642,94 @@ export function ClientModal({
                                                         value={newNoteContent}
                                                         onChange={(e) => setNewNoteContent(e.target.value)}
                                                         rows={2}
-                                                        placeholder="Escreva uma nova nota sobre o cliente..."
+                                                        placeholder={isVisit ? "Observações sobre a visita (opcional)..." : "Escreva uma nova nota sobre o cliente..."}
                                                         className="w-full bg-background border border-muted-foreground/30 rounded-lg p-3 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
                                                     />
                                                 </div>
+
+                                                {/* Checkbox de Visita */}
+                                                <div className="flex items-center gap-2">
+                                                    <input
+                                                        type="checkbox"
+                                                        id="client-is-visit-checkbox"
+                                                        checked={isVisit}
+                                                        onChange={(e) => {
+                                                            setIsVisit(e.target.checked)
+                                                            if (e.target.checked) {
+                                                                const visitsCount = clientNotes.filter(n => n.is_visit).length
+                                                                setVisitNumber(visitsCount + 1)
+                                                            }
+                                                        }}
+                                                        className="rounded border-muted-foreground/30 text-secondary focus:ring-secondary cursor-pointer h-4 w-4"
+                                                    />
+                                                    <label htmlFor="client-is-visit-checkbox" className="text-xs font-bold text-foreground cursor-pointer select-none">
+                                                        Registrar como Visita
+                                                    </label>
+                                                </div>
+
+                                                {/* Detalhes da Visita */}
+                                                {isVisit && (
+                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-lg border border-border/50 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                        <div className="flex flex-col">
+                                                            <label className="text-xs font-bold text-foreground ml-1 mb-2">Visita</label>
+                                                            <select
+                                                                value={visitNumber}
+                                                                onChange={(e) => setVisitNumber(Number(e.target.value))}
+                                                                className="h-[38px] w-full bg-background border border-muted-foreground/30 rounded-lg px-3 text-sm text-foreground outline-none focus:border-primary transition-colors"
+                                                            >
+                                                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                                                                    <option key={num} value={num}>{num}ª Visita</option>
+                                                                ))}
+                                                            </select>
+                                                        </div>
+
+                                                        <div className="flex flex-col">
+                                                            <label className="text-xs font-bold text-foreground ml-1 mb-2">Tipo de Imóvel</label>
+                                                            <div className="flex items-center gap-4 h-[38px]">
+                                                                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="clientPropertyType"
+                                                                        checked={isRegisteredProperty}
+                                                                        onChange={() => setIsRegisteredProperty(true)}
+                                                                        className="text-secondary focus:ring-secondary h-4 w-4"
+                                                                    />
+                                                                    Cadastrado
+                                                                </label>
+                                                                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
+                                                                    <input
+                                                                        type="radio"
+                                                                        name="clientPropertyType"
+                                                                        checked={!isRegisteredProperty}
+                                                                        onChange={() => setIsRegisteredProperty(false)}
+                                                                        className="text-secondary focus:ring-secondary h-4 w-4"
+                                                                    />
+                                                                    Não Cadastrado
+                                                                </label>
+                                                            </div>
+                                                        </div>
+
+                                                        <div className="md:col-span-2">
+                                                            {isRegisteredProperty ? (
+                                                                <PropertyAutocomplete
+                                                                    tenantId={tenantId}
+                                                                    label="Imóvel Cadastrado"
+                                                                    placeholder="Busque o imóvel cadastrado..."
+                                                                    selectedItem={selectedVisitProperty}
+                                                                    onSelect={(prop) => setSelectedVisitProperty(prop)}
+                                                                    onClear={() => setSelectedVisitProperty(null)}
+                                                                />
+                                                            ) : (
+                                                                <FormInput
+                                                                    label="Nome/Descrição do Imóvel"
+                                                                    value={unregisteredVisitProperty}
+                                                                    onChange={(e) => setUnregisteredVisitProperty(e.target.value)}
+                                                                    placeholder="Digite a identificação ou endereço do imóvel..."
+                                                                />
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                )}
 
                                                 <div className="space-y-3">
                                                     <button
@@ -1596,9 +1810,26 @@ export function ClientModal({
                                                                                 <div className="flex items-center justify-between gap-3">
                                                                                     <div className="flex items-center gap-2 min-w-0 flex-1">
                                                                                         <ChevronRight size={14} className="text-muted-foreground shrink-0" />
-                                                                                        <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
-                                                                                            {getFirstSentence(note.content)}
-                                                                                        </span>
+                                                                                        {note.is_visit ? (
+                                                                                            <span className="flex items-center gap-1.5 text-sm font-bold text-foreground truncate flex-1 leading-none">
+                                                                                                <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                                                    {note.visit_number}ª Visita
+                                                                                                </span>
+                                                                                                {note.properties ? (
+                                                                                                    <span className="truncate">
+                                                                                                        {note.properties.title}
+                                                                                                    </span>
+                                                                                                ) : (
+                                                                                                    <span className="truncate text-muted-foreground italic">
+                                                                                                        {note.visit_unregistered_property}
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </span>
+                                                                                        ) : (
+                                                                                            <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
+                                                                                                {getFirstSentence(note.content)}
+                                                                                            </span>
+                                                                                        )}
                                                                                     </div>
                                                                                     <div className="flex items-center gap-2 shrink-0">
                                                                                         <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
@@ -1639,6 +1870,27 @@ export function ClientModal({
                                                                                                 />
                                                                                             </div>
                                                                                         </div>
+                                                                                        {note.is_visit && (
+                                                                                            <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                                                                <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                                                    {note.visit_number}ª Visita
+                                                                                                </span>
+                                                                                                {note.properties ? (
+                                                                                                    <Link
+                                                                                                        href={`/properties/${note.properties.type}/${note.properties.slug}`}
+                                                                                                        onClick={(e) => e.stopPropagation()}
+                                                                                                        className="text-xs font-bold text-accent-icon hover:underline flex items-center gap-1 bg-[#404F4F]/10 dark:bg-white/10 px-2 py-0.5 rounded"
+                                                                                                    >
+                                                                                                        <Building2 size={12} />
+                                                                                                        {note.properties.title}
+                                                                                                    </Link>
+                                                                                                ) : (
+                                                                                                    <span className="text-xs font-medium text-muted-foreground italic bg-muted px-2 py-0.5 rounded">
+                                                                                                        {note.visit_unregistered_property} (Não cadastrado)
+                                                                                                    </span>
+                                                                                                )}
+                                                                                            </div>
+                                                                                        )}
                                                                                         <p className="text-sm text-foreground whitespace-pre-line leading-relaxed font-medium">
                                                                                             {note.content}
                                                                                         </p>
@@ -1674,7 +1926,7 @@ export function ClientModal({
                 {/* Tab: Leads */}
                 {activeTab === 'leads' && isEditing && (
                     <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <ClientLeadsTab client={editingClient} onMakeProposal={(leadId: string) => {
+                        <ClientLeadsTab client={editingClient} clientNotes={clientNotes} onMakeProposal={(leadId: string) => {
                             setPendingProposalLeadId(leadId)
                             setActiveTab('proposals')
                         }} />
@@ -1746,6 +1998,19 @@ export function ClientModal({
                 )}
             </div>
 
+            <ConfirmModal
+                isOpen={!!noteToDelete}
+                onCancel={() => setNoteToDelete(null)}
+                title="Excluir Nota"
+                message={noteToDelete === 'legacy' ? "Deseja realmente excluir a observação de cadastro do cliente?" : "Deseja realmente excluir esta nota? Esta ação não poderá ser desfeita."}
+                confirmLabel="Excluir"
+                onConfirm={async () => {
+                    if (noteToDelete) {
+                        await executeDeleteNote(noteToDelete)
+                        setNoteToDelete(null)
+                    }
+                }}
+            />
         </Modal>
     )
 }
@@ -1825,7 +2090,15 @@ function ClientLeadSelectorTab({
 
 // ─── Aba Leads ──────────────────────────────────────────────────────
 
-function ClientLeadsTab({ client, onMakeProposal }: { client: any; onMakeProposal?: (leadId: string) => void }) {
+function ClientLeadsTab({ 
+    client, 
+    clientNotes, 
+    onMakeProposal 
+}: { 
+    client: any; 
+    clientNotes: any[]; 
+    onMakeProposal?: (leadId: string) => void 
+}) {
     return (
         <div className="space-y-6 px-1 pb-4">
             <div className="space-y-4">
@@ -1833,7 +2106,12 @@ function ClientLeadsTab({ client, onMakeProposal }: { client: any; onMakeProposa
                 <div className="space-y-3">
                     {client.leads && client.leads.length > 0 ? (
                         client.leads.map((lead: any) => (
-                            <LeadCardDropdown key={lead.id} lead={lead} onMakeProposal={onMakeProposal} />
+                            <LeadCardDropdown 
+                                key={lead.id} 
+                                lead={lead} 
+                                clientNotes={clientNotes} 
+                                onMakeProposal={onMakeProposal} 
+                            />
                         ))
                     ) : (
                         <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-6 rounded-lg border border-border/40 text-center transition-all">
@@ -1846,9 +2124,19 @@ function ClientLeadsTab({ client, onMakeProposal }: { client: any; onMakeProposa
     )
 }
 
-function LeadCardDropdown({ lead, onMakeProposal }: { lead: any; onMakeProposal?: (leadId: string) => void }) {
+function LeadCardDropdown({ 
+    lead, 
+    clientNotes = [], 
+    onMakeProposal 
+}: { 
+    lead: any; 
+    clientNotes?: any[]; 
+    onMakeProposal?: (leadId: string) => void 
+}) {
     const [isOpen, setIsOpen] = useState(false)
     const hasAttachments = lead.images?.length > 0 || lead.videos?.length > 0 || lead.documents?.length > 0
+    const brokerName = lead.assigned_user?.full_name || lead.profiles?.full_name || 'Não atribuído'
+    const leadVisits = clientNotes.filter((n: any) => n.is_visit && n.lead_id === lead.id)
 
     return (
         <div className="bg-background rounded-xl border border-border shadow-sm overflow-hidden">
@@ -1914,27 +2202,150 @@ function LeadCardDropdown({ lead, onMakeProposal }: { lead: any; onMakeProposal?
                         transition={{ duration: 0.2 }}
                         className="overflow-hidden"
                     >
-                        <div className="px-4 pb-4 space-y-3 border-t border-border/50" style={{ backgroundColor: 'var(--background)' }}>
-                            <div className="pt-3 space-y-1.5">
-                                {lead.source && (
-                                    <p className="text-base text-muted-foreground">
-                                        <span className="font-bold">Origem:</span> {lead.source}
+                        <div className="px-4 pb-4 space-y-4 border-t border-border/50 animate-in fade-in duration-200" style={{ backgroundColor: 'var(--background)' }}>
+                            {/* Grid de Informações Básicas e Notas */}
+                            <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="space-y-2">
+                                    {lead.source && (
+                                        <p className="text-xs text-muted-foreground">
+                                            <span className="font-bold text-foreground/80">Origem:</span> {lead.source}
+                                        </p>
+                                    )}
+                                    {lead.lead_source && lead.lead_source !== lead.source && (
+                                        <p className="text-xs text-muted-foreground">
+                                            <span className="font-bold text-foreground/80">Canal:</span> {lead.lead_source}
+                                        </p>
+                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                        <span className="font-bold text-foreground/80">Corretor Responsável:</span> {brokerName}
                                     </p>
-                                )}
-                                {lead.lead_source && lead.lead_source !== lead.source && (
-                                    <p className="text-base text-muted-foreground">
-                                        <span className="font-bold">Canal:</span> {lead.lead_source}
-                                    </p>
-                                )}
+                                    {lead.partner_id && (
+                                        <p className="text-xs text-muted-foreground">
+                                            <span className="font-bold text-foreground/80">Parceria:</span> Sim
+                                        </p>
+                                    )}
+                                </div>
                                 {lead.notes && (
-                                    <p className="text-base text-muted-foreground">
-                                        <span className="font-bold">Notas:</span> <span className="italic">"{lead.notes}"</span>
-                                    </p>
+                                    <div className="p-3 bg-card border border-border/40 rounded-lg">
+                                        <h4 className="text-[10px] font-bold text-foreground uppercase tracking-widest mb-1">
+                                            Notas do Lead
+                                        </h4>
+                                        <p className="text-xs text-muted-foreground italic leading-snug">
+                                            "{lead.notes}"
+                                        </p>
+                                    </div>
                                 )}
                             </div>
-                            {hasAttachments && (
-                                <LeadAttachments lead={lead} />
+
+                            {/* Imóvel de Interesse */}
+                            {lead.properties ? (
+                                <div className="p-3 bg-card border border-border/40 rounded-lg shadow-sm space-y-2">
+                                    <h4 className="text-[10px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1">
+                                        <Building2 size={12} className="text-accent-icon" /> Imóvel de Interesse
+                                    </h4>
+                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                                        <div>
+                                            <Link
+                                                href={`/properties/${lead.properties.type}/${lead.properties.slug || lead.properties.id}`}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="text-xs font-bold text-accent-icon hover:underline block"
+                                            >
+                                                {lead.properties.title}
+                                            </Link>
+                                            <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
+                                                <span className="capitalize">{translatePropertyType(lead.properties.type)}</span>
+                                                {lead.properties.details?.endereco?.cidade && (
+                                                    <>
+                                                        <span>•</span>
+                                                        <span>{lead.properties.details.endereco.cidade} - {lead.properties.details.endereco.estado}</span>
+                                                    </>
+                                                )}
+                                            </div>
+                                        </div>
+                                        {lead.properties.price ? (
+                                            <div className="text-xs font-black text-foreground whitespace-nowrap">
+                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(lead.properties.price)}
+                                            </div>
+                                        ) : (
+                                            <div className="text-xs font-bold text-muted-foreground italic">
+                                                Preço sob consulta
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            ) : lead.property_interest ? (
+                                <div className="p-3 bg-card border border-border/40 rounded-lg shadow-sm space-y-1">
+                                    <h4 className="text-[10px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1">
+                                        <Building2 size={12} className="text-accent-icon" /> Interesse Indicado
+                                    </h4>
+                                    <p className="text-xs font-medium text-foreground">{lead.property_interest}</p>
+                                </div>
+                            ) : null}
+
+                            {/* Histórico de Visitas */}
+                            {leadVisits.length > 0 && (
+                                <div className="space-y-2">
+                                    <h4 className="text-[10px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1">
+                                        <MapPin size={12} className="text-accent-icon" /> Visitas Realizadas ({leadVisits.length})
+                                    </h4>
+                                    <div className="space-y-2 max-h-[220px] overflow-y-auto pr-1">
+                                        {leadVisits.map((visit: any) => (
+                                            <div key={visit.id} className="p-2.5 bg-card border border-border/40 rounded-lg shadow-sm space-y-1">
+                                                <div className="flex items-center justify-between gap-2 flex-wrap">
+                                                    <div className="flex items-center gap-1.5">
+                                                        <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                            {visit.visit_number}ª Visita
+                                                        </span>
+                                                        <span className="text-[10px] text-muted-foreground">
+                                                            {visit.date ? new Date(visit.date).toLocaleDateString('pt-BR') : '—'}
+                                                        </span>
+                                                    </div>
+                                                    {visit.profiles?.full_name && (
+                                                        <span className="text-[10px] text-muted-foreground font-medium bg-muted px-1.5 py-0.5 rounded">
+                                                            com {visit.profiles.full_name}
+                                                        </span>
+                                                    )}
+                                                </div>
+                                                {visit.properties ? (
+                                                    <div className="text-[11px] font-bold text-foreground">
+                                                        Imóvel: {' '}
+                                                        <Link
+                                                            href={`/properties/${visit.properties.type}/${visit.properties.slug}`}
+                                                            target="_blank"
+                                                            rel="noopener noreferrer"
+                                                            className="text-accent-icon hover:underline font-bold"
+                                                        >
+                                                            {visit.properties.title}
+                                                        </Link>
+                                                    </div>
+                                                ) : visit.visit_unregistered_property ? (
+                                                    <div className="text-[11px] font-medium text-muted-foreground italic">
+                                                        Imóvel: {visit.visit_unregistered_property} (Não cadastrado)
+                                                    </div>
+                                                ) : null}
+                                                {visit.content && (
+                                                    <p className="text-xs text-muted-foreground leading-snug">
+                                                        <span className="font-bold text-foreground/80">Obs:</span> "{visit.content}"
+                                                    </p>
+                                                )}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             )}
+
+                            {/* Anexos */}
+                            {hasAttachments && (
+                                <div className="space-y-2">
+                                    <h4 className="text-[10px] font-bold text-foreground uppercase tracking-widest">
+                                        Anexos do Lead
+                                    </h4>
+                                    <LeadAttachments lead={lead} />
+                                </div>
+                            )}
+
+                            {/* Botão Fazer Proposta */}
                             {onMakeProposal && (
                                 <div className="pt-2 border-t border-border/30">
                                     <button

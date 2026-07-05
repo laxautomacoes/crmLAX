@@ -129,6 +129,7 @@ export async function createLead(tenantId: string, data: unknown) {
             profile_id: profile?.id || user?.id,
             content: input.notes,
             lead_id: leadData.id,
+            contact_id: leadData.contact_id,
             date: new Date().toISOString().split('T')[0]
         })
     }

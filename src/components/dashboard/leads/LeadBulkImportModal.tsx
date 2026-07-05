@@ -458,32 +458,35 @@ export function LeadBulkImportModal({
                         <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar mb-4">
                             <button
                                 type="button"
+                                role="tab"
                                 onClick={() => { setActiveTab('print'); setFile(null); setPreviewUrl(null) }}
-                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
-                                    activeTab === 'print' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'
-                                }`}
+                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap border-b-[3px] ${
+                                    activeTab === 'print' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'
+                                  }`}
                             >
-                                <ImageIcon size={18} strokeWidth={1} />
+                                <ImageIcon size={14} strokeWidth={1} />
                                 Print / Imagem
                             </button>
                             <button
                                 type="button"
+                                role="tab"
                                 onClick={() => { setActiveTab('pdf'); setFile(null) }}
-                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
-                                    activeTab === 'pdf' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'
-                                }`}
+                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap border-b-[3px] ${
+                                    activeTab === 'pdf' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'
+                                  }`}
                             >
-                                <FileText size={18} strokeWidth={1} />
+                                <FileText size={14} strokeWidth={1} />
                                 PDF
                             </button>
                             <button
                                 type="button"
+                                role="tab"
                                 onClick={() => { setActiveTab('spreadsheet'); setFile(null) }}
-                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
-                                    activeTab === 'spreadsheet' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'
-                                }`}
+                                className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap border-b-[3px] ${
+                                    activeTab === 'spreadsheet' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'
+                                  }`}
                             >
-                                <Table size={18} strokeWidth={1} />
+                                <Table size={14} strokeWidth={1} />
                                 Planilha Excel/CSV
                             </button>
                         </div>

@@ -29,7 +29,7 @@ export function LeadAutocomplete({
         const supabase = createClient()
         const { data, error } = await supabase
             .from('leads')
-            .select('id, contacts!inner(name)')
+            .select('id, contact_id, contacts!inner(name)')
             .eq('tenant_id', tenantId)
             .ilike('contacts.name', `%${search}%`)
             .limit(5)
@@ -41,6 +41,7 @@ export function LeadAutocomplete({
 
         return (data || []).map((lead: any) => ({
             id: lead.id,
+            contact_id: lead.contact_id,
             name: lead.contacts?.name || 'Sem nome'
         }))
     }

@@ -20,7 +20,7 @@ import { getNotesByLeadId, createNote, deleteNote, updateNote } from '@/app/_act
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
 import { getPartners, createPartner } from '@/app/_actions/partners'
 import { PartnerQuickModal } from '@/components/dashboard/shared/PartnerQuickModal'
-import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle, Trash2, MoreVertical, Loader2, AlertTriangle } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle, Trash2, MoreVertical, Loader2, AlertTriangle, Building2 } from 'lucide-react'
 import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
 import { sendWhatsAppMessage, getWhatsAppChat, sendWhatsAppMedia, refreshInstanceStatus } from '@/app/_actions/whatsapp'
 import { createClient } from '@/lib/supabase/client'
@@ -185,6 +185,13 @@ export function LeadModal({
     const [editingNoteText, setEditingNoteText] = useState('')
     const [isSavingEditedNote, setIsSavingEditedNote] = useState(false)
     const [activeTab, setActiveTab] = useState<'info' | 'whatsapp'>('info')
+    
+    // States para controle de visitas nas notas
+    const [isVisit, setIsVisit] = useState(false)
+    const [visitNumber, setVisitNumber] = useState<number>(1)
+    const [isRegisteredProperty, setIsRegisteredProperty] = useState(true)
+    const [selectedVisitProperty, setSelectedVisitProperty] = useState<any>(null)
+    const [unregisteredVisitProperty, setUnregisteredVisitProperty] = useState('')
 
     const toggleNoteExpanded = (noteId: string) => {
         setExpandedNotes(prev => ({
@@ -315,17 +322,41 @@ export function LeadModal({
     }, [isOpen, editingLead?.id, loadLeadNotes])
 
     const handleAddNote = async () => {
-        if (!newNoteContent.trim() || !editingLead?.id || !tenantId) return
+        const contentStr = newNoteContent.trim()
+        const isNoteEmpty = !contentStr
+        if ((isNoteEmpty && !isVisit) || !editingLead?.id || !tenantId) return
         setIsSavingNote(true)
         try {
-            const res = await createNote(tenantId, {
-                content: newNoteContent.trim(),
+            const defaultVisitText = isRegisteredProperty 
+                ? `Visita ao imóvel cadastrada.` 
+                : `Visita ao imóvel cadastrada: ${unregisteredVisitProperty.trim()}`
+
+            const noteData: any = {
+                content: contentStr || defaultVisitText,
                 lead_id: editingLead.id,
-                date: new Date().toISOString().split('T')[0]
-            })
+                contact_id: editingLead.contact_id || null,
+                date: new Date().toISOString().split('T')[0],
+                is_visit: isVisit
+            }
+
+            if (isVisit) {
+                noteData.visit_number = visitNumber
+                if (isRegisteredProperty && selectedVisitProperty) {
+                    noteData.property_id = selectedVisitProperty.id
+                } else if (!isRegisteredProperty && unregisteredVisitProperty.trim()) {
+                    noteData.visit_unregistered_property = unregisteredVisitProperty.trim()
+                }
+            }
+
+            const res = await createNote(tenantId, noteData)
             if (res.success) {
-                toast.success('Nota adicionada com sucesso!')
+                toast.success(isVisit ? 'Visita registrada com sucesso!' : 'Nota adicionada com sucesso!')
                 setNewNoteContent('')
+                setIsVisit(false)
+                setVisitNumber(1)
+                setIsRegisteredProperty(true)
+                setSelectedVisitProperty(null)
+                setUnregisteredVisitProperty('')
                 loadLeadNotes()
             } else {
                 toast.error('Erro ao adicionar nota: ' + res.error)
@@ -1514,7 +1545,7 @@ export function LeadModal({
                                             <button
                                                 type="button"
                                                 onClick={handleAddNote}
-                                                disabled={isSavingNote || !newNoteContent.trim()}
+                                                disabled={isSavingNote || (!newNoteContent.trim() && (!isVisit || (isRegisteredProperty && !selectedVisitProperty) || (!isRegisteredProperty && !unregisteredVisitProperty.trim())))}
                                                 className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
                                             >
                                                 {isSavingNote ? 'Adicionando...' : 'Adicionar Nota'}
@@ -1537,10 +1568,94 @@ export function LeadModal({
                                                     value={newNoteContent}
                                                     onChange={(e) => setNewNoteContent(e.target.value)}
                                                     rows={2}
-                                                    placeholder="Escreva uma nova nota sobre o lead..."
+                                                    placeholder={isVisit ? "Observações sobre a visita (opcional)..." : "Escreva uma nova nota sobre o lead..."}
                                                     className="w-full bg-background border border-muted-foreground/30 rounded-lg p-3 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
                                                 />
                                             </div>
+
+                                            {/* Checkbox de Visita */}
+                                            <div className="flex items-center gap-2">
+                                                <input
+                                                    type="checkbox"
+                                                    id="lead-is-visit-checkbox"
+                                                    checked={isVisit}
+                                                    onChange={(e) => {
+                                                        setIsVisit(e.target.checked)
+                                                        if (e.target.checked) {
+                                                            const visitsCount = leadNotes.filter(n => n.is_visit).length
+                                                            setVisitNumber(visitsCount + 1)
+                                                        }
+                                                    }}
+                                                    className="rounded border-muted-foreground/30 text-secondary focus:ring-secondary cursor-pointer h-4 w-4"
+                                                />
+                                                <label htmlFor="lead-is-visit-checkbox" className="text-xs font-bold text-foreground cursor-pointer select-none">
+                                                    Registrar como Visita
+                                                </label>
+                                            </div>
+
+                                            {/* Detalhes da Visita */}
+                                            {isVisit && (
+                                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-lg border border-border/50 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    <div className="flex flex-col">
+                                                        <label className="text-xs font-bold text-foreground ml-1 mb-2">Visita</label>
+                                                        <select
+                                                            value={visitNumber}
+                                                            onChange={(e) => setVisitNumber(Number(e.target.value))}
+                                                            className="h-[38px] w-full bg-background border border-muted-foreground/30 rounded-lg px-3 text-sm text-foreground outline-none focus:border-primary transition-colors"
+                                                        >
+                                                            {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                                                                <option key={num} value={num}>{num}ª Visita</option>
+                                                            ))}
+                                                        </select>
+                                                    </div>
+
+                                                    <div className="flex flex-col">
+                                                        <label className="text-xs font-bold text-foreground ml-1 mb-2">Tipo de Imóvel</label>
+                                                        <div className="flex items-center gap-4 h-[38px]">
+                                                            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
+                                                                <input
+                                                                    type="radio"
+                                                                    name="leadPropertyType"
+                                                                    checked={isRegisteredProperty}
+                                                                    onChange={() => setIsRegisteredProperty(true)}
+                                                                    className="text-secondary focus:ring-secondary h-4 w-4"
+                                                                />
+                                                                Cadastrado
+                                                            </label>
+                                                            <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
+                                                                <input
+                                                                    type="radio"
+                                                                    name="leadPropertyType"
+                                                                    checked={!isRegisteredProperty}
+                                                                    onChange={() => setIsRegisteredProperty(false)}
+                                                                    className="text-secondary focus:ring-secondary h-4 w-4"
+                                                                />
+                                                                Não Cadastrado
+                                                            </label>
+                                                        </div>
+                                                    </div>
+
+                                                    <div className="md:col-span-2">
+                                                        {isRegisteredProperty ? (
+                                                            <PropertyAutocomplete
+                                                                tenantId={tenantId}
+                                                                label="Imóvel Cadastrado"
+                                                                placeholder="Busque o imóvel cadastrado..."
+                                                                selectedItem={selectedVisitProperty}
+                                                                onSelect={(prop) => setSelectedVisitProperty(prop)}
+                                                                onClear={() => setSelectedVisitProperty(null)}
+                                                            />
+                                                        ) : (
+                                                            <FormInput
+                                                                label="Nome/Descrição do Imóvel"
+                                                                value={unregisteredVisitProperty}
+                                                                onChange={(e) => setUnregisteredVisitProperty(e.target.value)}
+                                                                placeholder="Digite a identificação ou endereço do imóvel..."
+                                                            />
+                                                        )}
+                                                    </div>
+                                                </div>
+                                            )}
 
                                             {/* Timeline das Notas (Collapsible Dropdown) */}
                                             <div className="space-y-3">
@@ -1627,9 +1742,26 @@ export function LeadModal({
                                                                             <div className="flex items-center justify-between gap-3">
                                                                                 <div className="flex items-center gap-2 min-w-0 flex-1">
                                                                                     <ChevronRight size={14} className="text-muted-foreground shrink-0" />
-                                                                                    <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
-                                                                                        {getFirstSentence(note.content)}
-                                                                                    </span>
+                                                                                    {note.is_visit ? (
+                                                                                        <span className="flex items-center gap-1.5 text-sm font-bold text-foreground truncate flex-1 leading-none">
+                                                                                            <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                                                {note.visit_number}ª Visita
+                                                                                            </span>
+                                                                                            {note.properties ? (
+                                                                                                <span className="truncate">
+                                                                                                    {note.properties.title}
+                                                                                                </span>
+                                                                                            ) : (
+                                                                                                <span className="truncate text-muted-foreground italic">
+                                                                                                    {note.visit_unregistered_property}
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </span>
+                                                                                    ) : (
+                                                                                        <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
+                                                                                            {getFirstSentence(note.content)}
+                                                                                        </span>
+                                                                                    )}
                                                                                 </div>
                                                                                 <div className="flex items-center gap-2 shrink-0">
                                                                                     <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
@@ -1670,6 +1802,27 @@ export function LeadModal({
                                                                                             />
                                                                                         </div>
                                                                                     </div>
+                                                                                    {note.is_visit && (
+                                                                                        <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                                                            <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                                                {note.visit_number}ª Visita
+                                                                                            </span>
+                                                                                            {note.properties ? (
+                                                                                                <Link
+                                                                                                    href={`/properties/${note.properties.type}/${note.properties.slug}`}
+                                                                                                    onClick={(e) => e.stopPropagation()}
+                                                                                                    className="text-xs font-bold text-accent-icon hover:underline flex items-center gap-1 bg-[#404F4F]/10 dark:bg-white/10 px-2 py-0.5 rounded"
+                                                                                                >
+                                                                                                    <Building2 size={12} />
+                                                                                                    {note.properties.title}
+                                                                                                </Link>
+                                                                                            ) : (
+                                                                                                <span className="text-xs font-medium text-muted-foreground italic bg-muted px-2 py-0.5 rounded">
+                                                                                                    {note.visit_unregistered_property} (Não cadastrado)
+                                                                                                </span>
+                                                                                            )}
+                                                                                        </div>
+                                                                                    )}
                                                                                     <p className="text-sm text-foreground whitespace-pre-line leading-relaxed font-medium">
                                                                                         {note.content}
                                                                                     </p>

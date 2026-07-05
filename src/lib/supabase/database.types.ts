@@ -1645,39 +1645,51 @@ export type Database = {
       notes: {
         Row: {
           attachments: Json | null
+          contact_id: string | null
           content: string
           created_at: string
           date: string
           id: string
+          is_visit: boolean
           lead_id: string | null
           profile_id: string
           property_id: string | null
           tenant_id: string
           updated_at: string
+          visit_number: number | null
+          visit_unregistered_property: string | null
         }
         Insert: {
           attachments?: Json | null
+          contact_id?: string | null
           content: string
           created_at?: string
           date?: string
           id?: string
+          is_visit?: boolean
           lead_id?: string | null
           profile_id: string
           property_id?: string | null
           tenant_id: string
           updated_at?: string
+          visit_number?: number | null
+          visit_unregistered_property?: string | null
         }
         Update: {
           attachments?: Json | null
+          contact_id?: string | null
           content?: string
           created_at?: string
           date?: string
           id?: string
+          is_visit?: boolean
           lead_id?: string | null
           profile_id?: string
           property_id?: string | null
           tenant_id?: string
           updated_at?: string
+          visit_number?: number | null
+          visit_unregistered_property?: string | null
         }
         Relationships: [
           {
@@ -1685,6 +1697,13 @@ export type Database = {
             columns: ["property_id"]
             isOneToOne: false
             referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "notes_contact_id_fkey"
+            columns: ["contact_id"]
+            isOneToOne: false
+            referencedRelation: "contacts"
             referencedColumns: ["id"]
           },
           {

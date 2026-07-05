@@ -363,31 +363,35 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
             {/* Tab Navigation */}
             <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar">
                 <button
+                    role="tab"
                     onClick={() => setActiveTab('branding')}
-                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'branding' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap border-b-[3px] ${activeTab === 'branding' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                 >
-                    <Palette size={18} strokeWidth={1} />
+                    <Palette size={14} strokeWidth={1} />
                     Identidade
                 </button>
                 <button
+                    role="tab"
                     onClick={() => setActiveTab('appearance')}
-                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'appearance' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap border-b-[3px] ${activeTab === 'appearance' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                 >
-                    <Sun size={18} strokeWidth={1} />
+                    <Sun size={14} strokeWidth={1} />
                     Aparência
                 </button>
                 <button
+                    role="tab"
                     onClick={() => setActiveTab('sections')}
-                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'sections' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap border-b-[3px] ${activeTab === 'sections' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                 >
-                    <LayoutGrid size={18} strokeWidth={1} />
+                    <LayoutGrid size={14} strokeWidth={1} />
                     Seções
                 </button>
                 <button
+                    role="tab"
                     onClick={() => setActiveTab('footer')}
-                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${activeTab === 'footer' ? 'text-foreground border-b-[3px] active-tab-indicator' : 'text-muted-foreground hover:text-foreground'}`}
+                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap border-b-[3px] ${activeTab === 'footer' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                 >
-                    <MapPin size={18} strokeWidth={1} />
+                    <MapPin size={14} strokeWidth={1} />
                     Rodapé
                 </button>
             </div>

@@ -180,14 +180,15 @@ export function QuickPublishModal({ isOpen, onClose, prop, tenantId, profileId }
                             {tabs.map(tab => (
                                 <button
                                     key={tab.id}
+                                    role="tab"
                                     onClick={() => handleTabChange(tab.id)}
-                                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
+                                    className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap border-b-[3px] ${
                                         activeTab === tab.id
-                                            ? 'text-foreground border-b-[3px] active-tab-indicator'
-                                            : 'text-muted-foreground hover:text-foreground'
+                                            ? 'text-foreground active-tab-indicator'
+                                            : 'text-muted-foreground hover:text-foreground border-transparent'
                                     }`}
                                 >
-                                    <tab.icon size={18} strokeWidth={1} />
+                                    <tab.icon size={14} strokeWidth={1} />
                                     {tab.label}
                                 </button>
                             ))}

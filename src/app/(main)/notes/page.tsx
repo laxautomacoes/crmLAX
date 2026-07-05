@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import Link from 'next/link'
 import { Plus, Search, FileText, User, Building2, Trash2, Edit2, LayoutGrid, Table as TableIcon, Paperclip, Image as ImageIcon, ExternalLink, PlayCircle } from 'lucide-react'
 import { getNotes, deleteNote } from '@/app/_actions/notes'
 import { getProfile } from '@/app/_actions/profile'
@@ -241,12 +242,35 @@ export default function NotesPage() {
                                 />
 
                                 <div className="space-y-2 pt-2 border-t border-border">
-                                    {note.properties && (
-                                        <div className="flex items-center gap-2 text-[11px] font-semibold text-secondary bg-secondary/10 dark:bg-secondary/20 px-3 py-1.5 rounded-lg border border-secondary/20 w-fit max-w-full transition-colors">
-                                            <Building2 size={12} className="shrink-0" />
-                                            <span className="truncate">{note.properties.title}</span>
-                                        </div>
-                                    )}
+                                     {note.is_visit ? (
+                                         <div className="flex flex-wrap items-center gap-2">
+                                             <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[10px] font-black uppercase tracking-wider shrink-0">
+                                                 {note.visit_number}ª Visita
+                                             </span>
+                                             {note.properties ? (
+                                                 <Link
+                                                     href={`/properties/${note.properties.type}/${note.properties.slug}`}
+                                                     target="_blank"
+                                                     rel="noopener noreferrer"
+                                                     className="flex items-center gap-1 text-[11px] font-semibold text-secondary bg-secondary/10 dark:bg-secondary/20 px-2 py-1 rounded-lg border border-secondary/20 hover:underline"
+                                                 >
+                                                     <Building2 size={12} className="shrink-0" />
+                                                     <span className="truncate">{note.properties.title}</span>
+                                                 </Link>
+                                             ) : (
+                                                 <div className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground bg-muted px-2 py-1 rounded-lg border border-border">
+                                                     <span className="truncate italic">{note.visit_unregistered_property} (Não cadastrado)</span>
+                                                 </div>
+                                             )}
+                                         </div>
+                                     ) : (
+                                         note.properties && (
+                                             <div className="flex items-center gap-2 text-[11px] font-semibold text-secondary bg-secondary/10 dark:bg-secondary/20 px-3 py-1.5 rounded-lg border border-secondary/20 w-fit max-w-full transition-colors">
+                                                 <Building2 size={12} className="shrink-0" />
+                                                 <span className="truncate">{note.properties.title}</span>
+                                             </div>
+                                         )
+                                     )}
                                     {note.leads && (
                                         <div className="flex items-center gap-2 text-[11px] font-semibold text-muted-foreground bg-muted dark:bg-muted/40 px-3 py-1.5 rounded-lg border border-border w-fit max-w-full transition-colors">
                                             <User size={12} className="shrink-0 text-muted-foreground/80 dark:text-muted-foreground/60" />
@@ -289,13 +313,36 @@ export default function NotesPage() {
                                                 />
                                             </td>
                                             <td className="px-6 py-4">
-                                                <div className="flex flex-wrap gap-2">
-                                                    {note.properties && (
-                                                        <div className="flex items-center gap-1.5 text-[10px] font-bold text-secondary bg-secondary/10 dark:bg-secondary/20 px-2 py-1 rounded-md border border-secondary/20 transition-colors">
-                                                            <Building2 size={10} className="shrink-0" />
-                                                            <span className="truncate">{note.properties.title}</span>
-                                                        </div>
-                                                    )}
+                                                 <div className="flex flex-wrap gap-2">
+                                                     {note.is_visit ? (
+                                                         <>
+                                                             <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                 {note.visit_number}ª Visita
+                                                             </span>
+                                                             {note.properties ? (
+                                                                 <Link
+                                                                     href={`/properties/${note.properties.type}/${note.properties.slug}`}
+                                                                     target="_blank"
+                                                                     rel="noopener noreferrer"
+                                                                     className="flex items-center gap-1 text-[10px] font-bold text-secondary bg-secondary/10 dark:bg-secondary/20 px-2 py-1 rounded-md border border-secondary/20 hover:underline"
+                                                                 >
+                                                                     <Building2 size={10} className="shrink-0" />
+                                                                     <span className="truncate">{note.properties.title}</span>
+                                                                 </Link>
+                                                             ) : (
+                                                                 <div className="flex items-center gap-1 text-[10px] font-bold text-muted-foreground bg-muted px-2 py-1 rounded-md border border-border">
+                                                                     <span className="truncate italic">{note.visit_unregistered_property} (Não cadastrado)</span>
+                                                                 </div>
+                                                             )}
+                                                         </>
+                                                     ) : (
+                                                         note.properties && (
+                                                             <div className="flex items-center gap-1.5 text-[10px] font-bold text-secondary bg-secondary/10 dark:bg-secondary/20 px-2 py-1 rounded-md border border-secondary/20 transition-colors">
+                                                                 <Building2 size={10} className="shrink-0" />
+                                                                 <span className="truncate">{note.properties.title}</span>
+                                                             </div>
+                                                         )
+                                                     )}
                                                     {note.leads && (
                                                         <div className="flex items-center gap-1.5 text-[10px] font-bold text-muted-foreground bg-muted dark:bg-muted/40 px-2 py-1 rounded-md border border-border transition-colors">
                                                             <User size={10} className="shrink-0 text-muted-foreground/80 dark:text-muted-foreground/60" />

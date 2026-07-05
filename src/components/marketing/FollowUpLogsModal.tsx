@@ -145,24 +145,25 @@ export default function FollowUpLogsModal({ isOpen, onClose, sequenceId, sequenc
                 </div>
 
                 <div className="flex items-center border-b border-border overflow-x-auto no-scrollbar mb-4">
-                    {(['logs', 'enrolled'] as const).map(tab => (
+                    {([...(['logs', 'enrolled'] as const)]).map(tab => (
                         <button
                             key={tab}
+                            role="tab"
                             onClick={() => setActiveTab(tab)}
-                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap ${
+                            className={`px-6 py-3 text-base font-bold transition-all relative flex items-center gap-2 whitespace-nowrap border-b-[3px] ${
                                 activeTab === tab
-                                    ? 'text-foreground border-b-[3px] active-tab-indicator'
-                                    : 'text-muted-foreground hover:text-foreground'
+                                    ? 'text-foreground active-tab-indicator'
+                                    : 'text-muted-foreground hover:text-foreground border-transparent'
                             }`}
                         >
                             {tab === 'logs' ? (
                                 <>
-                                    <BarChart3 size={18} strokeWidth={1} />
+                                    <BarChart3 size={14} strokeWidth={1} />
                                     Logs de Envio ({logs.length})
                                 </>
                             ) : (
                                 <>
-                                    <User size={18} strokeWidth={1} />
+                                    <User size={14} strokeWidth={1} />
                                     Leads Inscritos ({enrollments.length})
                                 </>
                             )}

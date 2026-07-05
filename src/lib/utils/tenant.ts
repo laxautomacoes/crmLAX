@@ -1,11 +1,10 @@
-import { createClient } from '@/lib/supabase/server';
-import { headers } from 'next/headers';
 import { getTenantByHostname as queryTenantByHostname, getTenantBySlug as queryTenantBySlug } from './tenant-query';
 
 import { TenantInfo } from './tenant-types';
 export type { TenantInfo };
 
 export async function getTenantFromHeaders(): Promise<TenantInfo | null> {
+    const { headers } = await import('next/headers');
     const headersList = await headers();
     const tenantId = headersList.get('x-tenant-id');
     const tenantSlug = headersList.get('x-tenant-slug');
@@ -14,6 +13,7 @@ export async function getTenantFromHeaders(): Promise<TenantInfo | null> {
         return null;
     }
 
+    const { createClient } = await import('@/lib/supabase/server');
     const supabase = await createClient();
     const { data: tenant } = await supabase
         .from('tenants')
@@ -27,6 +27,7 @@ export async function getTenantFromHeaders(): Promise<TenantInfo | null> {
 export { queryTenantBySlug as getTenantBySlug };
 
 export async function getTenantWhatsApp(tenantId: string): Promise<string | null> {
+    const { createClient } = await import('@/lib/supabase/server');
     const supabase = await createClient();
 
     // Buscar do tenant branding primeiro

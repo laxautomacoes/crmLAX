@@ -1,9 +1,8 @@
-import { createClient } from '@/lib/supabase/server';
 import { TenantInfo } from './tenant-types';
 import type { SupabaseClient } from '@supabase/supabase-js';
 
 export async function getTenantByHostname(hostname: string, supabaseClient?: SupabaseClient): Promise<TenantInfo | null> {
-    const supabase = supabaseClient || await createClient();
+    const supabase = supabaseClient || await (await import('@/lib/supabase/server')).createClient();
     const cleanHostname = hostname.split(':')[0];
 
     // Caso 1: Custom domain
@@ -49,7 +48,7 @@ async function getTenantByCustomDomain(
 }
 
 export async function getTenantBySlug(slug: string, supabaseClient?: SupabaseClient): Promise<TenantInfo | null> {
-    const supabase = supabaseClient || await createClient();
+    const supabase = supabaseClient || await (await import('@/lib/supabase/server')).createClient();
     const { data } = await supabase
         .from('tenants')
         .select('id, slug, name, is_system, custom_domain, status, branding, custom_domain_verified, custom_domain_crm_verified, plan_type')
