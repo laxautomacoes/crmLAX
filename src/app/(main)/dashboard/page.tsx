@@ -27,14 +27,9 @@ export default async function DashboardPage() {
     const supabase = await createClient();
     const isAdmin = profile.role === 'admin' || profile.role === 'superadmin';
 
-    const [metricsResult, roiResult, stagesResult, sourcesResult, membersResult] = await Promise.all([
+    const [metricsResult, roiResult, sourcesResult, membersResult] = await Promise.all([
         getDashboardMetrics(profile.tenant_id),
         getROIMetrics(profile.tenant_id),
-        supabase
-            .from('lead_stages')
-            .select('id, name, order_index, color')
-            .eq('tenant_id', profile.tenant_id)
-            .order('order_index', { ascending: true }),
         supabase
             .from('lead_sources')
             .select('id, name')
@@ -73,7 +68,11 @@ export default async function DashboardPage() {
 
     // Dados para popular os filtros dinâmicos
     const filterOptions = {
-        stages: (stagesResult.data || []).map((s: any) => ({ id: s.id, name: s.name, color: s.color })),
+        stages: (metrics.funnelSteps || []).map((step: any) => ({
+            id: step.stageId,
+            name: step.label,
+            color: step.color
+        })),
         sources: (sourcesResult.data || []).map((s: any) => ({ id: s.id, name: s.name })),
         members: (membersResult.data || []).map((m: any) => ({ id: m.id, name: m.full_name })),
     };
