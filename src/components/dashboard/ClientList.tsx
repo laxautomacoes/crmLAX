@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { Search, Plus, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { ClientFilterModal } from './ClientFilterModal'
 import { FormInput } from '@/components/shared/forms/FormInput'
@@ -20,6 +21,7 @@ interface ClientListProps {
 }
 
 export default function ClientList({ initialClients, tenantId, profileId, openId }: ClientListProps) {
+    const router = useRouter()
     const [clients, setClients] = useState(initialClients)
 
     useEffect(() => {
@@ -77,13 +79,17 @@ export default function ClientList({ initialClients, tenantId, profileId, openId
 
     useEffect(() => {
         if (openId && clients.length > 0) {
-            const clientToOpen = clients.find(c => c.id === openId)
-            if (clientToOpen) {
-                setSelectedClient(clientToOpen)
-                setIsClientModalOpen(true)
+            if (selectedClient?.id !== openId) {
+                const clientToOpen = clients.find(c => c.id === openId)
+                if (clientToOpen) {
+                    setSelectedClient(clientToOpen)
+                    setIsClientModalOpen(true)
+                    // Limpa o openId da URL para evitar loops de re-render com Server Actions
+                    router.replace('/clients', { scroll: false })
+                }
             }
         }
-    }, [openId, clients])
+    }, [openId, clients, selectedClient, router])
 
     const filteredClients = clients.filter(client => {
         // Filtro de status (ativo/arquivado)
