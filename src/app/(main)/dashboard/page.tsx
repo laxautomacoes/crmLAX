@@ -45,6 +45,28 @@ export default async function DashboardPage() {
             : Promise.resolve({ data: [] })
     ]);
 
+    if (!metricsResult.success) {
+        return (
+            <div className="p-8 text-center text-red-500 space-y-2">
+                <h2 className="font-bold text-lg">Erro ao carregar métricas do dashboard:</h2>
+                <pre className="text-xs bg-gray-100 dark:bg-muted p-4 rounded text-left overflow-auto max-w-full">
+                    {metricsResult.error || JSON.stringify(metricsResult, null, 2)}
+                </pre>
+            </div>
+        );
+    }
+
+    if (!roiResult.success) {
+        return (
+            <div className="p-8 text-center text-red-500 space-y-2">
+                <h2 className="font-bold text-lg">Erro ao carregar ROI do dashboard:</h2>
+                <pre className="text-xs bg-gray-100 dark:bg-muted p-4 rounded text-left overflow-auto max-w-full">
+                    {roiResult.error || JSON.stringify(roiResult, null, 2)}
+                </pre>
+            </div>
+        );
+    }
+
     const metrics = metricsResult.success && metricsResult.data ? metricsResult.data : {
         kpis: {
             leadsAtivos: 0,
@@ -58,6 +80,10 @@ export default async function DashboardPage() {
         recentLeads: []
     };
 
+    if (!metricsResult.success) {
+        console.error("DASHBOARD METRICS ERROR:", metricsResult.error);
+    }
+
     const roiData: ROIMetrics = roiResult.success && roiResult.data ? roiResult.data : {
         totalCustos: 0,
         totalReceita: 0,
@@ -65,6 +91,10 @@ export default async function DashboardPage() {
         cpl: 0,
         leadsCount: 0
     };
+
+    if (!roiResult.success) {
+        console.error("ROI METRICS ERROR:", roiResult.error);
+    }
 
     // Dados para popular os filtros dinâmicos
     const filterOptions = {
