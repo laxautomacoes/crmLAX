@@ -12,6 +12,7 @@ interface ProfileData {
     tenant_id?: string
     whatsapp_number?: string
     is_active_for_service?: boolean
+    permissions?: Record<string, boolean>
 }
 
 interface TenantData {
