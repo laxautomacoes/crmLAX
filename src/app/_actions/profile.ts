@@ -1,21 +1,25 @@
 'use server'
 
+import { cache } from 'react'
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath, unstable_noStore } from 'next/cache'
 import { createAdminClient } from '@/lib/supabase/admin'
 import { notificationService } from '@/services/notification-service'
 import { Resend } from 'resend'
 
-
-
-export async function getProfile() {
+/**
+ * Request-level memoization: getProfile() chamado múltiplas vezes
+ * no mesmo server request executa apenas 1 vez.
+ * Isso elimina ~4-8 queries duplicadas por navegação.
+ */
+async function _getProfileInternal() {
     unstable_noStore()
     try {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
 
         if (!user) {
-            return { error: 'Not authenticated' }
+            return { error: 'Not authenticated' as const }
         }
 
         const { data: profile } = await supabase
@@ -26,7 +30,7 @@ export async function getProfile() {
 
         if (profile?.is_archived) {
             await supabase.auth.signOut()
-            return { error: 'Esta conta foi arquivada pelo administrador. Acesso negado.' }
+            return { error: 'Esta conta foi arquivada pelo administrador. Acesso negado.' as const }
         }
 
         return {
@@ -41,8 +45,15 @@ export async function getProfile() {
         }
     } catch (error) {
         console.error('Error in getProfile:', error)
-        return { error: 'Failed to fetch profile' }
+        return { error: 'Failed to fetch profile' as const }
     }
+}
+
+// cache() deduplicates calls within the same React server render pass
+const _cachedGetProfile = cache(_getProfileInternal)
+
+export async function getProfile() {
+    return _cachedGetProfile()
 }
 
 export async function updateProfileAvatar(avatarUrl: string) {

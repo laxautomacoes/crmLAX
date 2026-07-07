@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server'
 import { revalidatePath } from 'next/cache'
 import { cleanPhone } from '@/lib/utils/phone'
+import { getProfile } from './profile'
 
 export interface ClientData {
     id?: string
@@ -191,23 +192,10 @@ export async function getClientById(contactId: string) {
 export async function getClients(tenantId: string, includeArchived = false) {
     const supabase = await createClient()
 
-    // Verificar role do usuário para filtrar por atribuição
-    const { data: { user } } = await supabase.auth.getUser()
-    let isAdmin = false
-    let userId: string | undefined
-
-    if (user) {
-        const { data: profile } = await supabase
-            .from('profiles')
-            .select('id, role')
-            .eq('id', user.id)
-            .single()
-
-        if (profile) {
-            isAdmin = profile.role === 'admin' || profile.role === 'superadmin'
-            userId = profile.id
-        }
-    }
+    // Usar getProfile() cacheado — elimina 2 queries duplicadas (auth.getUser + profiles.select)
+    const { profile } = await getProfile()
+    const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
+    const userId = profile?.id
 
     // Buscar contatos
     let query = supabase
@@ -236,11 +224,6 @@ export async function getClients(tenantId: string, includeArchived = false) {
         lead_stages (
             name,
             color
-        ),
-        interactions (
-            content,
-            type,
-            created_at
         ),
         proposals ( id )
       )
@@ -271,9 +254,6 @@ export async function getClients(tenantId: string, includeArchived = false) {
         const activeLead = (contact.leads as any[])?.sort((a, b) => 
             new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
         )[0]
-        
-        // Pegar a última nota/mensagem
-        const lastInteraction = activeLead?.interactions?.[0]?.content
 
         // Interesse prioritário: property_interest (texto livre), depois Property linkado, depois source
         const interest = activeLead?.property_interest || activeLead?.properties?.title || activeLead?.source || 'N/A'

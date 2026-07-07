@@ -64,24 +64,31 @@ export async function getPipelineData(tenantId: string) {
     const { profile } = await getProfile()
     const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
 
-    const stagesResult = await getStages(tenantId)
-    if (!stagesResult.success) {
-        return { success: false, error: stagesResult.error }
-    }
-
-    // Deduplicar estágios por order_index
-    const uniqueStagesMap = new Map<number, StageRecord>()
-    ;((stagesResult.data || []) as StageRecord[]).forEach((stage) => {
-        if (!uniqueStagesMap.has(stage.order_index)) {
-            uniqueStagesMap.set(stage.order_index, stage)
-        }
-    })
-    const stages = Array.from(uniqueStagesMap.values()) as StageRecord[]
-
-    let query = supabase
+    // Paralelizar: stages e leads ao mesmo tempo
+    let leadsQuery = supabase
         .from('leads')
         .select(`
-            *,
+            id,
+            stage_id,
+            notes,
+            value,
+            property_interest,
+            source,
+            lead_source,
+            campaign,
+            property_id,
+            contact_id,
+            created_at,
+            assigned_to,
+            images,
+            videos,
+            documents,
+            whatsapp_chat,
+            date,
+            last_interaction_at,
+            partner_id,
+            partner_split,
+            partner_role,
             contacts (
                 name, phone, email, tags, avatar_url
             ),
@@ -95,16 +102,32 @@ export async function getPipelineData(tenantId: string) {
         .order('last_interaction_at', { ascending: false })
 
     if (!isAdmin && profile?.id) {
-        query = query.eq('assigned_to', profile.id)
+        leadsQuery = leadsQuery.eq('assigned_to', profile.id)
     }
 
-    const { data: leads, error: leadsError } = await query
+    const [stagesResult, leadsResult] = await Promise.all([
+        getStages(tenantId),
+        leadsQuery
+    ])
 
-    if (leadsError) {
-        return { success: false, error: leadsError.message }
+    if (!stagesResult.success) {
+        return { success: false, error: stagesResult.error }
     }
 
-    const formattedLeads = ((leads || []) as LeadRecord[]).map((lead) => ({
+    if (leadsResult.error) {
+        return { success: false, error: leadsResult.error.message }
+    }
+
+    // Deduplicar estágios por order_index
+    const uniqueStagesMap = new Map<number, StageRecord>()
+    ;((stagesResult.data || []) as StageRecord[]).forEach((stage) => {
+        if (!uniqueStagesMap.has(stage.order_index)) {
+            uniqueStagesMap.set(stage.order_index, stage)
+        }
+    })
+    const stages = Array.from(uniqueStagesMap.values()) as StageRecord[]
+
+    const formattedLeads = ((leadsResult.data || []) as LeadRecord[]).map((lead) => ({
         id: lead.id,
         name: lead.contacts?.name || 'Sem nome',
         phone: lead.contacts?.phone || '',

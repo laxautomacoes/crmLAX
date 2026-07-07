@@ -1,14 +1,13 @@
 'use client';
 
-import { useState, Suspense, useEffect } from 'react';
+import { useState, Suspense } from 'react';
 import { Sidebar } from '@/components/layout/Sidebar';
 import { Header } from '@/components/layout/Header';
 import { MobileServiceBar } from '@/components/layout/MobileServiceBar';
 import { WelcomePopup } from '@/components/shared/WelcomePopup';
-import { createClient } from '@/lib/supabase/client';
-import { User } from '@supabase/supabase-js';
+import { ProfileProvider, useProfile } from '@/components/layout/ProfileContext';
 
-export default function DashboardLayout({
+function DashboardLayoutInner({
     children,
     modal,
 }: {
@@ -17,20 +16,11 @@ export default function DashboardLayout({
 }) {
     const [sidebarOpen, setSidebarOpen] = useState(false);
     const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-    const [user, setUser] = useState<User | null>(null);
-
-    useEffect(() => {
-        const supabase = createClient();
-        supabase.auth.getUser().then(({ data }: { data: { user: User | null } }) => {
-            setUser(data.user);
-        }).catch((err: any) => {
-            console.error('[Layout] Erro ao buscar usuário:', err);
-        });
-    }, []);
+    const { profile } = useProfile();
 
     return (
         <div className="flex h-screen bg-background overflow-hidden text-foreground">
-            {user && <WelcomePopup user={user} />}
+            {profile && <WelcomePopup user={{ id: profile.id, email: profile.email } as any} />}
             <Suspense fallback={null}>
                 <Sidebar
                     isOpen={sidebarOpen}
@@ -62,3 +52,20 @@ export default function DashboardLayout({
         </div>
     );
 }
+
+export default function DashboardLayout({
+    children,
+    modal,
+}: {
+    children: React.ReactNode;
+    modal: React.ReactNode;
+}) {
+    return (
+        <ProfileProvider>
+            <DashboardLayoutInner modal={modal}>
+                {children}
+            </DashboardLayoutInner>
+        </ProfileProvider>
+    );
+}
+

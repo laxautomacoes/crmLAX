@@ -8,10 +8,11 @@ import { Notification } from '@/components/dashboard/NotificationItem';
 import { getNotifications } from '@/app/_actions/notifications';
 import { useState, useEffect } from 'react';
 import { useTheme } from 'next-themes';
-import { getProfile, updateLastSeen } from '@/app/_actions/profile';
+import { updateLastSeen } from '@/app/_actions/profile';
 import { Logo } from '@/components/shared/Logo';
 import { useOfflineSync } from '@/hooks/use-offline-sync';
 import { ServiceQueueToggle } from './ServiceQueueToggle';
+import { useProfile } from './ProfileContext';
 
 function SyncButton() {
     const { isOnline, isSyncing, syncData, syncProgress, lastSync } = useOfflineSync();
@@ -79,10 +80,12 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
     // Capitalize month if needed, though default is lowercase in pt-BR. User example showed "Janeira" (typo?) "Janeiro".
     const formattedDate = `Hoje é ${dateString}`;
 
-    const [profile, setProfile] = useState<any>(null);
-    const [branding, setBranding] = useState<{ logo_full?: string; logo_header?: string; logo_icon?: string; logo_height?: number; logo_header_height?: number } | null>(null);
-    const [companyName, setCompanyName] = useState<string>('');
-    const [brandingLoading, setBrandingLoading] = useState(true);
+    // Usar contexto centralizado em vez de chamadas independentes
+    const { profile: ctxProfile, tenant: ctxTenant, loading: ctxLoading } = useProfile();
+    const profile = ctxProfile;
+    const branding = ctxTenant?.branding || null;
+    const companyName = ctxTenant?.name || '';
+    const brandingLoading = ctxLoading;
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
 
@@ -148,60 +151,10 @@ export function Header({ onMenuClick, isSidebarCollapsed, toggleSidebar }: Heade
 
     const unreadCount = notifications.filter(n => !n.read).length;
 
-    useEffect(() => {
-        const handleBrandingUpdate = (event: any) => {
-            if (event.detail) {
-                const timestamp = Date.now();
-                const updatedBranding = { ...event.detail };
-                if (updatedBranding.logo_full) updatedBranding.logo_full = `${updatedBranding.logo_full}?t=${timestamp}`;
-                setBranding(updatedBranding);
-            }
-        };
-
-        const handleProfileUpdate = (event: any) => {
-            if (event.detail) {
-                setProfile((prev: any) => ({ ...prev, ...event.detail }));
-            }
-        };
-
-        window.addEventListener('branding-updated', handleBrandingUpdate);
-        window.addEventListener('profile-updated', handleProfileUpdate);
-        return () => {
-            window.removeEventListener('branding-updated', handleBrandingUpdate);
-            window.removeEventListener('profile-updated', handleProfileUpdate);
-        };
-    }, []);
+    // Event listeners de branding/profile agora são tratados pelo ProfileContext
 
     useEffect(() => {
         setMounted(true);
-        async function loadData() {
-            try {
-                const { profile: profileData } = await getProfile();
-                if (profileData) {
-                    setProfile(profileData);
-
-                    if (profileData.tenant_id) {
-                        const { createClient } = await import('@/lib/supabase/client');
-                        const supabase = createClient();
-                        const { data: tenant } = await supabase
-                            .from('tenants')
-                            .select('name, branding')
-                            .eq('id', profileData.tenant_id)
-                            .maybeSingle();
-
-                        if (tenant) {
-                            if (tenant.branding) setBranding(tenant.branding as any);
-                            if (tenant.name) setCompanyName(tenant.name);
-                        }
-                    }
-                }
-            } catch (err) {
-                console.error('[Header] Erro ao carregar dados do perfil:', err);
-            } finally {
-                setBrandingLoading(false);
-            }
-        }
-        loadData();
     }, []);
 
     // Heartbeat para status online

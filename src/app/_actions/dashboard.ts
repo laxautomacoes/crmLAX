@@ -49,30 +49,19 @@ export async function getDashboardMetrics(tenantId: string) {
         const thirtyDaysAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000).toISOString()
         const sixtyDaysAgo = new Date(now.getTime() - 60 * 24 * 60 * 60 * 1000).toISOString()
 
-        // 1. Definir as queries independentes
-        let leadsQuery = supabase
-            .from('leads')
-            .select('*', { count: 'exact', head: true })
-            .eq('tenant_id', tenantId)
-            .eq('is_archived', false)
-
-        let propertiesQuery = supabase
-            .from('properties')
-            .select('*', { count: 'exact', head: true })
-            .eq('tenant_id', tenantId)
-            .eq('is_archived', false)
+        // 1. Chamar RPC para agregar todos os counts
+        const countsQuery = supabase.rpc('get_dashboard_counts', {
+            p_tenant_id: tenantId,
+            p_user_id: (!isAdmin && profile?.id) ? profile.id : null,
+            p_start_curr: thirtyDaysAgo,
+            p_start_prev: sixtyDaysAgo
+        })
 
         let stagesQuery = supabase
             .from('lead_stages')
             .select('id, name, order_index, color')
             .eq('tenant_id', tenantId)
             .order('order_index', { ascending: true })
-
-        let funnelLeadsQuery = supabase
-            .from('leads')
-            .select('stage_id')
-            .eq('tenant_id', tenantId)
-            .eq('is_archived', false)
 
         let recentLeadsQuery = supabase
             .from('leads')
@@ -94,86 +83,35 @@ export async function getDashboardMetrics(tenantId: string) {
             .order('created_at', { ascending: false })
             .limit(10)
 
-        let prevLeadsQuery = supabase
-            .from('leads')
-            .select('*', { count: 'exact', head: true })
-            .eq('tenant_id', tenantId)
-            .eq('is_archived', false)
-            .gte('created_at', sixtyDaysAgo)
-            .lt('created_at', thirtyDaysAgo)
-
-        let currLeadsQuery = supabase
-            .from('leads')
-            .select('*', { count: 'exact', head: true })
-            .eq('tenant_id', tenantId)
-            .eq('is_archived', false)
-            .gte('created_at', thirtyDaysAgo)
-
-        const prevPropertiesQuery = supabase
-            .from('properties')
-            .select('*', { count: 'exact', head: true })
-            .eq('tenant_id', tenantId)
-            .eq('is_archived', false)
-            .gte('created_at', sixtyDaysAgo)
-            .lt('created_at', thirtyDaysAgo)
-
-        const currPropertiesQuery = supabase
-            .from('properties')
-            .select('*', { count: 'exact', head: true })
-            .eq('tenant_id', tenantId)
-            .eq('is_archived', false)
-            .gte('created_at', thirtyDaysAgo)
-
         if (!isAdmin && profile?.id) {
-            leadsQuery = leadsQuery.eq('assigned_to', profile.id)
-            funnelLeadsQuery = funnelLeadsQuery.eq('assigned_to', profile.id)
             recentLeadsQuery = recentLeadsQuery.eq('assigned_to', profile.id)
-            prevLeadsQuery = prevLeadsQuery.eq('assigned_to', profile.id)
-            currLeadsQuery = currLeadsQuery.eq('assigned_to', profile.id)
         }
 
         // 2. Executar em paralelo
         const [
-            leadsRes,
-            propertiesRes,
+            countsRes,
             stagesRes,
-            funnelLeadsRes,
-            recentLeadsRes,
-            prevLeadsRes,
-            currLeadsRes,
-            prevPropertiesRes,
-            currPropertiesRes
+            recentLeadsRes
         ] = await Promise.all([
-            leadsQuery,
-            propertiesQuery,
+            countsQuery,
             stagesQuery,
-            funnelLeadsQuery,
-            recentLeadsQuery,
-            prevLeadsQuery,
-            currLeadsQuery,
-            prevPropertiesQuery,
-            currPropertiesQuery
+            recentLeadsQuery
         ])
 
-        if (leadsRes.error) throw leadsRes.error
-        if (propertiesRes.error) throw propertiesRes.error
+        if (countsRes.error) throw countsRes.error
         if (stagesRes.error) throw stagesRes.error
-        if (funnelLeadsRes.error) throw funnelLeadsRes.error
         if (recentLeadsRes.error) throw recentLeadsRes.error
-        if (prevLeadsRes.error) throw prevLeadsRes.error
-        if (currLeadsRes.error) throw currLeadsRes.error
-        if (prevPropertiesRes.error) throw prevPropertiesRes.error
-        if (currPropertiesRes.error) throw currPropertiesRes.error
 
-        const totalLeads = leadsRes.count || 0
-        const totalProperties = propertiesRes.count || 0
+        const countsData = countsRes.data as any
+        const totalLeads = countsData?.leads?.total || 0
+        const totalProperties = countsData?.properties?.total || 0
         const stages = stagesRes.data || []
-        const funnelLeadsData = funnelLeadsRes.data || []
         const recentLeadsData = recentLeadsRes.data || []
-        const prevLeadsCount = prevLeadsRes.count || 0
-        const currLeadsCount = currLeadsRes.count || 0
-        const prevPropertiesCount = prevPropertiesRes.count || 0
-        const currPropertiesCount = currPropertiesRes.count || 0
+        const currLeadsCount = countsData?.leads?.curr || 0
+        const prevLeadsCount = countsData?.leads?.prev || 0
+        const currPropertiesCount = countsData?.properties?.curr || 0
+        const prevPropertiesCount = countsData?.properties?.prev || 0
+        const funnelCounts = countsData?.funnel || {}
 
         if (stages.length === 0) {
             console.log('Nenhum estágio encontrado para o tenant:', tenantId);
@@ -208,21 +146,14 @@ export async function getDashboardMetrics(tenantId: string) {
             s.name.toLowerCase().includes('concluído')
         )
 
-        const stageCountMap = new Map<string, number>()
         let conversions = 0
-
-        for (const lead of funnelLeadsData) {
-            if (lead.stage_id) {
-                stageCountMap.set(lead.stage_id, (stageCountMap.get(lead.stage_id) || 0) + 1)
-                if (winStage && lead.stage_id === winStage.id) {
-                    conversions++
-                }
-            }
+        if (winStage && funnelCounts[winStage.id]) {
+            conversions = funnelCounts[winStage.id]
         }
 
         const funnelSteps = uniqueStages.map((stage: any) => ({
             label: stage.name,
-            count: stageCountMap.get(stage.id) || 0,
+            count: funnelCounts[stage.id] || 0,
             stageId: stage.id,
             color: stage.color || undefined
         }))

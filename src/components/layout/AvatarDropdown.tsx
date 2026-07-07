@@ -4,7 +4,6 @@ import { useState, useRef, useEffect } from 'react';
 import { Moon, Sun, Bell, Settings, LogOut, User, Users, Headphones } from 'lucide-react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { getProfile } from '@/app/_actions/profile';
 import { UserAvatar } from '@/components/shared/UserAvatar';
 import { MenuItem } from './AvatarDropdown/MenuItem';
 import { DropdownHeader } from './AvatarDropdown/DropdownHeader';
@@ -13,12 +12,15 @@ import { saveAccount, removeAccount } from '@/lib/utils/multi-account';
 import { SwitchAccountModal } from './AvatarDropdown/SwitchAccountModal';
 import { recordAccessLog } from '@/app/_actions/auth-logs';
 import { SupportModal } from '@/components/shared/SupportModal';
+import { useProfile } from './ProfileContext';
 
 export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
     const [isOpen, setIsOpen] = useState(false);
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
-    const [profile, setProfile] = useState<any>(null);
+    // Usar contexto centralizado em vez de chamar getProfile()
+    const { profile: ctxProfile } = useProfile();
+    const profile = ctxProfile;
     const dropdownRef = useRef<HTMLDivElement>(null);
     const router = useRouter();
     const supabase = createClient();
@@ -35,24 +37,20 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
     };
 
     useEffect(() => {
+        // Sync multi-account quando o perfil estiver disponível
         const syncAccount = async () => {
+            if (!profile) return;
             try {
-                const { profile: fetchedProfile } = await getProfile();
-                if (fetchedProfile) {
-                    setProfile(fetchedProfile);
-                    
-                    // Sync with multi-account list
-                    const { data: { session } } = await supabase.auth.getSession();
-                    if (session) {
-                        saveAccount({
-                            email: session.user.email!,
-                            name: fetchedProfile.full_name || session.user.email!,
-                            avatar_url: fetchedProfile.avatar_url || null,
-                            role: fetchedProfile.role || null,
-                            tenant_id: fetchedProfile.tenant_id || null,
-                            session: session
-                        });
-                    }
+                const { data: { session } } = await supabase.auth.getSession();
+                if (session) {
+                    saveAccount({
+                        email: session.user.email!,
+                        name: profile.full_name || session.user.email!,
+                        avatar_url: profile.avatar_url || null,
+                        role: profile.role || null,
+                        tenant_id: profile.tenant_id || null,
+                        session: session
+                    });
                 }
             } catch (err) {
                 console.error('[AvatarDropdown] Erro ao sincronizar conta:', err);
@@ -61,23 +59,15 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
 
         syncAccount();
 
-        const handleProfileUpdate = (event: any) => {
-            if (event.detail) {
-                setProfile((prev: any) => ({ ...prev, ...event.detail }));
-            }
-        };
-
         const handleClickOutside = (e: MouseEvent) => {
             if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) setIsOpen(false);
         };
 
-        window.addEventListener('profile-updated', handleProfileUpdate);
         document.addEventListener('mousedown', handleClickOutside);
         return () => {
-            window.removeEventListener('profile-updated', handleProfileUpdate);
             document.removeEventListener('mousedown', handleClickOutside);
         };
-    }, []);
+    }, [profile?.id]);
 
     return (
         <div className="relative" ref={dropdownRef}>

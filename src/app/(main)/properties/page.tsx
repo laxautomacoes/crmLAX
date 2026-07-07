@@ -1,8 +1,6 @@
 import { getProfile } from '@/app/_actions/profile'
 import { getProperties } from '@/app/_actions/properties'
-import { getTenantByUserId } from '@/app/_actions/tenant'
 import { checkPlanFeatureAction } from '@/app/_actions/plan'
-import { initStorageBuckets } from '@/app/_actions/storage'
 import PropertiesClient from '@/components/dashboard/properties/PropertiesClient'
 import { redirect } from 'next/navigation'
 
@@ -15,12 +13,8 @@ export default async function PropertiesPage() {
         redirect('/login')
     }
 
-    // Inicializar buckets (best-effort, não bloqueia)
-    try { await initStorageBuckets() } catch {}
-
-    const [propertiesResult, tenant, aiAccess, marketingAccess] = await Promise.all([
+    const [propertiesResult, aiAccess, marketingAccess] = await Promise.all([
         getProperties(profile.tenant_id, undefined, profile.id, profile.role || 'user'),
-        getTenantByUserId(profile.id),
         checkPlanFeatureAction(profile.tenant_id, 'ai'),
         checkPlanFeatureAction(profile.tenant_id, 'marketing'),
     ])
@@ -31,7 +25,7 @@ export default async function PropertiesPage() {
         <PropertiesClient
             initialProperties={initialProperties}
             tenantId={profile.tenant_id}
-            tenantSlug={tenant?.slug || ''}
+            tenantSlug={(profile as any).tenants?.slug || ''}
             userId={profile.id}
             userRole={profile.role || 'user'}
             hasAIAccess={aiAccess}

@@ -9,6 +9,7 @@ import { Logo } from '@/components/shared/Logo';
 import { NavItem } from './Sidebar/NavItem';
 import { recordAccessLog } from '@/app/_actions/auth-logs';
 import { SupportModal } from '@/components/shared/SupportModal';
+import { useProfile } from './ProfileContext';
 
 interface SidebarProps {
     isOpen: boolean; onClose: () => void; isCollapsed: boolean; toggleCollapse: () => void;
@@ -19,93 +20,31 @@ export function Sidebar({ isOpen, onClose, isCollapsed }: SidebarProps) {
     const searchParams = useSearchParams();
     const router = useRouter();
     const supabase = createClient();
+    // Usar contexto centralizado em vez de queries independentes
+    const { profile: ctxProfile, tenant: ctxTenant, loading: ctxLoading } = useProfile();
+    const userRole = ctxProfile?.role || null;
+    const userProfile = ctxProfile;
+    const tenantSlug = ctxTenant?.slug || null;
+    const branding = ctxTenant?.branding || null;
+    const brandingLoading = ctxLoading;
+
+    // Calcular siteUrl baseado nos dados do contexto
     const [expandedItems, setExpandedItems] = useState<string[]>([]);
-    const [userRole, setUserRole] = useState<string | null>(null);
-    const [userProfile, setUserProfile] = useState<any>(null);
-    const [tenantSlug, setTenantSlug] = useState<string | null>(null);
-    const [branding, setBranding] = useState<{ logo_full?: string; logo_header?: string; logo_icon?: string; logo_height?: number; logo_header_height?: number } | null>(null);
-    const [brandingLoading, setBrandingLoading] = useState(true);
     const [siteUrl, setSiteUrl] = useState<string>('#');
     const [isSupportModalOpen, setIsSupportModalOpen] = useState(false);
 
     useEffect(() => {
-        const handleBrandingUpdate = (event: any) => {
-            if (event.detail) {
-                // Adiciona um timestamp para forçar o recarregamento das imagens pelo navegador (cache busting)
-                const timestamp = Date.now();
-                const updatedBranding = { ...event.detail };
-                if (updatedBranding.logo_full) updatedBranding.logo_full = `${updatedBranding.logo_full}?t=${timestamp}`;
-                if (updatedBranding.logo_header) updatedBranding.logo_header = `${updatedBranding.logo_header}?t=${timestamp}`;
-                if (updatedBranding.logo_icon) updatedBranding.logo_icon = `${updatedBranding.logo_icon}?t=${timestamp}`;
-                setBranding(updatedBranding);
-            }
-        };
-
-        const handleProfileUpdate = (event: any) => {
-            if (event.detail) {
-                setUserProfile((prev: any) => ({ ...prev, ...event.detail }));
-            }
-        };
-
-        window.addEventListener('branding-updated', handleBrandingUpdate);
-        window.addEventListener('profile-updated', handleProfileUpdate);
-        return () => {
-            window.removeEventListener('branding-updated', handleBrandingUpdate);
-            window.removeEventListener('profile-updated', handleProfileUpdate);
-        };
-    }, []);
-
-    useEffect(() => {
-        async function fetchData() {
-            try {
-                const { data: { user } } = await supabase.auth.getUser();
-                if (user) {
-                    // Buscar Role e Perfil
-                    const { data: profile } = await supabase
-                        .from('profiles')
-                        .select('role, tenant_id, full_name, avatar_url')
-                        .eq('id', user.id)
-                        .maybeSingle();
-
-                    setUserRole(profile?.role || 'user');
-                    setUserProfile(profile);
-
-                    // Buscar Slug, Branding e Custom Domain do Tenant
-                    if (profile?.tenant_id) {
-                        const { data: tenant } = await supabase
-                            .from('tenants')
-                            .select('slug, branding, custom_domain, custom_domain_verified')
-                            .eq('id', profile.tenant_id)
-                            .maybeSingle();
-
-                        if (tenant) {
-                            if (tenant.slug) {
-                                setTenantSlug(tenant.slug);
-                            }
-                            if (tenant.branding) {
-                                setBranding(tenant.branding as any);
-                            }
-                            
-                            // Calcular siteUrl
-                            const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(profile?.role?.toLowerCase() || '');
-                            if (isSuperAdmin) {
-                                setSiteUrl('/conheca');
-                            } else if (tenant.custom_domain && tenant.custom_domain_verified) {
-                                setSiteUrl(`https://${tenant.custom_domain}`);
-                            } else if (tenant.slug) {
-                                setSiteUrl(`/site/${tenant.slug}`);
-                            }
-                        }
-                    }
-                }
-            } catch (err) {
-                console.error('[Sidebar] Erro ao buscar dados do perfil:', err);
-            } finally {
-                setBrandingLoading(false);
+        if (ctxProfile && ctxTenant) {
+            const isSuperAdmin = ['superadmin', 'super_admin', 'super administrador'].includes(ctxProfile.role?.toLowerCase() || '');
+            if (isSuperAdmin) {
+                setSiteUrl('/conheca');
+            } else if (ctxTenant.custom_domain && ctxTenant.custom_domain_verified) {
+                setSiteUrl(`https://${ctxTenant.custom_domain}`);
+            } else if (ctxTenant.slug) {
+                setSiteUrl(`/site/${ctxTenant.slug}`);
             }
         }
-        fetchData();
-    }, []);
+    }, [ctxProfile, ctxTenant]);
 
     useEffect(() => {
         const activeItem = menuItems.find(item =>

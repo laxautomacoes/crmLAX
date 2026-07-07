@@ -2,9 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { CloudDownload, RefreshCw, WifiOff } from 'lucide-react';
-import { getProfile } from '@/app/_actions/profile';
 import { useOfflineSync } from '@/hooks/use-offline-sync';
 import { ServiceQueueToggle } from './ServiceQueueToggle';
+import { useProfile } from './ProfileContext';
 
 function SyncButtonMobile() {
     const { isOnline, isSyncing, syncData, syncProgress, lastSync } = useOfflineSync();
@@ -50,32 +50,8 @@ function SyncButtonMobile() {
 }
 
 export function MobileServiceBar() {
-    const [profile, setProfile] = useState<any>(null);
-    const [companyName, setCompanyName] = useState('');
-
-    useEffect(() => {
-        async function loadData() {
-            try {
-                const { profile: profileData } = await getProfile();
-                if (profileData) {
-                    setProfile(profileData);
-                    if (profileData.tenant_id) {
-                        const { createClient } = await import('@/lib/supabase/client');
-                        const supabase = createClient();
-                        const { data: tenant } = await supabase
-                            .from('tenants')
-                            .select('name')
-                            .eq('id', profileData.tenant_id)
-                            .maybeSingle();
-                        if (tenant?.name) setCompanyName(tenant.name);
-                    }
-                }
-            } catch (err) {
-                console.error('[MobileServiceBar] Erro ao carregar dados:', err);
-            }
-        }
-        loadData();
-    }, []);
+    const { profile, tenant } = useProfile();
+    const companyName = tenant?.name || '';
 
     return (
         <div className="md:hidden flex flex-col items-center gap-4 px-4 py-5 -mx-4 -mt-4 mb-6 w-[calc(100%+2rem)] bg-card border-b border-border">
