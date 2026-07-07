@@ -122,7 +122,7 @@ export function AvatarDropdown({ unreadCount = 0 }: { unreadCount?: number }) {
             <SwitchAccountModal 
                 isOpen={isModalOpen} 
                 onClose={() => setIsModalOpen(false)} 
-                currentEmail={profile?.email || profile?.user?.email}
+                currentEmail={profile?.email}
             />
 
             <SupportModal 
