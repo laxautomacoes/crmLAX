@@ -264,9 +264,17 @@ export async function getDashboardMetrics(tenantId: string) {
         }
     } catch (error: any) {
         console.error('Error fetching dashboard metrics:', error)
+        const parts: string[] = []
+        if (error?.message && error.message.trim()) parts.push(error.message.trim())
+        if (error?.hint && error.hint.trim()) parts.push(`Dica: ${error.hint.trim()}`)
+        if (error?.code) parts.push(`Código: ${error.code}`)
+        if (error?.status) parts.push(`HTTP ${error.status}`)
+        const errorDetails = parts.length > 0
+            ? parts.join(' | ')
+            : (typeof error === 'object' ? JSON.stringify(error) : String(error))
         return {
             success: false,
-            error: error.message
+            error: errorDetails || "Erro desconhecido ao carregar métricas"
         }
     }
 }
@@ -361,7 +369,15 @@ export async function getROIMetrics(tenantId: string): Promise<{ success: boolea
         }
     } catch (error: any) {
         console.error('Error fetching ROI metrics:', error)
-        return { success: false, error: error.message }
+        const parts: string[] = []
+        if (error?.message && error.message.trim()) parts.push(error.message.trim())
+        if (error?.hint && error.hint.trim()) parts.push(`Dica: ${error.hint.trim()}`)
+        if (error?.code) parts.push(`Código: ${error.code}`)
+        if (error?.status) parts.push(`HTTP ${error.status}`)
+        const errorDetails = parts.length > 0
+            ? parts.join(' | ')
+            : (typeof error === 'object' ? JSON.stringify(error) : String(error))
+        return { success: false, error: errorDetails || "Erro desconhecido ao carregar ROI" }
     }
 }
 

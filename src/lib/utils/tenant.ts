@@ -65,6 +65,8 @@ export function isPublicRoute(pathname: string): boolean {
         '/site',
         '/conheca',
         '/suspended',
+        '/privacidade',
+        '/termos',
     ];
 
     return publicRoutes.some(route => pathname.startsWith(route)) ||

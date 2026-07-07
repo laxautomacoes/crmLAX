@@ -1,8 +1,10 @@
-import { BulkSenderForm } from '@/components/dashboard/tools/BulkSenderForm'
+import nextDynamic from 'next/dynamic'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Metadata } from 'next'
 import { getProfile } from '@/app/_actions/profile'
 import { redirect } from 'next/navigation'
+
+const BulkSenderForm = nextDynamic(() => import('@/components/dashboard/tools/BulkSenderForm').then(mod => ({ default: mod.BulkSenderForm })))
 
 export const metadata: Metadata = {
     title: 'Disparador de WhatsApp | CRM LAX',

@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Search, Plus, Filter, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
 import { ClientFilterModal } from './ClientFilterModal'
@@ -10,8 +11,10 @@ import { deleteClient, archiveClient } from '@/app/_actions/clients'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { toast } from 'sonner'
 import { ClientListItem } from './ClientListItem'
-import { ClientModal } from './clients/ClientModal'
 import { PageHeader } from '@/components/shared/PageHeader'
+
+// Lazy-loaded modal — só carrega quando o usuário abre (~161KB economizados)
+const ClientModal = dynamic(() => import('./clients/ClientModal').then(mod => ({ default: mod.ClientModal })), { ssr: false })
 
 interface ClientListProps {
     initialClients: any[]

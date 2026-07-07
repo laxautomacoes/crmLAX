@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter, useSearchParams } from 'next/navigation'
 import { Plus, Search, LayoutGrid, List, Map, Filter, WifiOff, Archive, Trash2 } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
@@ -9,19 +10,21 @@ import { toast } from 'sonner'
 import { parseCurrencyBRL } from '@/lib/utils/currency'
 import { PropertyGallery } from '@/components/dashboard/properties/PropertyGallery'
 import { PropertyList } from '@/components/dashboard/properties/PropertyList'
-import { PropertyModal } from '@/components/dashboard/properties/PropertyModal'
-import { PropertyDetailsModal } from '@/components/dashboard/properties/PropertyDetailsModal'
-import { SendToLeadModal } from '@/components/dashboard/properties/SendToLeadModal'
-import { PropertyFiltersModal } from '@/components/dashboard/properties/PropertyFiltersModal'
-import { PropertyImportPDFModal } from '@/components/dashboard/properties/PropertyImportPDFModal'
-import { PropertyScrapingModal } from '@/components/dashboard/properties/PropertyScrapingModal'
-import { PropertyRejectModal } from '@/components/dashboard/properties/PropertyRejectModal'
 import type { CreationMethod } from '@/components/dashboard/properties/PropertyModal'
 import { useOfflineSync } from '@/hooks/use-offline-sync'
 import { getOfflineProperties } from '@/services/db'
 import { PropertiesMapView } from '@/components/shared/PropertiesMapView'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { translatePropertyType } from '@/utils/property-translations'
+
+// Lazy-loaded modals — só carregam quando o usuário interage (~300KB+ economizados)
+const PropertyModal = dynamic(() => import('@/components/dashboard/properties/PropertyModal').then(mod => ({ default: mod.PropertyModal })), { ssr: false })
+const PropertyDetailsModal = dynamic(() => import('@/components/dashboard/properties/PropertyDetailsModal').then(mod => ({ default: mod.PropertyDetailsModal })), { ssr: false })
+const SendToLeadModal = dynamic(() => import('@/components/dashboard/properties/SendToLeadModal').then(mod => ({ default: mod.SendToLeadModal })), { ssr: false })
+const PropertyFiltersModal = dynamic(() => import('@/components/dashboard/properties/PropertyFiltersModal').then(mod => ({ default: mod.PropertyFiltersModal })), { ssr: false })
+const PropertyImportPDFModal = dynamic(() => import('@/components/dashboard/properties/PropertyImportPDFModal').then(mod => ({ default: mod.PropertyImportPDFModal })), { ssr: false })
+const PropertyScrapingModal = dynamic(() => import('@/components/dashboard/properties/PropertyScrapingModal').then(mod => ({ default: mod.PropertyScrapingModal })), { ssr: false })
+const PropertyRejectModal = dynamic(() => import('@/components/dashboard/properties/PropertyRejectModal').then(mod => ({ default: mod.PropertyRejectModal })), { ssr: false })
 
 interface PropertiesClientProps {
     initialProperties: any[]

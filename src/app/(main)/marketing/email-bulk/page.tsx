@@ -1,8 +1,10 @@
+import nextDynamic from 'next/dynamic'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { Metadata } from 'next'
 import { getProfile } from '@/app/_actions/profile'
 import { redirect } from 'next/navigation'
-import { EmailBulkSenderForm } from '@/components/dashboard/tools/EmailBulkSenderForm'
+
+const EmailBulkSenderForm = nextDynamic(() => import('@/components/dashboard/tools/EmailBulkSenderForm').then(mod => ({ default: mod.EmailBulkSenderForm })))
 
 export const metadata: Metadata = {
     title: 'Disparador Email | CRM LAX',

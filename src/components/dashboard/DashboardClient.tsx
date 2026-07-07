@@ -1,16 +1,19 @@
 'use client'
 
 import { useState, useMemo } from 'react'
+import dynamic from 'next/dynamic'
 import { useRouter } from 'next/navigation'
 import { Filter, Plus } from 'lucide-react'
 import KPICards from '@/components/dashboard/KPICards'
 import SalesFunnel from '@/components/dashboard/SalesFunnel'
 import RecentLeadsList from '@/components/dashboard/RecentLeadsList'
-import { FilterModal } from '@/components/dashboard/FilterModal'
-import { LeadModal } from '@/components/dashboard/leads/LeadModal'
 import ROIDashboard from '@/components/dashboard/ROIDashboard'
 import { PageHeader } from '@/components/shared/PageHeader'
 import type { DashboardMetrics, ROIMetrics } from '@/app/_actions/dashboard'
+
+// Lazy-loaded modals — só carregam quando o usuário abre
+const FilterModal = dynamic(() => import('@/components/dashboard/FilterModal').then(mod => ({ default: mod.FilterModal })), { ssr: false })
+const LeadModal = dynamic(() => import('@/components/dashboard/leads/LeadModal').then(mod => ({ default: mod.LeadModal })), { ssr: false })
 
 export interface DashboardFilter {
     period: string

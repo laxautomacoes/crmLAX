@@ -1,9 +1,11 @@
 import { Metadata } from 'next';
+import nextDynamic from 'next/dynamic';
 import { getProfile } from '@/app/_actions/profile';
-import { MarketingStudio } from '@/components/marketing/MarketingStudio';
 import { StudioConnections } from '@/components/marketing/StudioConnections';
 import PlanGate from '@/components/ui/PlanGate';
 import { PageHeader } from '@/components/shared/PageHeader';
+
+const MarketingStudio = nextDynamic(() => import('@/components/marketing/MarketingStudio').then(mod => ({ default: mod.MarketingStudio })))
 
 export const metadata: Metadata = {
     title: 'Estúdio Criação | CRM LAX',

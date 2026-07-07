@@ -1,16 +1,19 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import nextDynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
 import { Plus, Upload } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { LeadsHeader } from '@/components/dashboard/leads/LeadsHeader'
 import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
 import { Modal } from '@/components/shared/Modal'
-import { LeadModal } from '@/components/dashboard/leads/LeadModal'
-import { LeadBulkImportModal } from '@/components/dashboard/leads/LeadBulkImportModal'
-import { ClientModal } from '@/components/dashboard/clients/ClientModal'
 import { getProfile, getBrokers } from '@/app/_actions/profile'
+
+// Lazy-loaded modals — só carregam quando o usuário abre (~347KB economizados no bundle inicial)
+const LeadModal = nextDynamic(() => import('@/components/dashboard/leads/LeadModal').then(mod => ({ default: mod.LeadModal })), { ssr: false })
+const LeadBulkImportModal = nextDynamic(() => import('@/components/dashboard/leads/LeadBulkImportModal').then(mod => ({ default: mod.LeadBulkImportModal })), { ssr: false })
+const ClientModal = nextDynamic(() => import('@/components/dashboard/clients/ClientModal').then(mod => ({ default: mod.ClientModal })), { ssr: false })
 import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
 import { getClientById } from '@/app/_actions/clients'
 import { createStage, deleteStage, duplicateStage, updateStageName, updateStageColor } from '@/app/_actions/stages'
