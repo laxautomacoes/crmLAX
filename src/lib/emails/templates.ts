@@ -70,8 +70,8 @@ function getBaseLayout(content: string, settings?: EmailSettings) {
     const primaryColor = settings?.primary_color || '#FFE600';
     const textColor = '#404F4F';
     const logoHtml = settings?.logo_url 
-        ? `<img src="${settings.logo_url}" alt="Logo" style="max-height: 60px; margin-bottom: 24px; display: block;">` 
-        : '<h1 style="color: #404F4F; margin: 0 0 24px 0; font-size: 24px;">CRM LAX</h1>';
+        ? `<img src="${settings.logo_url}" alt="Logo" style="max-height: 60px; margin: 0 auto 24px auto; display: block;">` 
+        : '';
 
     return `
         <!DOCTYPE html>
@@ -332,7 +332,7 @@ export function getPropertyEmail(property: any, propertyUrl: string, config: any
 
     const bodyContent = `
         <div style="margin-bottom: 24px; border-radius: 4px; overflow: hidden; background: #f9f9f9;">
-            ${displayImages[0] ? `<img src="${displayImages[0]}" style="width: 100%; height: 300px; object-fit: cover;" />` : ''}
+            ${displayImages[0] ? `<a href="${propertyUrl}" target="_blank" style="display: block; text-decoration: none;"><img src="${displayImages[0]}" style="width: 100%; height: 300px; object-fit: cover; display: block; border: none;" /></a>` : ''}
         </div>
 
         <h1 style="color: #1a1a1a; margin: 0 0 8px 0; font-size: 24px; font-weight: 800;">${displayTitle}</h1>
@@ -341,76 +341,93 @@ export function getPropertyEmail(property: any, propertyUrl: string, config: any
                 <strong>${getPropertyTypeName(property.type)}:</strong> ${config.selectedUnit.unit_number} ${config.selectedUnit.block_tower ? ` | Bloco/Torre: ${config.selectedUnit.block_tower}` : ''} ${config.selectedUnit.floor ? ` | ${config.selectedUnit.floor}º Andar` : ''}
             </p>
         ` : ''}
-        <p style="font-size: 20px; font-weight: bold; color: ${settings.highlight_color || '#000'}; margin: 0 0 24px 0;">
-            ${displayPrice}
-        </p>
-
-        ${config?.description === 'full' && property.description ? `
-            <div style="margin-bottom: 24px;">
-                <h2 style="font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px 0; font-weight: 800;">Descrição</h2>
-                <p style="color: #444; line-height: 1.6; white-space: pre-wrap; font-size: 15px;">${property.description}</p>
-            </div>
-        ` : ''}
-
-        ${config?.details !== 'none' ? `
-            <div style="margin-bottom: 24px;">
-                <h2 style="font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px 0; font-weight: 800;">Detalhes do Imóvel</h2>
-                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 12px;">
-                    ${tipologiaUnidade ? `<p style="margin: 0; color: #444; font-size: 14px; grid-column: span 2;">• Tipologia: <strong>${tipologiaUnidade}</strong></p>` : ''}
-                    ${(config?.showBedrooms !== false && (details.dormitorios || details.quartos)) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.dormitorios || details.quartos}</strong> Dormitórios</p>` : ''}
-                    ${(config?.showSuites !== false && details.suites) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.suites}</strong> Suítes</p>` : ''}
-                    ${(details.banheiros && parseInt(String(details.banheiros)) > 0) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.banheiros}</strong> Banheiro${parseInt(String(details.banheiros)) > 1 ? 's' : ''}</p>` : ''}
-                    ${(config?.showVagas !== false && (details.vagas_numeracao || (details.vagas && parseInt(String(details.vagas)) > 0))) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Vaga: <strong>${details.vagas_numeracao || details.vagas}</strong></p>` : ''}
-                    ${(config?.showSacada !== false && details.has_sacada_com_churrasqueira) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Sacada com churrasqueira</p>` : ''}
-                    ${(config?.showSacada !== false && !details.has_sacada_com_churrasqueira && details.has_sacada_sem_churrasqueira) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Sacada</p>` : ''}
-                    ${(config?.showEscritorio !== false && details.has_escritorio) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Escritório</p>` : ''}
-                    ${(config?.showDependencia !== false && details.has_dependencia_empregada) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Dependência de empregada</p>` : ''}
-                    ${(config?.showHobbyBox !== false && (details.hobby_box_numeracao || details.hobby_box)) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Hobby Box: <strong>${details.hobby_box_numeracao || (details.hobby_box !== 'Sim' ? details.hobby_box : 'Sim')}</strong></p>` : ''}
-                    ${(config?.showAreaPrivativa !== false && details.area_privativa) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.area_privativa}m²</strong> privativos</p>` : ''}
-                    ${(config?.showAreaTotal !== false && details.area_total && parseFloat(String(details.area_total)) > 0) ? `<p style="margin: 0; color: #444; font-size: 14px;">• <strong>${details.area_total}m²</strong> totais</p>` : ''}
-                    ${(config?.showObservations !== false && details.obs_dormitorios) ? `<p style="margin: 0; color: #444; font-size: 14px;">• Obs: <strong>${details.obs_dormitorios}</strong></p>` : ''}
-                </div>
-            </div>
-        ` : ''}
-
-        ${(config?.price !== false || config?.selectedUnit) ? `
-            <div style="margin-bottom: 24px; padding: 16px; border: 1px solid #e5e7eb; border-radius: 4px; background: #f9fafb;">
-                <h2 style="font-size: 14px; color: #404F4F; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px 0; font-weight: 800;">Valor</h2>
-                ${config?.selectedUnit ? `
-                    <p style="margin: 0 0 8px 0; font-size: 18px; font-weight: bold; color: ${settings.highlight_color || '#404F4F'};">
-                        Valor da Unidade: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_total || 0))}
-                    </p>
-                    ${(config.selectedUnit.valor_ato || config.selectedUnit.valor_mensais || config.selectedUnit.valor_reforcos || config.selectedUnit.valor_chaves || config.selectedUnit.soma_poupanca || config.selectedUnit.valor_financiamento) ? `
-                        <h3 style="font-size: 12px; color: #6b7280; text-transform: uppercase; margin: 12px 0 8px 0; font-weight: 700;">Condições de Pagamento</h3>
-                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: #4b5563;">
-                            ${config.selectedUnit.valor_ato ? `<p style="margin: 0;">• Ato: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_ato))}</p>` : ''}
-                            ${config.selectedUnit.valor_mensais ? `<p style="margin: 0;">• Mensais: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_mensais))}</p>` : ''}
-                            ${config.selectedUnit.valor_reforcos ? `<p style="margin: 0;">• Reforços: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_reforcos))}</p>` : ''}
-                            ${config.selectedUnit.valor_chaves ? `<p style="margin: 0;">• Chaves: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_chaves))}</p>` : ''}
-                            ${config.selectedUnit.soma_poupanca ? `<p style="margin: 0;">• Valor até a entrega: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.soma_poupanca))}</p>` : ''}
-                            ${config.selectedUnit.valor_financiamento ? `<p style="margin: 0;">• Saldo pós-entrega / Financiamento construtora: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_financiamento))}</p>` : ''}
-                        </div>
-                    ` : ''}
-                ` : `
-                    <p style="margin: 0; font-size: 18px; font-weight: bold; color: ${settings.highlight_color || '#404F4F'};">
-                        Imóvel: R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(property.price || 0)}
-                    </p>
-                `}
-                
-                ${(config?.showCondo !== false && details.valor_condominio) ? `<p style="margin: 8px 0 0 0; font-size: 13px; color: #666;">• <strong>Condomínio:</strong> R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(String(details.valor_condominio)))}</p>` : ''}
-                ${(config?.showIptu !== false && details.valor_iptu) ? `<p style="margin: 4px 0 0 0; font-size: 13px; color: #666;">• <strong>IPTU:</strong> R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(String(details.valor_iptu)))}</p>` : ''}
-            </div>
-        ` : ''}
 
         ${config?.location !== 'none' ? `
-            <div style="margin-bottom: 32px;">
-                <h2 style="font-size: 14px; color: #666; text-transform: uppercase; letter-spacing: 0.1em; margin: 0 0 12px 0; font-weight: 800;">Localização</h2>
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+            <div style="margin-bottom: 24px;">
+                <h2 style="font-size: 14px; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0; font-weight: 800;">Localização</h2>
                 <p style="color: #444; margin: 0; font-size: 14px;">
                     ${config?.location === 'exact' 
                         ? `${details.endereco?.rua || ''}, ${details.endereco?.numero || ''} - ${details.endereco?.bairro || ''}, ${details.endereco?.cidade || ''}`
                         : `${details.endereco?.bairro || ''}, ${details.endereco?.cidade || ''}`
                     }
                 </p>
+            </div>
+        ` : ''}
+
+        ${(config?.price !== false || config?.selectedUnit) ? `
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+            <div style="margin-bottom: 24px;">
+                <h2 style="font-size: 14px; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0; font-weight: 800;">Valor</h2>
+                ${config?.selectedUnit ? `
+                    <p style="margin: 0 0 8px 0; color: #444; font-size: 15px; line-height: 1.6;">
+                        • Valor da Unidade: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_total || 0))}</strong>
+                    </p>
+                    ${(config.selectedUnit.valor_ato || config.selectedUnit.valor_mensais || config.selectedUnit.valor_reforcos || config.selectedUnit.valor_chaves || config.selectedUnit.soma_poupanca || config.selectedUnit.valor_financiamento) ? `
+                        <h3 style="font-size: 12px; color: #6b7280; text-transform: uppercase; margin: 12px 0 8px 0; font-weight: 700;">Condições de Pagamento</h3>
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 15px; color: #444; line-height: 1.6;">
+                            ${config.selectedUnit.valor_ato ? `<p style="margin: 0;">• Ato: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_ato))}</strong></p>` : ''}
+                            ${config.selectedUnit.valor_mensais ? `<p style="margin: 0;">• Mensais: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_mensais))}</strong></p>` : ''}
+                            ${config.selectedUnit.valor_reforcos ? `<p style="margin: 0;">• Reforços: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_reforcos))}</strong></p>` : ''}
+                            ${config.selectedUnit.valor_chaves ? `<p style="margin: 0;">• Chaves: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_chaves))}</strong></p>` : ''}
+                            ${config.selectedUnit.soma_poupanca ? `<p style="margin: 0;">• Valor até a entrega: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.soma_poupanca))}</strong></p>` : ''}
+                            ${config.selectedUnit.valor_financiamento ? `<p style="margin: 0;">• Saldo pós-entrega / Financiamento construtora: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(Number(config.selectedUnit.valor_financiamento))}</strong></p>` : ''}
+                        </div>
+                    ` : ''}
+                ` : `
+                    <p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">
+                        • Imóvel: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(property.price || 0)}</strong>
+                    </p>
+                `}
+                
+                ${(config?.showCondo !== false && details.valor_condominio) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Condomínio: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(String(details.valor_condominio)))}</strong></p>` : ''}
+                ${(config?.showIptu !== false && details.valor_iptu) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• IPTU: <strong>R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(parseFloat(String(details.valor_iptu)))}</strong></p>` : ''}
+            </div>
+        ` : ''}
+
+        ${config?.details !== 'none' ? `
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+            <div style="margin-bottom: 24px;">
+                <h2 style="font-size: 14px; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0; font-weight: 800;">Informações</h2>
+                <div style="display: flex; flex-direction: column;">
+                    ${tipologiaUnidade ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Tipologia: <strong>${tipologiaUnidade}</strong></p>` : ''}
+                    ${(config?.showBedrooms !== false && (details.dormitorios || details.quartos)) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Dormitórios: <strong>${details.dormitorios || details.quartos}</strong></p>` : ''}
+                    ${(config?.showSuites !== false && details.suites) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Suítes: <strong>${details.suites}</strong></p>` : ''}
+                    ${(details.banheiros && parseInt(String(details.banheiros)) > 0) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Banheiros: <strong>${details.banheiros}</strong></p>` : ''}
+                    ${(config?.showVagas !== false && (details.vagas_numeracao || (details.vagas && parseInt(String(details.vagas)) > 0))) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Vaga: <strong>${details.vagas_numeracao || details.vagas}</strong></p>` : ''}
+                    ${(config?.showSacada !== false && details.has_sacada_com_churrasqueira) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Sacada com churrasqueira</p>` : ''}
+                    ${(config?.showSacada !== false && !details.has_sacada_com_churrasqueira && details.has_sacada_sem_churrasqueira) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Sacada</p>` : ''}
+                    ${(config?.showEscritorio !== false && details.has_escritorio) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Escritório</p>` : ''}
+                    ${(config?.showDependencia !== false && details.has_dependencia_empregada) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Dependência de empregada</p>` : ''}
+                    ${(config?.showHobbyBox !== false && (details.hobby_box_numeracao || details.hobby_box)) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Hobby Box: <strong>${details.hobby_box_numeracao || (details.hobby_box !== 'Sim' ? details.hobby_box : 'Sim')}</strong></p>` : ''}
+                    ${(config?.showAreaPrivativa !== false && details.area_privativa) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Área privativa: <strong>${details.area_privativa}m²</strong></p>` : ''}
+                    ${(config?.showAreaTotal !== false && details.area_total && parseFloat(String(details.area_total)) > 0) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Área total: <strong>${details.area_total}m²</strong></p>` : ''}
+                    ${(config?.showObservations !== false && details.obs_dormitorios) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Obs: <strong>${details.obs_dormitorios}</strong></p>` : ''}
+                </div>
+            </div>
+        ` : ''}
+
+        ${config?.description === 'full' && property.description ? `
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+            <div style="margin-bottom: 24px;">
+                <h2 style="font-size: 14px; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0; font-weight: 800;">Descrição</h2>
+                <p style="color: #444; line-height: 1.6; white-space: pre-wrap; font-size: 15px;">${property.description}</p>
+            </div>
+        ` : ''}
+
+        ${config?.showResponsavel && (property.user_created?.name || property.responsavel?.name) ? `
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+            <div style="margin-bottom: 24px;">
+                <h2 style="font-size: 14px; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0; font-weight: 800;">Responsável</h2>
+                <p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• ${property.user_created?.name || property.responsavel?.name}</p>
+            </div>
+        ` : ''}
+
+        ${config?.showConstrutora && (details.proprietario_nome || property.construtora?.name) ? `
+            <hr style="border: 0; border-top: 1px solid #e0e0e0; margin: 20px 0;" />
+            <div style="margin-bottom: 24px;">
+                <h2 style="font-size: 14px; color: #1a1a1a; text-transform: uppercase; letter-spacing: 0.05em; margin: 0 0 12px 0; font-weight: 800;">Proprietário | Construtora</h2>
+                <p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• ${details.proprietario_nome || property.construtora?.name}</p>
             </div>
         ` : ''}
 

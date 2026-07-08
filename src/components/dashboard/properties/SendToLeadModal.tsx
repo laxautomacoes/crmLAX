@@ -410,7 +410,6 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
         if (result.success) {
             toast.success('E-mail enviado com sucesso!')
-            onClose()
         } else {
             toast.error('Erro ao enviar e-mail: ' + result.error)
         }
@@ -471,7 +470,8 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (!config.showEscritorio) queryParams.set('ces', '0')
         if (!config.showDependencia) queryParams.set('cde', '0')
         if (!config.showObservations) queryParams.set('cob', '0')
-
+        if (config.showResponsavel) queryParams.set('crs', '1')
+        if (config.showConstrutora) queryParams.set('cct', '1')
         // Add media selections as indices
         const imageIndices = config.selectedImages
             .map(url => (property.images || []).indexOf(url))
@@ -819,7 +819,6 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
 
         toast.success('WhatsApp aberto!')
         setSending(false)
-        onClose()
     }
 
     const handleGeneratePDF = async () => {
@@ -981,10 +980,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             isOpen={isOpen}
             onClose={onClose}
             title={
-                <h3 className="text-lg font-black text-foreground uppercase tracking-widest truncate">
+                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">
                     Enviar para Lead
                 </h3>
-            } size="xl"
+            } size="lg"
         >
             <div className="flex flex-col max-h-[calc(90vh-120px)]">
                 <div className="flex-1 overflow-y-auto pr-2 -mr-2 space-y-6 min-h-0">
@@ -1155,10 +1154,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.basic ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Home size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <Home size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Imóvel</span>
                                         </div>
-                                        {expandedSections.basic ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                        {expandedSections.basic ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.basic && (
                                         <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
@@ -1181,12 +1180,12 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                             className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.units ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                         >
                                             <div className="flex items-center gap-2">
-                                                <Building2 size={16} strokeWidth={1.2} className="text-foreground" />
+                                                <Building2 size={14} strokeWidth={1.2} className="text-foreground" />
                                                 <span className="font-bold text-foreground text-lg">
                                                     {selectedUnit ? `Unidade Selecionada: ${selectedUnit.unit_number}` : 'Unidade'}
                                                 </span>
                                             </div>
-                                            {expandedSections.units ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                            {expandedSections.units ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                         </button>
                                         {expandedSections.units && (
                                             <div className="p-4 bg-white dark:bg-muted/30 space-y-4 border-t border-border/40">
@@ -1312,10 +1311,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.location ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <MapPin size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <MapPin size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Endereço</span>
                                         </div>
-                                        {expandedSections.location ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                        {expandedSections.location ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.location && (
                                         <div className="p-4 bg-white dark:bg-muted/30 border-t border-border/40">
@@ -1347,7 +1346,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.valores ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <DollarSign size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <DollarSign size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Valores</span>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1370,7 +1369,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.valores ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                            {expandedSections.valores ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.valores && (
@@ -1403,7 +1402,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.images ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <ImageIcon size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <ImageIcon size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Imagens ({config.selectedImages.length})</span>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1426,7 +1425,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.images ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                            {expandedSections.images ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.images && (
@@ -1493,7 +1492,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.videos ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Video size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <Video size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Vídeos ({config.selectedVideos.length})</span>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1516,7 +1515,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.videos ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                            {expandedSections.videos ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.videos && (
@@ -1552,7 +1551,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.docs ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <FileText size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <FileText size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Documentos ({config.selectedDocs.length})</span>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1575,7 +1574,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.docs ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                            {expandedSections.docs ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.docs && (
@@ -1611,7 +1610,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.details ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Info size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <Info size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Informações</span>
                                         </div>
                                         <div className="flex items-center gap-3">
@@ -1634,7 +1633,7 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                     </button>
                                                 </div>
                                             )}
-                                            {expandedSections.details ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                            {expandedSections.details ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                         </div>
                                     </button>
                                     {expandedSections.details && (() => {
@@ -1735,10 +1734,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.amenities ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Waves size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <Waves size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Área comum | Lazer</span>
                                         </div>
-                                        {expandedSections.amenities ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                        {expandedSections.amenities ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.amenities && (
                                         <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
@@ -1760,10 +1759,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.descricao ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <FileText size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <FileText size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Descrição</span>
                                         </div>
-                                        {expandedSections.descricao ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                        {expandedSections.descricao ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.descricao && (
                                         <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
@@ -1785,10 +1784,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.responsavel ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <UserCheck size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <UserCheck size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Responsável</span>
                                         </div>
-                                        {expandedSections.responsavel ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                        {expandedSections.responsavel ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.responsavel && (
                                         <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
@@ -1810,10 +1809,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         className={`w-full flex items-center justify-between p-4 transition-colors hover:bg-gray-100/50 dark:hover:bg-muted/20 ${expandedSections.construtora ? 'bg-gray-100/50 dark:bg-muted/20' : 'bg-gray-50 dark:bg-muted/15'}`}
                                     >
                                         <div className="flex items-center gap-2">
-                                            <Building2 size={16} strokeWidth={1.2} className="text-foreground" />
+                                            <Building2 size={14} strokeWidth={1.2} className="text-foreground" />
                                             <span className="font-bold text-foreground text-lg">Proprietário | Construtora</span>
                                         </div>
-                                        {expandedSections.construtora ? <ChevronUp size={16} strokeWidth={1.2} /> : <ChevronDown size={16} strokeWidth={1.2} />}
+                                        {expandedSections.construtora ? <ChevronUp size={14} strokeWidth={1.2} /> : <ChevronDown size={14} strokeWidth={1.2} />}
                                     </button>
                                     {expandedSections.construtora && (
                                         <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">

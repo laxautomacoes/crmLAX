@@ -259,25 +259,25 @@ export default function ClientList({ initialClients, tenantId, profileId, openId
 
 
 
-                    <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max order-2 md:order-2">
+                    <div className="grid grid-cols-2 md:grid-flow-col md:auto-cols-max gap-2 md:gap-3 w-full md:w-max order-1 md:order-2">
                         <button
                             onClick={() => setIsFilterModalOpen(true)}
-                            className={`min-w-[130px] h-[34px] flex items-center justify-center gap-2 px-4 border rounded-lg transition-all text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 shadow-sm ${
+                            className={`w-full md:w-auto md:min-w-[130px] h-[34px] flex items-center justify-center gap-2 px-4 border rounded-lg transition-all text-xs font-bold uppercase tracking-widest whitespace-nowrap outline-none focus:ring-2 shadow-sm ${
                                 filters.status !== 'active' || filters.startDate || filters.endDate || filters.interest || filters.primaryInterest || filters.maritalStatus || (filters.brokerId && filters.brokerId !== 'all')
                                     ? 'bg-secondary/10 border-secondary text-secondary-foreground hover:bg-secondary/20 focus:ring-secondary/50'
                                     : 'bg-card border-muted-foreground/30 text-foreground hover:bg-muted/50 focus:ring-ring/50'
                             }`}
                         >
                             <Filter size={14} strokeWidth={1} />
-                            Filtrar
+                            <span>FILTRAR</span>
                         </button>
 
                         <button
                             onClick={handleOpenCreate}
-                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                            className="w-full md:w-auto md:min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
                         >
                             <Plus size={14} strokeWidth={1} />
-                            Novo Cliente
+                            <span>NOVO CLIENTE</span>
                         </button>
                     </div>
 

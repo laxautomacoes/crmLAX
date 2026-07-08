@@ -55,6 +55,8 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
         if (config.showEscritorio === false) queryParams.set('ces', '0')
         if (config.showDependencia === false) queryParams.set('cde', '0')
         if (config.showObservations === false) queryParams.set('cob', '0')
+        if (config.showResponsavel) queryParams.set('crs', '1')
+        if (config.showConstrutora) queryParams.set('cct', '1')
         
         // Add media selections as indices
         if (config.images && (propertyData as any).images) {
@@ -94,8 +96,18 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
         .select('*')
         .eq('tenant_id', tenant.id)
         .single()
+    const finalSettings = settings || {}
+    
+    // Parse branding to handle cases where Supabase returns it as a string
+    const branding = typeof tenant.branding === 'string' 
+        ? JSON.parse(tenant.branding) 
+        : (tenant.branding || {})
+        
+    if (!finalSettings.logo_url && branding?.logo_full) {
+        finalSettings.logo_url = branding.logo_full
+    }
 
-    const { subject, html } = getPropertyEmail(propertyData, propertyUrl, config, settings || {})
+    const { subject, html } = getPropertyEmail(propertyData, propertyUrl, config, finalSettings)
 
     try {
         if (!process.env.RESEND_API_KEY) {
@@ -104,9 +116,22 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
         }
 
         const resend = new Resend(process.env.RESEND_API_KEY)
+        
+        // Define o domínio (usa custom_domain se existir e estiver verificado)
+        const domain = (tenant.custom_domain && tenant.custom_domain_verified) 
+            ? tenant.custom_domain 
+            : 'laxperience.online'
+            
+        // Se o admin logado tiver um e-mail com o mesmo domínio customizado, envia através do e-mail dele
+        let senderEmail = `noreply@${domain}`
+        if (user?.email && tenant.custom_domain && user.email.endsWith(`@${tenant.custom_domain}`)) {
+            senderEmail = user.email
+        }
+        
         const { data, error } = await resend.emails.send({
-            from: `${tenant.name} <noreply@laxperience.online>`,
+            from: `${tenant.name} <${senderEmail}>`,
             to: [leadEmail],
+            replyTo: user?.email || undefined,
             subject,
             html
         })
@@ -131,7 +156,7 @@ export async function logInteraction(leadId: string, type: 'email' | 'whatsapp' 
             .insert({
                 lead_id: leadId,
                 type,
-                description,
+                content: description,
                 created_at: new Date().toISOString()
             })
 

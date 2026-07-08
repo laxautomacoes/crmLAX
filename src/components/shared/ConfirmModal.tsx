@@ -1,5 +1,5 @@
 import { Modal } from './Modal';
-import { AlertTriangle } from 'lucide-react';
+import { AlertTriangle, CheckCircle2 } from 'lucide-react';
 
 interface ConfirmModalProps {
     isOpen: boolean;
@@ -11,6 +11,7 @@ interface ConfirmModalProps {
     onCancel: () => void;
     isLoading?: boolean;
     zIndex?: number;
+    variant?: 'danger' | 'success';
 }
 
 export function ConfirmModal({
@@ -22,13 +23,20 @@ export function ConfirmModal({
     onConfirm,
     onCancel,
     isLoading = false,
-    zIndex
+    zIndex,
+    variant = 'danger'
 }: ConfirmModalProps) {
+    const isSuccess = variant === 'success';
+
     return (
         <Modal isOpen={isOpen} onClose={onCancel} title={title} size="md" zIndex={zIndex}>
             <div className="flex flex-col items-center text-center p-4">
-                <div className="h-12 w-12 rounded-full bg-red-100 dark:bg-red-900/30 flex items-center justify-center mb-4">
-                    <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                <div className={`h-12 w-12 rounded-full flex items-center justify-center mb-4 ${isSuccess ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30'}`}>
+                    {isSuccess ? (
+                        <CheckCircle2 className="h-6 w-6 text-emerald-600 dark:text-emerald-400" />
+                    ) : (
+                        <AlertTriangle className="h-6 w-6 text-red-600 dark:text-red-400" />
+                    )}
                 </div>
                 <p className="text-sm text-muted-foreground mb-6">
                     {message}
@@ -37,14 +45,14 @@ export function ConfirmModal({
                     <button
                         onClick={onCancel}
                         disabled={isLoading}
-                        className="flex-1 px-4 py-2 bg-secondary text-secondary-foreground rounded-lg hover:bg-secondary/80 transition-colors disabled:opacity-50 font-medium"
+                        className="flex-1 px-4 py-2 border border-border text-foreground rounded-lg hover:bg-muted/50 transition-colors disabled:opacity-50 font-medium"
                     >
                         {cancelLabel}
                     </button>
                     <button
                         onClick={onConfirm}
                         disabled={isLoading}
-                        className="flex-1 px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 font-medium"
+                        className={`flex-1 px-4 py-2 text-white rounded-lg transition-colors disabled:opacity-50 font-medium ${isSuccess ? 'bg-emerald-600 hover:bg-emerald-700' : 'bg-red-600 hover:bg-red-700'}`}
                     >
                         {isLoading ? 'Aguarde...' : confirmLabel}
                     </button>

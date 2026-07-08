@@ -40,9 +40,9 @@ export function LogsFilters({
                 </span>
             </div>
 
-            <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max">
+            <div className="grid grid-flow-col auto-cols-max justify-center gap-2 md:gap-3 w-full md:w-max">
                 <button onClick={exportToCSV} disabled={logs.length === 0 || loading}
-                    className="min-w-[130px] h-[34px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 disabled:opacity-50 transition-colors text-sm font-bold shadow-sm"
+                    className="min-w-[130px] h-[34px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 disabled:opacity-50 transition-colors text-xs font-bold uppercase tracking-widest shadow-sm"
                 >
                     Exportar CSV
                 </button>
@@ -50,7 +50,7 @@ export function LogsFilters({
             {/* Filtro de Datas */}
             <div className="relative min-w-[130px]">
                 <button onClick={() => setIsDateFilterOpen(!isDateFilterOpen)}
-                    className="min-w-[130px] h-[34px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold shadow-sm"
+                    className="min-w-[130px] h-[34px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-xs font-bold uppercase tracking-widest shadow-sm"
                 >
                     Período
                 </button>
@@ -76,7 +76,7 @@ export function LogsFilters({
             {/* Filtro de Usuário */}
             <div className="relative min-w-[130px]">
                 <button onClick={() => setIsUserFilterOpen(!isUserFilterOpen)}
-                    className="min-w-[130px] h-[34px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold shadow-sm"
+                    className="min-w-[130px] h-[34px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-xs font-bold uppercase tracking-widest shadow-sm"
                 >
                     <span className="truncate max-w-[100px] md:max-w-[150px]">
                         {profileId === 'all' ? 'Usuários' : brokers.find(b => b.id === profileId)?.full_name || 'Usuário'}
@@ -102,7 +102,7 @@ export function LogsFilters({
             {/* Filtro de Ação */}
             <div className="relative min-w-[130px]">
                 <button onClick={() => setIsFilterOpen(!isFilterOpen)}
-                    className="min-w-[130px] h-[34px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold shadow-sm"
+                    className="min-w-[130px] h-[34px] w-full flex items-center justify-center bg-card border border-muted-foreground/30 text-muted-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-xs font-bold uppercase tracking-widest shadow-sm"
                 >
                     <span className="truncate max-w-[100px] md:max-w-[150px]">
                         {actionTypes.find(t => t.value === actionType)?.label || 'Filtrar'}

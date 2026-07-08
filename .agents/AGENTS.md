@@ -103,7 +103,7 @@ Logo após o `PageHeader`. Espaçamento herdado do container pai (`space-y-8` ou
 ### Botões de Ação do Header
 
 - Altura obrigatória: `h-[34px]`.
-- **Classe mestra**: `h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap`.
+- **Classe mestra**: `h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap`.
 - **Ícone Lucide**: `size={14} strokeWidth={1}`.
 
 ---
@@ -243,7 +243,7 @@ Estrutura obrigatória:
 
 - **Botão ativo**: `bg-secondary text-secondary-foreground`. O botão ativo deve preencher todo o espaço vertical e lateral destinado a ele na barra, sem margens ou paddings internos no container.
 - **Botão inativo**: `text-muted-foreground hover:bg-muted`.
-- **Container**: `bg-card border border-border rounded-lg overflow-hidden shadow-sm flex items-center p-0`. Os botões internos devem preencher 100% da altura da barra, e o arredondamento das pontas é herdado do container por meio da propriedade `overflow-hidden`.
+- **Container**: `bg-card border border-border rounded-lg overflow-hidden shadow-sm flex shrink-0`. Os botões internos esticam automaticamente para preencher 100% da altura da barra, e o arredondamento das pontas é herdado do container por meio da propriedade `overflow-hidden`.
 
 
 ---

@@ -3,10 +3,11 @@
 import { useState, useEffect } from 'react'
 import nextDynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
-import { Plus, Upload } from 'lucide-react'
+import { Plus, Upload, Kanban, Filter } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { LeadsHeader } from '@/components/dashboard/leads/LeadsHeader'
 import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
+import { LeadsFunnelView } from '@/components/dashboard/leads/LeadsFunnelView'
 import { Modal } from '@/components/shared/Modal'
 import { getProfile, getBrokers } from '@/app/_actions/profile'
 
@@ -64,6 +65,7 @@ export default function LeadsPage() {
     const [isClientModalOpen, setIsClientModalOpen] = useState(false)
     const [proposalClient, setProposalClient] = useState<any>(null)
     const [pendingProposalLeadId, setPendingProposalLeadId] = useState<string | null>(null)
+    const [viewMode, setViewMode] = useState<'pipeline' | 'funnel'>('pipeline')
     const searchParams = useSearchParams()
     const leadIdFromUrl = searchParams.get('id')
 
@@ -260,10 +262,36 @@ export default function LeadsPage() {
                         onBrokerChange={handleBrokerChange}
                         isAdmin={userRole === 'admin' || userRole === 'superadmin'}
                         selectedBroker={selectedBroker}
+                        viewToggle={
+                            <div className="h-[34px] flex bg-card border border-border rounded-lg overflow-hidden shadow-sm shrink-0">
+                                <button
+                                    onClick={() => setViewMode('pipeline')}
+                                    className={`flex-1 px-3 flex items-center justify-center transition-all ${
+                                        viewMode === 'pipeline'
+                                            ? 'bg-secondary text-secondary-foreground'
+                                            : 'text-muted-foreground hover:bg-muted'
+                                    }`}
+                                    title="Visualização em Kanban"
+                                >
+                                    <Kanban size={14} strokeWidth={1} />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('funnel')}
+                                    className={`flex-1 px-3 flex items-center justify-center transition-all ${
+                                        viewMode === 'funnel'
+                                            ? 'bg-secondary text-secondary-foreground'
+                                            : 'text-muted-foreground hover:bg-muted'
+                                    }`}
+                                    title="Visualização em Funil"
+                                >
+                                    <Filter size={14} strokeWidth={1} />
+                                </button>
+                            </div>
+                        }
                     >
                         <button
                             onClick={() => handleOpenLeadModal()}
-                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
                         >
                             <Plus size={14} strokeWidth={1} />
                             Novo Lead
@@ -274,30 +302,34 @@ export default function LeadsPage() {
 
             <hr className="hidden md:block border-border -mt-2" />
 
-            <PipelineBoard
-                initialStages={stages}
-                initialLeads={filteredLeads}
-                onRefresh={fetchData}
-                onAddLead={handleOpenLeadModal}
-                onDeleteStage={handleDeleteStage}
-                onDuplicateStage={handleDuplicateStage}
-                onRenameStage={handleRenameStage}
-                onUpdateStageColor={handleUpdateStageColor}
-                onAddStage={() => setIsStageModalOpen(true)}
-                onEditLead={handleEditLead}
-                onDeleteLead={handleDeleteLead}
-                onArchiveLead={handleArchiveLead}
-                onProposalClick={async (contactId, leadId) => {
-                    const res = await getClientById(contactId)
-                    if (res.success && res.data) {
-                        setProposalClient(res.data)
-                        setPendingProposalLeadId(leadId)
-                        setIsClientModalOpen(true)
-                    } else {
-                        toast.error('Erro ao buscar cliente vinculado ao lead.')
-                    }
-                }}
-            />
+            {viewMode === 'pipeline' ? (
+                <PipelineBoard
+                    initialStages={stages}
+                    initialLeads={filteredLeads}
+                    onRefresh={fetchData}
+                    onAddLead={handleOpenLeadModal}
+                    onDeleteStage={handleDeleteStage}
+                    onDuplicateStage={handleDuplicateStage}
+                    onRenameStage={handleRenameStage}
+                    onUpdateStageColor={handleUpdateStageColor}
+                    onAddStage={() => setIsStageModalOpen(true)}
+                    onEditLead={handleEditLead}
+                    onDeleteLead={handleDeleteLead}
+                    onArchiveLead={handleArchiveLead}
+                    onProposalClick={async (contactId, leadId) => {
+                        const res = await getClientById(contactId)
+                        if (res.success && res.data) {
+                            setProposalClient(res.data)
+                            setPendingProposalLeadId(leadId)
+                            setIsClientModalOpen(true)
+                        } else {
+                            toast.error('Erro ao buscar cliente vinculado ao lead.')
+                        }
+                    }}
+                />
+            ) : (
+                <LeadsFunnelView stages={stages} leads={filteredLeads} />
+            )}
 
             {/* Modal Novo Estágio */}
             <Modal

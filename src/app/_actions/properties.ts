@@ -568,7 +568,7 @@ export async function getPropertyById(propertyId: string) {
         if (error) throw error
 
         // Se o property estiver Pendente, apenas o criador ou admins podem ver
-        if (data.status === 'Pending') {
+        if (data.status === 'Pending' || data.status === 'Pendente') {
             if (!profile || (profile.role !== 'admin' && profile.role !== 'superadmin' && data.created_by && data.created_by !== profile.id)) {
                 return { success: false, error: 'Not authorized' }
             }

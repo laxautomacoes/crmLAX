@@ -203,7 +203,7 @@ export function PropertyDetailsContent({
                                         <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getPropertyTypeStyles(prop.type)}`}>
                                             {translatePropertyType(prop.type)}
                                         </span>
-                                        {(isAdmin || prop.status === 'Pending') && (
+                                        {(isAdmin || prop.status === 'Pending' || prop.status === 'Pendente') && (
                                             <span className={`px-2 py-0.5 text-[10px] font-black rounded uppercase tracking-widest shadow-sm ${getStatusStyles(prop.status)}`}>
                                                 {translateStatus(prop.status)}
                                             </span>

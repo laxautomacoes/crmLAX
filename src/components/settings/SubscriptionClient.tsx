@@ -173,7 +173,7 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
                     title="Assinatura"
                     subtitle={isSuperadmin ? 'Edite os planos exibidos para seus clientes.' : 'Gerencie seu plano e acompanhe o uso de IA.'}
                 >
-                    <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max items-center justify-end">
+                    <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max items-center justify-center md:justify-end">
                         {isSuperadmin && (
                             <span className="inline-flex items-center justify-center gap-1 rounded-full bg-[#404F4F] px-4 text-xs font-bold text-white h-[34px]">
                                 <Settings2 className="h-3 w-3" /> Modo Editor
@@ -184,7 +184,7 @@ export default function SubscriptionClient({ currentPlan, aiUsageCount, aiReques
 
                                 <button
                                     onClick={handleCancelSubscription}
-                                    className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-destructive/10 text-destructive border border-transparent px-4 rounded-lg hover:bg-destructive/20 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                                    className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-destructive/10 text-destructive border border-transparent px-4 rounded-lg hover:bg-destructive/20 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
                                 >
                                     Cancelar Assinatura
                                 </button>

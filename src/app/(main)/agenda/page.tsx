@@ -177,7 +177,7 @@ export default function AgendaPage() {
                     <DropdownMenu>
                         <DropdownMenuTrigger asChild>
                             <button 
-                                className={`h-[34px] min-w-[130px] flex items-center justify-center gap-2 px-4 rounded-lg text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 shadow-sm transition-all ${
+                                className={`h-[34px] min-w-[130px] flex items-center justify-center gap-2 px-4 rounded-lg text-xs font-bold uppercase tracking-widest whitespace-nowrap outline-none focus:ring-2 shadow-sm transition-all ${
                                     filterType !== 'all'
                                         ? 'bg-secondary/10 border border-secondary text-secondary-foreground hover:bg-secondary/20 focus:ring-secondary/50'
                                         : 'bg-card border border-muted-foreground/30 text-foreground hover:bg-muted/50 focus:ring-ring/50 data-[state=open]:bg-muted/50'
@@ -208,7 +208,7 @@ export default function AgendaPage() {
                     </DropdownMenu>
                     <button
                         onClick={() => handleAddEvent(new Date())}
-                        className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                        className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
                     >
                         <Plus size={14} strokeWidth={1} />
                         Agendar

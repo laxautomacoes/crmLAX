@@ -580,14 +580,32 @@ export function MediaFields({
             {/* ── Imagens encontradas via Scraping ── */}
             {sourceImages.length > 0 && (
                 <div className="space-y-4">
-                    <div className="flex items-center justify-between">
+                    <div className="flex items-center justify-between mb-4">
                         <div className="flex items-center gap-2">
                             <Globe size={14} className="text-primary" />
                             <span className="text-[10px] font-bold text-primary uppercase tracking-wider">
                                 Imagens encontradas na página ({sourceImages.length})
                             </span>
                         </div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-4">
+                            <button
+                                type="button"
+                                onClick={handleImport}
+                                disabled={isImportingImages || selectedSourceImages.size === 0}
+                                className="flex items-center justify-center gap-2 px-3 py-1.5 rounded-md font-bold text-[10px] uppercase tracking-wider transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed bg-secondary text-secondary-foreground hover:bg-[#F2DB00] shadow-sm"
+                            >
+                                {isImportingImages ? (
+                                    <>
+                                        <Loader2 size={12} className="animate-spin" />
+                                        Importando...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Download size={12} />
+                                        Importar {selectedSourceImages.size > 0 ? `${selectedSourceImages.size} imagem(ns)` : 'Selecionadas'}
+                                    </>
+                                )}
+                            </button>
                             <button
                                 type="button"
                                 onClick={selectAllSourceImages}
@@ -610,26 +628,6 @@ export function MediaFields({
                             />
                         ))}
                     </div>
-
-                    {/* Import button */}
-                    <button
-                        type="button"
-                        onClick={handleImport}
-                        disabled={isImportingImages || selectedSourceImages.size === 0}
-                        className="w-full flex items-center justify-center gap-2 px-4 py-3 md:py-2.5 rounded-lg font-bold text-sm transition-all active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed bg-secondary text-secondary-foreground hover:bg-secondary/90 shadow-sm"
-                    >
-                        {isImportingImages ? (
-                            <>
-                                <Loader2 size={16} className="animate-spin" />
-                                Importando imagens...
-                            </>
-                        ) : (
-                            <>
-                                <Download size={16} />
-                                Importar {selectedSourceImages.size > 0 ? `${selectedSourceImages.size} imagem(ns)` : 'Imagens Selecionadas'}
-                            </>
-                        )}
-                    </button>
 
                     <div className="h-px bg-border/40" />
                 </div>

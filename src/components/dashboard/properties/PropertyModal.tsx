@@ -343,6 +343,16 @@ interface EditingProperty {
 
 export type CreationMethod = 'url' | 'pdf' | 'text' | 'manual' | null
 
+function normalizeStatusValue(status: string | undefined | null): string {
+    if (!status) return 'Pending'
+    const s = status.toLowerCase()
+    if (s === 'disponível' || s === 'disponivel') return 'Available'
+    if (s === 'pendente') return 'Pending'
+    // Outros valores como 'Vendido', 'Reservado', 'Suspenso', 'Em Proposta' permanecem iguais
+    // se o banco de dados contiver os valores literais em português.
+    return status
+}
+
 interface PropertyModalProps {
     isOpen: boolean
     onClose: () => void
@@ -501,7 +511,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 price: editingProperty.price ? formatCurrencyBRL(Math.round(Number(editingProperty.price) * 100).toString()) : '',
                 commission_rate: editingProperty.commission_rate ? editingProperty.commission_rate.toString().replace('.', ',') : '',
                 type: editingProperty.type || 'apartment',
-                status: editingProperty.status || 'Pending',
+                status: normalizeStatusValue(editingProperty.status),
                 created_by: editingProperty.created_by || null,
                 owner_contact_id: editingProperty.owner_contact_id || null,
                 images: editingProperty.images || [],
@@ -880,7 +890,7 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                 </div>
                 )
             }
-            size="2xl"
+            size={showMethodSelection ? "lg" : "2xl"}
         >
             {showMethodSelection ? (
                 <div className="py-1">

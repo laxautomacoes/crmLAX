@@ -16,43 +16,47 @@ interface LeadsHeaderProps {
     onBrokerChange?: (brokerId: string) => void
     isAdmin?: boolean
     selectedBroker?: string
+    viewToggle?: React.ReactNode
     children?: React.ReactNode
 }
 
-export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin, selectedBroker = 'all', children }: LeadsHeaderProps) {
+export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin, selectedBroker = 'all', viewToggle, children }: LeadsHeaderProps) {
     const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [searchTerm, setSearchTerm] = useState('')
 
     return (
-        <div className="flex items-center gap-2 w-full md:w-auto">
-            <FormInput
-                value={searchTerm}
-                placeholder="Pesquisar leads..."
-                onChange={(e) => {
-                    setSearchTerm(e.target.value)
-                    onSearch(e.target.value)
-                }}
-                onClear={() => {
-                    setSearchTerm('')
-                    onSearch('')
-                }}
-                icon={Search}
-                iconSize={14}
-                iconStrokeWidth={1}
-                className="w-full md:w-[320px] h-[34px]"
-            />
-            <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max">
+        <div className="flex flex-col-reverse md:flex-row items-center gap-3 w-full md:w-auto">
+            <div className="flex items-center gap-2 w-full md:w-auto">
+                <FormInput
+                    value={searchTerm}
+                    placeholder="Pesquisar leads..."
+                    onChange={(e) => {
+                        setSearchTerm(e.target.value)
+                        onSearch(e.target.value)
+                    }}
+                    onClear={() => {
+                        setSearchTerm('')
+                        onSearch('')
+                    }}
+                    icon={Search}
+                    iconSize={14}
+                    iconStrokeWidth={1}
+                    className="w-full md:w-[320px] h-[34px]"
+                />
+                {viewToggle}
+            </div>
+            <div className="flex items-center justify-center md:justify-start gap-2 md:gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide shrink-0">
                 {isAdmin && brokers && brokers.length > 0 && (
                     <div className="relative group hidden md:block min-w-[130px]">
                         <button
                             onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className="min-w-[130px] h-[34px] w-full flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 focus:ring-ring/50"
+                            className="min-w-[130px] h-[34px] w-full flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-xs font-bold uppercase tracking-widest whitespace-nowrap outline-none focus:ring-2 focus:ring-ring/50"
                         >
                             <Filter size={14} strokeWidth={1} className="flex-shrink-0" />
                             <span className={selectedBroker === 'all' ? "" : "truncate max-w-[120px] md:max-w-[150px]"}>
                                 {selectedBroker === 'all' 
-                                    ? 'Todos' 
-                                    : brokers.find(b => b.id === selectedBroker)?.full_name || 'Todos'}
+                                    ? <span>Todos</span> 
+                                    : <span>{brokers.find(b => b.id === selectedBroker)?.full_name || 'Todos'}</span>}
                             </span>
                         </button>
                         {isFilterOpen && (

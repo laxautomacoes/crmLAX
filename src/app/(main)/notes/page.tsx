@@ -144,46 +144,50 @@ export default function NotesPage() {
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader title="Notas">
-                <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max items-center justify-end">
-                    <FormInput
-                        placeholder="Buscar notas..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onClear={() => setSearchTerm('')}
-                        icon={Search}
-                        iconSize={14}
-                        iconStrokeWidth={1}
-                        className="w-full md:w-[240px] h-[34px]"
-                    />
+                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 w-full md:w-auto">
+                    <div className="w-full md:w-[240px] md:flex-none order-2 md:order-1">
+                        <FormInput
+                            placeholder="Buscar notas..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onClear={() => setSearchTerm('')}
+                            icon={Search}
+                            iconSize={14}
+                            iconStrokeWidth={1}
+                            className="w-full h-[34px]"
+                        />
+                    </div>
                     
-                    {/* View Toggle */}
-                    <div className="flex items-center bg-card border border-border rounded-lg shadow-sm h-[34px] overflow-hidden">
+                    <div className="flex justify-between items-center w-full md:w-auto order-1 md:order-2 gap-2 md:gap-3">
+                        {/* View Toggle */}
+                        <div className="flex items-center bg-card border border-border rounded-lg shadow-sm h-[34px] overflow-hidden">
+                            <button
+                                onClick={() => setViewMode('grid')}
+                                className={`transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'grid' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
+                                title="Visualização em Grade"
+                            >
+                                <LayoutGrid size={14} strokeWidth={1} />
+                            </button>
+                            <button
+                                onClick={() => setViewMode('table')}
+                                className={`transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'table' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
+                                title="Visualização em Tabela"
+                            >
+                                <TableIcon size={14} strokeWidth={1} />
+                            </button>
+                        </div>
+
                         <button
-                            onClick={() => setViewMode('grid')}
-                            className={`transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'grid' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
-                            title="Visualização em Grade"
+                            onClick={() => {
+                                setEditingNote(null)
+                                setIsModalOpen(true)
+                            }}
+                            className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
                         >
-                            <LayoutGrid size={14} strokeWidth={1} />
-                        </button>
-                        <button
-                            onClick={() => setViewMode('table')}
-                            className={`transition-all h-full aspect-square flex items-center justify-center ${viewMode === 'table' ? 'bg-secondary text-secondary-foreground' : 'text-foreground hover:bg-muted'}`}
-                            title="Visualização em Tabela"
-                        >
-                            <TableIcon size={14} strokeWidth={1} />
+                            <Plus size={14} strokeWidth={1} />
+                            Nova Nota
                         </button>
                     </div>
-
-                    <button
-                        onClick={() => {
-                            setEditingNote(null)
-                            setIsModalOpen(true)
-                        }}
-                        className="h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
-                    >
-                        <Plus size={14} strokeWidth={1} />
-                        Nova Nota
-                    </button>
                 </div>
             </PageHeader>
 

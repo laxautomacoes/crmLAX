@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2, MoreVertical, Archive, Globe, XCircle, AlertTriangle } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Video, FileText, Send, Maximize2, MoreVertical, Archive, Globe, XCircle, AlertTriangle, Check, X } from 'lucide-react'
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyCardProps {
@@ -43,9 +43,9 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
     return (
         <div 
             onClick={() => onView(prop)}
-            className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer flex flex-col h-full"
+            className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer flex flex-col h-full relative"
         >
-            <div className="w-full h-48 bg-muted relative shrink-0 overflow-hidden">
+            <div className="w-full h-48 bg-muted relative shrink-0">
                 {prop.images?.[0] ? (
                     <img src={prop.images[0]} alt={prop.title} className="w-full h-full object-cover" />
                 ) : (
@@ -55,7 +55,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                 )}
                 
                 {/* Overlay: Pendente — visível para o admin E para o criador do imóvel */}
-                {prop.status === 'Pending' && (isAdmin || isOwner) && (
+                {(prop.status === 'Pending' || prop.status === 'Pendente') && (isAdmin || isOwner) && (
                     <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-3 p-3">
                         <div className="px-3 py-1.5 bg-secondary text-secondary-foreground rounded-full text-[10px] font-black uppercase tracking-widest shadow-xl animate-pulse">
                             Pendente de Aprovação
@@ -72,7 +72,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                                         }}
                                         className="flex items-center gap-1.5 px-3 py-1.5 bg-emerald-600 hover:bg-emerald-700 text-white rounded-lg font-bold text-xs transition-all shadow-lg active:scale-95"
                                     >
-                                        <FileText size={12} />
+                                        <Check size={12} strokeWidth={2.5} />
                                         Autorizar
                                     </button>
                                 )}
@@ -84,7 +84,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                                         }}
                                         className="flex items-center gap-1.5 px-3 py-1.5 bg-red-600 hover:bg-red-700 text-white rounded-lg font-bold text-xs transition-all shadow-lg active:scale-95"
                                     >
-                                        <XCircle size={12} />
+                                        <X size={12} strokeWidth={2.5} />
                                         Reprovar
                                     </button>
                                 )}
@@ -371,11 +371,10 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                                 }`}
                                 title={prop.is_published ? 'Publicado no site – clique para remover' : 'Não publicado – clique para publicar no site'}
                             >
-                                <Globe size={10} strokeWidth={1.5} />
                                 Site
                             </button>
                         )}
-                        {(isAdmin || prop.status === 'Pending') && (
+                        {(isAdmin || prop.status === 'Pending' || prop.status === 'Pendente') && (
                             <span className={`text-[9px] font-black px-3 py-1 rounded-full uppercase tracking-wider ${getStatusStyles(prop.status)}`}>
                                 {translateStatus(prop.status)}
                             </span>

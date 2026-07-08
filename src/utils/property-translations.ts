@@ -1,5 +1,8 @@
 export const propertyTypes: Record<string, string> = {
     'apartment': 'Apartamento',
+    'apartment_garden': 'Apartamento garden',
+    'duplex': 'Duplex',
+    'triplex': 'Triplex',
     'house': 'Casa',
     'land': 'Terreno',
     'commercial': 'Comercial',
@@ -25,7 +28,10 @@ export function translatePropertyType(type: string): string {
 export function getPropertyTypeStyles(type: string): string {
     const normalizedType = type?.toLowerCase();
     switch (normalizedType) {
-        case 'apartment': return 'bg-blue-500/10 text-blue-600';
+        case 'apartment': 
+        case 'apartment_garden': 
+        case 'duplex': 
+        case 'triplex': return 'bg-blue-500/10 text-blue-600';
         case 'house': return 'bg-emerald-500/10 text-emerald-600';
         case 'land': return 'bg-slate-500/10 text-slate-600';
         case 'commercial': return 'bg-purple-500/10 text-purple-600';

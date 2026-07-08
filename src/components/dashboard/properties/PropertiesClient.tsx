@@ -16,6 +16,7 @@ import { getOfflineProperties } from '@/services/db'
 import { PropertiesMapView } from '@/components/shared/PropertiesMapView'
 import { PageHeader } from '@/components/shared/PageHeader'
 import { translatePropertyType } from '@/utils/property-translations'
+import { ConfirmModal } from '@/components/shared/ConfirmModal'
 
 // Lazy-loaded modals — só carregam quando o usuário interage (~300KB+ economizados)
 const PropertyModal = dynamic(() => import('@/components/dashboard/properties/PropertyModal').then(mod => ({ default: mod.PropertyModal })), { ssr: false })
@@ -65,6 +66,7 @@ export default function PropertiesClient({
     const [confirmArchiveId, setConfirmArchiveId] = useState<string | null>(null)
     const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null)
     const [rejectingProperty, setRejectingProperty] = useState<any | null>(null)
+    const [confirmApproveId, setConfirmApproveId] = useState<string | null>(null)
     const [columnSort, setColumnSort] = useState<{ column: 'title' | 'type' | 'price' | null, direction: 'asc' | 'desc' }>({ column: null, direction: 'asc' })
 
     const [filters, setFilters] = useState({
@@ -206,15 +208,19 @@ export default function PropertiesClient({
         }
     }
 
-    const handleApprove = async (id: string) => {
-        if (!confirm('Deseja realmente autorizar este imóvel?')) return
+    const handleApprove = (id: string) => {
+        setConfirmApproveId(id)
+    }
 
+    const handleConfirmApprove = async (id: string) => {
         const result = await approveProperty(tenantId, id)
         if (result.success) {
             toast.success('Imóvel autorizado! O responsável foi notificado.')
+            setConfirmApproveId(null)
             refreshProperties()
         } else {
             toast.error('Erro ao autorizar imóvel: ' + result.error)
+            setConfirmApproveId(null)
         }
     }
 
@@ -535,24 +541,24 @@ export default function PropertiesClient({
                     </div>
 
                     {/* Linha 2 mobile: Filtrar + Novo Imóvel */}
-                    <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max order-2">
+                    <div className="grid grid-cols-2 md:grid-flow-col md:auto-cols-max gap-2 md:gap-3 w-full md:w-max order-1 md:order-2">
                         <button
                             onClick={() => setIsFiltersOpen(true)}
-                            className={`min-w-[130px] h-[34px] flex items-center justify-center gap-2 px-4 rounded-lg border transition-all text-sm font-bold uppercase tracking-wide whitespace-nowrap outline-none focus:ring-2 shadow-sm ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest' && v !== false)
+                            className={`w-full md:w-auto md:min-w-[130px] h-[34px] flex items-center justify-center gap-2 px-4 rounded-lg border transition-all text-xs font-bold uppercase tracking-widest whitespace-nowrap outline-none focus:ring-2 shadow-sm ${isFiltersOpen || Object.values(filters).some(v => v !== 'all' && v !== '' && v !== 'newest' && v !== false)
                                 ? 'bg-secondary/10 text-secondary-foreground border-secondary hover:bg-secondary/20 focus:ring-secondary/50'
                                 : 'bg-card border-muted-foreground/30 text-foreground hover:bg-muted/50 focus:ring-ring/50'
                                 }`}
                         >
                             <Filter size={14} strokeWidth={1} />
-                            Filtrar
+                            <span>FILTRAR</span>
                         </button>
 
                         <button
                             onClick={() => { setEditingProperty(null); setIsModalOpen(true); }}
-                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 transition-all text-sm font-bold uppercase tracking-wide shadow-sm active:scale-[0.99] whitespace-nowrap"
+                            className="w-full md:w-auto md:min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 transition-all text-xs font-bold uppercase tracking-widest shadow-sm active:scale-[0.99] whitespace-nowrap"
                         >
                             <Plus size={14} strokeWidth={1} />
-                            Novo Imóvel
+                            <span>NOVO IMÓVEL</span>
                         </button>
                     </div>
                 </div>
@@ -686,7 +692,7 @@ export default function PropertiesClient({
                         description: data.description || '',
                         price: data.price || '',
                         type: data.type || 'apartment',
-                        status: 'Disponível',
+                        status: 'Pending',
                         images: [],
                         videos: [],
                         documents: [],
@@ -707,6 +713,22 @@ export default function PropertiesClient({
                 propertyTitle={rejectingProperty?.title || ''}
                 onConfirm={handleReject}
                 onClose={() => setRejectingProperty(null)}
+            />
+
+            {/* Modal de autorização */}
+            <ConfirmModal
+                isOpen={!!confirmApproveId}
+                title="Autorizar Imóvel"
+                variant="success"
+                message={
+                    <>
+                        <span className="block">Deseja realmente autorizar este imóvel?</span>
+                        <span className="block">O imóvel ficará disponível para negociação.</span>
+                    </>
+                }
+                confirmLabel="Autorizar"
+                onConfirm={() => confirmApproveId && handleConfirmApprove(confirmApproveId)}
+                onCancel={() => setConfirmApproveId(null)}
             />
 
             {/* Modal de confirmação de arquivamento */}

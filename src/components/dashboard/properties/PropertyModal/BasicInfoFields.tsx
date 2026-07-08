@@ -406,6 +406,7 @@ export function BasicInfoFields({
                                 options={[
                                     { value: 'Pending', label: 'Pendente' },
                                     { value: 'Available', label: 'Disponível' },
+                                    { value: 'Em Proposta', label: 'Em Proposta' },
                                     { value: 'Vendido', label: 'Vendido' },
                                     { value: 'Reservado', label: 'Reservado' },
                                     { value: 'Suspenso', label: 'Suspenso' }
@@ -488,6 +489,7 @@ export function BasicInfoFields({
                                 options={[
                                     { value: 'Pending', label: 'Pendente' },
                                     { value: 'Available', label: 'Disponível' },
+                                    { value: 'Em Proposta', label: 'Em Proposta' },
                                     { value: 'Vendido', label: 'Vendido' },
                                     { value: 'Reservado', label: 'Reservado' },
                                     { value: 'Suspenso', label: 'Suspenso' }

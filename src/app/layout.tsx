@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
-import "./globals.css";
+import "./globals.css"; // Force rebuild style updates
 import { ThemeProvider } from "@/components/theme-provider";
 import { Toaster } from "sonner";
 import { DynamicFavicon } from "@/components/shared/DynamicFavicon";

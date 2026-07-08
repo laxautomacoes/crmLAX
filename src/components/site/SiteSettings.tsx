@@ -268,7 +268,7 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
                         <button
                             onClick={handleSaveMain}
                             disabled={saving || !isSectionsTabEdited()}
-                            className={`h-[34px] min-w-[130px] flex items-center justify-center gap-2 text-secondary-foreground border border-transparent px-4 rounded-lg transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap ${
+                            className={`h-[34px] min-w-[130px] flex items-center justify-center gap-2 text-secondary-foreground border border-transparent px-4 rounded-lg transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap ${
                                 isSectionsTabEdited()
                                     ? 'bg-secondary hover:opacity-90 cursor-pointer active:scale-[0.99]'
                                     : 'bg-secondary opacity-30 cursor-not-allowed pointer-events-none'
@@ -283,7 +283,7 @@ export function SiteSettings({ siteUrl }: { siteUrl?: string }) {
                             href={siteUrl} 
                             target="_blank" 
                             rel="noopener noreferrer"
-                            className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
+                            className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
                         >
                             <ExternalLink size={14} strokeWidth={1} />
                             Ver site

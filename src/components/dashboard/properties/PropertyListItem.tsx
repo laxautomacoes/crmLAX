@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, MoreVertical, Archive, Globe, XCircle, AlertTriangle } from 'lucide-react'
+import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, MoreVertical, Archive, Globe, XCircle, AlertTriangle, Check, X } from 'lucide-react'
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
 interface PropertyListItemProps {
@@ -280,7 +280,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-4 py-5">
                 <div className="flex flex-col gap-1.5 items-center">
-                    {(isAdmin || prop.status === 'Pending' || prop.status === 'Em Proposta') && (
+                    {(isAdmin || prop.status === 'Pending' || prop.status === 'Pendente' || prop.status === 'Em Proposta') && (
                         <span className={`text-[9px] font-black px-3 py-0.5 rounded-full uppercase whitespace-nowrap w-fit tracking-wider ${getStatusStyles(prop.status)}`}>
                             {translateStatus(prop.status)}
                         </span>
@@ -305,7 +305,6 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                             }`}
                             title={prop.is_published ? 'Publicado no site – clique para remover' : 'Não publicado – clique para publicar no site'}
                         >
-                            <Globe size={10} strokeWidth={1.5} />
                             Site
                         </button>
                     )}
@@ -313,22 +312,22 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
             </td>
             <td className="px-4 py-5 text-center">
                 <div className="relative flex items-center justify-center" ref={dropdownRef}>
-                    {isAdmin && prop.status === 'Pending' && onApprove && (
+                    {isAdmin && (prop.status === 'Pending' || prop.status === 'Pendente') && onApprove && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onApprove(prop.id) }}
                             className="p-2 mr-1 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors shadow-sm"
                             title="Autorizar Imóvel"
                         >
-                            <FileText size={16} />
+                            <Check size={16} strokeWidth={2.5} />
                         </button>
                     )}
-                    {isAdmin && prop.status === 'Pending' && onReject && (
+                    {isAdmin && (prop.status === 'Pending' || prop.status === 'Pendente') && onReject && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onReject(prop) }}
                             className="p-2 mr-1 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors shadow-sm"
                             title="Reprovar Imóvel"
                         >
-                            <XCircle size={16} />
+                            <X size={16} strokeWidth={2.5} />
                         </button>
                     )}
                     <button

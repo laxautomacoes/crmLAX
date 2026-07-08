@@ -79,24 +79,28 @@ export default function TeamSettingsPage() {
                 title="Gestão da Equipe"
                 subtitle="Administre os colaboradores e convites da sua empresa"
             >
-                <div className="grid grid-flow-col auto-cols-max gap-2 md:gap-3 w-full md:w-max items-center justify-end">
-                    <FormInput
-                        placeholder="Buscar colaborador..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        onClear={() => setSearchTerm('')}
-                        icon={Search}
-                        iconSize={14}
-                        iconStrokeWidth={1}
-                        className="w-full md:w-[320px] h-[34px]"
-                    />
-                    <button
-                        onClick={() => setIsInviteModalOpen(true)}
-                        className="h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-sm font-bold uppercase tracking-wide shadow-sm whitespace-nowrap"
-                    >
-                        <Plus size={14} strokeWidth={1} />
-                        Novo Colaborador
-                    </button>
+                <div className="flex flex-col md:flex-row md:items-center gap-2 md:gap-3 w-full md:w-auto">
+                    <div className="w-full md:w-[320px] md:flex-none order-2 md:order-1">
+                        <FormInput
+                            placeholder="Buscar colaborador..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            onClear={() => setSearchTerm('')}
+                            icon={Search}
+                            iconSize={14}
+                            iconStrokeWidth={1}
+                            className="w-full h-[34px]"
+                        />
+                    </div>
+                    <div className="grid grid-cols-1 justify-items-center md:grid-flow-col md:auto-cols-max gap-2 md:gap-3 w-full md:w-max order-1 md:order-2">
+                        <button
+                            onClick={() => setIsInviteModalOpen(true)}
+                            className="w-full md:w-auto md:min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
+                        >
+                            <Plus size={14} strokeWidth={1} />
+                            Novo Colaborador
+                        </button>
+                    </div>
                 </div>
             </PageHeader>
 

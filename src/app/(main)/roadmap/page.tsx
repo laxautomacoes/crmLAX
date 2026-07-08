@@ -414,14 +414,14 @@ export default function RoadmapPage() {
                     <div className="flex items-center gap-3">
                         <button
                             onClick={handleCreateStage}
-                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-card hover:bg-muted text-foreground border border-border px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-wider shadow-sm whitespace-nowrap"
+                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-card hover:bg-muted text-foreground border border-border px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
                         >
                             <Plus size={14} strokeWidth={2} />
                             Nova Coluna
                         </button>
                         <button
                             onClick={() => handleOpenModal()}
-                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-wider shadow-sm whitespace-nowrap"
+                            className="min-w-[130px] h-[34px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
                         >
                             <Plus size={14} strokeWidth={2} />
                             Novo Item
