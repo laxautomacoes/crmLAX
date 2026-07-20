@@ -402,6 +402,10 @@ export function getPropertyEmail(property: any, propertyUrl: string, config: any
                     ${(config?.showHobbyBox !== false && (details.hobby_box_numeracao || details.hobby_box)) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Hobby Box: <strong>${details.hobby_box_numeracao || (details.hobby_box !== 'Sim' ? details.hobby_box : 'Sim')}</strong></p>` : ''}
                     ${(config?.showAreaPrivativa !== false && details.area_privativa) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Área privativa: <strong>${details.area_privativa}m²</strong></p>` : ''}
                     ${(config?.showAreaTotal !== false && details.area_total && parseFloat(String(details.area_total)) > 0) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Área total: <strong>${details.area_total}m²</strong></p>` : ''}
+                    ${(config?.showIdade !== false && details.idade_imovel) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Idade do imóvel: <strong>${details.idade_imovel} anos</strong></p>` : ''}
+                    ${(config?.showElevador !== false && details.has_elevadores) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Elevadores: <strong>${details.numero_elevadores || 'Sim'}</strong></p>` : ''}
+                    ${(config?.showTorres !== false && details.numero_torres) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Número de Torres: <strong>${details.numero_torres}</strong></p>` : ''}
+                    ${(config?.showAptosTorre !== false && details.aptos_por_torre) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Aptos / Torre: <strong>${details.aptos_por_torre}</strong></p>` : ''}
                     ${(config?.showObservations !== false && details.obs_dormitorios) ? `<p style="margin: 0; color: #444; font-size: 15px; line-height: 1.6;">• Obs: <strong>${details.obs_dormitorios}</strong></p>` : ''}
                 </div>
             </div>

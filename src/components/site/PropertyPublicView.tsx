@@ -36,6 +36,10 @@ interface PropertyPublicViewProps {
         showEscritorio?: boolean;
         showDependencia?: boolean;
         showObservations?: boolean;
+        showIdade?: boolean;
+        showElevador?: boolean;
+        showTorres?: boolean;
+        showAptosTorre?: boolean;
         imageIndices: number[] | null;
         videoIndices: number[] | null;
         docIndices: number[] | null;
@@ -116,6 +120,12 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
         { id: 'coworking', icon: <Laptop size={20} />, label: 'Coworking' },
         { id: 'pet_place', icon: <PawPrint size={20} />, label: 'Pet Place' },
         { id: 'quadra', icon: <Trophy size={20} />, label: 'Quadra' },
+        { id: 'portaria_24h', icon: <User size={20} />, label: 'Portaria 24h' },
+        { id: 'portaria_virtual', icon: <Video size={20} />, label: 'Portaria Virtual' },
+        { id: 'home_market', icon: <Home size={20} />, label: 'Home Market' },
+        { id: 'smart_locker', icon: <Square size={20} />, label: 'Smart Locker' },
+        { id: 'vagas_visitantes', icon: <Car size={20} />, label: 'Vagas Visitantes' },
+        { id: 'zeladoria', icon: <Briefcase size={20} />, label: 'Zeladoria' },
     ].filter(a => details[a.id]);
 
     const brokerPhone = broker?.whatsapp_number || tenant?.branding?.whatsapp || '';
@@ -367,6 +377,18 @@ export function PropertyPublicView({ property, broker, tenant, config }: Propert
                         )}
                         {config?.showDependencia !== false && details.has_dependencia_empregada && (
                             <li>Dependência</li>
+                        )}
+                        {config?.showIdade !== false && details.idade_imovel && (
+                            <li>Idade do imóvel: {details.idade_imovel} anos</li>
+                        )}
+                        {config?.showElevador !== false && details.has_elevadores && (
+                            <li>Elevadores: {details.numero_elevadores || 'Sim'}</li>
+                        )}
+                        {config?.showTorres !== false && details.numero_torres && (
+                            <li>Número de Torres: {details.numero_torres}</li>
+                        )}
+                        {config?.showAptosTorre !== false && details.aptos_por_torre && (
+                            <li>Aptos / Torre: {details.aptos_por_torre}</li>
                         )}
                         </ul>
                         {config?.showObservations !== false && details.obs_dormitorios && (

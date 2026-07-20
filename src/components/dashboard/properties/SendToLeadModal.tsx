@@ -181,6 +181,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         showVagas: boolean;
         showHobbyBox: boolean;
         showType: boolean;
+        showIdade: boolean;
+        showElevador: boolean;
+        showTorres: boolean;
+        showAptosTorre: boolean;
         showAmenities: boolean;
         showSacada: boolean;
         showEscritorio: boolean;
@@ -205,6 +209,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         showVagas: false,
         showHobbyBox: false,
         showType: false,
+        showIdade: false,
+        showElevador: false,
+        showTorres: false,
+        showAptosTorre: false,
         showAmenities: false,
         showSacada: false,
         showEscritorio: false,
@@ -470,6 +478,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
         if (!config.showEscritorio) queryParams.set('ces', '0')
         if (!config.showDependencia) queryParams.set('cde', '0')
         if (!config.showObservations) queryParams.set('cob', '0')
+        if (!config.showIdade) queryParams.set('cid', '0')
+        if (!config.showElevador) queryParams.set('cel', '0')
+        if (!config.showTorres) queryParams.set('ctr', '0')
+        if (!config.showAptosTorre) queryParams.set('cat', '0')
         if (config.showResponsavel) queryParams.set('crs', '1')
         if (config.showConstrutora) queryParams.set('cct', '1')
         // Add media selections as indices
@@ -618,7 +630,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             (showSacada && (hasSacadaChurras || hasSacadaSem)) ||
             hasLavabo || (showEscritorio && hasEscritorio) || (showDependencia && hasDependencia) ||
             showObservations || (showVagas && vegasVal > 0) || (showHobbyBox && (hobbyBox || hobbyBoxNum)) ||
-            (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal) || !!tipologiaUnidade
+            (showAreaPrivativa && areaPrivativa) || (showAreaTotal && areaTotal) || !!tipologiaUnidade ||
+            (config.showIdade && property.details?.idade_imovel) ||
+            (config.showElevador && property.details?.has_elevadores) ||
+            (config.showTorres && property.details?.numero_torres) ||
+            (config.showAptosTorre && property.details?.aptos_por_torre)
 
         if (hasAnyInfo) {
             message += `*INFORMAÇÕES*\n`
@@ -677,6 +693,18 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
             }
             if (showAreaTotal && areaTotal && parseFloat(String(areaTotal)) > 0) {
                 message += `• Área total: ${areaTotal} m²\n`
+            }
+            if (config.showIdade && property.details?.idade_imovel) {
+                message += `• Idade do imóvel: ${property.details.idade_imovel} anos\n`
+            }
+            if (config.showElevador && property.details?.has_elevadores) {
+                message += `• Elevadores: ${property.details.numero_elevadores || 'Sim'}\n`
+            }
+            if (config.showTorres && property.details?.numero_torres) {
+                message += `• Número de Torres: ${property.details.numero_torres}\n`
+            }
+            if (config.showAptosTorre && property.details?.aptos_por_torre) {
+                message += `• Aptos / Torre: ${property.details.aptos_por_torre}\n`
             }
             message += `\n`
         }
@@ -748,6 +776,9 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 { id: 'playground', label: 'Playground' },
                 { id: 'brinquedoteca', label: 'Brinquedoteca' },
                 { id: 'home_market', label: 'Home Market' },
+                { id: 'smart_locker', label: 'Smart Locker' },
+                { id: 'vagas_visitantes', label: 'Vagas Visitantes' },
+                { id: 'zeladoria', label: 'Zeladoria' },
             ]
             const activeAmenities = amenitiesMap
                 .filter(a => property.details?.[a.id])
@@ -896,7 +927,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 showSacada: true,
                 showEscritorio: true,
                 showDependencia: true,
-                showObservations: true
+                showObservations: true,
+                showIdade: true,
+                showElevador: true,
+                showTorres: true,
+                showAptosTorre: true
             }))
         }
     }
@@ -936,7 +971,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 showSacada: false,
                 showEscritorio: false,
                 showDependencia: false,
-                showObservations: false
+                showObservations: false,
+                showIdade: false,
+                showElevador: false,
+                showTorres: false,
+                showAptosTorre: false
             }))
         }
     }
@@ -965,7 +1004,11 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                 config.showSacada ||
                 config.showEscritorio ||
                 config.showDependencia ||
-                config.showObservations
+                config.showObservations ||
+                config.showIdade ||
+                config.showElevador ||
+                config.showTorres ||
+                config.showAptosTorre
             )
         }
         return false
@@ -1647,6 +1690,10 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                         const areaPrivativa = parseFloat(String(property.details?.area_privativa || '0')) > 0
                                         const areaTotal = parseFloat(String(property.details?.area_total || '0')) > 0
                                         const obs = !!property.details?.obs_dormitorios
+                                        const idade = !!property.details?.idade_imovel
+                                        const elevador = !!property.details?.has_elevadores
+                                        const torres = !!property.details?.numero_torres
+                                        const aptosTorre = !!property.details?.aptos_por_torre
 
                                         return (
                                             <div className="p-4 bg-white dark:bg-muted/30 space-y-3 border-t border-border/40">
@@ -1719,6 +1766,34 @@ export function SendToLeadModal({ isOpen, onClose, property, tenantId, tenantSlu
                                                             label="Observações"
                                                             checked={config.showObservations}
                                                             onChange={(e) => setConfig({ ...config, showObservations: e.target.checked })}
+                                                        />
+                                                    )}
+                                                    {idade && (
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Idade do Imóvel"
+                                                            checked={config.showIdade}
+                                                            onChange={(e) => setConfig({ ...config, showIdade: e.target.checked })}
+                                                        />
+                                                    )}
+                                                    {elevador && (
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Elevadores"
+                                                            checked={config.showElevador}
+                                                            onChange={(e) => setConfig({ ...config, showElevador: e.target.checked })}
+                                                        />
+                                                    )}
+                                                    {torres && (
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Número de Torres"
+                                                            checked={config.showTorres}
+                                                            onChange={(e) => setConfig({ ...config, showTorres: e.target.checked })}
+                                                        />
+                                                    )}
+                                                    {aptosTorre && (
+                                                        <FormCheckbox labelClassName="text-base"
+                                                            label="Aptos / Torre"
+                                                            checked={config.showAptosTorre}
+                                                            onChange={(e) => setConfig({ ...config, showAptosTorre: e.target.checked })}
                                                         />
                                                     )}
                                                 </div>

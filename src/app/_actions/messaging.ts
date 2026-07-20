@@ -55,6 +55,10 @@ export async function sendPropertyEmail(leadId: string, leadEmail: string, prope
         if (config.showEscritorio === false) queryParams.set('ces', '0')
         if (config.showDependencia === false) queryParams.set('cde', '0')
         if (config.showObservations === false) queryParams.set('cob', '0')
+        if (config.showIdade === false) queryParams.set('cid', '0')
+        if (config.showElevador === false) queryParams.set('cel', '0')
+        if (config.showTorres === false) queryParams.set('ctr', '0')
+        if (config.showAptosTorre === false) queryParams.set('cat', '0')
         if (config.showResponsavel) queryParams.set('crs', '1')
         if (config.showConstrutora) queryParams.set('cct', '1')
         

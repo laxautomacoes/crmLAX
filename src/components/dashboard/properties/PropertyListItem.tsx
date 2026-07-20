@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { Home, MapPin, BedDouble, Bath, Car, Trash2, Edit, Shield, Waves, Utensils, PartyPopper, Dumbbell, Gamepad2, BookOpen, Film, Play, Baby, FileText, Video, Send, Maximize2, MoreVertical, Archive, Globe, XCircle, AlertTriangle, Check, X } from 'lucide-react'
 import { translatePropertyType, getPropertyTypeStyles, getStatusStyles, getSituacaoStyles, translateStatus } from '@/utils/property-translations'
 
@@ -26,17 +27,38 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
     )
     const canEdit = isAdmin || isOwner
     const [dropdownOpen, setDropdownOpen] = useState(false)
+    const [dropdownPos, setDropdownPos] = useState({ top: 0, right: 0 })
     const dropdownRef = useRef<HTMLDivElement>(null)
+    const buttonRef = useRef<HTMLButtonElement>(null)
 
     useEffect(() => {
         function handleClickOutside(e: MouseEvent) {
-            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+            if (dropdownOpen && 
+                dropdownRef.current && 
+                !dropdownRef.current.contains(e.target as Node) &&
+                buttonRef.current &&
+                !buttonRef.current.contains(e.target as Node)
+            ) {
                 setDropdownOpen(false)
             }
         }
+        
+        function handleScroll() {
+            if (dropdownOpen) {
+                setDropdownOpen(false)
+            }
+        }
+        
         document.addEventListener('mousedown', handleClickOutside)
-        return () => document.removeEventListener('mousedown', handleClickOutside)
-    }, [])
+        window.addEventListener('scroll', handleScroll, true) // capture scroll events
+        window.addEventListener('resize', handleScroll)
+        
+        return () => {
+            document.removeEventListener('mousedown', handleClickOutside)
+            window.removeEventListener('scroll', handleScroll, true)
+            window.removeEventListener('resize', handleScroll)
+        }
+    }, [dropdownOpen])
     const formattedPrice = prop.price
         ? `R$ ${Number(prop.price).toLocaleString('pt-BR')}`
         : 'Sob consulta'
@@ -311,7 +333,7 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                 </div>
             </td>
             <td className="px-4 py-5 text-center">
-                <div className="relative flex items-center justify-center" ref={dropdownRef}>
+                <div className="relative flex items-center justify-center">
                     {isAdmin && (prop.status === 'Pending' || prop.status === 'Pendente') && onApprove && (
                         <button
                             onClick={(e) => { e.stopPropagation(); onApprove(prop.id) }}
@@ -331,14 +353,26 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                         </button>
                     )}
                     <button
-                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(o => !o) }}
+                        ref={buttonRef}
+                        onClick={(e) => { 
+                            e.stopPropagation()
+                            if (!dropdownOpen && buttonRef.current) {
+                                const rect = buttonRef.current.getBoundingClientRect()
+                                setDropdownPos({ top: rect.bottom + 4, right: window.innerWidth - rect.right })
+                            }
+                            setDropdownOpen(o => !o) 
+                        }}
                         className="p-2 bg-muted text-foreground rounded-lg hover:bg-muted/80 transition-colors shadow-sm"
                         title="Ações"
                     >
                         <MoreVertical size={16} />
                     </button>
-                    {dropdownOpen && (
-                        <div className="absolute right-0 top-full mt-1 w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30">
+                    {dropdownOpen && createPortal(
+                        <div 
+                            ref={dropdownRef}
+                            className="fixed w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-[9999]"
+                            style={{ top: dropdownPos.top, right: dropdownPos.right }}
+                        >
                             <button
                                 onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onSend(prop) }}
                                 className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
@@ -373,7 +407,8 @@ export function PropertyListItem({ prop, onEdit, onDelete, onView, onSend, onApp
                                     </button>
                                 </>
                             )}
-                        </div>
+                        </div>,
+                        document.body
                     )}
                 </div>
             </td>

@@ -21,7 +21,7 @@ interface PropertyCardProps {
 export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove, onReject, onArchive, onTogglePublish, userRole, userId }: PropertyCardProps) {
     const isAdmin = userRole === 'admin' || userRole === 'superadmin'
     const isOwner = userId && prop.created_by && (
-        userId === prop.created_by || 
+        userId === prop.created_by ||
         userId === prop.created_by?.id
     )
     const canEdit = isAdmin || isOwner
@@ -39,9 +39,9 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
         document.addEventListener('mousedown', handleClickOutside)
         return () => document.removeEventListener('mousedown', handleClickOutside)
     }, [])
-    
+
     return (
-        <div 
+        <div
             onClick={() => onView(prop)}
             className="bg-card rounded-xl overflow-hidden shadow-sm hover:shadow-md transition-shadow group animate-in fade-in slide-in-from-bottom-2 duration-300 cursor-pointer flex flex-col h-full relative"
         >
@@ -53,7 +53,7 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                         <Home size={40} strokeWidth={1} />
                     </div>
                 )}
-                
+
                 {/* Overlay: Pendente — visível para o admin E para o criador do imóvel */}
                 {(prop.status === 'Pending' || prop.status === 'Pendente') && (isAdmin || isOwner) && (
                     <div className="absolute inset-0 bg-black/50 flex flex-col items-center justify-center gap-3 p-3">
@@ -104,53 +104,53 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                 )}
 
                 {mounted && (
-                <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-20" ref={dropdownRef}>
-                    <button
-                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(o => !o) }}
-                        className="p-2 bg-black/60 text-white rounded-lg shadow-sm hover:bg-black/80 transition-colors"
-                        title="Ações"
-                    >
-                        <MoreVertical size={16} />
-                    </button>
-                    {dropdownOpen && (
-                        <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-30">
-                            <button
-                                onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onSend(prop) }}
-                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
-                            >
-                                <Send size={14} className="text-emerald-500" />
-                                Enviar para Lead
-                            </button>
-                            {canEdit && (
-                                <>
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onEdit(prop) }}
-                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
-                                    >
-                                        <Edit size={14} className="text-blue-500" />
-                                        Editar
-                                    </button>
-                                    {onArchive && (
+                    <div className="absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity z-20" ref={dropdownRef}>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setDropdownOpen(o => !o) }}
+                            className="p-2 bg-black/60 text-white rounded-lg shadow-sm hover:bg-black/80 transition-colors"
+                            title="Ações"
+                        >
+                            <MoreVertical size={16} />
+                        </button>
+                        {dropdownOpen && (
+                            <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-xl shadow-xl overflow-hidden z-30">
+                                <button
+                                    onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onSend(prop) }}
+                                    className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                                >
+                                    <Send size={14} className="text-emerald-500" />
+                                    Enviar para Lead
+                                </button>
+                                {canEdit && (
+                                    <>
                                         <button
-                                            onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onArchive(prop.id) }}
-                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-amber-500/10 transition-colors"
+                                            onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onEdit(prop) }}
+                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
                                         >
-                                            <Archive size={14} className="text-amber-500" />
-                                            Arquivar
+                                            <Edit size={14} className="text-blue-500" />
+                                            Editar
                                         </button>
-                                    )}
-                                    <button
-                                        onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onDelete(prop.id) }}
-                                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-red-500/10 transition-colors"
-                                    >
-                                        <Trash2 size={14} className="text-red-500" />
-                                        Excluir
-                                    </button>
-                                </>
-                            )}
-                        </div>
-                    )}
-                </div>
+                                        {onArchive && (
+                                            <button
+                                                onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onArchive(prop.id) }}
+                                                className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-amber-500/10 transition-colors"
+                                            >
+                                                <Archive size={14} className="text-amber-500" />
+                                                Arquivar
+                                            </button>
+                                        )}
+                                        <button
+                                            onClick={(e) => { e.stopPropagation(); setDropdownOpen(false); onDelete(prop.id) }}
+                                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-red-500/10 transition-colors"
+                                        >
+                                            <Trash2 size={14} className="text-red-500" />
+                                            Excluir
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                        )}
+                    </div>
                 )}
             </div>
 
@@ -364,11 +364,10 @@ export function PropertyCard({ prop, onEdit, onDelete, onView, onSend, onApprove
                                     e.stopPropagation()
                                     onTogglePublish(prop.id, !prop.is_published)
                                 }}
-                                className={`flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${
-                                    prop.is_published
+                                className={`flex items-center gap-1 px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-wider transition-all ${prop.is_published
                                         ? 'bg-emerald-500/15 text-emerald-500 hover:bg-emerald-500/25'
                                         : 'bg-foreground/5 text-muted-foreground hover:bg-foreground/10'
-                                }`}
+                                    }`}
                                 title={prop.is_published ? 'Publicado no site – clique para remover' : 'Não publicado – clique para publicar no site'}
                             >
                                 Site
