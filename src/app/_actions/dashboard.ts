@@ -216,7 +216,7 @@ export async function getROIMetrics(tenantId: string): Promise<{ success: boolea
         // 1. Iniciar queries independentes principais
         const txQuery = supabase
             .from('transacoes_financeiras')
-            .select('valor, tipo')
+            .select('valor, tipo, categoria')
             .eq('tenant_id', tenantId)
             .eq('status', 'pago')
 
@@ -225,64 +225,76 @@ export async function getROIMetrics(tenantId: string): Promise<{ success: boolea
             .select('*', { count: 'exact', head: true })
             .eq('tenant_id', tenantId)
 
+        const stagesQuery = supabase
+            .from('lead_stages')
+            .select('id, name')
+            .eq('tenant_id', tenantId)
+
         // 2. Executar buscas principais em paralelo
-        const [txRes, leadsCountRes] = await Promise.all([txQuery, leadsCountQuery])
+        const [txRes, leadsCountRes, stagesRes] = await Promise.all([txQuery, leadsCountQuery, stagesQuery])
 
         if (txRes.error) throw txRes.error
         if (leadsCountRes.error) throw leadsCountRes.error
+        if (stagesRes.error) throw stagesRes.error
 
         const txData = txRes.data || []
         const leadsCount = leadsCountRes.count || 0
+        const allStages = stagesRes.data || []
 
-        const hasRealData = txData.length > 0
-
-        let totalReceita = 0
-        let totalCustos = 0
-
-        if (hasRealData) {
-            // Usar dados reais de transações financeiras
-            totalReceita = txData
-                .filter((t: any) => t.tipo === 'Receita')
-                .reduce((acc: number, t: any) => acc + (Number(t.valor) || 0), 0)
-
-            totalCustos = txData
-                .filter((t: any) => t.tipo === 'Despesa')
-                .reduce((acc: number, t: any) => acc + (Number(t.valor) || 0), 0)
-        } else {
-            // Fallback: cálculo antigo com traffic_sources + leads ganhos em paralelo
-            const trafficQuery = supabase
-                .from('traffic_sources')
-                .select('custo')
-                .eq('tenant_id', tenantId)
-
-            const stagesQuery = supabase
-                .from('lead_stages')
-                .select('id, name')
-                .eq('tenant_id', tenantId)
-
-            const [trafficRes, stagesRes] = await Promise.all([trafficQuery, stagesQuery])
-
-            const trafficData = trafficRes.data || []
-            const allStages = stagesRes.data || []
-
-            totalCustos = trafficData.reduce((acc: number, curr: any) => acc + (Number(curr.custo) || 0), 0)
-
-            const winStage = allStages.find((s: any) =>
-                s.name.toLowerCase().includes('ganho') ||
-                s.name.toLowerCase().includes('fechado') ||
-                s.name.toLowerCase().includes('concluído')
+        // Função para identificar se a categoria é de Marketing / Ads / Tráfego Pago
+        const isMarketingCategory = (catName: string | null): boolean => {
+            if (!catName) return false
+            const normalized = catName.toLowerCase()
+            return (
+                normalized.includes('marketing') ||
+                normalized.includes('ads') ||
+                normalized.includes('tráfego') ||
+                normalized.includes('trafego') ||
+                normalized.includes('anúncio') ||
+                normalized.includes('anuncio') ||
+                normalized.includes('meta') ||
+                normalized.includes('google') ||
+                normalized.includes('facebook') ||
+                normalized.includes('instagram') ||
+                normalized.includes('mídia') ||
+                normalized.includes('midia') ||
+                normalized.includes('propaganda')
             )
-
-            if (winStage) {
-                const { data: leadsData } = await supabase
-                    .from('leads')
-                    .select('value')
-                    .eq('tenant_id', tenantId)
-                    .eq('stage_id', winStage.id)
-
-                totalReceita = (leadsData || []).reduce((acc: number, curr: any) => acc + (Number(curr.value) || 0), 0)
-            }
         }
+
+        // Apenas despesas do tipo 'Despesa' com categoria de Marketing/Ads entram como Investimento Ads (totalCustos)
+        const totalCustos = txData
+            .filter((t: any) => t.tipo === 'Despesa' && isMarketingCategory(t.categoria))
+            .reduce((acc: number, t: any) => acc + (Number(t.valor) || 0), 0)
+
+        // Receita das transações financeiras pagas
+        const totalTxReceita = txData
+            .filter((t: any) => t.tipo === 'Receita')
+            .reduce((acc: number, t: any) => acc + (Number(t.valor) || 0), 0)
+
+        // Receita estimada de leads ganhos/fechados no pipeline
+        let totalLeadsReceita = 0
+        const winStage = allStages.find((s: any) =>
+            s.name.toLowerCase().includes('ganho') ||
+            s.name.toLowerCase().includes('fechado') ||
+            s.name.toLowerCase().includes('concluído')
+        )
+
+        if (winStage) {
+            const { data: leadsData } = await supabase
+                .from('leads')
+                .select('value, sale_value')
+                .eq('tenant_id', tenantId)
+                .eq('stage_id', winStage.id)
+
+            totalLeadsReceita = (leadsData || []).reduce((acc: number, curr: any) => {
+                const val = Number(curr.sale_value || curr.value) || 0
+                return acc + val
+            }, 0)
+        }
+
+        // totalReceita é o maior entre receitas pagas no financeiro e valor estimado dos leads ganhos
+        const totalReceita = Math.max(totalTxReceita, totalLeadsReceita)
 
         // 4. Calcular ROI e CPL
         const roi = totalCustos > 0 ? ((totalReceita - totalCustos) / totalCustos) * 100 : 0

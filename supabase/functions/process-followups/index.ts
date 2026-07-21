@@ -8,7 +8,7 @@ const corsHeaders = {
 
 // ─── Configuração da Evolution API ─────────────────────────────────────────────
 const EVOLUTION_API_URL = (Deno.env.get('EVOLUTION_URL') || '').replace(/['"\/]+$/g, '').replace(/^['"\/]+/g, '');
-const EVOLUTION_API_KEY = Deno.env.get('EVOLUTION_GLOBAL_API_KEY') || '').replace(/['"\/]+$/g, '').replace(/^['"\/]+/g, '');
+const EVOLUTION_API_KEY = (Deno.env.get('EVOLUTION_GLOBAL_API_KEY') || '').replace(/['"\/]+$/g, '').replace(/^['"\/]+/g, '');
 
 // ─── Funções de Envio WhatsApp ─────────────────────────────────────────────────
 

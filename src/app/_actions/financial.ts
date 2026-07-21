@@ -21,6 +21,7 @@ export interface Transaction {
     metadata: Record<string, any>
     created_at: string | null
     lead_name?: string
+    property_info?: string | null
 }
 
 export interface FinancialCategory {
@@ -67,7 +68,7 @@ export async function getTransactions(
     try {
         let query = supabase
             .from('transacoes_financeiras')
-            .select('*, leads(contacts(name))')
+            .select('*, leads(contacts(name), properties(details), proposals(buyer_data, status))')
             .eq('tenant_id', tenantId)
             .order('data_transacao', { ascending: false })
 
@@ -94,10 +95,42 @@ export async function getTransactions(
 
         if (error) throw error
 
-        const transactions: Transaction[] = (data || []).map((t: any) => ({
-            ...t,
-            lead_name: t.leads?.contacts?.name || null
-        }))
+        const transactions: Transaction[] = (data || []).map((t: any) => {
+            const lead = t.leads || {};
+            let property_info = null;
+
+            if (lead.proposals && lead.proposals.length > 0) {
+                const accepted = lead.proposals.find((p: any) => p.status === 'Aceito' || p.status === 'accepted' || p.status === 'Ganho' || p.status === 'aceita');
+                const proposalToUse = accepted || lead.proposals[0];
+                if (proposalToUse && proposalToUse.buyer_data && proposalToUse.buyer_data.imovel_descricao) {
+                    const desc = proposalToUse.buyer_data.imovel_descricao;
+                    if (desc.includes(' - ')) {
+                        property_info = desc.split(' - ')[1];
+                    } else {
+                        property_info = desc;
+                    }
+                }
+            }
+
+            if (!property_info) {
+                const details = lead.properties?.details || {}
+                const apto = details.endereco?.apto || details.apto;
+                const vagas = details.vagas;
+                const hobbyBox = details.hobby_box_numeracao || (details.hobby_box === 'Sim' ? 'Sim' : details.hobby_box);
+                
+                const unitParts: string[] = [];
+                if (apto) unitParts.push(`Apto ${apto}`);
+                if (vagas) unitParts.push(`Vg ${vagas}`);
+                if (hobbyBox) unitParts.push(`HB ${hobbyBox === 'Sim' ? '' : hobbyBox}`.trim());
+                if (unitParts.length > 0) property_info = unitParts.join(' • ');
+            }
+
+            return {
+                ...t,
+                lead_name: lead.contacts?.name || null,
+                property_info
+            }
+        })
 
         return { success: true, data: transactions }
     } catch (error: any) {

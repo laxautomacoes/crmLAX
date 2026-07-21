@@ -194,12 +194,12 @@ input[type="time"] {
   position: relative;
 }
 
-/* Hide native calendar icon but keep it clickable over the whole input */
+/* Hide native calendar icon but position it only over the right icon so the text remains clickable/typable */
 ::-webkit-calendar-picker-indicator {
   position: absolute;
   top: 0;
   right: 0;
-  width: 100%;
+  width: 40px;
   height: 100%;
   opacity: 0;
   cursor: pointer;

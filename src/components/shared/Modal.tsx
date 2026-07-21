@@ -52,9 +52,9 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
     const zIndexStyle = zIndex ? { zIndex } : {};
 
     const modalContent = (
-        <div 
+        <div
             style={zIndexStyle}
-            className={`fixed inset-0 ${zIndex ? '' : 'z-[100]'} flex ${align === 'top' ? 'items-start pt-8 md:pt-12' : 'items-center'} justify-center bg-black/50 backdrop-blur-sm p-4`} 
+            className={`fixed inset-0 ${zIndex ? '' : 'z-[100]'} flex ${align === 'top' ? 'items-start pt-8 md:pt-12' : 'items-center'} justify-center bg-black/50 backdrop-blur-sm p-4`}
             onClick={onClose}
         >
             <div onClick={(e) => e.stopPropagation()} className={`bg-card shadow-xl w-full ${sizeClasses[size]} ${fullHeight ? 'h-[95vh] md:h-[90vh]' : 'max-h-[95vh] md:max-h-[90vh]'} flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative ${className?.includes('rounded') ? '' : 'rounded-lg'} ${className || ''}`}>

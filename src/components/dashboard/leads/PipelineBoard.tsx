@@ -48,6 +48,7 @@ export interface Lead {
     last_interaction_at?: string | null
     has_proposal?: boolean
     partner_id?: string | null
+    partners?: { name: string }
     partner_split?: number | null
     partner_role?: string | null
 }
@@ -201,7 +202,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
         // --- Stage drag ---
         if (activeIdStr.startsWith('stage-')) {
             setActiveStage(null)
-            
+
             // Se caiu em cima de um card de Lead, descobrir a qual estágio ele pertence
             const overLead = leads.find(l => l.id === overIdStr)
             if (overLead) {
@@ -244,7 +245,7 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
         // --- Lead drag ---
         setActiveLead(null)
         const activeId = active.id
-        
+
         // Se overId começar com 'stage-', extrair o ID cru do estágio
         let targetStageId = over.id.toString()
         if (targetStageId.startsWith('stage-')) {
@@ -280,86 +281,86 @@ export function PipelineBoard({ initialStages, initialLeads, onRefresh, onAddLea
 
     return (
         <div className="flex-1 min-h-0 flex flex-col">
-        <DndContext
-            sensors={sensors}
-            collisionDetection={closestCorners}
-            onDragStart={handleDragStart}
-            onDragEnd={handleDragEnd}
-        >
-            <SortableContext items={stageIds} strategy={horizontalListSortingStrategy}>
-                <div className="flex gap-4 md:gap-6 overflow-x-auto pb-6 -mx-4 md:-mx-8 px-4 md:px-8 custom-scrollbar flex-1 min-h-0">
-                    {stages.map((stage) => (
-                        <SortableStageColumn
-                            key={stage.id}
-                            stage={stage}
-                            leads={leads.filter((l) => l.status === stage.id).sort((a, b) => {
-                                const dateA = new Date(a.last_interaction_at || 0).getTime()
-                                const dateB = new Date(b.last_interaction_at || 0).getTime()
-                                return dateB - dateA
-                            })}
-                            onAddLead={onAddLead}
-                            onDeleteStage={onDeleteStage}
-                            onDuplicateStage={onDuplicateStage}
-                            onRenameStage={onRenameStage}
-                            onUpdateStageColor={onUpdateStageColor}
-                            onEditLead={onEditLead}
-                            onDeleteLead={onDeleteLead}
-                            onArchiveLead={onArchiveLead}
-                            onProposalClick={onProposalClick}
-                        />
-                    ))}
-                    {onAddStage && (
-                        <div className="shrink-0 w-[40px]">
-                            <button
-                                onClick={onAddStage}
-                                className="w-full h-full flex items-center justify-center border border-muted-foreground/30 hover:border-muted-foreground/50 rounded-lg bg-card hover:bg-card transition-all group"
-                                title="Novo Estágio"
-                            >
-                                <Plus size={22} className="text-muted-foreground group-hover:text-foreground transition-colors" />
-                            </button>
-                        </div>
-                    )}
-                </div>
-            </SortableContext>
+            <DndContext
+                sensors={sensors}
+                collisionDetection={closestCorners}
+                onDragStart={handleDragStart}
+                onDragEnd={handleDragEnd}
+            >
+                <SortableContext items={stageIds} strategy={horizontalListSortingStrategy}>
+                    <div className="flex gap-4 md:gap-6 overflow-x-auto pb-6 -mx-4 md:-mx-8 px-4 md:px-8 custom-scrollbar flex-1 min-h-0">
+                        {stages.map((stage) => (
+                            <SortableStageColumn
+                                key={stage.id}
+                                stage={stage}
+                                leads={leads.filter((l) => l.status === stage.id).sort((a, b) => {
+                                    const dateA = new Date(a.last_interaction_at || 0).getTime()
+                                    const dateB = new Date(b.last_interaction_at || 0).getTime()
+                                    return dateB - dateA
+                                })}
+                                onAddLead={onAddLead}
+                                onDeleteStage={onDeleteStage}
+                                onDuplicateStage={onDuplicateStage}
+                                onRenameStage={onRenameStage}
+                                onUpdateStageColor={onUpdateStageColor}
+                                onEditLead={onEditLead}
+                                onDeleteLead={onDeleteLead}
+                                onArchiveLead={onArchiveLead}
+                                onProposalClick={onProposalClick}
+                            />
+                        ))}
+                        {onAddStage && (
+                            <div className="shrink-0 w-[40px]">
+                                <button
+                                    onClick={onAddStage}
+                                    className="w-full h-full flex items-center justify-center border border-muted-foreground/30 hover:border-muted-foreground/50 rounded-lg bg-card hover:bg-card transition-all group"
+                                    title="Novo Estágio"
+                                >
+                                    <Plus size={22} className="text-muted-foreground group-hover:text-foreground transition-colors" />
+                                </button>
+                            </div>
+                        )}
+                    </div>
+                </SortableContext>
 
-            <DragOverlay dropAnimation={{
-                sideEffects: defaultDropAnimationSideEffects({
-                    styles: {
-                        active: {
-                            opacity: '0.5',
+                <DragOverlay dropAnimation={{
+                    sideEffects: defaultDropAnimationSideEffects({
+                        styles: {
+                            active: {
+                                opacity: '0.5',
+                            },
                         },
-                    },
-                }),
-            }}>
-                {activeStage ? (
-                    <div className="w-[280px] md:w-[310px] opacity-90 shadow-2xl">
-                        <PipelineColumn
-                            id={activeStage.id}
-                            title={activeStage.name}
-                            color={activeStage.color}
-                            leads={leads.filter((l) => l.status === activeStage.id).sort((a, b) => {
-                                const dateA = new Date(a.last_interaction_at || 0).getTime()
-                                const dateB = new Date(b.last_interaction_at || 0).getTime()
-                                return dateB - dateA
-                            })}
-                            count={leads.filter((l) => l.status === activeStage.id).length}
-                            onAddLead={() => {}}
-                            onDeleteStage={() => {}}
-                            onDuplicateStage={() => {}}
-                            onRenameStage={() => {}}
-                            onUpdateColor={() => {}}
-                            onEditLead={() => {}}
-                            onDeleteLead={() => {}}
-                            onArchiveLead={() => {}}
-                        />
-                    </div>
-                ) : activeLead ? (
-                    <div className="w-[280px] md:w-[310px] items-center px-4">
-                        <LeadCard lead={activeLead} isOverlay />
-                    </div>
-                ) : null}
-            </DragOverlay>
-        </DndContext>
+                    }),
+                }}>
+                    {activeStage ? (
+                        <div className="w-[280px] md:w-[310px] opacity-90 shadow-2xl">
+                            <PipelineColumn
+                                id={activeStage.id}
+                                title={activeStage.name}
+                                color={activeStage.color}
+                                leads={leads.filter((l) => l.status === activeStage.id).sort((a, b) => {
+                                    const dateA = new Date(a.last_interaction_at || 0).getTime()
+                                    const dateB = new Date(b.last_interaction_at || 0).getTime()
+                                    return dateB - dateA
+                                })}
+                                count={leads.filter((l) => l.status === activeStage.id).length}
+                                onAddLead={() => { }}
+                                onDeleteStage={() => { }}
+                                onDuplicateStage={() => { }}
+                                onRenameStage={() => { }}
+                                onUpdateColor={() => { }}
+                                onEditLead={() => { }}
+                                onDeleteLead={() => { }}
+                                onArchiveLead={() => { }}
+                            />
+                        </div>
+                    ) : activeLead ? (
+                        <div className="w-[280px] md:w-[310px] items-center px-4">
+                            <LeadCard lead={activeLead} isOverlay />
+                        </div>
+                    ) : null}
+                </DragOverlay>
+            </DndContext>
         </div>
     )
 }

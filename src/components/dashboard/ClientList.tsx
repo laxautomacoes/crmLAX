@@ -29,6 +29,10 @@ export default function ClientList({ initialClients, tenantId, profileId, openId
 
     useEffect(() => {
         setClients(initialClients)
+        setSelectedClient((prev: any) => {
+            if (!prev) return null;
+            return initialClients.find(c => c.id === prev.id) || null;
+        })
     }, [initialClients])
 
     const [searchTerm, setSearchTerm] = useState('')
@@ -373,7 +377,7 @@ export default function ClientList({ initialClients, tenantId, profileId, openId
                 tenantId={tenantId}
                 profileId={profileId}
                 editingClient={selectedClient}
-                onSuccess={() => window.location.reload()}
+                onSuccess={() => router.refresh()}
             />
 
             <ClientFilterModal

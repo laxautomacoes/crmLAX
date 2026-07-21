@@ -1,9 +1,22 @@
 const EVOLUTION_API_URL = process.env.EVOLUTION_URL?.replace(/['"]/g, '');
 const EVOLUTION_API_KEY = process.env.EVOLUTION_GLOBAL_API_KEY?.replace(/['"]/g, '');
 
+// Circuit Breaker: evita chamadas repetidas quando a Evolution API está offline
+const CIRCUIT_BREAKER_THRESHOLD = 2; // Falhas consecutivas para abrir o circuito
+const CIRCUIT_BREAKER_RESET_MS = 60_000; // 60 segundos antes de tentar novamente
+let circuitBreakerFailures = 0;
+let circuitBreakerOpenUntil = 0;
+
+const FETCH_TIMEOUT_MS = 5_000; // Timeout de 5 segundos para cada chamada
+
 async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
     if (!EVOLUTION_API_URL || !EVOLUTION_API_KEY) {
         throw new Error('Evolution API configuration missing');
+    }
+
+    // Circuit Breaker: se o circuito está aberto, retornar erro imediato
+    if (circuitBreakerFailures >= CIRCUIT_BREAKER_THRESHOLD && Date.now() < circuitBreakerOpenUntil) {
+        throw new Error('Evolution API temporariamente indisponível (circuit breaker ativo). Tentativa automática em breve.');
     }
 
     const baseUrl = EVOLUTION_API_URL.endsWith('/') 
@@ -11,10 +24,15 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
         : EVOLUTION_API_URL;
     
     const url = `${baseUrl}${endpoint}`;
+
+    // AbortController para timeout explícito de 5s
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
     
     try {
         const response = await fetch(url, {
             ...options,
+            signal: controller.signal,
             headers: {
                 'Content-Type': 'application/json',
                 'apikey': EVOLUTION_API_KEY,
@@ -62,12 +80,26 @@ async function evolutionFetch(endpoint: string, options: RequestInit = {}) {
             throw new Error(errorMessage);
         }
 
+        // Sucesso: resetar circuit breaker
+        clearTimeout(timeoutId);
+        circuitBreakerFailures = 0;
         return data;
     } catch (error: any) {
+        clearTimeout(timeoutId);
+
         // Se o erro já foi tratado (lançado pelo bloco !response.ok acima), re-lançar
-        if (error.message && !error.message.includes('fetch')) {
+        // Erros de API (4xx/5xx) não devem ativar o circuit breaker
+        if (error.message && !error.message.includes('fetch') && !error.name?.includes('Abort')) {
             throw error;
         }
+
+        // Falha de conexão/timeout: ativar circuit breaker
+        circuitBreakerFailures++;
+        if (circuitBreakerFailures >= CIRCUIT_BREAKER_THRESHOLD) {
+            circuitBreakerOpenUntil = Date.now() + CIRCUIT_BREAKER_RESET_MS;
+            console.warn(`[Evolution] Circuit breaker aberto após ${circuitBreakerFailures} falhas. Próxima tentativa em ${CIRCUIT_BREAKER_RESET_MS / 1000}s.`);
+        }
+
         console.error('Fetch error in evolutionFetch:', {
             url,
             message: error.message,

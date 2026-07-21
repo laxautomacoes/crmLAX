@@ -310,3 +310,9 @@ Sempre que houver texto de instrução, subtítulo ou descrição longa:
 ## 18. Ordenação de Listas e Checkboxes
 
 - Checkboxes, listas de seleção e modais com atributos (Amenidades, Condomínio, Especificações, Características) DEVEM ser organizados em **ordem alfabética**.
+
+---
+
+## 19. Tags e Badges Específicas
+
+- **Tag de Parceria (P)**: Sempre que houver uma tag ou ícone que precise ser perfeitamente redondo (como a tag de parceria 'P'), usar a combinação de classes: `w-5 h-5 min-w-[20px] min-h-[20px] shrink-0 aspect-square flex items-center justify-center rounded-full leading-none`. Não usar tamanhos arbitrários como `w-[18px]` sem `aspect-square`, `shrink-0`, ou as larguras mínimas para evitar ovalização quando o texto ao lado quebrar em múltiplas linhas.

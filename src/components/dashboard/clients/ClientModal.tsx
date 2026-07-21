@@ -18,12 +18,13 @@ import { motion, AnimatePresence } from 'framer-motion'
 import {
     User, Filter, Sparkles, MessageCircle, Search, Loader2,
     ChevronDown, MapPin, FileText, Image as ImageIcon, Video, DollarSign, Pen,
-    ChevronRight, PenLine, Trash2, MoreVertical, Building2
+    ChevronRight, PenLine, Trash2, MoreVertical, Building2, CheckSquare, Archive, Edit2
 } from 'lucide-react'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
 import { ClientProposalsTab } from './ClientProposalsTab'
 import { LeadDocumentsTab } from '@/components/dashboard/leads/LeadDocumentsTab'
 import { LeadFinanceTab } from '@/components/dashboard/leads/LeadFinanceTab'
+import { getLeadFinancials } from '@/app/_actions/leads-finance'
 import { ConfirmModal } from '@/components/shared/ConfirmModal'
 import { getNotesByContactId, createNote, deleteNote, updateNote } from '@/app/_actions/notes'
 import { translatePropertyType } from '@/utils/property-translations'
@@ -203,8 +204,8 @@ export function ClientModal({
         if ((isNoteEmpty && !isVisit) || !editingClient?.id || !tenantId) return
         setIsSavingNote(true)
         try {
-            const defaultVisitText = isRegisteredProperty 
-                ? `Visita ao imóvel cadastrada.` 
+            const defaultVisitText = isRegisteredProperty
+                ? `Visita ao imóvel cadastrada.`
                 : `Visita ao imóvel cadastrada: ${unregisteredVisitProperty.trim()}`
 
             const noteData: any = {
@@ -377,6 +378,12 @@ export function ClientModal({
 
     // Preencher form quando editando
     useEffect(() => {
+        if (isOpen) {
+            setActiveTab(initialTab || 'info')
+        }
+    }, [isOpen, initialTab])
+
+    useEffect(() => {
         if (!isOpen) return
 
         if (editingClient) {
@@ -441,7 +448,6 @@ export function ClientModal({
                 videos: editingClient.videos || [],
                 documents: editingClient.documents || []
             })
-            setActiveTab(initialTab || 'info')
         } else {
             setFormData({
                 name: '',
@@ -504,7 +510,6 @@ export function ClientModal({
                 videos: [],
                 documents: []
             })
-            setActiveTab(initialTab || 'info')
         }
 
         // Reset AI
@@ -788,8 +793,10 @@ export function ClientModal({
 
             if (res.success) {
                 toast.success(editingClient ? 'Cliente atualizado!' : 'Cliente criado com sucesso!')
-                onClose()
                 onSuccess()
+                if (!editingClient) {
+                    onClose()
+                }
             } else {
                 toast.error('Erro: ' + res.error)
             }
@@ -850,15 +857,15 @@ export function ClientModal({
                 </button>
             }
         >
-            <div className="space-y-6">
+            <div className="flex flex-col h-full">
                 {/* Tabs — só para clientes existentes */}
                 {isEditing && (
-                    <div className="w-full flex items-center border-b border-border overflow-x-auto no-scrollbar mb-6">
+                    <div className="w-full flex items-center border-b border-border overflow-x-auto no-scrollbar mb-6 shrink-0">
                         <button
                             type="button"
                             role="tab"
                             onClick={() => setActiveTab('info')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'info' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'info' ? 'bg-secondary text-secondary-foreground rounded-t-lg border-transparent' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
                             <User size={14} strokeWidth={1} />
                             Informações
@@ -867,7 +874,7 @@ export function ClientModal({
                             type="button"
                             role="tab"
                             onClick={() => setActiveTab('leads')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'leads' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'leads' ? 'bg-secondary text-secondary-foreground rounded-t-lg border-transparent' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
                             <Filter size={14} strokeWidth={1} />
                             Leads
@@ -876,7 +883,7 @@ export function ClientModal({
                             type="button"
                             role="tab"
                             onClick={() => setActiveTab('proposals')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'proposals' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'proposals' ? 'bg-secondary text-secondary-foreground rounded-t-lg border-transparent' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
                             <Pen size={14} strokeWidth={1} className="-scale-x-100" />
                             Propostas
@@ -885,7 +892,7 @@ export function ClientModal({
                             type="button"
                             role="tab"
                             onClick={() => setActiveTab('documents')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'documents' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'documents' ? 'bg-secondary text-secondary-foreground rounded-t-lg border-transparent' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
                             <FileText size={14} strokeWidth={1} />
                             Documentos
@@ -894,7 +901,7 @@ export function ClientModal({
                             type="button"
                             role="tab"
                             onClick={() => setActiveTab('financeiro')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'financeiro' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'financeiro' ? 'bg-secondary text-secondary-foreground rounded-t-lg border-transparent' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
                             <DollarSign size={14} strokeWidth={1} />
                             Financeiro
@@ -903,7 +910,7 @@ export function ClientModal({
                             type="button"
                             role="tab"
                             onClick={() => setActiveTab('ai')}
-                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'ai' ? 'text-foreground active-tab-indicator' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
+                            className={`flex-1 flex items-center justify-center gap-2 px-6 py-3 text-base font-bold transition-all relative whitespace-nowrap border-b-[3px] ${activeTab === 'ai' ? 'bg-secondary text-secondary-foreground rounded-t-lg border-transparent' : 'text-muted-foreground hover:text-foreground border-transparent'}`}
                         >
                             <Sparkles size={14} strokeWidth={1} />
                             Análise IA
@@ -914,1018 +921,1010 @@ export function ClientModal({
                 {/* Tab: Informações */}
                 {activeTab === 'info' && (
                     <form id="client-modal-form" onSubmit={handleSubmit} className="space-y-8 px-1 pb-4 animate-in fade-in slide-in-from-bottom-4 duration-300">
-                                    {/* Dados Pessoais */}
-                                    <div className="space-y-4">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
+                        {/* Dados Pessoais */}
+                        <div className="space-y-4">
+                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
 
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="md:col-span-2 flex flex-col md:flex-row md:items-end gap-4">
-                                                <div className="flex-1">
-                                                    <FormInput
-                                                        label="Nome Completo"
-                                                        required
-                                                        value={formData.name}
-                                                        onChange={e => setFormData({ ...formData, name: e.target.value })}
-                                                        placeholder="Ex: João Silva"
-                                                    />
-                                                </div>
-                                                {/* Tipo de Contato */}
-                                                <div className="flex items-center gap-3 pb-[10px] shrink-0">
-                                                    {[
-                                                        { value: 'comprador', label: 'Comprador' },
-                                                        { value: 'vendedor', label: 'Vendedor' },
-                                                        { value: 'construtora', label: 'Construtora' }
-                                                    ].map(option => {
-                                                        const isChecked = formData.contact_type.includes(option.value)
-                                                        return (
-                                                            <label
-                                                                key={option.value}
-                                                                className="flex items-center gap-1.5 cursor-pointer select-none group"
-                                                            >
-                                                                <input
-                                                                    type="checkbox"
-                                                                    checked={isChecked}
-                                                                    onChange={() => {
-                                                                        const updated = isChecked
-                                                                            ? formData.contact_type.filter((t: string) => t !== option.value)
-                                                                            : [...formData.contact_type, option.value]
-                                                                        setFormData({ ...formData, contact_type: updated })
-                                                                    }}
-                                                                    className="w-4 h-4 rounded border-muted-foreground/40 bg-foreground/5 text-secondary focus:ring-secondary/30 focus:ring-offset-0 cursor-pointer accent-[#FFE600]"
-                                                                />
-                                                                <span className={`text-xs font-bold transition-colors ${isChecked ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'}`}>
-                                                                    {option.label}
-                                                                </span>
-                                                            </label>
-                                                        )
-                                                    })}
-                                                </div>
-                                            </div>
-                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                 <FormInput
-                                                     label="Telefone"
-                                                     required
-                                                     value={formData.phone}
-                                                     onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
-                                                     placeholder="(48) 99999 9999"
-                                                     rightElement={
-                                                         formData.phone && (
-                                                             <a
-                                                                 href={`https://wa.me/55${formData.phone.replace(/\D/g, '')}`}
-                                                                 target="_blank"
-                                                                 rel="noopener noreferrer"
-                                                                 className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
-                                                                 title="Conversar WhatsApp"
-                                                             >
-                                                                 <MessageCircle size={16} />
-                                                             </a>
-                                                         )
-                                                     }
-                                                 />
-                                                <FormInput
-                                                    label="E-mail"
-                                                    type="email"
-                                                    required
-                                                    value={formData.email}
-                                                    onChange={e => setFormData({ ...formData, email: e.target.value })}
-                                                    placeholder="joao@exemplo.com"
-                                                />
-                                                <FormInput
-                                                    label="Instagram"
-                                                    value={formData.instagram}
-                                                    onChange={e => setFormData({ ...formData, instagram: e.target.value })}
-                                                    placeholder="@usuario"
-                                                />
-                                                <FormInput
-                                                    label="Linkedin"
-                                                    value={formData.linkedin}
-                                                    onChange={e => setFormData({ ...formData, linkedin: e.target.value })}
-                                                    placeholder="linkedin.com/in/..."
-                                                />
-                                            </div>
-
-                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                <FormInput
-                                                    label="CPF"
-                                                    value={formData.cpf}
-                                                    onChange={e => setFormData({ ...formData, cpf: e.target.value })}
-                                                    placeholder="000.000.000-00"
-                                                />
-                                                <FormInput
-                                                    label="RG | CNH"
-                                                    value={formData.rg_cnh}
-                                                    onChange={e => setFormData({ ...formData, rg_cnh: e.target.value })}
-                                                    placeholder="Digite o documento"
-                                                />
-                                                <FormInput
-                                                    label="Data expedição | Data validade"
-                                                    value={formData.rg_cnh_date}
-                                                    onChange={e => setFormData({ ...formData, rg_cnh_date: e.target.value })}
-                                                    placeholder="ex: dd/mm/aaaa | dd/mm/aaaa"
-                                                />
-                                                <FormInput
-                                                    label="Órgão Expedidor"
-                                                    value={formData.issuing_agency}
-                                                    onChange={e => setFormData({ ...formData, issuing_agency: e.target.value })}
-                                                    placeholder="ex: SSP/SC"
-                                                />
-                                            </div>
-
-                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                <FormInput
-                                                    label="Profissão"
-                                                    value={formData.profession}
-                                                    onChange={e => setFormData({ ...formData, profession: e.target.value })}
-                                                    placeholder="Ex: Corretor de Imóveis"
-                                                />
-                                                <FormInput
-                                                    label="Naturalidade"
-                                                    value={formData.naturalness}
-                                                    onChange={e => setFormData({ ...formData, naturalness: e.target.value })}
-                                                    placeholder="Ex: Florianópolis - SC"
-                                                />
-                                                <FormInput
-                                                    label="Nacionalidade"
-                                                    value={formData.nationality}
-                                                    onChange={e => setFormData({ ...formData, nationality: e.target.value })}
-                                                    placeholder="Ex: Brasileira"
-                                                />
-                                                <FormInput
-                                                    label="Time Coração"
-                                                    value={formData.favorite_team}
-                                                    onChange={e => setFormData({ ...formData, favorite_team: e.target.value })}
-                                                    placeholder="Time do coração"
-                                                />
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <FormInput
-                                                    label="Data Nascimento"
-                                                    type="date"
-                                                    value={formData.birth_date}
-                                                    onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
-                                                />
-                                                <FormSelect
-                                                    label="Estado Civil"
-                                                    value={formData.marital_status}
-                                                    onChange={e => setFormData({ ...formData, marital_status: e.target.value })}
-                                                    options={[
-                                                        { value: '', label: 'Selecione...' },
-                                                        { value: 'Solteiro(a)', label: 'Solteiro(a)' },
-                                                        { value: 'Casado(a)', label: 'Casado(a)' },
-                                                        { value: 'Divorciado(a)', label: 'Divorciado(a)' },
-                                                        { value: 'Viúvo(a)', label: 'Viúvo(a)' },
-                                                        { value: 'União Estável', label: 'União Estável' }
-                                                    ]}
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <FormSelect
-                                                    label="Regime Casamento"
-                                                    value={formData.property_regime}
-                                                    onChange={e => setFormData({ ...formData, property_regime: e.target.value })}
-                                                    options={[
-                                                        { value: '', label: 'Selecione...' },
-                                                        { value: 'Comunhão Parcial', label: 'Comunhão Parcial' },
-                                                        { value: 'Comunhão Universal', label: 'Comunhão Universal' },
-                                                        { value: 'Separação Total', label: 'Separação Total' },
-                                                        { value: 'Separação Obrigatória', label: 'Separação Obrigatória' },
-                                                        { value: 'Participação Final nos Aquestos', label: 'Participação Final nos Aquestos' }
-                                                    ]}
-                                                />
-                                                <FormInput
-                                                    label="Data Casamento"
-                                                    type="date"
-                                                    value={formData.marriage_date}
-                                                    onChange={e => setFormData({ ...formData, marriage_date: e.target.value })}
-                                                />
-                                            </div>
-
-                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <FormInput
-                                                    label="Nome do Pai"
-                                                    value={formData.father_name}
-                                                    onChange={e => setFormData({ ...formData, father_name: e.target.value })}
-                                                    placeholder="Nome completo do pai"
-                                                />
-                                                <FormInput
-                                                    label="Nome da Mãe"
-                                                    value={formData.mother_name}
-                                                    onChange={e => setFormData({ ...formData, mother_name: e.target.value })}
-                                                    placeholder="Nome completo da mãe"
-                                                />
-                                            </div>
-                                        </div>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2 flex flex-col md:flex-row md:items-end gap-4">
+                                    <div className="flex-1">
+                                        <FormInput
+                                            label="Nome Completo"
+                                            required
+                                            value={formData.name}
+                                            onChange={e => setFormData({ ...formData, name: e.target.value })}
+                                            placeholder="Ex: João Silva"
+                                        />
                                     </div>
-
-                                    {/* Cônjuge | Sócio */}
-                                    <div className="space-y-4 pt-8 border-t border-border/50">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Cônjuge | Sócio</h3>
-                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                            <div className="md:col-span-2">
-                                                <FormInput
-                                                    label="Nome Completo"
-                                                    value={formData.spouse_name}
-                                                    onChange={e => setFormData({ ...formData, spouse_name: e.target.value })}
-                                                    placeholder="Nome do cônjuge ou sócio"
-                                                />
-                                            </div>
-
-                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                 <FormInput
-                                                     label="Telefone"
-                                                     value={formData.spouse_phone}
-                                                     onChange={e => setFormData({ ...formData, spouse_phone: formatPhone(e.target.value) })}
-                                                     placeholder="(48) 99999 9999"
-                                                     rightElement={
-                                                         formData.spouse_phone && (
-                                                             <a
-                                                                 href={`https://wa.me/55${formData.spouse_phone.replace(/\D/g, '')}`}
-                                                                 target="_blank"
-                                                                 rel="noopener noreferrer"
-                                                                 className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
-                                                                 title="Conversar WhatsApp"
-                                                             >
-                                                                 <MessageCircle size={16} />
-                                                             </a>
-                                                         )
-                                                     }
-                                                 />
-                                                <FormInput
-                                                    label="E-mail"
-                                                    type="email"
-                                                    value={formData.spouse_email}
-                                                    onChange={e => setFormData({ ...formData, spouse_email: e.target.value })}
-                                                    placeholder="email@exemplo.com"
-                                                />
-                                                <FormInput
-                                                    label="Instagram"
-                                                    value={formData.spouse_instagram}
-                                                    onChange={e => setFormData({ ...formData, spouse_instagram: e.target.value })}
-                                                    placeholder="@usuario"
-                                                />
-                                                <FormInput
-                                                    label="Linkedin"
-                                                    value={formData.spouse_linkedin}
-                                                    onChange={e => setFormData({ ...formData, spouse_linkedin: e.target.value })}
-                                                    placeholder="linkedin.com/in/..."
-                                                />
-                                            </div>
-
-                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                <FormInput
-                                                    label="CPF"
-                                                    value={formData.spouse_cpf}
-                                                    onChange={e => setFormData({ ...formData, spouse_cpf: e.target.value })}
-                                                    placeholder="000.000.000-00"
-                                                />
-                                                <FormInput
-                                                    label="RG | CNH"
-                                                    value={formData.spouse_rg_cnh}
-                                                    onChange={e => setFormData({ ...formData, spouse_rg_cnh: e.target.value })}
-                                                    placeholder="Digite o documento"
-                                                />
-                                                <FormInput
-                                                    label="Data expedição | Data validade"
-                                                    value={formData.spouse_rg_cnh_date}
-                                                    onChange={e => setFormData({ ...formData, spouse_rg_cnh_date: e.target.value })}
-                                                    placeholder="ex: dd/mm/aaaa | dd/mm/aaaa"
-                                                />
-                                                <FormInput
-                                                    label="Órgão Expedidor"
-                                                    value={formData.spouse_issuing_agency}
-                                                    onChange={e => setFormData({ ...formData, spouse_issuing_agency: e.target.value })}
-                                                    placeholder="ex: SSP/SC"
-                                                />
-                                            </div>
-
-                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
-                                                <FormInput
-                                                    label="Profissão"
-                                                    value={formData.spouse_profession}
-                                                    onChange={e => setFormData({ ...formData, spouse_profession: e.target.value })}
-                                                    placeholder="Ex: Corretor de Imóveis"
-                                                />
-                                                <FormInput
-                                                    label="Naturalidade"
-                                                    value={formData.spouse_naturalness}
-                                                    onChange={e => setFormData({ ...formData, spouse_naturalness: e.target.value })}
-                                                    placeholder="Ex: Florianópolis - SC"
-                                                />
-                                                <FormInput
-                                                    label="Nacionalidade"
-                                                    value={formData.spouse_nationality}
-                                                    onChange={e => setFormData({ ...formData, spouse_nationality: e.target.value })}
-                                                    placeholder="Ex: Brasileira"
-                                                />
-                                                <FormInput
-                                                    label="Time Coração"
-                                                    value={formData.spouse_favorite_team}
-                                                    onChange={e => setFormData({ ...formData, spouse_favorite_team: e.target.value })}
-                                                    placeholder="Time do coração"
-                                                />
-                                            </div>
-
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <FormInput
-                                                    label="Data Nascimento"
-                                                    type="date"
-                                                    value={formData.spouse_birth_date}
-                                                    onChange={e => setFormData({ ...formData, spouse_birth_date: e.target.value })}
-                                                />
-                                                <FormSelect
-                                                    label="Estado Civil"
-                                                    value={formData.spouse_marital_status}
-                                                    onChange={e => setFormData({ ...formData, spouse_marital_status: e.target.value })}
-                                                    options={[
-                                                        { value: '', label: 'Selecione...' },
-                                                        { value: 'Solteiro(a)', label: 'Solteiro(a)' },
-                                                        { value: 'Casado(a)', label: 'Casado(a)' },
-                                                        { value: 'Divorciado(a)', label: 'Divorciado(a)' },
-                                                        { value: 'Viúvo(a)', label: 'Viúvo(a)' },
-                                                        { value: 'União Estável', label: 'União Estável' }
-                                                    ]}
-                                                />
-                                            </div>
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <FormSelect
-                                                    label="Regime Casamento"
-                                                    value={formData.spouse_property_regime}
-                                                    onChange={e => setFormData({ ...formData, spouse_property_regime: e.target.value })}
-                                                    options={[
-                                                        { value: '', label: 'Selecione...' },
-                                                        { value: 'Comunhão Parcial', label: 'Comunhão Parcial' },
-                                                        { value: 'Comunhão Universal', label: 'Comunhão Universal' },
-                                                        { value: 'Separação Total', label: 'Separação Total' },
-                                                        { value: 'Separação Obrigatória', label: 'Separação Obrigatória' },
-                                                        { value: 'Participação Final nos Aquestos', label: 'Participação Final nos Aquestos' }
-                                                    ]}
-                                                />
-                                                <FormInput
-                                                    label="Data Casamento"
-                                                    type="date"
-                                                    value={formData.spouse_marriage_date}
-                                                    onChange={e => setFormData({ ...formData, spouse_marriage_date: e.target.value })}
-                                                />
-                                            </div>
-
-                                            <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
-                                                <FormInput
-                                                    label="Nome do Pai"
-                                                    value={formData.spouse_father_name}
-                                                    onChange={e => setFormData({ ...formData, spouse_father_name: e.target.value })}
-                                                    placeholder="Nome completo do pai"
-                                                />
-                                                <FormInput
-                                                    label="Nome da Mãe"
-                                                    value={formData.spouse_mother_name}
-                                                    onChange={e => setFormData({ ...formData, spouse_mother_name: e.target.value })}
-                                                    placeholder="Nome completo da mãe"
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Endereço Residencial */}
-                                    <div className="space-y-4 pt-8 border-t border-border/50">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
-                                            Endereço Residencial
-                                        </h3>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-6">
-                                            <div className="sm:col-span-1 lg:col-span-3">
-                                                <FormInput
-                                                    label={
-                                                        <div className="flex items-center gap-1">
-                                                            CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
-                                                        </div>
-                                                    }
-                                                    value={formData.address_zip_code}
-                                                    onChange={e => handleCepChange(e.target.value)}
-                                                    placeholder="00000-000"
-                                                    disabled={cepLoading}
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-2 lg:col-span-7 relative" ref={resultsRef}>
-                                                <FormInput
-                                                    label="Avenida | Rua"
-                                                    value={formData.address_street}
-                                                    onChange={e => setFormData({ ...formData, address_street: e.target.value })}
-                                                    placeholder="Rua / Avenida"
-                                                    rightElement={
-                                                        <button
-                                                            type="button"
-                                                            onClick={handleSearchAddress}
-                                                            className="p-1 hover:bg-muted rounded-md transition-colors text-foreground"
-                                                            title="Buscar CEP por endereço"
-                                                            disabled={cepLoading}
-                                                        >
-                                                            {cepLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-                                                        </button>
-                                                    }
-                                                />
-
-                                                {showResults && (
-                                                    <div className="absolute z-50 w-full mt-1 bg-card border border-muted-foreground/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                                        {searchResults.length > 0 ? (
-                                                            searchResults.map((result, index) => (
-                                                                <button
-                                                                    key={index}
-                                                                    type="button"
-                                                                    onClick={() => selectAddress(result)}
-                                                                    className="w-full text-left px-4 py-2 hover:bg-secondary/10 border-b border-muted-foreground/10 last:border-0 transition-colors"
-                                                                >
-                                                                    <div className="text-sm font-medium">{result.logradouro}</div>
-                                                                    <div className="text-xs text-muted-foreground">
-                                                                        {result.bairro}, {result.localidade} - {result.uf} | CEP: {result.cep}
-                                                                    </div>
-                                                                </button>
-                                                            ))
-                                                        ) : !cepLoading && (
-                                                            <div className="p-4 text-center text-sm text-muted-foreground">
-                                                                Nenhum endereço encontrado.
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-2">
-                                                <FormInput
-                                                    label="Nº"
-                                                    value={formData.address_number}
-                                                    onChange={e => setFormData({ ...formData, address_number: e.target.value })}
-                                                    placeholder="123"
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-3">
-                                                <FormInput
-                                                    label="Complemento"
-                                                    value={formData.address_complement}
-                                                    onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
-                                                    placeholder="Apto, Bloco, etc"
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-3">
-                                                <FormInput
-                                                    label="Bairro"
-                                                    value={formData.address_neighborhood}
-                                                    onChange={e => setFormData({ ...formData, address_neighborhood: e.target.value })}
-                                                    placeholder="Bairro"
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-4">
-                                                <FormInput
-                                                    label="Cidade"
-                                                    value={formData.address_city}
-                                                    onChange={e => setFormData({ ...formData, address_city: e.target.value })}
-                                                    placeholder="Cidade"
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-2">
-                                                <FormInput
-                                                    label="Estado"
-                                                    value={formData.address_state}
-                                                    onChange={e => setFormData({ ...formData, address_state: e.target.value })}
-                                                    maxLength={2}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Endereço Comercial */}
-                                    <div className="space-y-4 pt-8 border-t border-border/50">
-                                        <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
-                                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
-                                                Endereço Comercial
-                                            </h3>
-                                            <label className="flex items-center gap-1.5 cursor-pointer select-none group">
-                                                <input
-                                                    type="checkbox"
-                                                    checked={formData.com_address_same || false}
-                                                    onChange={e => handleComAddressSameChange(e.target.checked)}
-                                                    className="w-4 h-4 rounded border-muted-foreground/40 bg-foreground/5 text-secondary focus:ring-secondary/30 focus:ring-offset-0 cursor-pointer accent-[#FFE600]"
-                                                />
-                                                <span className={`text-xs font-bold transition-colors ${formData.com_address_same ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'}`}>
-                                                    Mesmo Residencial
-                                                </span>
-                                            </label>
-                                        </div>
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-6">
-                                            <div className="sm:col-span-1 lg:col-span-3">
-                                                <FormInput
-                                                    label={
-                                                        <div className="flex items-center gap-1">
-                                                            CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
-                                                        </div>
-                                                    }
-                                                    value={formData.com_address_zip_code}
-                                                    onChange={e => handleComCepChange(e.target.value)}
-                                                    placeholder="00000-000"
-                                                    disabled={cepLoading || formData.com_address_same}
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-2 lg:col-span-7 relative" ref={comResultsRef}>
-                                                <FormInput
-                                                    label="Avenida | Rua"
-                                                    value={formData.com_address_street}
-                                                    onChange={e => setFormData({ ...formData, com_address_street: e.target.value })}
-                                                    placeholder="Rua / Avenida"
-                                                    disabled={formData.com_address_same}
-                                                    rightElement={
-                                                        !formData.com_address_same && (
-                                                            <button
-                                                                type="button"
-                                                                onClick={handleComSearchAddress}
-                                                                className="p-1 hover:bg-muted rounded-md transition-colors text-foreground"
-                                                                title="Buscar CEP por endereço"
-                                                                disabled={cepLoading}
-                                                            >
-                                                                {cepLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
-                                                            </button>
-                                                        )
-                                                    }
-                                                />
-
-                                                {showComResults && (
-                                                    <div className="absolute z-50 w-full mt-1 bg-card border border-muted-foreground/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
-                                                        {comSearchResults.length > 0 ? (
-                                                            comSearchResults.map((result, index) => (
-                                                                <button
-                                                                    key={index}
-                                                                    type="button"
-                                                                    onClick={() => selectComAddress(result)}
-                                                                    className="w-full text-left px-4 py-2 hover:bg-secondary/10 border-b border-muted-foreground/10 last:border-0 transition-colors"
-                                                                >
-                                                                    <div className="text-sm font-medium">{result.logradouro}</div>
-                                                                    <div className="text-xs text-muted-foreground">
-                                                                        {result.bairro}, {result.localidade} - {result.uf} | CEP: {result.cep}
-                                                                    </div>
-                                                                </button>
-                                                            ))
-                                                        ) : !cepLoading && (
-                                                            <div className="p-4 text-center text-sm text-muted-foreground">
-                                                                Nenhum endereço encontrado.
-                                                            </div>
-                                                        )}
-                                                    </div>
-                                                )}
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-2">
-                                                <FormInput
-                                                    label="Nº"
-                                                    value={formData.com_address_number}
-                                                    onChange={e => setFormData({ ...formData, com_address_number: e.target.value })}
-                                                    placeholder="123"
-                                                    disabled={formData.com_address_same}
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-3">
-                                                <FormInput
-                                                    label="Complemento"
-                                                    value={formData.com_address_complement}
-                                                    onChange={e => setFormData({ ...formData, com_address_complement: e.target.value })}
-                                                    placeholder="Apto, Bloco, etc"
-                                                    disabled={formData.com_address_same}
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-3">
-                                                <FormInput
-                                                    label="Bairro"
-                                                    value={formData.com_address_neighborhood}
-                                                    onChange={e => setFormData({ ...formData, com_address_neighborhood: e.target.value })}
-                                                    placeholder="Bairro"
-                                                    disabled={formData.com_address_same}
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-4">
-                                                <FormInput
-                                                    label="Cidade"
-                                                    value={formData.com_address_city}
-                                                    onChange={e => setFormData({ ...formData, com_address_city: e.target.value })}
-                                                    placeholder="Cidade"
-                                                    disabled={formData.com_address_same}
-                                                />
-                                            </div>
-                                            <div className="sm:col-span-1 lg:col-span-2">
-                                                <FormInput
-                                                    label="Estado"
-                                                    value={formData.com_address_state}
-                                                    onChange={e => setFormData({ ...formData, com_address_state: e.target.value })}
-                                                    maxLength={2}
-                                                    disabled={formData.com_address_same}
-                                                />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* Imóveis Visitados / Interesse */}
-                                    {editingClient && (
-                                        <div className="space-y-4 pt-8 border-t border-border/50">
-                                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Imóveis Visitados / Interesse</h3>
-                                            
-                                            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                {/* Histórico de Visitas */}
-                                                <div className="space-y-2">
-                                                    <h4 className="text-xs font-bold text-foreground ml-1">Histórico de Visitas</h4>
-                                                    {clientNotes.filter(n => n.is_visit).length === 0 ? (
-                                                        <div className="bg-background/50 p-4 rounded-lg border border-border/40 text-center">
-                                                            <p className="text-xs text-muted-foreground italic">Nenhuma visita registrada para este cliente.</p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
-                                                            {clientNotes.filter(n => n.is_visit).map((visit) => (
-                                                                <div key={visit.id} className="p-3 bg-background border border-border/40 rounded-lg flex items-center justify-between gap-3 shadow-sm hover:border-muted-foreground/20 transition-all">
-                                                                    <div className="flex-1 min-w-0">
-                                                                        <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                                                                            <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
-                                                                                {visit.visit_number}ª Visita
-                                                                            </span>
-                                                                            <span className="text-[10px] text-muted-foreground">
-                                                                                {visit.date ? new Date(visit.date).toLocaleDateString('pt-BR') : '—'}
-                                                                            </span>
-                                                                        </div>
-                                                                        {visit.properties ? (
-                                                                            <Link
-                                                                                href={`/properties/${visit.properties.type}/${visit.properties.slug}`}
-                                                                                target="_blank"
-                                                                                rel="noopener noreferrer"
-                                                                                className="text-xs font-bold text-accent-icon hover:underline truncate block"
-                                                                            >
-                                                                                {visit.properties.title}
-                                                                            </Link>
-                                                                        ) : (
-                                                                            <span className="text-xs font-medium text-muted-foreground italic truncate block">
-                                                                                {visit.visit_unregistered_property} (Não cadastrado)
-                                                                            </span>
-                                                                        )}
-                                                                    </div>
-                                                                </div>
-                                                            ))}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                
-                                                {/* Interesses dos Leads */}
-                                                <div className="space-y-2">
-                                                    <h4 className="text-xs font-bold text-foreground ml-1">Interesses Registrados (Leads)</h4>
-                                                    {(!editingClient.leads || editingClient.leads.length === 0) ? (
-                                                        <div className="bg-background/50 p-4 rounded-lg border border-border/40 text-center">
-                                                            <p className="text-xs text-muted-foreground italic">Nenhum interesse registrado em leads.</p>
-                                                        </div>
-                                                    ) : (
-                                                        <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
-                                                            {editingClient.leads.map((lead: any) => {
-                                                                const interestText = lead.property_interest || lead.properties?.title || lead.interest
-                                                                if (!interestText) return null
-                                                                return (
-                                                                    <div key={lead.id} className="p-3 bg-background border border-border/40 rounded-lg flex items-center justify-between gap-3 shadow-sm hover:border-muted-foreground/20 transition-all">
-                                                                        <div className="flex-1 min-w-0">
-                                                                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
-                                                                                <span className="bg-[#404F4F] text-white px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
-                                                                                    Lead
-                                                                                </span>
-                                                                                <span className="text-[10px] text-muted-foreground">
-                                                                                    Status: {lead.status_name || lead.status}
-                                                                                </span>
-                                                                            </div>
-                                                                            {lead.properties ? (
-                                                                                <Link
-                                                                                    href={`/properties/${lead.properties.type}/${lead.properties.slug}`}
-                                                                                    target="_blank"
-                                                                                    rel="noopener noreferrer"
-                                                                                    className="text-xs font-bold text-accent-icon hover:underline truncate block"
-                                                                                >
-                                                                                    {lead.properties.title}
-                                                                                </Link>
-                                                                            ) : (
-                                                                                <span className="text-xs font-medium text-foreground truncate block">
-                                                                                    {interestText}
-                                                                                </span>
-                                                                            )}
-                                                                        </div>
-                                                                    </div>
-                                                                )
-                                                            })}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </div>
-                                        </div>
-                                    )}
-
-                                    {/* Notas */}
-                                    <div className="space-y-4 pt-8 border-t border-border/50">
-                                        <div className="flex items-center justify-between">
-                                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
-                                            {editingClient && (
-                                                <button
-                                                    type="button"
-                                                    onClick={handleAddNote}
-                                                    disabled={isSavingNote || (!newNoteContent.trim() && (!isVisit || (isRegisteredProperty && !selectedVisitProperty) || (!isRegisteredProperty && !unregisteredVisitProperty.trim())))}
-                                                    className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
+                                    {/* Tipo de Contato */}
+                                    <div className="flex items-center gap-3 pb-[10px] shrink-0">
+                                        {[
+                                            { value: 'comprador', label: 'Comprador' },
+                                            { value: 'vendedor', label: 'Vendedor' },
+                                            { value: 'construtora', label: 'Construtora' }
+                                        ].map(option => {
+                                            const isChecked = formData.contact_type.includes(option.value)
+                                            return (
+                                                <label
+                                                    key={option.value}
+                                                    className="flex items-center gap-1.5 cursor-pointer select-none group"
                                                 >
-                                                    {isSavingNote ? 'Adicionando...' : 'Adicionar Nota'}
-                                                </button>
-                                            )}
-                                        </div>
-
-                                        {!editingClient ? (
-                                            <FormTextarea
-                                                value={formData.notes}
-                                                onChange={e => setFormData({ ...formData, notes: e.target.value })}
-                                                placeholder="Alguma observação importante sobre o cliente (será salva como primeira nota)..."
-                                                rows={3}
-                                            />
-                                        ) : (
-                                            <div className="space-y-4">
-                                                <div className="space-y-2">
-                                                    <textarea
-                                                        value={newNoteContent}
-                                                        onChange={(e) => setNewNoteContent(e.target.value)}
-                                                        rows={2}
-                                                        placeholder={isVisit ? "Observações sobre a visita (opcional)..." : "Escreva uma nova nota sobre o cliente..."}
-                                                        className="w-full bg-background border border-muted-foreground/30 rounded-lg p-3 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
-                                                    />
-                                                </div>
-
-                                                {/* Checkbox de Visita */}
-                                                <div className="flex items-center gap-2">
                                                     <input
                                                         type="checkbox"
-                                                        id="client-is-visit-checkbox"
-                                                        checked={isVisit}
-                                                        onChange={(e) => {
-                                                            setIsVisit(e.target.checked)
-                                                            if (e.target.checked) {
-                                                                const visitsCount = clientNotes.filter(n => n.is_visit).length
-                                                                setVisitNumber(visitsCount + 1)
-                                                            }
+                                                        checked={isChecked}
+                                                        onChange={() => {
+                                                            const updated = isChecked
+                                                                ? formData.contact_type.filter((t: string) => t !== option.value)
+                                                                : [...formData.contact_type, option.value]
+                                                            setFormData({ ...formData, contact_type: updated })
                                                         }}
-                                                        className="rounded border-muted-foreground/30 text-secondary focus:ring-secondary cursor-pointer h-4 w-4"
+                                                        className="w-4 h-4 rounded border-muted-foreground/40 bg-foreground/5 text-secondary focus:ring-secondary/30 focus:ring-offset-0 cursor-pointer accent-[#FFE600]"
                                                     />
-                                                    <label htmlFor="client-is-visit-checkbox" className="text-xs font-bold text-foreground cursor-pointer select-none">
-                                                        Registrar como Visita
-                                                    </label>
-                                                </div>
+                                                    <span className={`text-xs font-bold transition-colors ${isChecked ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'}`}>
+                                                        {option.label}
+                                                    </span>
+                                                </label>
+                                            )
+                                        })}
+                                    </div>
+                                </div>
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <FormInput
+                                        label="Telefone"
+                                        required
+                                        value={formData.phone}
+                                        onChange={e => setFormData({ ...formData, phone: formatPhone(e.target.value) })}
+                                        placeholder="(48) 99999 9999"
+                                        rightElement={
+                                            formData.phone && (
+                                                <a
+                                                    href={`https://wa.me/55${formData.phone.replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
+                                                    title="Conversar WhatsApp"
+                                                >
+                                                    <MessageCircle size={16} />
+                                                </a>
+                                            )
+                                        }
+                                    />
+                                    <FormInput
+                                        label="E-mail"
+                                        type="email"
+                                        required
+                                        value={formData.email}
+                                        onChange={e => setFormData({ ...formData, email: e.target.value })}
+                                        placeholder="joao@exemplo.com"
+                                    />
+                                    <FormInput
+                                        label="Instagram"
+                                        value={formData.instagram}
+                                        onChange={e => setFormData({ ...formData, instagram: e.target.value })}
+                                        placeholder="@usuario"
+                                    />
+                                    <FormInput
+                                        label="Linkedin"
+                                        value={formData.linkedin}
+                                        onChange={e => setFormData({ ...formData, linkedin: e.target.value })}
+                                        placeholder="linkedin.com/in/..."
+                                    />
+                                </div>
 
-                                                {/* Detalhes da Visita */}
-                                                {isVisit && (
-                                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-lg border border-border/50 animate-in fade-in slide-in-from-top-1 duration-200">
-                                                        <div className="flex flex-col">
-                                                            <label className="text-xs font-bold text-foreground ml-1 mb-2">Visita</label>
-                                                            <select
-                                                                value={visitNumber}
-                                                                onChange={(e) => setVisitNumber(Number(e.target.value))}
-                                                                className="h-[38px] w-full bg-background border border-muted-foreground/30 rounded-lg px-3 text-sm text-foreground outline-none focus:border-primary transition-colors"
-                                                            >
-                                                                {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
-                                                                    <option key={num} value={num}>{num}ª Visita</option>
-                                                                ))}
-                                                            </select>
-                                                        </div>
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <FormInput
+                                        label="CPF"
+                                        value={formData.cpf}
+                                        onChange={e => setFormData({ ...formData, cpf: e.target.value })}
+                                        placeholder="000.000.000-00"
+                                    />
+                                    <FormInput
+                                        label="RG | CNH"
+                                        value={formData.rg_cnh}
+                                        onChange={e => setFormData({ ...formData, rg_cnh: e.target.value })}
+                                        placeholder="Digite o documento"
+                                    />
+                                    <FormInput
+                                        label="Data expedição | Data validade"
+                                        value={formData.rg_cnh_date}
+                                        onChange={e => setFormData({ ...formData, rg_cnh_date: e.target.value })}
+                                        placeholder="ex: dd/mm/aaaa | dd/mm/aaaa"
+                                    />
+                                    <FormInput
+                                        label="Órgão Expedidor"
+                                        value={formData.issuing_agency}
+                                        onChange={e => setFormData({ ...formData, issuing_agency: e.target.value })}
+                                        placeholder="ex: SSP/SC"
+                                    />
+                                </div>
 
-                                                        <div className="flex flex-col">
-                                                            <label className="text-xs font-bold text-foreground ml-1 mb-2">Tipo de Imóvel</label>
-                                                            <div className="flex items-center gap-4 h-[38px]">
-                                                                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
-                                                                    <input
-                                                                        type="radio"
-                                                                        name="clientPropertyType"
-                                                                        checked={isRegisteredProperty}
-                                                                        onChange={() => setIsRegisteredProperty(true)}
-                                                                        className="text-secondary focus:ring-secondary h-4 w-4"
-                                                                    />
-                                                                    Cadastrado
-                                                                </label>
-                                                                <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
-                                                                    <input
-                                                                        type="radio"
-                                                                        name="clientPropertyType"
-                                                                        checked={!isRegisteredProperty}
-                                                                        onChange={() => setIsRegisteredProperty(false)}
-                                                                        className="text-secondary focus:ring-secondary h-4 w-4"
-                                                                    />
-                                                                    Não Cadastrado
-                                                                </label>
-                                                            </div>
-                                                        </div>
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <FormInput
+                                        label="Profissão"
+                                        value={formData.profession}
+                                        onChange={e => setFormData({ ...formData, profession: e.target.value })}
+                                        placeholder="Ex: Corretor de Imóveis"
+                                    />
+                                    <FormInput
+                                        label="Naturalidade"
+                                        value={formData.naturalness}
+                                        onChange={e => setFormData({ ...formData, naturalness: e.target.value })}
+                                        placeholder="Ex: Florianópolis - SC"
+                                    />
+                                    <FormInput
+                                        label="Nacionalidade"
+                                        value={formData.nationality}
+                                        onChange={e => setFormData({ ...formData, nationality: e.target.value })}
+                                        placeholder="Ex: Brasileira"
+                                    />
+                                    <FormInput
+                                        label="Time Coração"
+                                        value={formData.favorite_team}
+                                        onChange={e => setFormData({ ...formData, favorite_team: e.target.value })}
+                                        placeholder="Time do coração"
+                                    />
+                                </div>
 
-                                                        <div className="md:col-span-2">
-                                                            {isRegisteredProperty ? (
-                                                                <PropertyAutocomplete
-                                                                    tenantId={tenantId}
-                                                                    label="Imóvel Cadastrado"
-                                                                    placeholder="Busque o imóvel cadastrado..."
-                                                                    selectedItem={selectedVisitProperty}
-                                                                    onSelect={(prop) => setSelectedVisitProperty(prop)}
-                                                                    onClear={() => setSelectedVisitProperty(null)}
-                                                                />
-                                                            ) : (
-                                                                <FormInput
-                                                                    label="Nome/Descrição do Imóvel"
-                                                                    value={unregisteredVisitProperty}
-                                                                    onChange={(e) => setUnregisteredVisitProperty(e.target.value)}
-                                                                    placeholder="Digite a identificação ou endereço do imóvel..."
-                                                                />
-                                                            )}
-                                                        </div>
-                                                    </div>
-                                                )}
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormInput
+                                        label="Data Nascimento"
+                                        type="date"
+                                        value={formData.birth_date}
+                                        onChange={e => setFormData({ ...formData, birth_date: e.target.value })}
+                                    />
+                                    <FormSelect
+                                        label="Estado Civil"
+                                        value={formData.marital_status}
+                                        onChange={e => setFormData({ ...formData, marital_status: e.target.value })}
+                                        options={[
+                                            { value: '', label: 'Selecione...' },
+                                            { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                                            { value: 'Casado(a)', label: 'Casado(a)' },
+                                            { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                                            { value: 'Viúvo(a)', label: 'Viúvo(a)' },
+                                            { value: 'União Estável', label: 'União Estável' }
+                                        ]}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormSelect
+                                        label="Regime Casamento"
+                                        value={formData.property_regime}
+                                        onChange={e => setFormData({ ...formData, property_regime: e.target.value })}
+                                        options={[
+                                            { value: '', label: 'Selecione...' },
+                                            { value: 'Comunhão Parcial', label: 'Comunhão Parcial' },
+                                            { value: 'Comunhão Universal', label: 'Comunhão Universal' },
+                                            { value: 'Separação Total', label: 'Separação Total' },
+                                            { value: 'Separação Obrigatória', label: 'Separação Obrigatória' },
+                                            { value: 'Participação Final nos Aquestos', label: 'Participação Final nos Aquestos' }
+                                        ]}
+                                    />
+                                    <FormInput
+                                        label="Data Casamento"
+                                        type="date"
+                                        value={formData.marriage_date}
+                                        onChange={e => setFormData({ ...formData, marriage_date: e.target.value })}
+                                    />
+                                </div>
 
-                                                <div className="space-y-3">
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormInput
+                                        label="Nome do Pai"
+                                        value={formData.father_name}
+                                        onChange={e => setFormData({ ...formData, father_name: e.target.value })}
+                                        placeholder="Nome completo do pai"
+                                    />
+                                    <FormInput
+                                        label="Nome da Mãe"
+                                        value={formData.mother_name}
+                                        onChange={e => setFormData({ ...formData, mother_name: e.target.value })}
+                                        placeholder="Nome completo da mãe"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Cônjuge | Sócio */}
+                        <div className="space-y-4 pt-8 border-t border-border/50">
+                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Cônjuge | Sócio</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div className="md:col-span-2">
+                                    <FormInput
+                                        label="Nome Completo"
+                                        value={formData.spouse_name}
+                                        onChange={e => setFormData({ ...formData, spouse_name: e.target.value })}
+                                        placeholder="Nome do cônjuge ou sócio"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <FormInput
+                                        label="Telefone"
+                                        value={formData.spouse_phone}
+                                        onChange={e => setFormData({ ...formData, spouse_phone: formatPhone(e.target.value) })}
+                                        placeholder="(48) 99999 9999"
+                                        rightElement={
+                                            formData.spouse_phone && (
+                                                <a
+                                                    href={`https://wa.me/55${formData.spouse_phone.replace(/\D/g, '')}`}
+                                                    target="_blank"
+                                                    rel="noopener noreferrer"
+                                                    className="text-emerald-500 hover:text-emerald-600 transition-colors p-1"
+                                                    title="Conversar WhatsApp"
+                                                >
+                                                    <MessageCircle size={16} />
+                                                </a>
+                                            )
+                                        }
+                                    />
+                                    <FormInput
+                                        label="E-mail"
+                                        type="email"
+                                        value={formData.spouse_email}
+                                        onChange={e => setFormData({ ...formData, spouse_email: e.target.value })}
+                                        placeholder="email@exemplo.com"
+                                    />
+                                    <FormInput
+                                        label="Instagram"
+                                        value={formData.spouse_instagram}
+                                        onChange={e => setFormData({ ...formData, spouse_instagram: e.target.value })}
+                                        placeholder="@usuario"
+                                    />
+                                    <FormInput
+                                        label="Linkedin"
+                                        value={formData.spouse_linkedin}
+                                        onChange={e => setFormData({ ...formData, spouse_linkedin: e.target.value })}
+                                        placeholder="linkedin.com/in/..."
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <FormInput
+                                        label="CPF"
+                                        value={formData.spouse_cpf}
+                                        onChange={e => setFormData({ ...formData, spouse_cpf: e.target.value })}
+                                        placeholder="000.000.000-00"
+                                    />
+                                    <FormInput
+                                        label="RG | CNH"
+                                        value={formData.spouse_rg_cnh}
+                                        onChange={e => setFormData({ ...formData, spouse_rg_cnh: e.target.value })}
+                                        placeholder="Digite o documento"
+                                    />
+                                    <FormInput
+                                        label="Data expedição | Data validade"
+                                        value={formData.spouse_rg_cnh_date}
+                                        onChange={e => setFormData({ ...formData, spouse_rg_cnh_date: e.target.value })}
+                                        placeholder="ex: dd/mm/aaaa | dd/mm/aaaa"
+                                    />
+                                    <FormInput
+                                        label="Órgão Expedidor"
+                                        value={formData.spouse_issuing_agency}
+                                        onChange={e => setFormData({ ...formData, spouse_issuing_agency: e.target.value })}
+                                        placeholder="ex: SSP/SC"
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-4 gap-4">
+                                    <FormInput
+                                        label="Profissão"
+                                        value={formData.spouse_profession}
+                                        onChange={e => setFormData({ ...formData, spouse_profession: e.target.value })}
+                                        placeholder="Ex: Corretor de Imóveis"
+                                    />
+                                    <FormInput
+                                        label="Naturalidade"
+                                        value={formData.spouse_naturalness}
+                                        onChange={e => setFormData({ ...formData, spouse_naturalness: e.target.value })}
+                                        placeholder="Ex: Florianópolis - SC"
+                                    />
+                                    <FormInput
+                                        label="Nacionalidade"
+                                        value={formData.spouse_nationality}
+                                        onChange={e => setFormData({ ...formData, spouse_nationality: e.target.value })}
+                                        placeholder="Ex: Brasileira"
+                                    />
+                                    <FormInput
+                                        label="Time Coração"
+                                        value={formData.spouse_favorite_team}
+                                        onChange={e => setFormData({ ...formData, spouse_favorite_team: e.target.value })}
+                                        placeholder="Time do coração"
+                                    />
+                                </div>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormInput
+                                        label="Data Nascimento"
+                                        type="date"
+                                        value={formData.spouse_birth_date}
+                                        onChange={e => setFormData({ ...formData, spouse_birth_date: e.target.value })}
+                                    />
+                                    <FormSelect
+                                        label="Estado Civil"
+                                        value={formData.spouse_marital_status}
+                                        onChange={e => setFormData({ ...formData, spouse_marital_status: e.target.value })}
+                                        options={[
+                                            { value: '', label: 'Selecione...' },
+                                            { value: 'Solteiro(a)', label: 'Solteiro(a)' },
+                                            { value: 'Casado(a)', label: 'Casado(a)' },
+                                            { value: 'Divorciado(a)', label: 'Divorciado(a)' },
+                                            { value: 'Viúvo(a)', label: 'Viúvo(a)' },
+                                            { value: 'União Estável', label: 'União Estável' }
+                                        ]}
+                                    />
+                                </div>
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormSelect
+                                        label="Regime Casamento"
+                                        value={formData.spouse_property_regime}
+                                        onChange={e => setFormData({ ...formData, spouse_property_regime: e.target.value })}
+                                        options={[
+                                            { value: '', label: 'Selecione...' },
+                                            { value: 'Comunhão Parcial', label: 'Comunhão Parcial' },
+                                            { value: 'Comunhão Universal', label: 'Comunhão Universal' },
+                                            { value: 'Separação Total', label: 'Separação Total' },
+                                            { value: 'Separação Obrigatória', label: 'Separação Obrigatória' },
+                                            { value: 'Participação Final nos Aquestos', label: 'Participação Final nos Aquestos' }
+                                        ]}
+                                    />
+                                    <FormInput
+                                        label="Data Casamento"
+                                        type="date"
+                                        value={formData.spouse_marriage_date}
+                                        onChange={e => setFormData({ ...formData, spouse_marriage_date: e.target.value })}
+                                    />
+                                </div>
+
+                                <div className="md:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
+                                    <FormInput
+                                        label="Nome do Pai"
+                                        value={formData.spouse_father_name}
+                                        onChange={e => setFormData({ ...formData, spouse_father_name: e.target.value })}
+                                        placeholder="Nome completo do pai"
+                                    />
+                                    <FormInput
+                                        label="Nome da Mãe"
+                                        value={formData.spouse_mother_name}
+                                        onChange={e => setFormData({ ...formData, spouse_mother_name: e.target.value })}
+                                        placeholder="Nome completo da mãe"
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Endereço Residencial */}
+                        <div className="space-y-4 pt-8 border-t border-border/50">
+                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
+                                Endereço Residencial
+                            </h3>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-6">
+                                <div className="sm:col-span-1 lg:col-span-3">
+                                    <FormInput
+                                        label={
+                                            <div className="flex items-center gap-1">
+                                                CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
+                                            </div>
+                                        }
+                                        value={formData.address_zip_code}
+                                        onChange={e => handleCepChange(e.target.value)}
+                                        placeholder="00000-000"
+                                        disabled={cepLoading}
+                                    />
+                                </div>
+                                <div className="sm:col-span-2 lg:col-span-7 relative" ref={resultsRef}>
+                                    <FormInput
+                                        label="Avenida | Rua"
+                                        value={formData.address_street}
+                                        onChange={e => setFormData({ ...formData, address_street: e.target.value })}
+                                        placeholder="Rua / Avenida"
+                                        rightElement={
+                                            <button
+                                                type="button"
+                                                onClick={handleSearchAddress}
+                                                className="p-1 hover:bg-muted rounded-md transition-colors text-foreground"
+                                                title="Buscar CEP por endereço"
+                                                disabled={cepLoading}
+                                            >
+                                                {cepLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                                            </button>
+                                        }
+                                    />
+
+                                    {showResults && (
+                                        <div className="absolute z-50 w-full mt-1 bg-card border border-muted-foreground/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                            {searchResults.length > 0 ? (
+                                                searchResults.map((result, index) => (
                                                     <button
+                                                        key={index}
                                                         type="button"
-                                                        onClick={() => setShowNotesHistory(!showNotesHistory)}
-                                                        className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-foreground uppercase tracking-wider transition-colors cursor-pointer"
+                                                        onClick={() => selectAddress(result)}
+                                                        className="w-full text-left px-4 py-2 hover:bg-secondary/10 border-b border-muted-foreground/10 last:border-0 transition-colors"
                                                     >
-                                                        <span>Notas salvas ({clientNotes.length + (formData.notes ? 1 : 0)})</span>
-                                                        <div className="flex items-center gap-1">
-                                                            {showNotesHistory ? <ChevronRight className="rotate-90 transition-transform" size={14} /> : <ChevronRight size={14} />}
+                                                        <div className="text-sm font-medium">{result.logradouro}</div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {result.bairro}, {result.localidade} - {result.uf} | CEP: {result.cep}
                                                         </div>
                                                     </button>
-
-                                                    {showNotesHistory && (() => {
-                                                        const sortedNotes = [...clientNotes]
-                                                        if (formData.notes) {
-                                                            sortedNotes.push({
-                                                                id: 'legacy',
-                                                                content: formData.notes,
-                                                                created_at: editingClient?.created_at || new Date(0).toISOString(),
-                                                                profiles: { full_name: 'Observação de Cadastro' }
-                                                            })
-                                                        }
-                                                        sortedNotes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
-
-                                                        return (
-                                                            <div className="space-y-3 pr-1 animate-in fade-in slide-in-from-top-1 duration-200">
-                                                                {sortedNotes.length === 0 && (
-                                                                    <p className="text-xs text-muted-foreground text-center py-4">
-                                                                        Nenhuma nota registrada para este cliente ainda.
-                                                                    </p>
-                                                                )}
-
-                                                                {sortedNotes.map((note) => {
-                                                                    const isExpanded = !!expandedNotes[note.id]
-                                                                    const isEditing = editingNoteId === note.id
-                                                                    const isLegacy = note.id === 'legacy'
-
-                                                                    if (isEditing) {
-                                                                        return (
-                                                                            <div key={note.id} className="p-3 bg-background border border-border/40 rounded-lg space-y-2">
-                                                                                <textarea
-                                                                                    value={editingNoteText}
-                                                                                    onChange={(e) => setEditingNoteText(e.target.value)}
-                                                                                    disabled={isSavingEditedNote}
-                                                                                    rows={6}
-                                                                                    className="w-full text-sm p-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-secondary/50 resize-y font-medium text-foreground"
-                                                                                />
-                                                                                <div className="flex items-center justify-end gap-2">
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() => setEditingNoteId(null)}
-                                                                                        disabled={isSavingEditedNote}
-                                                                                        className="px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
-                                                                                    >
-                                                                                        Cancelar
-                                                                                    </button>
-                                                                                    <button
-                                                                                        type="button"
-                                                                                        onClick={() => handleSaveEditedNote(note.id)}
-                                                                                        disabled={isSavingEditedNote || !editingNoteText.trim()}
-                                                                                        className="px-2.5 py-1.5 text-[10px] font-bold bg-secondary text-secondary-foreground hover:opacity-90 active:scale-[0.97] rounded-lg transition-all cursor-pointer disabled:opacity-50"
-                                                                                    >
-                                                                                        {isSavingEditedNote ? 'Salvando...' : 'Salvar'}
-                                                                                    </button>
-                                                                                </div>
-                                                                            </div>
-                                                                        )
-                                                                    }
-
-                                                                    return (
-                                                                        <div
-                                                                            key={note.id}
-                                                                            onClick={() => toggleNoteExpanded(note.id)}
-                                                                            className="p-3 bg-background border border-border/40 rounded-lg hover:border-muted-foreground/20 transition-all relative group cursor-pointer"
-                                                                        >
-                                                                            {!isExpanded ? (
-                                                                                <div className="flex items-center justify-between gap-3">
-                                                                                    <div className="flex items-center gap-2 min-w-0 flex-1">
-                                                                                        <ChevronRight size={14} className="text-muted-foreground shrink-0" />
-                                                                                        {note.is_visit ? (
-                                                                                            <span className="flex items-center gap-1.5 text-sm font-bold text-foreground truncate flex-1 leading-none">
-                                                                                                <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
-                                                                                                    {note.visit_number}ª Visita
-                                                                                                </span>
-                                                                                                {note.properties ? (
-                                                                                                    <span className="truncate">
-                                                                                                        {note.properties.title}
-                                                                                                    </span>
-                                                                                                ) : (
-                                                                                                    <span className="truncate text-muted-foreground italic">
-                                                                                                        {note.visit_unregistered_property}
-                                                                                                    </span>
-                                                                                                )}
-                                                                                            </span>
-                                                                                        ) : (
-                                                                                            <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
-                                                                                                {getFirstSentence(note.content)}
-                                                                                            </span>
-                                                                                        )}
-                                                                                    </div>
-                                                                                    <div className="flex items-center gap-2 shrink-0">
-                                                                                        <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
-                                                                                            {formatNoteDate(note.created_at)}
-                                                                                        </span>
-                                                                                        <NoteActionsDropdown
-                                                                                            onEdit={() => {
-                                                                                                setEditingNoteId(note.id)
-                                                                                                setEditingNoteText(note.content)
-                                                                                            }}
-                                                                                            onDelete={() => handleDeleteNote(note.id)}
-                                                                                        />
-                                                                                    </div>
-                                                                                </div>
-                                                                            ) : (
-                                                                                <div className="flex gap-2 items-start">
-                                                                                    <ChevronRight
-                                                                                        size={14}
-                                                                                        className="text-muted-foreground transition-transform rotate-90 shrink-0 mt-0.5"
-                                                                                    />
-                                                                                    <div className="flex-1 min-w-0 space-y-2">
-                                                                                        <div className="flex items-center justify-between mb-1.5 select-none">
-                                                                                            <div className="flex items-center gap-2">
-                                                                                                <span className={isLegacy ? "text-[10px] font-bold text-muted-foreground uppercase tracking-wider" : "text-[10px] font-bold text-accent-icon"}>
-                                                                                                    {isLegacy ? "Observação de Cadastro" : (note.profiles?.full_name || 'Corretor')}
-                                                                                                </span>
-                                                                                            </div>
-                                                                                            <div className="flex items-center gap-2">
-                                                                                                <span className="text-[10px] text-muted-foreground font-medium">
-                                                                                                    {formatNoteDate(note.created_at)}
-                                                                                                </span>
-                                                                                                <NoteActionsDropdown
-                                                                                                    onEdit={() => {
-                                                                                                        setEditingNoteId(note.id)
-                                                                                                        setEditingNoteText(note.content)
-                                                                                                    }}
-                                                                                                    onDelete={() => handleDeleteNote(note.id)}
-                                                                                                />
-                                                                                            </div>
-                                                                                        </div>
-                                                                                        {note.is_visit && (
-                                                                                            <div className="flex flex-wrap items-center gap-2 mb-2">
-                                                                                                <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
-                                                                                                    {note.visit_number}ª Visita
-                                                                                                </span>
-                                                                                                {note.properties ? (
-                                                                                                    <Link
-                                                                                                        href={`/properties/${note.properties.type}/${note.properties.slug}`}
-                                                                                                        onClick={(e) => e.stopPropagation()}
-                                                                                                        className="text-xs font-bold text-accent-icon hover:underline flex items-center gap-1 bg-[#404F4F]/10 dark:bg-white/10 px-2 py-0.5 rounded"
-                                                                                                    >
-                                                                                                        <Building2 size={12} />
-                                                                                                        {note.properties.title}
-                                                                                                    </Link>
-                                                                                                ) : (
-                                                                                                    <span className="text-xs font-medium text-muted-foreground italic bg-muted px-2 py-0.5 rounded">
-                                                                                                        {note.visit_unregistered_property} (Não cadastrado)
-                                                                                                    </span>
-                                                                                                )}
-                                                                                            </div>
-                                                                                        )}
-                                                                                        <p className="text-sm text-foreground whitespace-pre-line leading-relaxed font-medium">
-                                                                                            {note.content}
-                                                                                        </p>
-                                                                                    </div>
-                                                                                </div>
-                                                                            )}
-                                                                        </div>
-                                                                    )
-                                                                })}
-                                                            </div>
-                                                        )
-                                                    })()}
+                                                ))
+                                            ) : !cepLoading && (
+                                                <div className="p-4 text-center text-sm text-muted-foreground">
+                                                    Nenhum endereço encontrado.
                                                 </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-2">
+                                    <FormInput
+                                        label="Nº"
+                                        value={formData.address_number}
+                                        onChange={e => setFormData({ ...formData, address_number: e.target.value })}
+                                        placeholder="123"
+                                    />
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-3">
+                                    <FormInput
+                                        label="Complemento"
+                                        value={formData.address_complement}
+                                        onChange={e => setFormData({ ...formData, address_complement: e.target.value })}
+                                        placeholder="Apto, Bloco, etc"
+                                    />
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-3">
+                                    <FormInput
+                                        label="Bairro"
+                                        value={formData.address_neighborhood}
+                                        onChange={e => setFormData({ ...formData, address_neighborhood: e.target.value })}
+                                        placeholder="Bairro"
+                                    />
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-4">
+                                    <FormInput
+                                        label="Cidade"
+                                        value={formData.address_city}
+                                        onChange={e => setFormData({ ...formData, address_city: e.target.value })}
+                                        placeholder="Cidade"
+                                    />
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-2">
+                                    <FormInput
+                                        label="Estado"
+                                        value={formData.address_state}
+                                        onChange={e => setFormData({ ...formData, address_state: e.target.value })}
+                                        maxLength={2}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Endereço Comercial */}
+                        <div className="space-y-4 pt-8 border-t border-border/50">
+                            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+                                <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">
+                                    Endereço Comercial
+                                </h3>
+                                <label className="flex items-center gap-1.5 cursor-pointer select-none group">
+                                    <input
+                                        type="checkbox"
+                                        checked={formData.com_address_same || false}
+                                        onChange={e => handleComAddressSameChange(e.target.checked)}
+                                        className="w-4 h-4 rounded border-muted-foreground/40 bg-foreground/5 text-secondary focus:ring-secondary/30 focus:ring-offset-0 cursor-pointer accent-[#FFE600]"
+                                    />
+                                    <span className={`text-xs font-bold transition-colors ${formData.com_address_same ? 'text-foreground' : 'text-muted-foreground group-hover:text-foreground/80'}`}>
+                                        Mesmo Residencial
+                                    </span>
+                                </label>
+                            </div>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-12 gap-x-3 gap-y-6">
+                                <div className="sm:col-span-1 lg:col-span-3">
+                                    <FormInput
+                                        label={
+                                            <div className="flex items-center gap-1">
+                                                CEP <span className="text-[9px] lowercase font-normal opacity-70">(digite para buscar endereço)</span>
+                                            </div>
+                                        }
+                                        value={formData.com_address_zip_code}
+                                        onChange={e => handleComCepChange(e.target.value)}
+                                        placeholder="00000-000"
+                                        disabled={cepLoading || formData.com_address_same}
+                                    />
+                                </div>
+                                <div className="sm:col-span-2 lg:col-span-7 relative" ref={comResultsRef}>
+                                    <FormInput
+                                        label="Avenida | Rua"
+                                        value={formData.com_address_street}
+                                        onChange={e => setFormData({ ...formData, com_address_street: e.target.value })}
+                                        placeholder="Rua / Avenida"
+                                        disabled={formData.com_address_same}
+                                        rightElement={
+                                            !formData.com_address_same && (
+                                                <button
+                                                    type="button"
+                                                    onClick={handleComSearchAddress}
+                                                    className="p-1 hover:bg-muted rounded-md transition-colors text-foreground"
+                                                    title="Buscar CEP por endereço"
+                                                    disabled={cepLoading}
+                                                >
+                                                    {cepLoading ? <Loader2 size={16} className="animate-spin" /> : <Search size={16} />}
+                                                </button>
+                                            )
+                                        }
+                                    />
+
+                                    {showComResults && (
+                                        <div className="absolute z-50 w-full mt-1 bg-card border border-muted-foreground/30 rounded-lg shadow-xl max-h-60 overflow-y-auto">
+                                            {comSearchResults.length > 0 ? (
+                                                comSearchResults.map((result, index) => (
+                                                    <button
+                                                        key={index}
+                                                        type="button"
+                                                        onClick={() => selectComAddress(result)}
+                                                        className="w-full text-left px-4 py-2 hover:bg-secondary/10 border-b border-muted-foreground/10 last:border-0 transition-colors"
+                                                    >
+                                                        <div className="text-sm font-medium">{result.logradouro}</div>
+                                                        <div className="text-xs text-muted-foreground">
+                                                            {result.bairro}, {result.localidade} - {result.uf} | CEP: {result.cep}
+                                                        </div>
+                                                    </button>
+                                                ))
+                                            ) : !cepLoading && (
+                                                <div className="p-4 text-center text-sm text-muted-foreground">
+                                                    Nenhum endereço encontrado.
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-2">
+                                    <FormInput
+                                        label="Nº"
+                                        value={formData.com_address_number}
+                                        onChange={e => setFormData({ ...formData, com_address_number: e.target.value })}
+                                        placeholder="123"
+                                        disabled={formData.com_address_same}
+                                    />
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-3">
+                                    <FormInput
+                                        label="Complemento"
+                                        value={formData.com_address_complement}
+                                        onChange={e => setFormData({ ...formData, com_address_complement: e.target.value })}
+                                        placeholder="Apto, Bloco, etc"
+                                        disabled={formData.com_address_same}
+                                    />
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-3">
+                                    <FormInput
+                                        label="Bairro"
+                                        value={formData.com_address_neighborhood}
+                                        onChange={e => setFormData({ ...formData, com_address_neighborhood: e.target.value })}
+                                        placeholder="Bairro"
+                                        disabled={formData.com_address_same}
+                                    />
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-4">
+                                    <FormInput
+                                        label="Cidade"
+                                        value={formData.com_address_city}
+                                        onChange={e => setFormData({ ...formData, com_address_city: e.target.value })}
+                                        placeholder="Cidade"
+                                        disabled={formData.com_address_same}
+                                    />
+                                </div>
+                                <div className="sm:col-span-1 lg:col-span-2">
+                                    <FormInput
+                                        label="Estado"
+                                        value={formData.com_address_state}
+                                        onChange={e => setFormData({ ...formData, com_address_state: e.target.value })}
+                                        maxLength={2}
+                                        disabled={formData.com_address_same}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Imóveis Visitados / Interesse */}
+                        {editingClient && (
+                            <div className="space-y-4 pt-8 border-t border-border/50">
+                                <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Leads</h3>
+
+                                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                    {/* Interesses dos Leads */}
+                                    <div className="space-y-2">
+                                        <h4 className="text-xs font-bold text-foreground ml-1">Leads</h4>
+                                        {(!editingClient.leads || editingClient.leads.length === 0) ? (
+                                            <div className="bg-background/50 p-4 rounded-lg border border-border/40 text-center">
+                                                <p className="text-xs text-muted-foreground italic">Nenhum interesse registrado em leads.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                                                {editingClient.leads.map((lead: any) => {
+                                                    const interestText = lead.property_interest || lead.properties?.title || lead.interest
+                                                    if (!interestText) return null
+                                                    return (
+                                                        <div key={lead.id} className="p-3 bg-background border border-border/40 rounded-lg flex items-center justify-between gap-3 shadow-sm hover:border-muted-foreground/20 transition-all">
+                                                            <div className="flex-1 min-w-0">
+
+                                                                {lead.properties ? (
+                                                                    <Link
+                                                                        href={`/properties/${lead.properties.type}/${lead.properties.slug || lead.properties.id}`}
+                                                                        className="text-xs font-bold text-accent-icon hover:underline truncate block"
+                                                                    >
+                                                                        {lead.properties.title}
+                                                                    </Link>
+                                                                ) : (
+                                                                    <span className="text-xs font-medium text-foreground truncate block">
+                                                                        {interestText}
+                                                                    </span>
+                                                                )}
+                                                                <span className="text-[10px] text-muted-foreground block mt-0.5">
+                                                                    Status: {lead.status_name || lead.status}
+                                                                </span>
+                                                            </div>
+                                                        </div>
+                                                    )
+                                                })}
                                             </div>
                                         )}
                                     </div>
 
-                                    {/* Mídias e Docs */}
-                                    <div className="space-y-4 pt-8 border-t border-border/50">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Mídias e Docs</h3>
-                                        <MediaUpload
-                                            pathPrefix={`clients/${tenantId}`}
-                                            images={formData.images}
-                                            videos={formData.videos}
-                                            documents={formData.documents}
-                                            onUpload={handleMediaUpload}
-                                            onRemove={handleMediaRemove}
+                                    {/* Histórico de Visitas */}
+                                    <div className="space-y-2">
+                                        <h4 className="text-xs font-bold text-foreground ml-1">Visitas</h4>
+                                        {clientNotes.filter(n => n.is_visit).length === 0 ? (
+                                            <div className="bg-background/50 p-4 rounded-lg border border-border/40 text-center">
+                                                <p className="text-xs text-muted-foreground italic">Nenhuma visita registrada para este cliente.</p>
+                                            </div>
+                                        ) : (
+                                            <div className="space-y-2 max-h-[250px] overflow-y-auto pr-1">
+                                                {clientNotes.filter(n => n.is_visit).map((visit) => (
+                                                    <div key={visit.id} className="p-3 bg-background border border-border/40 rounded-lg flex items-center justify-between gap-3 shadow-sm hover:border-muted-foreground/20 transition-all">
+                                                        <div className="flex-1 min-w-0">
+                                                            <div className="flex items-center gap-1.5 mb-1 flex-wrap">
+                                                                <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                    {visit.visit_number}ª Visita
+                                                                </span>
+                                                                <span className="text-[10px] text-muted-foreground">
+                                                                    {visit.date ? new Date(visit.date).toLocaleDateString('pt-BR') : '—'}
+                                                                </span>
+                                                            </div>
+                                                            {visit.properties ? (
+                                                                <Link
+                                                                    href={`/properties/${visit.properties.type}/${visit.properties.slug || visit.properties.id}`}
+                                                                    className="text-xs font-bold text-accent-icon hover:underline truncate block"
+                                                                >
+                                                                    {visit.properties.title}
+                                                                </Link>
+                                                            ) : (
+                                                                <span className="text-xs font-medium text-muted-foreground italic truncate block">
+                                                                    {visit.visit_unregistered_property} (Não cadastrado)
+                                                                </span>
+                                                            )}
+                                                        </div>
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+                        )}
+
+                        {/* Notas */}
+                        <div className="space-y-4 pt-8 border-t border-border/50">
+                            <div className="flex items-center justify-between">
+                                <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Notas</h3>
+                                {editingClient && (
+                                    <button
+                                        type="button"
+                                        onClick={handleAddNote}
+                                        disabled={isSavingNote || (!newNoteContent.trim() && (!isVisit || (isRegisteredProperty && !selectedVisitProperty) || (!isRegisteredProperty && !unregisteredVisitProperty.trim())))}
+                                        className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
+                                    >
+                                        {isSavingNote ? 'Adicionando...' : 'Adicionar Nota'}
+                                    </button>
+                                )}
+                            </div>
+
+                            {!editingClient ? (
+                                <FormTextarea
+                                    value={formData.notes}
+                                    onChange={e => setFormData({ ...formData, notes: e.target.value })}
+                                    placeholder="Alguma observação importante sobre o cliente (será salva como primeira nota)..."
+                                    rows={3}
+                                />
+                            ) : (
+                                <div className="space-y-4">
+                                    <div className="space-y-2">
+                                        <textarea
+                                            value={newNoteContent}
+                                            onChange={(e) => setNewNoteContent(e.target.value)}
+                                            rows={2}
+                                            placeholder={isVisit ? "Observações sobre a visita (opcional)..." : "Escreva uma nova nota sobre o cliente..."}
+                                            className="w-full bg-background border border-muted-foreground/30 rounded-lg p-3 text-sm text-foreground outline-none focus:border-primary transition-colors resize-none"
                                         />
                                     </div>
-                                </form>
+
+                                    {/* Checkbox de Visita */}
+                                    <div className="flex items-center gap-2">
+                                        <input
+                                            type="checkbox"
+                                            id="client-is-visit-checkbox"
+                                            checked={isVisit}
+                                            onChange={(e) => {
+                                                setIsVisit(e.target.checked)
+                                                if (e.target.checked) {
+                                                    const visitsCount = clientNotes.filter(n => n.is_visit).length
+                                                    setVisitNumber(visitsCount + 1)
+                                                }
+                                            }}
+                                            className="rounded border-muted-foreground/30 text-secondary focus:ring-secondary cursor-pointer h-4 w-4"
+                                        />
+                                        <label htmlFor="client-is-visit-checkbox" className="text-xs font-bold text-foreground cursor-pointer select-none">
+                                            Registrar como Visita
+                                        </label>
+                                    </div>
+
+                                    {/* Detalhes da Visita */}
+                                    {isVisit && (
+                                        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-muted/20 p-4 rounded-lg border border-border/50 animate-in fade-in slide-in-from-top-1 duration-200">
+                                            <div className="flex flex-col">
+                                                <label className="text-xs font-bold text-foreground ml-1 mb-2">Visita</label>
+                                                <select
+                                                    value={visitNumber}
+                                                    onChange={(e) => setVisitNumber(Number(e.target.value))}
+                                                    className="h-[38px] w-full bg-background border border-muted-foreground/30 rounded-lg px-3 text-sm text-foreground outline-none focus:border-primary transition-colors"
+                                                >
+                                                    {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                                                        <option key={num} value={num}>{num}ª Visita</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+
+                                            <div className="flex flex-col">
+                                                <label className="text-xs font-bold text-foreground ml-1 mb-2">Tipo de Imóvel</label>
+                                                <div className="flex items-center gap-4 h-[38px]">
+                                                    <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
+                                                        <input
+                                                            type="radio"
+                                                            name="clientPropertyType"
+                                                            checked={isRegisteredProperty}
+                                                            onChange={() => setIsRegisteredProperty(true)}
+                                                            className="text-secondary focus:ring-secondary h-4 w-4"
+                                                        />
+                                                        Cadastrado
+                                                    </label>
+                                                    <label className="flex items-center gap-2 text-sm text-foreground cursor-pointer font-medium">
+                                                        <input
+                                                            type="radio"
+                                                            name="clientPropertyType"
+                                                            checked={!isRegisteredProperty}
+                                                            onChange={() => setIsRegisteredProperty(false)}
+                                                            className="text-secondary focus:ring-secondary h-4 w-4"
+                                                        />
+                                                        Não Cadastrado
+                                                    </label>
+                                                </div>
+                                            </div>
+
+                                            <div className="md:col-span-2">
+                                                {isRegisteredProperty ? (
+                                                    <PropertyAutocomplete
+                                                        tenantId={tenantId}
+                                                        label="Imóvel Cadastrado"
+                                                        placeholder="Busque o imóvel cadastrado..."
+                                                        selectedItem={selectedVisitProperty}
+                                                        onSelect={(prop) => setSelectedVisitProperty(prop)}
+                                                        onClear={() => setSelectedVisitProperty(null)}
+                                                    />
+                                                ) : (
+                                                    <FormInput
+                                                        label="Nome/Descrição do Imóvel"
+                                                        value={unregisteredVisitProperty}
+                                                        onChange={(e) => setUnregisteredVisitProperty(e.target.value)}
+                                                        placeholder="Digite a identificação ou endereço do imóvel..."
+                                                    />
+                                                )}
+                                            </div>
+                                        </div>
+                                    )}
+
+                                    <div className="space-y-3">
+                                        <button
+                                            type="button"
+                                            onClick={() => setShowNotesHistory(!showNotesHistory)}
+                                            className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-foreground uppercase tracking-wider transition-colors cursor-pointer"
+                                        >
+                                            <span>Notas salvas ({clientNotes.length + (formData.notes ? 1 : 0)})</span>
+                                            <div className="flex items-center gap-1">
+                                                {showNotesHistory ? <ChevronDown className="rotate-180 transition-transform" size={14} /> : <ChevronDown className="transition-transform" size={14} />}
+                                            </div>
+                                        </button>
+
+                                        {showNotesHistory && (() => {
+                                            const sortedNotes = [...clientNotes]
+                                            if (formData.notes) {
+                                                sortedNotes.push({
+                                                    id: 'legacy',
+                                                    content: formData.notes,
+                                                    created_at: editingClient?.created_at || new Date(0).toISOString(),
+                                                    profiles: { full_name: 'Observação de Cadastro' }
+                                                })
+                                            }
+                                            sortedNotes.sort((a, b) => new Date(a.created_at).getTime() - new Date(b.created_at).getTime())
+
+                                            return (
+                                                <div className="space-y-3 pr-1 animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    {sortedNotes.length === 0 && (
+                                                        <p className="text-xs text-muted-foreground text-center py-4">
+                                                            Nenhuma nota registrada para este cliente ainda.
+                                                        </p>
+                                                    )}
+
+                                                    {sortedNotes.map((note) => {
+                                                        const isExpanded = !!expandedNotes[note.id]
+                                                        const isEditing = editingNoteId === note.id
+                                                        const isLegacy = note.id === 'legacy'
+
+                                                        if (isEditing) {
+                                                            return (
+                                                                <div key={note.id} className="p-3 bg-background border border-border/40 rounded-lg space-y-2">
+                                                                    <textarea
+                                                                        value={editingNoteText}
+                                                                        onChange={(e) => setEditingNoteText(e.target.value)}
+                                                                        disabled={isSavingEditedNote}
+                                                                        rows={6}
+                                                                        className="w-full text-sm p-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-1 focus:ring-secondary/50 resize-y font-medium text-foreground"
+                                                                    />
+                                                                    <div className="flex items-center justify-end gap-2">
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => setEditingNoteId(null)}
+                                                                            disabled={isSavingEditedNote}
+                                                                            className="px-2.5 py-1.5 text-[10px] font-bold text-muted-foreground hover:bg-muted rounded-lg transition-colors cursor-pointer"
+                                                                        >
+                                                                            Cancelar
+                                                                        </button>
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleSaveEditedNote(note.id)}
+                                                                            disabled={isSavingEditedNote || !editingNoteText.trim()}
+                                                                            className="px-2.5 py-1.5 text-[10px] font-bold bg-secondary text-secondary-foreground hover:opacity-90 active:scale-[0.97] rounded-lg transition-all cursor-pointer disabled:opacity-50"
+                                                                        >
+                                                                            {isSavingEditedNote ? 'Salvando...' : 'Salvar'}
+                                                                        </button>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        }
+
+                                                        return (
+                                                            <div
+                                                                key={note.id}
+                                                                onClick={() => toggleNoteExpanded(note.id)}
+                                                                className="p-3 bg-background border border-border/40 rounded-lg hover:border-muted-foreground/20 transition-all relative group cursor-pointer"
+                                                            >
+                                                                {!isExpanded ? (
+                                                                    <div className="flex items-center justify-between gap-3">
+                                                                        <div className="flex items-center gap-2 min-w-0 flex-1">
+                                                                            <ChevronRight size={14} className="text-muted-foreground shrink-0" />
+                                                                            {note.is_visit ? (
+                                                                                <span className="flex items-center gap-1.5 text-sm font-bold text-foreground truncate flex-1 leading-none">
+                                                                                    <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                                        {note.visit_number}ª Visita
+                                                                                    </span>
+                                                                                    {note.properties ? (
+                                                                                        <span className="truncate">
+                                                                                            {note.properties.title}
+                                                                                        </span>
+                                                                                    ) : (
+                                                                                        <span className="truncate text-muted-foreground italic">
+                                                                                            {note.visit_unregistered_property}
+                                                                                        </span>
+                                                                                    )}
+                                                                                </span>
+                                                                            ) : (
+                                                                                <span className="text-sm font-medium text-foreground truncate flex-1 leading-none">
+                                                                                    {getFirstSentence(note.content)}
+                                                                                </span>
+                                                                            )}
+                                                                        </div>
+                                                                        <div className="flex items-center gap-2 shrink-0">
+                                                                            <span className="text-[10px] text-muted-foreground font-medium whitespace-nowrap">
+                                                                                {formatNoteDate(note.created_at)}
+                                                                            </span>
+                                                                            <NoteActionsDropdown
+                                                                                onEdit={() => {
+                                                                                    setEditingNoteId(note.id)
+                                                                                    setEditingNoteText(note.content)
+                                                                                }}
+                                                                                onDelete={() => handleDeleteNote(note.id)}
+                                                                            />
+                                                                        </div>
+                                                                    </div>
+                                                                ) : (
+                                                                    <div className="flex gap-2 items-start">
+                                                                        <ChevronRight
+                                                                            size={14}
+                                                                            className="text-muted-foreground transition-transform rotate-90 shrink-0 mt-0.5"
+                                                                        />
+                                                                        <div className="flex-1 min-w-0 space-y-2">
+                                                                            <div className="flex items-center justify-between mb-1.5 select-none">
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className={isLegacy ? "text-[10px] font-bold text-muted-foreground uppercase tracking-wider" : "text-[10px] font-bold text-accent-icon"}>
+                                                                                        {isLegacy ? "Observação de Cadastro" : (note.profiles?.full_name || 'Corretor')}
+                                                                                    </span>
+                                                                                </div>
+                                                                                <div className="flex items-center gap-2">
+                                                                                    <span className="text-[10px] text-muted-foreground font-medium">
+                                                                                        {formatNoteDate(note.created_at)}
+                                                                                    </span>
+                                                                                    <NoteActionsDropdown
+                                                                                        onEdit={() => {
+                                                                                            setEditingNoteId(note.id)
+                                                                                            setEditingNoteText(note.content)
+                                                                                        }}
+                                                                                        onDelete={() => handleDeleteNote(note.id)}
+                                                                                    />
+                                                                                </div>
+                                                                            </div>
+                                                                            {note.is_visit && (
+                                                                                <div className="flex flex-wrap items-center gap-2 mb-2">
+                                                                                    <span className="bg-[#FFE600] text-[#404F4F] px-1.5 py-0.5 rounded text-[9px] font-black uppercase tracking-wider shrink-0">
+                                                                                        {note.visit_number}ª Visita
+                                                                                    </span>
+                                                                                    {note.properties ? (
+                                                                                        <Link
+                                                                                            href={`/properties/${note.properties.type}/${note.properties.slug || note.properties.id}`}
+                                                                                            onClick={(e) => e.stopPropagation()}
+                                                                                            className="text-xs font-bold text-accent-icon hover:underline flex items-center gap-1 bg-[#404F4F]/10 dark:bg-white/10 px-2 py-0.5 rounded"
+                                                                                        >
+                                                                                            <Building2 size={12} />
+                                                                                            {note.properties.title}
+                                                                                        </Link>
+                                                                                    ) : (
+                                                                                        <span className="text-xs font-medium text-muted-foreground italic bg-muted px-2 py-0.5 rounded">
+                                                                                            {note.visit_unregistered_property} (Não cadastrado)
+                                                                                        </span>
+                                                                                    )}
+                                                                                </div>
+                                                                            )}
+                                                                            <p className="text-sm text-foreground whitespace-pre-line leading-relaxed font-medium">
+                                                                                {note.content}
+                                                                            </p>
+                                                                        </div>
+                                                                    </div>
+                                                                )}
+                                                            </div>
+                                                        )
+                                                    })}
+                                                </div>
+                                            )
+                                        })()}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Mídias e Docs */}
+                        <div className="space-y-4 pt-8 border-t border-border/50">
+                            <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Mídias e Docs</h3>
+                            <MediaUpload
+                                pathPrefix={`clients/${tenantId}`}
+                                images={formData.images}
+                                videos={formData.videos}
+                                documents={formData.documents}
+                                onUpload={handleMediaUpload}
+                                onRemove={handleMediaRemove}
+                            />
+                        </div>
+                    </form>
                 )}
 
                 {/* Tab: Leads */}
                 {activeTab === 'leads' && isEditing && (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 flex-1 min-h-0 overflow-y-auto">
                         <ClientLeadsTab client={editingClient} clientNotes={clientNotes} onMakeProposal={(leadId: string) => {
                             setPendingProposalLeadId(leadId)
                             setActiveTab('proposals')
@@ -1935,9 +1934,9 @@ export function ClientModal({
 
                 {/* Tab: Propostas */}
                 {activeTab === 'proposals' && isEditing && (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <ClientProposalsTab 
-                            client={editingClient} 
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 h-full flex flex-col flex-1 min-h-0">
+                        <ClientProposalsTab
+                            client={editingClient}
                             tenantId={tenantId}
                             initialLeadId={pendingProposalLeadId}
                             onConsumeInitialLead={() => setPendingProposalLeadId(null)}
@@ -1948,7 +1947,7 @@ export function ClientModal({
 
                 {/* Tab: Documentos */}
                 {activeTab === 'documents' && isEditing && (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 flex-1 min-h-0 overflow-y-auto">
                         <ClientLeadSelectorTab
                             client={editingClient}
                             tenantId={tenantId}
@@ -1968,25 +1967,17 @@ export function ClientModal({
 
                 {/* Tab: Financeiro */}
                 {activeTab === 'financeiro' && isEditing && (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
-                        <ClientLeadSelectorTab
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 h-full flex flex-col flex-1 min-h-0">
+                        <ClientFinanceSelectorTab
                             client={editingClient}
                             tenantId={tenantId}
-                            renderTab={(leadId, _leadName, _propertyInterest, assignedTo) => (
-                                <LeadFinanceTab
-                                    leadId={leadId}
-                                    tenantId={tenantId}
-                                    assignedToId={assignedTo}
-                                />
-                            )}
-                            emptyMessage="Selecione um lead para gerenciar o financeiro."
                         />
                     </div>
                 )}
 
                 {/* Tab: Análise IA */}
                 {activeTab === 'ai' && isEditing && (
-                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300">
+                    <div className="animate-in fade-in slide-in-from-bottom-4 duration-300 flex-1 min-h-0 overflow-y-auto">
                         <ClientAITab
                             isAnalyzed={isAnalyzed}
                             analysisLoading={analysisLoading}
@@ -2017,28 +2008,19 @@ export function ClientModal({
 
 // ─── Wrapper com seletor de Lead para Docs/Financeiro ────────────────
 
-function ClientLeadSelectorTab({ 
-    client, 
-    tenantId, 
-    renderTab, 
-    emptyMessage 
-}: { 
+function ClientLeadSelectorTab({
+    client,
+    tenantId,
+    renderTab,
+    emptyMessage
+}: {
     client: any
     tenantId: string
     renderTab: (leadId: string, leadName: string, propertyInterest: string, assignedTo?: string) => React.ReactNode
     emptyMessage: string
 }) {
-    const [selectedLeadId, setSelectedLeadId] = useState('')
     const leads = client?.leads || []
-
-    // Auto-select se houver apenas 1 lead
-    useEffect(() => {
-        if (leads.length === 1 && !selectedLeadId) {
-            setSelectedLeadId(leads[0].id)
-        }
-    }, [leads, selectedLeadId])
-
-    const selectedLead = leads.find((l: any) => l.id === selectedLeadId)
+    const [openLeadId, setOpenLeadId] = useState<string | null>(leads.length === 1 ? leads[0].id : null)
 
     return (
         <div className="space-y-4 px-1 pb-4">
@@ -2048,41 +2030,78 @@ function ClientLeadSelectorTab({
                     <p className="text-xs text-muted-foreground">Nenhum lead vinculado a este cliente.</p>
                 </div>
             ) : (
-                <>
-                    {leads.length > 1 && (
-                        <div className="space-y-1">
-                            <label className="text-[11px] font-bold text-foreground/80 ml-0.5">Selecione o Lead</label>
-                            <div className="relative">
-                                <select
-                                    value={selectedLeadId}
-                                    onChange={e => setSelectedLeadId(e.target.value)}
-                                    className="appearance-none w-full bg-gray-50 dark:bg-input border border-gray-200 dark:border-border rounded-lg px-3 py-2.5 text-xs font-medium text-foreground outline-none cursor-pointer focus:ring-2 focus:ring-secondary/30 pr-8"
+                <div className="space-y-3">
+                    {leads.map((lead: any) => {
+                        const isOpen = openLeadId === lead.id;
+                        return (
+                            <div key={lead.id} className="bg-background rounded-xl border border-border shadow-sm">
+                                <button
+                                    onClick={() => setOpenLeadId(isOpen ? null : lead.id)}
+                                    className={`w-full p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors text-left ${isOpen ? 'rounded-t-xl' : 'rounded-xl'}`}
                                 >
-                                    <option value="">Selecione...</option>
-                                    {leads.map((lead: any) => (
-                                        <option key={lead.id} value={lead.id}>
+                                    <div className="flex-1 min-w-0 flex flex-col items-start gap-1">
+                                        <span className="text-base font-bold text-foreground truncate block">
                                             {lead.property_interest || lead.properties?.title || lead.source || `Lead ${new Date(lead.created_at).toLocaleDateString('pt-BR')}`}
-                                        </option>
-                                    ))}
-                                </select>
-                                <ChevronDown size={14} className="absolute right-2.5 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" />
-                            </div>
-                        </div>
-                    )}
+                                        </span>
+                                        {(() => {
+                                            const details = lead.properties?.details || {};
+                                            const apto = details.endereco?.apto || details.apto;
+                                            const vagas = details.vagas;
+                                            const hobbyBox = details.hobby_box_numeracao || (details.hobby_box === 'Sim' ? 'Sim' : details.hobby_box);
+                                            
+                                            const specs = [];
+                                            if (apto) specs.push(`Apto ${apto}`);
+                                            if (vagas) specs.push(`${vagas} Vaga(s)`);
+                                            if (hobbyBox) specs.push(`Hobby Box ${hobbyBox === 'Sim' ? '' : hobbyBox}`.trim());
 
-                    {selectedLeadId && selectedLead ? (
-                        renderTab(
-                            selectedLeadId, 
-                            client.name || '', 
-                            selectedLead.property_interest || selectedLead.properties?.title || '',
-                            selectedLead.assigned_to
+                                            return (
+                                                <div className="flex flex-wrap items-center gap-x-2 gap-y-1 text-[11px] text-muted-foreground font-medium">
+                                                    {specs.length > 0 && (
+                                                        <>
+                                                            <span className="text-foreground/80 font-bold">{specs.join(' • ')}</span>
+                                                            <span className="text-border/50 px-1">•</span>
+                                                        </>
+                                                    )}
+                                                    <span>Criado em: {new Date(lead.created_at).toLocaleDateString('pt-BR')}</span>
+                                                    {(lead.last_interaction_at || lead.updated_at) && (
+                                                        <>
+                                                            <span className="text-border/50 px-1">•</span>
+                                                            <span>Atualizado em: {new Date(lead.last_interaction_at || lead.updated_at).toLocaleDateString('pt-BR')}</span>
+                                                        </>
+                                                    )}
+                                                </div>
+                                            )
+                                        })()}
+                                    </div>
+                                    <ChevronDown
+                                        className={`shrink-0 text-muted-foreground transition-transform duration-200 ${isOpen ? 'rotate-180' : ''}`}
+                                        size={20}
+                                    />
+                                </button>
+                                <AnimatePresence>
+                                    {isOpen && (
+                                        <motion.div
+                                            initial={{ height: 0, opacity: 0 }}
+                                            animate={{ height: 'auto', opacity: 1 }}
+                                            exit={{ height: 0, opacity: 0 }}
+                                            transition={{ duration: 0.2 }}
+                                            className="overflow-hidden"
+                                        >
+                                            <div className="p-4 border-t border-border/40 space-y-4">
+                                                {renderTab(
+                                                    lead.id,
+                                                    client.name || '',
+                                                    lead.property_interest || lead.properties?.title || '',
+                                                    lead.assigned_to
+                                                )}
+                                            </div>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         )
-                    ) : leads.length > 1 ? (
-                        <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-6 rounded-lg border border-border/40 text-center transition-all">
-                            <p className="text-xs text-muted-foreground">{emptyMessage}</p>
-                        </div>
-                    ) : null}
-                </>
+                    })}
+                </div>
             )}
         </div>
     )
@@ -2090,14 +2109,14 @@ function ClientLeadSelectorTab({
 
 // ─── Aba Leads ──────────────────────────────────────────────────────
 
-function ClientLeadsTab({ 
-    client, 
-    clientNotes, 
-    onMakeProposal 
-}: { 
-    client: any; 
-    clientNotes: any[]; 
-    onMakeProposal?: (leadId: string) => void 
+function ClientLeadsTab({
+    client,
+    clientNotes,
+    onMakeProposal
+}: {
+    client: any;
+    clientNotes: any[];
+    onMakeProposal?: (leadId: string) => void
 }) {
     return (
         <div className="space-y-6 px-1 pb-4">
@@ -2106,11 +2125,11 @@ function ClientLeadsTab({
                 <div className="space-y-3">
                     {client.leads && client.leads.length > 0 ? (
                         client.leads.map((lead: any) => (
-                            <LeadCardDropdown 
-                                key={lead.id} 
-                                lead={lead} 
-                                clientNotes={clientNotes} 
-                                onMakeProposal={onMakeProposal} 
+                            <LeadCardDropdown
+                                key={lead.id}
+                                lead={lead}
+                                clientNotes={clientNotes}
+                                onMakeProposal={onMakeProposal}
                             />
                         ))
                     ) : (
@@ -2124,14 +2143,14 @@ function ClientLeadsTab({
     )
 }
 
-function LeadCardDropdown({ 
-    lead, 
-    clientNotes = [], 
-    onMakeProposal 
-}: { 
-    lead: any; 
-    clientNotes?: any[]; 
-    onMakeProposal?: (leadId: string) => void 
+function LeadCardDropdown({
+    lead,
+    clientNotes = [],
+    onMakeProposal
+}: {
+    lead: any;
+    clientNotes?: any[];
+    onMakeProposal?: (leadId: string) => void
 }) {
     const [isOpen, setIsOpen] = useState(false)
     const hasAttachments = lead.images?.length > 0 || lead.videos?.length > 0 || lead.documents?.length > 0
@@ -2139,34 +2158,21 @@ function LeadCardDropdown({
     const leadVisits = clientNotes.filter((n: any) => n.is_visit && n.lead_id === lead.id)
 
     return (
-        <div className="bg-background rounded-xl border border-border shadow-sm overflow-hidden">
+        <div className="bg-background rounded-xl border border-border shadow-sm">
             <button
                 onClick={() => setIsOpen(!isOpen)}
-                className="w-full p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors text-left"
+                className={`w-full p-4 flex items-center justify-between gap-3 hover:bg-muted/30 transition-colors text-left ${isOpen ? 'rounded-t-xl' : 'rounded-xl'}`}
             >
-                <div className="flex-1 min-w-0 flex items-center gap-2">
+                <div className="flex-1 min-w-0 flex items-center gap-3">
                     <span className="text-base font-bold text-foreground truncate block">
                         {lead.property_interest || lead.properties?.title || lead.source || 'Interesse não especificado'}
                     </span>
-                    {lead.partner_id && (
-                        <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 rounded-full text-[10px] font-bold border border-blue-200/60 dark:border-blue-500/20 whitespace-nowrap">
-                            Parceria
-                        </span>
-                    )}
-                </div>
-                <div className="flex items-center gap-2 shrink-0">
-                    {lead.has_proposal && (
-                        <LeadProposalBadgeDropdown
-                            leadId={lead.id}
-                            onProposalClick={onMakeProposal}
-                        />
-                    )}
                     {(() => {
                         const c = lead.status_color
                         const isLight = c && ['#FFFFFF', '#FACC15', '#FDE047', '#FEF08A', '#FCD34D'].includes(c.toUpperCase())
                         return (
                             <span
-                                className="px-2.5 py-0.5 text-xs font-medium rounded-full uppercase whitespace-nowrap"
+                                className="px-2.5 py-0.5 text-xs font-medium rounded-full uppercase whitespace-nowrap shrink-0"
                                 style={c ? {
                                     backgroundColor: c,
                                     color: isLight ? '#1a1a1a' : '#ffffff',
@@ -2180,6 +2186,21 @@ function LeadCardDropdown({
                             </span>
                         )
                     })()}
+                </div>
+                <div className="flex items-center gap-2 shrink-0">
+                    {lead.partner_id && (
+                        <div className="relative group flex items-center" title={lead.partners?.name ? `Parceria - ${lead.partners.name}` : "Parceria"}>
+                            <span className="w-5 h-5 min-w-[20px] min-h-[20px] aspect-square flex items-center justify-center text-[10px] font-black rounded-full shrink-0 bg-blue-600 text-white dark:bg-blue-600 dark:text-white cursor-default leading-none shadow-sm">
+                                P
+                            </span>
+                        </div>
+                    )}
+                    {lead.has_proposal && (
+                        <LeadProposalBadgeDropdown
+                            leadId={lead.id}
+                            onProposalClick={onMakeProposal}
+                        />
+                    )}
                     <LeadTemperatureBadge lastInteractionAt={lead.last_interaction_at || lead.created_at} />
                     {lead.created_at && (
                         <span className="text-xs text-muted-foreground font-medium">
@@ -2200,30 +2221,23 @@ function LeadCardDropdown({
                         animate={{ height: 'auto', opacity: 1 }}
                         exit={{ height: 0, opacity: 0 }}
                         transition={{ duration: 0.2 }}
-                        className="overflow-hidden"
+                        className="overflow-hidden rounded-b-xl"
                     >
                         <div className="px-4 pb-4 space-y-4 border-t border-border/50 animate-in fade-in duration-200" style={{ backgroundColor: 'var(--background)' }}>
                             {/* Grid de Informações Básicas e Notas */}
                             <div className="pt-4 grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
-                                    {lead.source && (
+                                    {lead.lead_source && (
                                         <p className="text-xs text-muted-foreground">
-                                            <span className="font-bold text-foreground/80">Origem:</span> {lead.source}
-                                        </p>
-                                    )}
-                                    {lead.lead_source && lead.lead_source !== lead.source && (
-                                        <p className="text-xs text-muted-foreground">
-                                            <span className="font-bold text-foreground/80">Canal:</span> {lead.lead_source}
+                                            <span className="font-bold text-foreground/80">Origem:</span> {lead.lead_source}
                                         </p>
                                     )}
                                     <p className="text-xs text-muted-foreground">
                                         <span className="font-bold text-foreground/80">Corretor Responsável:</span> {brokerName}
                                     </p>
-                                    {lead.partner_id && (
-                                        <p className="text-xs text-muted-foreground">
-                                            <span className="font-bold text-foreground/80">Parceria:</span> Sim
-                                        </p>
-                                    )}
+                                    <p className="text-xs text-muted-foreground">
+                                        <span className="font-bold text-foreground/80">Parceria:</span> {lead.partner_id ? lead.partners?.name || 'Sim' : 'Não'}
+                                    </p>
                                 </div>
                                 {lead.notes && (
                                     <div className="p-3 bg-card border border-border/40 rounded-lg">
@@ -2237,51 +2251,7 @@ function LeadCardDropdown({
                                 )}
                             </div>
 
-                            {/* Imóvel de Interesse */}
-                            {lead.properties ? (
-                                <div className="p-3 bg-card border border-border/40 rounded-lg shadow-sm space-y-2">
-                                    <h4 className="text-[10px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1">
-                                        <Building2 size={12} className="text-accent-icon" /> Imóvel de Interesse
-                                    </h4>
-                                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
-                                        <div>
-                                            <Link
-                                                href={`/properties/${lead.properties.type}/${lead.properties.slug || lead.properties.id}`}
-                                                target="_blank"
-                                                rel="noopener noreferrer"
-                                                className="text-xs font-bold text-accent-icon hover:underline block"
-                                            >
-                                                {lead.properties.title}
-                                            </Link>
-                                            <div className="flex items-center gap-1.5 mt-0.5 text-[10px] text-muted-foreground">
-                                                <span className="capitalize">{translatePropertyType(lead.properties.type)}</span>
-                                                {lead.properties.details?.endereco?.cidade && (
-                                                    <>
-                                                        <span>•</span>
-                                                        <span>{lead.properties.details.endereco.cidade} - {lead.properties.details.endereco.estado}</span>
-                                                    </>
-                                                )}
-                                            </div>
-                                        </div>
-                                        {lead.properties.price ? (
-                                            <div className="text-xs font-black text-foreground whitespace-nowrap">
-                                                {new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 }).format(lead.properties.price)}
-                                            </div>
-                                        ) : (
-                                            <div className="text-xs font-bold text-muted-foreground italic">
-                                                Preço sob consulta
-                                            </div>
-                                        )}
-                                    </div>
-                                </div>
-                            ) : lead.property_interest ? (
-                                <div className="p-3 bg-card border border-border/40 rounded-lg shadow-sm space-y-1">
-                                    <h4 className="text-[10px] font-bold text-foreground uppercase tracking-widest flex items-center gap-1">
-                                        <Building2 size={12} className="text-accent-icon" /> Interesse Indicado
-                                    </h4>
-                                    <p className="text-xs font-medium text-foreground">{lead.property_interest}</p>
-                                </div>
-                            ) : null}
+
 
                             {/* Histórico de Visitas */}
                             {leadVisits.length > 0 && (
@@ -2311,9 +2281,7 @@ function LeadCardDropdown({
                                                     <div className="text-[11px] font-bold text-foreground">
                                                         Imóvel: {' '}
                                                         <Link
-                                                            href={`/properties/${visit.properties.type}/${visit.properties.slug}`}
-                                                            target="_blank"
-                                                            rel="noopener noreferrer"
+                                                            href={`/properties/${visit.properties.type}/${visit.properties.slug || visit.properties.id}`}
                                                             className="text-accent-icon hover:underline font-bold"
                                                         >
                                                             {visit.properties.title}
@@ -2346,7 +2314,7 @@ function LeadCardDropdown({
                             )}
 
                             {/* Botão Fazer Proposta */}
-                            {onMakeProposal && (
+                            {onMakeProposal && !lead.has_proposal && (
                                 <div className="pt-2 border-t border-border/30">
                                     <button
                                         onClick={() => onMakeProposal(lead.id)}
@@ -2545,6 +2513,356 @@ function LeadProposalBadgeDropdown({ leadId, onProposalClick }: { leadId: string
                     </motion.div>
                 )}
             </AnimatePresence>
+        </div>
+    )
+}
+
+function ClientFinanceActionsDropdown({ onEdit, onArchive, onDelete }: { onEdit: () => void, onArchive: () => void, onDelete: () => void }) {
+    const [isOpen, setIsOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(e: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    return (
+        <div className="relative inline-block" ref={dropdownRef} onClick={e => e.stopPropagation()}>
+            <button
+                onClick={(e) => { e.stopPropagation(); setIsOpen(o => !o) }}
+                className="p-1.5 bg-muted text-foreground rounded-md hover:bg-muted/80 transition-colors shadow-sm"
+                title="Ações"
+            >
+                <MoreVertical size={14} />
+            </button>
+            <AnimatePresence>
+                {isOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.95, y: -5 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95, y: -5 }}
+                        transition={{ duration: 0.1 }}
+                        className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 text-left"
+                    >
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit() }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-blue-500/10 transition-colors"
+                        >
+                            <Edit2 size={14} className="text-blue-500" />
+                            Editar
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onArchive() }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-amber-500/10 transition-colors"
+                        >
+                            <Archive size={14} className="text-amber-500" />
+                            Arquivar
+                        </button>
+                        <button
+                            onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDelete() }}
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-red-500/10 transition-colors"
+                        >
+                            <Trash2 size={14} className="text-red-500" />
+                            Excluir
+                        </button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+function ClientFinanceRow({ lead, tenantId, isExpanded, onToggle, assignedTo }: any) {
+    const [propertyName, setPropertyName] = useState<string>(lead.properties?.title || lead.property_interest || 'Imóvel não especificado');
+    const [unitInfoString, setUnitInfoString] = useState<string>('—');
+    const [createdAt, setCreatedAt] = useState<string>('—');
+    const [updatedAt, setUpdatedAt] = useState<string>('—');
+    
+    const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+    const [archiveModalOpen, setArchiveModalOpen] = useState(false);
+    const [hasFinancials, setHasFinancials] = useState(false);
+    const [isEditingFinance, setIsEditingFinance] = useState(false);
+
+    useEffect(() => {
+        let mounted = true;
+
+        async function fetchUnitInfo() {
+            try {
+                const { getLatestProposalByLead } = await import('@/app/_actions/proposals');
+                const res = await getLatestProposalByLead(lead.id);
+                if (mounted && res.success && res.data) {
+                    const proposal = res.data;
+                    const unitInfo = proposal.unit_info || {};
+                    const unitParts: string[] = [];
+                    
+                    if (proposal.unit) unitParts.push(`apto ${proposal.unit}`);
+                    if (unitInfo.block_tower) unitParts.push(`bl ${unitInfo.block_tower}`);
+                    
+                    if (unitInfo.garage_number) {
+                        unitParts.push(`vg ${unitInfo.garage_number}`);
+                    } else if (unitInfo.garage_type && unitInfo.garage_type !== 'Não') {
+                        if (unitInfo.garage_type.toLowerCase() === 'sim') {
+                            unitParts.push(`vg sim`)
+                        } else {
+                            unitParts.push(`vg ${unitInfo.garage_type}`)
+                        }
+                    }
+                    
+                    if (unitInfo.hobby_box && unitInfo.hobby_box !== 'Não') {
+                        if (unitInfo.hobby_box_number) {
+                            unitParts.push(`hb ${unitInfo.hobby_box_number}`);
+                        } else if (unitInfo.hobby_box.toLowerCase() !== 'sim') {
+                            unitParts.push(`hb ${unitInfo.hobby_box}`);
+                        } else {
+                            unitParts.push(`hb sim`);
+                        }
+                    }
+                    
+                    if (proposal.buyer_data?.imovel_descricao) {
+                        const desc = proposal.buyer_data.imovel_descricao as string;
+                        const splitIndex = desc.indexOf(' - ');
+                        if (splitIndex !== -1) {
+                            setPropertyName(desc.substring(0, splitIndex).trim());
+                            setUnitInfoString(desc.substring(splitIndex + 3).trim());
+                        } else {
+                            setPropertyName(desc);
+                            setUnitInfoString('');
+                        }
+                        return;
+                    }
+
+                    if (unitParts.length > 0) {
+                        setUnitInfoString(unitParts.join(' • '));
+                        return;
+                    }
+                }
+            } catch (err) {
+                console.error('Failed to fetch proposal unit info', err);
+            }
+
+            // Fallback to lead details if no proposal or no unit info in proposal
+            if (mounted) {
+                const details = lead.properties?.details || {};
+                const apto = details.endereco?.apto || details.apto;
+                const vagas = details.vagas;
+                const hbVal = details.hobby_box_numeracao || details.hobby_box;
+                
+                const unitParts: string[] = [];
+                if (apto) unitParts.push(`apto ${apto}`);
+                
+                if (vagas && vagas !== 'Não' && vagas !== '0') {
+                    if (!isNaN(Number(vagas))) {
+                        unitParts.push(`vg ${vagas}`);
+                    } else {
+                        unitParts.push(`vg ${vagas}`);
+                    }
+                }
+                if (hbVal && hbVal !== 'Não' && hbVal !== '0') {
+                    if (hbVal === 'Sim') {
+                        unitParts.push('hb sim');
+                    } else if (!isNaN(Number(hbVal))) {
+                        unitParts.push(`hb ${hbVal}`);
+                    } else {
+                        unitParts.push(`hb ${hbVal}`);
+                    }
+                }
+                setUnitInfoString(unitParts.length > 0 ? unitParts.join(' | ') : '—');
+            }
+        }
+        
+        fetchUnitInfo();
+        
+        getLeadFinancials(lead.id).then((res: any) => {
+            if (mounted && res.success && res.data && res.data.length > 0) {
+                setHasFinancials(true);
+                const financials = res.data;
+                const earliest = [...financials].sort((a, b) => new Date(a.created_at || a.data_transacao).getTime() - new Date(b.created_at || b.data_transacao).getTime())[0];
+                const latest = [...financials].sort((a, b) => new Date(b.updated_at || b.created_at || b.data_transacao).getTime() - new Date(a.updated_at || a.created_at || a.data_transacao).getTime())[0];
+                if (earliest?.created_at) setCreatedAt(new Date(earliest.created_at).toLocaleDateString('pt-BR'));
+                if (latest?.updated_at) setUpdatedAt(new Date(latest.updated_at).toLocaleDateString('pt-BR'));
+            } else if (mounted) {
+                setHasFinancials(false);
+            }
+        });
+        return () => { mounted = false; };
+    }, [lead.id, lead.properties]);
+
+    const handleDelete = async () => {
+        const { deleteLeadFinancials } = await import('@/app/_actions/leads-finance');
+        const res = await deleteLeadFinancials(lead.id);
+        if (res.success) {
+            import('sonner').then(({ toast }) => toast.success('Faturamento excluído com sucesso.'));
+            setHasFinancials(false);
+            setCreatedAt('—');
+            setUpdatedAt('—');
+        } else {
+            import('sonner').then(({ toast }) => toast.error(res.error || 'Erro ao excluir faturamento.'));
+        }
+        setDeleteModalOpen(false);
+    }
+
+    const handleArchive = async () => {
+        const { archiveLeadFinancials } = await import('@/app/_actions/leads-finance');
+        await archiveLeadFinancials(lead.id);
+        setArchiveModalOpen(false);
+    }
+
+    return (
+        <>
+            <tr onClick={onToggle} className="bg-muted dark:bg-muted/10 transition-colors cursor-pointer group">
+                 <td className="px-4 py-5 text-sm font-bold text-foreground truncate text-center">
+                     <span className="truncate">{propertyName}</span>
+                 </td>
+                 <td className="px-4 py-5 text-sm font-bold text-foreground truncate text-center">
+                     {unitInfoString && unitInfoString !== '—' ? (
+                         <span className="text-[10px] font-medium text-foreground truncate">
+                             {unitInfoString}
+                         </span>
+                     ) : (
+                         <span className="text-foreground">—</span>
+                     )}
+                 </td>
+                 <td className="px-4 py-5 align-middle text-center">
+                     <span className="text-xs font-bold text-foreground">{createdAt}</span>
+                 </td>
+                 <td className="px-4 py-5 align-middle text-center">
+                     <span className="text-xs font-bold text-muted-foreground">{updatedAt}</span>
+                 </td>
+                 <td className="px-4 py-5 align-middle text-center" onClick={e => e.stopPropagation()}>
+                     {hasFinancials && (
+                         <ClientFinanceActionsDropdown 
+                             onEdit={() => {
+                                 setIsEditingFinance(true);
+                                 if (!isExpanded) onToggle();
+                             }}
+                             onArchive={() => setArchiveModalOpen(true)}
+                             onDelete={() => setDeleteModalOpen(true)}
+                         />
+                     )}
+                 </td>
+            </tr>
+            <AnimatePresence>
+                {isExpanded && (
+                    <tr>
+                        <td colSpan={5} className="p-0 border-b-0">
+                            <motion.div
+                                initial={{ height: 0, opacity: 0 }}
+                                animate={{ height: 'auto', opacity: 1 }}
+                                exit={{ height: 0, opacity: 0 }}
+                                transition={{ duration: 0.2 }}
+                                className="overflow-hidden"
+                            >
+                                <div className="px-4 py-6 bg-background dark:bg-muted/5 border-t border-border/30 shadow-inner">
+                                    <LeadFinanceTab 
+                                        key={hasFinancials.toString()} 
+                                        leadId={lead.id} 
+                                        tenantId={tenantId} 
+                                        assignedToId={assignedTo} 
+                                        isEditing={isEditingFinance}
+                                        onCancelEdit={() => setIsEditingFinance(false)}
+                                        onSuccess={() => {
+                                            setIsEditingFinance(false);
+                                            getLeadFinancials(lead.id).then((res: any) => {
+                                                if (res.success && res.data && res.data.length > 0) {
+                                                    setHasFinancials(true);
+                                                }
+                                            })
+                                        }}
+                                    />
+                                </div>
+                            </motion.div>
+                        </td>
+                    </tr>
+                )}
+            </AnimatePresence>
+            
+            <ConfirmModal
+                isOpen={deleteModalOpen}
+                title="Excluir Faturamento"
+                message={
+                    <>
+                        <span className="block">Esta ação excluirá permanentemente todos os registros financeiros</span>
+                        <span className="block">associados a este negócio.</span>
+                        <span className="block font-bold mt-2">Esta ação não poderá ser desfeita.</span>
+                    </>
+                }
+                onConfirm={handleDelete}
+                onCancel={() => setDeleteModalOpen(false)}
+                confirmLabel="Excluir"
+                variant="danger"
+            />
+
+            <ConfirmModal
+                isOpen={archiveModalOpen}
+                title="Arquivar Faturamento"
+                message={
+                    <>
+                        <span className="block">O faturamento será cancelado/arquivado e não</span>
+                        <span className="block">entrará mais nos cálculos de receita.</span>
+                    </>
+                }
+                onConfirm={handleArchive}
+                onCancel={() => setArchiveModalOpen(false)}
+                confirmLabel="Arquivar"
+                variant="warning"
+            />
+        </>
+    )
+}
+
+function ClientFinanceSelectorTab({ client, tenantId }: { client: any, tenantId: string }) {
+    const leads = client?.leads || []
+    const [openLeadId, setOpenLeadId] = useState<string | null>(null)
+
+    if (leads.length === 0) {
+        return (
+            <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-8 rounded-lg border border-border/40 text-center transition-all flex-1 flex flex-col items-center justify-center h-full">
+                <DollarSign size={28} className="mx-auto text-muted-foreground/40 mb-2" />
+                <p className="text-xs text-muted-foreground">Nenhum financeiro disponível.</p>
+                <p className="text-[10px] text-muted-foreground/60 mt-0.5">O cliente ainda não possui leads com propostas ou faturamentos.</p>
+            </div>
+        )
+    }
+
+    return (
+        <div className="bg-white dark:bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm flex-1 flex flex-col h-full">
+            <div className="overflow-x-auto overflow-y-auto flex-1 min-h-[250px]">
+                <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
+                    <colgroup>
+                        <col style={{ width: '25%' }} />
+                        <col style={{ width: '20%' }} />
+                        <col style={{ width: '20%' }} />
+                        <col style={{ width: '25%' }} />
+                        <col style={{ width: '10%' }} />
+                    </colgroup>
+                    <thead className="bg-gray-200 dark:bg-muted/50 border-b border-muted-foreground/30">
+                        <tr>
+                            <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Imóvel</th>
+                            <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Unidade</th>
+                            <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Criado em</th>
+                            <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Atualizado em</th>
+                            <th className="px-4 py-4 text-[10px] font-bold text-foreground uppercase tracking-wider text-center whitespace-nowrap">Ações</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-muted-foreground/30">
+                        {leads.map((lead: any) => (
+                            <ClientFinanceRow 
+                                key={lead.id} 
+                                lead={lead} 
+                                tenantId={tenantId} 
+                                isExpanded={openLeadId === lead.id}
+                                onToggle={() => setOpenLeadId(openLeadId === lead.id ? null : lead.id)}
+                                assignedTo={client.assigned_to || undefined}
+                            />
+                        ))}
+                    </tbody>
+                </table>
+            </div>
         </div>
     )
 }

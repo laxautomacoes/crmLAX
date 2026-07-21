@@ -359,7 +359,7 @@ export default function LeadsPage() {
             </Modal>
 
             {/* Componente Reutilizável de Modal de Lead */}
-            {tenantId && (
+            {tenantId && isLeadModalOpen && (
                 <LeadModal
                     isOpen={isLeadModalOpen}
                     onClose={() => {

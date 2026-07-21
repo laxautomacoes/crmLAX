@@ -14,15 +14,15 @@ import type { FormActionSelectOption } from '@/components/shared/forms/FormActio
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { MediaUpload } from '@/components/shared/MediaUpload'
 import { toast } from 'sonner'
-import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign, updateLeadSource, deleteLeadSource, updateLeadCampaign, deleteLeadCampaign } from '@/app/_actions/leads'
+import { createLead, updateLead, getLeadSources, createLeadSource, getLeadCampaigns, createLeadCampaign, updateLeadSource, deleteLeadSource, updateLeadCampaign, deleteLeadCampaign, getLeadDetails } from '@/app/_actions/leads'
 import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { getNotesByLeadId, createNote, deleteNote, updateNote } from '@/app/_actions/notes'
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
 import { getPartners, createPartner } from '@/app/_actions/partners'
 import { PartnerQuickModal } from '@/components/dashboard/shared/PartnerQuickModal'
-import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, Upload, MessageCircle, Trash2, MoreVertical, Loader2, AlertTriangle, Building2 } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, ChevronDown, Upload, MessageCircle, Trash2, MoreVertical, Loader2, AlertTriangle, Building2 } from 'lucide-react'
 import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
-import { sendWhatsAppMessage, getWhatsAppChat, sendWhatsAppMedia, refreshInstanceStatus } from '@/app/_actions/whatsapp'
+import { sendWhatsAppMessage, getWhatsAppChat, sendWhatsAppMedia, refreshInstanceStatus, checkInstanceStatus } from '@/app/_actions/whatsapp'
 import { createClient } from '@/lib/supabase/client'
 import type { Lead } from './PipelineBoard'
 import {
@@ -701,6 +701,23 @@ export function LeadModal({
                 partner_split: (editingLead as any).partner_split ? (editingLead as any).partner_split.toString() : '',
                 partner_role: (editingLead as any).partner_role || ''
             })
+
+            // Carrega os dados pesados (notes, images, videos, documents, chat) sob demanda
+            const fetchHeavyData = async () => {
+                if (!editingLead.id) return;
+                const result = await getLeadDetails(editingLead.id);
+                if (result.success && result.data) {
+                    setWhatsappChat(result.data.whatsapp_chat || []);
+                    setLeadData(prev => ({
+                        ...prev,
+                        notes: result.data.notes || prev.notes,
+                        images: Array.isArray(result.data.images) ? result.data.images : prev.images,
+                        videos: Array.isArray(result.data.videos) ? result.data.videos : prev.videos,
+                        documents: Array.isArray(result.data.documents) ? result.data.documents : prev.documents,
+                    }));
+                }
+            };
+            fetchHeavyData();
         } else {
             setWhatsappChat([])
             setLeadData({
@@ -728,9 +745,9 @@ export function LeadModal({
         }
     }, [editingLead, isOpen, firstStageId])
 
-    // Polling de atualização do histórico do chat no emulador
+    // Polling de atualização do histórico do chat — apenas quando a aba WhatsApp está ativa
     useEffect(() => {
-        if (!isOpen || !editingLead?.id) return;
+        if (!isOpen || !editingLead?.id || activeTab !== 'whatsapp') return;
 
         const interval = setInterval(async () => {
             const { chat, error } = await getWhatsAppChat(editingLead.id!);
@@ -743,18 +760,18 @@ export function LeadModal({
                     return prev;
                 });
             }
-        }, 4000); // Executa a cada 4 segundos
+        }, 8000); // Executa a cada 8 segundos (apenas na aba WhatsApp)
 
         return () => clearInterval(interval);
-    }, [isOpen, editingLead?.id]);
+    }, [isOpen, editingLead?.id, activeTab]);
 
-    // Polling de status da instância WhatsApp (a cada 30s)
+    // Verificação inicial do status WhatsApp (chamada pesada, apenas 1x na abertura)
     useEffect(() => {
         if (!isOpen || !editingLead) return;
 
         setInstanceStatus('loading');
 
-        const fetchStatus = async () => {
+        const fetchInitialStatus = async () => {
             try {
                 const res = await refreshInstanceStatus();
                 if (res.error) {
@@ -767,8 +784,24 @@ export function LeadModal({
             }
         };
 
-        fetchStatus();
-        const interval = setInterval(fetchStatus, 30000);
+        fetchInitialStatus();
+        // Sem intervalo — chamada pesada apenas uma vez
+    }, [isOpen, editingLead?.id]);
+
+    // Polling leve de status WhatsApp — lê apenas do banco de dados (a cada 60s)
+    useEffect(() => {
+        if (!isOpen || !editingLead) return;
+
+        const pollStatus = async () => {
+            try {
+                const res = await checkInstanceStatus();
+                setInstanceStatus(res.status === 'connected' ? 'connected' : 'disconnected');
+            } catch {
+                setInstanceStatus('disconnected');
+            }
+        };
+
+        const interval = setInterval(pollStatus, 60000);
 
         return () => clearInterval(interval);
     }, [isOpen, editingLead?.id]);
@@ -1666,7 +1699,7 @@ export function LeadModal({
                                                 >
                                                     <span>Notas salvas ({leadNotes.length + (leadData.notes ? 1 : 0)})</span>
                                                     <div className="flex items-center gap-1">
-                                                        {showNotesHistory ? <ChevronRight className="rotate-90 transition-transform" size={14} /> : <ChevronRight size={14} />}
+                                                        {showNotesHistory ? <ChevronDown className="rotate-180 transition-transform" size={14} /> : <ChevronDown className="transition-transform" size={14} />}
                                                     </div>
                                                 </button>
 
@@ -1809,7 +1842,7 @@ export function LeadModal({
                                                                                             </span>
                                                                                             {note.properties ? (
                                                                                                 <Link
-                                                                                                    href={`/properties/${note.properties.type}/${note.properties.slug}`}
+                                                                                                    href={`/properties/${note.properties.type}/${note.properties.slug || note.properties.id}`}
                                                                                                     onClick={(e) => e.stopPropagation()}
                                                                                                     className="text-xs font-bold text-accent-icon hover:underline flex items-center gap-1 bg-[#404F4F]/10 dark:bg-white/10 px-2 py-0.5 rounded"
                                                                                                 >

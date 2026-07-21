@@ -212,23 +212,29 @@ export async function getQrCode() {
     }
 }
 
+/**
+ * Função LEVE para polling: lê o status apenas do banco de dados (Supabase).
+ * Não faz nenhuma chamada à Evolution API. Ideal para polling frequente.
+ */
+export async function checkInstanceStatus() {
+    const { data, error } = await getWhatsAppInstance();
+    if (error || !data) return { status: 'disconnected' as const, connectedPhone: null };
+    return {
+        status: (data.status === 'connected' ? 'connected' : 'disconnected') as 'connected' | 'disconnected',
+        connectedPhone: data.connected_phone || null
+    };
+}
+
+/**
+ * Função PESADA: consulta a Evolution API para obter o estado real da conexão.
+ * Deve ser chamada apenas na abertura do modal ou em ações explícitas do usuário.
+ * NÃO usar em pollings de intervalo.
+ */
 export async function refreshInstanceStatus() {
     const { data, error } = await getWhatsAppInstance();
     if (error || !data) return { error: 'No instance found' };
 
     try {
-        // Garantir que o webhook esteja atualizado silenciosamente com base no domínio atual
-        try {
-            const webhookUrl = await getDynamicWebhookUrl();
-            if (!webhookUrl.includes('localhost') && !webhookUrl.includes('127.0.0.1')) {
-                await evolutionService.setWebhook(data.instance_name, webhookUrl);
-            } else {
-                console.log('[WhatsApp] Ignorando atualização de webhook para URL local em refreshInstanceStatus:', webhookUrl);
-            }
-        } catch (webhookErr: any) {
-            console.error('[WhatsApp] Falha ao atualizar webhook silenciosamente em refreshInstanceStatus:', webhookErr.message);
-        }
-
         const statusData = await evolutionService.getInstanceStatus(data.instance_name);
         const status = statusData.instance.state === 'open' ? 'connected' : 'disconnected';
 

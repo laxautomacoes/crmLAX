@@ -75,8 +75,11 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive, onPropo
                                 </span>
                             )}
                             {lead.partner_id && (
-                                <span className="inline-block px-2.5 py-0.5 bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 rounded-full text-[10px] font-bold border border-blue-200/60 dark:border-blue-500/20 whitespace-nowrap">
-                                    Parceria
+                                <span 
+                                    className="w-5 h-5 min-w-[20px] min-h-[20px] aspect-square flex items-center justify-center text-[10px] font-black rounded-full shrink-0 bg-blue-600 text-white dark:bg-blue-600 dark:text-white leading-none shadow-sm"
+                                    title={lead.partners?.name ? `Parceria - ${lead.partners.name}` : "Parceria"}
+                                >
+                                    P
                                 </span>
                             )}
                         </div>

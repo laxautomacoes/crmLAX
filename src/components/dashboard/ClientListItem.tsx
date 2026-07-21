@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { Phone, Mail, MessageSquare, Edit, Trash2, Archive, MoreVertical, User } from 'lucide-react'
+import { Phone, Mail, MessageCircle, Edit, Trash2, Archive, MoreVertical, User } from 'lucide-react'
 import { formatPhone } from '@/lib/utils/phone'
 import { LeadTemperatureBadge } from '@/components/dashboard/leads/LeadTemperatureBadge'
 
@@ -39,8 +39,13 @@ export function ClientListItem({
                         <span className="font-bold text-foreground">{client.name}</span>
                         {client.leads?.some((l: any) => l.partner_id) && (
                             <span 
-                                className="flex items-center justify-center w-[18px] h-[18px] bg-blue-50 text-blue-700 dark:bg-blue-500/10 dark:text-blue-300 rounded-full border border-blue-200/60 dark:border-blue-500/20 text-[10px] font-bold"
-                                title="Cliente de Parceria"
+                                className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0 aspect-square flex items-center justify-center bg-blue-600 text-white dark:bg-blue-600 dark:text-white rounded-full text-[10px] font-bold leading-none shadow-sm"
+                                title={(() => {
+                                    const lead = client.leads?.find((l: any) => l.partner_id && l.partners);
+                                    if (!lead) return "Cliente de Parceria";
+                                    const name = Array.isArray(lead.partners) ? lead.partners[0]?.name : lead.partners?.name;
+                                    return name ? `Parceria - ${name}` : "Cliente de Parceria";
+                                })()}
                             >
                                 P
                             </span>
@@ -57,11 +62,11 @@ export function ClientListItem({
                             href={`https://wa.me/55${client.phone.replace(/\D/g, '')}`}
                             target="_blank"
                             rel="noopener noreferrer"
-                            className="p-1 bg-emerald-500/10 text-emerald-600 rounded-md hover:bg-emerald-500/20 transition-colors"
+                            className="p-1.5 bg-emerald-500/10 text-emerald-600 rounded-full hover:bg-emerald-500/20 transition-colors"
                             title="Abrir no WhatsApp"
                             onClick={(e) => e.stopPropagation()}
                         >
-                            <MessageSquare size={12} />
+                            <MessageCircle size={14} />
                         </a>
                         )}
                     </div>
@@ -71,10 +76,10 @@ export function ClientListItem({
                             <a
                                 href={`mailto:${client.email}`}
                                 onClick={(e) => e.stopPropagation()}
-                                className="p-1 bg-blue-500/10 text-blue-600 rounded-md hover:bg-blue-500/20 transition-colors"
+                                className="p-1.5 bg-blue-500/10 text-blue-600 rounded-full hover:bg-blue-500/20 transition-colors"
                                 title="Enviar e-mail"
                             >
-                                <Mail size={12} />
+                                <Mail size={14} />
                             </a>
                         </div>
                     )}
@@ -84,9 +89,20 @@ export function ClientListItem({
                 <div className="flex flex-col gap-0.5 items-center">
                     {client.leads && client.leads.length > 0 ? (
                         client.leads.map((lead: any, i: number) => (
-                            <span key={i} className="text-sm font-medium text-foreground truncate max-w-[200px] block mb-1 last:mb-0">
-                                {lead.property_interest || lead.properties?.title || lead.source || 'Sem interesse'}
-                            </span>
+                            <div key={i} className="flex items-center justify-center gap-1.5 mb-1 last:mb-0">
+                                <span className="text-sm font-medium text-foreground truncate max-w-[200px]">
+                                    {lead.property_interest || lead.properties?.title || lead.source || 'Sem interesse'}
+                                </span>
+                                {lead.proposals && lead.proposals.length > 0 && (
+                                    <span 
+                                        className="w-5 h-5 min-w-[20px] min-h-[20px] shrink-0 aspect-square flex items-center justify-center rounded-full text-[10px] font-black leading-none"
+                                        style={{ backgroundColor: '#FFE600', color: '#1a1a1a' }}
+                                        title="Possui proposta"
+                                    >
+                                        P
+                                    </span>
+                                )}
+                            </div>
                         ))
                     ) : (
                         <span className="text-sm text-muted-foreground">Sem leads</span>

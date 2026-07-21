@@ -54,12 +54,13 @@ export function ProposalDynamicForm({ fields, responses, onChange }: ProposalDyn
 
             {fields.map((field) => {
                 const value = responses[field.name] || ''
+                const normalizedLabel = field.label.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '')
                 const isFullWidth = field.type === 'text' && (
-                    field.label.toLowerCase().includes('obs') ||
-                    field.label.toLowerCase().includes('nota') ||
-                    field.label.toLowerCase().includes('condic') ||
-                    field.label.toLowerCase().includes('detalhe') ||
-                    field.label.toLowerCase().includes('descricao')
+                    normalizedLabel.includes('obs') ||
+                    normalizedLabel.includes('nota') ||
+                    normalizedLabel.includes('condic') ||
+                    normalizedLabel.includes('detalhe') ||
+                    normalizedLabel.includes('descri')
                 )
 
                 if (isFullWidth) {
@@ -69,8 +70,8 @@ export function ProposalDynamicForm({ fields, responses, onChange }: ProposalDyn
                                 label={field.label}
                                 value={value}
                                 onChange={(e) => handleInputChange(field, e.target.value)}
-                                placeholder={`Preencha o campo ${field.label.toLowerCase()}...`}
-                                rows={2}
+                                placeholder={`Preencha ${field.label.toLowerCase()}...`}
+                                rows={normalizedLabel.includes('condic') ? 6 : 3}
                             />
                         </div>
                     )

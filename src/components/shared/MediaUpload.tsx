@@ -75,16 +75,16 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                 </h4>
                 <div className="flex flex-wrap gap-3">
                     {images.map((url, index) => (
-                        <div key={index} className="relative w-32 h-32 rounded-lg overflow-hidden group border border-muted-foreground/30 shadow-sm shrink-0">
+                        <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="relative w-32 h-32 rounded-lg overflow-hidden group border border-muted-foreground/30 shadow-sm shrink-0 block cursor-pointer">
                             <img src={url} alt={`Upload ${index}`} className="w-full h-full object-cover" />
                             <button
                                 type="button"
-                                onClick={() => onRemove('images', index)}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove('images', index); }}
                                 className="absolute top-1.5 right-1.5 p-1.5 bg-destructive/90 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-lg z-10"
                             >
                                 <X size={12} />
                             </button>
-                        </div>
+                        </a>
                     ))}
                     <label className="w-32 h-32 rounded-lg bg-background hover:bg-gray-50 dark:hover:bg-muted/30 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30 shadow-sm shrink-0">
                         {isUploading === 'images' ? (
@@ -114,7 +114,7 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                 </h4>
                 <div className="flex flex-wrap gap-3">
                     {videos.map((url, index) => (
-                        <div key={index} className="relative w-48 h-32 rounded-lg overflow-hidden group bg-black flex items-center justify-center border border-muted-foreground/30 shadow-sm shrink-0">
+                        <a key={index} href={url} target="_blank" rel="noopener noreferrer" className="relative w-48 h-32 rounded-lg overflow-hidden group bg-black flex items-center justify-center border border-muted-foreground/30 shadow-sm shrink-0 block cursor-pointer">
                             <video 
                                 src={`${url}#t=0.1`} 
                                 className="w-full h-full object-cover opacity-80 group-hover:opacity-100 transition-opacity"
@@ -127,12 +127,12 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                             </div>
                             <button
                                 type="button"
-                                onClick={() => onRemove('videos', index)}
+                                onClick={(e) => { e.preventDefault(); e.stopPropagation(); onRemove('videos', index); }}
                                 className="absolute top-1.5 right-1.5 p-1.5 bg-destructive/90 text-white rounded-full opacity-0 group-hover:opacity-100 transition-all hover:scale-110 shadow-lg z-10"
                             >
                                 <X size={12} />
                             </button>
-                        </div>
+                        </a>
                     ))}
                     <label className="w-48 h-32 rounded-lg bg-background hover:bg-gray-50 dark:hover:bg-muted/30 flex flex-col items-center justify-center cursor-pointer transition-all border border-muted-foreground/30 shadow-sm shrink-0">
                         {isUploading === 'videos' ? (
@@ -163,14 +163,23 @@ export function MediaUpload({ images, videos, documents, onUpload, onRemove, pat
                 <div className="space-y-2">
                     {documents.map((doc, index) => (
                         <div key={index} className="flex items-center justify-between p-2 rounded-lg bg-background border border-muted-foreground/30 group shadow-sm">
-                            <div className="flex items-center gap-2 min-w-0">
+                            <div className="flex items-center gap-2 min-w-0 flex-1">
                                 <FileText size={14} className="text-muted-foreground shrink-0" />
-                                <span className="text-xs font-medium truncate">{doc.name}</span>
+                                <a 
+                                    href={doc.url}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="text-xs font-medium truncate hover:underline hover:text-blue-500 cursor-pointer text-foreground"
+                                    title="Clique para visualizar/baixar"
+                                >
+                                    {doc.name}
+                                </a>
                             </div>
                             <button
                                 type="button"
                                 onClick={() => onRemove('documents', index)}
-                                className="p-1 text-muted-foreground hover:text-destructive transition-colors"
+                                className="p-1 text-muted-foreground hover:text-destructive transition-colors shrink-0"
+                                title="Remover documento"
                             >
                                 <X size={14} />
                             </button>

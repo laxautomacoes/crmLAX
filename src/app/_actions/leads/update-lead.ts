@@ -33,10 +33,17 @@ export async function updateLead(tenantId: string, leadId: string, data: unknown
 
     const supabase = await createClient()
 
-    // 1. Buscar lead para contact_id
+    // 1. Buscar lead para contact_id e mídias atuais do contato
     const { data: lead } = await supabase
         .from('leads')
-        .select('contact_id')
+        .select(`
+            contact_id,
+            contacts (
+                images,
+                videos,
+                documents
+            )
+        `)
         .eq('id', leadId)
         .eq('tenant_id', tenantId)
         .single()
@@ -60,6 +67,36 @@ export async function updateLead(tenantId: string, leadId: string, data: unknown
     if (input.marital_status !== undefined) contactUpdate.marital_status = input.marital_status
     if (input.birth_date !== undefined) contactUpdate.birth_date = input.birth_date || null
     if (input.contact_type !== undefined) contactUpdate.contact_type = input.contact_type
+
+    // Sincronizar mídias do Lead para o Contato (Merge)
+    const contactData = lead.contacts as any;
+    
+    if (input.images !== undefined) {
+        const existingImages = Array.isArray(contactData?.images) ? contactData.images : [];
+        const newImages = Array.isArray(input.images) ? input.images : [];
+        contactUpdate.images = Array.from(new Set([...existingImages, ...newImages]));
+    }
+
+    if (input.videos !== undefined) {
+        const existingVideos = Array.isArray(contactData?.videos) ? contactData.videos : [];
+        const newVideos = Array.isArray(input.videos) ? input.videos : [];
+        contactUpdate.videos = Array.from(new Set([...existingVideos, ...newVideos]));
+    }
+
+    if (input.documents !== undefined) {
+        const existingDocs = Array.isArray(contactData?.documents) ? contactData.documents : [];
+        const newDocs = Array.isArray(input.documents) ? input.documents : [];
+        
+        // Remove duplicates based on URL
+        const allDocs = [...existingDocs, ...newDocs];
+        const uniqueDocsMap = new Map();
+        allDocs.forEach((doc: any) => {
+            if (doc && doc.url) {
+                uniqueDocsMap.set(doc.url, doc);
+            }
+        });
+        contactUpdate.documents = Array.from(uniqueDocsMap.values());
+    }
 
     if (Object.keys(contactUpdate).length > 0) {
         const { error: contactError } = await supabase.from('contacts').update(contactUpdate).eq('id', lead.contact_id)

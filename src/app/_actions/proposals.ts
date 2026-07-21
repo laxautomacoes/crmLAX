@@ -82,6 +82,7 @@ export async function saveProposal(
             property_id: proposalData.property_id || null,
             buyer_data: proposalData.buyer_data || null,
             template_id: proposalData.template_id || null,
+            unit: proposalData.unit || null,
             updated_at: new Date().toISOString()
         }
 
@@ -101,6 +102,7 @@ export async function saveProposal(
                     lead_id: leadId || null,
                     tenant_id: tenantId,
                     created_by: profile.id,
+                    created_at: payload.updated_at,
                     ...payload
                 }])
                 .select()
@@ -213,19 +215,29 @@ async function enrichProposals(supabase: any, proposals: any[]) {
 
     // Coletar IDs únicos
     const contactIds = [...new Set(proposals.map(p => p.contact_id).filter(Boolean))]
-    const propertyIds = [...new Set(proposals.map(p => p.property_id).filter(Boolean))]
+    const directPropertyIds = [...new Set(proposals.map(p => p.property_id).filter(Boolean))]
     const leadIds = [...new Set(proposals.map(p => p.lead_id).filter(Boolean))]
+    const unitNumbers = [...new Set(proposals.map(p => p.unit).filter(Boolean))]
 
-    // Buscar dados relacionados em paralelo (sem sub-relações)
-    const [contactsRes, propertiesRes, leadsRes] = await Promise.all([
+    // Buscar leads primeiro para resolver property_id indiretamente
+    const leadsRes = leadIds.length > 0
+        ? await supabase.from('leads').select('id, property_interest, stage_id, property_id, properties(id, title, price, type, details)').in('id', leadIds)
+        : { data: [] }
+
+    // Coletar property IDs também via leads (fallback)
+    const leadPropertyIds = [...new Set((leadsRes.data || []).map((l: any) => l.property_id).filter(Boolean))]
+    const propertyIds = [...new Set([...directPropertyIds, ...leadPropertyIds])]
+
+    // Buscar propriedades e unidades em paralelo
+    const [contactsRes, propertiesRes, unitsRes] = await Promise.all([
         contactIds.length > 0
             ? supabase.from('contacts').select('*').in('id', contactIds)
             : { data: [] },
         propertyIds.length > 0
             ? supabase.from('properties').select('id, title, price, type, details').in('id', propertyIds)
             : { data: [] },
-        leadIds.length > 0
-            ? supabase.from('leads').select('id, property_interest, stage_id, property_id, properties(id, title, price, type, details)').in('id', leadIds)
+        (unitNumbers.length > 0 && propertyIds.length > 0)
+            ? supabase.from('property_units').select('property_id, unit_number, valor_total, block_tower, garage_type, garage_number, hobby_box, hobby_box_number').in('property_id', propertyIds).in('unit_number', unitNumbers)
             : { data: [] }
     ])
 
@@ -268,13 +280,33 @@ async function enrichProposals(supabase: any, proposals: any[]) {
     const propertyMap = new Map(processedProperties.map((p: any) => [p.id, p]))
     const leadMap = new Map(processedLeads.map((l: any) => [l.id, l]))
 
+    // Mapeamento de unidades
+    const unitMap = new Map((unitsRes.data || []).map((u: any) => [`${u.property_id}_${u.unit_number}`, u]))
+
     // Enriquecer cada proposta
-    return proposals.map((p: any) => ({
-        ...p,
-        contact: contactMap.get(p.contact_id) || null,
-        property: propertyMap.get(p.property_id) || null,
-        lead: leadMap.get(p.lead_id) || null
-    }))
+    return proposals.map((p: any) => {
+        const lead: any = leadMap.get(p.lead_id) || null;
+        // Resolver property_id: direto na proposta, ou via lead
+        const resolvedPropertyId = p.property_id || lead?.property_id || null;
+        const property = propertyMap.get(resolvedPropertyId) || mapPropertyAddress(lead?.properties) || null;
+        let propertyPrice = property?.price;
+        let unitInfo: any = null;
+
+        if (p.unit && resolvedPropertyId) {
+            unitInfo = unitMap.get(`${resolvedPropertyId}_${p.unit}`) || null;
+            if (unitInfo?.valor_total) {
+                propertyPrice = unitInfo.valor_total;
+            }
+        }
+
+        return {
+            ...p,
+            contact: contactMap.get(p.contact_id) || null,
+            property: property ? { ...property, price: propertyPrice } : null,
+            lead,
+            unit_info: unitInfo
+        }
+    })
 }
 
 // ─── Buscar todas as propostas do tenant (página centralizada) ───
@@ -324,6 +356,30 @@ export async function getProposalsByContact(contactId: string) {
         return { success: true, data: enriched }
     } catch (error: any) {
         console.error('[getProposalsByContact] ERROR:', error)
+        return { success: false, error: error.message }
+    }
+}
+
+// ─── Buscar proposta mais recente de um lead específico ───
+export async function getLatestProposalByLead(leadId: string) {
+    const supabase = await createClient()
+
+    try {
+        const { data, error } = await supabase
+            .from('proposals')
+            .select('*')
+            .eq('lead_id', leadId)
+            .order('updated_at', { ascending: false })
+            .limit(1)
+
+        if (error) throw error
+
+        if (!data || data.length === 0) return { success: true, data: null }
+
+        const enriched = await enrichProposals(supabase, data)
+        return { success: true, data: enriched[0] }
+    } catch (error: any) {
+        console.error('[getLatestProposalByLead] ERROR:', error)
         return { success: false, error: error.message }
     }
 }

@@ -64,13 +64,13 @@ export async function getPipelineData(tenantId: string) {
     const { profile } = await getProfile()
     const isAdmin = profile?.role === 'admin' || profile?.role === 'superadmin'
 
-    // Paralelizar: stages e leads ao mesmo tempo
+    // Query leve: apenas os campos necessários para renderizar o Pipeline/Kanban
+    // Campos pesados (whatsapp_chat, images, videos, documents, notes) são carregados sob demanda no modal
     let leadsQuery = supabase
         .from('leads')
         .select(`
             id,
             stage_id,
-            notes,
             value,
             property_interest,
             source,
@@ -80,10 +80,6 @@ export async function getPipelineData(tenantId: string) {
             contact_id,
             created_at,
             assigned_to,
-            images,
-            videos,
-            documents,
-            whatsapp_chat,
             date,
             last_interaction_at,
             partner_id,
@@ -135,7 +131,6 @@ export async function getPipelineData(tenantId: string) {
         avatar_url: lead.contacts?.avatar_url || null,
         tags: lead.contacts?.tags || [],
         status: lead.stage_id,
-        notes: lead.notes,
         value: lead.value,
         interest: lead.property_interest || lead.source,
         property_interest: lead.property_interest,
@@ -146,10 +141,12 @@ export async function getPipelineData(tenantId: string) {
         date: lead.date || (lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : null),
         assigned_to: lead.assigned_to,
         broker_name: lead.profiles?.full_name || 'Não atribuído',
-        images: lead.images || [],
-        videos: lead.videos || [],
-        documents: lead.documents || [],
-        whatsapp_chat: lead.whatsapp_chat || [],
+        // Campos pesados: não carregados na pipeline, carregados sob demanda no modal
+        images: [],
+        videos: [],
+        documents: [],
+        whatsapp_chat: [],
+        notes: '',
         last_interaction_at: lead.last_interaction_at || lead.created_at || null,
         has_proposal: ((lead as any).proposals && (lead as any).proposals.length > 0),
         partner_id: lead.partner_id || null,

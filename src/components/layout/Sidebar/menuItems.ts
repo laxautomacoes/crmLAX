@@ -54,6 +54,7 @@ export const menuItems = [
         href: '/marketing/studio', 
         permission: 'marketing',
         subItems: [
+            { name: 'Anúncios', href: '/marketing/ads' },
             { name: 'Estúdio Criação', href: '/marketing/studio' },
             { name: 'Disparador WhatsApp', href: '/marketing/bulk-sender' },
             { name: 'Disparador Email', href: '/marketing/email-bulk' },

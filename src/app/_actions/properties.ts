@@ -748,8 +748,14 @@ export async function getPropertyBySlug(type: string, slug: string, allowUnpubli
                 )
             `)
             .eq('type', type)
-            .eq('slug', slug)
             .eq('is_archived', false)
+
+        const isUuid = /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(slug);
+        if (isUuid) {
+            query = query.or(`slug.eq.${slug},id.eq.${slug}`)
+        } else {
+            query = query.eq('slug', slug)
+        }
 
         // Se não permitir não-publicados, filtra por is_published = true
         if (!allowUnpublished) {

@@ -5,12 +5,13 @@ import { getProposalsByContact, saveProposal, updateProposalStatus, getProposalT
 import { getPropertyUnits } from '@/app/_actions/property-units'
 import { generateProposalPdf } from '@/app/_actions/generate-proposal-pdf'
 import { getWhatsAppInstance } from '@/app/_actions/whatsapp'
+import { getProfile, getBrokers } from '@/app/_actions/profile'
 import { evolutionService } from '@/lib/evolution'
 import { createClient } from '@/lib/supabase/client'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
-import { Plus, FileText, Home, Loader2, ChevronDown, ChevronUp, X, Archive, Trash2, MoreVertical, Eye, Send, MessageSquare, Search } from 'lucide-react'
+import { Plus, FileText, Home, Loader2, ChevronDown, ChevronUp, X, Archive, Trash2, MoreVertical, Eye, Edit2, Send, MessageSquare, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { formatCurrencyBRL, parseCurrencyBRL } from '@/lib/utils/currency'
 import { autoFillProposalFields } from '@/lib/utils/proposal-autofill'
@@ -39,6 +40,15 @@ interface ProposalItem {
     template_id?: string | null
     buyer_data?: any
     is_archived?: boolean
+    unit?: string | null
+    unit_info?: {
+        block_tower?: string | null
+        garage_type?: string | null
+        garage_number?: string | null
+        hobby_box?: string | null
+        hobby_box_number?: string | null
+        valor_total?: number | null
+    } | null
 }
 
 const STATUS_OPTIONS = [
@@ -98,19 +108,19 @@ function ClientProposalActionsDropdown({
                 <MoreVertical size={14} />
             </button>
             {isOpen && (
-                <div className="absolute right-0 mt-1 w-48 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 text-left">
+                <div className="absolute right-0 mt-1 w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30 text-left">
                     <button
                         onClick={(e) => { e.stopPropagation(); setIsOpen(false); onEdit() }}
-                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-blue-500/10 transition-colors"
                     >
-                        <Eye size={14} className="text-blue-500" />
+                        <Edit2 size={14} className="text-blue-500" />
                         Editar
                     </button>
                     {hasTemplate && onDownloadPDF && (
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsOpen(false); onDownloadPDF() }}
                             disabled={downloading}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors disabled:opacity-50"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-emerald-500/10 transition-colors disabled:opacity-50"
                         >
                             <FileText size={14} className="text-emerald-500" />
                             {downloading ? 'Gerando...' : 'Baixar PDF'}
@@ -119,7 +129,7 @@ function ClientProposalActionsDropdown({
                     {waConnected && onSendWhatsAppProposal && (
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsOpen(false); onSendWhatsAppProposal() }}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-green-500/10 transition-colors"
                         >
                             <MessageSquare size={14} className="text-green-500" />
                             Avisar Proposta
@@ -128,7 +138,7 @@ function ClientProposalActionsDropdown({
                     {waConnected && onSendWhatsAppSale && (
                         <button
                             onClick={(e) => { e.stopPropagation(); setIsOpen(false); onSendWhatsAppSale() }}
-                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted/50 transition-colors"
+                            className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-green-500/10 transition-colors"
                         >
                             <Send size={14} className="text-green-500" />
                             Avisar Venda
@@ -179,6 +189,10 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
     const [waInstance, setWaInstance] = useState<any>(null)
     const [waLoading, setWaLoading] = useState(false)
 
+    // Dados de perfil para autofill
+    const [profileName, setProfileName] = useState('')
+    const [adminName, setAdminName] = useState('')
+
     const [templates, setTemplates] = useState<any[]>([])
     const [selectedTemplateId, setSelectedTemplateId] = useState('')
     const [dynamicFields, setDynamicFields] = useState<any[]>([])
@@ -222,8 +236,22 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             }
             setLoading(false)
         }
+        async function loadProfileData() {
+            const { profile } = await getProfile()
+            if (profile) {
+                setProfileName(profile.full_name || '')
+                // Buscar admin do tenant
+                const brokersRes = await getBrokers(tenantId)
+                if (brokersRes.success && brokersRes.data) {
+                    const admin = brokersRes.data.find((b: any) => b.role === 'admin' || b.role === 'superadmin')
+                    if (admin) setAdminName(admin.full_name || '')
+                    else setAdminName(profile.full_name || '') // fallback: próprio usuário
+                }
+            }
+        }
         load()
         loadWhatsApp()
+        loadProfileData()
     }, [client?.id, tenantId])
 
     // Auto-abrir formulário ou expandir proposta existente quando vem de Leads
@@ -252,7 +280,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             const template = templates.find(t => t.id === selectedTemplateId)
             if (template) {
                 const fields = template.mapped_fields || []
-                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId)
+                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId, selectedSystemProperty, selectedUnit, availableUnits, profileName, adminName)
                 
                 setDynamicResponses(prev => {
                     const newResponses = { ...prev }
@@ -266,7 +294,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                 })
             }
         }
-    }, [selectedLeadId, selectedTemplateId, templates, client])
+    }, [selectedLeadId, selectedTemplateId, templates, client, selectedSystemProperty, selectedUnit, availableUnits, profileName, adminName])
 
     useEffect(() => {
         if (!isPropertySelectorModalOpen) return
@@ -302,9 +330,23 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
 
     useEffect(() => {
         async function fetchUnits() {
-            if (selectedSystemProperty?.id && (selectedSystemProperty?.type === 'Empreendimento' || selectedSystemProperty?.details?.is_empreendimento)) {
+            let propertyId = null;
+            let isEmpreendimento = false;
+
+            if (selectedLeadId && selectedLeadId !== 'NEW_PROPERTY') {
+                const lead = client?.leads?.find((l: any) => l.id === selectedLeadId);
+                if (lead?.properties?.id && (lead.properties.type === 'Empreendimento' || lead.properties.details?.is_empreendimento)) {
+                    propertyId = lead.properties.id;
+                    isEmpreendimento = true;
+                }
+            } else if (selectedSystemProperty?.id && (selectedSystemProperty?.type === 'Empreendimento' || selectedSystemProperty?.details?.is_empreendimento)) {
+                propertyId = selectedSystemProperty.id;
+                isEmpreendimento = true;
+            }
+
+            if (propertyId && isEmpreendimento) {
                 setIsLoadingUnits(true)
-                const res = await getPropertyUnits(selectedSystemProperty.id)
+                const res = await getPropertyUnits(propertyId)
                 if (res.success && res.data) {
                     setAvailableUnits(res.data)
                 } else {
@@ -316,7 +358,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             }
         }
         fetchUnits()
-    }, [selectedSystemProperty])
+    }, [selectedSystemProperty, selectedLeadId, client])
 
     const handleTemplateChange = (templateId: string) => {
         setSelectedTemplateId(templateId)
@@ -331,7 +373,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             const fields = template.mapped_fields || []
             setDynamicFields(fields)
             if (selectedLeadId) {
-                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId, selectedSystemProperty, selectedUnit, availableUnits)
+                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId, selectedSystemProperty, selectedUnit, availableUnits, profileName, adminName)
                 setDynamicResponses(autoFilled)
             } else {
                 setDynamicResponses({})
@@ -345,11 +387,11 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             const template = templates.find(t => t.id === selectedTemplateId)
             if (template) {
                 const fields = template.mapped_fields || []
-                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId, selectedSystemProperty, selectedUnit, availableUnits)
+                const autoFilled = autoFillProposalFields(fields, client, selectedLeadId, selectedSystemProperty, selectedUnit, availableUnits, profileName, adminName)
                 setDynamicResponses(prev => ({ ...prev, ...autoFilled }))
             }
         }
-    }, [selectedSystemProperty, selectedUnit, availableUnits, selectedLeadId])
+    }, [selectedSystemProperty, selectedUnit, availableUnits, selectedLeadId, profileName, adminName])
 
     const resetForm = () => {
         setFormData({ value: '', down_payment: '', financing: '', installments: '', permutas: '', notes: '' })
@@ -377,6 +419,8 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             notes: terms.notes || '',
         })
         setSelectedLeadId(proposal.lead_id)
+        if (proposal.unit) setSelectedUnit(proposal.unit)
+        else setSelectedUnit('')
         
         if (proposal.template_id) {
             setSelectedTemplateId(proposal.template_id)
@@ -432,7 +476,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
             property_id: selectedLeadId === 'NEW_PROPERTY' ? selectedSystemProperty.id : (lead?.property_id || undefined),
             template_id: selectedTemplateId && selectedTemplateId !== 'simple' ? selectedTemplateId : undefined,
             buyer_data: selectedTemplateId && selectedTemplateId !== 'simple' ? dynamicResponses : undefined,
-            unit: selectedLeadId === 'NEW_PROPERTY' ? selectedUnit : undefined,
+            unit: selectedUnit || undefined,
             create_lead: selectedLeadId === 'NEW_PROPERTY' ? createLeadForProperty : undefined
         }
 
@@ -453,9 +497,10 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
     }
 
     const handleStatusChange = async (proposalId: string, newStatus: string) => {
+        const now = new Date().toISOString()
         const res = await updateProposalStatus(proposalId, newStatus)
         if (res.success) {
-            setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: newStatus } : p))
+            setProposals(prev => prev.map(p => p.id === proposalId ? { ...p, status: newStatus, updated_at: now } : p))
             toast.success(`Status atualizado para "${STATUS_OPTIONS.find(s => s.value === newStatus)?.label}"`)
             if (onSuccess) onSuccess()
         } else {
@@ -601,6 +646,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                             onChange={e => {
                                 const val = e.target.value
                                 setSelectedLeadId(val)
+                                setSelectedUnit('')
                                 if (val === 'NEW_PROPERTY' && !selectedSystemProperty) {
                                     setIsPropertySelectorModalOpen(true)
                                 }
@@ -639,6 +685,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                     type="button"
                                     onClick={() => {
                                         setSelectedSystemProperty(null)
+                                        setSelectedUnit('')
                                         setIsPropertySelectorModalOpen(true)
                                     }}
                                     className="text-xs text-red-500 hover:underline"
@@ -648,63 +695,6 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                             </div>
                         </div>
                         )}
-                        
-                        {/* Seleção de Unidade se for Empreendimento */}
-                        {(selectedSystemProperty?.type === 'Empreendimento' || selectedSystemProperty?.details?.is_empreendimento) && (
-                            availableUnits.length > 0 ? (
-                                <FormSelect
-                                    label="Unidade"
-                                    value={selectedUnit}
-                                    onChange={e => setSelectedUnit(e.target.value)}
-                                    options={[
-                                        { value: '', label: 'Selecione a unidade...' },
-                                        ...availableUnits
-                                            .filter((u: any) => {
-                                                if (!u.status) return true;
-                                                const s = u.status.toLowerCase();
-                                                return s === 'disponível' || s === 'disponivel' || s === 'available' || s === 'ativo';
-                                            })
-                                            .sort((a: any, b: any) => {
-                                                const aNum = parseInt(a.unit_number?.replace(/\D/g, '') || '0', 10);
-                                                const bNum = parseInt(b.unit_number?.replace(/\D/g, '') || '0', 10);
-                                                if (aNum !== bNum) return aNum - bNum;
-                                                const aTower = a.block_tower || '';
-                                                const bTower = b.block_tower || '';
-                                                return aTower.localeCompare(bTower);
-                                            })
-                                            .map((u: any) => {
-                                                let towerStr = '';
-                                                if (u.block_tower) {
-                                                    const t = u.block_tower.trim();
-                                                    if (t.toLowerCase().includes('torre') || t.toLowerCase().includes('bloco')) {
-                                                        towerStr = ` (${t})`;
-                                                    } else {
-                                                        towerStr = ` (Torre ${t})`;
-                                                    }
-                                                }
-                                                return {
-                                                    value: u.unit_number,
-                                                    label: `${u.unit_number}${towerStr} - ${u.valor_total ? `R$ ${parseFloat(u.valor_total).toLocaleString('pt-BR')}` : 'Sob Consulta'}`
-                                                };
-                                            })
-                                    ]}
-                                />
-                            ) : (
-                                <div className="relative">
-                                    <FormInput
-                                        label="Unidade"
-                                        value={selectedUnit}
-                                        onChange={e => setSelectedUnit(e.target.value)}
-                                        placeholder="Ex: Apto 101, Torre B"
-                                        disabled={isLoadingUnits}
-                                    />
-                                    {isLoadingUnits && (
-                                        <Loader2 size={14} className="absolute right-3 top-[34px] animate-spin text-muted-foreground" />
-                                    )}
-                                </div>
-                            )
-                        )}
-
                         {selectedSystemProperty && (
                             <label className="flex items-center gap-2 cursor-pointer mt-2">
                                 <input
@@ -718,6 +708,76 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                         )}
                     </div>
                 )}
+
+                {/* Seleção de Unidade se for Empreendimento */}
+                {(() => {
+                    let isEmpreendimento = false;
+                    if (selectedLeadId && selectedLeadId !== 'NEW_PROPERTY') {
+                        const lead = clientLeads.find((l: any) => l.id === selectedLeadId);
+                        if (lead?.properties?.type === 'Empreendimento' || lead?.properties?.details?.is_empreendimento) {
+                            isEmpreendimento = true;
+                        }
+                    } else if (selectedSystemProperty?.type === 'Empreendimento' || selectedSystemProperty?.details?.is_empreendimento) {
+                        isEmpreendimento = true;
+                    }
+
+                    if (!isEmpreendimento) return null;
+
+                    return availableUnits.length > 0 ? (
+                        <div className="pt-2">
+                            <FormSelect
+                                label="Unidade"
+                                value={selectedUnit}
+                                onChange={e => setSelectedUnit(e.target.value)}
+                                options={[
+                                    { value: '', label: 'Selecione a unidade...' },
+                                    ...availableUnits
+                                        .filter((u: any) => {
+                                            if (!u.status) return true;
+                                            const s = u.status.toLowerCase();
+                                            return s === 'disponível' || s === 'disponivel' || s === 'available' || s === 'ativo';
+                                        })
+                                        .sort((a: any, b: any) => {
+                                            const aNum = parseInt(a.unit_number?.replace(/\D/g, '') || '0', 10);
+                                            const bNum = parseInt(b.unit_number?.replace(/\D/g, '') || '0', 10);
+                                            if (aNum !== bNum) return aNum - bNum;
+                                            const aTower = a.block_tower || '';
+                                            const bTower = b.block_tower || '';
+                                            return aTower.localeCompare(bTower);
+                                        })
+                                        .map((u: any) => {
+                                            let towerStr = '';
+                                            if (u.block_tower) {
+                                                const t = u.block_tower.trim();
+                                                if (t.toLowerCase().includes('torre') || t.toLowerCase().includes('bloco')) {
+                                                    towerStr = ` (${t})`;
+                                                } else {
+                                                    towerStr = ` (Torre ${t})`;
+                                                }
+                                            }
+                                            return {
+                                                value: u.unit_number,
+                                                label: `${u.unit_number}${towerStr} - ${u.valor_total ? `R$ ${parseFloat(u.valor_total).toLocaleString('pt-BR')}` : 'Sob Consulta'}`
+                                            };
+                                        })
+                                ]}
+                            />
+                        </div>
+                    ) : (
+                        <div className="pt-2 relative">
+                            <FormInput
+                                label="Unidade"
+                                value={selectedUnit}
+                                onChange={e => setSelectedUnit(e.target.value)}
+                                placeholder="Ex: Apto 101, Torre B"
+                                disabled={isLoadingUnits}
+                            />
+                            {isLoadingUnits && (
+                                <Loader2 size={14} className="absolute right-3 top-[34px] animate-spin text-muted-foreground" />
+                            )}
+                        </div>
+                    );
+                })()}
 
                 {/* Modelo de Ficha de Proposta */}
                 <div className="pt-2 border-t border-border/30">
@@ -860,7 +920,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
     }
 
     return (
-        <div className="space-y-5 px-1 pb-4">
+        <div className="space-y-5 px-1 pb-4 flex flex-col h-full">
             {/* Header */}
             <div className="flex items-center justify-between">
                 <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Propostas</h3>
@@ -903,14 +963,14 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
 
             {/* Lista de Propostas */}
             {activeProposals.length === 0 ? (
-                <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-8 rounded-lg border border-border/40 text-center transition-all">
+                <div className="bg-background hover:bg-gray-50 dark:hover:bg-muted/30 p-8 rounded-lg border border-border/40 text-center transition-all flex-1">
                     <FileText size={28} className="mx-auto text-muted-foreground/40 mb-2" />
                     <p className="text-xs text-muted-foreground">Nenhuma proposta criada para este cliente.</p>
                     <p className="text-[10px] text-muted-foreground/60 mt-0.5">Clique em "Nova Proposta" para começar.</p>
                 </div>
             ) : (
-                <div className="bg-white dark:bg-card rounded-lg border border-muted-foreground/30 overflow-hidden shadow-sm">
-                        <div className="overflow-x-auto min-h-[500px]">
+                <div className="bg-white dark:bg-card rounded-xl border border-muted-foreground/30 overflow-hidden shadow-sm flex-1 flex flex-col">
+                        <div className="overflow-x-auto overflow-y-auto flex-1 min-h-[250px]">
                             <table className="w-full text-left" style={{ tableLayout: 'fixed' }}>
                                 <colgroup>
                                     <col style={{ width: '26%' }} />
@@ -936,8 +996,47 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                     {activeProposals.map(proposal => {
                                         const isExpanded = expandedId === proposal.id
                                         const property = proposal.property || proposal.lead?.properties
-                                        const propertyName = property?.title || proposal.lead?.property_interest || 'Imóvel não especificado'
+                                        let propertyName = property?.title || proposal.lead?.property_interest || 'Imóvel não especificado'
                                         const terms = proposal.payment_terms || {}
+                                        const unitInfo = proposal.unit_info
+
+                                        // Linha de detalhes da unidade (Apto + Vaga + Hobby Box)
+                                        const unitParts: string[] = []
+                                        if (proposal.unit) unitParts.push(`apto ${proposal.unit}`)
+                                        if (unitInfo?.block_tower) unitParts.push(`bl ${unitInfo.block_tower}`)
+                                        
+                                        if (unitInfo?.garage_number) {
+                                            unitParts.push(`vg ${unitInfo.garage_number}`)
+                                        } else if (unitInfo?.garage_type && unitInfo.garage_type !== 'Não') {
+                                            if (unitInfo.garage_type.toLowerCase() === 'sim') {
+                                                unitParts.push(`vg sim`)
+                                            } else {
+                                                unitParts.push(`vg ${unitInfo.garage_type}`)
+                                            }
+                                        }
+                                        
+                                        if (unitInfo?.hobby_box && unitInfo.hobby_box !== 'Não') {
+                                            if (unitInfo.hobby_box_number) {
+                                                unitParts.push(`hb ${unitInfo.hobby_box_number}`)
+                                            } else if (unitInfo.hobby_box.toLowerCase() !== 'sim') {
+                                                unitParts.push(`hb ${unitInfo.hobby_box}`)
+                                            } else {
+                                                unitParts.push(`hb sim`)
+                                            }
+                                        }
+                                        let unitSubtitle = unitParts.join(' • ')
+                                        
+                                        if (proposal.buyer_data?.imovel_descricao) {
+                                            const desc = proposal.buyer_data.imovel_descricao as string;
+                                            const splitIndex = desc.indexOf(' - ');
+                                            if (splitIndex !== -1) {
+                                                propertyName = desc.substring(0, splitIndex).trim();
+                                                unitSubtitle = desc.substring(splitIndex + 3).trim();
+                                            } else {
+                                                propertyName = desc;
+                                                unitSubtitle = '';
+                                            }
+                                        }
 
                                         // Calcular diferença de valor
                                         const propertyPrice = property?.price ? parseFloat(property.price.toString()) : 0
@@ -965,12 +1064,17 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                             setExpandedId(proposal.id)
                                                         }
                                                     }}
-                                                    className="bg-white dark:bg-card hover:bg-muted/50 transition-colors cursor-pointer group"
+                                                    className="bg-muted dark:bg-muted/10 transition-colors cursor-pointer group"
                                                 >
                                                     <td className="px-4 py-5 text-sm font-bold text-foreground truncate text-center">
                                                         <div className="flex flex-col min-w-0">
                                                             <span className="truncate">{propertyName}</span>
-                                                            {property?.address_city && (
+                                                            {unitSubtitle && (
+                                                                <span className="text-[10px] font-medium text-muted-foreground truncate mt-0.5">
+                                                                    {unitSubtitle}
+                                                                </span>
+                                                            )}
+                                                            {!unitSubtitle && property?.address_city && (
                                                                 <span className="text-[10px] font-medium text-muted-foreground truncate">
                                                                     {property.address_city} - {property.address_state}
                                                                 </span>
@@ -978,11 +1082,13 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-5 text-sm font-medium text-foreground text-center whitespace-nowrap">
-                                                        R$ {property?.price ? parseFloat(property.price.toString()).toLocaleString('pt-BR') : '—'}
+                                                        {property?.price
+                                                            ? `R$ ${parseFloat(property.price.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+                                                            : 'R$ —'}
                                                     </td>
                                                     <td className="px-4 py-5 text-sm font-medium text-foreground text-center whitespace-nowrap">
                                                         <div className="flex items-center justify-center gap-1.5">
-                                                            <span>R$ {proposal.value ? parseFloat(proposal.value.toString()).toLocaleString('pt-BR') : '0'}</span>
+                                                            <span>{proposal.value ? `R$ ${parseFloat(proposal.value.toString()).toLocaleString('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}` : 'R$ —'}</span>
                                                             {diffPercentStr && (
                                                                 <span className={`text-[10px] font-bold ${diffValue > 0 ? 'text-emerald-500' : diffValue < 0 ? 'text-red-500' : 'text-muted-foreground'}`}>
                                                                     {diffPercentStr}
@@ -991,10 +1097,12 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                         </div>
                                                     </td>
                                                     <td className="px-4 py-5 text-sm font-medium text-muted-foreground text-center whitespace-nowrap">
-                                                        {new Date(proposal.created_at || proposal.updated_at).toLocaleDateString('pt-BR')}
+                                                        {new Date(proposal.created_at).toLocaleDateString('pt-BR')}
                                                     </td>
                                                     <td className="px-4 py-5 text-sm font-medium text-muted-foreground text-center whitespace-nowrap">
-                                                        {new Date(proposal.updated_at).toLocaleDateString('pt-BR')}
+                                                        {proposal.updated_at && Math.abs(new Date(proposal.updated_at).getTime() - new Date(proposal.created_at).getTime()) > 1000
+                                                            ? new Date(proposal.updated_at).toLocaleDateString('pt-BR')
+                                                            : '—'}
                                                     </td>
                                                     <td className="px-4 py-5 text-center" onClick={e => e.stopPropagation()}>
                                                         <div className="flex justify-center items-center">
@@ -1032,41 +1140,52 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                                                 renderProposalForm(true)
                                                             ) : (
                                                                 <div className="space-y-4 animate-in fade-in duration-200">
-                                                                {/* Valores */}
-                                                                <div className="grid grid-cols-3 gap-3">
-                                                                    <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
-                                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Valor Proposta</p>
-                                                                        <p className="text-sm font-bold text-foreground mt-0.5">
-                                                                            R$ {proposal.value ? parseFloat(proposal.value.toString()).toLocaleString('pt-BR') : '0'}
+                                                                {(!proposal.template_id || proposal.template_id === 'simple') ? (
+                                                                    <>
+                                                                        {/* Valores */}
+                                                                        <div className="grid grid-cols-3 gap-3">
+                                                                            <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
+                                                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Valor Proposta</p>
+                                                                                <p className="text-sm font-bold text-foreground mt-0.5">
+                                                                                    R$ {proposal.value ? parseFloat(proposal.value.toString()).toLocaleString('pt-BR') : '0'}
+                                                                                </p>
+                                                                            </div>
+                                                                            <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
+                                                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Sinal/Entrada</p>
+                                                                                <p className="text-sm font-bold text-foreground mt-0.5">
+                                                                                    R$ {terms.down_payment ? parseFloat(terms.down_payment.toString()).toLocaleString('pt-BR') : '0'}
+                                                                                </p>
+                                                                            </div>
+                                                                            <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
+                                                                                <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Financiamento</p>
+                                                                                <p className="text-sm font-bold text-foreground mt-0.5">
+                                                                                    R$ {terms.financing ? parseFloat(terms.financing.toString()).toLocaleString('pt-BR') : '0'}
+                                                                                </p>
+                                                                            </div>
+                                                                        </div>
+                                                                        <div className="space-y-2 pt-2 border-t border-border/10">
+                                                                            <div className="text-xs">
+                                                                                <span className="font-bold text-muted-foreground">Parcelamento:</span>{' '}
+                                                                                <span className="text-foreground">{terms.installments || '—'}</span>
+                                                                            </div>
+                                                                            <div className="text-xs">
+                                                                                <span className="font-bold text-muted-foreground">Permutas/Bens:</span>{' '}
+                                                                                <span className="text-foreground">{terms.permutas || '—'}</span>
+                                                                            </div>
+                                                                            <div className="text-xs">
+                                                                                <span className="font-bold text-muted-foreground">Observações:</span>{' '}
+                                                                                <span className="text-foreground italic">{terms.notes || '—'}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    </>
+                                                                ) : (
+                                                                    <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-4">
+                                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-2">Condições de Pagamento</p>
+                                                                        <p className="text-sm text-foreground whitespace-pre-wrap">
+                                                                            {proposal.buyer_data?.condicoes_pagamento || '—'}
                                                                         </p>
                                                                     </div>
-                                                                    <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
-                                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Sinal/Entrada</p>
-                                                                        <p className="text-sm font-bold text-foreground mt-0.5">
-                                                                            R$ {terms.down_payment ? parseFloat(terms.down_payment.toString()).toLocaleString('pt-BR') : '0'}
-                                                                        </p>
-                                                                    </div>
-                                                                    <div className="bg-white border border-border/40 dark:bg-muted/30 dark:border-0 rounded-md p-3">
-                                                                        <p className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider">Financiamento</p>
-                                                                        <p className="text-sm font-bold text-foreground mt-0.5">
-                                                                            R$ {terms.financing ? parseFloat(terms.financing.toString()).toLocaleString('pt-BR') : '0'}
-                                                                        </p>
-                                                                    </div>
-                                                                </div>
-                                                                <div className="space-y-2 pt-2 border-t border-border/10">
-                                                                    <div className="text-xs">
-                                                                        <span className="font-bold text-muted-foreground">Parcelamento:</span>{' '}
-                                                                        <span className="text-foreground">{terms.installments || '—'}</span>
-                                                                    </div>
-                                                                    <div className="text-xs">
-                                                                        <span className="font-bold text-muted-foreground">Permutas/Bens:</span>{' '}
-                                                                        <span className="text-foreground">{terms.permutas || '—'}</span>
-                                                                    </div>
-                                                                    <div className="text-xs">
-                                                                        <span className="font-bold text-muted-foreground">Observações:</span>{' '}
-                                                                        <span className="text-foreground italic">{terms.notes || '—'}</span>
-                                                                    </div>
-                                                                </div>
+                                                                )}
 
                                                                 {/* Exibição dos Dados Dinâmicos da Ficha */}
                                                                 {proposal.template_id && proposal.buyer_data && Object.keys(proposal.buyer_data).length > 0 && (
@@ -1294,6 +1413,7 @@ export function ClientProposalsTab({ client, tenantId, initialLeadId, onConsumeI
                                     type="button"
                                     onClick={() => {
                                         setSelectedSystemProperty(prop)
+                                        setSelectedUnit('')
                                         setIsPropertySelectorModalOpen(false)
                                     }}
                                     className="w-full flex flex-col items-start p-3 bg-white dark:bg-background hover:bg-muted/50 border-b border-border last:border-0 transition-colors"

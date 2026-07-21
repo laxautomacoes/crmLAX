@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { Plus } from 'lucide-react'
+import { Plus, Search, Filter as FilterIcon } from 'lucide-react'
 import { toast } from 'sonner'
 import { PageHeader } from '@/components/shared/PageHeader'
+import { FormInput } from '@/components/shared/forms/FormInput'
 import { FinancialKPIs } from '@/components/financial/FinancialKPIs'
 import { MonthlyChart } from '@/components/financial/MonthlyChart'
 import { TransactionsTable } from '@/components/financial/TransactionsTable'
@@ -30,6 +31,7 @@ export function FinanceiroClient({ tenantId, leads }: FinanceiroClientProps) {
     const [monthlyData, setMonthlyData] = useState<MonthlyData[]>([])
     const [categories, setCategories] = useState<FinancialCategory[]>([])
     const [isModalOpen, setIsModalOpen] = useState(false)
+    const [isFilterOpen, setIsFilterOpen] = useState(false)
     const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null)
     const [isLoading, setIsLoading] = useState(true)
 
@@ -145,13 +147,39 @@ export function FinanceiroClient({ tenantId, leads }: FinanceiroClientProps) {
         )
     }
 
+    const isFiltered = tipo !== 'Todas' || categoria !== '' || periodo !== 'month' || search !== '';
+
     return (
         <div className="max-w-[1600px] mx-auto space-y-6 md:space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-300">
             <PageHeader
                 title="Financeiro"
                 subtitle="Gerencie receitas e despesas do seu negócio"
             >
-                <div className="grid grid-flow-col auto-cols-fr gap-2 md:gap-3 w-full md:w-max">
+                <div className="w-full md:w-[320px] md:flex-none order-1 md:order-1">
+                    <FormInput
+                        placeholder="Pesquisar..."
+                        value={search}
+                        onChange={(e) => setSearch(e.target.value)}
+                        onClear={() => setSearch('')}
+                        icon={Search}
+                        iconSize={14}
+                        iconStrokeWidth={1}
+                        className="w-full h-[34px]"
+                    />
+                </div>
+                <div className="grid grid-cols-2 md:grid-flow-col md:auto-cols-max gap-2 md:gap-3 w-full md:w-max order-2 md:order-2">
+                    <button
+                        onClick={() => setIsFilterOpen(true)}
+                        className={`w-full md:w-auto md:min-w-[130px] h-[34px] flex items-center justify-center gap-2 px-4 border rounded-lg transition-all text-xs font-bold uppercase tracking-widest whitespace-nowrap outline-none focus:ring-2 shadow-sm ${
+                            isFiltered
+                                ? 'bg-secondary/10 border-secondary text-secondary-foreground hover:bg-secondary/20 focus:ring-secondary/50'
+                                : 'bg-card border-muted-foreground/30 text-foreground hover:bg-muted/50 focus:ring-ring/50'
+                        }`}
+                    >
+                        <FilterIcon size={14} strokeWidth={1} />
+                        <span>Filtrar</span>
+                        {isFiltered && <span className="ml-1 w-4 h-4 rounded-full bg-secondary text-secondary-foreground text-[10px] flex items-center justify-center font-black">!</span>}
+                    </button>
                     <button
                         onClick={handleOpenModal}
                         className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 bg-secondary text-secondary-foreground border border-transparent px-4 rounded-lg hover:opacity-90 active:scale-[0.99] transition-all text-xs font-bold uppercase tracking-widest shadow-sm whitespace-nowrap"
@@ -178,6 +206,8 @@ export function FinanceiroClient({ tenantId, leads }: FinanceiroClientProps) {
                 search={search}
                 onSearchChange={setSearch}
                 categories={categories}
+                isOpen={isFilterOpen}
+                onClose={() => setIsFilterOpen(false)}
             />
 
             <TransactionsTable
@@ -196,6 +226,8 @@ export function FinanceiroClient({ tenantId, leads }: FinanceiroClientProps) {
                 editingTransaction={editingTransaction}
                 categories={categories}
                 leads={leads}
+                tenantId={tenantId}
+                onCategoriesChange={fetchData}
             />
         </div>
     )

@@ -1,7 +1,8 @@
 'use client'
 
-import { Search, Calendar, Filter as FilterIcon, X } from 'lucide-react'
+import { Calendar, Filter as FilterIcon } from 'lucide-react'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
+import { Modal } from '@/components/shared/Modal'
 import type { FinancialCategory } from '@/app/_actions/financial'
 
 interface TransactionFiltersProps {
@@ -14,6 +15,8 @@ interface TransactionFiltersProps {
     search: string
     onSearchChange: (v: string) => void
     categories: FinancialCategory[]
+    isOpen: boolean
+    onClose: () => void
 }
 
 export function TransactionFilters({
@@ -21,89 +24,78 @@ export function TransactionFilters({
     categoria, onCategoriaChange,
     periodo, onPeriodoChange,
     search, onSearchChange,
-    categories
+    categories,
+    isOpen, onClose
 }: TransactionFiltersProps) {
     const filteredCategories = tipo && tipo !== 'Todas'
         ? categories.filter(c => c.tipo === tipo || c.tipo === 'Ambos')
         : categories
 
     return (
-        <div className="bg-card border border-border rounded-2xl p-4 animate-in fade-in slide-in-from-bottom-4 duration-500">
-            <div className="flex flex-col gap-3">
-                {/* Busca - always full width */}
-                <div className="relative w-full">
-                    <Search size={14} strokeWidth={1} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
-                    <input
-                        type="text"
-                        value={search}
-                        onChange={(e) => onSearchChange(e.target.value)}
-                        placeholder="Buscar por descrição..."
-                        className="w-full pl-9 pr-8 py-2.5 bg-input border border-border rounded-lg text-sm text-foreground placeholder:text-muted-foreground focus:ring-2 focus:ring-secondary/50 focus:border-secondary outline-none transition-all"
+        <Modal isOpen={isOpen} onClose={onClose} title="Filtros">
+            <div className="space-y-4">
+                {/* Período */}
+                <FormSelect
+                    label="Período"
+                    value={periodo}
+                    onChange={(e) => onPeriodoChange(e.target.value)}
+                    options={[
+                        { value: 'month', label: 'Este Mês' },
+                        { value: '3months', label: 'Últimos 3 meses' },
+                        { value: '6months', label: 'Últimos 6 meses' },
+                        { value: 'year', label: 'Este Ano' },
+                        { value: 'all', label: 'Tudo' },
+                    ]}
+                />
+
+                {/* Tipo */}
+                <FormSelect
+                    label="Tipo"
+                    value={tipo}
+                    onChange={(e) => onTipoChange(e.target.value)}
+                    options={[
+                        { value: 'Todas', label: 'Todas' },
+                        { value: 'Receita', label: 'Receitas' },
+                        { value: 'Despesa', label: 'Despesas' },
+                    ]}
+                />
+
+                {/* Categoria */}
+                {filteredCategories.length > 0 && (
+                    <FormSelect
+                        label="Categoria"
+                        value={categoria}
+                        onChange={(e) => onCategoriaChange(e.target.value)}
+                        options={[
+                            { value: '', label: 'Todas categorias' },
+                            ...filteredCategories.map(c => ({
+                                value: c.name,
+                                label: c.name,
+                            }))
+                        ]}
                     />
-                    {search && (
-                        <button
-                            type="button"
-                            onClick={() => onSearchChange('')}
-                            className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground outline-none"
-                        >
-                            <X size={14} strokeWidth={1.5} />
-                        </button>
-                    )}
-                </div>
-
-                {/* Selects - grid on mobile, flex row on desktop */}
-                <div className="grid grid-cols-2 md:flex md:flex-row items-stretch md:items-center gap-2 md:gap-3">
-                    {/* Período */}
-                    <div className="flex items-center gap-2 md:min-w-[160px]">
-                        <Calendar size={14} className="text-muted-foreground hidden md:block flex-shrink-0" />
-                        <FormSelect
-                            label=""
-                            value={periodo}
-                            onChange={(e) => onPeriodoChange(e.target.value)}
-                            options={[
-                                { value: 'month', label: 'Este Mês' },
-                                { value: '3months', label: 'Últimos 3 meses' },
-                                { value: '6months', label: 'Últimos 6 meses' },
-                                { value: 'year', label: 'Este Ano' },
-                                { value: 'all', label: 'Tudo' },
-                            ]}
-                        />
-                    </div>
-
-                    {/* Tipo */}
-                    <div className="flex items-center gap-2 md:min-w-[140px]">
-                        <FilterIcon size={14} className="text-muted-foreground hidden md:block flex-shrink-0" />
-                        <FormSelect
-                            label=""
-                            value={tipo}
-                            onChange={(e) => onTipoChange(e.target.value)}
-                            options={[
-                                { value: 'Todas', label: 'Todas' },
-                                { value: 'Receita', label: 'Receitas' },
-                                { value: 'Despesa', label: 'Despesas' },
-                            ]}
-                        />
-                    </div>
-
-                    {/* Categoria */}
-                    {filteredCategories.length > 0 && (
-                        <div className="col-span-2 md:col-span-1 md:min-w-[160px]">
-                            <FormSelect
-                                label=""
-                                value={categoria}
-                                onChange={(e) => onCategoriaChange(e.target.value)}
-                                options={[
-                                    { value: '', label: 'Todas categorias' },
-                                    ...filteredCategories.map(c => ({
-                                        value: c.name,
-                                        label: c.name,
-                                    }))
-                                ]}
-                            />
-                        </div>
-                    )}
-                </div>
+                )}
             </div>
-        </div>
+            
+            <div className="flex items-center justify-between gap-3 mt-8 pt-4 border-t border-border/50">
+                <button
+                    onClick={() => {
+                        onPeriodoChange('month')
+                        onTipoChange('Todas')
+                        onCategoriaChange('')
+                        onSearchChange('')
+                    }}
+                    className="text-sm font-bold text-muted-foreground hover:text-foreground transition-colors"
+                >
+                    Limpar
+                </button>
+                <button
+                    onClick={onClose}
+                    className="bg-secondary text-secondary-foreground h-[34px] px-6 rounded-lg font-bold text-sm hover:opacity-90 transition-opacity"
+                >
+                    Aplicar
+                </button>
+            </div>
+        </Modal>
     )
 }

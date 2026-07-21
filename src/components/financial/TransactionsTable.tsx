@@ -1,6 +1,7 @@
 'use client'
 
-import { Pencil, Trash2, DollarSign, Link2 } from 'lucide-react'
+import { useState, useRef, useEffect } from 'react'
+import { Pencil, Trash2, DollarSign, Link2, MoreVertical } from 'lucide-react'
 import type { Transaction } from '@/app/_actions/financial'
 
 interface TransactionsTableProps {
@@ -56,11 +57,11 @@ export function TransactionsTable({ transactions, onEdit, onDelete }: Transactio
                 <table className="w-full">
                     <thead>
                         <tr className="border-b border-border bg-muted/30">
-                            <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Data</th>
-                            <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Descrição</th>
-                            <th className="text-left text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Categoria</th>
+                            <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Data</th>
+                            <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Descrição</th>
+                            <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Categoria</th>
                             <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Tipo</th>
-                            <th className="text-right text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Valor</th>
+                            <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3 whitespace-nowrap">Valor (R$)</th>
                             <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Status</th>
                             <th className="text-center text-[10px] font-black text-muted-foreground uppercase tracking-widest px-6 py-3">Ações</th>
                         </tr>
@@ -68,23 +69,22 @@ export function TransactionsTable({ transactions, onEdit, onDelete }: Transactio
                     <tbody>
                         {transactions.map((t) => (
                             <tr key={t.id} className="border-b border-border/50 hover:bg-muted/10 transition-colors">
-                                <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap">
+                                <td className="px-6 py-4 text-sm text-muted-foreground whitespace-nowrap text-center">
                                     {formatDate(t.data_transacao)}
                                 </td>
-                                <td className="px-6 py-4">
-                                    <div className="flex items-center gap-2">
+                                <td className="px-6 py-4 text-center">
+                                    <div className="flex flex-col items-center justify-center gap-1">
                                         <span className="text-sm font-medium text-foreground line-clamp-1">
                                             {t.descricao || '—'}
                                         </span>
-                                        {t.lead_name && (
-                                            <span className="flex items-center gap-1 text-[10px] text-primary font-medium bg-primary/5 px-1.5 py-0.5 rounded">
-                                                <Link2 size={10} />
-                                                {t.lead_name}
+                                        {(t.property_info || t.lead_name) && (
+                                            <span className="flex items-center justify-center gap-1 text-[10px] text-primary dark:text-gray-300 font-medium bg-primary/5 dark:bg-muted/50 px-1.5 py-0.5 rounded">
+                                                {t.property_info || t.lead_name}
                                             </span>
                                         )}
                                     </div>
                                 </td>
-                                <td className="px-6 py-4 text-sm text-muted-foreground">
+                                <td className="px-6 py-4 text-sm text-muted-foreground text-center">
                                     {t.categoria || '—'}
                                 </td>
                                 <td className="px-6 py-4 text-center">
@@ -92,9 +92,9 @@ export function TransactionsTable({ transactions, onEdit, onDelete }: Transactio
                                         {t.tipo}
                                     </span>
                                 </td>
-                                <td className="px-6 py-4 text-right">
+                                <td className="px-6 py-4 text-center">
                                     <span className={`text-sm font-bold ${t.tipo === 'Receita' ? 'text-emerald-600' : 'text-rose-600'}`}>
-                                        {t.tipo === 'Receita' ? '+' : '-'}R$ {formatCurrency(t.valor)}
+                                        {t.tipo === 'Receita' ? '+' : '-'}{formatCurrency(t.valor)}
                                     </span>
                                 </td>
                                 <td className="px-6 py-4 text-center">
@@ -104,18 +104,10 @@ export function TransactionsTable({ transactions, onEdit, onDelete }: Transactio
                                 </td>
                                 <td className="px-6 py-4">
                                     <div className="flex items-center justify-center gap-1">
-                                        <button
-                                            onClick={() => onEdit(t)}
-                                            className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground hover:text-foreground"
-                                        >
-                                            <Pencil size={14} />
-                                        </button>
-                                        <button
-                                            onClick={() => onDelete(t.id)}
-                                            className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors text-muted-foreground hover:text-red-600"
-                                        >
-                                            <Trash2 size={14} />
-                                        </button>
+                                        <TransactionActionsDropdown
+                                            onEdit={() => onEdit(t)}
+                                            onDelete={() => onDelete(t.id)}
+                                        />
                                     </div>
                                 </td>
                             </tr>
@@ -141,24 +133,73 @@ export function TransactionsTable({ transactions, onEdit, onDelete }: Transactio
                             <div className="flex items-center gap-2">
                                 <span className={`text-[10px] font-bold px-2 py-0.5 rounded-full ${tipoBadge(t.tipo)}`}>{t.tipo}</span>
                                 <span className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${statusBadge(t.status)}`}>{t.status || 'pago'}</span>
-                                {t.lead_name && (
-                                    <span className="flex items-center gap-1 text-[10px] text-primary font-medium">
-                                        <Link2 size={10} />{t.lead_name}
+                                {(t.property_info || t.lead_name) && (
+                                    <span className="flex items-center gap-1 text-[10px] text-primary dark:text-gray-300 font-medium bg-primary/5 dark:bg-muted/50 px-1.5 py-0.5 rounded">
+                                        {t.property_info || t.lead_name}
                                     </span>
                                 )}
                             </div>
                             <div className="flex items-center gap-1">
-                                <button onClick={() => onEdit(t)} className="p-1.5 hover:bg-muted rounded-lg transition-colors text-muted-foreground">
-                                    <Pencil size={14} />
-                                </button>
-                                <button onClick={() => onDelete(t.id)} className="p-1.5 hover:bg-red-50 dark:hover:bg-red-500/10 rounded-lg transition-colors text-muted-foreground hover:text-red-600">
-                                    <Trash2 size={14} />
-                                </button>
+                                <TransactionActionsDropdown
+                                    onEdit={() => onEdit(t)}
+                                    onDelete={() => onDelete(t.id)}
+                                />
                             </div>
                         </div>
                     </div>
                 ))}
             </div>
+        </div>
+    )
+}
+
+function TransactionActionsDropdown({ onEdit, onDelete }: { onEdit: () => void, onDelete: () => void }) {
+    const [isOpen, setIsOpen] = useState(false)
+    const dropdownRef = useRef<HTMLDivElement>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+                setIsOpen(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    return (
+        <div className="relative inline-block text-left" ref={dropdownRef}>
+            <button
+                onClick={() => setIsOpen(!isOpen)}
+                className="p-2 bg-muted text-foreground rounded-lg shadow-sm hover:opacity-90 transition-opacity"
+            >
+                <MoreVertical size={16} />
+            </button>
+
+            {isOpen && (
+                <div className="absolute right-0 mt-2 w-44 bg-card border border-border rounded-lg shadow-xl overflow-hidden z-30">
+                    <button
+                        onClick={() => {
+                            setIsOpen(false)
+                            onEdit()
+                        }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                        <Pencil size={14} className="text-blue-500" />
+                        Editar
+                    </button>
+                    <button
+                        onClick={() => {
+                            setIsOpen(false)
+                            onDelete()
+                        }}
+                        className="w-full flex items-center gap-2 px-4 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                    >
+                        <Trash2 size={14} className="text-red-500" />
+                        Excluir
+                    </button>
+                </div>
+            )}
         </div>
     )
 }
