@@ -1349,230 +1349,6 @@ export function LeadModal({
                                     </div>
                                 </div>
 
-                                {/* Seção: Parceria Comercial */}
-                                <div className="space-y-4 pt-8 border-t border-border/50">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Parceria Comercial</h3>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsPartnerModalOpen(true)}
-                                            className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
-                                        >
-                                            Novo Parceiro
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <FormSelect
-                                                label="Parceiro"
-                                                value={leadData.partner_id}
-                                                onChange={async (e) => {
-                                                    const partnerId = e.target.value
-                                                    let updatedCampaign = leadData.campaign
-                                                    
-                                                    if (leadData.lead_source.toLowerCase().includes('parceria')) {
-                                                        const p = partners.find(part => part.id === partnerId)
-                                                        if (p) {
-                                                            updatedCampaign = p.name
-                                                            // Se a campanha correspondente ainda não existir nas opções, criar no BD e na lista local
-                                                            if (!campaigns.includes(p.name)) {
-                                                                setCampaigns(prev => [...prev, p.name])
-                                                                await createLeadCampaign(tenantId, leadData.lead_source, p.name)
-                                                                // Atualiza também campaignsRaw para ter o id correto da campanha
-                                                                const campRes = await getLeadCampaigns(tenantId, leadData.lead_source)
-                                                                if (campRes.success) {
-                                                                    setCampaignsRaw((campRes.data || []) as NamedOption[])
-                                                                }
-                                                            }
-                                                        } else {
-                                                            updatedCampaign = ''
-                                                        }
-                                                    }
-                                                    
-                                                    setLeadData(prev => ({ 
-                                                        ...prev, 
-                                                        partner_id: partnerId,
-                                                        campaign: updatedCampaign
-                                                    }))
-                                                }}
-                                                options={[
-                                                    { value: '', label: 'Nenhum (Sem Parceria)' },
-                                                    ...partners.map(p => ({
-                                                        value: p.id,
-                                                        label: p.company ? `${p.name} (${p.company})` : p.name
-                                                    }))
-                                                ]}
-                                            />
-                                        </div>
-                                        <div>
-                                            <FormInput
-                                                label="Comissão (%)"
-                                                type="number"
-                                                min="0"
-                                                max="100"
-                                                value={leadData.partner_split}
-                                                onChange={(e) => setLeadData({ ...leadData, partner_split: e.target.value })}
-                                                placeholder="Ex: 50"
-                                                disabled={!leadData.partner_id}
-                                            />
-                                        </div>
-                                        <div>
-                                            <FormSelect
-                                                label="Ativo"
-                                                value={leadData.partner_role}
-                                                onChange={(e) => setLeadData({ ...leadData, partner_role: e.target.value })}
-                                                disabled={!leadData.partner_id}
-                                                options={[
-                                                    { value: '', label: 'Selecione o papel' },
-                                                    { value: 'buyer_agent', label: 'Trouxe Lead' },
-                                                    { value: 'seller_agent', label: 'Trouxe Imóvel' }
-                                                ]}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Seção: Negociação */}
-                                <div className="space-y-4 pt-8 border-t border-border/50">
-                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Negociação</h3>
-                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                        <div>
-                                            <FormSelect
-                                                label="Estágio"
-                                                value={leadData.stage_id}
-                                                onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
-                                                options={[
-                                                    { value: '', label: 'Selecione um estágio' },
-                                                    ...stages.map(s => ({ value: s.id, label: s.name }))
-                                                ]}
-                                            />
-                                        </div>
-                                        <div>
-                                            <FormInput
-                                                label="Valor Estimado"
-                                                value={leadData.value}
-                                                onChange={(e) => setLeadData({ ...leadData, value: formatCurrencyBRL(e.target.value) })}
-                                                placeholder="0,00"
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                {/* Seção: Acompanhamento (Follow-up) */}
-                                <div className="space-y-4 pt-8 border-t border-border/50">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Acompanhamento (Follow-up)</h3>
-                                        <Link
-                                            href="/marketing/follow-up"
-                                            className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
-                                        >
-                                            Gerenciar
-                                        </Link>
-                                    </div>
-
-                                    {editingLead ? (
-                                        <div className="space-y-4">
-                                            {/* Nova Inscrição */}
-                                            {followupSequences.length > 0 && (
-                                                <div className="flex items-end gap-3 pt-2">
-                                                    <div className="flex-1">
-                                                        <FormSelect
-                                                            label="Inscrever em nova sequência"
-                                                            value={selectedSequenceId}
-                                                            onChange={(e) => setSelectedSequenceId(e.target.value)}
-                                                            options={[
-                                                                { value: '', label: 'Selecione uma sequência...' },
-                                                                ...followupSequences
-                                                                    .filter((s: any) => !leadEnrollments.some((e: any) => e.sequence_id === s.id && e.status === 'active'))
-                                                                    .map((s: any) => ({ value: s.id, label: s.name + (s.is_active ? '' : ' (Inativa)') }))
-                                                            ]}
-                                                        />
-                                                    </div>
-                                                    <button
-                                                        type="button"
-                                                        onClick={handleEnrollInSequence}
-                                                        disabled={isProcessingFollowup || !selectedSequenceId}
-                                                        className="px-4 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 w-[120px]"
-                                                    >
-                                                        {isProcessingFollowup ? (
-                                                            <Loader2 size={14} className="animate-spin" />
-                                                        ) : (
-                                                            'Inscrever'
-                                                        )}
-                                                    </button>
-                                                </div>
-                                            )}
-
-                                            {/* Lista de Inscrições Ativas */}
-                                            {leadEnrollments.filter((e: any) => e.status !== 'cancelled' && e.status !== 'paused').length > 0 ? (
-                                                <div className="space-y-2">
-                                                    <label className="block text-xs font-bold text-foreground ml-1 mb-2">Inscrições Ativas</label>
-                                                    <div className="space-y-2">
-                                                        {leadEnrollments.filter((e: any) => e.status !== 'cancelled' && e.status !== 'paused').map((enrollment: any) => {
-                                                            const isActive = enrollment.status === 'active';
-                                                            return (
-                                                                <div
-                                                                    key={enrollment.id}
-                                                                    className="flex items-center justify-between p-3 bg-background rounded-lg border border-border/40 text-sm"
-                                                                >
-                                                                    <div>
-                                                                        <p className="font-semibold text-foreground">
-                                                                            {enrollment.followup_sequences?.name || 'Sequência'}
-                                                                        </p>
-                                                                        <p className="text-xs text-muted-foreground mt-0.5">
-                                                                            Status: <span className={`font-bold ${isActive ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                                                                                {isActive ? 'Ativo' : enrollment.status === 'completed' ? 'Concluído' : 'Cancelado'}
-                                                                            </span>
-                                                                            {isActive && enrollment.next_action_at && (
-                                                                                <>
-                                                                                    {' • '}Próximo envio: <span className="font-medium text-foreground">
-                                                                                        {new Date(enrollment.next_action_at).toLocaleString('pt-BR', {
-                                                                                            day: '2-digit',
-                                                                                            month: '2-digit',
-                                                                                            hour: '2-digit',
-                                                                                            minute: '2-digit'
-                                                                                        })}
-                                                                                    </span>
-                                                                                </>
-                                                                            )}
-                                                                        </p>
-                                                                    </div>
-                                                                    {isActive && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleCancelEnrollment(enrollment.id)}
-                                                                            disabled={isProcessingFollowup}
-                                                                            className="p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors cursor-pointer"
-                                                                            title="Cancelar acompanhamento"
-                                                                        >
-                                                                            <X size={16} />
-                                                                        </button>
-                                                                    )}
-                                                                </div>
-                                                            );
-                                                        })}
-                                                    </div>
-                                                </div>
-                                            ) : (
-                                                <p className="text-xs text-muted-foreground italic">Nenhum acompanhamento ativo para este lead no momento.</p>
-                                            )}
-                                        </div>
-                                    ) : (
-                                        /* Modo de Criação: Campo único opcional */
-                                        <div>
-                                            <FormSelect
-                                                label="Inscrever em sequência de follow-up (Opcional)"
-                                                value={selectedSequenceId}
-                                                onChange={(e) => setSelectedSequenceId(e.target.value)}
-                                                options={[
-                                                    { value: '', label: 'Nenhuma sequência' },
-                                                    ...followupSequences.map((s: any) => ({ value: s.id, label: s.name + (s.is_active ? '' : ' (Inativa)') }))
-                                                ]}
-                                            />
-                                        </div>
-                                    )}
-                                </div>
-
                                 {/* Seção: Notas */}
                                 <div className="space-y-4 pt-8 border-t border-border/50">
                                     <div className="flex items-center justify-between">
@@ -1882,6 +1658,230 @@ export function LeadModal({
                                                     )
                                                 })()}
                                             </div>
+                                        </div>
+                                    )}
+                                </div>
+
+                                {/* Seção: Parceria Comercial */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Parceria Comercial</h3>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPartnerModalOpen(true)}
+                                            className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
+                                        >
+                                            Novo Parceiro
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <FormSelect
+                                                label="Parceiro"
+                                                value={leadData.partner_id}
+                                                onChange={async (e) => {
+                                                    const partnerId = e.target.value
+                                                    let updatedCampaign = leadData.campaign
+                                                    
+                                                    if (leadData.lead_source.toLowerCase().includes('parceria')) {
+                                                        const p = partners.find(part => part.id === partnerId)
+                                                        if (p) {
+                                                            updatedCampaign = p.name
+                                                            // Se a campanha correspondente ainda não existir nas opções, criar no BD e na lista local
+                                                            if (!campaigns.includes(p.name)) {
+                                                                setCampaigns(prev => [...prev, p.name])
+                                                                await createLeadCampaign(tenantId, leadData.lead_source, p.name)
+                                                                // Atualiza também campaignsRaw para ter o id correto da campanha
+                                                                const campRes = await getLeadCampaigns(tenantId, leadData.lead_source)
+                                                                if (campRes.success) {
+                                                                    setCampaignsRaw((campRes.data || []) as NamedOption[])
+                                                                }
+                                                            }
+                                                        } else {
+                                                            updatedCampaign = ''
+                                                        }
+                                                    }
+                                                    
+                                                    setLeadData(prev => ({ 
+                                                        ...prev, 
+                                                        partner_id: partnerId,
+                                                        campaign: updatedCampaign
+                                                    }))
+                                                }}
+                                                options={[
+                                                    { value: '', label: 'Nenhum (Sem Parceria)' },
+                                                    ...partners.map(p => ({
+                                                        value: p.id,
+                                                        label: p.company ? `${p.name} (${p.company})` : p.name
+                                                    }))
+                                                ]}
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormInput
+                                                label="Comissão (%)"
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                value={leadData.partner_split}
+                                                onChange={(e) => setLeadData({ ...leadData, partner_split: e.target.value })}
+                                                placeholder="Ex: 50"
+                                                disabled={!leadData.partner_id}
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormSelect
+                                                label="Ativo"
+                                                value={leadData.partner_role}
+                                                onChange={(e) => setLeadData({ ...leadData, partner_role: e.target.value })}
+                                                disabled={!leadData.partner_id}
+                                                options={[
+                                                    { value: '', label: 'Selecione o papel' },
+                                                    { value: 'buyer_agent', label: 'Trouxe Lead' },
+                                                    { value: 'seller_agent', label: 'Trouxe Imóvel' }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Seção: Negociação */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Negociação</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                        <div>
+                                            <FormSelect
+                                                label="Estágio"
+                                                value={leadData.stage_id}
+                                                onChange={(e) => setLeadData({ ...leadData, stage_id: e.target.value })}
+                                                options={[
+                                                    { value: '', label: 'Selecione um estágio' },
+                                                    ...stages.map(s => ({ value: s.id, label: s.name }))
+                                                ]}
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormInput
+                                                label="Valor Estimado"
+                                                value={leadData.value}
+                                                onChange={(e) => setLeadData({ ...leadData, value: formatCurrencyBRL(e.target.value) })}
+                                                placeholder="0,00"
+                                            />
+                                        </div>
+                                    </div>
+                                </div>
+
+                                {/* Seção: Acompanhamento (Follow-up) */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Acompanhamento (Follow-up)</h3>
+                                        <Link
+                                            href="/marketing/follow-up"
+                                            className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                        >
+                                            Gerenciar
+                                        </Link>
+                                    </div>
+
+                                    {editingLead ? (
+                                        <div className="space-y-4">
+                                            {/* Nova Inscrição */}
+                                            {followupSequences.length > 0 && (
+                                                <div className="flex items-end gap-3 pt-2">
+                                                    <div className="flex-1">
+                                                        <FormSelect
+                                                            label="Inscrever em nova sequência"
+                                                            value={selectedSequenceId}
+                                                            onChange={(e) => setSelectedSequenceId(e.target.value)}
+                                                            options={[
+                                                                { value: '', label: 'Selecione uma sequência...' },
+                                                                ...followupSequences
+                                                                    .filter((s: any) => !leadEnrollments.some((e: any) => e.sequence_id === s.id && e.status === 'active'))
+                                                                    .map((s: any) => ({ value: s.id, label: s.name + (s.is_active ? '' : ' (Inativa)') }))
+                                                            ]}
+                                                        />
+                                                    </div>
+                                                    <button
+                                                        type="button"
+                                                        onClick={handleEnrollInSequence}
+                                                        disabled={isProcessingFollowup || !selectedSequenceId}
+                                                        className="px-4 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 flex items-center justify-center gap-1.5 cursor-pointer shrink-0 w-[120px]"
+                                                    >
+                                                        {isProcessingFollowup ? (
+                                                            <Loader2 size={14} className="animate-spin" />
+                                                        ) : (
+                                                            'Inscrever'
+                                                        )}
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {/* Lista de Inscrições Ativas */}
+                                            {leadEnrollments.filter((e: any) => e.status !== 'cancelled' && e.status !== 'paused').length > 0 ? (
+                                                <div className="space-y-2">
+                                                    <label className="block text-xs font-bold text-foreground ml-1 mb-2">Inscrições Ativas</label>
+                                                    <div className="space-y-2">
+                                                        {leadEnrollments.filter((e: any) => e.status !== 'cancelled' && e.status !== 'paused').map((enrollment: any) => {
+                                                            const isActive = enrollment.status === 'active';
+                                                            return (
+                                                                <div
+                                                                    key={enrollment.id}
+                                                                    className="flex items-center justify-between p-3 bg-background rounded-lg border border-border/40 text-sm"
+                                                                >
+                                                                    <div>
+                                                                        <p className="font-semibold text-foreground">
+                                                                            {enrollment.followup_sequences?.name || 'Sequência'}
+                                                                        </p>
+                                                                        <p className="text-xs text-muted-foreground mt-0.5">
+                                                                            Status: <span className={`font-bold ${isActive ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                                                                                {isActive ? 'Ativo' : enrollment.status === 'completed' ? 'Concluído' : 'Cancelado'}
+                                                                            </span>
+                                                                            {isActive && enrollment.next_action_at && (
+                                                                                <>
+                                                                                    {' • '}Próximo envio: <span className="font-medium text-foreground">
+                                                                                        {new Date(enrollment.next_action_at).toLocaleString('pt-BR', {
+                                                                                            day: '2-digit',
+                                                                                            month: '2-digit',
+                                                                                            hour: '2-digit',
+                                                                                            minute: '2-digit'
+                                                                                        })}
+                                                                                    </span>
+                                                                                </>
+                                                                            )}
+                                                                        </p>
+                                                                    </div>
+                                                                    {isActive && (
+                                                                        <button
+                                                                            type="button"
+                                                                            onClick={() => handleCancelEnrollment(enrollment.id)}
+                                                                            disabled={isProcessingFollowup}
+                                                                            className="p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors cursor-pointer"
+                                                                            title="Cancelar acompanhamento"
+                                                                        >
+                                                                            <X size={16} />
+                                                                        </button>
+                                                                    )}
+                                                                </div>
+                                                            );
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            ) : (
+                                                <p className="text-xs text-muted-foreground italic">Nenhum acompanhamento ativo para este lead no momento.</p>
+                                            )}
+                                        </div>
+                                    ) : (
+                                        /* Modo de Criação: Campo único opcional */
+                                        <div>
+                                            <FormSelect
+                                                label="Inscrever em sequência de follow-up (Opcional)"
+                                                value={selectedSequenceId}
+                                                onChange={(e) => setSelectedSequenceId(e.target.value)}
+                                                options={[
+                                                    { value: '', label: 'Nenhuma sequência' },
+                                                    ...followupSequences.map((s: any) => ({ value: s.id, label: s.name + (s.is_active ? '' : ' (Inativa)') }))
+                                                ]}
+                                            />
                                         </div>
                                     )}
                                 </div>
