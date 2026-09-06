@@ -312,14 +312,29 @@ export async function deleteWhatsAppInstance() {
         await evolutionService.deleteInstance(data.instance_name);
     } catch (e: any) {
         console.log('[WhatsApp] delete na Evolution falhou:', e.message);
-        const msg = e.message.toLowerCase();
+        const msg = (e.message || '').toLowerCase();
         
-        // Se for um erro [object Object] ou similar, significa que a Evolution falhou internamente
-        if (msg.includes('[object object]')) {
-            warningMessage = `Evolution API returned Bad Request (object Object) for instance: ${data.instance_name}`;
-        } else if (!msg.includes('not found') && !msg.includes("doesn't exist")) {
-            // Se for outro tipo de erro real, bloqueia a deleção para segurança
-            return { error: `Falha ao excluir na Evolution: ${e.message}` };
+        // Se a instância já não existe na Evolution (qualquer variação de 404/not found),
+        // ou se houve erro de conexão/indisponibilidade — sempre prosseguir com exclusão local.
+        const isAlreadyGone =
+            msg.includes('not found') ||
+            msg.includes("doesn't exist") ||
+            msg.includes('instance not found') ||
+            msg.includes('no instance') ||
+            msg.includes('404') ||
+            msg.includes('[object object]') ||
+            msg.includes('circuit breaker') ||
+            msg.includes('falha na conexão');
+        
+        if (isAlreadyGone) {
+            // Instância já estava excluída ou inacessível — apenas registrar aviso
+            warningMessage = `Instância "${data.instance_name}" não encontrada na Evolution API (já excluída ou inacessível). Registro local removido.`;
+            console.log('[WhatsApp] Instância já ausente na Evolution, prosseguindo com exclusão local.');
+        } else {
+            // Erro inesperado — registrar mas NÃO bloquear a exclusão local
+            // (o usuário pediu para excluir; não faz sentido manter o registro órfão)
+            warningMessage = `Aviso: Evolution API retornou erro ao excluir "${data.instance_name}": ${e.message}. Registro local removido.`;
+            console.warn('[WhatsApp] Erro inesperado na Evolution ao excluir, removendo registro local de qualquer forma:', e.message);
         }
     }
 

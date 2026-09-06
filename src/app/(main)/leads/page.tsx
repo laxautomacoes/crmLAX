@@ -1,20 +1,25 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 import nextDynamic from 'next/dynamic'
 import { useSearchParams } from 'next/navigation'
-import { Plus, Upload, Kanban, Filter } from 'lucide-react'
+import { Plus, Kanban, Filter } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 import { LeadsHeader } from '@/components/dashboard/leads/LeadsHeader'
 import { PipelineBoard } from '@/components/dashboard/leads/PipelineBoard'
 import { LeadsFunnelView } from '@/components/dashboard/leads/LeadsFunnelView'
 import { Modal } from '@/components/shared/Modal'
+import { ConfirmModal } from '@/components/shared/ConfirmModal'
 import { getProfile, getBrokers } from '@/app/_actions/profile'
+import { getLeadTemperature } from '@/lib/utils/lead-temperature'
+import type { LeadsFilter } from '@/components/dashboard/leads/LeadsFilterModal'
 
 // Lazy-loaded modals — só carregam quando o usuário abre (~347KB economizados no bundle inicial)
 const LeadModal = nextDynamic(() => import('@/components/dashboard/leads/LeadModal').then(mod => ({ default: mod.LeadModal })), { ssr: false })
 const LeadBulkImportModal = nextDynamic(() => import('@/components/dashboard/leads/LeadBulkImportModal').then(mod => ({ default: mod.LeadBulkImportModal })), { ssr: false })
 const ClientModal = nextDynamic(() => import('@/components/dashboard/clients/ClientModal').then(mod => ({ default: mod.ClientModal })), { ssr: false })
+const LeadsFilterModal = nextDynamic(() => import('@/components/dashboard/leads/LeadsFilterModal').then(mod => ({ default: mod.LeadsFilterModal })), { ssr: false })
+
 import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
 import { getFunnels, createFunnel, updateFunnel, deleteFunnel, setPreferredFunnel } from '@/app/_actions/funnels'
 import { FunnelSelector } from '@/components/dashboard/leads/FunnelSelector'
@@ -43,15 +48,30 @@ interface Broker {
 type PipelineLead = Lead & {
     property_interest?: string
     lead_source?: string
+    source?: string
     campaign?: string
     property_id?: string
     date?: string | null
+    created_at?: string | null
+}
+
+const initialFilters: LeadsFilter = {
+    period: '',
+    startDate: '',
+    endDate: '',
+    stageId: '',
+    source: '',
+    campaign: '',
+    brokerId: '',
+    temperature: '',
+    hasProposal: '',
 }
 
 export default function LeadsPage() {
     const [isStageModalOpen, setIsStageModalOpen] = useState(false)
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)
     const [isLeadBulkImportModalOpen, setIsLeadBulkImportModalOpen] = useState(false)
+    const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
     const [newStageName, setNewStageName] = useState('')
     const [tenantId, setTenantId] = useState<string | null>(null)
     const [stages, setStages] = useState<Stage[]>([])
@@ -64,7 +84,7 @@ export default function LeadsPage() {
     const [selectedFunnelId, setSelectedFunnelId] = useState<string | null>(null)
     const [preferredFunnelId, setPreferredFunnelId] = useState<string | null>(null)
     const [searchTerm, setSearchTerm] = useState('')
-    const [selectedBroker, setSelectedBroker] = useState('all')
+    const [filters, setFilters] = useState<LeadsFilter>(initialFilters)
     const [editingLead, setEditingLead] = useState<Partial<PipelineLead> | null>(null)
     const [isLoading, setIsLoading] = useState(true)
     const [hasAIAccess, setHasAIAccess] = useState(false)
@@ -72,6 +92,20 @@ export default function LeadsPage() {
     const [proposalClient, setProposalClient] = useState<any>(null)
     const [pendingProposalLeadId, setPendingProposalLeadId] = useState<string | null>(null)
     const [viewMode, setViewMode] = useState<'pipeline' | 'funnel'>('pipeline')
+    const [confirmModal, setConfirmModal] = useState<{
+        isOpen: boolean
+        title: string
+        message: React.ReactNode
+        confirmLabel?: string
+        variant?: 'danger' | 'warning' | 'success'
+        onConfirm: () => void
+    }>({
+        isOpen: false,
+        title: '',
+        message: '',
+        onConfirm: () => {},
+    })
+
     const searchParams = useSearchParams()
     const leadIdFromUrl = searchParams.get('id')
 
@@ -137,9 +171,44 @@ export default function LeadsPage() {
         fetchData()
     }, [])
 
+    // Lista dinâmica de origens presentes nos leads
+    const availableSources = useMemo(() => {
+        const set = new Set<string>()
+        leads.forEach(l => {
+            if (l.lead_source) set.add(l.lead_source)
+            if (l.source) set.add(l.source)
+        })
+        return Array.from(set).filter(Boolean)
+    }, [leads])
+
+    // Lista dinâmica de campanhas presentes nos leads
+    const availableCampaigns = useMemo(() => {
+        const set = new Set<string>()
+        leads.forEach(l => {
+            if (l.campaign && l.campaign.trim()) set.add(l.campaign.trim())
+        })
+        return Array.from(set).filter(Boolean)
+    }, [leads])
+
+    // Contador de filtros ativos
+    const activeFilterCount = useMemo(() => {
+        let count = 0
+        if (filters.period) count++
+        if (filters.startDate || filters.endDate) count++
+        if (filters.stageId) count++
+        if (filters.source) count++
+        if (filters.campaign) count++
+        if (filters.brokerId) count++
+        if (filters.temperature) count++
+        if (filters.hasProposal) count++
+        return count
+    }, [filters])
+
+    // Filtragem reativa
     useEffect(() => {
         let result = leads
 
+        // 1. Busca textual
         if (searchTerm) {
             const term = searchTerm.toLowerCase()
             result = result.filter(lead => 
@@ -148,16 +217,104 @@ export default function LeadsPage() {
                 lead.interest?.toLowerCase().includes(term) ||
                 lead.campaign?.toLowerCase().includes(term) ||
                 lead.lead_source?.toLowerCase().includes(term) ||
-                lead.email?.toLowerCase().includes(term)
+                lead.source?.toLowerCase().includes(term) ||
+                lead.email?.toLowerCase().includes(term) ||
+                lead.broker_name?.toLowerCase().includes(term)
             )
         }
 
-        if (selectedBroker !== 'all') {
-            result = result.filter(lead => lead.assigned_to === selectedBroker)
+        // 2. Período (created_at ou date)
+        if (filters.period || (filters.startDate && filters.endDate)) {
+            const now = new Date()
+            let start: Date | null = null
+            let end: Date | null = null
+
+            switch (filters.period) {
+                case 'today':
+                    start = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+                    end = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59)
+                    break
+                case '7days':
+                    start = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
+                    end = now
+                    break
+                case '30days':
+                    start = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000)
+                    end = now
+                    break
+                case 'month':
+                    start = new Date(now.getFullYear(), now.getMonth(), 1)
+                    end = now
+                    break
+                case 'custom':
+                    if (filters.startDate) start = new Date(filters.startDate + 'T00:00:00')
+                    if (filters.endDate) end = new Date(filters.endDate + 'T23:59:59')
+                    break
+            }
+
+            if (start || end) {
+                result = result.filter(lead => {
+                    const rawDate = lead.created_at || (lead.date ? `${lead.date}T12:00:00` : null)
+                    if (!rawDate) return false
+                    const leadDate = new Date(rawDate)
+                    if (start && leadDate < start) return false
+                    if (end && leadDate > end) return false
+                    return true
+                })
+            }
+        }
+
+        // 3. Estágio
+        if (filters.stageId) {
+            result = result.filter(lead => lead.status === filters.stageId)
+        }
+
+        // 4. Origem
+        if (filters.source) {
+            const src = filters.source.toLowerCase()
+            result = result.filter(lead => 
+                (lead.lead_source && lead.lead_source.toLowerCase() === src) ||
+                (lead.source && lead.source.toLowerCase() === src) ||
+                (lead.interest && lead.interest.toLowerCase().includes(src))
+            )
+        }
+
+        // 5. Campanha
+        if (filters.campaign) {
+            const cmp = filters.campaign.toLowerCase()
+            result = result.filter(lead => 
+                lead.campaign && lead.campaign.toLowerCase() === cmp
+            )
+        }
+
+        // 5. Corretor
+        if (filters.brokerId) {
+            if (filters.brokerId === 'unassigned') {
+                result = result.filter(lead => !lead.assigned_to)
+            } else {
+                result = result.filter(lead => lead.assigned_to === filters.brokerId)
+            }
+        }
+
+        // 6. Temperatura
+        if (filters.temperature) {
+            result = result.filter(lead => {
+                const temp = getLeadTemperature(lead.last_interaction_at)
+                return temp === filters.temperature
+            })
+        }
+
+        // 7. Proposta Comercial
+        if (filters.hasProposal) {
+            if (filters.hasProposal === 'yes') {
+                result = result.filter(lead => lead.has_proposal)
+            } else if (filters.hasProposal === 'no') {
+                result = result.filter(lead => !lead.has_proposal)
+            }
         }
 
         setFilteredLeads(result)
-    }, [searchTerm, selectedBroker, leads])
+    }, [searchTerm, filters, leads])
 
     useEffect(() => {
         if (leadIdFromUrl && leads.length > 0) {
@@ -188,28 +345,44 @@ export default function LeadsPage() {
         setIsLeadModalOpen(true)
     }
 
-    const handleDeleteLead = async (leadId: string) => {
-        if (!confirm('Tem certeza que deseja excluir este lead permanentemente?')) return
-
-        const result = await deleteLead(leadId)
-        if (result.success) {
-            toast.success('Lead excluído com sucesso!')
-            fetchData(selectedFunnelId || undefined)
-        } else {
-            toast.error('Erro ao excluir lead: ' + result.error)
-        }
+    const handleDeleteLead = (leadId: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Excluir Lead',
+            message: 'Tem certeza que deseja excluir este lead permanentemente? Esta ação não pode ser desfeita.',
+            confirmLabel: 'Excluir',
+            variant: 'danger',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }))
+                const result = await deleteLead(leadId)
+                if (result.success) {
+                    toast.success('Lead excluído com sucesso!')
+                    fetchData(selectedFunnelId || undefined)
+                } else {
+                    toast.error('Erro ao excluir lead: ' + result.error)
+                }
+            }
+        })
     }
 
-    const handleArchiveLead = async (leadId: string) => {
-        if (!confirm('Tem certeza que deseja arquivar este lead? Ele não aparecerá mais no funil.')) return
-
-        const result = await archiveLead(leadId)
-        if (result.success) {
-            toast.success('Lead arquivado com sucesso!')
-            fetchData(selectedFunnelId || undefined)
-        } else {
-            toast.error('Erro ao arquivar lead: ' + result.error)
-        }
+    const handleArchiveLead = (leadId: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Arquivar Lead',
+            message: 'Tem certeza que deseja arquivar este lead? Ele não aparecerá mais no funil.',
+            confirmLabel: 'Arquivar',
+            variant: 'warning',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }))
+                const result = await archiveLead(leadId)
+                if (result.success) {
+                    toast.success('Lead arquivado com sucesso!')
+                    fetchData(selectedFunnelId || undefined)
+                } else {
+                    toast.error('Erro ao arquivar lead: ' + result.error)
+                }
+            }
+        })
     }
 
     const handleOpenLeadModal = (stageId?: string) => {
@@ -225,8 +398,8 @@ export default function LeadsPage() {
         setSearchTerm(term)
     }
 
-    const handleBrokerChange = (brokerId: string) => {
-        setSelectedBroker(brokerId)
+    const handleClearFilters = () => {
+        setFilters(initialFilters)
     }
 
     if (isLoading) {
@@ -247,16 +420,24 @@ export default function LeadsPage() {
         }
     }
 
-    const handleDeleteStage = async (stageId: string) => {
-        if (!confirm('Tem certeza que deseja excluir este estágio? Todos os leads ficarão sem status.')) return
-
-        const result = await deleteStage(stageId)
-        if (result.success) {
-            toast.success('Estágio excluído com sucesso!')
-            fetchData(selectedFunnelId || undefined)
-        } else {
-            toast.error('Erro ao excluir estágio: ' + result.error)
-        }
+    const handleDeleteStage = (stageId: string) => {
+        setConfirmModal({
+            isOpen: true,
+            title: 'Excluir Estágio',
+            message: 'Tem certeza que deseja excluir este estágio? Todos os leads deste estágio ficarão sem status.',
+            confirmLabel: 'Excluir',
+            variant: 'danger',
+            onConfirm: async () => {
+                setConfirmModal(prev => ({ ...prev, isOpen: false }))
+                const result = await deleteStage(stageId)
+                if (result.success) {
+                    toast.success('Estágio excluído com sucesso!')
+                    fetchData(selectedFunnelId || undefined)
+                } else {
+                    toast.error('Erro ao excluir estágio: ' + result.error)
+                }
+            }
+        })
     }
 
     const handleDuplicateStage = async (stageId: string) => {
@@ -310,10 +491,8 @@ export default function LeadsPage() {
                 <div className="flex flex-wrap items-center justify-center md:justify-end gap-2 md:gap-3 w-full md:w-auto">
                     <LeadsHeader 
                         onSearch={handleSearch} 
-                        brokers={brokers}
-                        onBrokerChange={handleBrokerChange}
-                        isAdmin={userRole === 'admin' || userRole === 'superadmin'}
-                        selectedBroker={selectedBroker}
+                        onOpenFilter={() => setIsFilterModalOpen(true)}
+                        activeFilterCount={activeFilterCount}
                         viewToggle={
                             <div className="h-[34px] flex bg-card border border-border rounded-lg overflow-hidden shadow-sm shrink-0">
                                 <button
@@ -448,6 +627,31 @@ export default function LeadsPage() {
                     </button>
                 </div>
             </Modal>
+
+            {/* Modal de Filtros Avançados */}
+            <LeadsFilterModal
+                isOpen={isFilterModalOpen}
+                onClose={() => setIsFilterModalOpen(false)}
+                filters={filters}
+                setFilters={setFilters}
+                stages={stages}
+                sources={availableSources}
+                campaigns={availableCampaigns}
+                brokers={brokers}
+                isAdmin={userRole === 'admin' || userRole === 'superadmin'}
+                onClear={handleClearFilters}
+            />
+
+            {/* Modal de Confirmação (Substitui confirm() nativo) */}
+            <ConfirmModal
+                isOpen={confirmModal.isOpen}
+                title={confirmModal.title}
+                message={confirmModal.message}
+                confirmLabel={confirmModal.confirmLabel}
+                variant={confirmModal.variant}
+                onConfirm={confirmModal.onConfirm}
+                onCancel={() => setConfirmModal(prev => ({ ...prev, isOpen: false }))}
+            />
 
             {/* Componente Reutilizável de Modal de Lead */}
             {tenantId && isLeadModalOpen && (

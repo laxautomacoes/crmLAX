@@ -1,27 +1,29 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Filter, Check } from 'lucide-react'
+import { Search, Filter } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
-
-interface Broker {
-    id: string
-    full_name: string
-    role?: string
-}
 
 interface LeadsHeaderProps {
     onSearch: (term: string) => void
-    brokers?: Broker[]
+    onOpenFilter?: () => void
+    activeFilterCount?: number
+    viewToggle?: React.ReactNode
+    children?: React.ReactNode
+    // Mantém compatibilidade com chamadas existentes
+    brokers?: any[]
     onBrokerChange?: (brokerId: string) => void
     isAdmin?: boolean
     selectedBroker?: string
-    viewToggle?: React.ReactNode
-    children?: React.ReactNode
 }
 
-export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin, selectedBroker = 'all', viewToggle, children }: LeadsHeaderProps) {
-    const [isFilterOpen, setIsFilterOpen] = useState(false)
+export function LeadsHeader({
+    onSearch,
+    onOpenFilter,
+    activeFilterCount = 0,
+    viewToggle,
+    children,
+}: LeadsHeaderProps) {
     const [searchTerm, setSearchTerm] = useState('')
 
     return (
@@ -46,44 +48,24 @@ export function LeadsHeader({ onSearch, brokers, onBrokerChange, isAdmin, select
                 {viewToggle}
             </div>
             <div className="flex items-center justify-center md:justify-start gap-2 md:gap-3 w-full md:w-auto overflow-x-auto pb-1 md:pb-0 scrollbar-hide shrink-0">
-                {isAdmin && brokers && brokers.length > 0 && (
-                    <div className="relative group hidden md:block min-w-[130px]">
-                        <button
-                            onClick={() => setIsFilterOpen(!isFilterOpen)}
-                            className="min-w-[130px] h-[34px] w-full flex items-center justify-center gap-2 bg-card border border-muted-foreground/30 text-foreground px-4 rounded-lg hover:bg-muted/50 transition-colors text-xs font-bold uppercase tracking-widest whitespace-nowrap outline-none focus:ring-2 focus:ring-ring/50"
-                        >
-                            <Filter size={14} strokeWidth={1} className="flex-shrink-0" />
-                            <span className={selectedBroker === 'all' ? "" : "truncate max-w-[120px] md:max-w-[150px]"}>
-                                {selectedBroker === 'all' 
-                                    ? <span>Todos</span> 
-                                    : <span>{brokers.find(b => b.id === selectedBroker)?.full_name || 'Todos'}</span>}
+                {onOpenFilter && (
+                    <button
+                        type="button"
+                        onClick={onOpenFilter}
+                        className={`h-[34px] min-w-[130px] flex items-center justify-center gap-2 px-4 border rounded-lg transition-all text-xs font-bold uppercase tracking-widest whitespace-nowrap outline-none focus:ring-2 shadow-sm ${
+                            activeFilterCount > 0
+                                ? 'bg-secondary/10 border-secondary text-foreground hover:bg-secondary/20 focus:ring-secondary/50'
+                                : 'bg-card border-muted-foreground/30 text-foreground hover:bg-muted/50 focus:ring-ring/50'
+                        }`}
+                    >
+                        <Filter size={14} strokeWidth={1} className="flex-shrink-0" />
+                        <span>FILTRAR</span>
+                        {activeFilterCount > 0 && (
+                            <span className="w-5 h-5 rounded-full bg-secondary text-secondary-foreground flex items-center justify-center text-[10px] font-bold shrink-0">
+                                {activeFilterCount}
                             </span>
-                        </button>
-                        {isFilterOpen && (
-                            <>
-                                <div className="fixed inset-0 z-10" onClick={() => setIsFilterOpen(false)} />
-                                <div className="absolute right-0 mt-2 w-56 bg-card border border-border rounded-xl shadow-xl z-20 py-2 max-h-60 overflow-y-auto animate-in fade-in zoom-in-95 duration-200">
-                                    <button
-                                        onClick={() => { onBrokerChange?.('all'); setIsFilterOpen(false); }}
-                                        className={`w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${selectedBroker === 'all' ? 'text-accent-icon font-bold bg-accent-icon/5' : 'text-foreground font-medium'}`}
-                                    >
-                                        Todos
-                                        {selectedBroker === 'all' && <Check size={14} />}
-                                    </button>
-                                    {brokers.filter((broker) => broker.role !== 'admin' && broker.role !== 'superadmin').map((broker) => (
-                                        <button
-                                            key={broker.id}
-                                            onClick={() => { onBrokerChange?.(broker.id); setIsFilterOpen(false); }}
-                                            className={`w-full flex items-center justify-between px-4 py-2 text-sm hover:bg-muted/50 transition-colors ${selectedBroker === broker.id ? 'text-accent-icon font-bold bg-accent-icon/5' : 'text-foreground font-medium'}`}
-                                        >
-                                            <span className="truncate">{broker.full_name}</span>
-                                            {selectedBroker === broker.id && <Check size={14} className="flex-shrink-0" />}
-                                        </button>
-                                    ))}
-                                </div>
-                            </>
                         )}
-                    </div>
+                    </button>
                 )}
                 {children}
             </div>

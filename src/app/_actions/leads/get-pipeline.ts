@@ -53,10 +53,12 @@ interface LeadRecord {
 type PipelineLead = Lead & {
     property_interest?: string
     lead_source?: string
+    source?: string
     campaign?: string
     property_id?: string
     contact_id?: string
     date?: string | null
+    created_at?: string | null
 }
 
 export async function getPipelineData(tenantId: string, funnelId?: string) {
@@ -180,10 +182,12 @@ export async function getPipelineData(tenantId: string, funnelId?: string) {
         interest: lead.property_interest || lead.source,
         property_interest: lead.property_interest,
         lead_source: lead.lead_source || 'Direto',
+        source: lead.source || undefined,
         campaign: lead.campaign,
         property_id: lead.property_id,
         contact_id: lead.contact_id || undefined,
         date: lead.date || (lead.created_at ? new Date(lead.created_at).toISOString().split('T')[0] : null),
+        created_at: lead.created_at || null,
         assigned_to: lead.assigned_to,
         broker_name: lead.profiles?.full_name || 'Não atribuído',
         // Campos pesados: não carregados na pipeline, carregados sob demanda no modal
