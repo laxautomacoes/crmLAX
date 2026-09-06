@@ -950,14 +950,29 @@ export function LeadModal({
             className={editingLead ? "md:h-[94vh] md:max-h-[94vh] [&>div:last-child]:!pb-2 md:[&>div:last-child]:!pb-3 [&>div:last-child]:!pt-2 md:[&>div:last-child]:!pt-3" : ""}
             extraHeaderContent={
                 showMethodSelection ? undefined : (
-                    <div className="flex items-center gap-3">
+                    <div className={editingLead ? "hidden md:flex items-center gap-3" : "flex items-center gap-3"}>
+
+                        {editingLead?.id && editingLead?.contact_id && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setCreationMethod(null)
+                                    onClose()
+                                    router.push(`/clients?openId=${editingLead.contact_id}`)
+                                }}
+                                className="min-w-[120px] flex items-center justify-center py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                title="Ver ficha completa do cliente"
+                            >
+                                Cliente
+                            </button>
+                        )}
 
                         {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
                             editingLead.has_proposal ? (
                                 <button
                                     type="button"
                                     onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
-                                    className="px-4 py-1.5 border border-foreground/30 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-lg font-bold text-sm whitespace-nowrap flex items-center gap-1.5 transition-all shadow-sm active:scale-[0.97]"
+                                    className="min-w-[120px] flex items-center justify-center gap-1.5 py-1.5 border border-foreground/30 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-lg font-bold text-sm whitespace-nowrap transition-all shadow-sm active:scale-[0.97]"
                                     title="Ver Proposta"
                                 >
                                     <span
@@ -966,41 +981,85 @@ export function LeadModal({
                                     >
                                         P
                                     </span>
-                                    <span className="hidden sm:inline">Em Proposta</span>
-                                    <span className="sm:hidden">Proposta</span>
+                                    Em Proposta
                                 </button>
                             ) : (
                                 <button
                                     type="button"
                                     onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
-                                    className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                    className="min-w-[120px] flex items-center justify-center py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
                                 >
-                                    <span className="hidden sm:inline">Fazer Proposta</span>
-                                    <span className="sm:hidden">Proposta</span>
+                                    Fazer Proposta
                                 </button>
                             )
                         )}
                         <button
                             onClick={handleSubmit}
                             disabled={isLoading}
-                            className="px-4 py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
+                            className="min-w-[120px] flex items-center justify-center py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-sm hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
                         >
                             {isLoading ? "Processando..." : (
-                                editingLead ? (
-                                    <>
-                                        <span className="hidden sm:inline">Salvar Alterações</span>
-                                        <span className="sm:hidden">Salvar</span>
-                                    </>
-                                ) : (
-                                    <>
-                                        <span className="hidden sm:inline">Criar Lead</span>
-                                        <span className="sm:hidden">Criar</span>
-                                    </>
-                                )
+                                editingLead ? "Salvar Alterações" : "Criar Lead"
                             )}
                         </button>
                     </div>
                 )
+            }
+            headerBottomClassName={editingLead ? "md:hidden" : undefined}
+            headerBottomContent={
+                editingLead ? (
+                    <div className="flex items-center gap-2 w-full">
+                        {editingLead?.id && editingLead?.contact_id && (
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setCreationMethod(null)
+                                    onClose()
+                                    router.push(`/clients?openId=${editingLead.contact_id}`)
+                                }}
+                                className="flex-1 flex items-center justify-center py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-xs hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                title="Ver ficha completa do cliente"
+                            >
+                                Cliente
+                            </button>
+                        )}
+                        {editingLead?.id && editingLead?.contact_id && onMakeProposal && (
+                            editingLead.has_proposal ? (
+                                <button
+                                    type="button"
+                                    onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
+                                    className="flex-1 flex items-center justify-center gap-1.5 py-1.5 border border-foreground/30 text-foreground/80 hover:text-foreground hover:bg-muted/50 rounded-lg font-bold text-xs whitespace-nowrap transition-all shadow-sm active:scale-[0.97]"
+                                    title="Ver Proposta"
+                                >
+                                    <span
+                                        className="w-4 h-4 flex items-center justify-center text-[9px] font-black rounded-full shrink-0"
+                                        style={{ backgroundColor: '#FFE600', color: '#1a1a1a' }}
+                                    >
+                                        P
+                                    </span>
+                                    Proposta
+                                </button>
+                            ) : (
+                                <button
+                                    type="button"
+                                    onClick={() => onMakeProposal(editingLead.contact_id!, editingLead.id!)}
+                                    className="flex-1 flex items-center justify-center py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-xs hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
+                                    title="Fazer Proposta"
+                                >
+                                    Proposta
+                                </button>
+                            )
+                        )}
+                        <button
+                            type="button"
+                            onClick={handleSubmit}
+                            disabled={isLoading}
+                            className="flex-1 flex items-center justify-center py-1.5 bg-secondary text-secondary-foreground rounded-lg font-bold text-xs hover:opacity-90 shadow-sm active:scale-[0.97] transition-all disabled:opacity-50 whitespace-nowrap"
+                        >
+                            {isLoading ? "Processando..." : "Salvar"}
+                        </button>
+                    </div>
+                ) : undefined
             }
         >
             {showMethodSelection ? (
@@ -1082,23 +1141,7 @@ export function LeadModal({
                             <div className="space-y-8 pb-4">
                                 {/* Seção: Dados Pessoais */}
                                 <div className="space-y-4">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
-                                        {editingLead?.id && editingLead?.contact_id && (
-                                            <button
-                                                type="button"
-                                                onClick={() => {
-                                                    setCreationMethod(null)
-                                                    onClose()
-                                                    router.push(`/clients?openId=${editingLead.contact_id}`)
-                                                }}
-                                                className="px-3 py-1 border border-border bg-card text-foreground rounded-lg font-bold text-xs hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
-                                                title="Ver ficha completa do cliente"
-                                            >
-                                                Cliente
-                                            </button>
-                                        )}
-                                    </div>
+                                    <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
                                     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                         {/* Linha 1: Nome + Avatar */}
                                         <div className="col-span-1 md:col-span-2 flex items-end gap-4">
@@ -1358,7 +1401,7 @@ export function LeadModal({
                                                 type="button"
                                                 onClick={handleAddNote}
                                                 disabled={isSavingNote || (!newNoteContent.trim() && (!isVisit || (isRegisteredProperty && !selectedVisitProperty) || (!isRegisteredProperty && !unregisteredVisitProperty.trim())))}
-                                                className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
+                                                className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
                                             >
                                                 {isSavingNote ? 'Adicionando...' : 'Adicionar Nota'}
                                             </button>
@@ -1662,89 +1705,6 @@ export function LeadModal({
                                     )}
                                 </div>
 
-                                {/* Seção: Parceria Comercial */}
-                                <div className="space-y-4 pt-8 border-t border-border/50">
-                                    <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Parceria Comercial</h3>
-                                        <button
-                                            type="button"
-                                            onClick={() => setIsPartnerModalOpen(true)}
-                                            className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 w-[120px]"
-                                        >
-                                            Novo Parceiro
-                                        </button>
-                                    </div>
-                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                        <div>
-                                            <FormSelect
-                                                label="Parceiro"
-                                                value={leadData.partner_id}
-                                                onChange={async (e) => {
-                                                    const partnerId = e.target.value
-                                                    let updatedCampaign = leadData.campaign
-                                                    
-                                                    if (leadData.lead_source.toLowerCase().includes('parceria')) {
-                                                        const p = partners.find(part => part.id === partnerId)
-                                                        if (p) {
-                                                            updatedCampaign = p.name
-                                                            // Se a campanha correspondente ainda não existir nas opções, criar no BD e na lista local
-                                                            if (!campaigns.includes(p.name)) {
-                                                                setCampaigns(prev => [...prev, p.name])
-                                                                await createLeadCampaign(tenantId, leadData.lead_source, p.name)
-                                                                // Atualiza também campaignsRaw para ter o id correto da campanha
-                                                                const campRes = await getLeadCampaigns(tenantId, leadData.lead_source)
-                                                                if (campRes.success) {
-                                                                    setCampaignsRaw((campRes.data || []) as NamedOption[])
-                                                                }
-                                                            }
-                                                        } else {
-                                                            updatedCampaign = ''
-                                                        }
-                                                    }
-                                                    
-                                                    setLeadData(prev => ({ 
-                                                        ...prev, 
-                                                        partner_id: partnerId,
-                                                        campaign: updatedCampaign
-                                                    }))
-                                                }}
-                                                options={[
-                                                    { value: '', label: 'Nenhum (Sem Parceria)' },
-                                                    ...partners.map(p => ({
-                                                        value: p.id,
-                                                        label: p.company ? `${p.name} (${p.company})` : p.name
-                                                    }))
-                                                ]}
-                                            />
-                                        </div>
-                                        <div>
-                                            <FormInput
-                                                label="Comissão (%)"
-                                                type="number"
-                                                min="0"
-                                                max="100"
-                                                value={leadData.partner_split}
-                                                onChange={(e) => setLeadData({ ...leadData, partner_split: e.target.value })}
-                                                placeholder="Ex: 50"
-                                                disabled={!leadData.partner_id}
-                                            />
-                                        </div>
-                                        <div>
-                                            <FormSelect
-                                                label="Ativo"
-                                                value={leadData.partner_role}
-                                                onChange={(e) => setLeadData({ ...leadData, partner_role: e.target.value })}
-                                                disabled={!leadData.partner_id}
-                                                options={[
-                                                    { value: '', label: 'Selecione o papel' },
-                                                    { value: 'buyer_agent', label: 'Trouxe Lead' },
-                                                    { value: 'seller_agent', label: 'Trouxe Imóvel' }
-                                                ]}
-                                            />
-                                        </div>
-                                    </div>
-                                </div>
-
                                 {/* Seção: Negociação */}
                                 <div className="space-y-4 pt-8 border-t border-border/50">
                                     <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Negociação</h3>
@@ -1774,7 +1734,7 @@ export function LeadModal({
                                 {/* Seção: Acompanhamento (Follow-up) */}
                                 <div className="space-y-4 pt-8 border-t border-border/50">
                                     <div className="flex items-center justify-between">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Acompanhamento (Follow-up)</h3>
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Follow-up</h3>
                                         <Link
                                             href="/marketing/follow-up"
                                             className="px-4 py-1.5 border border-border bg-card text-foreground rounded-lg font-bold text-sm hover:bg-muted shadow-sm active:scale-[0.97] transition-all whitespace-nowrap"
@@ -1884,6 +1844,89 @@ export function LeadModal({
                                             />
                                         </div>
                                     )}
+                                </div>
+
+                                {/* Seção: Parceria Comercial */}
+                                <div className="space-y-4 pt-8 border-t border-border/50">
+                                    <div className="flex items-center justify-between">
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Parceria Comercial</h3>
+                                        <button
+                                            type="button"
+                                            onClick={() => setIsPartnerModalOpen(true)}
+                                            className="px-3 py-2 bg-secondary text-secondary-foreground border border-transparent rounded-lg font-bold text-sm hover:opacity-90 active:scale-[0.97] transition-all disabled:opacity-50 cursor-pointer flex items-center justify-center gap-1.5 whitespace-nowrap"
+                                        >
+                                            Novo Parceiro
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                                        <div>
+                                            <FormSelect
+                                                label="Parceiro"
+                                                value={leadData.partner_id}
+                                                onChange={async (e) => {
+                                                    const partnerId = e.target.value
+                                                    let updatedCampaign = leadData.campaign
+                                                    
+                                                    if (leadData.lead_source.toLowerCase().includes('parceria')) {
+                                                        const p = partners.find(part => part.id === partnerId)
+                                                        if (p) {
+                                                            updatedCampaign = p.name
+                                                            // Se a campanha correspondente ainda não existir nas opções, criar no BD e na lista local
+                                                            if (!campaigns.includes(p.name)) {
+                                                                setCampaigns(prev => [...prev, p.name])
+                                                                await createLeadCampaign(tenantId, leadData.lead_source, p.name)
+                                                                // Atualiza também campaignsRaw para ter o id correto da campanha
+                                                                const campRes = await getLeadCampaigns(tenantId, leadData.lead_source)
+                                                                if (campRes.success) {
+                                                                    setCampaignsRaw((campRes.data || []) as NamedOption[])
+                                                                }
+                                                            }
+                                                        } else {
+                                                            updatedCampaign = ''
+                                                        }
+                                                    }
+                                                    
+                                                    setLeadData(prev => ({ 
+                                                        ...prev, 
+                                                        partner_id: partnerId,
+                                                        campaign: updatedCampaign
+                                                    }))
+                                                }}
+                                                options={[
+                                                    { value: '', label: 'Nenhum (Sem Parceria)' },
+                                                    ...partners.map(p => ({
+                                                        value: p.id,
+                                                        label: p.company ? `${p.name} (${p.company})` : p.name
+                                                    }))
+                                                ]}
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormInput
+                                                label="Comissão (%)"
+                                                type="number"
+                                                min="0"
+                                                max="100"
+                                                value={leadData.partner_split}
+                                                onChange={(e) => setLeadData({ ...leadData, partner_split: e.target.value })}
+                                                placeholder="Ex: 50"
+                                                disabled={!leadData.partner_id}
+                                            />
+                                        </div>
+                                        <div>
+                                            <FormSelect
+                                                label="Ativo"
+                                                value={leadData.partner_role}
+                                                onChange={(e) => setLeadData({ ...leadData, partner_role: e.target.value })}
+                                                disabled={!leadData.partner_id}
+                                                options={[
+                                                    { value: '', label: 'Selecione o papel' },
+                                                    { value: 'buyer_agent', label: 'Trouxe Lead' },
+                                                    { value: 'seller_agent', label: 'Trouxe Imóvel' }
+                                                ]}
+                                            />
+                                        </div>
+                                    </div>
                                 </div>
 
                                 {/* Seção: Mídias e Docs */}

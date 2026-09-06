@@ -12,6 +12,8 @@ interface ModalProps {
     size?: 'sm' | 'md' | 'lg' | 'xl' | '2xl' | 'full';
     titleClassName?: string;
     extraHeaderContent?: React.ReactNode;
+    headerBottomContent?: React.ReactNode;
+    headerBottomClassName?: string;
     align?: 'center' | 'top';
     fullHeight?: boolean;
     className?: string;
@@ -19,7 +21,7 @@ interface ModalProps {
     footer?: React.ReactNode;
 }
 
-export function Modal({ isOpen, onClose, title, children, size = 'md', titleClassName, extraHeaderContent, align = 'center', fullHeight = false, className, zIndex, footer }: ModalProps) {
+export function Modal({ isOpen, onClose, title, children, size = 'md', titleClassName, extraHeaderContent, headerBottomContent, headerBottomClassName, align = 'center', fullHeight = false, className, zIndex, footer }: ModalProps) {
     const sizeClasses = {
         sm: 'max-w-sm',
         md: 'max-w-md',
@@ -59,23 +61,30 @@ export function Modal({ isOpen, onClose, title, children, size = 'md', titleClas
         >
             <div onClick={(e) => e.stopPropagation()} className={`bg-card shadow-xl w-full ${sizeClasses[size]} ${fullHeight ? 'h-[95vh] md:h-[90vh]' : 'max-h-[95vh] md:max-h-[90vh]'} flex flex-col overflow-hidden animate-in fade-in zoom-in-95 duration-200 relative ${className?.includes('rounded') ? '' : 'rounded-lg'} ${className || ''}`}>
                 {title ? (
-                    <div className="flex items-center justify-between px-4 md:px-6 py-4 border-b border-border shrink-0 gap-3 md:gap-4">
-                        <div className={`flex-1 min-w-0 ${titleClassName || ''}`}>
-                            {typeof title === 'string' ? (
-                                <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">{title}</h3>
-                            ) : (
-                                title
-                            )}
+                    <div className="flex flex-col border-b border-border shrink-0">
+                        <div className="flex items-center justify-between px-4 md:px-6 py-4 gap-3 md:gap-4">
+                            <div className={`flex-1 min-w-0 ${titleClassName || ''}`}>
+                                {typeof title === 'string' ? (
+                                    <h3 className="text-base font-black text-foreground uppercase tracking-widest truncate">{title}</h3>
+                                ) : (
+                                    title
+                                )}
+                            </div>
+                            <div className="flex items-center gap-3 md:gap-4">
+                                {extraHeaderContent}
+                                <button
+                                    onClick={onClose}
+                                    className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
+                                >
+                                    <X size={20} />
+                                </button>
+                            </div>
                         </div>
-                        <div className="flex items-center gap-3 md:gap-4">
-                            {extraHeaderContent}
-                            <button
-                                onClick={onClose}
-                                className="text-muted-foreground hover:text-foreground transition-colors flex-shrink-0"
-                            >
-                                <X size={20} />
-                            </button>
-                        </div>
+                        {headerBottomContent && (
+                            <div className={`px-4 md:px-6 pb-3.5 -mt-1.5 ${headerBottomClassName || ''}`}>
+                                {headerBottomContent}
+                            </div>
+                        )}
                     </div>
                 ) : (
                     <div className="absolute top-4 right-4 z-50 flex items-center gap-4">
