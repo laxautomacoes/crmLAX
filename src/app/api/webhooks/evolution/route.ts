@@ -443,6 +443,49 @@ export async function POST(req: Request) {
         if (!exists) {
             updatedChat.push(newMessage);
         }
+
+        // Cancelar sequências de follow-up que têm exit_on_reply ativo
+        try {
+            const { data: activeEnrollments } = await supabase
+                .from('followup_enrollments')
+                .select('id, sequence_id')
+                .eq('lead_id', lead.id)
+                .eq('status', 'active');
+
+            if (activeEnrollments && activeEnrollments.length > 0) {
+                const sequenceIds = activeEnrollments.map(e => e.sequence_id);
+                const { data: sequences } = await supabase
+                    .from('followup_sequences')
+                    .select('id, exit_target_stage_id')
+                    .in('id', sequenceIds)
+                    .eq('exit_on_reply', true);
+
+                if (sequences && sequences.length > 0) {
+                    const exitSequenceIds = sequences.map(s => s.id);
+                    const enrollmentsToCancel = activeEnrollments
+                        .filter(e => exitSequenceIds.includes(e.sequence_id))
+                        .map(e => e.id);
+
+                    if (enrollmentsToCancel.length > 0) {
+                        await supabase
+                            .from('followup_enrollments')
+                            .update({ status: 'cancelled' })
+                            .in('id', enrollmentsToCancel);
+
+                        // Mover lead para novo estágio (Ação ao Sair)
+                        const targetStageSeq = sequences.find(s => s.exit_target_stage_id);
+                        if (targetStageSeq?.exit_target_stage_id) {
+                            await supabase
+                                .from('leads')
+                                .update({ stage_id: targetStageSeq.exit_target_stage_id })
+                                .eq('id', lead.id);
+                        }
+                    }
+                }
+            }
+        } catch (err) {
+            console.error('[Evolution Webhook] Erro ao cancelar follow-up por resposta:', err);
+        }
     }
     
     updatedChat = updatedChat.slice(-20);

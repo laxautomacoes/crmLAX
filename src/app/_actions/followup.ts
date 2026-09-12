@@ -11,6 +11,8 @@ interface FollowupStepInput {
     message_template: string;
     media_url?: string;
     media_type?: 'image' | 'video' | 'document';
+    media_name?: string;
+    target_stage_id?: string | null;
 }
 
 interface CreateSequenceInput {
@@ -19,6 +21,8 @@ interface CreateSequenceInput {
     trigger_type: 'manual' | 'stage_change' | 'new_lead';
     trigger_config?: Record<string, any>;
     exit_on_reply?: boolean;
+    exit_target_stage_id?: string | null;
+    campaign_keywords?: string[];
     steps: FollowupStepInput[];
 }
 
@@ -159,7 +163,7 @@ export async function getFollowupSequence(sequenceId: string) {
         .select(`
             *,
             followup_steps (
-                id, order_index, delay_value, delay_unit, message_template, media_url, media_type
+                id, order_index, delay_value, delay_unit, message_template, media_url, media_type, media_name, target_stage_id
             )
         `)
         .eq('id', sequenceId)
@@ -195,6 +199,8 @@ export async function createFollowupSequence(input: CreateSequenceInput) {
             trigger_type: input.trigger_type,
             trigger_config: input.trigger_config || {},
             exit_on_reply: input.exit_on_reply !== false,
+            exit_target_stage_id: input.exit_target_stage_id || null,
+            campaign_keywords: input.campaign_keywords || [],
             is_active: false,
         })
         .select()
@@ -212,6 +218,8 @@ export async function createFollowupSequence(input: CreateSequenceInput) {
             message_template: step.message_template,
             media_url: step.media_url || null,
             media_type: step.media_type || null,
+            media_name: step.media_name || null,
+            target_stage_id: step.target_stage_id || null,
         }))
 
         const { error: stepsError } = await supabase
@@ -243,6 +251,8 @@ export async function updateFollowupSequence(sequenceId: string, input: CreateSe
             trigger_type: input.trigger_type,
             trigger_config: input.trigger_config || {},
             exit_on_reply: input.exit_on_reply !== false,
+            exit_target_stage_id: input.exit_target_stage_id || null,
+            campaign_keywords: input.campaign_keywords || [],
             updated_at: new Date().toISOString(),
         })
         .eq('id', sequenceId)
@@ -262,6 +272,8 @@ export async function updateFollowupSequence(sequenceId: string, input: CreateSe
             message_template: step.message_template,
             media_url: step.media_url || null,
             media_type: step.media_type || null,
+            media_name: step.media_name || null,
+            target_stage_id: step.target_stage_id || null,
         }))
 
         const { error: stepsError } = await supabase
@@ -579,5 +591,30 @@ export async function getLeadEnrollments(leadId: string) {
 
     if (error) return { success: false, error: error.message }
     return { success: true, data }
+}
+
+export async function getFollowupAvailableStages() {
+    const ctx = await getAuthContext()
+    if ('error' in ctx) return { success: false, error: ctx.error, data: [] }
+
+    const { supabase, tenantId } = ctx
+
+    const { data, error } = await supabase
+        .from('lead_stages')
+        .select(`
+            id,
+            name,
+            order_index,
+            funnel_id,
+            funnels (
+                id,
+                name
+            )
+        `)
+        .eq('tenant_id', tenantId)
+        .order('order_index', { ascending: true })
+
+    if (error) return { success: false, error: error.message, data: [] }
+    return { success: true, data: data || [] }
 }
 

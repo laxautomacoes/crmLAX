@@ -67,11 +67,11 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive, onPropo
                             {lead.name}
                         </h4>
                     </div>
-                    {(lead.interest || lead.partner_id) && (
+                    {(lead.campaign || lead.partner_id) && (
                         <div className="flex flex-wrap items-center gap-1.5 mt-1 min-w-0">
-                            {lead.interest && (
-                                <span className="inline-block px-2.5 py-0.5 bg-muted text-muted-foreground rounded-full text-[10px] font-bold transition-colors border border-muted-foreground/30 truncate max-w-[180px]" title={lead.interest}>
-                                    {lead.interest}
+                            {lead.campaign && (
+                                <span className="inline-block px-2.5 py-0.5 bg-muted text-muted-foreground rounded-full text-[10px] font-bold transition-colors border border-muted-foreground/30 truncate max-w-[180px]" title={`Campanha: ${lead.campaign}`}>
+                                    {lead.campaign}
                                 </span>
                             )}
                             {lead.partner_id && (

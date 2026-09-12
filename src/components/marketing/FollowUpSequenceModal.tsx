@@ -27,6 +27,7 @@ import {
     createFollowupSequence,
     updateFollowupSequence,
     getFollowupSequence,
+    getFollowupAvailableStages,
 } from '@/app/_actions/followup';
 
 interface FollowUpSequenceModalProps {
@@ -44,6 +45,15 @@ interface StepForm {
     media_url?: string;
     media_type?: 'image' | 'video' | 'document';
     media_name?: string;
+    target_stage_id?: string | null;
+    target_funnel_id?: string | null;
+}
+
+interface StageOption {
+    id: string;
+    name: string;
+    funnel_id: string;
+    funnel_name: string;
 }
 
 const DELAY_UNITS = [
@@ -71,12 +81,17 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
     const [description, setDescription] = useState('');
     const [triggerType, setTriggerType] = useState<'manual' | 'stage_change' | 'new_lead'>('manual');
     const [exitOnReply, setExitOnReply] = useState(true);
+    const [exitTargetFunnelId, setExitTargetFunnelId] = useState('');
+    const [exitTargetStageId, setExitTargetStageId] = useState('');
+    const [campaignKeywords, setCampaignKeywords] = useState('');
     const [steps, setSteps] = useState<StepForm[]>([]);
     const [isSaving, setIsSaving] = useState(false);
     const [isLoadingEdit, setIsLoadingEdit] = useState(false);
     const [uploadingStepId, setUploadingStepId] = useState<string | null>(null);
     const mediaInputRef = useRef<HTMLInputElement>(null);
     const activeStepRef = useRef<string | null>(null);
+    const textareasRef = useRef<Map<string, HTMLTextAreaElement>>(new Map());
+    const [availableStages, setAvailableStages] = useState<StageOption[]>([]);
 
     // Property image picker states
     const [properties, setProperties] = useState<any[]>([]);
@@ -85,7 +100,22 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
     const [selectedPropertyId, setSelectedPropertyId] = useState<string>('');
     const [propertyImages, setPropertyImages] = useState<string[]>([]);
 
-    // Load properties on mount
+    // Load stages and properties on mount
+    useEffect(() => {
+        if (!isOpen) return;
+        getFollowupAvailableStages().then(result => {
+            if (result.success && result.data) {
+                const mapped = (result.data as any[]).map((s: any) => ({
+                    id: s.id,
+                    name: s.name,
+                    funnel_id: (s.funnels as any)?.id || '',
+                    funnel_name: (s.funnels as any)?.name || 'Funil',
+                }));
+                setAvailableStages(mapped);
+            }
+        });
+    }, [isOpen]);
+
     useEffect(() => {
         if (!isOpen) return;
         const loadProperties = async () => {
@@ -141,6 +171,14 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                     setDescription(seq.description || '');
                     setTriggerType(seq.trigger_type);
                     setExitOnReply(seq.exit_on_reply);
+                    
+                    const exitStageId = seq.exit_target_stage_id || '';
+                    setExitTargetStageId(exitStageId);
+                    setExitTargetFunnelId(
+                        exitStageId ? (availableStages.find(a => a.id === exitStageId)?.funnel_id || '') : ''
+                    );
+
+                    setCampaignKeywords((seq.campaign_keywords || []).join(', '));
                     setSteps(
                         (seq.followup_steps || []).map((s: any) => ({
                             id: s.id,
@@ -149,7 +187,11 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                             message_template: s.message_template,
                             media_url: s.media_url || undefined,
                             media_type: s.media_type || undefined,
-                            media_name: s.media_url ? s.media_url.split('/').pop() : undefined,
+                            media_name: s.media_name || (s.media_url ? s.media_url.split('/').pop() : undefined),
+                            target_stage_id: s.target_stage_id || null,
+                            target_funnel_id: s.target_stage_id
+                                ? (availableStages.find(a => a.id === s.target_stage_id)?.funnel_id || null)
+                                : null,
                         }))
                     );
                 }
@@ -160,6 +202,9 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
             setDescription('');
             setTriggerType('manual');
             setExitOnReply(true);
+            setExitTargetFunnelId('');
+            setExitTargetStageId('');
+            setCampaignKeywords('');
             setSteps([{ id: `step_${Date.now()}`, delay_value: 1, delay_unit: 'hours', message_template: '' }]);
         }
         // Reset property picker state when modal opens/closes
@@ -184,7 +229,25 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
     };
 
     const insertVariable = (stepId: string, variable: string) => {
-        setSteps(prev => prev.map(s => s.id !== stepId ? s : { ...s, message_template: s.message_template + variable }));
+        const textarea = textareasRef.current.get(stepId);
+        setSteps(prev => prev.map(s => {
+            if (s.id !== stepId) return s;
+            
+            let newText = s.message_template + variable;
+            if (textarea) {
+                const start = textarea.selectionStart;
+                const end = textarea.selectionEnd;
+                newText = s.message_template.substring(0, start) + variable + s.message_template.substring(end);
+                
+                // Focar e ajustar o cursor logo após o estado ser atualizado
+                setTimeout(() => {
+                    textarea.focus();
+                    textarea.setSelectionRange(start + variable.length, start + variable.length);
+                }, 0);
+            }
+            
+            return { ...s, message_template: newText };
+        }));
     };
 
     const moveStep = (index: number, direction: 'up' | 'down') => {
@@ -204,7 +267,8 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
         try {
             const supabase = createClient();
             const fileExt = file.name.split('.').pop();
-            const fileName = `${Math.random().toString(36).slice(2)}.${fileExt}`;
+            const sanitizedName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
+            const fileName = `${Date.now()}_${sanitizedName}`;
             const filePath = `followup-media/${fileName}`;
 
             const { error: uploadError } = await supabase.storage.from('crm-attachments').upload(filePath, file);
@@ -269,10 +333,14 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                 description: description.trim() || undefined,
                 trigger_type: triggerType,
                 exit_on_reply: exitOnReply,
+                exit_target_stage_id: exitTargetStageId || null,
+                campaign_keywords: campaignKeywords.split(',').map(k => k.trim()).filter(Boolean),
                 steps: steps.map((s, i) => ({
                     order_index: i, delay_value: s.delay_value, delay_unit: s.delay_unit,
                     message_template: s.message_template,
                     media_url: s.media_url, media_type: s.media_type,
+                    media_name: s.media_name,
+                    target_stage_id: s.target_stage_id || null,
                 })),
             };
 
@@ -290,7 +358,7 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                     });
                 }
                 
-                onSaved(); onClose();
+                onSaved();
             } else { toast.error(result.error || 'Erro ao salvar.'); }
         } catch { toast.error('Erro ao salvar sequência.'); }
         finally { setIsSaving(false); }
@@ -366,6 +434,13 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                             <p className="text-[10px] text-muted-foreground mt-1">{TRIGGER_TYPES.find(t => t.value === triggerType)?.description}</p>
                         </div>
                         <div>
+                            <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Palavras-chave da Campanha (opcional)</label>
+                            <input type="text" value={campaignKeywords} onChange={e => setCampaignKeywords(e.target.value)}
+                                placeholder="Ex: luminae, leads luminae"
+                                className="w-full h-10 px-3 rounded-lg border border-border/40 bg-foreground/5 text-foreground text-xs focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 transition-all" />
+                            <p className="text-[10px] text-muted-foreground mt-1">Leads com estas campanhas entrarão na sequência.</p>
+                        </div>
+                        <div>
                             <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Saída Automática</label>
                             <label className="flex items-center gap-3 h-10 px-4 rounded-lg border border-border/40 bg-foreground/5 cursor-pointer hover:bg-foreground/10 transition-all">
                                 <input type="checkbox" checked={exitOnReply} onChange={e => setExitOnReply(e.target.checked)}
@@ -374,6 +449,39 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                             </label>
                             <p className="text-[10px] text-muted-foreground mt-1">Lead passa para atendimento humano ao responder.</p>
                         </div>
+                        {exitOnReply && (
+                            <div>
+                                <label className="text-[10px] font-bold text-muted-foreground uppercase tracking-wider mb-1.5 block">Ação ao Sair (Mover Card)</label>
+                                <div className="flex gap-2">
+                                    <select
+                                        value={exitTargetFunnelId}
+                                        onChange={(e) => {
+                                            setExitTargetFunnelId(e.target.value);
+                                            setExitTargetStageId('');
+                                        }}
+                                        className="w-1/2 h-10 px-3 text-xs font-bold bg-foreground/5 border border-border/40 text-foreground rounded-lg focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50"
+                                    >
+                                        <option value="">Nenhum (Manter onde está)</option>
+                                        {Array.from(new Set(availableStages.map(a => a.funnel_id))).map(fId => {
+                                            const funnelName = availableStages.find(a => a.funnel_id === fId)?.funnel_name;
+                                            return <option key={fId} value={fId}>{funnelName}</option>;
+                                        })}
+                                    </select>
+                                    <select
+                                        value={exitTargetStageId}
+                                        onChange={(e) => setExitTargetStageId(e.target.value)}
+                                        disabled={!exitTargetFunnelId}
+                                        className="w-1/2 h-10 px-3 text-xs font-bold bg-foreground/5 border border-border/40 text-foreground rounded-lg focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 disabled:opacity-50"
+                                    >
+                                        <option value="">Selecione o Estágio</option>
+                                        {availableStages.filter(a => a.funnel_id === exitTargetFunnelId).map(stage => (
+                                            <option key={stage.id} value={stage.id}>{stage.name}</option>
+                                        ))}
+                                    </select>
+                                </div>
+                                <p className="text-[10px] text-muted-foreground mt-1">Move o card automaticamente se o lead responder.</p>
+                            </div>
+                        )}
                     </div>
 
                     {/* Builder de Etapas */}
@@ -450,7 +558,12 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                                                     ))}
                                                 </div>
                                             </div>
-                                            <textarea value={step.message_template}
+                                            <textarea 
+                                                ref={(el) => {
+                                                    if (el) textareasRef.current.set(step.id, el);
+                                                    else textareasRef.current.delete(step.id);
+                                                }}
+                                                value={step.message_template}
                                                 onChange={e => updateStep(step.id, 'message_template', e.target.value)}
                                                 placeholder={`Ex: Olá {primeiro_nome}, tudo bem? Passando para saber se tem alguma dúvida sobre o ${index === 0 ? 'imóvel que conversamos.' : 'nosso último contato.'}`}
                                                 rows={3}
@@ -618,6 +731,64 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
                                                 </div>
                                             )}
                                         </div>
+
+                                        {/* Mover para Estágio — seleção em cascata: Funil → Estágio */}
+                                        {availableStages.length > 0 && (() => {
+                                            // Funis únicos disponíveis
+                                            const funnels = availableStages.reduce<{ id: string; name: string }[]>((acc, s) => {
+                                                if (!acc.find(f => f.id === s.funnel_id)) acc.push({ id: s.funnel_id, name: s.funnel_name });
+                                                return acc;
+                                            }, []);
+                                            // Estágios filtrados pelo funil selecionado no step
+                                            const filteredStages = step.target_funnel_id
+                                                ? availableStages.filter(s => s.funnel_id === step.target_funnel_id)
+                                                : [];
+                                            return (
+                                                <div className="space-y-2">
+                                                    <label className="text-[10px] font-bold text-foreground uppercase tracking-wider block">
+                                                        Mover Lead para Estágio (opcional)
+                                                    </label>
+                                                    {/* Seletor de Funil */}
+                                                    <div className="relative">
+                                                        <select
+                                                            value={step.target_funnel_id || ''}
+                                                            onChange={e => {
+                                                                updateStep(step.id, 'target_funnel_id', e.target.value || null);
+                                                                updateStep(step.id, 'target_stage_id', null);
+                                                            }}
+                                                            className="appearance-none w-full h-9 px-3 pr-8 rounded-lg border border-border/40 bg-foreground/5 text-foreground text-xs font-bold focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 transition-all"
+                                                        >
+                                                            <option value="">Selecione um funil...</option>
+                                                            {funnels.map(f => (
+                                                                <option key={f.id} value={f.id}>{f.name}</option>
+                                                            ))}
+                                                        </select>
+                                                        <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                                                    </div>
+                                                    {/* Seletor de Estágio (aparece apenas após escolher funil) */}
+                                                    {step.target_funnel_id && (
+                                                        <div className="relative">
+                                                            <select
+                                                                value={step.target_stage_id || ''}
+                                                                onChange={e => updateStep(step.id, 'target_stage_id', e.target.value || null)}
+                                                                className="appearance-none w-full h-9 px-3 pr-8 rounded-lg border border-border/40 bg-foreground/5 text-foreground text-xs font-bold focus:outline-none focus:border-ring focus:ring-2 focus:ring-ring/50 transition-all"
+                                                            >
+                                                                <option value="">Não mover — manter estágio atual</option>
+                                                                {filteredStages.map(stage => (
+                                                                    <option key={stage.id} value={stage.id}>{stage.name}</option>
+                                                                ))}
+                                                            </select>
+                                                            <ChevronDown className="absolute right-2.5 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground pointer-events-none" />
+                                                        </div>
+                                                    )}
+                                                    {step.target_stage_id && (
+                                                        <p className="text-[10px] text-muted-foreground">
+                                                            Ao enviar esta mensagem, o lead será movido automaticamente para este estágio.
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            );
+                                        })()}
                                     </div>
                                 </div>
                             ))}

@@ -1006,10 +1006,12 @@ export type Database = {
       }
       followup_sequences: {
         Row: {
+          campaign_keywords: string[] | null
           created_at: string | null
           created_by: string
           description: string | null
           exit_on_reply: boolean
+          exit_target_stage_id: string | null
           id: string
           is_active: boolean
           name: string
@@ -1019,10 +1021,12 @@ export type Database = {
           updated_at: string | null
         }
         Insert: {
+          campaign_keywords?: string[] | null
           created_at?: string | null
           created_by: string
           description?: string | null
           exit_on_reply?: boolean
+          exit_target_stage_id?: string | null
           id?: string
           is_active?: boolean
           name: string
@@ -1032,10 +1036,12 @@ export type Database = {
           updated_at?: string | null
         }
         Update: {
+          campaign_keywords?: string[] | null
           created_at?: string | null
           created_by?: string
           description?: string | null
           exit_on_reply?: boolean
+          exit_target_stage_id?: string | null
           id?: string
           is_active?: boolean
           name?: string
@@ -1067,33 +1073,39 @@ export type Database = {
           delay_unit: string
           delay_value: number
           id: string
+          media_name: string | null
           media_type: string | null
           media_url: string | null
           message_template: string
           order_index: number
           sequence_id: string
+          target_stage_id: string | null
         }
         Insert: {
           created_at?: string | null
           delay_unit?: string
           delay_value?: number
           id?: string
+          media_name?: string | null
           media_type?: string | null
           media_url?: string | null
           message_template: string
           order_index?: number
           sequence_id: string
+          target_stage_id?: string | null
         }
         Update: {
           created_at?: string | null
           delay_unit?: string
           delay_value?: number
           id?: string
+          media_name?: string | null
           media_type?: string | null
           media_url?: string | null
           message_template?: string
           order_index?: number
           sequence_id?: string
+          target_stage_id?: string | null
         }
         Relationships: [
           {

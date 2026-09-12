@@ -1,12 +1,13 @@
 'use client'
 
 import { useState } from 'react'
-import { Search, Filter } from 'lucide-react'
+import { Search, Filter, RefreshCw } from 'lucide-react'
 import { FormInput } from '@/components/shared/forms/FormInput'
 
 interface LeadsHeaderProps {
     onSearch: (term: string) => void
     onOpenFilter?: () => void
+    onOpenSync?: () => void
     activeFilterCount?: number
     viewToggle?: React.ReactNode
     children?: React.ReactNode
@@ -20,6 +21,7 @@ interface LeadsHeaderProps {
 export function LeadsHeader({
     onSearch,
     onOpenFilter,
+    onOpenSync,
     activeFilterCount = 0,
     viewToggle,
     children,
@@ -65,6 +67,16 @@ export function LeadsHeader({
                                 {activeFilterCount}
                             </span>
                         )}
+                    </button>
+                )}
+                {onOpenSync && (
+                    <button
+                        type="button"
+                        onClick={onOpenSync}
+                        className="h-[34px] min-w-[130px] flex items-center justify-center gap-2 px-4 border border-muted-foreground/30 bg-card hover:bg-muted/50 text-foreground rounded-lg transition-all text-xs font-bold uppercase tracking-widest whitespace-nowrap outline-none focus:ring-2 focus:ring-ring/50 shadow-sm"
+                    >
+                        <RefreshCw size={14} strokeWidth={1} className="flex-shrink-0" />
+                        <span>SINCRONIZAR</span>
                     </button>
                 )}
                 {children}

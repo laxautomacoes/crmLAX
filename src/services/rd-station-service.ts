@@ -47,6 +47,17 @@ export async function processRDStationBatch(
     let updated = 0;
     let skipped = 0;
 
+    // Buscar sequências ativas de "new_lead" para auto-enrollment
+    const { data: activeSequences } = await supabase
+        .from('followup_sequences')
+        .select(`
+            id, campaign_keywords,
+            followup_steps ( id, order_index, delay_value, delay_unit )
+        `)
+        .eq('tenant_id', tenantId)
+        .eq('trigger_type', 'new_lead')
+        .eq('is_active', true);
+
     for (const deal of deals) {
         const dealId = deal.id || deal._id;
         const primaryContact = deal.contacts?.[0];
@@ -162,7 +173,7 @@ export async function processRDStationBatch(
                 .eq('id', existingLead.id);
             updated++;
         } else {
-            await supabase
+            const { data: newLead } = await supabase
                 .from('leads')
                 .insert({
                     tenant_id: tenantId,
@@ -181,8 +192,46 @@ export async function processRDStationBatch(
                         ...(deal.deal_source ? { rd_source: deal.deal_source } : {}),
                         ...(deal.campaign ? { rd_campaign: deal.campaign } : {}),
                     },
-                });
-            imported++;
+                })
+                .select('id')
+                .single();
+
+            if (newLead) {
+                imported++;
+                
+                // Auto-enrollment por match de campanha
+                if (campaignName && activeSequences && activeSequences.length > 0) {
+                    const campaignLower = campaignName.toLowerCase();
+                    for (const seq of activeSequences) {
+                        if (!seq.campaign_keywords || seq.campaign_keywords.length === 0) continue;
+                        
+                        const matches = seq.campaign_keywords.some((kw: string) => campaignLower.includes(kw.trim().toLowerCase()));
+                        if (matches) {
+                            const steps = seq.followup_steps as any[];
+                            if (!steps || steps.length === 0) continue;
+                            
+                            const firstStep = steps.sort((a, b) => a.order_index - b.order_index)[0];
+                            if (firstStep) {
+                                const nextActionAt = new Date();
+                                if (firstStep.delay_unit === 'minutes') nextActionAt.setMinutes(nextActionAt.getMinutes() + firstStep.delay_value);
+                                else if (firstStep.delay_unit === 'hours') nextActionAt.setHours(nextActionAt.getHours() + firstStep.delay_value);
+                                else if (firstStep.delay_unit === 'days') nextActionAt.setDate(nextActionAt.getDate() + firstStep.delay_value);
+                                else if (firstStep.delay_unit === 'weeks') nextActionAt.setDate(nextActionAt.getDate() + (firstStep.delay_value * 7));
+
+                                await supabase.from('followup_enrollments').insert({
+                                    tenant_id: tenantId,
+                                    sequence_id: seq.id,
+                                    lead_id: newLead.id,
+                                    status: 'active',
+                                    current_step_index: 0,
+                                    enrolled_at: new Date().toISOString(),
+                                    next_action_at: nextActionAt.toISOString()
+                                });
+                            }
+                        }
+                    }
+                }
+            }
         }
     }
 

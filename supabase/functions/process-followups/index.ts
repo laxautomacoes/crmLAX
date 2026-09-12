@@ -55,7 +55,23 @@ async function sendWhatsAppText(instanceName: string, number: string, message: s
   });
 }
 
-async function sendWhatsAppMedia(instanceName: string, number: string, mediaUrl: string, mediaType: string, caption?: string) {
+async function sendWhatsAppMedia(instanceName: string, number: string, mediaUrl: string, mediaType: string, caption?: string, fileName?: string) {
+  // Para documentos, usar endpoint específico
+  if (mediaType === 'document') {
+    return evolutionFetch(`/message/sendMedia/${instanceName}`, {
+      method: 'POST',
+      body: JSON.stringify({
+        number,
+        options: { delay: 1200, presence: 'composing' },
+        mediatype: 'document',
+        media: mediaUrl,
+        caption: caption || '',
+        fileName: fileName || 'documento',
+        mediaMessage: { mediatype: 'document', media: mediaUrl, caption: caption || '', fileName: fileName || 'documento' }
+      }),
+    });
+  }
+  
   return evolutionFetch(`/message/sendMedia/${instanceName}`, {
     method: 'POST',
     body: JSON.stringify({
@@ -64,7 +80,8 @@ async function sendWhatsAppMedia(instanceName: string, number: string, mediaUrl:
       mediatype: mediaType,
       media: mediaUrl,
       caption: caption || '',
-      mediaMessage: { mediatype: mediaType, media: mediaUrl, caption: caption || '' }
+      fileName: fileName || undefined,
+      mediaMessage: { mediatype: mediaType, media: mediaUrl, caption: caption || '', fileName: fileName || undefined }
     }),
   });
 }
@@ -322,7 +339,8 @@ Deno.serve(async (req: Request) => {
 
         try {
           if (finalMediaUrl && finalMediaType) {
-            await sendWhatsAppMedia(activeInstance, contactPhone, finalMediaUrl, finalMediaType, personalizedMessage);
+            const mediaFileName = currentStep.media_name || undefined;
+            await sendWhatsAppMedia(activeInstance, contactPhone, finalMediaUrl, finalMediaType, personalizedMessage, mediaFileName);
           } else {
             await sendWhatsAppText(activeInstance, contactPhone, personalizedMessage);
           }
@@ -354,6 +372,43 @@ Deno.serve(async (req: Request) => {
             content: `Follow-Up "${sequence.name}" (etapa ${enrollment.current_step_index + 1}): ${personalizedMessage.substring(0, 100)}...`,
             metadata: { followup_sequence: sequence.name, step_index: enrollment.current_step_index }
           });
+
+          // Mover lead de estágio se configurado no step
+          if (currentStep.target_stage_id) {
+            try {
+              // Buscar nome do estágio alvo para o log
+              const { data: targetStage } = await supabase
+                .from('lead_stages')
+                .select('name')
+                .eq('id', currentStep.target_stage_id)
+                .single();
+
+              const { error: stageErr } = await supabase
+                .from('leads')
+                .update({ stage_id: currentStep.target_stage_id })
+                .eq('id', enrollment.lead_id);
+
+              if (stageErr) {
+                console.error(`[Follow-Up] ❌ Erro ao mover lead ${enrollment.lead_id} para estágio ${currentStep.target_stage_id}:`, stageErr.message);
+              } else {
+                console.log(`[Follow-Up] 🔄 Lead ${enrollment.lead_id} movido para estágio "${targetStage?.name || currentStep.target_stage_id}".`);
+                // Registrar a mudança de estágio como interação
+                await supabase.from('interactions').insert({
+                  lead_id: enrollment.lead_id,
+                  type: 'stage_change',
+                  content: `Follow-Up "${sequence.name}" (etapa ${enrollment.current_step_index + 1}): lead movido automaticamente para o estágio "${targetStage?.name || 'Desconhecido'}"`,
+                  metadata: {
+                    followup_sequence: sequence.name,
+                    step_index: enrollment.current_step_index,
+                    target_stage_id: currentStep.target_stage_id,
+                    target_stage_name: targetStage?.name || null,
+                  }
+                });
+              }
+            } catch (stageChangeErr: any) {
+              console.error(`[Follow-Up] ❌ Erro inesperado ao mover estágio:`, stageChangeErr.message);
+            }
+          }
 
           processed++;
           console.log(`[Follow-Up] ✅ Mensagem enviada para ${contactName} (${contactPhone}), etapa ${enrollment.current_step_index + 1}.`);

@@ -19,6 +19,7 @@ const LeadModal = nextDynamic(() => import('@/components/dashboard/leads/LeadMod
 const LeadBulkImportModal = nextDynamic(() => import('@/components/dashboard/leads/LeadBulkImportModal').then(mod => ({ default: mod.LeadBulkImportModal })), { ssr: false })
 const ClientModal = nextDynamic(() => import('@/components/dashboard/clients/ClientModal').then(mod => ({ default: mod.ClientModal })), { ssr: false })
 const LeadsFilterModal = nextDynamic(() => import('@/components/dashboard/leads/LeadsFilterModal').then(mod => ({ default: mod.LeadsFilterModal })), { ssr: false })
+const LeadsSyncModal = nextDynamic(() => import('@/components/dashboard/leads/LeadsSyncModal').then(mod => ({ default: mod.LeadsSyncModal })), { ssr: false })
 
 import { getPipelineData, deleteLead, archiveLead } from '@/app/_actions/leads'
 import { getFunnels, createFunnel, updateFunnel, deleteFunnel, setPreferredFunnel } from '@/app/_actions/funnels'
@@ -49,7 +50,7 @@ type PipelineLead = Lead & {
     property_interest?: string
     lead_source?: string
     source?: string
-    campaign?: string
+    campaign?: string | null
     property_id?: string
     date?: string | null
     created_at?: string | null
@@ -72,6 +73,7 @@ export default function LeadsPage() {
     const [isLeadModalOpen, setIsLeadModalOpen] = useState(false)
     const [isLeadBulkImportModalOpen, setIsLeadBulkImportModalOpen] = useState(false)
     const [isFilterModalOpen, setIsFilterModalOpen] = useState(false)
+    const [isSyncModalOpen, setIsSyncModalOpen] = useState(false)
     const [newStageName, setNewStageName] = useState('')
     const [tenantId, setTenantId] = useState<string | null>(null)
     const [stages, setStages] = useState<Stage[]>([])
@@ -492,6 +494,7 @@ export default function LeadsPage() {
                     <LeadsHeader 
                         onSearch={handleSearch} 
                         onOpenFilter={() => setIsFilterModalOpen(true)}
+                        onOpenSync={() => setIsSyncModalOpen(true)}
                         activeFilterCount={activeFilterCount}
                         viewToggle={
                             <div className="h-[34px] flex bg-card border border-border rounded-lg overflow-hidden shadow-sm shrink-0">
@@ -714,6 +717,13 @@ export default function LeadsPage() {
                     initialProposalLeadId={pendingProposalLeadId}
                 />
             )}
+
+            {/* Modal de Sincronização RD Station */}
+            <LeadsSyncModal
+                isOpen={isSyncModalOpen}
+                onClose={() => setIsSyncModalOpen(false)}
+                onSyncSuccess={() => fetchData()}
+            />
         </div>
     )
 }

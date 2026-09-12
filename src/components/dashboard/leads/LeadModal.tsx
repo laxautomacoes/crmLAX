@@ -60,7 +60,7 @@ interface ChatMessage {
 type EditableLead = Partial<Lead> & {
     id?: string
     lead_source?: string
-    campaign?: string
+    campaign?: string | null
     property_id?: string
     property_interest?: string
     date?: string | null

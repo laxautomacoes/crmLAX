@@ -34,6 +34,7 @@ export interface Lead {
     email: string
     avatar_url?: string | null
     interest?: string
+    campaign?: string | null
     tags?: string[]
     notes?: string
     value?: number
