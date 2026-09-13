@@ -135,7 +135,20 @@ Deno.serve(async (req: Request) => {
   );
 
   try {
-    console.log('[Follow-Up] Iniciando processamento...');
+    // 🕐 Anti-ban: verificar horário comercial (7h–20h, Brasília UTC-3)
+    const nowUTC = new Date();
+    const brasiliaHour = new Date(nowUTC.getTime() - (3 * 60 * 60 * 1000)).getUTCHours();
+    const HOUR_START = 7;
+    const HOUR_END = 20;
+
+    if (brasiliaHour < HOUR_START || brasiliaHour >= HOUR_END) {
+      console.log(`[Follow-Up] Fora do horário comercial (${brasiliaHour}h Brasília). Disparos suspensos até ${HOUR_START}h.`);
+      return new Response(JSON.stringify({ processed: 0, reason: 'outside_business_hours', currentHour: brasiliaHour }), {
+        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+      });
+    }
+
+    console.log(`[Follow-Up] Iniciando processamento (${brasiliaHour}h Brasília)...`);
 
     // 1. Buscar enrollments pendentes (next_action_at <= now e status = active)
     const { data: pendingEnrollments, error: fetchError } = await supabase
@@ -153,7 +166,7 @@ Deno.serve(async (req: Request) => {
       `)
       .eq('status', 'active')
       .lte('next_action_at', new Date().toISOString())
-      .limit(50);
+      .limit(150);
 
     if (fetchError) {
       console.error('[Follow-Up] Erro ao buscar enrollments:', fetchError);
@@ -168,10 +181,26 @@ Deno.serve(async (req: Request) => {
     }
 
     console.log(`[Follow-Up] ${pendingEnrollments.length} enrollment(s) pendente(s).`);
+
+    // 1.5 Agrupar por tenant_id, limitando a 3 enrollments por tenant
+    const enrollmentsByTenant: Record<string, any[]> = {};
+    for (const enr of pendingEnrollments) {
+      if (!enrollmentsByTenant[enr.tenant_id]) {
+        enrollmentsByTenant[enr.tenant_id] = [];
+      }
+      if (enrollmentsByTenant[enr.tenant_id].length < 3) {
+        enrollmentsByTenant[enr.tenant_id].push(enr);
+      }
+    }
+
     let processed = 0;
     let errors = 0;
+    const delayMs = (ms: number) => new Promise(res => setTimeout(res, ms));
 
-    for (const enrollment of pendingEnrollments) {
+    await Promise.all(Object.entries(enrollmentsByTenant).map(async ([tenantId, enrollments]) => {
+      for (const enrollment of enrollments) {
+        let sentMessageInThisIteration = false;
+
       try {
         const sequence = (enrollment as any).followup_sequences;
 
@@ -411,6 +440,7 @@ Deno.serve(async (req: Request) => {
           }
 
           processed++;
+          sentMessageInThisIteration = true;
           console.log(`[Follow-Up] ✅ Mensagem enviada para ${contactName} (${contactPhone}), etapa ${enrollment.current_step_index + 1}.`);
 
         } catch (sendErr: any) {
@@ -446,7 +476,12 @@ Deno.serve(async (req: Request) => {
         console.error(`[Follow-Up] Erro no enrollment ${enrollment.id}:`, enrollErr.message);
         errors++;
       }
+
+      if (sentMessageInThisIteration) {
+        await delayMs(30000);
+      }
     }
+  }));
 
     console.log(`[Follow-Up] Processamento concluído: ${processed} enviados, ${errors} erros.`);
 
