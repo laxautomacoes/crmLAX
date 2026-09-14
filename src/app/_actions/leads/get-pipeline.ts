@@ -93,7 +93,8 @@ export async function getPipelineData(tenantId: string, funnelId?: string) {
             profiles:assigned_to (
                 full_name
             ),
-            proposals ( id )
+            proposals ( id ),
+            followup_enrollments ( status )
         `)
         .eq('tenant_id', tenantId)
         .eq('is_archived', false)
@@ -198,6 +199,7 @@ export async function getPipelineData(tenantId: string, funnelId?: string) {
         notes: '',
         last_interaction_at: lead.last_interaction_at || lead.created_at || null,
         has_proposal: ((lead as any).proposals && (lead as any).proposals.length > 0),
+        has_active_followup: ((lead as any).followup_enrollments && (lead as any).followup_enrollments.some((e: any) => e.status === 'active')),
         partner_id: lead.partner_id || null,
         partner_split: lead.partner_split || null,
         partner_role: lead.partner_role || null

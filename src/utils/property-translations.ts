@@ -3,6 +3,7 @@ export const propertyTypes: Record<string, string> = {
     'apartment_garden': 'Apartamento garden',
     'duplex': 'Duplex',
     'triplex': 'Triplex',
+    'loft_duplex': 'Loft Duplex',
     'house': 'Casa',
     'land': 'Terreno',
     'commercial': 'Comercial',
@@ -31,6 +32,7 @@ export function getPropertyTypeStyles(type: string): string {
         case 'apartment': 
         case 'apartment_garden': 
         case 'duplex': 
+        case 'loft_duplex':
         case 'triplex': return 'bg-blue-500/10 text-blue-600';
         case 'house': return 'bg-emerald-500/10 text-emerald-600';
         case 'land': return 'bg-slate-500/10 text-slate-600';

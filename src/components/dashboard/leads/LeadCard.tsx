@@ -94,6 +94,9 @@ export function LeadCard({ lead, isOverlay, onEdit, onDelete, onArchive, onPropo
                             onProposalClick={onProposalClick}
                         />
                     )}
+                    {lead.has_active_followup && (
+                        <LeadFollowupBadge />
+                    )}
                     <LeadTemperatureBadge lastInteractionAt={lead.last_interaction_at} />
                     <div className="relative" ref={dropdownRef} onClick={(e) => e.stopPropagation()}>
                         <button
@@ -225,6 +228,71 @@ function LeadProposalBadge({ contactId, leadId, onProposalClick }: LeadProposalB
                             </div>
                             <p className="text-[10px] text-muted-foreground leading-relaxed">
                                 Este lead possui propostas cadastradas. Clique aqui para gerenciar e visualizar as propostas deste cliente.
+                            </p>
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
+    )
+}
+
+function LeadFollowupBadge() {
+    const [showTooltip, setShowTooltip] = useState(false)
+    const badgeRef = useRef<HTMLDivElement>(null)
+    const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+
+    useEffect(() => {
+        function handleClickOutside(event: MouseEvent) {
+            if (badgeRef.current && !badgeRef.current.contains(event.target as Node)) {
+                setShowTooltip(false)
+            }
+        }
+        document.addEventListener('mousedown', handleClickOutside)
+        return () => document.removeEventListener('mousedown', handleClickOutside)
+    }, [])
+
+    const handleMouseEnter = () => {
+        if (timeoutRef.current) clearTimeout(timeoutRef.current)
+        setShowTooltip(true)
+    }
+
+    const handleMouseLeave = () => {
+        timeoutRef.current = setTimeout(() => setShowTooltip(false), 150)
+    }
+
+    return (
+        <div
+            ref={badgeRef}
+            className="relative flex items-center"
+            onMouseEnter={handleMouseEnter}
+            onMouseLeave={handleMouseLeave}
+        >
+            <div
+                className="w-5 h-5 flex items-center justify-center text-[10px] font-black rounded-full shrink-0 relative"
+                style={{ backgroundColor: '#404F4F', color: '#FFFFFF' }}
+            >
+                F
+            </div>
+
+            <AnimatePresence>
+                {showTooltip && (
+                    <motion.div
+                        initial={{ opacity: 0, scale: 0.9, y: 4 }}
+                        animate={{ opacity: 1, scale: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.9, y: 4 }}
+                        transition={{ duration: 0.15 }}
+                        className="absolute right-0 top-full mt-2 z-50 min-w-[200px]"
+                        onClick={(e) => e.stopPropagation()}
+                    >
+                        <div className="bg-card border border-muted-foreground/30 rounded-lg shadow-xl p-3 text-left">
+                            <div className="flex items-center gap-2 mb-1">
+                                <span className="text-[11px] font-bold text-foreground uppercase tracking-wider">
+                                    Follow-up Ativo
+                                </span>
+                            </div>
+                            <p className="text-[10px] text-muted-foreground leading-relaxed">
+                                Este lead está inscrito em uma sequência automática de follow-up ativa.
                             </p>
                         </div>
                     </motion.div>

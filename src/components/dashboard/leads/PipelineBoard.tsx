@@ -48,6 +48,7 @@ export interface Lead {
     whatsapp_chat?: Array<{ fromMe?: boolean; message?: string; text?: string }>
     last_interaction_at?: string | null
     has_proposal?: boolean
+    has_active_followup?: boolean
     partner_id?: string | null
     partners?: { name: string }
     partner_split?: number | null

@@ -5,6 +5,7 @@ import { FormInput } from '@/components/shared/forms/FormInput'
 import { FormSelect } from '@/components/shared/forms/FormSelect'
 import { Building2, Plus, Trash2, Layers, ChevronDown, ChevronRight } from 'lucide-react'
 import { formatCurrencyBRL } from '@/lib/utils/currency'
+import { propertyTypeOptions } from '@/utils/property-translations'
 
 interface TowersFieldsProps {
     formData: any
@@ -184,13 +185,7 @@ export function TowersFields({ formData, setFormData }: TowersFieldsProps) {
                                             label="Tipo"
                                             value={tip.tipo}
                                             onChange={(e) => updateTipologia(torreIndex, tipIndex, 'tipo', e.target.value)}
-                                            options={[
-                                                { value: 'apartment', label: 'Apartamento' },
-                                                { value: 'penthouse', label: 'Cobertura' },
-                                                { value: 'studio', label: 'Studio' },
-                                                { value: 'house', label: 'Casa' },
-                                                { value: 'commercial', label: 'Comercial' }
-                                            ]}
+                                            options={propertyTypeOptions}
                                         />
                                         <FormInput
                                             label="Dormitórios"

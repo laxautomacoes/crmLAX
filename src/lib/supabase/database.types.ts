@@ -2865,6 +2865,67 @@ export type Database = {
           },
         ]
       }
+      viability_studies: {
+        Row: {
+          builder_logo_url: string | null
+          created_at: string | null
+          id: string
+          property_id: string | null
+          property_unit_id: string | null
+          study_data: Json
+          tenant_id: string
+          title: string
+          property_logo_url: string | null
+          updated_at: string | null
+        }
+        Insert: {
+          builder_logo_url?: string | null
+          created_at?: string | null
+          id?: string
+          property_id?: string | null
+          property_unit_id?: string | null
+          study_data?: Json
+          tenant_id: string
+          title: string
+          property_logo_url?: string | null
+          updated_at?: string | null
+        }
+        Update: {
+          builder_logo_url?: string | null
+          created_at?: string | null
+          id?: string
+          property_id?: string | null
+          property_unit_id?: string | null
+          study_data?: Json
+          tenant_id?: string
+          title?: string
+          property_logo_url?: string | null
+          updated_at?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "viability_studies_property_id_fkey"
+            columns: ["property_id"]
+            isOneToOne: false
+            referencedRelation: "properties"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viability_studies_property_unit_id_fkey"
+            columns: ["property_unit_id"]
+            isOneToOne: false
+            referencedRelation: "property_units"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "viability_studies_tenant_id_fkey"
+            columns: ["tenant_id"]
+            isOneToOne: false
+            referencedRelation: "tenants"
+            referencedColumns: ["id"]
+          }
+        ]
+      }
       whatsapp_instances: {
         Row: {
           connected_phone: string | null

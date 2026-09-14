@@ -157,7 +157,6 @@ export async function processRDStationBatch(
             const updatePayload: Record<string, any> = {
                 value: dealValue,
                 valor_estimado: dealValue,
-                stage_id: targetStageId,
                 last_interaction_at: new Date().toISOString(),
             };
             if (campaignName) {
