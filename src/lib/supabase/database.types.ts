@@ -3003,7 +3003,7 @@ export type Database = {
         | "commercial"
         | "penthouse"
         | "studio"
-      calendar_event_type: "duty" | "visit" | "note" | "other"
+      calendar_event_type: "duty" | "visit" | "note" | "other" | "meeting" | "call"
       interaction_type: "whatsapp" | "system" | "note"
       plan_type: "freemium" | "starter" | "pro" | "business" | "enterprise"
       profile_role:
@@ -3151,7 +3151,7 @@ export const Constants = {
         "penthouse",
         "studio",
       ],
-      calendar_event_type: ["duty", "visit", "note", "other"],
+      calendar_event_type: ["duty", "visit", "note", "other", "meeting", "call"],
       interaction_type: ["whatsapp", "system", "note"],
       plan_type: ["freemium", "starter", "pro", "business", "enterprise"],
       profile_role: [

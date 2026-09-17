@@ -97,7 +97,12 @@ export const notificationService = {
                 .maybeSingle();
 
             if (instance?.instance_name) {
-                const cleanNumber = target_number.replace(/\D/g, '');
+                let cleanNumber = target_number.replace(/\D/g, '');
+                // Adiciona DDI do Brasil (55) se o número tiver apenas DDD + Número (10 ou 11 dígitos)
+                if (cleanNumber.length === 10 || cleanNumber.length === 11) {
+                    cleanNumber = '55' + cleanNumber;
+                }
+                
                 await evolutionService.sendMessage(
                     instance.instance_name,
                     cleanNumber,

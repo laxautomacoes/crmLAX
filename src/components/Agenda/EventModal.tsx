@@ -127,7 +127,11 @@ export default function EventModal({
         onSave({
             ...formData,
             start_time: new Date(formData.start_time).toISOString(),
-            end_time: new Date(finalEndTime).toISOString()
+            end_time: new Date(finalEndTime).toISOString(),
+            metadata: {
+                ...(formData.metadata as any || {}),
+                user_reminder_time: 5
+            }
         });
     };
 
@@ -198,20 +202,25 @@ export default function EventModal({
                 />
 
                 {formData.lead_id && (
-                    <div className="flex items-center gap-2 px-1 py-1 bg-green-50 rounded-lg border border-green-100">
-                        <input
-                            type="checkbox"
-                            id="send_whatsapp_reminder"
-                            checked={(formData.metadata as any)?.send_whatsapp_reminder || false}
-                            onChange={(e) => setFormData({
-                                ...formData,
-                                metadata: { ...formData.metadata, send_whatsapp_reminder: e.target.checked }
-                            })}
-                            className="w-4 h-4 rounded border-gray-300 text-[#25D366] focus:ring-[#25D366]"
-                        />
-                        <label htmlFor="send_whatsapp_reminder" className="text-sm font-bold text-green-700 cursor-pointer">
-                            Enviar lembrete via WhatsApp (1h antes)
-                        </label>
+                    <div className="flex flex-col mt-2">
+                        <label className="text-xs font-bold text-foreground ml-1 mb-2">Lembrete p/ Lead (Whats)</label>
+                        <div className="relative">
+                            <select
+                                className="w-full h-11 px-3 bg-background border border-input rounded-lg text-sm text-foreground focus:ring-2 focus:ring-ring/50 focus:border-ring outline-none appearance-none font-medium"
+                                value={(formData.metadata as any)?.lead_reminder_time || 0}
+                                onChange={(e) => setFormData({
+                                    ...formData,
+                                    metadata: { ...formData.metadata, lead_reminder_time: Number(e.target.value) }
+                                })}
+                            >
+                                <option value={0}>Não enviar</option>
+                                <option value={5}>5 min antes</option>
+                                <option value={15}>15 min antes</option>
+                                <option value={30}>30 min antes</option>
+                                <option value={60}>1 h antes</option>
+                            </select>
+                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                        </div>
                     </div>
                 )}
 
@@ -236,22 +245,25 @@ export default function EventModal({
                 <div className="flex gap-3 pt-4">
                     {editingEvent && onDelete && (
                         <button
+                            type="button"
                             onClick={() => setShowDeleteConfirm(true)}
-                            className="flex-1 py-3 bg-[#EF4444] text-white rounded-lg font-bold hover:bg-[#DC2626] transition-all active:scale-[0.99] shadow-sm"
+                            className="flex-1 py-3 bg-red-500 text-white rounded-lg font-bold hover:bg-red-600 transition-all active:scale-[0.99] shadow-sm uppercase tracking-widest text-xs"
                         >
                             Excluir
                         </button>
                     )}
                     <button
+                        type="button"
                         onClick={handleSubmit}
-                        className="flex-1 whitespace-nowrap py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:bg-[#F2DB00] shadow-sm transform active:scale-[0.99] transition-all"
+                        className="flex-1 whitespace-nowrap py-3 bg-secondary text-secondary-foreground rounded-lg font-bold hover:bg-[#F2DB00] shadow-sm transform active:scale-[0.99] transition-all uppercase tracking-widest text-xs"
                     >
                         {editingEvent ? 'Salvar Alterações' : 'Agendar'}
                     </button>
                     {formData.lead_id && (
                         <button
+                            type="button"
                             onClick={handleWhatsAppReminder}
-                            className="px-6 py-3 bg-[#25D366] text-white rounded-lg font-bold hover:opacity-90 shadow-sm active:scale-[0.99] transition-all flex items-center gap-2"
+                            className="px-6 py-3 bg-[#25D366] text-white rounded-lg font-bold hover:bg-[#1EBE5D] shadow-sm active:scale-[0.99] transition-all flex items-center justify-center gap-2 uppercase tracking-widest text-xs"
                         >
                             WhatsApp
                         </button>
@@ -277,7 +289,7 @@ export default function EventModal({
                         onClose();
                     }}
                     onCancel={() => setShowDeleteConfirm(false)}
-                    zIndex={60}
+                    zIndex={200}
                 />
             )}
         </Modal>

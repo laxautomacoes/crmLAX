@@ -16,7 +16,7 @@ export type CalendarEvent = {
     description?: string;
     start_time: string;
     end_time: string;
-    event_type: 'duty' | 'visit' | 'note' | 'other';
+    event_type: 'duty' | 'visit' | 'note' | 'other' | 'meeting' | 'call';
     metadata: any;
     reminder_sent?: boolean;
 };
@@ -45,6 +45,24 @@ export async function getEvents(tenantId: string) {
     return { success: true, data };
 }
 
+export async function getEventsByLeadId(leadId: string) {
+    const supabase = await createClient();
+
+    const { data, error } = await supabase
+        .from('calendar_events')
+        .select(`
+            *,
+            profiles:profile_id (
+                full_name
+            )
+        `)
+        .eq('lead_id', leadId)
+        .order('start_time', { ascending: false });
+
+    if (error) return { success: false, error: error.message };
+    return { success: true, data };
+}
+
 export async function createEvent(data: Partial<CalendarEvent>) {
     const supabase = await createClient();
 
@@ -70,6 +88,10 @@ export async function createEvent(data: Partial<CalendarEvent>) {
     // Inicializa o status do lembrete como falso
     insertData.reminder_sent = false;
 
+    // Força o envio de lembrete em 5 min para o usuário, independentemente do que o frontend enviar
+    if (!insertData.metadata) insertData.metadata = {};
+    (insertData.metadata as any).user_reminder_time = 5;
+
     const { data: event, error } = await supabase
         .from('calendar_events')
         .insert(insertData)
@@ -80,12 +102,36 @@ export async function createEvent(data: Partial<CalendarEvent>) {
 
     // Create notification for the user
     if (event.profile_id) {
+        // Busca o número de WhatsApp do corretor para notificação
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('whatsapp_number')
+            .eq('id', event.profile_id)
+            .single();
+
+        let leadNameForMsg = 'Não informado';
+        if (event.lead_id) {
+            const { data: leadData } = await supabase
+                .from('leads')
+                .select('contacts(name)')
+                .eq('id', event.lead_id)
+                .single();
+            if ((leadData as any)?.contacts?.name) {
+                leadNameForMsg = (leadData as any).contacts.name;
+            }
+        }
+
+        const dateStr = new Date(event.start_time).toLocaleDateString('pt-BR');
+        const timeStr = new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
         await notificationService.create({
             user_id: event.profile_id,
             tenant_id: event.tenant_id,
             title: 'Novo compromisso agendado',
-            message: `Você agendou: ${event.title}`,
-            type: 'calendar'
+            message: `• Lead: ${leadNameForMsg}\n• Assunto: ${event.title}\n• Data: ${dateStr}\n• Hora: ${timeStr}`,
+            type: 'calendar',
+            send_whatsapp: true,
+            whatsapp_number: profile?.whatsapp_number || undefined
         });
     }
 
@@ -120,6 +166,9 @@ export async function updateEvent(eventId: string, data: Partial<CalendarEvent>)
         updateData.reminder_sent = false;
     }
 
+    if (!updateData.metadata) updateData.metadata = {};
+    (updateData.metadata as any).user_reminder_time = 5;
+
     const { data: event, error } = await supabase
         .from('calendar_events')
         .update(updateData)
@@ -131,12 +180,36 @@ export async function updateEvent(eventId: string, data: Partial<CalendarEvent>)
 
     // Create notification for the user
     if (event.profile_id) {
+        // Busca o número de WhatsApp do corretor para notificação
+        const { data: profile } = await supabase
+            .from('profiles')
+            .select('whatsapp_number')
+            .eq('id', event.profile_id)
+            .single();
+
+        let leadNameForMsg = 'Não informado';
+        if (event.lead_id) {
+            const { data: leadData } = await supabase
+                .from('leads')
+                .select('contacts(name)')
+                .eq('id', event.lead_id)
+                .single();
+            if ((leadData as any)?.contacts?.name) {
+                leadNameForMsg = (leadData as any).contacts.name;
+            }
+        }
+
+        const dateStr = new Date(event.start_time).toLocaleDateString('pt-BR');
+        const timeStr = new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
         await notificationService.create({
             user_id: event.profile_id,
             tenant_id: event.tenant_id,
             title: 'Compromisso atualizado',
-            message: `O compromisso "${event.title}" foi alterado`,
-            type: 'calendar'
+            message: `• Lead: ${leadNameForMsg}\n• Assunto: ${event.title}\n• Data: ${dateStr}\n• Hora: ${timeStr}`,
+            type: 'calendar',
+            send_whatsapp: true,
+            whatsapp_number: profile?.whatsapp_number || undefined
         });
     }
 
@@ -166,18 +239,16 @@ export async function processAgendaReminders() {
     try {
         const supabase = createAdminClient();
 
-        // Get current time and time 1 hour from now
         const now = new Date();
-        const oneHourFromNow = new Date(now.getTime() + 60 * 60 * 1000);
+        const twentyFourHoursFromNow = new Date(now.getTime() + 24 * 60 * 60 * 1000);
 
-        // Busca eventos que começam em até 1 hora e ainda não tiveram lembrete enviado
-        // Filtramos para não pegar eventos que já passaram (start_time > now)
+        // Busca eventos que começam em até 24 horas e ainda não tiveram lembrete concluído
         const { data: events, error } = await supabase
             .from('calendar_events')
-            .select('*')
+            .select('*, profiles(full_name, whatsapp_number)')
             .eq('reminder_sent', false)
             .gt('start_time', now.toISOString())
-            .lte('start_time', oneHourFromNow.toISOString());
+            .lte('start_time', twentyFourHoursFromNow.toISOString());
 
         if (error) {
             console.error('Erro ao buscar eventos para lembretes:', error);
@@ -192,17 +263,38 @@ export async function processAgendaReminders() {
 
         for (const event of events) {
             try {
-                // Cria a notificação para o usuário dono do evento
-                await notificationService.create({
-                    user_id: event.profile_id,
-                    tenant_id: event.tenant_id,
-                    title: 'Lembrete de Agenda',
-                    message: `O evento "${event.title}" começa em 1 hora (${new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}).`,
-                    type: 'calendar_reminder'
-                });
+                const metadata = event.metadata || {};
+                const userReminderTime = metadata.user_reminder_time || 0; // minutos
+                let leadReminderTime = metadata.lead_reminder_time || 0; // minutos
+                
+                // Compatibilidade com eventos antigos que usavam o booleano send_whatsapp_reminder
+                if (!metadata.lead_reminder_time && metadata.send_whatsapp_reminder) {
+                    leadReminderTime = 60;
+                }
 
-                // Tenta enviar lembrete via WhatsApp se houver um lead vinculado e a opção estiver ativa
-                if (event.lead_id && (event.metadata as any)?.send_whatsapp_reminder) {
+                const userReminderSent = metadata.user_reminder_sent || false;
+                const leadReminderSent = metadata.lead_reminder_sent || false;
+                
+                const timeUntilEvent = (new Date(event.start_time).getTime() - now.getTime()) / (60 * 1000); // minutos
+                let metadataChanged = false;
+
+                // 1. Lembrete do Corretor (Usuário)
+                if (userReminderTime > 0 && !userReminderSent && timeUntilEvent <= userReminderTime) {
+                    await notificationService.create({
+                        user_id: event.profile_id,
+                        tenant_id: event.tenant_id,
+                        title: 'Lembrete de Agenda',
+                        message: `O compromisso "${event.title}" começa em ${userReminderTime} minuto(s) (${new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}).`,
+                        type: 'calendar_reminder',
+                        send_whatsapp: true,
+                        whatsapp_number: (event as any).profiles?.whatsapp_number || undefined
+                    });
+                    metadata.user_reminder_sent = true;
+                    metadataChanged = true;
+                }
+
+                // 2. Lembrete do Lead
+                if (leadReminderTime > 0 && !leadReminderSent && timeUntilEvent <= leadReminderTime && event.lead_id) {
                     const { data: lead } = await supabase
                         .from('leads')
                         .select('*, contacts(*)')
@@ -210,8 +302,11 @@ export async function processAgendaReminders() {
                         .single();
 
                     if (lead?.contacts?.phone) {
-                        const dateStr = new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-                        const message = `Olá ${lead.contacts.name}, confirmando nosso compromisso "${event.title}" hoje às ${dateStr}. Nos vemos lá!`;
+                        const dateStr = new Date(event.start_time).toLocaleDateString('pt-BR');
+                        const timeStr = new Date(event.start_time).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+                        const brokerName = (event as any).profiles?.full_name || 'Corretor';
+                        
+                        const message = `🔔 *Lembrete de Compromisso*\n\n• Corretor: ${brokerName}\n• Assunto: ${event.title}\n• Data: ${dateStr}\n• Hora: ${timeStr}`;
                         
                         await notificationService.sendWhatsApp(
                             event.tenant_id,
@@ -220,15 +315,26 @@ export async function processAgendaReminders() {
                             message
                         );
                     }
+                    metadata.lead_reminder_sent = true;
+                    metadataChanged = true;
                 }
 
-                // Marca como lembrete enviado
-                await supabase
-                    .from('calendar_events')
-                    .update({ reminder_sent: true })
-                    .eq('id', event.id);
-
-                processedEvents.push(event.id);
+                // Se alguma notificação foi enviada, atualiza o metadata e a flag principal
+                if (metadataChanged) {
+                    const userDone = (userReminderTime === 0 || metadata.user_reminder_sent);
+                    const leadDone = (leadReminderTime === 0 || metadata.lead_reminder_sent);
+                    const allDone = userDone && leadDone;
+                    
+                    await supabase
+                        .from('calendar_events')
+                        .update({ 
+                            metadata,
+                            reminder_sent: allDone 
+                        })
+                        .eq('id', event.id);
+                        
+                    processedEvents.push(event.id);
+                }
             } catch (err) {
                 console.error(`Erro ao processar lembrete para evento ${event.id}:`, err);
             }

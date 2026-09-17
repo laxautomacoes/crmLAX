@@ -212,6 +212,32 @@ export default function FollowUpSequenceModal({ isOpen, onClose, editingSequence
         setSelectedPropertyId('');
     }, [editingSequence, isOpen]);
 
+    // Prevenir race condition: se a sequence carregar antes dos availableStages, os funis ficam nulos.
+    // Quando availableStages carregar, sincronizamos os funis baseados nos stage_ids já setados.
+    useEffect(() => {
+        if (availableStages.length > 0) {
+            if (exitTargetStageId && !exitTargetFunnelId) {
+                const fId = availableStages.find(a => a.id === exitTargetStageId)?.funnel_id;
+                if (fId) setExitTargetFunnelId(fId);
+            }
+            
+            setSteps(prev => {
+                let hasChanges = false;
+                const newSteps = prev.map(s => {
+                    if (s.target_stage_id && !s.target_funnel_id) {
+                        const fId = availableStages.find(a => a.id === s.target_stage_id)?.funnel_id;
+                        if (fId) {
+                            hasChanges = true;
+                            return { ...s, target_funnel_id: fId };
+                        }
+                    }
+                    return s;
+                });
+                return hasChanges ? newSteps : prev;
+            });
+        }
+    }, [availableStages, exitTargetStageId, exitTargetFunnelId]);
+
     const addStep = () => {
         setSteps(prev => [...prev, {
             id: `step_${Date.now()}_${Math.random().toString(36).slice(2, 6)}`,

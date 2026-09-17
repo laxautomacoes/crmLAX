@@ -20,7 +20,8 @@ import { getNotesByLeadId, createNote, deleteNote, updateNote } from '@/app/_act
 import { PropertyAutocomplete } from '@/components/dashboard/properties/PropertyAutocomplete'
 import { getPartners, createPartner } from '@/app/_actions/partners'
 import { PartnerQuickModal } from '@/components/dashboard/shared/PartnerQuickModal'
-import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, ChevronDown, Upload, MessageCircle, Trash2, MoreVertical, Loader2, AlertTriangle, Building2 } from 'lucide-react'
+import { MessageSquare, X, Sparkles, User, FileText, PenLine, ChevronRight, ChevronDown, ChevronUp, Upload, MessageCircle, Trash2, MoreVertical, Loader2, AlertTriangle, Building2, Play, RotateCcw, Calendar } from 'lucide-react'
+import { createEvent, getEventsByLeadId, deleteEvent } from '@/app/_actions/calendar'
 import { LeadWhatsAppConversation } from './LeadWhatsAppConversation'
 import { sendWhatsAppMessage, getWhatsAppChat, sendWhatsAppMedia, refreshInstanceStatus, checkInstanceStatus } from '@/app/_actions/whatsapp'
 import { createClient } from '@/lib/supabase/client'
@@ -29,7 +30,8 @@ import {
     getLeadEnrollments,
     getFollowupSequences,
     enrollLeadInSequence,
-    cancelEnrollment
+    cancelEnrollment,
+    triggerEnrollmentStep,
 } from '@/app/_actions/followup'
 
 interface Broker {
@@ -184,7 +186,7 @@ export function LeadModal({
     const [editingNoteId, setEditingNoteId] = useState<string | null>(null)
     const [editingNoteText, setEditingNoteText] = useState('')
     const [isSavingEditedNote, setIsSavingEditedNote] = useState(false)
-    const [activeTab, setActiveTab] = useState<'info' | 'whatsapp'>('info')
+    const [activeTab, setActiveTab] = useState<'info' | 'whatsapp' | 'agenda'>('info')
     
     // States para controle de visitas nas notas
     const [isVisit, setIsVisit] = useState(false)
@@ -226,6 +228,21 @@ export function LeadModal({
         const res = await getNotesByLeadId(editingLead.id)
         if (res.success && res.data) {
             setLeadNotes(res.data)
+        }
+    }, [editingLead?.id])
+
+    const loadLeadEvents = useCallback(async () => {
+        if (!editingLead?.id) return
+        setIsEventsLoading(true)
+        try {
+            const res = await getEventsByLeadId(editingLead.id)
+            if (res.success && res.data) {
+                setLeadEvents(res.data)
+            }
+        } catch (error) {
+            console.error('Erro ao carregar agendamentos:', error)
+        } finally {
+            setIsEventsLoading(false)
         }
     }, [editingLead?.id])
 
@@ -299,6 +316,24 @@ export function LeadModal({
         }
     }
 
+    const handleTriggerStep = async (enrollmentId: string, stepIndex: number) => {
+        setIsDispatching(`${enrollmentId}-${stepIndex}`)
+        try {
+            const res = await triggerEnrollmentStep(enrollmentId, stepIndex)
+            if (res.success) {
+                toast.success('Mensagem disparada com sucesso!')
+                loadFollowupData()
+                if ((res as any).stageChanged) onSuccess()
+            } else {
+                toast.error('Erro ao disparar: ' + (res as any).error)
+            }
+        } catch (err) {
+            toast.error('Ocorreu um erro ao disparar a mensagem.')
+        } finally {
+            setIsDispatching(null)
+        }
+    }
+
     useEffect(() => {
         if (isOpen) {
             loadFollowupData()
@@ -315,11 +350,80 @@ export function LeadModal({
             setActiveTab('info')
             if (editingLead?.id) {
                 loadLeadNotes()
+                loadLeadEvents()
             }
         } else {
             setLeadNotes([])
+            setLeadEvents([])
         }
-    }, [isOpen, editingLead?.id, loadLeadNotes])
+    }, [isOpen, editingLead?.id, loadLeadNotes, loadLeadEvents])
+
+    const handleCreateAgendaEvent = async () => {
+        if (!agendaTitle.trim() || !agendaDate || !agendaTime || !editingLead?.id) return
+        
+        setIsSavingAgenda(true)
+        try {
+            const startDateTime = new Date(`${agendaDate}T${agendaTime}:00`)
+            const endDateTime = new Date(startDateTime.getTime() + 60 * 60 * 1000) // +1 hora padrão
+
+            // Fallback para o usuário logado caso assigned_to esteja vazio
+            const targetProfileId = leadData.assigned_to || currentUserId
+
+            const res = await createEvent({
+                tenant_id: tenantId,
+                profile_id: targetProfileId,
+                lead_id: editingLead.id,
+                property_id: leadData.property_id || undefined,
+                title: agendaTitle,
+                description: agendaDescription,
+                start_time: startDateTime.toISOString(),
+                end_time: endDateTime.toISOString(),
+                event_type: agendaType,
+                metadata: {
+                    user_reminder_time: 5,
+                    lead_reminder_time: leadReminderTime
+                }
+            })
+
+            if (res.success) {
+                toast.success('Agendamento criado com sucesso!')
+                setAgendaTitle('')
+                setAgendaDate('')
+                setAgendaTime('')
+                setAgendaDescription('')
+                setLeadReminderTime(0)
+                loadLeadEvents()
+                setShowAgendaHistory(true)
+            } else {
+                toast.error('Erro ao criar agendamento: ' + res.error)
+            }
+        } catch (error) {
+            console.error('Erro ao criar agendamento:', error)
+            toast.error('Ocorreu um erro ao salvar o agendamento')
+        } finally {
+            setIsSavingAgenda(false)
+        }
+    }
+
+    const handleDeleteAgendaEvent = async () => {
+        if (!agendaToDelete) return
+        setIsDeletingAgenda(true)
+        try {
+            const res = await deleteEvent(agendaToDelete)
+            if (res.success) {
+                toast.success('Compromisso excluído com sucesso!')
+                setAgendaToDelete(null)
+                loadLeadEvents()
+            } else {
+                toast.error('Erro ao excluir compromisso: ' + res.error)
+            }
+        } catch (error) {
+            console.error('Erro ao excluir compromisso:', error)
+            toast.error('Erro ao excluir compromisso')
+        } finally {
+            setIsDeletingAgenda(false)
+        }
+    }
 
     const handleAddNote = async () => {
         const contentStr = newNoteContent.trim()
@@ -457,6 +561,19 @@ export function LeadModal({
         }
     }, [isAvatarZoomed])
     const [userRole, setUserRole] = useState<string>('user')
+    const [currentUserId, setCurrentUserId] = useState<string>('')
+    const [agendaTitle, setAgendaTitle] = useState('')
+    const [agendaDate, setAgendaDate] = useState('')
+    const [agendaTime, setAgendaTime] = useState('')
+    const [agendaType, setAgendaType] = useState<'duty' | 'visit' | 'note' | 'other'>('visit')
+    const [agendaDescription, setAgendaDescription] = useState('')
+    const [leadReminderTime, setLeadReminderTime] = useState<number>(0)
+    const [isSavingAgenda, setIsSavingAgenda] = useState(false)
+    const [leadEvents, setLeadEvents] = useState<any[]>([])
+    const [agendaToDelete, setAgendaToDelete] = useState<string | null>(null)
+    const [isDeletingAgenda, setIsDeletingAgenda] = useState(false)
+    const [showAgendaHistory, setShowAgendaHistory] = useState(false)
+    const [isEventsLoading, setIsEventsLoading] = useState(false)
     const [sources, setSources] = useState<string[]>([])
     const [sourcesRaw, setSourcesRaw] = useState<NamedOption[]>([])
     const [campaigns, setCampaigns] = useState<string[]>([])
@@ -477,6 +594,8 @@ export function LeadModal({
     const [leadEnrollments, setLeadEnrollments] = useState<any[]>([])
     const [selectedSequenceId, setSelectedSequenceId] = useState<string>('')
     const [isProcessingFollowup, setIsProcessingFollowup] = useState(false)
+    const [expandedEnrollmentId, setExpandedEnrollmentId] = useState<string | null>(null)
+    const [isDispatching, setIsDispatching] = useState<string | null>(null)
     const [enrollmentToCancel, setEnrollmentToCancel] = useState<string | null>(null)
     const [noteToDelete, setNoteToDelete] = useState<string | null>(null)
 
@@ -630,6 +749,7 @@ export function LeadModal({
             const { profile } = await getProfile()
             if (profile) {
                 setUserRole(profile.role)
+                setCurrentUserId(profile.id)
                 if (profile.role === 'admin' || profile.role === 'superadmin') {
                     const res = await getBrokers(tenantId)
                     if (res.success) {
@@ -1134,11 +1254,21 @@ export function LeadModal({
                                 <MessageCircle size={14} />
                                 WhatsApp
                             </button>
+                            <button
+                                type="button"
+                                onClick={() => setActiveTab('agenda')}
+                                className={`flex-1 py-2.5 text-xs font-bold transition-all relative flex items-center justify-center gap-1.5 whitespace-nowrap ${activeTab === 'agenda' ? 'text-foreground border-b-2 border-primary' : 'text-muted-foreground hover:text-foreground'
+                                    }`}
+                            >
+                                <Calendar size={14} />
+                                Agenda
+                            </button>
                         </div>
                     )}
                     <div className={editingLead ? "grid grid-cols-1 lg:grid-cols-[minmax(0,1fr)_340px] gap-6 lg:max-h-[calc(94vh-90px)] overflow-visible" : "space-y-6"}>
-                        <div className={editingLead ? `space-y-6 lg:overflow-y-auto lg:max-h-[calc(94vh-90px)] pr-2 no-scrollbar ${activeTab === 'info' ? 'block' : 'hidden lg:block'}` : "space-y-6"}>
+                        <div className={editingLead ? `space-y-6 lg:overflow-y-auto lg:max-h-[calc(94vh-90px)] pr-2 no-scrollbar ${activeTab === 'info' || activeTab === 'agenda' ? 'block' : 'hidden lg:block'}` : "space-y-6"}>
                             <div className="space-y-8 pb-4">
+                                <div className={`${activeTab === 'info' || !editingLead ? 'block' : 'hidden lg:block'} space-y-8`}>
                                 {/* Seção: Dados Pessoais */}
                                 <div className="space-y-4">
                                     <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Dados Pessoais</h3>
@@ -1783,43 +1913,139 @@ export function LeadModal({
                                                     <div className="space-y-2">
                                                         {leadEnrollments.filter((e: any) => e.status !== 'cancelled' && e.status !== 'paused').map((enrollment: any) => {
                                                             const isActive = enrollment.status === 'active';
+                                                            const isExpanded = expandedEnrollmentId === enrollment.id;
+                                                            const steps = (enrollment.followup_sequences?.followup_steps || [])
+                                                                .sort((a: any, b: any) => a.order_index - b.order_index);
+                                                            const currentIdx = enrollment.current_step_index;
+
                                                             return (
                                                                 <div
                                                                     key={enrollment.id}
-                                                                    className="flex items-center justify-between p-3 bg-background rounded-lg border border-border/40 text-sm"
+                                                                    className="bg-background rounded-lg border border-border/40 text-sm overflow-hidden"
                                                                 >
-                                                                    <div>
-                                                                        <p className="font-semibold text-foreground">
-                                                                            {enrollment.followup_sequences?.name || 'Sequência'}
-                                                                        </p>
-                                                                        <p className="text-xs text-muted-foreground mt-0.5">
-                                                                            Status: <span className={`font-bold ${isActive ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
-                                                                                {isActive ? 'Ativo' : enrollment.status === 'completed' ? 'Concluído' : 'Cancelado'}
-                                                                            </span>
-                                                                            {isActive && enrollment.next_action_at && (
-                                                                                <>
-                                                                                    {' • '}Próximo envio: <span className="font-medium text-foreground">
-                                                                                        {new Date(enrollment.next_action_at).toLocaleString('pt-BR', {
-                                                                                            day: '2-digit',
-                                                                                            month: '2-digit',
-                                                                                            hour: '2-digit',
-                                                                                            minute: '2-digit'
-                                                                                        })}
-                                                                                    </span>
-                                                                                </>
+                                                                    {/* Header do Card — clicável para expandir */}
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setExpandedEnrollmentId(isExpanded ? null : enrollment.id)}
+                                                                        className="w-full flex items-center justify-between p-3 hover:bg-muted/30 transition-colors cursor-pointer text-left"
+                                                                    >
+                                                                        <div className="flex-1 min-w-0">
+                                                                            <p className="font-semibold text-foreground">
+                                                                                {enrollment.followup_sequences?.name || 'Sequência'}
+                                                                            </p>
+                                                                            <p className="text-xs text-muted-foreground mt-0.5">
+                                                                                Status: <span className={`font-bold ${isActive ? 'text-green-600 dark:text-green-400' : 'text-muted-foreground'}`}>
+                                                                                    {isActive ? 'Ativo' : enrollment.status === 'completed' ? 'Concluído' : 'Cancelado'}
+                                                                                </span>
+                                                                                {isActive && enrollment.next_action_at && (
+                                                                                    <>
+                                                                                        {' • '}Próximo envio: <span className="font-medium text-foreground">
+                                                                                            {new Date(enrollment.next_action_at).toLocaleString('pt-BR', {
+                                                                                                day: '2-digit',
+                                                                                                month: '2-digit',
+                                                                                                hour: '2-digit',
+                                                                                                minute: '2-digit'
+                                                                                            })}
+                                                                                        </span>
+                                                                                    </>
+                                                                                )}
+                                                                            </p>
+                                                                        </div>
+                                                                        <div className="flex items-center gap-1 shrink-0 ml-2">
+                                                                            {isExpanded ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
+                                                                        </div>
+                                                                    </button>
+
+                                                                    {/* Corpo Expandido — Lista de Etapas */}
+                                                                    {isExpanded && steps.length > 0 && (
+                                                                        <div className="border-t border-border/40 px-3 py-3 space-y-2">
+                                                                            {steps.map((step: any, idx: number) => {
+                                                                                const isPast = idx < currentIdx;
+                                                                                const isCurrent = idx === currentIdx;
+                                                                                const isFuture = idx > currentIdx;
+                                                                                const dispatchKey = `${enrollment.id}-${idx}`;
+                                                                                const isLoading = isDispatching === dispatchKey;
+
+                                                                                const delayLabel = step.delay_unit === 'minutes' ? `${step.delay_value} min`
+                                                                                    : step.delay_unit === 'hours' ? `${step.delay_value}h`
+                                                                                    : step.delay_unit === 'days' ? `${step.delay_value} dia${step.delay_value > 1 ? 's' : ''}`
+                                                                                    : `${step.delay_value} sem`;
+
+                                                                                const preview = step.message_template?.substring(0, 60) + (step.message_template?.length > 60 ? '...' : '');
+
+                                                                                return (
+                                                                                    <div
+                                                                                        key={step.id}
+                                                                                        className={`flex items-start gap-3 p-2.5 rounded-lg transition-colors ${
+                                                                                            isCurrent ? 'bg-secondary/10 border border-secondary/30' : 'bg-muted/20'
+                                                                                        }`}
+                                                                                    >
+                                                                                        {/* Indicador de status */}
+                                                                                        <div className="pt-0.5 shrink-0">
+                                                                                            {isPast && <span className="text-green-600 dark:text-green-400 text-xs font-bold">✓</span>}
+                                                                                            {isCurrent && <span className="text-secondary text-xs font-bold">→</span>}
+                                                                                            {isFuture && <span className="text-muted-foreground text-xs">○</span>}
+                                                                                        </div>
+
+                                                                                        {/* Conteúdo da etapa */}
+                                                                                        <div className="flex-1 min-w-0">
+                                                                                            <p className="text-xs font-bold text-foreground">
+                                                                                                Etapa {idx + 1}
+                                                                                                {isCurrent && <span className="text-[10px] font-medium text-muted-foreground ml-1">(atual)</span>}
+                                                                                            </p>
+                                                                                            <p className="text-[10px] text-muted-foreground mt-0.5 truncate" title={step.message_template}>
+                                                                                                {preview}
+                                                                                            </p>
+                                                                                            <p className="text-[10px] text-muted-foreground mt-0.5">
+                                                                                                Após {delayLabel}
+                                                                                                {step.media_url && ' • 📎 Mídia'}
+                                                                                            </p>
+                                                                                        </div>
+
+                                                                                        {/* Botão de ação */}
+                                                                                        {isActive && (
+                                                                                            <button
+                                                                                                type="button"
+                                                                                                onClick={() => handleTriggerStep(enrollment.id, idx)}
+                                                                                                disabled={!!isDispatching}
+                                                                                                className={`shrink-0 flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-[10px] font-bold uppercase tracking-wider transition-all active:scale-[0.97] cursor-pointer disabled:opacity-50 whitespace-nowrap ${
+                                                                                                    isCurrent
+                                                                                                        ? 'bg-secondary text-secondary-foreground hover:opacity-90 shadow-sm'
+                                                                                                        : isPast
+                                                                                                            ? 'bg-muted text-foreground border border-border/40 hover:bg-muted/80'
+                                                                                                            : 'bg-muted text-foreground border border-border/40 hover:bg-muted/80'
+                                                                                                }`}
+                                                                                                title={isPast ? 'Re-disparar esta etapa' : isCurrent ? 'Disparar agora' : 'Adiantar para esta etapa'}
+                                                                                            >
+                                                                                                {isLoading ? (
+                                                                                                    <Loader2 size={12} className="animate-spin" />
+                                                                                                ) : isPast ? (
+                                                                                                    <><RotateCcw size={10} /> Re-disparar</>
+                                                                                                ) : isCurrent ? (
+                                                                                                    <><Play size={10} /> Disparar</>
+                                                                                                ) : (
+                                                                                                    <><Play size={10} /> Adiantar</>
+                                                                                                )}
+                                                                                            </button>
+                                                                                        )}
+                                                                                    </div>
+                                                                                );
+                                                                            })}
+
+                                                                            {/* Botão de cancelar no rodapé */}
+                                                                            {isActive && (
+                                                                                <div className="pt-2 border-t border-border/30">
+                                                                                    <button
+                                                                                        type="button"
+                                                                                        onClick={() => setEnrollmentToCancel(enrollment.id)}
+                                                                                        disabled={isProcessingFollowup}
+                                                                                        className="w-full flex items-center justify-center gap-1.5 py-2 text-[10px] font-bold uppercase tracking-wider text-red-500 hover:bg-red-500/10 rounded-lg transition-colors cursor-pointer"
+                                                                                    >
+                                                                                        <X size={12} /> Cancelar Sequência
+                                                                                    </button>
+                                                                                </div>
                                                                             )}
-                                                                        </p>
-                                                                    </div>
-                                                                    {isActive && (
-                                                                        <button
-                                                                            type="button"
-                                                                            onClick={() => handleCancelEnrollment(enrollment.id)}
-                                                                            disabled={isProcessingFollowup}
-                                                                            className="p-1.5 hover:bg-red-500/10 text-red-500 rounded-lg transition-colors cursor-pointer"
-                                                                            title="Cancelar acompanhamento"
-                                                                        >
-                                                                            <X size={16} />
-                                                                        </button>
+                                                                        </div>
                                                                     )}
                                                                 </div>
                                                             );
@@ -1941,6 +2167,151 @@ export function LeadModal({
                                         onRemove={handleMediaRemove}
                                     />
                                 </div>
+                                </div> {/* Fim da tab Info */}
+
+                                {/* Tab: Agenda */}
+                                <div className={`${activeTab === 'agenda' ? 'block' : 'hidden lg:block'} space-y-8`}>
+                                    <div className="space-y-4 pt-8 border-t border-border/50 lg:border-t-0 lg:pt-0">
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Agendar Compromisso</h3>
+                                        <div className="grid grid-cols-1 gap-4">
+                                            <FormInput
+                                                label="Título do Compromisso"
+                                                value={agendaTitle}
+                                                onChange={(e) => setAgendaTitle(e.target.value)}
+                                                placeholder="Ex: Visita ao imóvel X, Ligação..."
+                                            />
+                                            <div className="grid grid-cols-2 gap-4">
+                                                <FormInput
+                                                    type="date"
+                                                    label="Data"
+                                                    value={agendaDate}
+                                                    onChange={(e) => setAgendaDate(e.target.value)}
+                                                />
+                                                <FormInput
+                                                    type="time"
+                                                    label="Hora"
+                                                    value={agendaTime}
+                                                    onChange={(e) => setAgendaTime(e.target.value)}
+                                                />
+                                            </div>
+                                            <div className="flex flex-col">
+                                                <label className="text-xs font-bold text-foreground ml-1 mb-2">Tipo</label>
+                                                <div className="relative">
+                                                    <select
+                                                        className="w-full h-[42px] bg-background border border-input rounded-lg px-3 text-sm focus:ring-2 focus:ring-ring/50 focus:border-ring outline-none appearance-none disabled:opacity-50 transition-all font-medium text-foreground"
+                                                        value={agendaType}
+                                                        onChange={(e) => setAgendaType(e.target.value as any)}
+                                                    >
+                                                        <option value="visit">Visita</option>
+                                                        <option value="meeting">Reunião</option>
+                                                        <option value="call">Ligação</option>
+                                                        <option value="duty">Plantão</option>
+                                                        <option value="note">Anotação</option>
+                                                        <option value="other">Outro</option>
+                                                    </select>
+                                                    <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                                                </div>
+                                            </div>
+                                            <FormTextarea
+                                                label="Descrição (Opcional)"
+                                                value={agendaDescription}
+                                                onChange={(e) => setAgendaDescription(e.target.value)}
+                                                placeholder="Detalhes adicionais..."
+                                                rows={3}
+                                            />
+                                            {editingLead.phone && (
+                                                <div className="mt-2">
+                                                    <div className="flex flex-col">
+                                                        <label className="text-xs font-bold text-foreground ml-1 mb-2">Lembrete p/ Lead (Whats)</label>
+                                                        <div className="relative">
+                                                            <select
+                                                                className="w-full h-[42px] px-3 bg-background border border-input rounded-lg text-sm text-foreground focus:ring-2 focus:ring-ring/50 focus:border-ring outline-none appearance-none font-medium"
+                                                                value={leadReminderTime}
+                                                                onChange={(e) => setLeadReminderTime(Number(e.target.value))}
+                                                            >
+                                                                <option value={0}>Não enviar</option>
+                                                                <option value={5}>5 min antes</option>
+                                                                <option value={15}>15 min antes</option>
+                                                                <option value={30}>30 min antes</option>
+                                                                <option value={60}>1 h antes</option>
+                                                            </select>
+                                                            <ChevronDown className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground pointer-events-none" size={16} />
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            )}
+                                            <button
+                                                type="button"
+                                                onClick={handleCreateAgendaEvent}
+                                                disabled={isSavingAgenda || !agendaTitle || !agendaDate || !agendaTime}
+                                                className="h-[42px] mt-4 w-full flex items-center justify-center gap-2 bg-secondary text-secondary-foreground font-bold rounded-lg hover:opacity-90 active:scale-[0.99] transition-all disabled:opacity-50 disabled:active:scale-100 uppercase tracking-widest text-xs"
+                                            >
+                                                {isSavingAgenda ? <Loader2 size={16} className="animate-spin" /> : <Calendar size={16} strokeWidth={2} />}
+                                                Salvar Agendamento
+                                            </button>
+                                        </div>
+
+                                        {/* Timeline da Agenda (Collapsible Dropdown) */}
+                                        <div className="space-y-3 mt-8 pt-6 border-t border-border/50">
+                                            <button
+                                                type="button"
+                                                onClick={() => setShowAgendaHistory(!showAgendaHistory)}
+                                                className="w-full flex items-center justify-between py-2 text-[10px] font-bold text-foreground uppercase tracking-wider transition-colors cursor-pointer"
+                                            >
+                                                <span>Compromissos agendados ({leadEvents.length})</span>
+                                                <div className="flex items-center gap-1">
+                                                    {showAgendaHistory ? <ChevronDown className="rotate-180 transition-transform" size={14} /> : <ChevronDown className="transition-transform" size={14} />}
+                                                </div>
+                                            </button>
+
+                                            {showAgendaHistory && (
+                                                <div className="space-y-3 max-h-[300px] overflow-y-auto pr-1 no-scrollbar animate-in fade-in slide-in-from-top-1 duration-200">
+                                                    {isEventsLoading ? (
+                                                        <div className="flex justify-center py-4">
+                                                            <Loader2 size={16} className="animate-spin text-muted-foreground" />
+                                                        </div>
+                                                    ) : leadEvents.length === 0 ? (
+                                                        <p className="text-xs text-muted-foreground text-center py-4">
+                                                            Nenhum compromisso registrado para este lead ainda.
+                                                        </p>
+                                                    ) : (
+                                                        leadEvents.map((ev) => (
+                                                            <div key={ev.id} className="p-3 bg-background border border-border/40 rounded-lg space-y-2">
+                                                                <div className="flex justify-between items-start gap-4">
+                                                                    <div>
+                                                                        <h4 className="text-sm font-bold text-foreground">{ev.title}</h4>
+                                                                        <div className="text-[10px] text-muted-foreground mt-0.5 space-y-0.5 font-medium">
+                                                                            <p>{new Date(ev.start_time).toLocaleString('pt-BR', { dateStyle: 'short', timeStyle: 'short' })}</p>
+                                                                            <p>Tipo: {
+                                                                                ev.event_type === 'visit' ? 'Visita' :
+                                                                                ev.event_type === 'meeting' ? 'Reunião' :
+                                                                                ev.event_type === 'call' ? 'Ligação' :
+                                                                                ev.event_type === 'duty' ? 'Plantão' :
+                                                                                ev.event_type === 'note' ? 'Anotação' : 'Outro'
+                                                                            }</p>
+                                                                        </div>
+                                                                    </div>
+                                                                    <button
+                                                                        type="button"
+                                                                        onClick={() => setAgendaToDelete(ev.id)}
+                                                                        className="p-1.5 text-red-500/70 hover:text-red-500 hover:bg-red-500/10 rounded-md transition-colors"
+                                                                    >
+                                                                        <Trash2 size={14} />
+                                                                    </button>
+                                                                </div>
+                                                                {ev.description && (
+                                                                    <p className="text-sm text-foreground/90 whitespace-pre-wrap leading-relaxed mt-2 bg-muted/30 p-2.5 rounded-md border border-border/50">
+                                                                        {ev.description}
+                                                                    </p>
+                                                                )}
+                                                            </div>
+                                                        ))
+                                                    )}
+                                                </div>
+                                            )}
+                                        </div>
+                                    </div>
+                                </div> {/* Fim da tab Agenda */}
 
                             </div>
                         </div>
@@ -2221,6 +2592,24 @@ export function LeadModal({
                     setDeletingCampaignOption(null)
                 }}
                 onCancel={() => setDeletingCampaignOption(null)}
+            />
+
+            {/* Modal Excluir Compromisso da Agenda */}
+            <ConfirmModal
+                isOpen={agendaToDelete !== null}
+                title="Excluir Compromisso"
+                message={
+                    <span className="block leading-snug">
+                        <span className="block">Tem certeza que deseja excluir este compromisso?</span>
+                        <span className="block text-red-500 font-bold mt-1">Esta ação não pode ser desfeita.</span>
+                    </span>
+                }
+                confirmLabel="Excluir"
+                cancelLabel="Cancelar"
+                onConfirm={handleDeleteAgendaEvent}
+                onCancel={() => setAgendaToDelete(null)}
+                isLoading={isDeletingAgenda}
+                zIndex={200}
             />
         </Modal>
     )

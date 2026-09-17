@@ -582,7 +582,12 @@ export async function getLeadEnrollments(leadId: string) {
             *,
             followup_sequences!inner (
                 id,
-                name
+                name,
+                followup_steps (
+                    id, order_index, delay_value, delay_unit,
+                    message_template, target_stage_id,
+                    media_url, media_type, media_name
+                )
             )
         `)
         .eq('lead_id', leadId)
@@ -591,6 +596,178 @@ export async function getLeadEnrollments(leadId: string) {
 
     if (error) return { success: false, error: error.message }
     return { success: true, data }
+}
+
+// ─── Disparo Manual de Etapa ──────────────────────────────────────────────────
+
+export async function triggerEnrollmentStep(enrollmentId: string, stepIndex: number) {
+    const ctx = await getAuthContext()
+    if ('error' in ctx) return { success: false, error: ctx.error }
+
+    const { supabase, tenantId } = ctx
+
+    // 1. Buscar enrollment com dados do lead e sequência
+    const { data: enrollment, error: enrollErr } = await supabase
+        .from('followup_enrollments')
+        .select(`
+            id, lead_id, sequence_id, tenant_id, current_step_index,
+            leads!inner (
+                id, whatsapp_chat,
+                contacts ( name, phone ),
+                properties:property_id ( title, main_image_url, images ),
+                profiles:assigned_to ( full_name, whatsapp_instance_name )
+            ),
+            followup_sequences!inner ( id, name )
+        `)
+        .eq('id', enrollmentId)
+        .eq('tenant_id', tenantId)
+        .single()
+
+    if (enrollErr || !enrollment) return { success: false, error: 'Enrollment não encontrado.' }
+
+    // 2. Buscar todas as etapas da sequência ordenadas
+    const { data: steps, error: stepsErr } = await supabase
+        .from('followup_steps')
+        .select('*')
+        .eq('sequence_id', enrollment.sequence_id)
+        .order('order_index', { ascending: true })
+
+    if (stepsErr || !steps || steps.length === 0) return { success: false, error: 'Sequência sem etapas.' }
+    if (stepIndex < 0 || stepIndex >= steps.length) return { success: false, error: 'Etapa inválida.' }
+
+    const step = steps[stepIndex]
+    const lead = (enrollment as any).leads
+    const sequence = (enrollment as any).followup_sequences
+
+    if (!lead?.contacts?.phone) return { success: false, error: 'Lead sem telefone cadastrado.' }
+
+    // 3. Normalizar telefone
+    let phone = lead.contacts.phone.replace(/\D/g, '')
+    if (phone.length === 10 || phone.length === 11) phone = '55' + phone
+
+    const contactName = lead.contacts?.name || 'Cliente'
+    const propertyTitle = lead.properties?.title || ''
+    const brokerName = lead.profiles?.full_name || ''
+
+    // 4. Personalizar mensagem
+    const message = step.message_template
+        .replace(/{nome}/g, contactName)
+        .replace(/{primeiro_nome}/g, contactName.split(' ')[0])
+        .replace(/{imovel}/g, propertyTitle)
+        .replace(/{corretor}/g, brokerName)
+
+    // 5. Buscar instância WhatsApp
+    let instanceName = lead.profiles?.whatsapp_instance_name
+    if (!instanceName) {
+        const { data: instances } = await supabase
+            .from('whatsapp_instances')
+            .select('instance_name')
+            .eq('tenant_id', tenantId)
+            .eq('status', 'connected')
+            .limit(1)
+        instanceName = instances?.[0]?.instance_name
+    }
+    if (!instanceName) return { success: false, error: 'Nenhuma instância WhatsApp conectada.' }
+
+    // 6. Enviar via Evolution API
+    const evolutionUrl = (process.env.EVOLUTION_URL || '').replace(/\/+$/, '')
+    const evolutionKey = process.env.EVOLUTION_GLOBAL_API_KEY || ''
+
+    if (!evolutionUrl || !evolutionKey) return { success: false, error: 'Evolution API não configurada.' }
+
+    const headers = {
+        'Content-Type': 'application/json',
+        'apikey': evolutionKey,
+        'Authorization': `Bearer ${evolutionKey}`,
+    }
+
+    try {
+        let mediaUrl = step.media_url
+        let mediaType = step.media_type
+
+        if (step.media_url === '__PROPERTY_MAIN_IMAGE__') {
+            const propImages = lead.properties?.images
+            mediaUrl = lead.properties?.main_image_url
+                || (Array.isArray(propImages) && propImages.length > 0
+                    ? (typeof propImages[0] === 'string' ? propImages[0] : propImages[0]?.url)
+                    : null)
+            mediaType = mediaUrl ? 'image' : null
+        }
+
+        if (mediaUrl && mediaType) {
+            await fetch(`${evolutionUrl}/message/sendMedia/${instanceName}`, {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    number: phone,
+                    options: { delay: 1200, presence: 'composing' },
+                    mediatype: mediaType,
+                    media: mediaUrl,
+                    caption: message,
+                    fileName: step.media_name || undefined,
+                }),
+            })
+        } else {
+            await fetch(`${evolutionUrl}/message/sendText/${instanceName}`, {
+                method: 'POST', headers,
+                body: JSON.stringify({
+                    number: phone,
+                    options: { delay: 1200, presence: 'composing' },
+                    text: message,
+                    textMessage: { text: message },
+                }),
+            })
+        }
+    } catch (sendErr: any) {
+        return { success: false, error: 'Falha ao enviar mensagem: ' + sendErr.message }
+    }
+
+    // 7. Registrar log
+    await supabase.from('followup_logs').insert({
+        enrollment_id: enrollmentId,
+        step_id: step.id,
+        tenant_id: tenantId,
+        status: 'sent',
+    }).catch(() => {})
+
+    // 8. Salvar no histórico de chat do lead
+    const currentChat = Array.isArray(lead.whatsapp_chat) ? lead.whatsapp_chat : []
+    const newMsg = {
+        id: `followup_manual_${Date.now()}`,
+        text: message || (step.media_url ? '📎 Mídia enviada' : ''),
+        fromMe: true,
+        timestamp: new Date().toISOString(),
+        senderName: `Follow-Up: ${sequence.name} (manual)`,
+    }
+    await supabase.from('leads')
+        .update({ whatsapp_chat: [...currentChat, newMsg].slice(-20) })
+        .eq('id', enrollment.lead_id)
+        .catch(() => {})
+
+    // 9. Mover lead de estágio se configurado
+    if (step.target_stage_id) {
+        await supabase.from('leads')
+            .update({ stage_id: step.target_stage_id })
+            .eq('id', enrollment.lead_id)
+            .catch(() => {})
+    }
+
+    // 10. Avançar enrollment para próxima etapa
+    const nextIndex = stepIndex + 1
+    if (nextIndex >= steps.length) {
+        await supabase.from('followup_enrollments')
+            .update({ status: 'completed', completed_at: new Date().toISOString(), current_step_index: nextIndex })
+            .eq('id', enrollmentId)
+    } else {
+        const nextStep = steps[nextIndex]
+        await supabase.from('followup_enrollments')
+            .update({
+                current_step_index: nextIndex,
+                next_action_at: calculateNextActionAt(nextStep.delay_value, nextStep.delay_unit),
+            })
+            .eq('id', enrollmentId)
+    }
+
+    return { success: true, stageChanged: !!step.target_stage_id }
 }
 
 export async function getFollowupAvailableStages() {

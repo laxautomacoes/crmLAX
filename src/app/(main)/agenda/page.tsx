@@ -19,7 +19,7 @@ import CalendarGrid from '@/components/Agenda/CalendarGrid';
 import EventModal from '@/components/Agenda/EventModal';
 import { getEvents, createEvent, updateEvent, deleteEvent } from '@/app/_actions/calendar';
 import { getProfile } from '@/app/_actions/profile';
-import { getClients } from '@/app/_actions/clients';
+import { getSimpleLeads } from '@/app/_actions/leads';
 import { getProperties } from '@/app/_actions/properties';
 import { toast } from 'sonner';
 import { PageHeader } from '@/components/shared/PageHeader';
@@ -49,7 +49,7 @@ export default function AgendaPage() {
 
                 const [eventsRes, clientsRes, propertiesRes] = await Promise.all([
                     getEvents(profile.tenant_id),
-                    getClients(profile.tenant_id),
+                    getSimpleLeads(profile.tenant_id),
                     getProperties(profile.tenant_id)
                 ]);
 
