@@ -2171,8 +2171,8 @@ export function LeadModal({
 
                                 {/* Tab: Agenda */}
                                 <div className={`${activeTab === 'agenda' ? 'block' : 'hidden lg:block'} space-y-8`}>
-                                    <div className="space-y-4 pt-8 border-t border-border/50 lg:border-t-0 lg:pt-0">
-                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Agendar Compromisso</h3>
+                                    <div className="space-y-4 pt-8 border-t border-border/50">
+                                        <h3 className="text-sm font-bold text-foreground uppercase tracking-widest">Agendamento</h3>
                                         <div className="grid grid-cols-1 gap-4">
                                             <FormInput
                                                 label="Título do Compromisso"
@@ -2327,6 +2327,9 @@ export function LeadModal({
                                     onSendMessage={handleSendWhatsAppMessage}
                                     onSendMedia={handleSendWhatsAppMedia}
                                     instanceStatus={instanceStatus}
+                                    leadId={editingLead.id}
+                                    tenantId={editingLead.tenant_id}
+                                    profileId={currentUserId}
                                 />
                             </div>
                         )}

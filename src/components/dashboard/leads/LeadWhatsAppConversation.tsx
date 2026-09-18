@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useRef, useEffect } from 'react';
-import { Send, Phone, Video, MoreVertical, Paperclip, Mic, Smile, User, Image, FileText, Music, X, Loader2 } from 'lucide-react';
+import { Send, Phone, Video, MoreVertical, Paperclip, Mic, Smile, User, Image, FileText, Music, X, Loader2, Sparkles } from 'lucide-react';
 import { toast } from 'sonner';
 
 interface Message {
@@ -14,6 +14,7 @@ interface Message {
     mediaType?: 'image' | 'video' | 'audio' | 'document';
     mediaUrl?: string;
     mediaName?: string;
+    created_at?: string; // Support for older message formats
 }
 
 interface LeadWhatsAppConversationProps {
@@ -24,6 +25,9 @@ interface LeadWhatsAppConversationProps {
     onSendMessage?: (text: string) => Promise<void>;
     onSendMedia?: (file: File) => Promise<void>;
     instanceStatus?: 'connected' | 'disconnected' | 'loading';
+    leadId?: string;
+    tenantId?: string;
+    profileId?: string;
 }
 
 function getContactStatus(chat: Message[]) {
@@ -75,10 +79,11 @@ function getContactStatus(chat: Message[]) {
     }
 }
 
-export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onSendMessage, onSendMedia, instanceStatus = 'loading' }: LeadWhatsAppConversationProps) {
+export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onSendMessage, onSendMedia, instanceStatus = 'loading', leadId, tenantId, profileId }: LeadWhatsAppConversationProps) {
     const [newMessage, setNewMessage] = useState('');
     const [isSending, setIsSending] = useState(false);
     const [isUploading, setIsUploading] = useState(false);
+    const [isGeneratingReply, setIsGeneratingReply] = useState(false);
     const [showAttachMenu, setShowAttachMenu] = useState(false);
     const scrollRef = useRef<HTMLDivElement>(null);
     const attachMenuRef = useRef<HTMLDivElement>(null);
@@ -130,6 +135,36 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
             toast.error(error.message || 'Erro ao enviar mensagem');
         } finally {
             setIsSending(false);
+        }
+    };
+
+    const handleCopilot = async () => {
+        if (!leadId || !tenantId || !profileId) {
+            toast.error('Dados insuficientes para usar o Copilot.');
+            return;
+        }
+        
+        // Verifica se há alguma mensagem do lead para analisar
+        const leadMessages = chat.filter(msg => !msg.fromMe);
+        if (leadMessages.length === 0) {
+            toast.error('O Copilot precisa de pelo menos uma mensagem do lead para gerar uma resposta.');
+            return;
+        }
+
+        setIsGeneratingReply(true);
+        try {
+            const { generateCopilotReply } = await import('@/app/_actions/ai-copilot');
+            const res = await generateCopilotReply(leadId, tenantId, profileId);
+            if (res.success && res.data) {
+                setNewMessage(res.data);
+                toast.success('Resposta sugerida com sucesso!');
+            } else {
+                toast.error(res.error || 'Erro ao gerar resposta.');
+            }
+        } catch (error: any) {
+            toast.error('Erro de conexão com o Copilot.');
+        } finally {
+            setIsGeneratingReply(false);
         }
     };
 
@@ -230,7 +265,25 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                             As mensagens e chamadas são protegidas com a criptografia de ponta a ponta. Ninguém fora desta conversa, nem mesmo o WhatsApp, pode ler ou ouvi-las.
                         </div>
                     ) : (
-                        chat.map((msg, index) => (
+                        chat.map((msg, index) => {
+                            const msgTimestamp = msg.timestamp || msg.created_at;
+                            // Tentar extrair o texto de várias fontes possíveis (formatos antigos ou aninhados)
+                            let msgText = msg.text || '';
+                            if (!msgText && msg.message) {
+                                if (typeof msg.message === 'string') {
+                                    msgText = msg.message;
+                                } else if (typeof msg.message === 'object') {
+                                    msgText = (msg.message as any)?.conversation || 
+                                              (msg.message as any)?.extendedTextMessage?.text || '';
+                                }
+                            }
+                            
+                            // Em caso de envio apenas de mídia sem texto
+                            if (!msgText && !msg.mediaUrl && !msg.mediaType) {
+                                msgText = msg.fromMe ? '[Mensagem enviada]' : '[Mensagem recebida]';
+                            }
+
+                            return (
                             <div
                                 key={msg.id || index}
                                 className={`flex flex-col ${msg.fromMe ? 'items-end' : 'items-start'}`}
@@ -275,13 +328,14 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                                         </div>
                                     )}
 
-                                    <p className="leading-snug break-words pr-12 pb-1 whitespace-pre-wrap">{msg.text || msg.message || ''}</p>
+                                    <p className="leading-snug break-words pr-12 pb-1 whitespace-pre-wrap">{msgText}</p>
                                     <span className="text-[10px] text-black/40 dark:text-white/60 absolute bottom-1.5 right-2">
-                                        {msg.timestamp ? new Date(msg.timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
+                                        {msgTimestamp ? new Date(msgTimestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : ''}
                                     </span>
                                 </div>
                             </div>
-                        ))
+                            );
+                        })
                     )}
 
                     {/* Upload indicator */}
@@ -312,6 +366,16 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                     <button className="p-3 text-gray-500 hover:text-gray-700 dark:text-[#8696a0] dark:hover:text-[#d1d7db] transition-colors shrink-0">
                         <Smile size={20} />
                     </button>
+                    {leadId && tenantId && (
+                        <button
+                            onClick={handleCopilot}
+                            disabled={isGeneratingReply || isSending}
+                            title="Gerar Resposta com IA"
+                            className="p-3 text-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors shrink-0 disabled:opacity-50"
+                        >
+                            {isGeneratingReply ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}
+                        </button>
+                    )}
                     <textarea
                         ref={inputRef}
                         value={newMessage}
