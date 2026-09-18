@@ -2219,7 +2219,7 @@ export function LeadModal({
                                                 placeholder="Detalhes adicionais..."
                                                 rows={3}
                                             />
-                                            {editingLead.phone && (
+                                            {editingLead?.phone && (
                                                 <div className="mt-2">
                                                     <div className="flex flex-col">
                                                         <label className="text-xs font-bold text-foreground ml-1 mb-2">Lembrete p/ Lead (Whats)</label>
