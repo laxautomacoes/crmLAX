@@ -314,12 +314,16 @@ export async function POST(req: Request) {
     // Let's assume we search for the phone containing these digits.
 
     // 3. Find the contact by phone
-    // Since phone is in contacts, we need to join or filter
+    // We need to match the phone ignoring formatting characters like spaces or hyphens.
+    // By inserting '%' between each digit of the last 8 digits, we can match formatted phones like (48) 99616-6896.
+    const last8 = phone.slice(-8);
+    const searchPattern = '%' + last8.split('').join('%') + '%';
+
     const { data: contacts } = await supabase
         .from('contacts')
         .select('id, avatar_url')
         .eq('tenant_id', instance.tenant_id!)
-        .ilike('phone', `%${phone.slice(-8)}%`) // Match last 8 digits for safety
+        .ilike('phone', searchPattern)
         .limit(1);
 
     const contact = contacts?.[0];

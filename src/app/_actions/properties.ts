@@ -177,11 +177,14 @@ async function upsertOwnerContact(
         if (proprietario.telefone) {
             const cleanPhone = proprietario.telefone.replace(/\D/g, '')
             if (cleanPhone.length >= 10) {
+                const last9 = cleanPhone.slice(-9)
+                const searchPattern = '%' + last9.split('').join('%') + '%'
+
                 const { data: byPhone } = await supabase
                     .from('contacts')
                     .select('id, contact_type')
                     .eq('tenant_id', tenantId)
-                    .ilike('phone', `%${cleanPhone.slice(-9)}%`)
+                    .ilike('phone', searchPattern)
                     .limit(1)
                     .single()
 
