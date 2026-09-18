@@ -313,7 +313,7 @@ export async function createProperty(tenantId: string, propertyData: unknown) {
         if (error) throw error
 
         revalidatePath('/properties')
-        
+
         await createLog({
             action: 'create_property',
             entityType: 'property',
@@ -354,7 +354,7 @@ export async function updateProperty(tenantId: string, propertyId: string, prope
             const contactId = await upsertOwnerContact(supabase, tenantId, input.details.proprietario)
             if (contactId) updateData.owner_contact_id = contactId
         }
-        
+
         // Se não for admin, permitimos a edição mas forçamos o status para Pendente e is_published=false
         const userRoleUpdate = profile?.role?.toLowerCase()
         if (userRoleUpdate !== 'admin' && userRoleUpdate !== 'superadmin') {
@@ -471,7 +471,7 @@ export async function deleteProperty(tenantId: string, propertyId: string) {
                     .neq('id', profile.id)
 
                 if (admins && admins.length > 0) {
-                    await Promise.all(admins.map((admin: any) => 
+                    await Promise.all(admins.map((admin: any) =>
                         notificationService.create({
                             user_id: admin.id,
                             tenant_id: profile.tenant_id as string,
@@ -533,7 +533,7 @@ export async function archiveProperty(tenantId: string, propertyId: string) {
                     .neq('id', profile.id)
 
                 if (admins && admins.length > 0) {
-                    await Promise.all(admins.map((admin: any) => 
+                    await Promise.all(admins.map((admin: any) =>
                         notificationService.create({
                             user_id: admin.id,
                             tenant_id: profile.tenant_id as string,
