@@ -263,7 +263,7 @@ export async function processAgendaReminders() {
 
         for (const event of events) {
             try {
-                const metadata = event.metadata || {};
+                const metadata = (event.metadata as Record<string, any>) || {};
                 const userReminderTime = metadata.user_reminder_time || 0; // minutos
                 let leadReminderTime = metadata.lead_reminder_time || 0; // minutos
                 
