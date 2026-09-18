@@ -2328,7 +2328,7 @@ export function LeadModal({
                                     onSendMedia={handleSendWhatsAppMedia}
                                     instanceStatus={instanceStatus}
                                     leadId={editingLead.id}
-                                    tenantId={editingLead.tenant_id}
+                                    tenantId={tenantId}
                                     profileId={currentUserId}
                                 />
                             </div>
