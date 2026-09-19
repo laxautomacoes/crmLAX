@@ -15,47 +15,49 @@ export async function generateCopilotReply(
     const supabase = await createClient();
 
     try {
-        // 1. Fetch Lead & Property info
+        // 1. Fetch Lead info separately to avoid left join ambiguity
         const { data: lead, error: leadError } = await supabase
             .from('leads')
-            .select(`
-                name,
-                property_id,
-                properties (
-                    title,
-                    price,
-                    type,
-                    details
-                )
-            `)
+            .select('name, property_id')
             .eq('id', leadId)
             .eq('tenant_id', tenantId)
             .single();
 
         if (leadError || !lead) {
-            throw new Error('Lead não encontrado.');
+            console.error('generateCopilotReply DB Error (Lead):', leadError);
+            throw new Error(`Erro ao buscar lead: ${leadError?.message || 'Lead não encontrado.'}`);
         }
 
-        const property = lead.properties;
         let propertyContext = '';
 
-        if (property) {
-            const d = (property as any).details || {};
-            const price = (property as any).price
-                ? `R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format((property as any).price)}`
-                : 'Preço sob consulta';
+        if (lead.property_id) {
+            const { data: property, error: propError } = await supabase
+                .from('properties')
+                .select('title, price, type, details')
+                .eq('id', lead.property_id)
+                .single();
 
-            const typeLabels: Record<string, string> = {
-                house: 'Casa',
-                apartment: 'Apartamento',
-                land: 'Terreno',
-                commercial: 'Imóvel Comercial'
-            };
+            if (propError) {
+                console.warn('generateCopilotReply DB Warning (Property):', propError);
+            }
 
-            propertyContext = `
+            if (property) {
+                const d = (property as any).details || {};
+                const price = property.price
+                    ? `R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(property.price)}`
+                    : 'Preço sob consulta';
+
+                const typeLabels: Record<string, string> = {
+                    house: 'Casa',
+                    apartment: 'Apartamento',
+                    land: 'Terreno',
+                    commercial: 'Imóvel Comercial'
+                };
+
+                propertyContext = `
 DADOS DO EMPREENDIMENTO/IMÓVEL DE INTERESSE:
-Título: ${(property as any).title}
-Tipo: ${typeLabels[(property as any).type] || (property as any).type}
+Título: ${property.title}
+Tipo: ${typeLabels[property.type || ''] || property.type || 'Não informado'}
 Preço: ${price}
 Dormitórios: ${d.dormitorios || d.quartos || 'N/A'}
 Suítes: ${d.suites || 'N/A'}
@@ -65,8 +67,11 @@ Bairro: ${d.endereco?.bairro || 'N/A'}
 Cidade: ${d.endereco?.cidade || 'N/A'}
 Diferenciais: ${d.diferenciais?.join(', ') || 'N/A'}
 `;
-        } else {
-            propertyContext = 'O lead ainda não possui um empreendimento específico vinculado ao seu interesse inicial.';
+            }
+        }
+
+        if (!propertyContext) {
+            propertyContext = 'O lead ainda não possui um empreendimento específico vinculado ao seu interesse inicial ou não foi possível carregar os detalhes.';
         }
 
         // 2. Fetch Chat History to get the last message from the lead
@@ -85,8 +90,8 @@ Diferenciais: ${d.diferenciais?.join(', ') || 'N/A'}
             return { success: false, error: 'Não há mensagens recebidas do lead para gerar uma resposta.' };
         }
 
-        const prompt = `Você é um corretor de imóveis experiente e altamente persuasivo.
-O seu papel é atuar como um "Copilot" (Assistente Virtual) sugerindo uma resposta rápida, empática e focada no fechamento ou no avanço da negociação.
+        const prompt = `Você é um corretor de imóveis experiente, altamente persuasivo e atua como a "IA LAX", o cérebro inteligente de vendas do CRM.
+O seu papel é analisar o contexto do imóvel e a dúvida do cliente para sugerir uma resposta rápida, empática e focada no fechamento ou no avanço da negociação.
 
 INFORMAÇÕES DO LEAD:
 Nome do Lead: ${lead.name}
@@ -98,9 +103,9 @@ MENSAGEM RECEBIDA DO LEAD (ÚLTIMA DÚVIDA/PERGUNTA):
 
 TAREFA:
 Crie uma sugestão de resposta para enviar via WhatsApp para este lead.
-- Responda diretamente à dúvida levantada.
+- Responda diretamente à dúvida levantada utilizando os dados e argumentos disponíveis.
 - Seja cordial, profissional, mas com uma linguagem natural de WhatsApp (pode usar emojis adequados).
-- Utilize os dados do empreendimento para agregar valor à resposta, se aplicável.
+- Utilize os dados e o relatório do empreendimento para agregar valor à resposta, se aplicável.
 - Sempre termine com uma pergunta de engajamento (Call to Action) para manter a conversa fluindo (ex: "Podemos agendar uma visita?", "Você prefere uma simulação de financiamento?").
 - Retorne APENAS o texto da mensagem sugerida, sem aspas, sem marcadores de markdown, e sem texto introdutório como "Aqui está a sugestão". Apenas o texto puro que será colado no campo de mensagem do corretor.`;
 

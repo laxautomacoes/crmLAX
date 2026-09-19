@@ -8,6 +8,7 @@ import { getBrokers, getProfile } from '@/app/_actions/profile'
 import { getTenantCustomAmenities, getTenantCustomFeatures, getTenantCustomCondo } from '@/app/_actions/tenant'
 import type { CustomAmenity, CustomFeature, CustomCondo } from '@/app/_actions/tenant'
 import { BasicInfoFields } from './PropertyModal/BasicInfoFields'
+import { AILaxReportField } from './PropertyModal/AILaxReportField'
 import { AreaFields } from './PropertyModal/AreaFields'
 import { DormitoriosVagasFields } from './PropertyModal/RoomsFields'
 import { TowersFields } from './PropertyModal/TowersFields'
@@ -1153,6 +1154,13 @@ export function PropertyModal({ isOpen, onClose, editingProperty, onSave, userRo
                             </div>
                         </div>
                     </div>
+                    <AILaxReportField
+                        formData={formData}
+                        setFormData={setFormData}
+                        propertyId={(editingProperty as any)?.id}
+                        tenantId={tenantId}
+                        profileId={currentProfile?.id}
+                    />
                 </div>
             </div>
             )}

@@ -63,13 +63,13 @@ async function fetchImageAsInlinePart(url: string) {
     }
 }
 
-export async function runAI(tenantId: string, prompt: string, imageUrls?: string[]): Promise<AIResult> {
+export async function runAI(tenantId: string, prompt: string, fileUrls?: string[]): Promise<AIResult> {
     const { provider, model: modelName } = await getAIConfig(tenantId);
 
     if (provider === 'openai') {
         const content: any[] = [{ type: 'text', text: prompt }];
-        if (imageUrls && imageUrls.length > 0) {
-            imageUrls.forEach(url => {
+        if (fileUrls && fileUrls.length > 0) {
+            fileUrls.forEach(url => {
                 const isVideo = /\.(mp4|webm|mov|m4v|3gp|avi|mkv)(\?.*)?$/i.test(url) || url.includes('/videos/');
                 if (isVideo) return; // Ignore video formats
                 
@@ -100,14 +100,20 @@ export async function runAI(tenantId: string, prompt: string, imageUrls?: string
         const model = getAIModel(modelName);
         const parts: any[] = [prompt];
 
-        if (imageUrls && imageUrls.length > 0) {
-            for (const url of imageUrls) {
+        if (fileUrls && fileUrls.length > 0) {
+            for (const url of fileUrls) {
                 const isVideo = /\.(mp4|webm|mov|m4v|3gp|avi|mkv)(\?.*)?$/i.test(url) || url.includes('/videos/');
                 if (isVideo) continue; // Ignore video formats
                 
                 const isImage = /\.(jpg|jpeg|png|webp|gif|heic|heif)(\?.*)?$/i.test(url) || url.includes('/images/') || url.includes('marketing-studio') || url.includes('crm-attachments');
-                if (isImage) {
+                const isPdf = /\.(pdf)(\?.*)?$/i.test(url) || url.includes('/documents/');
+
+                if (isImage || isPdf) {
                     const part = await fetchImageAsInlinePart(url);
+                    // Force application/pdf if it's a PDF and the server returned octet-stream
+                    if (part && isPdf && part.inlineData.mimeType.includes('octet-stream')) {
+                        part.inlineData.mimeType = 'application/pdf';
+                    }
                     if (part) parts.push(part);
                 }
             }
