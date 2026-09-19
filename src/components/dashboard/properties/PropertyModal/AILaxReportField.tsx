@@ -4,27 +4,27 @@ import { useState } from 'react'
 import { FormTextarea } from '@/components/shared/forms/FormTextarea'
 import { Brain, Loader2 } from 'lucide-react'
 import { trainAILaxWithProperty } from '@/app/_actions/ai-lax'
-import { useToast } from '@/components/ui/use-toast'
+import { toast } from 'sonner'
 
 interface AILaxReportFieldProps {
     formData: any
     setFormData: (data: any) => void
     propertyId?: string
     tenantId: string
-    profileId: string
+    profileId?: string
 }
 
 export function AILaxReportField({ formData, setFormData, propertyId, tenantId, profileId }: AILaxReportFieldProps) {
-    const { toast } = useToast()
     const [isTraining, setIsTraining] = useState(false)
 
     const handleTrain = async () => {
         if (!propertyId) {
-            toast({
-                title: 'Imóvel não salvo',
-                description: 'Você precisa salvar o imóvel primeiro antes de treinar a IA LAX.',
-                variant: 'destructive'
-            })
+            toast.error('Você precisa salvar o imóvel primeiro antes de treinar a IA LAX.')
+            return
+        }
+
+        if (!profileId) {
+            toast.error('Perfil de usuário não identificado.')
             return
         }
 
@@ -40,23 +40,12 @@ export function AILaxReportField({ formData, setFormData, propertyId, tenantId, 
                         ai_master_report: result.data
                     }
                 })
-                toast({
-                    title: 'Treinamento Concluído!',
-                    description: 'A IA LAX leu todos os dados e gerou o relatório mestre com sucesso.',
-                })
+                toast.success('Treinamento Concluído! A IA LAX leu todos os dados e gerou o relatório mestre com sucesso.')
             } else {
-                toast({
-                    title: 'Erro no Treinamento',
-                    description: result.error || 'Ocorreu um erro ao treinar a IA.',
-                    variant: 'destructive'
-                })
+                toast.error(result.error || 'Ocorreu um erro ao treinar a IA.')
             }
         } catch (error: any) {
-            toast({
-                title: 'Erro inesperado',
-                description: error.message || 'Falha ao treinar IA LAX.',
-                variant: 'destructive'
-            })
+            toast.error(error.message || 'Falha ao treinar IA LAX.')
         } finally {
             setIsTraining(false)
         }
@@ -67,7 +56,7 @@ export function AILaxReportField({ formData, setFormData, propertyId, tenantId, 
             <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
                 <div>
                     <h4 className="flex items-center gap-2 text-base font-black text-foreground uppercase tracking-widest">
-                        <Brain className="text-secondary" size={18} />
+                        <Brain className="text-accent-icon" size={18} />
                         Cérebro IA LAX
                     </h4>
                     <p className="text-xs text-muted-foreground leading-snug mt-1">

@@ -140,14 +140,14 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
 
     const handleCopilot = async () => {
         if (!leadId || !tenantId || !profileId) {
-            toast.error('Dados insuficientes para usar o Copilot.');
+            toast.error('Dados insuficientes para usar a IA LAX.');
             return;
         }
         
         // Verifica se há alguma mensagem do lead para analisar
         const leadMessages = chat.filter(msg => !msg.fromMe);
         if (leadMessages.length === 0) {
-            toast.error('O Copilot precisa de pelo menos uma mensagem do lead para gerar uma resposta.');
+            toast.error('A IA LAX precisa de pelo menos uma mensagem do lead para gerar uma resposta.');
             return;
         }
 
@@ -162,7 +162,7 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                 toast.error(res.error || 'Erro ao gerar resposta.');
             }
         } catch (error: any) {
-            toast.error('Erro de conexão com o Copilot.');
+            toast.error('Erro de conexão com a IA LAX.');
         } finally {
             setIsGeneratingReply(false);
         }
@@ -370,7 +370,7 @@ export function LeadWhatsAppConversation({ chat, leadName, avatarUrl, phone, onS
                         <button
                             onClick={handleCopilot}
                             disabled={isGeneratingReply || isSending}
-                            title="Gerar Resposta com IA"
+                            title="Gerar Resposta com IA LAX"
                             className="p-3 text-purple-500 hover:text-purple-600 dark:hover:text-purple-400 transition-colors shrink-0 disabled:opacity-50"
                         >
                             {isGeneratingReply ? <Loader2 size={20} className="animate-spin" /> : <Sparkles size={20} />}

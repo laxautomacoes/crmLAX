@@ -43,19 +43,26 @@ export async function generateCopilotReply(
 
             if (property) {
                 const d = (property as any).details || {};
-                const price = property.price
-                    ? `R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(property.price)}`
-                    : 'Preço sob consulta';
+                
+                if (d.ai_master_report) {
+                    propertyContext = `
+DADOS E RELATÓRIO DO IMÓVEL (CÉREBRO IA LAX):
+${d.ai_master_report}
+`.trim();
+                } else {
+                    const price = property.price
+                        ? `R$ ${new Intl.NumberFormat('pt-BR', { minimumFractionDigits: 2, maximumFractionDigits: 2 }).format(property.price)}`
+                        : 'Preço sob consulta';
 
-                const typeLabels: Record<string, string> = {
-                    house: 'Casa',
-                    apartment: 'Apartamento',
-                    land: 'Terreno',
-                    commercial: 'Imóvel Comercial'
-                };
+                    const typeLabels: Record<string, string> = {
+                        house: 'Casa',
+                        apartment: 'Apartamento',
+                        land: 'Terreno',
+                        commercial: 'Imóvel Comercial'
+                    };
 
-                propertyContext = `
-DADOS DO EMPREENDIMENTO/IMÓVEL DE INTERESSE:
+                    propertyContext = `
+DADOS BÁSICOS DO IMÓVEL DE INTERESSE:
 Título: ${property.title}
 Tipo: ${typeLabels[property.type || ''] || property.type || 'Não informado'}
 Preço: ${price}
@@ -67,6 +74,7 @@ Bairro: ${d.endereco?.bairro || 'N/A'}
 Cidade: ${d.endereco?.cidade || 'N/A'}
 Diferenciais: ${d.diferenciais?.join(', ') || 'N/A'}
 `;
+                }
             }
         }
 
